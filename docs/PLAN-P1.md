@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M16 xong (5 engine, phủ ~80%); kho 51 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M17 xong (6 engine, phủ ~84%); kho 53 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,46 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M17 — Game engine · [E] — **xong một phần, và phần thiếu là có chủ ý**
+
+Hạng mục 7, đắt nhất trong hàng đợi.
+
+> **Không mở DSL-03.** SRS đòi GM-01 "định nghĩa game bằng rule script
+> sandboxed" — một ngôn ngữ *có trạng thái*, chạy Web Worker với budget riêng
+> (NFR-S2). Tôi dùng **tập luật đóng** thay thế, vì (a) R-2 trong sổ rủi ro là
+> "DSL phình thành ngôn ngữ lập trình" và đối sách ghi rõ là grammar đóng,
+> (b) `COMBINE_RULES` của engine dãy đã có tiền lệ đúng như vậy, (c) ba luật
+> đóng phủ gần hết game thi đấu. **GM-01 vẫn còn nợ**, và game có luật riêng —
+> cờ trên đồ thị, Chomp, trò tô màu — chưa khai được.
+
+- ✅ Ba luật đóng có tham số: bốc theo khoảng (Nim là trường hợp không giới hạn), bốc theo tập cho trước, chia đống thành hai phần khác nhau.
+- ✅ Solver: giá trị Grundy + XOR cho luật chơi thường; **duyệt lùi** cho misère, vì lý thuyết Grundy không áp dụng được ở đó. Vượt trần thì từ chối kèm lý do (GM-03).
+- ✅ View `spectrum` — mọi thế một đống từ $0$ tới $N$, tô theo thắng/thua. Đây là view đắt giá hơn hẳn: phát biểu "thua đúng khi $n$ chia hết cho $k+1$" không phải câu để tin, nó là **một vệt sọc** hiện ra trên màn hình.
+- ✅ Lệnh đi **tự kiểm luật** — gọi đúng hàm sinh nước mà solver dùng. Nếu để lệnh sửa số viên tuỳ ý thì người học "thắng" bằng một nước không tồn tại, và sandbox mất hết ý nghĩa.
+- ✅ Hai bài: `take-stones-one-to-three`, `nim-three-piles-xor`.
+
+**`claims` bắt hai lỗi của chính tôi trong milestone này** — và đó là lần đầu cơ
+chế M14 trả cổ tức trên nội dung mới:
+
+1. Tôi viết "người đi trước thắng" cho $20$ viên bốc $1..3$. Sai: $20 = 4 \times 5$
+   là bội của $4$, nên người đi trước **thua**.
+2. Tôi viết Nim$(3,5,7)$ có "đúng $1$ nước thắng". Sai: có **$3$** — bốc một viên
+   từ bất kỳ đống nào đều đưa XOR về $0$.
+
+Cả hai đều là loại lỗi mà đọc lại bằng mắt rất dễ trượt, và cả hai đều đỏ ngay ở
+`validate`.
+
+Solver đối chiếu **vét cạn** trên $5$ luật: hơn $500$ thế cho luật thường, hơn
+$100$ cho misère, cộng kiểm rằng **mọi** nước được báo là thắng thật sự đưa đối
+thủ vào thế thua. Lý thuyết Sprague–Grundy là một tầng gián tiếp (Grundy → XOR →
+thắng/thua), và một lỗi ở `mex` vẫn cho ra những con số trông hoàn toàn hợp lý.
+
+**Hai lỗi hình chỉ lộ khi nhìn:** đống $20$ viên vẽ thành một cột tỉ lệ $1:20$
+(nay chồng thành khối $4\times6$), và nhãn các đống nằm so le theo chiều cao từng
+cột nên một hàng "3, 5, 7" đọc ra như mấy con số rời rạc (nay chung một đường chân).
+
+**Mức phủ:** ~80% → **~84%**. Kho: 51 → **53 bài**.
 
 ### M16 — Poset / sơ đồ Hasse · [E] — **xong**
 

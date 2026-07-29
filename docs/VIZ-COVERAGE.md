@@ -24,7 +24,7 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~+ set engine, chu trình hoán vị, view song ánh (M11)~~ | ~~63%~~ | ~~71%~~ |
 | ~~+ view song ánh, set engine, chu trình hoán vị (M11)~~ | ~~73%~~ | ~~81%~~ |
 | ~~+ ghép cặp, tính phẳng, ma trận kề (M12)~~ | ~~76%~~ | ~~84%~~ |
-| **Hôm nay** (5 engine + poset/Hasse) | **~80%** | ~87% |
+| **Hôm nay** (6 engine + poset/Hasse) | **~84%** | ~90% |
 | Còn lại trong hàng đợi §7 làm hết | **~88%** | ~97% |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
@@ -52,17 +52,17 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà năm engin
 | Đồ thị | 22% | 94% | 20.7 | tô mặt (phần còn lại của GR-05), kiểm tính phẳng tổng quát |
 | Đếm / song ánh / đếm hai chiều | 14% | 80% | 11.2 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 90% | 14.4 | — (`engine-sequence`) |
-| Trò chơi | 7% | 10% | 0.7 | **game engine (GM-01..04)** |
+| Trò chơi | 7% | 65% | 4.55 | game có luật riêng (cờ trên đồ thị, Chomp) — cần GM-01 rule script thật |
 | Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
 | Hình học tổ hợp | 5% | 75% | 3.75 | tô vùng do các đoạn chia (PT-03), đường tròn |
 | Hoán vị / thứ tự | 6% | 95% | 5.7 | — (chu trình hoán vị + poset/Hasse + Dilworth) |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 5% | 0.15 | xem §6 — **không co lại theo engine** |
-| **Tổng** | **100%** | | **~80%** | |
+| **Tổng** | **100%** | | **~84%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
-31 bài quen thuộc, phân loại tay. Chính chủ đọc bảng này thấy sai chỗ nào thì sửa
+32 bài quen thuộc, phân loại tay. Chính chủ đọc bảng này thấy sai chỗ nào thì sửa
 chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 
 | Bài | Họ | Hôm nay |
@@ -91,21 +91,22 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Gộp đống sỏi theo mod | dãy / đa tập | ✅ engine sequence, chế độ `piles` |
 | Xoá hai số, viết $\|a-b\|$ | dãy / đa tập | ✅ có trong kho |
 | Chip-firing | quá trình | 🟡 vẽ và thao tác được, thiếu luật lan truyền |
-| Nim | trò chơi | ❌ |
-| Trò chơi tô đồ thị | trò chơi | 🟡 vẽ được thế, không chơi được |
+| Nim | trò chơi | ✅ có trong kho (XOR + giá trị Grundy) |
+| Bốc sỏi $1..k$ | trò chơi | ✅ có trong kho (phổ thắng-thua) |
+| Trò chơi tô đồ thị | trò chơi | 🟡 vẽ được thế, không chơi được — cần GM-01 |
 | Happy ending (4 điểm lồi) | hình học | ✅ có trong kho (bao lồi + ba trường hợp) |
 | Sylvester–Gallai | hình học | 🟡 có `line` và `aligned`; thiếu bài |
 | Năm điểm nguyên có trung điểm nguyên | hình học | ✅ có trong kho |
 | Đếm giao điểm đường chéo đa giác | đếm / hình học | ✅ có trong kho |
 | Phương pháp xác suất: tồn tại tô $K_n$ không $K_k$ đơn sắc | trừu tượng | ❌ §6 |
 
-**23 ✅ · 6 🟡 · 2 ❌** trên 31 bài ⇒ 74% trọn vẹn, **84%** nếu tính nửa điểm cho 🟡.
-Hơi cao hơn 80% của bảng trọng số, và chênh lệch nhỏ ấy có thật: danh sách này
+**25 ✅ · 6 🟡 · 1 ❌** trên 32 bài ⇒ 78% trọn vẹn, **88%** nếu tính nửa điểm cho 🟡.
+Hơi cao hơn 84% của bảng trọng số, và chênh lệch nhỏ ấy có thật: danh sách này
 thiên về bài **kinh điển**, mà bài kinh điển thường là bài có hình đẹp — đó chính
 là lý do người ta nhớ chúng. Bảng trọng số ở trên là con số nên tin.
 
 *(Trước Sequence engine: 9 ✅ · 4 🟡 · 11 ❌ ⇒ ≈ 46%. Trước M11: ≈ 63%.
-Trước M12: ≈ 72%. Trước M15: ≈ 76%. Trước M16: 22 ✅ · 7 🟡 · 2 ❌ ⇒ ≈ 82%.)*
+Trước M12: ≈ 72%. Trước M15: ≈ 76%. Trước M16: ≈ 82%. Trước M17: 23 ✅ · 6 🟡 · 2 ❌ ⇒ ≈ 84%.)*
 
 ---
 
@@ -261,7 +262,7 @@ trong SRS.
 | ~~4~~ | ~~**Point/segment engine**~~ ✅ M15 | +3.5 | xong | — | `packages/engines/point`: bao lồi, thẳng hàng, đếm giao điểm, đường thẳng, lưới điểm. **Chưa có**: PT-03 tô vùng, đường tròn |
 | ~~5~~ | ~~**Hoàn tất graph**~~ ✅ M12 (phần lớn) | +2.7 | xong | — | Ghép cặp + König + Hall, ma trận kề, tính phẳng qua hình vẽ và chặn Euler. **Chưa có**: tô mặt, kiểm tính phẳng tổng quát |
 | ~~6~~ | ~~**Poset / Hasse**~~ ✅ M16 | +0.6 | xong | — | Layout `hasse` + `analyzePoset`; Dilworth tính bằng **chính** lõi ghép cặp của GR-06 |
-| 7 | **Game engine** (GM-01..04) | +5.25 | 1.5 | **3.5** | Đắt nhất: cần DSL-03 rule script sandboxed + solver + mô hình lượt. Đúng như SRS xếp vào P3 |
+| ~~7~~ | ~~**Game engine**~~ ✅ M17 (một phần) | +3.9 | xong | — | Tập luật **đóng** thay cho DSL-03: bốc theo khoảng / theo tập / chia đống, cộng Grundy, misère, phổ thắng-thua. **Chưa có**: GM-01 rule script |
 | 8 | **Derivation engine** (§4.5) | +1.35 | 1.0 | **1.35** | Lãi thấp ở cột "gánh lập luận" nhưng đẩy cột "**có hình mang thông tin**" từ ~71% lên ~97%. Cần label atlas (D-07) trước |
 
 Cộng dồn: **63 → ~88%**, tổng chi phí ≈ **5.5 M4**, tức khoảng 11 tuần ở nhịp
@@ -276,10 +277,30 @@ mặt).
 **M15 lấy hạng mục 4**: 75.9% → **79.4%** (+3.5, thấp hơn dự tính +4.0 — phần hụt
 là PT-03 tô vùng và đường tròn, cả hai đều ngoài phạm vi P2).
 
-**M16 lấy hạng mục 6**: 79.4% → **80.0%** (+0.6, dự tính +0.8). Còn lại **hai**
-hạng mục, và cả hai đều đắt: game engine (+5.25, ~1.5 M4, cần DSL-03) và
-derivation engine (+1.35, ~1.0 M4, cần label atlas D-07). Phần "rẻ mà lãi" của
-hàng đợi đã hết.
+**M16 lấy hạng mục 6**: 79.4% → **80.0%** (+0.6, dự tính +0.8).
+
+**M17 lấy hạng mục 7**: 80.0% → **83.8%** (+3.9, thấp hơn dự tính +5.25). Chỗ
+hụt là có chủ ý và cần nói rõ: engine dùng **tập luật đóng** thay vì mở DSL-03,
+nên game có luật riêng — cờ trên đồ thị, Chomp, trò tô màu — vẫn chưa khai được.
+Đó là GM-01 thật sự và nó còn nợ. Xem phần dưới.
+
+Còn lại **một** hạng mục: derivation engine (+1.35, ~1.0 M4, cần label atlas D-07).
+
+#### Vì sao game engine không mở DSL-03
+
+SRS đòi "định nghĩa game bằng rule script sandboxed" (GM-01), tức một ngôn ngữ
+*có trạng thái* chạy trong Web Worker với budget riêng (NFR-S2). Ba lý do không
+làm thế:
+
+- **R-2 trong sổ rủi ro** là "DSL phình thành ngôn ngữ lập trình", đối sách ghi
+  rõ là grammar đóng. Mở một ngôn ngữ có trạng thái là đi thẳng vào rủi ro đó.
+- **Tiền lệ trong chính kho**: `COMBINE_RULES` của engine dãy là enum đóng, kèm
+  ghi chú rằng cho nhập biểu thức là "mở cửa hậu cho DSL-03".
+- **Ba luật đóng phủ gần hết game thi đấu**: bốc theo khoảng, bốc theo tập cho
+  trước, chia đống. Nim, bài bốc sỏi, trò Grundy đều nằm trong đó.
+
+Cái giá, nói thẳng: game có luật riêng không khai được, và nó sẽ **không** khai
+được cho tới khi ai đó thật sự làm GM-01 + NFR-S2.
 
 #### Hạn chế đã biết của kiểm tính phẳng
 

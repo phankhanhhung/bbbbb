@@ -10,6 +10,7 @@
     "@combviz/check": "workspace:*",
     "@combviz/dsl": "workspace:*",
     "@combviz/engine-board": "workspace:*",
+    "@combviz/engine-game": "workspace:*",
     "@combviz/engine-graph": "workspace:*",
     "@combviz/engine-point": "workspace:*",
     "@combviz/engine-sequence": "workspace:*",

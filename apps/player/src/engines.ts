@@ -82,6 +82,17 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       resolveValidator: module.resolvePointValidator,
     };
   },
+
+  game: async () => {
+    const module = await import('@combviz/engine-game');
+    return {
+      renderer: module.gameRenderer,
+      commands: module.gameCommands,
+      hitTest: module.gameHitTest,
+      environment: module.gameEnvironment,
+      resolveValidator: module.resolveGameValidator,
+    };
+  },
 };
 
 const cache = new Map<string, LoadedEngine>();

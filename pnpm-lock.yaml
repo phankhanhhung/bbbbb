@@ -56,6 +56,9 @@ importers:
       '@combviz/engine-board':
         specifier: workspace:*
         version: link:../../packages/engines/board
+      '@combviz/engine-game':
+        specifier: workspace:*
+        version: link:../../packages/engines/game
       '@combviz/engine-graph':
         specifier: workspace:*
         version: link:../../packages/engines/graph
@@ -108,6 +111,9 @@ importers:
       '@combviz/engine-board':
         specifier: workspace:*
         version: link:../../packages/engines/board
+      '@combviz/engine-game':
+        specifier: workspace:*
+        version: link:../../packages/engines/game
       '@combviz/engine-graph':
         specifier: workspace:*
         version: link:../../packages/engines/graph
@@ -174,6 +180,27 @@ importers:
         version: link:../schema
 
   packages/engines/board:
+    dependencies:
+      '@combviz/dsl':
+        specifier: workspace:*
+        version: link:../../dsl
+      '@combviz/editor':
+        specifier: workspace:*
+        version: link:../../editor
+      '@combviz/render':
+        specifier: workspace:*
+        version: link:../../render
+      '@combviz/schema':
+        specifier: workspace:*
+        version: link:../../schema
+      '@combviz/theme':
+        specifier: workspace:*
+        version: link:../../theme
+      '@sinclair/typebox':
+        specifier: ^0.34.13
+        version: 0.34.52
+
+  packages/engines/game:
     dependencies:
       '@combviz/dsl':
         specifier: workspace:*
@@ -312,6 +339,9 @@ importers:
       '@combviz/engine-board':
         specifier: workspace:*
         version: link:../../packages/engines/board
+      '@combviz/engine-game':
+        specifier: workspace:*
+        version: link:../../packages/engines/game
       '@combviz/engine-graph':
         specifier: workspace:*
         version: link:../../packages/engines/graph

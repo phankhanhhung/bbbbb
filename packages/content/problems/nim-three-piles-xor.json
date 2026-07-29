@@ -1,0 +1,288 @@
+{
+  "schema_version": "0.1.0",
+  "id": "nim-three-piles-xor",
+  "statement": {
+    "vi": "Nim ba đống $3$, $5$, $7$: mỗi lượt bốc **bao nhiêu tuỳ ý** từ **một** đống. Ai bốc viên cuối cùng thì thắng. Ai có chiến lược thắng, và chiến lược đó là gì?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Định lý Bouton (1901); Nim là hòn đá tảng của lý thuyết trò chơi tổ hợp."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "game"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "xor",
+      "id": "inv-x",
+      "label": {
+        "vi": "XOR các đống"
+      }
+    },
+    {
+      "expr": "winning_moves",
+      "id": "inv-w",
+      "label": {
+        "vi": "Số nước thắng"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ba đống [[a1|$3$, $5$, $7$]]. Khác bài một đống ở chỗ: không còn một con số duy nhất để xét chẵn lẻ."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0",
+                "p1",
+                "p2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              },
+              "show_grundy": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 3
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 5
+              },
+              {
+                "id": "p2",
+                "type": "pile",
+                "count": 7
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba đống sỏi 3, 5, 7 viên."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "n == 3",
+            "total == 15"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Viết mỗi đống trong hệ nhị phân rồi cộng **không nhớ** — tức XOR. $3 = 011$, $5 = 101$, $7 = 111$, XOR ra ${{xor}}$. Với Nim, giá trị Grundy của một đống chính là cỡ đống, nên [[a2|con số này]] là toàn bộ thông tin."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "p0",
+                "p1",
+                "p2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              },
+              "show_grundy": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 3
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 5
+              },
+              {
+                "id": "p2",
+                "type": "pile",
+                "count": 7
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba đống với giá trị Grundy ghi dưới chân."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "XOR bằng $1 \\ne 0$ nên người đi trước **thắng**, và có tới ${{winning_moves}}$ nước thắng — bốc $1$ viên từ [[a3|bất kỳ đống nào]]. Chẳng hạn bốc từ đống $7$ thì còn $3, 5, 6$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "p0",
+                "p1",
+                "p2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              },
+              "show_grundy": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "color_class": 3,
+                "emphasis": "focus",
+                "count": 3
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "color_class": 3,
+                "emphasis": "focus",
+                "count": 5
+              },
+              {
+                "id": "p2",
+                "type": "pile",
+                "color_class": 3,
+                "emphasis": "focus",
+                "count": 7
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cả ba đống được làm nổi."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "winning == true",
+            "winning_moves == 3"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Sau nước ấy: [[a4|$3, 5, 6$]] với XOR $= {{xor}}$. Từ thế XOR $= 0$, **mọi** nước đều phá vỡ nó; còn từ thế XOR $\\ne 0$, luôn có nước đưa về $0$. Đó là bất biến của cả trò chơi."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "p0",
+                "p1",
+                "p2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              },
+              "show_grundy": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 3
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 5
+              },
+              {
+                "id": "p2",
+                "type": "pile",
+                "count": 6
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba đống 3, 5, 6 — thế thua của người sắp đi."
+          },
+          "verified": true,
+          "claims": [
+            "xor == 0",
+            "winning == false"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "hand-opponent-a-loss"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

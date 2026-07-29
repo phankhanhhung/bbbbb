@@ -1,0 +1,274 @@
+{
+  "schema_version": "0.1.0",
+  "id": "take-stones-one-to-three",
+  "statement": {
+    "vi": "Trên bàn có $20$ viên sỏi. Hai người lần lượt bốc $1$, $2$ hoặc $3$ viên. Ai bốc viên **cuối cùng** thì thắng. Hỏi ai có chiến lược thắng?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài bốc sỏi kinh điển; thế thua là bội của k+1."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "parity",
+    "extremal"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "game"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "total",
+      "id": "inv-t",
+      "label": {
+        "vi": "Số viên còn lại"
+      }
+    },
+    {
+      "expr": "moves",
+      "id": "inv-m",
+      "label": {
+        "vi": "Số nước đi được"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thế bắt đầu: [[a1|$20$ viên]], người đi trước có ${{moves}}$ nước để chọn. Câu hỏi không phải \"đi nước nào\" mà \"thế nào là thế **thua**\"."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "max": 3,
+                "min": 1,
+                "type": "subtract"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 20
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một đống hai mươi viên sỏi."
+          },
+          "verified": true,
+          "claims": [
+            "total == 20",
+            "moves == 3"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bắt đầu từ thế nhỏ nhất. [[a2|$0$ viên]] là thua — hết nước đi, mà người không đi được là người thua. Còn $1$, $2$, $3$ viên thì thắng: bốc sạch là xong."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "pos-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "max": 3,
+                "min": 1,
+                "type": "subtract"
+              },
+              "spectrum_to": 7,
+              "view": "spectrum"
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 7
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Phổ thắng thua cho các thế từ 0 đến 7 viên."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a3|$4$ viên]] thì **thua**: bốc $1$, $2$ hay $3$ đều để lại $3$, $2$, $1$ — toàn thế thắng cho đối thủ. Không có nước nào thoát."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "pos-4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "max": 3,
+                "min": 1,
+                "type": "subtract"
+              },
+              "spectrum_to": 7,
+              "view": "spectrum"
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 7
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ô số 4 được tô đậm cùng ô số 0."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vẽ tiếp tới $20$ thì quy luật hiện ra thành một vệt sọc: [[a4|thua đúng ở bội của $4$]]. Vì sao đều đặn thế — từ một bội của $4$, bốc $1$, $2$ hay $3$ đều cho ra số không chia hết cho $4$; ngược lại từ số không chia hết, luôn bốc được đúng phần dư để quay về. Bội của $4$ là cái bẫy: vào rồi thì đối thủ luôn đẩy ta trở lại."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "pos-0",
+                "pos-4",
+                "pos-8",
+                "pos-12",
+                "pos-16",
+                "pos-20"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "max": 3,
+                "min": 1,
+                "type": "subtract"
+              },
+              "spectrum_to": 20,
+              "view": "spectrum"
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 20
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Phổ tới 20: các ô 0, 4, 8, 12, 16, 20 tô đậm, cách đều nhau bốn ô."
+          },
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a5|$20 = 4 \\times 5$]] là bội của $4$, nên **người đi trước đang ở thế thua**. Người đi sau thắng, bằng cách sau mỗi nước của đối thủ thì bốc cho đủ $4$ viên mỗi vòng."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "max": 3,
+                "min": 1,
+                "type": "subtract"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 20
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Trở lại đống hai mươi viên — thế thua của người sắp đi."
+          },
+          "verified": true,
+          "claims": [
+            "winning == false"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "hand-opponent-a-loss"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}
