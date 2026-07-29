@@ -1,6 +1,11 @@
-import { boardRenderer, boardSchemaFragment } from '@combviz/engine-board';
-import type { EngineSchemaFragment } from '@combviz/schema';
+import {
+  boardEnvironment,
+  boardRenderer,
+  boardSchemaFragment,
+} from '@combviz/engine-board';
+import type { EngineSchemaFragment, Scene } from '@combviz/schema';
 import type { EngineRenderer } from '@combviz/render';
+import type { DslEnvironment } from '@combviz/dsl';
 
 /**
  * Composition root cho phía Node.
@@ -21,3 +26,19 @@ export const ENGINE_FRAGMENTS: readonly EngineSchemaFragment[] = [boardSchemaFra
  * chạy trong CI chính là chốt canh cửa đó.
  */
 export const ENGINE_RENDERERS: readonly EngineRenderer[] = [boardRenderer];
+
+/**
+ * Phần "chạy được" của engine: môi trường DSL + validator, tra theo engine id.
+ *
+ * Tách khỏi `ENGINE_FRAGMENTS` (schema) và `ENGINE_RENDERERS` (hình) vì ba mặt
+ * này có vòng đời khác nhau: schema đi vào JSON Schema công bố, renderer chạy cả
+ * headless, còn phần này chỉ cần khi thực sự eval biểu thức.
+ */
+export interface EngineDslModule {
+  readonly fragment: EngineSchemaFragment;
+  environment(scene: Scene): DslEnvironment;
+}
+
+export const ENGINE_DSL: Readonly<Record<string, EngineDslModule>> = {
+  board: { fragment: boardSchemaFragment, environment: boardEnvironment },
+};

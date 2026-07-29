@@ -10,6 +10,7 @@
     "@combviz/schema": "workspace:*",
     "@sinclair/typebox": "^0.34.13",
     "@combviz/render": "workspace:*",
-    "@combviz/theme": "workspace:*"
+    "@combviz/theme": "workspace:*",
+    "@combviz/dsl": "workspace:*"
   }
 }

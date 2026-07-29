@@ -93,6 +93,21 @@ export default tseslint.config(
         'error',
         { name: 'fetch', message: 'DSL chạy sandboxed: không network (DSL-02)' },
         { name: 'document', message: 'DSL chạy sandboxed: không DOM (DSL-02)' },
+        { name: 'window', message: 'DSL chạy sandboxed: không DOM (DSL-02)' },
+        { name: 'XMLHttpRequest', message: 'DSL chạy sandboxed: không network (DSL-02)' },
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@combviz/engine-*', '@combviz/render'],
+              message:
+                'DSL định nghĩa *ngôn ngữ*; engine cung cấp môi trường qua DslEnvironment. ' +
+                'Import ngược lại sẽ khiến ngôn ngữ biết về bàn cờ.',
+            },
+          ],
+        },
       ],
     },
   },

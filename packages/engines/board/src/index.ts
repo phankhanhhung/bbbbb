@@ -12,11 +12,14 @@ import {
   type BoardConfig as BoardConfigType,
 } from './schema.js';
 import { cellId } from './ids.js';
+import { BOARD_VALIDATOR_IDS, resolveBoardValidator } from './validators.js';
 
 export * from './schema.js';
 export * from './geometry.js';
 export * from './ids.js';
 export { boardRenderer } from './render.js';
+export * from './dsl.js';
+export * from './validators.js';
 
 export function isHole(config: BoardConfigType, row: number, col: number): boolean {
   return (config.holes ?? []).some(([r, c]) => r === row && c === col);
@@ -45,6 +48,8 @@ export const boardSchemaFragment: EngineSchemaFragment = {
     region: RegionElement,
   },
   bounds: { engine: 'board', limits: BOARD_LIMITS },
+  resolveValidator: resolveBoardValidator,
+  validatorIds: BOARD_VALIDATOR_IDS,
 
   /**
    * Ô khuyết **vẫn nằm trong** tập này.

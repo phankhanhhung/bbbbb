@@ -190,18 +190,20 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 
 **DoD:** bài §4.7 chạy end-to-end trên iPad thật, chuyển step ≤150ms p95, kéo timeline mượt. Nếu trượt → **dừng, đánh giá lại Canvas fallback trước khi đi tiếp**. Không viết engine thứ hai khi cược này chưa xong.
 
-### M2 — DSL + validator + invariant · Tuần 4–5 · [E]
+### M2 — DSL + validator + invariant · Tuần 4–5 · [E] — ✅ **XONG**
 
-- `packages/dsl`: parser, interpreter, budget 50ms, builtin registry (DSL-01/02).
-- `derive(scene)` + memo (A-04).
-- BD-04 validator built-in; invariant eval.
-- PLY-06 invariant strip + sparkline (G-04).
-- `combviz validate` v1: schema + anchor (ANC-02) + eval invariant/validator mọi step + bound (NFR-P4) → AUT-04 phần máy.
-- **Chốt OPQ-1** (brand name/domain) — hết tuần 4.
+- ✅ `packages/dsl`: tokenizer, parser Pratt viết tay, interpreter sandboxed, ngân sách bước + đồng hồ (DSL-01/02).
+- ✅ `deriveBoard(scene)` memo theo hash scene (A-03/A-04): `covered()`, `attacks()`, `adjacent()`.
+- ✅ BD-04 validator built-in: `tiles-no-overlap`, `tiles-in-bounds`, `full-cover`, `no-attacks`, `pieces-per-row|col:<k>`.
+- ✅ PLY-06 invariant strip + sparkline theo nhánh đang xem (G-04).
+- ✅ `combviz validate` chạy đủ AUT-04 phần máy: schema → cấu trúc → anchor → bound → taxonomy → **eval invariant/validator mọi step**.
+- ✅ 138 test, trong đó 30 test riêng cho DSL gồm sandbox và ngân sách.
 
-**DoD:** invariant `inv-bw` của bài mẫu hiển thị đúng qua cả 3 step; `validate` bắt được anchor rot cố ý và bound vượt ngưỡng; DSL có ≥40 unit test gồm test budget/timeout.
+**DoD:** ✅ Invariant `inv-bw` cho **−2** ở cả s1 và s2 — bất biến thật sự bất biến, hiện trên Player kèm nhãn "không đổi qua bước này". `validate` bắt được biểu thức hỏng ở *một* step cụ thể (`min` trên tập rỗng khi chưa có quân nào).
 
-### M3 — Board engine đầy đủ + Sandbox · Tuần 5–7 · [E]
+**Lỗ hổng sandbox tìm ra ở đây:** tra tên bằng `bindings[name]` rơi xuống `Object.prototype`, nên `constructor`, `toString`, `valueOf` trở thành tên hợp lệ trỏ vào nội tại của JS — và `constructor(...)` gọi được thật. Sửa bằng `Object.hasOwn` ở cả ba chỗ tra (tên, thuộc tính element, tên hàm). Đây đúng là loại lỗ mà NFR-S1 nhắm tới; test bắt được vì nó hỏi thẳng câu "nội dung có với tới global của JS không".
+
+### M3 — Board engine đầy đủ + Sandbox · Tuần 5–7 · [E] — **tiếp theo**
 
 - ENG-00..04: command layer, undo/redo ≥50, multi-select, zoom/pan, worker + cancel.
 - BD-01..03, BD-06 (summary strip theo color_class).
@@ -319,6 +321,10 @@ Quyết định trước, để lúc gấp không phải quyết trong hoảng l
 
 ## 10. Việc tiếp theo
 
+**Chặn tiến độ:**
+
+0. ⬜ **Đo perf trên iPad Gen 9** — gate G-A vẫn chưa đóng. Mọi thứ sau M2 đều xây trên giả định renderer đủ nhanh; càng để lâu càng đắt nếu giả định sai.
+
 **Còn lại của tuần 1:**
 
 1. ⬜ Prototype giấy minimap cây, thử trên bài $R(3,3)=6$ (case-branching thật) → chốt bố cục, quy tắc thu gọn, cách vẽ merge_ref.
@@ -326,13 +332,13 @@ Quyết định trước, để lúc gấp không phải quyết trong hoảng l
 3. ⬜ Mượn/chuẩn bị iPad Gen 9 — perf đo từ tuần 2, không phải tuần 12 (R-3).
 4. ⬜ Thêm `LICENSE` (MIT) + `packages/content/LICENSE` (CC BY-SA 4.0) theo D-14.
 
-**Tuần 2–3 — M1 walking skeleton, milestone quan trọng nhất:**
+**M3 — board engine đầy đủ + sandbox:**
 
-5. `packages/render`: `render(scene, theme) → SvgNode[]` thuần, `diff()`, `interpolate()` (D-05), `patch()` keyed theo element id.
-6. Board renderer tối thiểu: bàn + ô + coloring preset + tile domino. Gộp ô tĩnh cùng `color_class` thành một `<path>` (D-15).
-7. Canonical scene hash (A-03) + chính sách cấp id (A-02).
-8. Player tối thiểu: đọc JSON, Prev/Next, narrative KaTeX, animation từ auto-diff.
-9. **Đo trên iPad thật** → gate G-A.
+5. ENG-00..04: command layer, undo/redo ≥50, multi-select, zoom/pan, worker + cancel.
+6. BD-01..03 (tô quét, đặt/di chuyển quân, đặt tile với xoay/lật, phát hiện chồng lấn realtime), BD-06 summary strip.
+7. ANC-01/02 hai chiều đầy đủ trong Player (hiện mới có một chiều: span → hình).
+8. SBX-01/02 (validator live, bật/tắt từng ràng buộc), SBX-05 export PNG/SVG.
+9. PRN-01 live trong sandbox, PRN-02 partition view.
 
 ---
 

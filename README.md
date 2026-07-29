@@ -6,7 +6,7 @@ trên canvas tương tác, văn bản ↔ hình liên kết hai chiều, sandbox
 Vận hành theo mô hình **single-author brand engine**: engine là xưởng in riêng của
 một tác giả; sản phẩm công chúng là kho bài đã curate. Xem `docs/SRS-v1.0.md`.
 
-**Trạng thái:** Phase 1, M1 code xong (renderer thuần + Player + render headless), chờ đo perf trên iPad. Xem `docs/PLAN-P1.md`.
+**Trạng thái:** Phase 1, M2 xong (DSL + validator + invariant strip). Còn chờ đo perf trên iPad để đóng gate G-A. Xem `docs/PLAN-P1.md`.
 
 ## Bắt đầu
 
@@ -33,7 +33,8 @@ npx tsx tools/pipeline/src/cli.ts render mutilated-chessboard --step s2 --out s2
 ```
 
 `validate` chạy đúng bộ luật mà Studio và CI dùng (AUT-04): schema → cấu trúc cây →
-anchor → bound → taxonomy. `--strict` coi cảnh báo là lỗi.
+anchor → bound → taxonomy → eval invariant và validator trên **mọi** step.
+`--strict` coi cảnh báo là lỗi.
 
 `render` chạy trong Node, không cần browser (REN-01), bằng **đúng renderer** mà
 Player dùng — không có bản sao nào.
@@ -52,7 +53,8 @@ packages/
   theme/             Theme tokens — nguồn brand visual duy nhất (DAT-20)
   render/            Scene → SvgNode[] thuần, diff, interpolate, serialize
   render/src/dom/    Lớp DOM duy nhất: patch + animate (entry point riêng)
-  engines/board/     Grid/Board engine: schema fragment, bound, renderer
+  dsl/               Expression DSL: parser Pratt, interpreter sandboxed
+  engines/board/     Grid/Board engine: schema, bound, renderer, DSL env, validator
   content/           Kho bài JSON + controlled vocabulary
 apps/
   player/            SPA cho người học (Preact + Vite)

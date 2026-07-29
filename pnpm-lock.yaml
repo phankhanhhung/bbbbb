@@ -38,6 +38,9 @@ importers:
       '@combviz/content':
         specifier: workspace:*
         version: link:../../packages/content
+      '@combviz/dsl':
+        specifier: workspace:*
+        version: link:../../packages/dsl
       '@combviz/engine-board':
         specifier: workspace:*
         version: link:../../packages/engines/board
@@ -66,8 +69,17 @@ importers:
 
   packages/content: {}
 
+  packages/dsl:
+    dependencies:
+      '@combviz/schema':
+        specifier: workspace:*
+        version: link:../schema
+
   packages/engines/board:
     dependencies:
+      '@combviz/dsl':
+        specifier: workspace:*
+        version: link:../../dsl
       '@combviz/render':
         specifier: workspace:*
         version: link:../../render
@@ -106,6 +118,9 @@ importers:
 
   tools/pipeline:
     dependencies:
+      '@combviz/dsl':
+        specifier: workspace:*
+        version: link:../../packages/dsl
       '@combviz/engine-board':
         specifier: workspace:*
         version: link:../../packages/engines/board

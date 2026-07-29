@@ -3,6 +3,7 @@ import { join, relative } from 'node:path';
 import { createValidator, formatIssue, type ValidationIssue } from '@combviz/schema';
 import { ENGINE_FRAGMENTS } from '../engines.js';
 import { checkTaxonomy, loadTaxonomy } from '../taxonomy.js';
+import { checkSemantics } from '../semantics.js';
 
 export interface ValidateOptions {
   /** Thư mục content (chứa `problems/` và `taxonomy/`). */
@@ -54,6 +55,9 @@ export async function runValidate(options: ValidateOptions): Promise<ValidateRep
     // có thể không tồn tại và ta sẽ báo lỗi giả chồng lên lỗi thật.
     if (result.ok || !result.issues.some((i) => i.code.startsWith('schema/'))) {
       issues.push(...checkTaxonomy(parsed as never, taxonomy));
+      // Eval invariant/validator chỉ có nghĩa khi hình dạng đã đúng — chạy trên
+      // dữ liệu méo sẽ sinh lỗi DSL giả chồng lên lỗi thật.
+      issues.push(...checkSemantics(parsed as never));
     }
 
     const fileErrors = issues.filter((i) => i.severity === 'error').length;

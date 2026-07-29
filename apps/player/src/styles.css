@@ -155,3 +155,73 @@ body {
   font-variant-numeric: tabular-nums;
   color: var(--ink-soft);
 }
+
+/* --- Invariant strip (PLY-06) -------------------------------------------- */
+
+.invariants {
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.invariant {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfbf9;
+}
+
+.invariant__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.invariant__label {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.invariant__value {
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.invariant__error {
+  font-size: 0.8rem;
+  color: #a50e0e;
+}
+
+.invariant__trail {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  color: var(--accent);
+}
+
+.sparkline {
+  width: 96px;
+  height: 22px;
+  flex: none;
+}
+
+.invariant__badge {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+
+/* Sự **đứng yên** mới là lập luận, nên nó được nhấn mạnh hơn sự thay đổi. */
+.invariant__badge--steady {
+  background: #e6f4ea;
+  color: #137333;
+  font-weight: 600;
+}
+
+.invariant__badge--moved {
+  background: #f1f1ee;
+  color: var(--ink-soft);
+}

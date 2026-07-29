@@ -1,6 +1,7 @@
 import type { TSchema } from '@sinclair/typebox';
 import type { Scene } from './scene.js';
 import type { ValidationIssue } from './issues.js';
+import type { SceneValidator } from './validator.js';
 import type { EngineBounds } from './bounds.js';
 
 /**
@@ -42,6 +43,14 @@ export interface EngineSchemaFragment {
    * sai là anchor rot.
    */
   implicitElementIds(scene: Scene): Set<string>;
+  /**
+   * Tra validator built-in theo id (BD-04), kể cả dạng có tham số
+   * (`pieces-per-row:2`). Trả `null` khi engine không biết id đó — validate biến
+   * điều đó thành lỗi, thay vì để một ràng buộc gõ sai im lặng không chạy.
+   */
+  resolveValidator(id: string): SceneValidator | null;
+  /** Danh sách id hợp lệ, dùng trong thông báo lỗi. */
+  readonly validatorIds: readonly string[];
 }
 
 export type EngineRegistry = ReadonlyMap<string, EngineSchemaFragment>;

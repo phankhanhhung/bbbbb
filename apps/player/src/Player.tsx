@@ -9,9 +9,10 @@ import {
 } from '@combviz/render';
 import { animate } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
-import type { Problem, Step } from '@combviz/schema';
-import { loadEngines } from './engines.js';
+import type { Problem, Scene, Step } from '@combviz/schema';
+import { loadEngines, type LoadedEngine } from './engines.js';
 import { Narrative } from './Narrative.jsx';
+import { InvariantStrip } from './InvariantStrip.jsx';
 import { renderMath } from './math.js';
 
 /**
@@ -24,7 +25,7 @@ import { renderMath } from './math.js';
  * Milestone này tồn tại để trả lời ba câu hỏi kiến trúc, không phải để đẹp.
  */
 export function Player({ problem }: { problem: Problem }) {
-  const [renderer, setRenderer] = useState<SceneRenderer | null>(null);
+  const [engines, setEngines] = useState<ReadonlyMap<string, LoadedEngine> | null>(null);
   const [index, setIndex] = useState(0);
   const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
 
@@ -37,10 +38,22 @@ export function Player({ problem }: { problem: Problem }) {
   const lastStepId = useRef<string | null>(null);
 
   useEffect(() => {
-    void loadEngines(problem.engines_used).then((engines) =>
-      setRenderer(createRenderer(engines)),
-    );
+    void loadEngines(problem.engines_used).then(setEngines);
   }, [problem]);
+
+  const renderer = useMemo<SceneRenderer | null>(
+    () => (engines ? createRenderer([...engines.values()].map((e) => e.renderer)) : null),
+    [engines],
+  );
+
+  // Đường đi từ gốc tới step hiện tại — cơ sở của sparkline (G-04): invariant
+  // được đọc dọc theo *nhánh đang xem*, không phải toàn bộ solution.
+  const path = useMemo(() => pathTo(solution.steps, step.id), [solution, step]);
+
+  const environmentFor = useMemo(
+    () => (scene: Scene) => engines?.get(scene.engine)?.environment(scene) ?? null,
+    [engines],
+  );
 
   const [diff, setDiff] = useState<NodeDiff | null>(null);
 
@@ -126,6 +139,14 @@ export function Player({ problem }: { problem: Problem }) {
             />
           ) : null}
 
+          {problem.invariants?.length ? (
+            <InvariantStrip
+              invariants={problem.invariants}
+              path={path}
+              environmentFor={environmentFor}
+            />
+          ) : null}
+
           {step.edge_type === 'contradiction' ? (
             <p class="badge badge--contradiction">✗ Mâu thuẫn — nhánh đóng</p>
           ) : null}
@@ -157,6 +178,27 @@ export function Player({ problem }: { problem: Problem }) {
       </div>
     </div>
   );
+}
+
+/**
+ * Đường đi từ gốc tới một step, theo `parent`.
+ *
+ * Bỏ qua `merge_ref` (G-04): nó là con trỏ quay lại, không phải một bước trên
+ * đường đi — tính nó vào sẽ làm sparkline lặp lại một giá trị đã vẽ.
+ */
+function pathTo(steps: readonly Step[], targetId: string): Step[] {
+  const byId = new Map(steps.map((step) => [step.id, step]));
+  const chain: Step[] = [];
+
+  let cursor = byId.get(targetId);
+  const guard = new Set<string>();
+  while (cursor && !guard.has(cursor.id)) {
+    guard.add(cursor.id);
+    if (cursor.edge_type !== 'merge_ref') chain.unshift(cursor);
+    cursor = cursor.parent ? byId.get(cursor.parent) : undefined;
+  }
+
+  return chain;
 }
 
 /**

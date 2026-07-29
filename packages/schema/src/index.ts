@@ -51,6 +51,12 @@ export {
   type ValidationResult,
 } from './issues.js';
 
+export {
+  parseValidatorId,
+  type SceneValidator,
+  type ValidatorOutcome,
+} from './validator.js';
+
 export { checkStructure } from './structure.js';
 export { createValidator, type Validator } from './validate.js';
 
