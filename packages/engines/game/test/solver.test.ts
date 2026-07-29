@@ -13,6 +13,8 @@ const NIM: GameRule = { type: 'subtract', min: 1 };
 const TAKE_1_3: GameRule = { type: 'subtract', min: 1, max: 3 };
 const SET_123: GameRule = { type: 'subtract-set', allowed: [1, 2, 3] };
 const SET_14: GameRule = { type: 'subtract-set', allowed: [1, 4] };
+const HALF: GameRule = { type: 'subtract-fraction', denominator: 2 };
+const THIRD: GameRule = { type: 'subtract-fraction', denominator: 3 };
 const SPLIT: GameRule = { type: 'split-unequal' };
 
 /**
@@ -40,6 +42,14 @@ describe('sinh nước đi', () => {
   it('bốc theo tập, bỏ qua số lớn hơn đống', () => {
     expect(movesFromPile(3, SET_14)).toEqual([[2]]);
     expect(movesFromPile(5, SET_14)).toEqual([[4], [1]]);
+  });
+
+  it('bốc tối đa **một phần** của đống — cận đọc từ thế', () => {
+    expect(movesFromPile(7, HALF)).toEqual([[6], [5], [4]]);
+    expect(movesFromPile(6, HALF)).toEqual([[5], [4], [3]]);
+    // Đống 1 viên: $\lfloor 1/2 \rfloor = 0$ ⇒ hết nước, đúng luật gốc.
+    expect(movesFromPile(1, HALF)).toEqual([]);
+    expect(movesFromPile(8, THIRD)).toEqual([[7], [6]]);
   });
 
   it('chia đống thành hai phần **khác nhau**', () => {
@@ -119,6 +129,8 @@ describe('đối chiếu vét cạn', () => {
     ['take 1..3', TAKE_1_3],
     ['set {1,2,3}', SET_123],
     ['set {1,4}', SET_14],
+    ['half', HALF],
+    ['third', THIRD],
     ['split', SPLIT],
   ];
 
@@ -193,6 +205,20 @@ describe('phổ thế thua (view spectrum)', () => {
     // Ai bốc viên cuối thì thua, nên thế thua là $n \equiv 1 \pmod 4$.
     const lose = losingSpectrum(13, TAKE_1_3, true);
     expect(lose.map((v, n) => (v ? n : -1)).filter((n) => n >= 0)).toEqual([1, 5, 9, 13]);
+  });
+
+  it('bốc tối đa nửa đống: thua đúng ở $2^m - 1$, **không** phải cấp số cộng', () => {
+    const lose = losingSpectrum(40, HALF);
+    expect(lose.map((v, n) => (v ? n : -1)).filter((n) => n > 0)).toEqual([1, 3, 7, 15, 31]);
+
+    // Đây là lý do luật này phải là một thành viên riêng: không `max` cố định nào
+    // dựng lại được dãy trên, vì `subtract` luôn cho thế thua cách đều nhau.
+    for (let max = 1; max <= 20; max += 1) {
+      const fixed = losingSpectrum(40, { type: 'subtract', min: 1, max })
+        .map((v, n) => (v ? n : -1))
+        .filter((n) => n > 0);
+      expect(fixed).not.toEqual([1, 3, 7, 15, 31]);
+    }
   });
 
   it('phổ khớp phân tích thế một đống', () => {

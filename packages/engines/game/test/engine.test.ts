@@ -187,10 +187,34 @@ describe('renderer', () => {
     expect(cells.filter((c) => c === neutral)).toHaveLength(9);
   });
 
-  it('đống quá cao hiện số thay vì vẽ từng viên', () => {
+  it('đống quá cao hiện số thay vì vẽ từng viên — và **không vẽ viên nào**', () => {
+    // Ngưỡng cũ vẽ 24 chấm rồi dán nhãn "40" lên dưới. Test cũ (`<= 24`) xanh,
+    // hình thì nói dối: ai đếm sẽ ra 24. Ba viên trên + ba chấm ⋮ + một viên đáy = 7 hình tròn, không bao giờ là 24
+    // hay 40; ký hiệu lược thì không mời ai đếm.
     const svg = renderer.toSvg(scene([40]), ctx);
-    expect((svg.match(/<circle/g) ?? []).length).toBeLessThanOrEqual(24);
+    expect((svg.match(/<circle/g) ?? []).length).toBe(7);
     expect(svg).toContain('>40<');
+  });
+
+  it('dưới ngưỡng thì vẽ **đủ** số viên, đếm được', () => {
+    for (const n of [1, 7, 13, 24]) {
+      expect((renderer.toSvg(scene([n]), ctx).match(/<circle/g) ?? []).length).toBe(n);
+    }
+  });
+
+  it('viewport ôm sát hình, không chừa khoảng trống to hơn lề', () => {
+    // Lỗi cũ: viewport dựng đứng gấp đôi hình, sỏi nằm lọt thỏm dưới đáy. Không
+    // test nào bắt được vì chẳng có gì *sai* — chỉ nhìn mới thấy.
+    for (const s of [scene([3, 5, 7]), scene([40]), scene([1])]) {
+      const view = gameRenderer.defaultViewport(s);
+      const svg = renderer.toSvg(s, ctx);
+      const ys = [...svg.matchAll(/\b(?:cy|y)="(-?[\d.]+)"/g)].map((m) => Number(m[1]));
+      const top = Math.min(...ys);
+      const bottom = Math.max(...ys);
+      // Lề trên và lề dưới đều không quá 8 đơn vị scene (PADDING = 4 cộng nét).
+      expect(top - view.y).toBeLessThan(8);
+      expect(view.y + view.height - bottom).toBeLessThan(8);
+    }
   });
 
   it('hình thuần: cùng scene cho cùng chuỗi', () => {

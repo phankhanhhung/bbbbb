@@ -31,12 +31,23 @@ export const GAME_LIMITS = {
  *     rủi ro đó.
  *   - Engine dãy đã có tiền lệ: `COMBINE_RULES` là enum đóng, kèm ghi chú rằng
  *     cho nhập biểu thức là "mở cửa hậu cho DSL-03".
- *   - Ba luật dưới đây phủ gần hết game tổ hợp thi đấu: bốc theo khoảng, bốc
- *     theo tập cho trước, và chia đống. Nim, bài bốc sỏi, trò Grundy đều nằm
- *     trong đó.
+ *   - Bốn luật dưới đây phủ trọn họ game **bốc đống** kinh điển: bốc theo khoảng,
+ *     bốc theo tập cho trước, bốc theo phần của đống, và chia đống. Nim, bài bốc
+ *     sỏi $1..k$, "bốc tối đa nửa đống", trò Grundy đều nằm trong đó.
  *
- * Cái giá phải trả, nói thẳng: game có luật riêng — cờ trên đồ thị, trò chơi tô
- * màu, Chomp — **không** khai được ở đây. Đó là GM-01 thật sự, và nó vẫn còn nợ.
+ * Cái giá phải trả, nói thẳng, và **không** được nói giảm: chỉ game bốc đống chơi
+ * được. Ngoài họ ấy thì mọi thứ đều nằm ngoài, và không phải vì thiếu một luật
+ * nữa mà vì `Move` ở đây là "một đống biến thành mấy đống":
+ *
+ *   - **Wythoff** — một nước ăn *hai* đống cùng lúc.
+ *   - **Trò Euclid** — nước đi từ đống này đọc cỡ đống kia.
+ *   - **Nim Fibonacci** — luật nhớ **nước trước**, nên đa tập đống không đủ mô tả ván.
+ *   - **Nim Lasker** (bốc *hoặc* chia) — `rule` là **một** thành viên, không hợp được hai.
+ *   - **Chomp, Hackenbush, lật đồng xu, cờ trên đồ thị, game bàn cờ, game tô màu**
+ *     — thế không phải đa tập số, chấm hết.
+ *   - **Game partizan** — solver giả định hai bên cùng luật.
+ *
+ * Đó là GM-01 thật sự, và nó vẫn còn nợ.
  */
 export const GameRule = Type.Union([
   Type.Object(
@@ -54,6 +65,21 @@ export const GameRule = Type.Union([
       type: Type.Literal('subtract-set'),
       /** Chỉ được bốc đúng những số này. */
       allowed: Type.Array(Type.Integer({ minimum: 1 }), { minItems: 1, maxItems: 12 }),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      /**
+       * Bốc tối đa **một phần** của đống: $1 \le k \le \lfloor n/d \rfloor$.
+       *
+       * $d = 2$ là "bốc tối đa nửa đống", cách phát biểu rất hay gặp và nhìn qua
+       * tưởng khai được bằng `subtract`. Không: cận ở đây **phụ thuộc thế**, và
+       * điều đó đổi hẳn lời giải — thế thua là $n = 2^m - 1$ ($1, 3, 7, 15, 31$),
+       * trong khi mọi `subtract` có `max` cố định đều cho một cấp số cộng.
+       */
+      type: Type.Literal('subtract-fraction'),
+      denominator: Type.Integer({ minimum: 2, maximum: 12 }),
     },
     { additionalProperties: false },
   ),

@@ -58,13 +58,12 @@ export const gameRenderer: EngineRenderer = {
       };
     }
 
-    const width = model.piles.reduce((n, p) => n + pileWidth(p.count), 0);
-    const tallest = Math.max(1, ...model.piles.map((p) => stackShape(p.count).rows));
+    const box = pilesBox(model);
     return {
       x: -PADDING,
-      y: -PADDING - SLOT * 0.9,
-      width: Math.max(SLOT, width) + PADDING * 2,
-      height: tallest * DOT_GAP + SLOT * 2.2 + PADDING * 2,
+      y: box.top - PADDING,
+      width: box.width + PADDING * 2,
+      height: box.bottom - box.top + PADDING * 2,
     };
   },
 
@@ -105,9 +104,43 @@ function stackShape(count: number): { columns: number; rows: number } {
   return { columns: Math.max(1, Math.ceil(dots / STACK)), rows: Math.max(1, rows) };
 }
 
-/** Bề ngang một đống, tính bằng đơn vị scene. */
+/** Bề ngang một đống, tính bằng đơn vị scene. Đống lược chỉ chiếm một cột. */
 function pileWidth(count: number): number {
+  if (count > MAX_DOTS) return SLOT;
   return Math.max(SLOT, stackShape(count).columns * (STONE_R * 2.6));
+}
+
+const DOT_TOP = SLOT * 0.4;
+
+/**
+ * Hộp bao của view `piles`, tính **một lần** rồi cả viewport lẫn renderer đọc.
+ *
+ * Trước đây viewport ước lượng riêng bằng mấy hằng số cộng vào, và nó chừa hơn
+ * một phần ba khung làm khoảng trống — hình bốn cột sỏi nằm lọt thỏm dưới đáy
+ * một khung dựng đứng. Lỗi ấy không test nào bắt được vì không có gì sai; chỉ có
+ * nhìn mới thấy.
+ */
+function pilesBox(model: GameModel): {
+  width: number;
+  top: number;
+  bottom: number;
+  baseline: number;
+} {
+  const width = Math.max(
+    SLOT,
+    model.piles.reduce((n, p) => n + pileWidth(p.count), 0),
+  );
+  const tallest = Math.max(1, ...model.piles.map((p) => stackShape(p.count).rows));
+  const dotsBottom = DOT_TOP + (tallest - 1) * DOT_GAP + STONE_R;
+  const baseline = dotsBottom + SLOT * 0.5;
+  const caption = model.config.caption ? SLOT * 0.6 : 0;
+
+  return {
+    width,
+    top: DOT_TOP - STONE_R - caption,
+    baseline,
+    bottom: baseline + (model.config.show_grundy ? SLOT * 0.5 : 0) + SLOT * 0.2,
+  };
 }
 
 function spectrumLength(model: GameModel): number {
@@ -194,38 +227,65 @@ function renderPiles(model: GameModel, ctx: RenderContext): SvgNode[] {
   // Nhãn của **mọi** đống nằm trên cùng một đường chân, không phải dưới chân
   // từng cột. Cột cao thấp khác nhau thì nhãn so le, và một hàng số so le đọc
   // ra như mấy con số rời rạc chứ không ra "các đống là 3, 5, 7".
-  const tallest = Math.max(1, ...model.piles.map((p) => stackShape(p.count).rows));
-  const baseline = SLOT * 0.4 + tallest * DOT_GAP + SLOT * 0.35;
+  const { baseline } = pilesBox(model);
 
   let cursor = 0;
   model.piles.forEach((pile, index) => {
     const width = pileWidth(pile.count);
     const { columns } = stackShape(pile.count);
-    const dots = Math.min(pile.count, MAX_DOTS);
     const centre = cursor + width / 2;
     const group: SvgNode[] = [];
 
-    for (let i = 0; i < dots; i += 1) {
-      const column = Math.floor(i / STACK);
-      const row = i % STACK;
-      group.push(
+    if (pile.count > MAX_DOTS) {
+      // Quá ngưỡng thì **không vẽ đủ viên, và nói ra là mình không vẽ đủ**.
+      //
+      // Bản trước vẽ đúng 24 chấm rồi dán nhãn "40" xuống dưới: ai đếm sẽ ra 24,
+      // mà đếm đúng là việc bài bốc sỏi bắt người đọc làm. Bản sau đó vẽ một khối
+      // đặc — hết nói dối, nhưng khối trơn ấy không còn đọc ra "sỏi". Cách còn
+      // lại là ký hiệu lược: mấy viên trên, dấu ⋮, một viên đáy.
+      const dot = (row: number, r = STONE_R): SvgNode =>
         el('circle', {
-          cx: round(centre + (column - (columns - 1) / 2) * (STONE_R * 2.6)),
-          cy: round(SLOT * 0.4 + row * DOT_GAP),
-          r: STONE_R,
+          cx: round(centre),
+          cy: round(DOT_TOP + row * DOT_GAP),
+          r,
           fill: fillForClass(ctx, pile.colorClass || undefined),
           stroke: strokeForClass(ctx, pile.colorClass || undefined),
           'stroke-width': ctx.theme.stroke.hairline,
-        }),
-      );
+        });
+
+      group.push(dot(0), dot(1), dot(2));
+      for (const row of [3.15, 3.6, 4.05]) {
+        group.push(
+          el('circle', {
+            cx: round(centre),
+            cy: round(DOT_TOP + row * DOT_GAP),
+            r: STONE_R * 0.22,
+            fill: ctx.theme.surface.guide,
+          }),
+        );
+      }
+      group.push(dot(5));
+    } else {
+      for (let i = 0; i < pile.count; i += 1) {
+        const column = Math.floor(i / STACK);
+        const row = i % STACK;
+        group.push(
+          el('circle', {
+            cx: round(centre + (column - (columns - 1) / 2) * (STONE_R * 2.6)),
+            cy: round(DOT_TOP + row * DOT_GAP),
+            r: STONE_R,
+            fill: fillForClass(ctx, pile.colorClass || undefined),
+            stroke: strokeForClass(ctx, pile.colorClass || undefined),
+            'stroke-width': ctx.theme.stroke.hairline,
+          }),
+        );
+      }
     }
 
     nodes.push(
       keyed(pile.id, 'g', decorationAttrs(ctx, pile.id, pile.emphasis), group),
     );
 
-    // Đống quá cao thì hiện số: hai mươi lăm viên vẽ rời là một khối chấm không
-    // ai đếm, mà đếm mới là việc người đọc cần làm.
     nodes.push(
       text(
         'text',

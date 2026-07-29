@@ -23,6 +23,14 @@ export function movesFromPile(n: number, rule: GameRule): readonly (readonly num
     return out;
   }
 
+  if (rule.type === 'subtract-fraction') {
+    // Cận đọc từ **thế hiện tại**, không phải hằng số. Đống $1$ viên hết nước —
+    // $\lfloor 1/2 \rfloor = 0$ — nên nó là thế cuối, đúng như luật gốc.
+    const max = Math.floor(n / rule.denominator);
+    for (let take = 1; take <= max; take += 1) out.push([n - take]);
+    return out;
+  }
+
   // split-unequal: hai phần khác rỗng và **khác nhau**.
   for (let a = 1; a < n - a; a += 1) out.push([a, n - a]);
   return out;

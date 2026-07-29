@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M17 xong (6 engine, phủ ~84%); kho 53 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M17 xong (6 engine, phủ ~83%); kho 54 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -337,7 +337,47 @@ thắng/thua), và một lỗi ở `mex` vẫn cho ra những con số trông ho
 (nay chồng thành khối $4\times6$), và nhãn các đống nằm so le theo chiều cao từng
 cột nên một hàng "3, 5, 7" đọc ra như mấy con số rời rạc (nay chung một đường chân).
 
-**Mức phủ:** ~80% → **~84%**. Kho: 51 → **53 bài**.
+**Mức phủ:** ~80% → **~83%**. Kho: 51 → **53 bài**.
+
+### M17b — rà lại "engine game đã đủ mở chưa" · [E] — **xong**
+
+Không phải milestone mới, là **kiểm lại lời mình vừa nói**. Câu trả lời hoá ra
+có ba phần, và cả ba đều phải kiểm bằng máy chứ không bằng trí nhớ.
+
+**Phần chạy được thì chạy đúng.** Năm họ game bốc đống kinh điển — Nim nhiều
+đống, bốc $1..k$, bốc theo tập, trò Grundy chia đống, cùng bản misère — đều đối
+chiếu vét cạn với định nghĩa gốc trên hơn 600 thế, và khớp.
+
+**Phần không chạy được thì nhiều hơn tôi ghi.** Ranh giới thật nằm ở `Move`: một
+nước là "một đống biến thành mấy đống". Wythoff (ăn hai đống), trò Euclid (đọc
+đống kia), Nim Fibonacci (nhớ nước trước), Nim Lasker (hợp hai luật), Chomp, cờ
+trên đồ thị, game bàn cờ, game partizan — tất cả nằm ngoài, và không phải vì
+thiếu một luật nữa.
+
+**Một dòng vá được ngay:** "bốc tối đa nửa đống" là cách phát biểu rất hay gặp mà
+`subtract` không khai được (thế thua $2^m - 1$, không phải cấp số cộng). Thêm
+thành viên thứ tư `subtract-fraction` vào họ luật đóng là đủ — không đụng DSL-03.
+Kho: 53 → **54 bài** (`take-at-most-half`).
+
+**Hai lỗi hình, cả hai chỉ lộ khi render ra ảnh và nhìn:**
+
+- Đống $40$ viên vẽ đúng **24** chấm dưới cái nhãn ghi "40" — ai đếm sẽ ra 24, mà
+  đếm chính là việc bài bốc sỏi bắt người đọc làm. Test cũ khẳng định
+  `circles <= 24` nên nó **xanh trong lúc hình nói dối**. Nay: quá ngưỡng thì vẽ
+  ký hiệu lược (ba viên, dấu ⋮, một viên đáy) — không mời ai đếm.
+- Viewport view `piles` ước lượng bằng mấy hằng số cộng vào, chừa hơn một phần ba
+  khung làm khoảng trắng; sỏi nằm lọt thỏm dưới đáy một khung dựng đứng. Nay
+  viewport và renderer đọc **cùng một** hộp bao.
+
+**Hạ số phủ họ trò chơi:** xem ngay dưới.
+
+**Hạ số sau khi kiểm lại:** tôi ghi phủ họ trò chơi 65% ngay sau M17, rồi khi liệt
+kê thật những game không khai được (Wythoff, trò Euclid, Nim Fibonacci, Chomp, cờ
+trên đồ thị) thì thấy 65% không đứng vững — tập luật đóng chơi được **game bốc
+đống**, và đó là một họ con. Hạ còn **57%** (55% trước khi thêm
+`subtract-fraction`), tổng 83.8% → **83.3%**. Không có code nào bị gỡ giữa hai con
+số; chỉ có tôi kiểm lại điều mình đã khẳng định. Chi tiết ranh giới ở
+`docs/VIZ-COVERAGE.md` §4.
 
 ### M16 — Poset / sơ đồ Hasse · [E] — **xong**
 
@@ -672,16 +712,16 @@ Hai gate này chặn theo hai hướng khác nhau: G-A chặn *niềm tin vào n
 5. ⬜ Pilot ≥10 học sinh + 2 GV (DoD §15.5).
 6. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
 
-**Về việc mở engine mới:** xem `docs/VIZ-COVERAGE.md`. Tóm tắt: board + graph phủ
-khoảng **45%** đề tổ hợp thi đấu; đúng roadmap Phase 2–3 của SRS lên ~75%; thêm bốn
-view nữa (lớn nhất là **engine dãy số / đa tập**, đang chặn cụm invariant-centric mà
-§16 đòi ≥ 5 bài) lên ~88%. Trần thật khoảng 88%, không phải 100% — khoảng 10–12% đề
-có lập luận **không mang nội dung không gian** (xác suất, hàm sinh, tiệm cận), và với
-chúng, vẽ một cái hình đẹp không gánh lập luận là đường duy nhất phải tránh.
+**Về việc mở engine mới:** xem `docs/VIZ-COVERAGE.md`. Tóm tắt: sáu engine hiện có
+phủ khoảng **83%** đề tổ hợp thi đấu (board + graph một mình là ~45%). Hàng đợi §7
+chỉ còn **một** hạng mục — derivation engine, +1.35 — đưa lên ~85%. Trần thật khoảng
+**85%**, không phải 100%: khoảng 10–12% đề có lập luận **không mang nội dung không
+gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái hình đẹp không gánh
+lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 8 bài, chưa bài nào do chính chủ soạn ⇒ việc trước engine thứ ba là
-G-C, không phải engine thứ ba.
+engine mới. Kho có 54 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):
 

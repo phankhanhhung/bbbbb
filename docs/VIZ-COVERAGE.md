@@ -1,6 +1,6 @@
 # CombViz — Kho bài tổ hợp: visualize được bao nhiêu phần trăm?
 
-Trạng thái: **ước lượng chuyên gia, không phải điều tra** · Cập nhật: 2026-07-29 (sau khi có Sequence engine)
+Trạng thái: **ước lượng chuyên gia, không phải điều tra** · Cập nhật: 2026-07-29 (sau M17 — game engine; đã hạ số họ trò chơi, xem §4)
 
 > **Đọc con số ở đây đúng cách.**
 >
@@ -24,16 +24,16 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~+ set engine, chu trình hoán vị, view song ánh (M11)~~ | ~~63%~~ | ~~71%~~ |
 | ~~+ view song ánh, set engine, chu trình hoán vị (M11)~~ | ~~73%~~ | ~~81%~~ |
 | ~~+ ghép cặp, tính phẳng, ma trận kề (M12)~~ | ~~76%~~ | ~~84%~~ |
-| **Hôm nay** (6 engine + poset/Hasse) | **~84%** | ~90% |
-| Còn lại trong hàng đợi §7 làm hết | **~88%** | ~97% |
+| **Hôm nay** (6 engine + poset/Hasse) | **~83%** | ~90% |
+| Còn lại trong hàng đợi §7 làm hết (chỉ còn derivation engine) | **~85%** | ~97% |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
 | Thêm 4 view ngoài roadmap (§4) | **~85%** | ~92% |
-| Thêm "derivation engine" (§4.5) | ~88% | **~97%** |
+| ~~Thêm "derivation engine" (§4.5)~~ — nay là chính dòng trên | ~85% | **~97%** |
 
 **100% không đạt được, và điều đó không phải vì thiếu công sức.** Xem §6.
 
-Nhưng khoảng cách từ 45% lên ~88% là việc kỹ thuật thuần tuý, đã có đường ray, và
+Nhưng khoảng cách từ 45% lên ~85% là việc kỹ thuật thuần tuý, đã có đường ray, và
 kiến trúc hiện tại được dựng đúng để đi đường đó: `packages/schema` không biết
 engine nào tồn tại, renderer nhận engine từ ngoài, Player nạp engine theo
 `engines_used[]`. Thêm một engine là một milestone có biên giới rõ — graph engine
@@ -52,17 +52,17 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà năm engin
 | Đồ thị | 22% | 94% | 20.7 | tô mặt (phần còn lại của GR-05), kiểm tính phẳng tổng quát |
 | Đếm / song ánh / đếm hai chiều | 14% | 80% | 11.2 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 90% | 14.4 | — (`engine-sequence`) |
-| Trò chơi | 7% | 65% | 4.55 | game có luật riêng (cờ trên đồ thị, Chomp) — cần GM-01 rule script thật |
+| Trò chơi | 7% | 57% | 3.99 | chỉ chơi được game **bốc đống**; nước ăn nhiều đống, luật nhớ lịch sử, và mọi game không-phải-đống đều chưa — cần GM-01 rule script thật |
 | Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
 | Hình học tổ hợp | 5% | 75% | 3.75 | tô vùng do các đoạn chia (PT-03), đường tròn |
 | Hoán vị / thứ tự | 6% | 95% | 5.7 | — (chu trình hoán vị + poset/Hasse + Dilworth) |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 5% | 0.15 | xem §6 — **không co lại theo engine** |
-| **Tổng** | **100%** | | **~84%** | |
+| **Tổng** | **100%** | | **~83%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
-32 bài quen thuộc, phân loại tay. Chính chủ đọc bảng này thấy sai chỗ nào thì sửa
+39 bài quen thuộc, phân loại tay. Chính chủ đọc bảng này thấy sai chỗ nào thì sửa
 chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 
 | Bài | Họ | Hôm nay |
@@ -93,20 +93,34 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Chip-firing | quá trình | 🟡 vẽ và thao tác được, thiếu luật lan truyền |
 | Nim | trò chơi | ✅ có trong kho (XOR + giá trị Grundy) |
 | Bốc sỏi $1..k$ | trò chơi | ✅ có trong kho (phổ thắng-thua) |
+| Trò Grundy (chia đống không đều) | trò chơi | ✅ đối chiếu vét cạn, khớp dãy Grundy đã biết |
+| Bốc theo tập $\{1,3,4\}$ | trò chơi | ✅ thua ở $0,2,7,9,14,\dots$ — khớp |
+| Bốc **tối đa nửa đống** | trò chơi | ✅ có trong kho (luật `subtract-fraction`, thua ở $2^m-1$) |
+| Wythoff (hai đống, nước chéo) | trò chơi | ❌ một nước chỉ đụng **một** đống |
+| Trò Euclid, Nim Fibonacci | trò chơi | ❌ nước ăn theo đống kia / theo nước trước |
+| Chomp, Hackenbush, lật đồng xu | trò chơi | ❌ thế không phải đa tập đống |
 | Trò chơi tô đồ thị | trò chơi | 🟡 vẽ được thế, không chơi được — cần GM-01 |
+| Game bàn cờ có chiến lược đối xứng | trò chơi | 🟡 board vẽ được thế và cặp ghép; không chơi được |
 | Happy ending (4 điểm lồi) | hình học | ✅ có trong kho (bao lồi + ba trường hợp) |
 | Sylvester–Gallai | hình học | 🟡 có `line` và `aligned`; thiếu bài |
 | Năm điểm nguyên có trung điểm nguyên | hình học | ✅ có trong kho |
 | Đếm giao điểm đường chéo đa giác | đếm / hình học | ✅ có trong kho |
 | Phương pháp xác suất: tồn tại tô $K_n$ không $K_k$ đơn sắc | trừu tượng | ❌ §6 |
 
-**25 ✅ · 6 🟡 · 1 ❌** trên 32 bài ⇒ 78% trọn vẹn, **88%** nếu tính nửa điểm cho 🟡.
-Hơi cao hơn 84% của bảng trọng số, và chênh lệch nhỏ ấy có thật: danh sách này
-thiên về bài **kinh điển**, mà bài kinh điển thường là bài có hình đẹp — đó chính
-là lý do người ta nhớ chúng. Bảng trọng số ở trên là con số nên tin.
+**28 ✅ · 7 🟡 · 4 ❌** trên 39 bài ⇒ 72% trọn vẹn, **81%** nếu tính nửa điểm cho 🟡.
+
+Con số này **tụt** so với lần trước (88%) mà không có dòng code nào bị gỡ. Lý do
+nằm ở chính danh sách: tôi vừa thêm bảy dòng trò chơi, bốn trong số đó là ❌ (một
+dòng thứ năm vá được ngay — xem `subtract-fraction` ở §4), vì câu hỏi "engine game
+đã đủ mở chưa" chỉ trả lời được bằng cách viết ra những game **không** khai được. Bảy dòng trên ba mươi chín là 18% danh sách, trong khi họ
+trò chơi chỉ chiếm 7% đề thi thật. Nói cách khác: danh sách này giờ thiên về chỗ
+yếu, đúng như trước kia nó thiên về bài kinh điển có hình đẹp. **Bảng trọng số ở
+§2 mới là con số nên tin** — cả hai lần lệch đều là lệch của danh sách, không
+phải của kho.
 
 *(Trước Sequence engine: 9 ✅ · 4 🟡 · 11 ❌ ⇒ ≈ 46%. Trước M11: ≈ 63%.
-Trước M12: ≈ 72%. Trước M15: ≈ 76%. Trước M16: ≈ 82%. Trước M17: 23 ✅ · 6 🟡 · 2 ❌ ⇒ ≈ 84%.)*
+Trước M12: ≈ 72%. Trước M15: ≈ 76%. Trước M16: ≈ 82%. Trước M17: 23 ✅ · 6 🟡 · 2 ❌ ⇒ ≈ 84%,
+đo trên danh sách 32 dòng chưa có bảy dòng trò chơi.)*
 
 ---
 
@@ -248,7 +262,7 @@ là hiểu được, và ở bài đó thì niềm tin ấy sai.
 
 ---
 
-## 7. Còn lại gì để lên ~88%
+## 7. Còn lại gì để lên ~85%
 
 Chi phí tính bằng **M4** — một engine graph, tức khoảng hai tuần ở nhịp 35h/tuần.
 "Lãi" là số điểm phủ thu được. Sắp theo **lãi trên chi phí**, không theo thứ tự
@@ -262,10 +276,10 @@ trong SRS.
 | ~~4~~ | ~~**Point/segment engine**~~ ✅ M15 | +3.5 | xong | — | `packages/engines/point`: bao lồi, thẳng hàng, đếm giao điểm, đường thẳng, lưới điểm. **Chưa có**: PT-03 tô vùng, đường tròn |
 | ~~5~~ | ~~**Hoàn tất graph**~~ ✅ M12 (phần lớn) | +2.7 | xong | — | Ghép cặp + König + Hall, ma trận kề, tính phẳng qua hình vẽ và chặn Euler. **Chưa có**: tô mặt, kiểm tính phẳng tổng quát |
 | ~~6~~ | ~~**Poset / Hasse**~~ ✅ M16 | +0.6 | xong | — | Layout `hasse` + `analyzePoset`; Dilworth tính bằng **chính** lõi ghép cặp của GR-06 |
-| ~~7~~ | ~~**Game engine**~~ ✅ M17 (một phần) | +3.9 | xong | — | Tập luật **đóng** thay cho DSL-03: bốc theo khoảng / theo tập / chia đống, cộng Grundy, misère, phổ thắng-thua. **Chưa có**: GM-01 rule script |
+| ~~7~~ | ~~**Game engine**~~ ✅ M17 (một phần) | +3.3 | xong | — | Tập luật **đóng** thay cho DSL-03: bốc theo khoảng / theo tập / chia đống, cộng Grundy, misère, phổ thắng-thua. Chơi được **game bốc đống**, không hơn — ranh giới ở §4. **Chưa có**: GM-01 rule script |
 | 8 | **Derivation engine** (§4.5) | +1.35 | 1.0 | **1.35** | Lãi thấp ở cột "gánh lập luận" nhưng đẩy cột "**có hình mang thông tin**" từ ~71% lên ~97%. Cần label atlas (D-07) trước |
 
-Cộng dồn: **63 → ~88%**, tổng chi phí ≈ **5.5 M4**, tức khoảng 11 tuần ở nhịp
+Cộng dồn: **63 → ~85%**, tổng chi phí ≈ **5.5 M4**, tức khoảng 11 tuần ở nhịp
 35h/tuần nếu làm liên tục.
 
 **M11 đã lấy ba hạng mục đầu**: kho đi từ 63.4% lên **73.2%** (+9.8, thấp hơn +10.8
@@ -279,10 +293,18 @@ là PT-03 tô vùng và đường tròn, cả hai đều ngoài phạm vi P2).
 
 **M16 lấy hạng mục 6**: 79.4% → **80.0%** (+0.6, dự tính +0.8).
 
-**M17 lấy hạng mục 7**: 80.0% → **83.8%** (+3.9, thấp hơn dự tính +5.25). Chỗ
+**M17 lấy hạng mục 7**: 80.0% → **83.3%** (+3.3, thấp hơn dự tính +5.25). Chỗ
 hụt là có chủ ý và cần nói rõ: engine dùng **tập luật đóng** thay vì mở DSL-03,
 nên game có luật riêng — cờ trên đồ thị, Chomp, trò tô màu — vẫn chưa khai được.
 Đó là GM-01 thật sự và nó còn nợ. Xem phần dưới.
+
+> **Sửa số, ngày 2026-07-29.** Ngay sau M17 tôi ghi phủ họ trò chơi là **65%** và
+> tổng là 83.8%. Con số ấy tôi đặt ra khi trong đầu chỉ có game bốc đống. Khi
+> ngồi liệt kê **thật** những game thi đấu không khai được (bảng ngay dưới đây),
+> nó không đứng vững: 65% ngụ ý hai phần ba họ bài chơi được, trong khi chơi được
+> chỉ có đúng một họ con. Hạ xuống **55%**, rồi lên lại **57%** sau khi thêm luật
+> `subtract-fraction`; tổng còn **83.3%**. Không có code nào bị gỡ giữa hai con số
+> — chỉ có tôi kiểm lại điều mình đã khẳng định.
 
 Còn lại **một** hạng mục: derivation engine (+1.35, ~1.0 M4, cần label atlas D-07).
 
@@ -296,8 +318,35 @@ làm thế:
   rõ là grammar đóng. Mở một ngôn ngữ có trạng thái là đi thẳng vào rủi ro đó.
 - **Tiền lệ trong chính kho**: `COMBINE_RULES` của engine dãy là enum đóng, kèm
   ghi chú rằng cho nhập biểu thức là "mở cửa hậu cho DSL-03".
-- **Ba luật đóng phủ gần hết game thi đấu**: bốc theo khoảng, bốc theo tập cho
-  trước, chia đống. Nim, bài bốc sỏi, trò Grundy đều nằm trong đó.
+- **Ba luật đóng phủ trọn họ game bốc đống kinh điển**: bốc theo khoảng, bốc theo
+  tập cho trước, chia đống không đều. Nim nhiều đống, bài bốc sỏi $1..k$, trò
+  Grundy, cùng bản misère của cả ba, đều nằm trong đó và đều **đã đối chiếu vét
+  cạn** với định nghĩa gốc (`test/solver.test.ts`, >600 thế).
+
+#### Chính xác thì tập luật đóng khai được tới đâu
+
+Đây là chỗ tôi từng nói quá ("phủ gần hết game thi đấu"). Nó phủ gần hết game
+**bốc đống**, mà game bốc đống chỉ là một họ con. Ranh giới thật:
+
+| Khai được | Không khai được | Vướng ở đâu |
+|---|---|---|
+| Nim nhiều đống | Wythoff | một `Move` chỉ đụng **một** đống |
+| Bốc $1..k$, **bốc tối đa $1/d$ đống** | "bốc tối đa gấp đôi nước trước" | cận đọc được cỡ đống, không đọc được *nước trước* |
+| Bốc theo tập $\{1,3,4\}$, tập số nguyên tố… | Nim Fibonacci | luật nhớ **nước trước**, thế không đủ mô tả ván |
+| Chia đống không đều (trò Grundy) | Trò Euclid | nước ăn theo cỡ đống **kia** |
+| Misère của mọi luật trên | Nim Lasker (bốc **hoặc** chia) | luật là **một** thành viên, không hợp được hai |
+| | Chomp, Hackenbush, lật đồng xu | thế không phải đa tập số |
+| | Cờ trên đồ thị, game tô màu, game bàn cờ | thế không phải đống, chấm hết |
+| | Game partizan (hai bên luật khác nhau) | solver giả định luật đối xứng |
+
+Dòng "tối đa nửa đống" đáng nói riêng, vì khi rà bảng này tôi phát hiện nó **đang
+thiếu** dù là cách phát biểu rất hay gặp, và nhìn qua thì tưởng `subtract` khai
+được. Không: thế thua của nó là $n = 2^m - 1$ ($1, 3, 7, 15, 31$), còn mọi
+`subtract` với `max` cố định đều cho thế thua là một cấp số cộng — có test đối
+chiếu đủ hai mươi giá trị `max`, không phải suy đoán. Chỗ này đã **vá xong** bằng
+một thành viên thứ tư của họ luật đóng, `subtract-fraction`, và không phải đụng
+tới DSL-03. Đó là điểm đáng giữ của thiết kế tập luật đóng: mở rộng thì rẻ,
+miễn là thứ cần mở vẫn nằm trong "một đống biến thành mấy đống".
 
 Cái giá, nói thẳng: game có luật riêng không khai được, và nó sẽ **không** khai
 được cho tới khi ai đó thật sự làm GM-01 + NFR-S2.
@@ -334,9 +383,9 @@ tĩnh viết sẵn trong file. Ba hệ quả, nói ra để không ai trông đ�
 
 ### ~90% thì sao?
 
-Không tới được bằng cách thêm engine. Làm hết bảng trên ra **~88%**, và phần còn
+Không tới được bằng cách thêm engine. Làm hết bảng trên ra **~85%**, và phần còn
 lại là ~12% ở §6 — những lập luận **không có nội dung không gian**. Con số đó
-không co lại theo số engine, nên chênh lệch 88 → 90 phải mua bằng cách khác:
+không co lại theo số engine, nên chênh lệch 85 → 90 phải mua bằng cách khác:
 hoặc chọn bài (không nhận vào kho những bài mà hình không nói được gì — hoàn toàn
 hợp lệ với một kho *đã curate*), hoặc chấp nhận đo bằng cột "có hình mang thông
 tin", nơi derivation engine đưa lên ~97%.
@@ -345,21 +394,16 @@ Nói thẳng: nếu chỉ tiêu là "90% bài trong **kho** có hình gánh đư
 đạt được, vì kho là do mình chọn. Nếu là "90% **đề tổ hợp thi đấu nói chung**" thì
 không, và không phải vì thiếu công sức.
 
----|---|---:|---|---|
-| ~~1~~ | ~~**Sequence/Multiset engine**~~ ✅ | +9.6 | xong | Kho: 45% → **55%** |
-| 2 | **PRN-03 bảng incidence** | +5 | nhỏ | Dùng lại được cho ST-01 và GR-07 |
-| 3 | **PRN-04 bijection view** | +5 | vừa | SRS gọi là flagship P2, đánh giá đó đúng |
-| 4 | **ST-01..03 Set engine** | +7 | ~0.7 M4 | Bảng incidence ở #2 là nửa việc rồi |
-| 5 | **PT-01..02 Point engine** | +4 | ~0.7 M4 | Họ riêng biệt, không dùng lại được gì |
-| 6 | **Permutation/cycle + Poset** (§4.2, §4.3) | +3.7 | nhỏ | Chủ yếu là layout + analyzer trên graph engine |
-| 7 | **GM game engine** | +6 | ~1.5 M4 | Đắt vì cần DSL-03 rule script + solver |
-| 8 | **Derivation engine** (§4.5) | +3 phủ, +5 "có hình" | ~1 M4 | Cần label atlas trước |
+---
 
-Cộng dồn: 45 → 55 (đã đi) → **~88%**.
+## 8. Cảnh báo về thứ tự
 
-**Một cảnh báo về thứ tự.** AUT-KPI là gate có răng: *trượt KPI thì dồn sửa
-pipeline **trước khi** mở engine mới* (SRS §7). Kho hiện có 8 bài và chưa bài nào
-do chính chủ soạn — nên theo đúng luật của chính dự án, việc đầu tiên không phải
-engine nào trong bảng này, mà là **soạn tay 3–5 bài** (G-C). Mở engine thứ ba khi
-kho chưa chứng minh nổi engine thứ nhất và thứ hai nuôi được bài là cách R-1 giết
-dự án.
+**AUT-KPI là gate có răng:** *trượt KPI thì dồn sửa pipeline **trước khi** mở
+engine mới* (SRS §7). Kho hôm nay có **54 bài** — nhưng **không bài nào do chính
+chủ soạn**, và người duyệt cũng là người soạn. Theo đúng luật của chính dự án,
+việc còn nợ không phải engine nào trong bảng §7, mà là **soạn tay 3–5 bài**
+(G-C), rồi mới đóng băng schema 1.0.0.
+
+*(Ghi chú dọn dẹp 2026-07-29: chỗ này trước đây còn sót lại một bảng hàng đợi cũ
+từ thời kho mới có 8 bài — số liệu mâu thuẫn với §7 và tiêu đề bảng thì hỏng.
+Đã bỏ; §7 là bảng duy nhất.)*

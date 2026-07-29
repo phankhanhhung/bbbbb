@@ -1,0 +1,277 @@
+{
+  "schema_version": "0.1.0",
+  "id": "take-at-most-half",
+  "statement": {
+    "vi": "Trên bàn có $40$ viên sỏi. Hai người lần lượt bốc, mỗi lượt được bốc ít nhất $1$ viên và **nhiều nhất một nửa** số viên đang có. Ai không bốc được nữa thì thua. Hỏi ai có chiến lược thắng?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Biến thể cận phụ thuộc thế: thế thua là 2^m − 1, không phải một cấp số cộng."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "invariant",
+    "extremal"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "game"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "total",
+      "id": "inv-t",
+      "label": {
+        "vi": "Số viên còn lại"
+      }
+    },
+    {
+      "expr": "moves",
+      "id": "inv-m",
+      "label": {
+        "vi": "Số nước đi được"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thế bắt đầu: [[a1|$40$ viên]]. Người đi trước có ${{moves}}$ nước để chọn — bốc từ $1$ tới $20$ viên. Cận trên **đổi theo thế**, và đó là toàn bộ chỗ khác so với bài bốc $1..k$ quen thuộc."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "denominator": 2,
+                "type": "subtract-fraction"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 40
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một đống bốn mươi viên sỏi."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "total == 40",
+            "moves == 20"
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vẽ tới $40$ và nhìn vệt sọc: [[a3|$1$, $3$, $7$, $15$, $31$]] — khoảng cách **không** đều mà **gấp đôi** mỗi lần, nên ai quen bài bốc $1..k$ mà đi tìm một bội số thì tìm mãi không ra; dạng đúng là $n = 2^m - 1$. Ô $0$ cũng tô đậm nhưng **không tới được**: từ đống $1$ viên đã hết nước, nên ván dừng ở $1$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "pos-1",
+                "pos-3",
+                "pos-7",
+                "pos-15",
+                "pos-31"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "denominator": 2,
+                "type": "subtract-fraction"
+              },
+              "spectrum_to": 40,
+              "view": "spectrum"
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 40
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Phổ tới 40: các ô 0, 1, 3, 7, 15, 31 tô đậm, khoảng cách giữa các mốc gấp đôi dần."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chứng minh, đọc trên [[a4|hai mốc $15$ và $31$]]. **Từ $2^m - 1$ mọi nước đều hỏng:** bốc nhiều nhất $2^{m-1} - 1$ viên nên còn lại $p$ với $2^{m-1} \\le p \\le 2^m - 2$. **Mọi $p$ như thế đều thắng:** bốc đúng $p - (2^{m-1} - 1)$ viên là về mốc dưới; số ấy $\\ge 1$, và $\\le p/2$ vì $p \\le 2^m - 2$. Vậy hai mốc kề nhau kẹp giữa toàn thế thắng."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "pos-15",
+                "pos-31"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "denominator": 2,
+                "type": "subtract-fraction"
+              },
+              "spectrum_to": 40,
+              "view": "spectrum"
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 40
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Phổ tới 40, nhấn hai mốc 15 và 31."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a5|$40$]] không có dạng $2^m - 1$, nên **người đi trước thắng**, và chỉ bằng ${{winning_moves}}$ nước duy nhất: bốc $9$ viên để về $31$. Bốc $9$ là hợp lệ vì $9 \\le 20$."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "denominator": 2,
+                "type": "subtract-fraction"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 40
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Trở lại đống bốn mươi viên — thế thắng của người sắp đi."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "winning == true",
+            "winning_moves == 1"
+          ]
+        },
+        {
+          "id": "s5",
+          "parent": "s4",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thế sau nước ấy: [[a6|$31 = 2^5 - 1$]]. Từ đây người đi sau không thoát được — mọi nước của họ đều rơi vào khoảng $16 \\dots 30$, và ta luôn kéo về $15$."
+          },
+          "anchors": {
+            "a6": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "denominator": 2,
+                "type": "subtract-fraction"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 31
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đống ba mươi mốt viên — thế thua của người sắp đi."
+          },
+          "verified": true,
+          "claims": [
+            "winning == false"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "hand-opponent-a-loss"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}
