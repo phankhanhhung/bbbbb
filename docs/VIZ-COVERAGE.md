@@ -45,7 +45,7 @@ mất đúng M4.
 ## 2. Phân bố họ bài, và engine hiện có phủ tới đâu
 
 Trọng số cột 2 là tỉ trọng ước lượng trong đề tổ hợp thi đấu (IMO Shortlist C và
-tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà năm engine hiện có gánh nổi.
+tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engine hiện có gánh nổi.
 
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
@@ -115,8 +115,9 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 Con số này **tụt** so với lần trước (88%) mà không có dòng code nào bị gỡ. Lý do
 nằm ở chính danh sách: tôi vừa thêm bảy dòng trò chơi, bốn trong số đó là ❌ (một
 dòng thứ năm vá được ngay — xem `subtract-fraction` ở §4), vì câu hỏi "engine game
-đã đủ mở chưa" chỉ trả lời được bằng cách viết ra những game **không** khai được. Bảy dòng trên ba mươi chín là 18% danh sách, trong khi họ
-trò chơi chỉ chiếm 7% đề thi thật. Nói cách khác: danh sách này giờ thiên về chỗ
+đã đủ mở chưa" chỉ trả lời được bằng cách viết ra những game **không** khai
+được. Chín dòng trò chơi trên bốn mươi mốt là 22% danh sách, trong khi họ trò
+chơi chỉ chiếm 7% đề thi thật. Nói cách khác: danh sách này giờ thiên về chỗ
 yếu, đúng như trước kia nó thiên về bài kinh điển có hình đẹp. **Bảng trọng số ở
 §2 mới là con số nên tin** — cả hai lần lệch đều là lệch của danh sách, không
 phải của kho.
@@ -428,7 +429,7 @@ không, và không phải vì thiếu công sức.
 ## 8. Cảnh báo về thứ tự
 
 **AUT-KPI là gate có răng:** *trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới* (SRS §7). Kho hôm nay có **54 bài** — nhưng **không bài nào do chính
+engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **56 bài** — nhưng **không bài nào do chính
 chủ soạn**, và người duyệt cũng là người soạn. Theo đúng luật của chính dự án,
 việc còn nợ không phải engine nào trong bảng §7, mà là **soạn tay 3–5 bài**
 (G-C), rồi mới đóng băng schema 1.0.0.
