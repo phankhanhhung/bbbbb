@@ -1,0 +1,225 @@
+{
+  "schema_version": "0.1.0",
+  "id": "candies-with-minimum",
+  "statement": {
+    "vi": "Chia $10$ chiếc kẹo cho $4$ bạn sao cho **mỗi bạn nhận ít nhất $1$ chiếc**. Hỏi có bao nhiêu cách?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Phát trước cho [[a1|mỗi bạn $1$ chiếc]]. Việc này chỉ có một cách và nó đảm bảo luôn ràng buộc."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Phát trước mỗi bạn 1 chiếc",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 1
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 1
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn cột, mỗi cột một viên."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn lại [[a2|$6$ chiếc]] chia tự do cho $4$ bạn — bài toán sao và vách quen thuộc, không còn ràng buộc gì."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Chia nốt 6 chiếc còn lại",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "color_class": 3,
+                "pos": 0,
+                "value": 3
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "color_class": 3,
+                "pos": 1,
+                "value": 2
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "color_class": 3,
+                "pos": 2,
+                "value": 4
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "color_class": 3,
+                "pos": 3,
+                "value": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn cột với số lượng khác nhau, tổng bằng 10."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Số cách là $\\binom{6+3}{3} = \\binom{9}{3} = 84$. Phép [[a3|phát trước]] là một song ánh giữa hai bài toán, nên hai đáp số bằng nhau."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "i0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Đáp số: 84 cách",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "color_class": 3,
+                "pos": 0,
+                "value": 3
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 2
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 4
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng hình, cột đầu được tô nổi."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "total == 10",
+    "validators": [
+      "count:4",
+      "values-non-negative"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

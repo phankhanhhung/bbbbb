@@ -5,6 +5,7 @@ import { patch } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
 import { buildTree, preorder, type Step } from '@combviz/schema';
 import { ENGINE_DSL, ENGINE_FRAGMENTS, ENGINE_RENDERERS } from './engines.js';
+import { TAXONOMY } from './taxonomy.js';
 import { FILE_SYSTEM_SUPPORTED, useProblemFile } from './useProblemFile.js';
 import { IssuePanel, pointerToStep } from './IssuePanel.jsx';
 import { ReviewPanel } from './ReviewPanel.jsx';
@@ -34,7 +35,7 @@ export function App() {
   const [ipadFrame, setIpadFrame] = useState(false);
 
   const checker = useMemo(
-    () => createChecker({ fragments: ENGINE_FRAGMENTS, dsl: ENGINE_DSL }),
+    () => createChecker({ fragments: ENGINE_FRAGMENTS, dsl: ENGINE_DSL, taxonomy: TAXONOMY }),
     [],
   );
   const renderer = useMemo(() => createRenderer(ENGINE_RENDERERS), []);

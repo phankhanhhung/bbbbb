@@ -1,0 +1,258 @@
+{
+  "schema_version": "0.1.0",
+  "id": "tetromino-straight-and-square",
+  "statement": {
+    "vi": "Chứng minh không thể phủ kín bàn $8\\times8$ bằng $15$ quân tetromino thẳng $1\\times4$ và $1$ quân tetromino vuông $2\\times2$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "tiling",
+    "coloring"
+  ],
+  "techniques": [
+    "invariant",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "count(cells, c => c.color_class == 1 && !covered(c))",
+      "id": "inv-m1",
+      "label": {
+        "vi": "Ô màu 1 chưa phủ"
+      }
+    },
+    {
+      "expr": "count(cells, c => c.color_class == 2 && !covered(c))",
+      "id": "inv-m2",
+      "label": {
+        "vi": "Ô màu 2 chưa phủ"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tô bàn bằng [[a1|bốn màu theo đường chéo]]: ô $(r,c)$ mang màu $r+c \\bmod 4$. Mỗi màu xuất hiện đúng $16$ lần."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-1",
+                "cell-0-2",
+                "cell-0-3",
+                "cell-0-4",
+                "cell-0-5",
+                "cell-0-6",
+                "cell-0-7"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "k": 4,
+                "orientation": "diag-right",
+                "type": "stripes"
+              },
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bàn 8×8 tô bốn màu thành các dải chéo."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a2|Quân thẳng $1\\times4$]] — nằm ngang hay dọc đều vậy — luôn phủ đúng một ô của mỗi màu."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "t-h",
+                "t-v"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "k": 4,
+                "orientation": "diag-right",
+                "type": "stripes"
+              },
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "t-h",
+                "type": "tile",
+                "emphasis": "focus",
+                "pos": [1, 1],
+                "rot": 0,
+                "shape": "tetromino-i"
+              },
+              {
+                "id": "t-v",
+                "type": "tile",
+                "emphasis": "focus",
+                "pos": [3, 6],
+                "rot": 90,
+                "shape": "tetromino-i"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai quân tetromino thẳng, một nằm ngang một nằm dọc, mỗi quân chạm bốn màu khác nhau."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a3|Quân vuông $2\\times2$]] thì không: nó luôn phủ hai ô của một màu và hai ô của màu kia, bỏ sót hai màu còn lại."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "t-sq"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "k": 4,
+                "orientation": "diag-right",
+                "type": "stripes"
+              },
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "t-sq",
+                "type": "tile",
+                "emphasis": "focus",
+                "pos": [2, 2],
+                "rot": 0,
+                "shape": "tetromino-o"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một quân tetromino vuông phủ hai ô cùng màu."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "contradiction",
+          "narrative": {
+            "vi": "Nếu phủ được thì $15$ quân thẳng dùng hết $15$ ô mỗi màu, còn [[a4|quân vuông]] phải bù đúng một ô mỗi màu — mà nó không làm được. Mâu thuẫn."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "t-sq"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "k": 4,
+                "orientation": "diag-right",
+                "type": "stripes"
+              },
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "t-sq",
+                "type": "tile",
+                "emphasis": "focus",
+                "pos": [2, 2],
+                "rot": 0,
+                "shape": "tetromino-o"
+              },
+              {
+                "id": "t-h",
+                "type": "tile",
+                "pos": [1, 1],
+                "rot": 0,
+                "shape": "tetromino-i"
+              },
+              {
+                "id": "t-v",
+                "type": "tile",
+                "pos": [3, 6],
+                "rot": 90,
+                "shape": "tetromino-i"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Quân vuông cùng vài quân thẳng trên bàn tô bốn màu chéo."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(cells, c => !covered(c)) == 0",
+    "validators": [
+      "tiles-no-overlap",
+      "tiles-in-bounds"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

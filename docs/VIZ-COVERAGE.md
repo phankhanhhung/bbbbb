@@ -20,7 +20,8 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 |---|---|---|
 | ~~board + graph~~ | ~~45%~~ | ~~55%~~ |
 | ~~+ sequence~~ | ~~55%~~ | ~~64%~~ |
-| **Hôm nay** (+ bảng đếm hai chiều PRN-03) | **~60%** | ~68% |
+| ~~+ bảng đếm hai chiều PRN-03~~ | ~~60%~~ | ~~68%~~ |
+| **Hôm nay** (+ 20 bài showcase, mọi tính năng engine đã có bài dùng) | **~62%** | ~70% |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
 | Thêm 4 view ngoài roadmap (§4) | **~85%** | ~92% |

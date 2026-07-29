@@ -1,0 +1,240 @@
+{
+  "schema_version": "0.1.0",
+  "id": "merge-piles-sum-of-products",
+  "statement": {
+    "vi": "Có $6$ đống sỏi, mỗi đống $1$ viên. Mỗi bước gộp hai đống và ghi lên bảng **tích** số sỏi của hai đống đó. Chứng minh khi chỉ còn một đống, tổng các số đã ghi luôn bằng $15$, bất kể gộp theo thứ tự nào."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "sequences",
+    "counting"
+  ],
+  "techniques": [
+    "invariant",
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "total",
+      "id": "inv-tong",
+      "label": {
+        "vi": "Tổng số sỏi"
+      }
+    },
+    {
+      "expr": "n",
+      "id": "inv-dong",
+      "label": {
+        "vi": "Số đống"
+      },
+      "monotone": "non-increasing"
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Coi mỗi viên sỏi là một người và [[a1|mỗi đống]] là một nhóm. Ban đầu sáu nhóm, mỗi nhóm một người."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3",
+                "i4",
+                "i5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Sáu đống, mỗi đống 1 viên",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 1
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 1
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 1
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "pos": 4,
+                "value": 1
+              },
+              {
+                "id": "i5",
+                "type": "item",
+                "pos": 5,
+                "value": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sáu cột sỏi, mỗi cột một viên."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Gộp hai đống $a$ và $b$ rồi ghi $a \\times b$ — đó đúng bằng số **cặp** người mới trở thành cùng nhóm. [[a2|Đống mới]] có $2$ viên và ta ghi $1 \\times 1 = 1$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "i0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Ghi 1 × 1 = 1",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "color_class": 3,
+                "pos": 0,
+                "value": 2
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 1
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 1
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 1
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "pos": 4,
+                "value": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm cột: một cột hai viên được tô nổi và bốn cột một viên."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mỗi cặp người chỉ **một lần duy nhất** chuyển từ khác nhóm sang cùng nhóm, nên tổng các số ghi đúng bằng [[a3|số cặp]] của $6$ người: $\\binom{6}{2} = 15$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "i0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Còn một đống: tổng đã ghi = 15",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "color_class": 3,
+                "pos": 0,
+                "value": 6
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một cột duy nhất gồm sáu viên."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "n == 1",
+    "validators": [
+      "values-non-negative",
+      "values-integer"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

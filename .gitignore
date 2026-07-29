@@ -11,6 +11,7 @@ playwright-report/
 # Sinh lúc build, không commit
 packages/content/.index/
 packages/content/index.json
+packages/content/taxonomy.json
 packages/content/og/
 schema.json
 

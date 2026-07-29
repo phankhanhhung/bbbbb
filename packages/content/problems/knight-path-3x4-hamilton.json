@@ -1,0 +1,529 @@
+{
+  "schema_version": "0.1.0",
+  "id": "knight-path-3x4-hamilton",
+  "statement": {
+    "vi": "Con mã có thể đi qua tất cả $12$ ô của bàn $3\\times4$, mỗi ô đúng một lần, hay không?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; minh hoạ cross-engine bàn cờ ↔ đồ thị."
+    }
+  },
+  "topics": [
+    "pieces",
+    "graph-basics"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board",
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bài toán trên [[a1|bàn cờ]]: mã xuất phát ở một ô và phải thăm đủ $12$ ô."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "m"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 4,
+              "rows": 3
+            },
+            "elements": [
+              {
+                "id": "m",
+                "type": "piece",
+                "emphasis": "focus",
+                "kind": "knight",
+                "pos": [0, 0],
+                "show_attacks": true
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bàn 3×4 với một quân mã ở góc và các ô nó nhảy tới được."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đổi cách nhìn: mỗi ô thành một [[a2|đỉnh]], hai ô nối nhau khi mã nhảy được giữa chúng. Câu hỏi thành: đồ thị này có đường Hamilton không?"
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "v00",
+                "v01",
+                "v02",
+                "v03",
+                "v10",
+                "v11",
+                "v12",
+                "v13",
+                "v20",
+                "v21",
+                "v22",
+                "v23"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 8,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v00",
+                "type": "vertex",
+                "label": "",
+                "pos": [-15, -10],
+                "shape": "square"
+              },
+              {
+                "id": "v01",
+                "type": "vertex",
+                "label": "",
+                "pos": [-5, -10],
+                "shape": "square"
+              },
+              {
+                "id": "v02",
+                "type": "vertex",
+                "label": "",
+                "pos": [5, -10],
+                "shape": "square"
+              },
+              {
+                "id": "v03",
+                "type": "vertex",
+                "label": "",
+                "pos": [15, -10],
+                "shape": "square"
+              },
+              {
+                "id": "v10",
+                "type": "vertex",
+                "label": "",
+                "pos": [-15, 0],
+                "shape": "square"
+              },
+              {
+                "id": "v11",
+                "type": "vertex",
+                "label": "",
+                "pos": [-5, 0],
+                "shape": "square"
+              },
+              {
+                "id": "v12",
+                "type": "vertex",
+                "label": "",
+                "pos": [5, 0],
+                "shape": "square"
+              },
+              {
+                "id": "v13",
+                "type": "vertex",
+                "label": "",
+                "pos": [15, 0],
+                "shape": "square"
+              },
+              {
+                "id": "v20",
+                "type": "vertex",
+                "label": "",
+                "pos": [-15, 10],
+                "shape": "square"
+              },
+              {
+                "id": "v21",
+                "type": "vertex",
+                "label": "",
+                "pos": [-5, 10],
+                "shape": "square"
+              },
+              {
+                "id": "v22",
+                "type": "vertex",
+                "label": "",
+                "pos": [5, 10],
+                "shape": "square"
+              },
+              {
+                "id": "v23",
+                "type": "vertex",
+                "label": "",
+                "pos": [15, 10],
+                "shape": "square"
+              },
+              {
+                "id": "e-v00-v12",
+                "type": "edge",
+                "u": "v00",
+                "v": "v12"
+              },
+              {
+                "id": "e-v00-v21",
+                "type": "edge",
+                "u": "v00",
+                "v": "v21"
+              },
+              {
+                "id": "e-v01-v13",
+                "type": "edge",
+                "u": "v01",
+                "v": "v13"
+              },
+              {
+                "id": "e-v01-v20",
+                "type": "edge",
+                "u": "v01",
+                "v": "v20"
+              },
+              {
+                "id": "e-v01-v22",
+                "type": "edge",
+                "u": "v01",
+                "v": "v22"
+              },
+              {
+                "id": "e-v02-v10",
+                "type": "edge",
+                "u": "v02",
+                "v": "v10"
+              },
+              {
+                "id": "e-v02-v21",
+                "type": "edge",
+                "u": "v02",
+                "v": "v21"
+              },
+              {
+                "id": "e-v02-v23",
+                "type": "edge",
+                "u": "v02",
+                "v": "v23"
+              },
+              {
+                "id": "e-v03-v11",
+                "type": "edge",
+                "u": "v03",
+                "v": "v11"
+              },
+              {
+                "id": "e-v03-v22",
+                "type": "edge",
+                "u": "v03",
+                "v": "v22"
+              },
+              {
+                "id": "e-v10-v22",
+                "type": "edge",
+                "u": "v10",
+                "v": "v22"
+              },
+              {
+                "id": "e-v11-v23",
+                "type": "edge",
+                "u": "v11",
+                "v": "v23"
+              },
+              {
+                "id": "e-v12-v20",
+                "type": "edge",
+                "u": "v12",
+                "v": "v20"
+              },
+              {
+                "id": "e-v13-v21",
+                "type": "edge",
+                "u": "v13",
+                "v": "v21"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đồ thị 12 đỉnh vuông, cạnh nối các ô mà mã nhảy được."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Có. [[a3|Đường tô đậm]] đi qua đủ $12$ đỉnh, mỗi đỉnh một lần — số trên đỉnh là thứ tự thăm."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "e-v00-v12",
+                "e-v01-v13",
+                "e-v01-v20",
+                "e-v02-v10",
+                "e-v02-v21",
+                "e-v03-v11",
+                "e-v03-v22",
+                "e-v10-v22",
+                "e-v11-v23",
+                "e-v12-v20",
+                "e-v13-v21"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 8,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v00",
+                "type": "vertex",
+                "label": "1",
+                "pos": [-15, -10],
+                "shape": "square"
+              },
+              {
+                "id": "v01",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-5, -10],
+                "shape": "square"
+              },
+              {
+                "id": "v02",
+                "type": "vertex",
+                "label": "7",
+                "pos": [5, -10],
+                "shape": "square"
+              },
+              {
+                "id": "v03",
+                "type": "vertex",
+                "label": "10",
+                "pos": [15, -10],
+                "shape": "square"
+              },
+              {
+                "id": "v10",
+                "type": "vertex",
+                "label": "8",
+                "pos": [-15, 0],
+                "shape": "square"
+              },
+              {
+                "id": "v11",
+                "type": "vertex",
+                "label": "11",
+                "pos": [-5, 0],
+                "shape": "square"
+              },
+              {
+                "id": "v12",
+                "type": "vertex",
+                "label": "2",
+                "pos": [5, 0],
+                "shape": "square"
+              },
+              {
+                "id": "v13",
+                "type": "vertex",
+                "label": "5",
+                "pos": [15, 0],
+                "shape": "square"
+              },
+              {
+                "id": "v20",
+                "type": "vertex",
+                "label": "3",
+                "pos": [-15, 10],
+                "shape": "square"
+              },
+              {
+                "id": "v21",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-5, 10],
+                "shape": "square"
+              },
+              {
+                "id": "v22",
+                "type": "vertex",
+                "label": "9",
+                "pos": [5, 10],
+                "shape": "square"
+              },
+              {
+                "id": "v23",
+                "type": "vertex",
+                "label": "12",
+                "pos": [15, 10],
+                "shape": "square"
+              },
+              {
+                "id": "e-v00-v12",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v00",
+                "v": "v12"
+              },
+              {
+                "id": "e-v00-v21",
+                "type": "edge",
+                "emphasis": "dim",
+                "u": "v00",
+                "v": "v21"
+              },
+              {
+                "id": "e-v01-v13",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v01",
+                "v": "v13"
+              },
+              {
+                "id": "e-v01-v20",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v01",
+                "v": "v20"
+              },
+              {
+                "id": "e-v01-v22",
+                "type": "edge",
+                "emphasis": "dim",
+                "u": "v01",
+                "v": "v22"
+              },
+              {
+                "id": "e-v02-v10",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v02",
+                "v": "v10"
+              },
+              {
+                "id": "e-v02-v21",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v02",
+                "v": "v21"
+              },
+              {
+                "id": "e-v02-v23",
+                "type": "edge",
+                "emphasis": "dim",
+                "u": "v02",
+                "v": "v23"
+              },
+              {
+                "id": "e-v03-v11",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v03",
+                "v": "v11"
+              },
+              {
+                "id": "e-v03-v22",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v03",
+                "v": "v22"
+              },
+              {
+                "id": "e-v10-v22",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v10",
+                "v": "v22"
+              },
+              {
+                "id": "e-v11-v23",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v11",
+                "v": "v23"
+              },
+              {
+                "id": "e-v12-v20",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v12",
+                "v": "v20"
+              },
+              {
+                "id": "e-v13-v21",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v13",
+                "v": "v21"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đường Hamilton được tô đậm, các đỉnh đánh số từ 1 đến 12."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

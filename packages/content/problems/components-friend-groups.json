@@ -1,0 +1,497 @@
+{
+  "schema_version": "0.1.0",
+  "id": "components-friend-groups",
+  "statement": {
+    "vi": "Một nhóm có $7$ người; quan hệ quen biết chia họ thành các nhóm rời nhau. Chứng minh nếu có $2$ nhóm thì số cặp quen nhau nhiều nhất là $\\binom{3}{2} + \\binom{4}{2} = 9$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "graph-basics",
+    "counting"
+  ],
+  "techniques": [
+    "extremal"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "components",
+      "id": "inv-tp",
+      "label": {
+        "vi": "Số thành phần liên thông"
+      }
+    },
+    {
+      "expr": "m",
+      "id": "inv-m",
+      "label": {
+        "vi": "Số cạnh"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a1|Hai thành phần liên thông]] — ba người và bốn người — không có cạnh nào nối giữa chúng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a0",
+                "a1",
+                "a2",
+                "b0",
+                "b1",
+                "b2",
+                "b3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "a0",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "A",
+                "pos": [0, -7]
+              },
+              {
+                "id": "a1",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "B",
+                "pos": [6.06, 3.5]
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "C",
+                "pos": [-6.06, 3.5]
+              },
+              {
+                "id": "b0",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "D",
+                "pos": [22, -8]
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "E",
+                "pos": [30, 0]
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "F",
+                "pos": [22, 8]
+              },
+              {
+                "id": "b3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "G",
+                "pos": [14, 0]
+              },
+              {
+                "id": "ea01",
+                "type": "edge",
+                "u": "a0",
+                "v": "a1"
+              },
+              {
+                "id": "ea02",
+                "type": "edge",
+                "u": "a0",
+                "v": "a2"
+              },
+              {
+                "id": "ea12",
+                "type": "edge",
+                "u": "a1",
+                "v": "a2"
+              },
+              {
+                "id": "eb01",
+                "type": "edge",
+                "u": "b0",
+                "v": "b1"
+              },
+              {
+                "id": "eb02",
+                "type": "edge",
+                "u": "b0",
+                "v": "b2"
+              },
+              {
+                "id": "eb03",
+                "type": "edge",
+                "u": "b0",
+                "v": "b3"
+              },
+              {
+                "id": "eb12",
+                "type": "edge",
+                "u": "b1",
+                "v": "b2"
+              },
+              {
+                "id": "eb13",
+                "type": "edge",
+                "u": "b1",
+                "v": "b3"
+              },
+              {
+                "id": "eb23",
+                "type": "edge",
+                "u": "b2",
+                "v": "b3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai cụm đỉnh tách rời, mỗi cụm nối đầy đủ bên trong."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Số cặp tối đa trong [[a2|cụm ba người]] là $\\binom{3}{2} = 3$, trong cụm bốn người là $\\binom{4}{2} = 6$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "ea01",
+                "ea02",
+                "ea12"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "a0",
+                "type": "vertex",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "A",
+                "pos": [0, -7]
+              },
+              {
+                "id": "a1",
+                "type": "vertex",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "B",
+                "pos": [6.06, 3.5]
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "C",
+                "pos": [-6.06, 3.5]
+              },
+              {
+                "id": "b0",
+                "type": "vertex",
+                "color_class": 2,
+                "emphasis": "dim",
+                "label": "D",
+                "pos": [22, -8]
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "color_class": 2,
+                "emphasis": "dim",
+                "label": "E",
+                "pos": [30, 0]
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "color_class": 2,
+                "emphasis": "dim",
+                "label": "F",
+                "pos": [22, 8]
+              },
+              {
+                "id": "b3",
+                "type": "vertex",
+                "color_class": 2,
+                "emphasis": "dim",
+                "label": "G",
+                "pos": [14, 0]
+              },
+              {
+                "id": "ea01",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "a0",
+                "v": "a1"
+              },
+              {
+                "id": "ea02",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "a0",
+                "v": "a2"
+              },
+              {
+                "id": "ea12",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "a1",
+                "v": "a2"
+              },
+              {
+                "id": "eb01",
+                "type": "edge",
+                "emphasis": "dim",
+                "u": "b0",
+                "v": "b1"
+              },
+              {
+                "id": "eb02",
+                "type": "edge",
+                "emphasis": "dim",
+                "u": "b0",
+                "v": "b2"
+              },
+              {
+                "id": "eb03",
+                "type": "edge",
+                "emphasis": "dim",
+                "u": "b0",
+                "v": "b3"
+              },
+              {
+                "id": "eb12",
+                "type": "edge",
+                "emphasis": "dim",
+                "u": "b1",
+                "v": "b2"
+              },
+              {
+                "id": "eb13",
+                "type": "edge",
+                "emphasis": "dim",
+                "u": "b1",
+                "v": "b3"
+              },
+              {
+                "id": "eb23",
+                "type": "edge",
+                "emphasis": "dim",
+                "u": "b2",
+                "v": "b3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cụm ba người được làm nổi, cụm kia mờ đi."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cộng lại $3 + 6 = 9$, và [[a3|không cạnh nào]] được phép bắc qua giữa hai cụm. Vậy $9$ là nhiều nhất."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "eb01",
+                "eb02",
+                "eb03",
+                "eb12",
+                "eb13",
+                "eb23"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "a0",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "A",
+                "pos": [0, -7]
+              },
+              {
+                "id": "a1",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "B",
+                "pos": [6.06, 3.5]
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "C",
+                "pos": [-6.06, 3.5]
+              },
+              {
+                "id": "b0",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "D",
+                "pos": [22, -8]
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "E",
+                "pos": [30, 0]
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "F",
+                "pos": [22, 8]
+              },
+              {
+                "id": "b3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "G",
+                "pos": [14, 0]
+              },
+              {
+                "id": "ea01",
+                "type": "edge",
+                "u": "a0",
+                "v": "a1"
+              },
+              {
+                "id": "ea02",
+                "type": "edge",
+                "u": "a0",
+                "v": "a2"
+              },
+              {
+                "id": "ea12",
+                "type": "edge",
+                "u": "a1",
+                "v": "a2"
+              },
+              {
+                "id": "eb01",
+                "type": "edge",
+                "u": "b0",
+                "v": "b1"
+              },
+              {
+                "id": "eb02",
+                "type": "edge",
+                "u": "b0",
+                "v": "b2"
+              },
+              {
+                "id": "eb03",
+                "type": "edge",
+                "u": "b0",
+                "v": "b3"
+              },
+              {
+                "id": "eb12",
+                "type": "edge",
+                "u": "b1",
+                "v": "b2"
+              },
+              {
+                "id": "eb13",
+                "type": "edge",
+                "u": "b1",
+                "v": "b3"
+              },
+              {
+                "id": "eb23",
+                "type": "edge",
+                "u": "b2",
+                "v": "b3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cả hai cụm đầy đủ, tổng cộng chín cạnh."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "m == 9",
+    "validators": [
+      "simple-graph",
+      "max-degree:3"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

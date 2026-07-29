@@ -7,9 +7,11 @@ import {
 } from '@combviz/schema';
 import { checkSemantics, type EngineDslModule } from './semantics.js';
 import { lintProblem } from './lint.js';
+import { checkTaxonomy, type Taxonomy } from './taxonomy.js';
 
 export { checkSemantics, type EngineDslModule } from './semantics.js';
 export { lintProblem } from './lint.js';
+export { checkTaxonomy, type Taxonomy, type VocabEntry } from './taxonomy.js';
 
 /**
  * Bộ kiểm đầy đủ của AUT-04, **một bộ cho ba nơi**: Studio, CLI và CI.
@@ -25,6 +27,11 @@ export { lintProblem } from './lint.js';
 export interface CheckerOptions {
   readonly fragments: readonly EngineSchemaFragment[];
   readonly dsl: Readonly<Record<string, EngineDslModule>>;
+  /**
+   * Controlled vocabulary (CMS-01). Vắng thì luật tag **không chạy** — và đó là
+   * một sự im lặng nguy hiểm, nên phía gọi nào cũng nên truyền vào.
+   */
+  readonly taxonomy?: Taxonomy;
 }
 
 export interface Checker {
@@ -50,6 +57,9 @@ export function createChecker(options: CheckerOptions): Checker {
       if (!shape.issues.some((i) => i.code.startsWith('schema/'))) {
         issues.push(...checkSemantics(problem as Problem, options.dsl));
         issues.push(...lintProblem(problem as Problem, raw));
+        if (options.taxonomy) {
+          issues.push(...checkTaxonomy(problem as Problem, options.taxonomy));
+        }
       }
 
       return issues;

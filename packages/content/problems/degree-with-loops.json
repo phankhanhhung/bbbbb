@@ -1,0 +1,328 @@
+{
+  "schema_version": "0.1.0",
+  "id": "degree-with-loops",
+  "statement": {
+    "vi": "Trong một đồ thị cho phép khuyên và cạnh bội, bậc của một đỉnh được tính thế nào? Chứng minh tổng mọi bậc vẫn bằng hai lần số cạnh."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "graph-basics"
+  ],
+  "techniques": [
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "sum(vertices, v => deg(v))",
+      "id": "inv-tong-bac",
+      "label": {
+        "vi": "Tổng bậc"
+      }
+    },
+    {
+      "expr": "m",
+      "id": "inv-m",
+      "label": {
+        "vi": "Số cạnh"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đồ thị này có [[a1|một khuyên]] ở đỉnh $A$ và hai cạnh song song giữa $B$ và $C$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "loop-a"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, -9]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [9, 0]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [0, 9]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [-9, 0]
+              },
+              {
+                "id": "loop-a",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v0",
+                "v": "v0"
+              },
+              {
+                "id": "e-bc-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-bc-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-cd",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-ad",
+                "type": "edge",
+                "u": "v0",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đồ thị bốn đỉnh có một khuyên và một cặp cạnh song song."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a2|Khuyên]] chạm vào đỉnh của nó **hai lần**, nên nó góp $2$ vào bậc — đúng như mọi cạnh khác góp $1$ vào bậc của mỗi đầu."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "loop-a"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "A",
+                "pos": [0, -9]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [9, 0]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [0, 9]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [-9, 0]
+              },
+              {
+                "id": "loop-a",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "v0",
+                "v": "v0"
+              },
+              {
+                "id": "e-bc-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-bc-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-cd",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-ad",
+                "type": "edge",
+                "u": "v0",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Khuyên ở đỉnh A được tô nổi; bậc của A bằng 3."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a3|Cạnh song song]] cũng được đếm riêng từng cạnh. Với quy ước đó, mỗi cạnh vẫn góp đúng $2$ vào tổng bậc, nên tổng bậc $= 2m$ như thường."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "e-bc-0",
+                "e-bc-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, -9]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [9, 0]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [0, 9]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [-9, 0]
+              },
+              {
+                "id": "loop-a",
+                "type": "edge",
+                "u": "v0",
+                "v": "v0"
+              },
+              {
+                "id": "e-bc-0",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "multi_index": 0,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-bc-1",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "multi_index": 1,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-cd",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-ad",
+                "type": "edge",
+                "u": "v0",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai cạnh song song được tô hai màu khác nhau."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

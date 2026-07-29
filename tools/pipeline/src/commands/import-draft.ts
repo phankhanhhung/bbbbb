@@ -8,6 +8,7 @@ import {
   type ValidationIssue,
 } from '@combviz/schema';
 import { createChecker } from '@combviz/check';
+import { loadTaxonomy } from '../taxonomy.js';
 import { ENGINE_DSL, ENGINE_FRAGMENTS } from '../engines.js';
 
 /**
@@ -47,7 +48,13 @@ export async function runImportDraft(
 
   const { problem, stripped } = quarantine(parsed);
 
-  const checker = createChecker({ fragments: ENGINE_FRAGMENTS, dsl: ENGINE_DSL });
+  // Cổng draft chạy **đúng** bộ luật của CI, taxonomy bao gồm: một cổng lỏng hơn
+  // CI chỉ dời thời điểm phát hiện lỗi sang lúc muộn hơn và đắt hơn.
+  const checker = createChecker({
+    fragments: ENGINE_FRAGMENTS,
+    dsl: ENGINE_DSL,
+    taxonomy: await loadTaxonomy(options.root),
+  });
   const issues: ValidationIssue[] = checker.check(problem);
 
   const errors = issues.filter((i) => i.severity === 'error').length;

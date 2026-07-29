@@ -88,23 +88,16 @@ export const graphRenderer: EngineRenderer = {
         // cắt nhau, thứ tự file sẽ chôn đúng những cạnh đang mang lập luận.
         [...graph.edges]
           .sort((a, b) => weightOf(a, ctx) - weightOf(b, ctx))
-          .map((edge) => renderEdge(edge, graph, ctx, weight)),
+          .flatMap((edge) => [
+            ...renderEdge(edge, graph, ctx, weight),
+            ...renderArrow(edge, graph, ctx),
+          ]),
       ),
       el(
         'g',
         { class: 'cv-vertices' },
         graph.vertices.flatMap((vertex) => {
-          const nodes: SvgNode[] = [
-            keyed(vertex.id, 'circle', {
-              cx: vertex.x,
-              cy: vertex.y,
-              r: VERTEX_RADIUS,
-              fill: fillForClass(ctx, vertex.colorClass || undefined),
-              stroke: ctx.theme.emphasis.focusHalo,
-              'stroke-width': ctx.theme.stroke.link,
-              ...decorationAttrs(ctx, vertex.id, vertex.emphasis, weight),
-            }),
-          ];
+          const nodes: SvgNode[] = [renderVertexShape(vertex, ctx, weight)];
 
           if (vertex.label && (config.show_labels ?? true)) {
             nodes.push(
@@ -151,33 +144,189 @@ export const graphRenderer: EngineRenderer = {
   },
 };
 
+/**
+ * Một cạnh, cộng vòng halo khi nó được nhấn.
+ *
+ * Halo phải là **một path riêng vẽ phía dưới**, không phải thuộc tính chồng lên
+ * chính cạnh. Với hình có mặt (ô bàn cờ, quân domino) thì màu nằm ở `fill` còn
+ * halo nằm ở `stroke`, hai kênh không đụng nhau. Cạnh đồ thị thì màu **chính là**
+ * `stroke` — nên trước sửa này, một cạnh vừa mang `color_class` vừa mang
+ * `emphasis: "focus"` bị halo xoá mất màu, im lặng và đúng ở chỗ đau nhất: cạnh
+ * đang mang lập luận là cạnh hay được nhấn nhất.
+ */
 function renderEdge(
   edge: Edge,
   graph: GraphModel,
   ctx: RenderContext,
   weight: number,
-): SvgNode {
+): SvgNode[] {
   const u = graph.byId.get(edge.u);
   const v = graph.byId.get(edge.v);
-  if (!u || !v) return el('g', {});
+  if (!u || !v) return [];
 
   const stroke =
     edge.colorClass > 0
       ? fillForClass(ctx, edge.colorClass)
       : ctx.theme.emphasis.focusHalo;
 
-  return keyed(edge.id, 'path', {
-    d: edge.u === edge.v ? loopPath(u.x, u.y, edge.multiIndex) : arcPath(u, v, edge.multiIndex),
-    fill: 'none',
-    stroke,
-    // Cạnh đã tô màu dày hơn chút: nó mang lập luận, nên phải đọc được giữa đám
-    // cạnh chưa xét.
-    'stroke-width':
-      edge.colorClass > 0 ? ctx.theme.stroke.link * 1.6 : ctx.theme.stroke.link,
-    'stroke-linecap': 'round',
-    ...dashAttrs(edge.style),
-    ...decorationAttrs(ctx, edge.id, edge.emphasis, weight),
+  const d =
+    edge.u === edge.v ? loopPath(u.x, u.y, edge.multiIndex) : arcPath(u, v, edge.multiIndex);
+
+  // Cạnh đã tô màu dày hơn chút: nó mang lập luận, nên phải đọc được giữa đám
+  // cạnh chưa xét.
+  const width = edge.colorClass > 0 ? ctx.theme.stroke.link * 1.6 : ctx.theme.stroke.link;
+  const decoration = decorationAttrs(ctx, edge.id, edge.emphasis, weight);
+  const haloStroke = decoration['stroke'];
+
+  const nodes: SvgNode[] = [];
+
+  if (typeof haloStroke === 'string') {
+    nodes.push(
+      keyed(`${edge.id}-halo`, 'path', {
+        d,
+        fill: 'none',
+        stroke: haloStroke,
+        'stroke-width': Number(decoration['stroke-width'] ?? width) + width,
+        'stroke-linecap': 'round',
+      }),
+    );
+  }
+
+  nodes.push(
+    keyed(edge.id, 'path', {
+      d,
+      fill: 'none',
+      stroke,
+      'stroke-width': width,
+      'stroke-linecap': 'round',
+      ...dashAttrs(edge.style),
+      ...dimAttrs(ctx, edge.emphasis),
+    }),
+  );
+
+  return nodes;
+}
+
+/**
+ * `emphasis: "dim"` cho hình dạng lá.
+ *
+ * Trường này là của **mọi** element, mọi engine (`ElementBaseProps`), nhưng board
+ * engine áp nó qua `groupAttrs` trên `<g>` còn graph engine thì không có nhóm —
+ * nên "đẩy ra nền" là một lệnh không ai thi hành. Một scene khai `dim` mà trông
+ * y hệt scene không khai là lời nói dối rẻ tiền nhất mà renderer có thể kể.
+ */
+function dimAttrs(
+  ctx: RenderContext,
+  emphasis: string | undefined,
+): Record<string, string | number> {
+  return emphasis === 'dim' ? { opacity: ctx.theme.emphasis.dimOpacity } : {};
+}
+
+/**
+ * Hình dạng đỉnh (GR-01): tròn, vuông, thoi.
+ *
+ * Trường thứ tư bị bỏ quên. Nó quan trọng hơn vẻ ngoài: trong đồ thị hai phía,
+ * **hình dạng** là kênh phân biệt hai nhóm mà không phụ thuộc màu — đúng thứ
+ * NFR-A1 đòi hỏi, và là kênh duy nhất còn lại khi bài đã dùng hết màu cho việc
+ * khác.
+ */
+function renderVertexShape(
+  vertex: GraphModel['vertices'][number],
+  ctx: RenderContext,
+  weight: number,
+): SvgNode {
+  const common = {
+    fill: fillForClass(ctx, vertex.colorClass || undefined),
+    stroke: ctx.theme.emphasis.focusHalo,
+    'stroke-width': ctx.theme.stroke.link,
+    ...decorationAttrs(ctx, vertex.id, vertex.emphasis, weight),
+    ...dimAttrs(ctx, vertex.emphasis),
+  };
+
+  const shape = vertex.shape;
+
+  if (shape === 'square') {
+    const side = VERTEX_RADIUS * 1.7;
+    return keyed(vertex.id, 'rect', {
+      x: round(vertex.x - side / 2),
+      y: round(vertex.y - side / 2),
+      width: round(side),
+      height: round(side),
+      rx: side * 0.12,
+      ...common,
+    });
+  }
+
+  if (shape === 'diamond') {
+    const r = VERTEX_RADIUS * 1.15;
+    return keyed(vertex.id, 'polygon', {
+      points: [
+        `${round(vertex.x)},${round(vertex.y - r)}`,
+        `${round(vertex.x + r)},${round(vertex.y)}`,
+        `${round(vertex.x)},${round(vertex.y + r)}`,
+        `${round(vertex.x - r)},${round(vertex.y)}`,
+      ].join(' '),
+      ...common,
+    });
+  }
+
+  return keyed(vertex.id, 'circle', {
+    cx: vertex.x,
+    cy: vertex.y,
+    r: VERTEX_RADIUS,
+    ...common,
   });
+}
+
+/**
+ * Mũi tên cho cạnh có hướng (GR-01).
+ *
+ * `directed` có trong schema từ M4 và renderer **chưa bao giờ đọc nó**: một bài
+ * về giải đấu vòng tròn vẽ ra mười đoạn thẳng không đầu không đuôi, trong khi
+ * toàn bộ nội dung bài nằm ở chiều "ai thắng ai". Trường ma thứ ba, cùng họ với
+ * `show_attacks` và nhãn cạnh.
+ *
+ * Vẽ tam giác bằng hình học thay vì `<marker>` của SVG: marker thừa kế màu nét
+ * qua `context-stroke`, mà resvg (D-08, đường raster của REN-02) không hỗ trợ
+ * đầy đủ — nghĩa là mũi tên sẽ có trong browser và biến mất trên OG card. Một
+ * tam giác tự vẽ thì ba đường render đều ra đúng một hình.
+ */
+function renderArrow(edge: Edge, graph: GraphModel, ctx: RenderContext): SvgNode[] {
+  if (!edge.directed || edge.u === edge.v) return [];
+
+  const u = graph.byId.get(edge.u);
+  const v = graph.byId.get(edge.v);
+  if (!u || !v) return [];
+
+  const dx = v.x - u.x;
+  const dy = v.y - u.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const ux = dx / length;
+  const uy = dy / length;
+
+  // Đầu mũi đặt ngay mép vòng tròn đỉnh đích, không đặt ở tâm — đâm vào tâm thì
+  // mũi tên bị chính đỉnh che mất.
+  const tipX = v.x - ux * VERTEX_RADIUS;
+  const tipY = v.y - uy * VERTEX_RADIUS;
+  const size = VERTEX_RADIUS * 0.75;
+  const baseX = tipX - ux * size;
+  const baseY = tipY - uy * size;
+  const halfWidth = size * 0.42;
+
+  const stroke =
+    edge.colorClass > 0 ? fillForClass(ctx, edge.colorClass) : ctx.theme.emphasis.focusHalo;
+
+  return [
+    keyed(`${edge.id}-arrow`, 'polygon', {
+      points: [
+        `${round(tipX)},${round(tipY)}`,
+        `${round(baseX - uy * halfWidth)},${round(baseY + ux * halfWidth)}`,
+        `${round(baseX + uy * halfWidth)},${round(baseY - ux * halfWidth)}`,
+      ].join(' '),
+      fill: stroke,
+      ...(edge.emphasis === 'dim' ? { opacity: ctx.theme.emphasis.dimOpacity } : {}),
+    }),
+  ];
 }
 
 /**

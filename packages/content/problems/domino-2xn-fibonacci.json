@@ -1,0 +1,325 @@
+{
+  "schema_version": "0.1.0",
+  "id": "domino-2xn-fibonacci",
+  "statement": {
+    "vi": "Gọi $f(n)$ là số cách phủ kín bàn $2\\times n$ bằng quân domino. Chứng minh $f(n) = f(n-1) + f(n-2)$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "tiling",
+    "counting"
+  ],
+  "techniques": [
+    "induction",
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "count(cells, c => !covered(c))",
+      "id": "inv-phu",
+      "label": {
+        "vi": "Ô chưa phủ"
+      },
+      "monotone": "non-increasing"
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Xét [[a1|cột cuối cùng]] của bàn. Quân phủ ô trên cùng của cột đó hoặc dựng đứng, hoặc nằm ngang — không còn khả năng nào khác."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-5",
+                "cell-1-5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 6,
+              "rows": 2
+            },
+            "elements": [
+              {
+                "id": "cuoi",
+                "type": "region",
+                "cells": [[0, 5], [1, 5]],
+                "label": "cột cuối"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bàn 2×6 trống, cột cuối được khoanh."
+          },
+          "expects_violation": [
+            "full-cover"
+          ],
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: quân dựng đứng"
+          },
+          "narrative": {
+            "vi": "Trường hợp 1: [[a2|một quân dựng đứng]] phủ trọn cột cuối. Phần còn lại là bàn $2\\times(n-1)$, cho $f(n-1)$ cách."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "d5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 6,
+              "rows": 2
+            },
+            "elements": [
+              {
+                "id": "d0",
+                "type": "tile",
+                "pos": [0, 0],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "d1",
+                "type": "tile",
+                "pos": [0, 1],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "d2",
+                "type": "tile",
+                "pos": [0, 2],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "d3",
+                "type": "tile",
+                "pos": [0, 3],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "d4",
+                "type": "tile",
+                "pos": [0, 4],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "d5",
+                "type": "tile",
+                "pos": [0, 5],
+                "rot": 90,
+                "shape": "domino"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sáu quân domino dựng đứng phủ kín bàn 2×6."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: quân nằm ngang"
+          },
+          "narrative": {
+            "vi": "Trường hợp 2: [[a3|một quân nằm ngang]] ở hàng trên. Khi đó ô dưới nó buộc phải do một quân ngang nữa phủ, và hai quân này chiếm trọn hai cột cuối."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "h0",
+                "h1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 6,
+              "rows": 2
+            },
+            "elements": [
+              {
+                "id": "d0",
+                "type": "tile",
+                "pos": [0, 0],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "d1",
+                "type": "tile",
+                "pos": [0, 1],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "d2",
+                "type": "tile",
+                "pos": [0, 2],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "d3",
+                "type": "tile",
+                "pos": [0, 3],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "h0",
+                "type": "tile",
+                "pos": [0, 4],
+                "rot": 0,
+                "shape": "domino"
+              },
+              {
+                "id": "h1",
+                "type": "tile",
+                "pos": [1, 4],
+                "rot": 0,
+                "shape": "domino"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn quân dựng đứng và hai quân nằm ngang phủ hai cột cuối."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Phần còn lại là bàn $2\\times(n-2)$, cho $f(n-2)$ cách. Hai trường hợp rời nhau và phủ hết, nên [[a4|$f(n) = f(n-1) + f(n-2)$]]."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "d0",
+                "d1",
+                "d2",
+                "d3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 6,
+              "rows": 2
+            },
+            "elements": [
+              {
+                "id": "d0",
+                "type": "tile",
+                "pos": [0, 0],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "d1",
+                "type": "tile",
+                "pos": [0, 1],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "d2",
+                "type": "tile",
+                "pos": [0, 2],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "d3",
+                "type": "tile",
+                "pos": [0, 3],
+                "rot": 90,
+                "shape": "domino"
+              },
+              {
+                "id": "h0",
+                "type": "tile",
+                "pos": [0, 4],
+                "rot": 0,
+                "shape": "domino"
+              },
+              {
+                "id": "h1",
+                "type": "tile",
+                "pos": [1, 4],
+                "rot": 0,
+                "shape": "domino"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng hình, nhấn bốn cột đầu là phần bàn còn lại."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(cells, c => !covered(c)) == 0",
+    "validators": [
+      "full-cover",
+      "tiles-no-overlap"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

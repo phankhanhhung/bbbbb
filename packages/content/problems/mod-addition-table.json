@@ -1,0 +1,451 @@
+{
+  "schema_version": "0.1.0",
+  "id": "mod-addition-table",
+  "statement": {
+    "vi": "Trong bảng cộng theo modulo $5$, chứng minh mỗi giá trị xuất hiện đúng $5$ lần."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "double-counting",
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Lập bảng: ô $(r,c)$ ghi $r + c \\bmod 5$. [[a1|Các ô ghi $0$]] được tô nổi."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-1-4",
+                "cell-2-3",
+                "cell-3-2",
+                "cell-4-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-0-1": {
+                  "glyph": "1"
+                },
+                "cell-0-2": {
+                  "glyph": "2"
+                },
+                "cell-0-3": {
+                  "glyph": "3"
+                },
+                "cell-0-4": {
+                  "glyph": "4"
+                },
+                "cell-1-0": {
+                  "glyph": "1"
+                },
+                "cell-1-1": {
+                  "glyph": "2"
+                },
+                "cell-1-2": {
+                  "glyph": "3"
+                },
+                "cell-1-3": {
+                  "glyph": "4"
+                },
+                "cell-1-4": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-2-0": {
+                  "glyph": "2"
+                },
+                "cell-2-1": {
+                  "glyph": "3"
+                },
+                "cell-2-2": {
+                  "glyph": "4"
+                },
+                "cell-2-3": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-2-4": {
+                  "glyph": "1"
+                },
+                "cell-3-0": {
+                  "glyph": "3"
+                },
+                "cell-3-1": {
+                  "glyph": "4"
+                },
+                "cell-3-2": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-3-3": {
+                  "glyph": "1"
+                },
+                "cell-3-4": {
+                  "glyph": "2"
+                },
+                "cell-4-0": {
+                  "glyph": "4"
+                },
+                "cell-4-1": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-4-2": {
+                  "glyph": "1"
+                },
+                "cell-4-3": {
+                  "glyph": "2"
+                },
+                "cell-4-4": {
+                  "glyph": "3"
+                }
+              },
+              "cols": 5,
+              "rows": 5,
+              "table": {
+                "col_labels": [
+                  "0",
+                  "1",
+                  "2",
+                  "3",
+                  "4"
+                ],
+                "row_labels": [
+                  "0",
+                  "1",
+                  "2",
+                  "3",
+                  "4"
+                ]
+              }
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bảng cộng modulo 5 với các ô giá trị 0 được tô."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Trong [[a2|mỗi hàng]], khi $c$ chạy hết $0..4$ thì $r + c \\bmod 5$ cũng chạy hết $0..4$ — mỗi giá trị đúng một lần."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "cell-2-0",
+                "cell-2-1",
+                "cell-2-2",
+                "cell-2-3",
+                "cell-2-4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-0-1": {
+                  "glyph": "1"
+                },
+                "cell-0-2": {
+                  "glyph": "2"
+                },
+                "cell-0-3": {
+                  "glyph": "3"
+                },
+                "cell-0-4": {
+                  "glyph": "4"
+                },
+                "cell-1-0": {
+                  "glyph": "1"
+                },
+                "cell-1-1": {
+                  "glyph": "2"
+                },
+                "cell-1-2": {
+                  "glyph": "3"
+                },
+                "cell-1-3": {
+                  "glyph": "4"
+                },
+                "cell-1-4": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-2-0": {
+                  "glyph": "2"
+                },
+                "cell-2-1": {
+                  "glyph": "3"
+                },
+                "cell-2-2": {
+                  "glyph": "4"
+                },
+                "cell-2-3": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-2-4": {
+                  "glyph": "1"
+                },
+                "cell-3-0": {
+                  "glyph": "3"
+                },
+                "cell-3-1": {
+                  "glyph": "4"
+                },
+                "cell-3-2": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-3-3": {
+                  "glyph": "1"
+                },
+                "cell-3-4": {
+                  "glyph": "2"
+                },
+                "cell-4-0": {
+                  "glyph": "4"
+                },
+                "cell-4-1": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-4-2": {
+                  "glyph": "1"
+                },
+                "cell-4-3": {
+                  "glyph": "2"
+                },
+                "cell-4-4": {
+                  "glyph": "3"
+                }
+              },
+              "cols": 5,
+              "rows": 5,
+              "table": {
+                "col_labels": [
+                  "0",
+                  "1",
+                  "2",
+                  "3",
+                  "4"
+                ],
+                "row_labels": [
+                  "0",
+                  "1",
+                  "2",
+                  "3",
+                  "4"
+                ]
+              }
+            },
+            "elements": [
+              {
+                "id": "hang2",
+                "type": "region",
+                "emphasis": "focus",
+                "cells": [
+                  [2, 0],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4]
+                ],
+                "label": "hàng r = 2"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một hàng của bảng được khoanh; các giá trị trong hàng là 2, 3, 4, 0, 1."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Có $5$ hàng, mỗi hàng góp đúng một ô cho mỗi giá trị ⇒ [[a3|mỗi giá trị]] xuất hiện đúng $5$ lần. Tổng kiểm: $5 \\times 5 = 25$ ô."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "cell-0-0",
+                "cell-1-4",
+                "cell-2-3",
+                "cell-3-2",
+                "cell-4-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-0-1": {
+                  "glyph": "1"
+                },
+                "cell-0-2": {
+                  "glyph": "2"
+                },
+                "cell-0-3": {
+                  "glyph": "3"
+                },
+                "cell-0-4": {
+                  "glyph": "4"
+                },
+                "cell-1-0": {
+                  "glyph": "1"
+                },
+                "cell-1-1": {
+                  "glyph": "2"
+                },
+                "cell-1-2": {
+                  "glyph": "3"
+                },
+                "cell-1-3": {
+                  "glyph": "4"
+                },
+                "cell-1-4": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-2-0": {
+                  "glyph": "2"
+                },
+                "cell-2-1": {
+                  "glyph": "3"
+                },
+                "cell-2-2": {
+                  "glyph": "4"
+                },
+                "cell-2-3": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-2-4": {
+                  "glyph": "1"
+                },
+                "cell-3-0": {
+                  "glyph": "3"
+                },
+                "cell-3-1": {
+                  "glyph": "4"
+                },
+                "cell-3-2": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-3-3": {
+                  "glyph": "1"
+                },
+                "cell-3-4": {
+                  "glyph": "2"
+                },
+                "cell-4-0": {
+                  "glyph": "4"
+                },
+                "cell-4-1": {
+                  "color_class": 3,
+                  "glyph": "0"
+                },
+                "cell-4-2": {
+                  "glyph": "1"
+                },
+                "cell-4-3": {
+                  "glyph": "2"
+                },
+                "cell-4-4": {
+                  "glyph": "3"
+                }
+              },
+              "cols": 5,
+              "rows": 5,
+              "table": {
+                "col_labels": [
+                  "0",
+                  "1",
+                  "2",
+                  "3",
+                  "4"
+                ],
+                "row_labels": [
+                  "0",
+                  "1",
+                  "2",
+                  "3",
+                  "4"
+                ],
+                "show_sums": true
+              }
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bảng đầy đủ kèm tổng theo hàng và theo cột, mỗi tổng bằng 1."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

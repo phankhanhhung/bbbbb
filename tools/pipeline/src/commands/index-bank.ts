@@ -1,6 +1,7 @@
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { stripAnchorMarkup, toSearchableText, type Problem } from '@combviz/schema';
+import { loadTaxonomy } from '../taxonomy.js';
 
 /**
  * `combviz index` — chỉ mục kho, sinh lúc build (CMS-02).
@@ -54,6 +55,23 @@ export async function runIndex(options: IndexOptions): Promise<number> {
 
   await mkdir(dirname(options.out), { recursive: true });
   await writeFile(options.out, `${JSON.stringify(index, null, 2)}\n`, 'utf8');
+
+  // Studio chạy trong browser nên không đọc được YAML trên đĩa. Xuất controlled
+  // vocabulary ra JSON cạnh chỉ mục để nó chạy **đúng** luật tag mà CI chạy —
+  // nếu không, Studio lại là nơi duy nhất không thấy một lớp kiểm (AUT-04).
+  const taxonomy = await loadTaxonomy(options.root);
+  await writeFile(
+    join(dirname(options.out), 'taxonomy.json'),
+    `${JSON.stringify(
+      {
+        topics: [...taxonomy.topics.values()],
+        techniques: [...taxonomy.techniques.values()],
+      },
+      null,
+      2,
+    )}\n`,
+    'utf8',
+  );
 
   console.log(`${index.length} bài published → ${options.out}`);
   return index.length;

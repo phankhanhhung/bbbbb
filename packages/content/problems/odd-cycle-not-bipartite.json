@@ -1,0 +1,351 @@
+{
+  "schema_version": "0.1.0",
+  "id": "odd-cycle-not-bipartite",
+  "statement": {
+    "vi": "Chứng minh đồ thị chứa một chu trình độ dài lẻ thì không thể chia đỉnh thành hai nhóm sao cho mọi cạnh nối hai nhóm khác nhau."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "graph-basics",
+    "graph-coloring"
+  ],
+  "techniques": [
+    "contradiction",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giả sử chia được thành hai nhóm. Đi dọc [[a1|chu trình]], mỗi cạnh bắt ta đổi nhóm."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e01",
+                "e12",
+                "e23",
+                "e34",
+                "e40"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [9.51, -3.09]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [5.88, 8.09]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-5.88, 8.09]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-9.51, -3.09]
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e40",
+                "type": "edge",
+                "u": "v4",
+                "v": "v0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Chu trình năm đỉnh."
+          },
+          "expects_violation": [
+            "bipartite"
+          ],
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tô hai nhóm bằng hai màu. Đi từ đỉnh $1$: màu đổi sau mỗi bước, nên sau [[a2|một số chẵn bước]] ta về đúng màu ban đầu."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "v0",
+                "v1",
+                "v2",
+                "v3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "2",
+                "pos": [9.51, -3.09]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "3",
+                "pos": [5.88, 8.09]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "4",
+                "pos": [-5.88, 8.09]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-9.51, -3.09]
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e40",
+                "type": "edge",
+                "style": "dashed",
+                "u": "v4",
+                "v": "v0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn đỉnh đầu tô xen kẽ hai màu; cạnh khép vòng vẽ nét đứt."
+          },
+          "expects_violation": [
+            "bipartite"
+          ],
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "contradiction",
+          "narrative": {
+            "vi": "Chu trình có $5$ cạnh — số lẻ — nên khi khép vòng, [[a3|cạnh cuối]] nối hai đỉnh **cùng** màu. Mâu thuẫn với giả thiết."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "e40"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "2",
+                "pos": [9.51, -3.09]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "3",
+                "pos": [5.88, 8.09]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "4",
+                "pos": [-5.88, 8.09]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "5",
+                "pos": [-9.51, -3.09]
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e40",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "v4",
+                "v": "v0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cạnh khép vòng nối hai đỉnh cùng màu, được làm nổi."
+          },
+          "expects_violation": [
+            "bipartite"
+          ],
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(vertices, v => v.color_class == 0) == 0",
+    "validators": [
+      "bipartite"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

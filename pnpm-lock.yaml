@@ -90,6 +90,9 @@ importers:
       '@combviz/check':
         specifier: workspace:*
         version: link:../../packages/check
+      '@combviz/content':
+        specifier: workspace:*
+        version: link:../../packages/content
       '@combviz/dsl':
         specifier: workspace:*
         version: link:../../packages/dsl

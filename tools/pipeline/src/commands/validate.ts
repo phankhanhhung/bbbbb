@@ -3,7 +3,7 @@ import { join, relative } from 'node:path';
 import { formatIssue, type ValidationIssue } from '@combviz/schema';
 import { createChecker } from '@combviz/check';
 import { ENGINE_DSL, ENGINE_FRAGMENTS } from '../engines.js';
-import { checkTaxonomy, loadTaxonomy } from '../taxonomy.js';
+import { loadTaxonomy } from '../taxonomy.js';
 
 export interface ValidateOptions {
   /** Thư mục content (chứa `problems/` và `taxonomy/`). */
@@ -19,8 +19,12 @@ export interface ValidateReport {
 }
 
 export async function runValidate(options: ValidateOptions): Promise<ValidateReport> {
-  const validator = createChecker({ fragments: ENGINE_FRAGMENTS, dsl: ENGINE_DSL });
   const taxonomy = await loadTaxonomy(options.root);
+  const validator = createChecker({
+    fragments: ENGINE_FRAGMENTS,
+    dsl: ENGINE_DSL,
+    taxonomy,
+  });
   const files = await findProblemFiles(join(options.root, 'problems'));
 
   let errors = 0;
@@ -48,14 +52,9 @@ export async function runValidate(options: ValidateOptions): Promise<ValidateRep
       continue;
     }
 
-    const found = validator.check(parsed, raw);
-    issues.push(...found);
-
-    // Taxonomy nằm ngoài `@combviz/check` vì nó cần đọc file YAML trong kho —
-    // Studio nạp vocabulary theo đường khác.
-    if (!found.some((i) => i.code.startsWith('schema/'))) {
-      issues.push(...checkTaxonomy(parsed as never, taxonomy));
-    }
+    // Một lần gọi, đủ mọi lớp — kể cả taxonomy, thứ trước đây chỉ lệnh này chạy
+    // còn Studio và `import-draft` thì không (AUT-04).
+    issues.push(...validator.check(parsed, raw));
 
     const fileErrors = issues.filter((i) => i.severity === 'error').length;
     const fileWarnings = issues.filter((i) => i.severity === 'warning').length;

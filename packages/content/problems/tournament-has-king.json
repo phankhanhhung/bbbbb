@@ -1,0 +1,738 @@
+{
+  "schema_version": "0.1.0",
+  "id": "tournament-has-king",
+  "statement": {
+    "vi": "Trong một giải đấu vòng tròn (hai đấu thủ bất kỳ gặp nhau đúng một lần, không có hoà), chứng minh luôn tồn tại một đấu thủ $V$ sao cho mọi đấu thủ khác hoặc thua trực tiếp $V$, hoặc thua một người mà $V$ đã thắng."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "graph-basics"
+  ],
+  "techniques": [
+    "extremal",
+    "contradiction"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vẽ mỗi đấu thủ thành một đỉnh và mỗi trận thành [[a1|một mũi tên]] từ người thắng sang người thua."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e01",
+                "e02",
+                "e12",
+                "e13",
+                "e23",
+                "e24",
+                "e34",
+                "e30",
+                "e40",
+                "e41"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [9.51, -3.09]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [5.88, 8.09]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [-5.88, 8.09]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [-9.51, -3.09]
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "directed": true,
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e02",
+                "type": "edge",
+                "directed": true,
+                "u": "v0",
+                "v": "v2"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e13",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e23",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e24",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e34",
+                "type": "edge",
+                "directed": true,
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e30",
+                "type": "edge",
+                "directed": true,
+                "u": "v3",
+                "v": "v0"
+              },
+              {
+                "id": "e40",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v0"
+              },
+              {
+                "id": "e41",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đồ thị năm đỉnh với mười cạnh có hướng."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chọn [[a2|$V$ là người thắng nhiều trận nhất]]. Ta chứng minh $V$ chính là đấu thủ cần tìm."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "v0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [9.51, -3.09]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [5.88, 8.09]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [-5.88, 8.09]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [-9.51, -3.09]
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e02",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v0",
+                "v": "v2"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e13",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e23",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e24",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e34",
+                "type": "edge",
+                "directed": true,
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e30",
+                "type": "edge",
+                "directed": true,
+                "u": "v3",
+                "v": "v0"
+              },
+              {
+                "id": "e40",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v0"
+              },
+              {
+                "id": "e41",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đỉnh A được làm nổi cùng các mũi tên đi ra từ nó."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: X thua trực tiếp V"
+          },
+          "narrative": {
+            "vi": "Trường hợp 1: [[a3|đối thủ $X$ thua trực tiếp $V$]]. Không có gì phải chứng minh."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "e01",
+                "e02"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [9.51, -3.09]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [5.88, 8.09]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [-5.88, 8.09]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [-9.51, -3.09]
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e02",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v0",
+                "v": "v2"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e13",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e23",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e24",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e34",
+                "type": "edge",
+                "directed": true,
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e30",
+                "type": "edge",
+                "directed": true,
+                "u": "v3",
+                "v": "v0"
+              },
+              {
+                "id": "e40",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v0"
+              },
+              {
+                "id": "e41",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Các mũi tên từ A tới những người A thắng."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: X thắng V"
+          },
+          "narrative": {
+            "vi": "Trường hợp 2: $X$ **thắng** $V$. Nếu $X$ cũng thắng mọi người mà $V$ đã thắng thì [[a4|$X$]] thắng nhiều trận hơn $V$ — trái với cách chọn $V$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "v3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "emphasis": "dim",
+                "label": "B",
+                "pos": [9.51, -3.09]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "emphasis": "dim",
+                "label": "C",
+                "pos": [5.88, 8.09]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "D",
+                "pos": [-5.88, 8.09]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [-9.51, -3.09]
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "directed": true,
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e02",
+                "type": "edge",
+                "directed": true,
+                "u": "v0",
+                "v": "v2"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e13",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e23",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e24",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e34",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e30",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v3",
+                "v": "v0"
+              },
+              {
+                "id": "e40",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v0"
+              },
+              {
+                "id": "e41",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đỉnh D được làm nổi như đối thủ giả định thắng A."
+          },
+          "verified": false
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy phải có [[a5|một người $Y$]] mà $V$ thắng và $Y$ thắng $X$ — đúng điều cần chứng minh. Cả hai trường hợp đều xong."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "v2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [9.51, -3.09]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [5.88, 8.09]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [-5.88, 8.09]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [-9.51, -3.09]
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e02",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v0",
+                "v": "v2"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e13",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e23",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e24",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e34",
+                "type": "edge",
+                "directed": true,
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e30",
+                "type": "edge",
+                "directed": true,
+                "u": "v3",
+                "v": "v0"
+              },
+              {
+                "id": "e40",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v0"
+              },
+              {
+                "id": "e41",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đường A → C → D minh hoạ trường hợp thứ hai."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "m == 10",
+    "validators": [
+      "simple-graph"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +24,10 @@ function loadProblem(name: string): Problem {
 async function indexOf(problems: readonly Problem[]): Promise<IndexEntry[]> {
   const root = await mkdtemp(join(tmpdir(), 'combviz-index-'));
   await mkdir(join(root, 'problems'), { recursive: true });
+  // `index` xuất luôn `taxonomy.json` cho Studio, nên content root giả cũng phải
+  // có controlled vocabulary thật — thiếu là lệnh nổ, và nổ ở đây là đúng: một
+  // chỉ mục sinh ra mà Studio mất luật tag thì tệ hơn nhiều so với một lỗi build.
+  await cp(join(CONTENT, 'taxonomy'), join(root, 'taxonomy'), { recursive: true });
   for (const problem of problems) {
     await writeFile(
       join(root, 'problems', `${problem.id}.json`),

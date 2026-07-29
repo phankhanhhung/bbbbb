@@ -1,0 +1,337 @@
+{
+  "schema_version": "0.1.0",
+  "id": "kings-domination-8x8",
+  "statement": {
+    "vi": "Cần ít nhất bao nhiêu quân vua để mọi ô của bàn $8\\times8$ đều bị chiếm hoặc bị khống chế?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "pieces"
+  ],
+  "techniques": [
+    "extremal",
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a1|Một quân vua]] khống chế ô nó đứng cùng $8$ ô quanh — tức là trọn một khối $3\\times3$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "k"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "k",
+                "type": "piece",
+                "emphasis": "focus",
+                "kind": "king",
+                "pos": [3, 3],
+                "show_attacks": true
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một quân vua giữa bàn với tám ô quanh nó được đánh dấu."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chia bàn thành [[a2|chín vùng]]: ba dải hàng $3, 3, 2$ nhân ba dải cột như vậy. Mỗi vùng cần ít nhất một quân, nên cần ít nhất $9$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "z00",
+                "z01",
+                "z02",
+                "z10",
+                "z11",
+                "z12",
+                "z20",
+                "z21",
+                "z22"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "z00",
+                "type": "region",
+                "cells": [
+                  [0, 0],
+                  [0, 1],
+                  [0, 2],
+                  [1, 0],
+                  [1, 1],
+                  [1, 2],
+                  [2, 0],
+                  [2, 1],
+                  [2, 2]
+                ]
+              },
+              {
+                "id": "z01",
+                "type": "region",
+                "cells": [
+                  [0, 3],
+                  [0, 4],
+                  [0, 5],
+                  [1, 3],
+                  [1, 4],
+                  [1, 5],
+                  [2, 3],
+                  [2, 4],
+                  [2, 5]
+                ]
+              },
+              {
+                "id": "z02",
+                "type": "region",
+                "cells": [
+                  [0, 6],
+                  [0, 7],
+                  [1, 6],
+                  [1, 7],
+                  [2, 6],
+                  [2, 7]
+                ]
+              },
+              {
+                "id": "z10",
+                "type": "region",
+                "cells": [
+                  [3, 0],
+                  [3, 1],
+                  [3, 2],
+                  [4, 0],
+                  [4, 1],
+                  [4, 2],
+                  [5, 0],
+                  [5, 1],
+                  [5, 2]
+                ]
+              },
+              {
+                "id": "z11",
+                "type": "region",
+                "cells": [
+                  [3, 3],
+                  [3, 4],
+                  [3, 5],
+                  [4, 3],
+                  [4, 4],
+                  [4, 5],
+                  [5, 3],
+                  [5, 4],
+                  [5, 5]
+                ]
+              },
+              {
+                "id": "z12",
+                "type": "region",
+                "cells": [
+                  [3, 6],
+                  [3, 7],
+                  [4, 6],
+                  [4, 7],
+                  [5, 6],
+                  [5, 7]
+                ]
+              },
+              {
+                "id": "z20",
+                "type": "region",
+                "cells": [
+                  [6, 0],
+                  [6, 1],
+                  [6, 2],
+                  [7, 0],
+                  [7, 1],
+                  [7, 2]
+                ]
+              },
+              {
+                "id": "z21",
+                "type": "region",
+                "cells": [
+                  [6, 3],
+                  [6, 4],
+                  [6, 5],
+                  [7, 3],
+                  [7, 4],
+                  [7, 5]
+                ]
+              },
+              {
+                "id": "z22",
+                "type": "region",
+                "cells": [[6, 6], [6, 7], [7, 6], [7, 7]]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bàn chia thành chín vùng bằng viền đậm."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Và $9$ là đủ: đặt [[a3|mỗi quân vào giữa một vùng]] thì cả bàn bị phủ. Vậy đáp số là $9$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "k00",
+                "k01",
+                "k02",
+                "k10",
+                "k11",
+                "k12",
+                "k20",
+                "k21",
+                "k22"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "k00",
+                "type": "piece",
+                "kind": "king",
+                "pos": [1, 1],
+                "show_attacks": true
+              },
+              {
+                "id": "k01",
+                "type": "piece",
+                "kind": "king",
+                "pos": [1, 4],
+                "show_attacks": true
+              },
+              {
+                "id": "k02",
+                "type": "piece",
+                "kind": "king",
+                "pos": [1, 6],
+                "show_attacks": true
+              },
+              {
+                "id": "k10",
+                "type": "piece",
+                "kind": "king",
+                "pos": [4, 1],
+                "show_attacks": true
+              },
+              {
+                "id": "k11",
+                "type": "piece",
+                "kind": "king",
+                "pos": [4, 4],
+                "show_attacks": true
+              },
+              {
+                "id": "k12",
+                "type": "piece",
+                "kind": "king",
+                "pos": [4, 6],
+                "show_attacks": true
+              },
+              {
+                "id": "k20",
+                "type": "piece",
+                "kind": "king",
+                "pos": [6, 1],
+                "show_attacks": true
+              },
+              {
+                "id": "k21",
+                "type": "piece",
+                "kind": "king",
+                "pos": [6, 4],
+                "show_attacks": true
+              },
+              {
+                "id": "k22",
+                "type": "piece",
+                "kind": "king",
+                "pos": [6, 6],
+                "show_attacks": true
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Chín quân vua rải đều, mọi ô bàn đều bị khống chế."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(pieces) >= 9",
+    "validators": []
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

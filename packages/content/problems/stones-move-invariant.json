@@ -1,0 +1,222 @@
+{
+  "schema_version": "0.1.0",
+  "id": "stones-move-invariant",
+  "statement": {
+    "vi": "Ba đống sỏi có $5$, $8$ và $11$ viên. Mỗi bước lấy một viên từ một đống bỏ sang đống khác. Hỏi có thể làm cho ba đống bằng nhau không?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "sequences"
+  ],
+  "techniques": [
+    "invariant"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "total",
+      "id": "inv-tong",
+      "label": {
+        "vi": "Tổng số sỏi"
+      }
+    },
+    {
+      "expr": "max(items, x => x.value) - min(items, x => x.value)",
+      "id": "inv-lech",
+      "label": {
+        "vi": "Đống lớn nhất − nhỏ nhất"
+      },
+      "monotone": "non-increasing"
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tổng số sỏi là [[a1|$5 + 8 + 11 = 24$]], và mỗi bước chỉ chuyển sỏi chứ không thêm bớt — nên tổng luôn là $24$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Ba đống ban đầu",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 5
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 8
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 11
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba cột sỏi cao 5, 8, 11 viên, tổng 24."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thử chuyển một viên từ đống lớn nhất sang [[a2|đống nhỏ nhất]]: $6, 8, 10$. Tổng vẫn $24$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "i0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Sau một lần chuyển",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "color_class": 3,
+                "pos": 0,
+                "value": 6
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 8
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "color_class": 3,
+                "pos": 2,
+                "value": 10
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba cột 6, 8, 10; hai cột vừa đổi được tô nổi."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ba đống bằng nhau nghĩa là mỗi đống $24 / 3 = 8$ viên — [[a3|chia hết]], nên không có gì cản. Chuyển dần là tới."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Đích: 8 + 8 + 8",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "color_class": 4,
+                "pos": 0,
+                "value": 8
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "color_class": 4,
+                "pos": 1,
+                "value": 8
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "color_class": 4,
+                "pos": 2,
+                "value": 8
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba cột bằng nhau, mỗi cột tám viên."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "max(items, x => x.value) - min(items, x => x.value) == 0",
+    "validators": [
+      "values-non-negative",
+      "total:24"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

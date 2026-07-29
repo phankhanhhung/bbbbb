@@ -1,0 +1,427 @@
+{
+  "schema_version": "0.1.0",
+  "id": "hall-matching-three",
+  "statement": {
+    "vi": "Ba bạn $A, B, C$ đăng ký ba suất học bổng $1, 2, 3$; mỗi bạn chỉ nhận được suất mình đủ điều kiện. Chứng minh nếu cứ $k$ bạn bất kỳ cùng đủ điều kiện cho ít nhất $k$ suất thì luôn chia được sao cho mỗi bạn một suất."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "matching",
+    "graph-basics"
+  ],
+  "techniques": [
+    "extremal",
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vẽ đồ thị hai phía: [[a1|bạn ở cột trái]], suất ở cột phải, nối khi bạn đó đủ điều kiện."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a0",
+                "a1",
+                "a2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 12,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "a0",
+                "type": "vertex",
+                "label": "A",
+                "pos": [-12, -10],
+                "shape": "circle"
+              },
+              {
+                "id": "a1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [-12, 0],
+                "shape": "circle"
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [-12, 10],
+                "shape": "circle"
+              },
+              {
+                "id": "b0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [12, -10],
+                "shape": "square"
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [12, 0],
+                "shape": "square"
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [12, 10],
+                "shape": "square"
+              },
+              {
+                "id": "e00",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a0",
+                "v": "b0"
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a0",
+                "v": "b1"
+              },
+              {
+                "id": "e11",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a1",
+                "v": "b1"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a1",
+                "v": "b2"
+              },
+              {
+                "id": "e20",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a2",
+                "v": "b0"
+              },
+              {
+                "id": "e22",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a2",
+                "v": "b2"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đồ thị hai phía: ba đỉnh tròn bên trái, ba đỉnh vuông bên phải, các cạnh nét đứt."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: mọi nhóm đều dư suất"
+          },
+          "narrative": {
+            "vi": "Trường hợp 1: mọi nhóm $k$ bạn ($k < 3$) cùng đủ điều kiện cho **nhiều hơn** $k$ suất. Khi đó ghép bừa một bạn rồi bỏ đi, điều kiện vẫn còn đúng — [[a2|quy nạp]] xong."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "a0",
+                "b0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 12,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "a0",
+                "type": "vertex",
+                "label": "A",
+                "pos": [-12, -10],
+                "shape": "circle"
+              },
+              {
+                "id": "a1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [-12, 0],
+                "shape": "circle"
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [-12, 10],
+                "shape": "circle"
+              },
+              {
+                "id": "b0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [12, -10],
+                "shape": "square"
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [12, 0],
+                "shape": "square"
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [12, 10],
+                "shape": "square"
+              },
+              {
+                "id": "e00",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "a0",
+                "v": "b0"
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "emphasis": "dim",
+                "style": "dashed",
+                "u": "a0",
+                "v": "b1"
+              },
+              {
+                "id": "e11",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "a1",
+                "v": "b1"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "emphasis": "dim",
+                "style": "dashed",
+                "u": "a1",
+                "v": "b2"
+              },
+              {
+                "id": "e20",
+                "type": "edge",
+                "emphasis": "dim",
+                "style": "dashed",
+                "u": "a2",
+                "v": "b0"
+              },
+              {
+                "id": "e22",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "a2",
+                "v": "b2"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba cạnh được chọn làm cặp ghép, tô đậm."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: có nhóm vừa khít"
+          },
+          "narrative": {
+            "vi": "Trường hợp 2: có [[a3|một nhóm $k$ bạn]] đủ điều kiện cho **đúng** $k$ suất. Nhóm đó phải dùng trọn $k$ suất ấy, nên tách riêng và xử lý hai phần độc lập."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "a0",
+                "a2",
+                "b0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 12,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "a0",
+                "type": "vertex",
+                "label": "A",
+                "pos": [-12, -10],
+                "shape": "circle"
+              },
+              {
+                "id": "a1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [-12, 0],
+                "shape": "circle"
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [-12, 10],
+                "shape": "circle"
+              },
+              {
+                "id": "b0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [12, -10],
+                "shape": "square"
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [12, 0],
+                "shape": "square"
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [12, 10],
+                "shape": "square"
+              },
+              {
+                "id": "e00",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a0",
+                "v": "b0"
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a0",
+                "v": "b1"
+              },
+              {
+                "id": "e11",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a1",
+                "v": "b1"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a1",
+                "v": "b2"
+              },
+              {
+                "id": "e20",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a2",
+                "v": "b0"
+              },
+              {
+                "id": "e22",
+                "type": "edge",
+                "style": "dashed",
+                "u": "a2",
+                "v": "b2"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một nhóm bạn và các suất tương ứng của họ."
+          },
+          "verified": false
+        },
+        {
+          "id": "m1",
+          "parent": "s2",
+          "edge_type": "merge_ref",
+          "merge_target": "s1",
+          "narrative": {
+            "vi": "Cả hai nhánh đều quy về bài toán nhỏ hơn."
+          },
+          "anchors": {},
+          "alt_text": {
+            "vi": "Hợp nhất hai trường hợp."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "m == 6",
+    "validators": [
+      "simple-graph",
+      "bipartite"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

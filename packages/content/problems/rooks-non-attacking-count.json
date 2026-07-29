@@ -1,0 +1,224 @@
+{
+  "schema_version": "0.1.0",
+  "id": "rooks-non-attacking-count",
+  "statement": {
+    "vi": "Trên bàn $4\\times4$, có bao nhiêu cách đặt $4$ quân xe sao cho không quân nào ăn quân nào?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "pieces",
+    "counting"
+  ],
+  "techniques": [
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Quân xe khống chế [[a1|cả hàng và cả cột]] của nó. Hai quân ăn nhau khi cùng hàng hoặc cùng cột."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "r0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "r0",
+                "type": "piece",
+                "emphasis": "focus",
+                "kind": "rook",
+                "pos": [1, 1],
+                "show_attacks": true
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một quân xe với hàng và cột nó khống chế được đánh dấu."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bốn quân, bốn hàng ⇒ mỗi hàng đúng một quân. [[a2|Quân ở hàng đầu]] có $4$ cột để chọn."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "r0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "r0",
+                "type": "piece",
+                "emphasis": "focus",
+                "kind": "rook",
+                "pos": [0, 2],
+                "show_attacks": true
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Quân xe ở hàng đầu, cột thứ ba."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chọn xong hàng đầu thì [[a3|quân hàng thứ hai]] còn $3$ cột, hàng ba còn $2$, hàng cuối còn $1$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "r1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "r0",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [0, 2]
+              },
+              {
+                "id": "r1",
+                "type": "piece",
+                "emphasis": "focus",
+                "kind": "rook",
+                "pos": [1, 0],
+                "show_attacks": true
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai quân xe, quân thứ hai ở cột khác cột quân thứ nhất."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy số cách là $4 \\times 3 \\times 2 \\times 1 = 24$ — đúng bằng số [[a4|hoán vị]] của bốn cột."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "r0",
+                "r1",
+                "r2",
+                "r3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "r0",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [0, 2]
+              },
+              {
+                "id": "r1",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [1, 0]
+              },
+              {
+                "id": "r2",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [2, 3]
+              },
+              {
+                "id": "r3",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [3, 1]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn quân xe, mỗi hàng và mỗi cột đúng một quân."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(pieces) >= 4",
+    "validators": [
+      "no-attacks"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

@@ -1,0 +1,755 @@
+{
+  "schema_version": "0.1.0",
+  "id": "sum-first-n-two-ways",
+  "statement": {
+    "vi": "Tính $1 + 2 + \\cdots + n$. Chứng minh tổng bằng $\\dfrac{n(n+1)}{2}$ bằng **hai** cách khác nhau."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; giai thoại Gauss. Minh hoạ hai lời giải song song cho cùng một bài."
+    }
+  },
+  "topics": [
+    "counting",
+    "sequences"
+  ],
+  "techniques": [
+    "double-counting",
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "sequence",
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol-ghep-cap",
+      "label": {
+        "vi": "Cách 1 — ghép cặp đầu cuối"
+      },
+      "steps": [
+        {
+          "id": "a0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Viết dãy [[a1|$1$ tới $6$]] rồi ghép đầu với cuối: $1+6$, $2+5$, $3+4$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3",
+                "i4",
+                "i5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "1 + 2 + … + 6",
+              "mode": "sequence",
+              "show_index": true,
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 2
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 3
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 4
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "pos": 4,
+                "value": 5
+              },
+              {
+                "id": "i5",
+                "type": "item",
+                "pos": 5,
+                "value": 6
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sáu ô ghi 1 đến 6, kèm tổng."
+          },
+          "verified": false
+        },
+        {
+          "id": "a1",
+          "parent": "a0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mỗi cặp có tổng $7$, và có [[a2|đúng $3$ cặp]]. Vậy tổng bằng $3 \\times 7 = 21$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "i0",
+                "i5",
+                "i1",
+                "i4",
+                "i2",
+                "i3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Ba cặp, mỗi cặp tổng 7",
+              "mode": "sequence",
+              "show_index": true,
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "color_class": 3,
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "color_class": 4,
+                "pos": 1,
+                "value": 2
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "color_class": 5,
+                "pos": 2,
+                "value": 3
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "color_class": 5,
+                "pos": 3,
+                "value": 4
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "color_class": 4,
+                "pos": 4,
+                "value": 5
+              },
+              {
+                "id": "i5",
+                "type": "item",
+                "color_class": 3,
+                "pos": 5,
+                "value": 6
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sáu ô tô thành ba cặp màu, mỗi cặp tổng bằng 7."
+          },
+          "verified": false
+        },
+        {
+          "id": "a2",
+          "parent": "a1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Với $n$ bất kỳ, cách ghép này cho $\\frac{n}{2}$ cặp, [[a3|mỗi cặp tổng $n+1$]] — ra công thức $\\frac{n(n+1)}{2}$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "i0",
+                "i5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Cặp đầu–cuối: 1 + 6 = 7",
+              "mode": "sequence",
+              "show_index": true,
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "color_class": 3,
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 2
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 3
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 4
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "pos": 4,
+                "value": 5
+              },
+              {
+                "id": "i5",
+                "type": "item",
+                "color_class": 3,
+                "pos": 5,
+                "value": 6
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cặp ô đầu và cuối được tô nổi."
+          },
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "sol-bac-thang",
+      "label": {
+        "vi": "Cách 2 — hai bậc thang thành hình chữ nhật"
+      },
+      "steps": [
+        {
+          "id": "b0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Xếp $1$ ô, rồi $2$ ô, rồi $3$ ô… thành một [[a4|bậc thang]]. Số ô của bậc thang chính là tổng cần tính."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "cell-0-0",
+                "cell-1-0",
+                "cell-2-0",
+                "cell-3-0",
+                "cell-4-0",
+                "cell-5-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1
+                },
+                "cell-1-0": {
+                  "color_class": 1
+                },
+                "cell-1-1": {
+                  "color_class": 1
+                },
+                "cell-2-0": {
+                  "color_class": 1
+                },
+                "cell-2-1": {
+                  "color_class": 1
+                },
+                "cell-2-2": {
+                  "color_class": 1
+                },
+                "cell-3-0": {
+                  "color_class": 1
+                },
+                "cell-3-1": {
+                  "color_class": 1
+                },
+                "cell-3-2": {
+                  "color_class": 1
+                },
+                "cell-3-3": {
+                  "color_class": 1
+                },
+                "cell-4-0": {
+                  "color_class": 1
+                },
+                "cell-4-1": {
+                  "color_class": 1
+                },
+                "cell-4-2": {
+                  "color_class": 1
+                },
+                "cell-4-3": {
+                  "color_class": 1
+                },
+                "cell-4-4": {
+                  "color_class": 1
+                },
+                "cell-5-0": {
+                  "color_class": 1
+                },
+                "cell-5-1": {
+                  "color_class": 1
+                },
+                "cell-5-2": {
+                  "color_class": 1
+                },
+                "cell-5-3": {
+                  "color_class": 1
+                },
+                "cell-5-4": {
+                  "color_class": 1
+                },
+                "cell-5-5": {
+                  "color_class": 1
+                }
+              },
+              "cols": 7,
+              "rows": 6
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bậc thang gồm 21 ô tô màu."
+          },
+          "verified": false
+        },
+        {
+          "id": "b1",
+          "parent": "b0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Lấy **hai** bậc thang úp vào nhau thì được [[a5|hình chữ nhật $6 \\times 7$]]."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-1",
+                "cell-0-2",
+                "cell-0-3",
+                "cell-0-4",
+                "cell-0-5",
+                "cell-0-6",
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2",
+                "cell-1-3",
+                "cell-1-4",
+                "cell-1-5",
+                "cell-1-6",
+                "cell-2-0",
+                "cell-2-1",
+                "cell-2-2",
+                "cell-2-3",
+                "cell-2-4",
+                "cell-2-5",
+                "cell-2-6",
+                "cell-3-0",
+                "cell-3-1",
+                "cell-3-2",
+                "cell-3-3",
+                "cell-3-4",
+                "cell-3-5",
+                "cell-3-6",
+                "cell-4-0",
+                "cell-4-1",
+                "cell-4-2",
+                "cell-4-3",
+                "cell-4-4",
+                "cell-4-5",
+                "cell-4-6",
+                "cell-5-0",
+                "cell-5-1",
+                "cell-5-2",
+                "cell-5-3",
+                "cell-5-4",
+                "cell-5-5",
+                "cell-5-6"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1
+                },
+                "cell-0-1": {
+                  "color_class": 2
+                },
+                "cell-0-2": {
+                  "color_class": 2
+                },
+                "cell-0-3": {
+                  "color_class": 2
+                },
+                "cell-0-4": {
+                  "color_class": 2
+                },
+                "cell-0-5": {
+                  "color_class": 2
+                },
+                "cell-0-6": {
+                  "color_class": 2
+                },
+                "cell-1-0": {
+                  "color_class": 1
+                },
+                "cell-1-1": {
+                  "color_class": 1
+                },
+                "cell-1-2": {
+                  "color_class": 2
+                },
+                "cell-1-3": {
+                  "color_class": 2
+                },
+                "cell-1-4": {
+                  "color_class": 2
+                },
+                "cell-1-5": {
+                  "color_class": 2
+                },
+                "cell-1-6": {
+                  "color_class": 2
+                },
+                "cell-2-0": {
+                  "color_class": 1
+                },
+                "cell-2-1": {
+                  "color_class": 1
+                },
+                "cell-2-2": {
+                  "color_class": 1
+                },
+                "cell-2-3": {
+                  "color_class": 2
+                },
+                "cell-2-4": {
+                  "color_class": 2
+                },
+                "cell-2-5": {
+                  "color_class": 2
+                },
+                "cell-2-6": {
+                  "color_class": 2
+                },
+                "cell-3-0": {
+                  "color_class": 1
+                },
+                "cell-3-1": {
+                  "color_class": 1
+                },
+                "cell-3-2": {
+                  "color_class": 1
+                },
+                "cell-3-3": {
+                  "color_class": 1
+                },
+                "cell-3-4": {
+                  "color_class": 2
+                },
+                "cell-3-5": {
+                  "color_class": 2
+                },
+                "cell-3-6": {
+                  "color_class": 2
+                },
+                "cell-4-0": {
+                  "color_class": 1
+                },
+                "cell-4-1": {
+                  "color_class": 1
+                },
+                "cell-4-2": {
+                  "color_class": 1
+                },
+                "cell-4-3": {
+                  "color_class": 1
+                },
+                "cell-4-4": {
+                  "color_class": 1
+                },
+                "cell-4-5": {
+                  "color_class": 2
+                },
+                "cell-4-6": {
+                  "color_class": 2
+                },
+                "cell-5-0": {
+                  "color_class": 1
+                },
+                "cell-5-1": {
+                  "color_class": 1
+                },
+                "cell-5-2": {
+                  "color_class": 1
+                },
+                "cell-5-3": {
+                  "color_class": 1
+                },
+                "cell-5-4": {
+                  "color_class": 1
+                },
+                "cell-5-5": {
+                  "color_class": 1
+                },
+                "cell-5-6": {
+                  "color_class": 2
+                }
+              },
+              "cols": 7,
+              "rows": 6
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai bậc thang hai màu ghép thành hình chữ nhật 6×7."
+          },
+          "verified": false
+        },
+        {
+          "id": "b2",
+          "parent": "b1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hình chữ nhật có $6 \\times 7 = 42$ ô, mà nó là [[a6|hai lần]] bậc thang. Vậy tổng bằng $42 / 2 = 21$."
+          },
+          "anchors": {
+            "a6": {
+              "ids": [
+                "cell-0-0",
+                "cell-5-5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1
+                },
+                "cell-0-1": {
+                  "color_class": 2
+                },
+                "cell-0-2": {
+                  "color_class": 2
+                },
+                "cell-0-3": {
+                  "color_class": 2
+                },
+                "cell-0-4": {
+                  "color_class": 2
+                },
+                "cell-0-5": {
+                  "color_class": 2
+                },
+                "cell-0-6": {
+                  "color_class": 2
+                },
+                "cell-1-0": {
+                  "color_class": 1
+                },
+                "cell-1-1": {
+                  "color_class": 1
+                },
+                "cell-1-2": {
+                  "color_class": 2
+                },
+                "cell-1-3": {
+                  "color_class": 2
+                },
+                "cell-1-4": {
+                  "color_class": 2
+                },
+                "cell-1-5": {
+                  "color_class": 2
+                },
+                "cell-1-6": {
+                  "color_class": 2
+                },
+                "cell-2-0": {
+                  "color_class": 1
+                },
+                "cell-2-1": {
+                  "color_class": 1
+                },
+                "cell-2-2": {
+                  "color_class": 1
+                },
+                "cell-2-3": {
+                  "color_class": 2
+                },
+                "cell-2-4": {
+                  "color_class": 2
+                },
+                "cell-2-5": {
+                  "color_class": 2
+                },
+                "cell-2-6": {
+                  "color_class": 2
+                },
+                "cell-3-0": {
+                  "color_class": 1
+                },
+                "cell-3-1": {
+                  "color_class": 1
+                },
+                "cell-3-2": {
+                  "color_class": 1
+                },
+                "cell-3-3": {
+                  "color_class": 1
+                },
+                "cell-3-4": {
+                  "color_class": 2
+                },
+                "cell-3-5": {
+                  "color_class": 2
+                },
+                "cell-3-6": {
+                  "color_class": 2
+                },
+                "cell-4-0": {
+                  "color_class": 1
+                },
+                "cell-4-1": {
+                  "color_class": 1
+                },
+                "cell-4-2": {
+                  "color_class": 1
+                },
+                "cell-4-3": {
+                  "color_class": 1
+                },
+                "cell-4-4": {
+                  "color_class": 1
+                },
+                "cell-4-5": {
+                  "color_class": 2
+                },
+                "cell-4-6": {
+                  "color_class": 2
+                },
+                "cell-5-0": {
+                  "color_class": 1
+                },
+                "cell-5-1": {
+                  "color_class": 1
+                },
+                "cell-5-2": {
+                  "color_class": 1
+                },
+                "cell-5-3": {
+                  "color_class": 1
+                },
+                "cell-5-4": {
+                  "color_class": 1
+                },
+                "cell-5-5": {
+                  "color_class": 1
+                },
+                "cell-5-6": {
+                  "color_class": 2
+                }
+              },
+              "cols": 7,
+              "rows": 6
+            },
+            "elements": [
+              {
+                "id": "bac",
+                "type": "region",
+                "emphasis": "focus",
+                "cells": [
+                  [0, 0],
+                  [1, 0],
+                  [1, 1],
+                  [2, 0],
+                  [2, 1],
+                  [2, 2],
+                  [3, 0],
+                  [3, 1],
+                  [3, 2],
+                  [3, 3],
+                  [4, 0],
+                  [4, 1],
+                  [4, 2],
+                  [4, 3],
+                  [4, 4],
+                  [5, 0],
+                  [5, 1],
+                  [5, 2],
+                  [5, 3],
+                  [5, 4],
+                  [5, 5]
+                ],
+                "label": "một bậc thang"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một nửa hình chữ nhật được khoanh làm nổi."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol-bac-thang",
+    "step_id": "b1"
+  }
+}

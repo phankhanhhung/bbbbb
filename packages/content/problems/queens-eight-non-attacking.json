@@ -1,0 +1,261 @@
+{
+  "schema_version": "0.1.0",
+  "id": "queens-eight-non-attacking",
+  "statement": {
+    "vi": "Đặt $8$ quân hậu lên bàn cờ $8\\times8$ sao cho không quân nào ăn quân nào. Chỉ ra một cách đặt."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "pieces"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Quân hậu khống chế cả hàng, cả cột và cả hai đường chéo. [[a1|Một quân ở giữa bàn]] đã chiếm $27$ ô."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "q"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "q",
+                "type": "piece",
+                "emphasis": "focus",
+                "kind": "queen",
+                "pos": [3, 3],
+                "show_attacks": true
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một quân hậu giữa bàn cờ, mọi ô nó khống chế được đánh dấu."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mỗi hàng chứa nhiều nhất một quân, mà có $8$ hàng và $8$ quân ⇒ [[a2|mỗi hàng đúng một quân]]. Cột cũng vậy."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "q0",
+                "q1",
+                "q2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "q0",
+                "type": "piece",
+                "kind": "queen",
+                "pos": [0, 0]
+              },
+              {
+                "id": "q1",
+                "type": "piece",
+                "kind": "queen",
+                "pos": [1, 4]
+              },
+              {
+                "id": "q2",
+                "type": "piece",
+                "kind": "queen",
+                "pos": [2, 7]
+              },
+              {
+                "id": "hang",
+                "type": "region",
+                "cells": [
+                  [0, 0],
+                  [0, 1],
+                  [0, 2],
+                  [0, 3],
+                  [0, 4],
+                  [0, 5],
+                  [0, 6],
+                  [0, 7],
+                  [1, 0],
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [1, 5],
+                  [1, 6],
+                  [1, 7],
+                  [2, 0],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4],
+                  [2, 5],
+                  [2, 6],
+                  [2, 7]
+                ],
+                "label": "ba hàng đầu"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba quân hậu đầu tiên, mỗi quân một hàng."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đi tiếp theo cách đó tới hàng cuối được [[a3|một cách đặt đủ $8$ quân]] mà không quân nào ăn nhau."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "q0",
+                "q1",
+                "q2",
+                "q3",
+                "q4",
+                "q5",
+                "q6",
+                "q7"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "q0",
+                "type": "piece",
+                "kind": "queen",
+                "pos": [0, 0]
+              },
+              {
+                "id": "q1",
+                "type": "piece",
+                "kind": "queen",
+                "pos": [1, 4]
+              },
+              {
+                "id": "q2",
+                "type": "piece",
+                "kind": "queen",
+                "pos": [2, 7]
+              },
+              {
+                "id": "q3",
+                "type": "piece",
+                "kind": "queen",
+                "pos": [3, 5]
+              },
+              {
+                "id": "q4",
+                "type": "piece",
+                "kind": "queen",
+                "pos": [4, 2]
+              },
+              {
+                "id": "q5",
+                "type": "piece",
+                "kind": "queen",
+                "pos": [5, 6]
+              },
+              {
+                "id": "q6",
+                "type": "piece",
+                "kind": "queen",
+                "pos": [6, 1]
+              },
+              {
+                "id": "q7",
+                "type": "piece",
+                "kind": "queen",
+                "pos": [7, 3]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tám quân hậu trên bàn cờ, mỗi hàng và mỗi cột đúng một quân."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(pieces) >= 8",
+    "validators": [
+      "no-attacks"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

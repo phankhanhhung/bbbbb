@@ -278,6 +278,24 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 2. Luật "step có hình mà không có anchor" đếm `elements.length > 0`, trong khi bàn cờ 8×8 sinh 64 ô từ `config` với `elements` rỗng (D-16) — tức là luật miễn trừ đúng những bài dùng engine board.
 3. `nextStepId` hứa không tái dùng id đã xoá nhưng chỉ lấy max trên step **đang còn**: xoá step cuối rồi thêm bước mới sẽ cấp lại đúng id đó, và một `merge_target` đang treo sẽ lặng lẽ trỏ sang step khác — tệ hơn nữa, validate đang báo đỏ sẽ **xanh trở lại** trong khi bài đã sai.
 
+### M10 — 20 bài showcase toàn bộ tính năng · [C]+[E] — **xong**
+
+Mục tiêu khác các milestone trước: không phải thêm năng lực, mà **bắt mọi năng lực
+đã có phải có ít nhất một bài dùng nó**. Cách làm là chạy một bản kiểm kê trên kho
+trước khi soạn, liệt kê trường nào chưa bài nào chạm tới, rồi soạn theo danh sách đó.
+
+Kiểm kê đó lôi ra **năm trường ma** — có trong schema, validate xanh, renderer bỏ qua:
+
+1. **Đỉnh `shape`** (tròn/vuông/thoi) — quan trọng hơn vẻ ngoài: ở đồ thị hai phía, hình dạng là kênh phân biệt hai nhóm **không phụ thuộc màu**, đúng thứ NFR-A1 đòi.
+2. **Cạnh `directed`** — một bài về giải đấu vòng tròn vẽ ra mười đoạn thẳng không đầu không đuôi, trong khi toàn bộ nội dung nằm ở chiều "ai thắng ai". Vẽ mũi tên bằng hình học chứ không bằng `<marker>`: marker thừa kế màu qua `context-stroke` mà resvg không hỗ trợ đủ, tức là mũi tên có trong browser và biến mất trên OG card.
+3. **`emphasis: "dim"` trên element đồ thị** — board áp nó qua `groupAttrs` trên `<g>`, graph không có nhóm nên lệnh "đẩy ra nền" không ai thi hành.
+4. **`emphasis: "focus"` xoá mất `color_class` của cạnh** — với hình có mặt thì màu ở `fill` còn halo ở `stroke`, hai kênh không đụng nhau; cạnh đồ thị thì màu **chính là** `stroke`. Sai đúng ở chỗ đau nhất: cạnh mang lập luận là cạnh hay được nhấn nhất. Chữa bằng cách vẽ halo thành path riêng phía dưới.
+5. **Luật `techniques ↔ widget` chỉ chạy trong `combviz validate`** — không nằm trong `packages/check`, nên `import-draft` và Studio đều không thấy. Đúng thứ M6 tuyên bố đã chữa. Chuyển phần thuần sang `@combviz/check`, phần đọc YAML ở lại `tools/pipeline`, và `combviz index` xuất thêm `taxonomy.json` để Studio (chạy trong browser) dùng chung một bộ luật.
+
+**Sau milestone này, mọi tính năng engine đều có bài dùng:** năm loại quân cờ, năm hình tile kể cả `custom` offsets, hai preset tô màu, mười sáu validator, cạnh có hướng / khuyên / cạnh bội / nét đứt / nhãn, hai hình dạng đỉnh, bảng có tổng, hai chế độ sequence, vạch cắt, `dim`, `expects_violation`, `merge_ref`, nhánh mâu thuẫn, **cross-engine** (bàn cờ ↔ đồ thị) và **nhiều lời giải cho một bài**.
+
+**Kho: 19 → 39 bài.** Mọi chỉ tiêu phân bố của DoD §15.1 đều vượt, trừ case-branching (6/8).
+
 ### M9 — Cụm đếm cơ bản · [C]+[E] — **xong**
 
 - ✅ **PRN-03 sớm hơn lịch**: tuỳ chọn `table` của board engine — nhãn hàng/cột và **tổng theo hàng, tổng theo cột**. Đó chính là toàn bộ nội dung của "đếm hai chiều": không phải một công thức, mà hai con số bằng nhau mà người học tự đối chiếu được. Rẻ vì bảng khác bàn cờ đúng ba chi tiết, nên nó là tuỳ chọn của engine sẵn có chứ không phải engine mới.

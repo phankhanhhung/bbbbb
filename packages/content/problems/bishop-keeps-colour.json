@@ -1,0 +1,189 @@
+{
+  "schema_version": "0.1.0",
+  "id": "bishop-keeps-colour",
+  "statement": {
+    "vi": "Chứng minh quân tượng không bao giờ đi tới được ô khác màu với ô nó đang đứng — nói riêng, một quân tượng không thể đi qua hết $64$ ô."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "pieces",
+    "coloring"
+  ],
+  "techniques": [
+    "invariant",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "count(cells, c => c.color_class == 1)",
+      "id": "inv-mau",
+      "label": {
+        "vi": "Số ô màu 1"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tô bàn xen kẽ. [[a1|Quân tượng]] đi chéo, nên mỗi bước nó dịch $1$ hàng và $1$ cột."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "b"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "b",
+                "type": "piece",
+                "emphasis": "focus",
+                "kind": "bishop",
+                "pos": [3, 3],
+                "show_attacks": true
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Quân tượng giữa bàn với toàn bộ hai đường chéo được đánh dấu."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tổng $r + c$ vì thế đổi đi $0$ hoặc $\\pm 2$ — luôn là số chẵn. Mà màu ô chỉ phụ thuộc [[a2|tính chẵn lẻ của $r+c$]], nên màu không đổi."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "cell-3-3",
+                "cell-4-4",
+                "cell-2-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "b",
+                "type": "piece",
+                "kind": "bishop",
+                "pos": [3, 3],
+                "show_attacks": true
+              },
+              {
+                "id": "cheo",
+                "type": "region",
+                "cells": [[2, 2], [3, 3], [4, 4], [5, 5]],
+                "label": "cùng màu"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đường chéo của quân tượng được khoanh, mọi ô trên đó cùng một màu."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "contradiction",
+          "narrative": {
+            "vi": "Bàn có $32$ ô mỗi màu, mà quân tượng chỉ với tới [[a3|một nửa]] đó. Vậy nó không thể đi hết bàn."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "b"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 8,
+              "rows": 8
+            },
+            "elements": [
+              {
+                "id": "b",
+                "type": "piece",
+                "emphasis": "focus",
+                "kind": "bishop",
+                "pos": [0, 0],
+                "show_attacks": true
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Quân tượng ở góc bàn, chỉ khống chế được các ô cùng màu với nó."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(pieces) >= 8",
+    "validators": [
+      "no-attacks"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}
