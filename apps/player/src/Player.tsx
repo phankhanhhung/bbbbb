@@ -1,4 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import {
+  branchPointAbove,
+  buildTree,
+  childrenOf,
+  isBranchPoint,
+  nextStep,
+  pathTo,
+} from '@combviz/schema';
+import type { Problem, Scene, Solution, Step } from '@combviz/schema';
 import {
   createContext,
   createRenderer,
@@ -9,34 +18,43 @@ import {
 } from '@combviz/render';
 import { animate } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
-import type { Problem, Scene, Step } from '@combviz/schema';
 import type { GraphAnalysis } from '@combviz/engine-graph';
 import { loadEngines, type LoadedEngine } from './engines.js';
 import { Narrative } from './Narrative.jsx';
 import { InvariantStrip } from './InvariantStrip.jsx';
+import { TreeNavigator } from './TreeNavigator.jsx';
+import { GraphFacts } from './GraphFacts.jsx';
 import { Sandbox } from './Sandbox.jsx';
 import { renderMath } from './math.js';
 import { useAnalyzer } from './useAnalyzer.js';
-import { GraphFacts } from './GraphFacts.jsx';
+
+const SPEEDS = [0.5, 1, 2] as const;
 
 /**
- * Walking skeleton của Player (M1).
+ * Player (PLY-01..06).
  *
- * Phạm vi cố ý hẹp: PLY-01 điều khiển cơ bản, PLY-03 narrative + anchor, PLY-04
- * animation sinh từ auto-diff. **Chưa có** tree navigator (PLY-02 ở M5) — ở đây
- * đi theo thứ tự duyệt trước của cây, đủ cho lời giải tuyến tính.
- *
- * Milestone này tồn tại để trả lời ba câu hỏi kiến trúc, không phải để đẹp.
+ * Điều hướng theo **cây**, không theo danh sách phẳng: `nextStep` trả `null` ở
+ * node rẽ nhánh, nên auto-play tự dừng ở đó mà không cần luật riêng — đúng điều
+ * PLY-02 đòi.
  */
 export function Player({ problem }: { problem: Problem }) {
   const [engines, setEngines] = useState<ReadonlyMap<string, LoadedEngine> | null>(null);
-  const [index, setIndex] = useState(0);
   const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
   const [forkedScene, setForkedScene] = useState<Scene | null>(null);
+  const [diff, setDiff] = useState<NodeDiff | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(1);
 
-  const solution = problem.solutions[0]!;
-  const steps = useMemo(() => preorder(solution.steps), [solution]);
-  const step = steps[index] ?? steps[0]!;
+  const initial = useMemo(() => readLocation(problem), [problem]);
+  // Chọn lời giải song song (CMS-03) đến ở M6 cùng trang problem; ở đây chỉ đọc
+  // từ URL để deep-link vào đúng nhánh vẫn hoạt động (DAT-14).
+  const solutionId = initial.solutionId;
+  const [stepId, setStepId] = useState(initial.stepId);
+
+  const solution =
+    problem.solutions.find((s) => s.id === solutionId) ?? (problem.solutions[0] as Solution);
+  const tree = useMemo(() => buildTree(solution), [solution]);
+  const step = tree.steps.get(stepId) ?? (tree.root as Step);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const previous = useRef<SvgNode[]>([]);
@@ -51,30 +69,54 @@ export function Player({ problem }: { problem: Problem }) {
     [engines],
   );
 
-  // Đường đi từ gốc tới step hiện tại — cơ sở của sparkline (G-04): invariant
-  // được đọc dọc theo *nhánh đang xem*, không phải toàn bộ solution.
-  const path = useMemo(() => pathTo(solution.steps, step.id), [solution, step]);
+  const path = useMemo(() => pathTo(tree, step.id), [tree, step]);
+  const choices = childrenOf(tree, step.id);
+  const branching = isBranchPoint(tree, step.id);
+  const upstream = useMemo(() => branchPointAbove(tree, step.id), [tree, step]);
 
   const environmentFor = useMemo(
     () => (scene: Scene) => engines?.get(scene.engine)?.environment(scene) ?? null,
     [engines],
   );
 
-  const [diff, setDiff] = useState<NodeDiff | null>(null);
-
-  // ENG-04: analyzer nặng chạy trong worker, cache theo hash scene, huỷ được.
   const analysis = useAnalyzer<GraphAnalysis>(
     step.scene?.engine === 'graph' ? step.scene : undefined,
   );
 
-  // Highlight là **đầu vào của render**, không phải lớp sửa DOM sau đó (ANC-01).
-  // Nhờ vậy nó sống sót qua mọi khung animation và không có hai nguồn sự thật.
+  // DAT-14: URL luôn phản ánh vị trí hiện tại, nên mọi bước đều chia sẻ được.
+  useEffect(() => {
+    const url = new URL(location.href);
+    url.searchParams.set('sol', solution.id);
+    url.searchParams.set('step', step.id);
+    history.replaceState(null, '', url);
+  }, [solution, step]);
+
+  const goTo = useCallback((id: string) => {
+    setStepId(id);
+    setActiveAnchor(null);
+  }, []);
+
+  const goNext = useCallback(() => {
+    const next = nextStep(tree, step.id);
+    if (next) goTo(next.id);
+    else setPlaying(false);
+  }, [tree, step, goTo]);
+
+  const goPrev = useCallback(() => {
+    if (step.parent) goTo(step.parent);
+  }, [step, goTo]);
+
+  useEffect(() => {
+    if (!playing) return;
+    const delay = (defaultTheme.motion.stepDurationMs + 1400) / speed;
+    const timer = setTimeout(goNext, delay);
+    return () => clearTimeout(timer);
+  }, [playing, speed, goNext]);
+
   const ctx = useMemo(
     () =>
       createContext(defaultTheme, {
-        highlight: new Set(
-          activeAnchor ? (step.anchors?.[activeAnchor]?.ids ?? []) : [],
-        ),
+        highlight: new Set(activeAnchor ? (step.anchors?.[activeAnchor]?.ids ?? []) : []),
       }),
     [activeAnchor, step],
   );
@@ -86,37 +128,52 @@ export function Player({ problem }: { problem: Problem }) {
     const next = renderer.render(step.scene, ctx);
     setDiff(diffNodes(previous.current, next));
 
-    // Chỉ animate khi *step* đổi. Bật/tắt highlight thì patch thẳng: chuyển tiếp
-    // 360ms cho một cái viền làm anchor có cảm giác trễ và dính.
     const isStepChange = previous.current.length > 0 && lastStepId.current !== step.id;
     const handle = animate(container, previous.current, next, {
-      durationMs: isStepChange ? defaultTheme.motion.stepDurationMs : 0,
+      durationMs: isStepChange ? defaultTheme.motion.stepDurationMs / speed : 0,
     });
 
     previous.current = next;
     lastStepId.current = step.id;
-
     return () => handle.cancel();
-  }, [renderer, step, ctx]);
+  }, [renderer, step, ctx, speed]);
 
+  // NFR-A2: mọi điều khiển tới được bằng bàn phím.
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'ArrowRight' || event.key === ' ') {
+      if (event.key === 'ArrowRight') {
         event.preventDefault();
-        setIndex((i) => Math.min(i + 1, steps.length - 1));
-      }
-      if (event.key === 'ArrowLeft') {
+        goNext();
+      } else if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        setIndex((i) => Math.max(i - 1, 0));
+        goPrev();
+      } else if (event.key === ' ') {
+        event.preventDefault();
+        setPlaying((v) => !v);
+      } else if (event.key === 'Escape') {
+        setPlaying(false);
       }
     };
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
-  }, [steps.length]);
+  }, [goNext, goPrev]);
+
+  const swipeStart = useRef<number | null>(null);
+  const onCanvasPointerUp = (event: PointerEvent): void => {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (start === null) return;
+
+    // Ngưỡng 48px: dưới mức đó gần như luôn là chạm hụt chứ không phải vuốt, và
+    // chuyển step vì một cú chạm hụt là cách nhanh nhất làm mất niềm tin.
+    const delta = event.clientX - start;
+    if (delta < -48) goNext();
+    else if (delta > 48) goPrev();
+  };
 
   const viewport = renderer && step.scene ? renderer.viewportOf(step.scene) : null;
-
   const engine = step.scene ? engines?.get(step.scene.engine) : undefined;
+
   const sandboxValidators = useMemo(
     () =>
       engine
@@ -127,9 +184,6 @@ export function Player({ problem }: { problem: Problem }) {
     [engine, problem],
   );
 
-  // PLY-05 "Thử từ đây": fork scene hiện tại sang Sandbox **mà không phá trạng
-  // thái Player** — đóng lại là quay về đúng step đang xem. Đây là cầu nối
-  // học-bằng-nghịch, và nó chỉ có nghĩa nếu đường quay lại không mất gì.
   if (forkedScene && engine) {
     return (
       <div class="player">
@@ -160,7 +214,13 @@ export function Player({ problem }: { problem: Problem }) {
       </header>
 
       <div class="player__body">
-        <div class="canvas">
+        <div
+          class="canvas"
+          onPointerDown={(event: PointerEvent) => {
+            swipeStart.current = event.clientX;
+          }}
+          onPointerUp={onCanvasPointerUp}
+        >
           <svg
             ref={svgRef}
             viewBox={
@@ -169,7 +229,7 @@ export function Player({ problem }: { problem: Problem }) {
                 : '0 0 100 100'
             }
             role="img"
-            aria-label={step.alt_text?.vi ?? ''}
+            aria-label={step.alt_text?.vi ?? altFallback(step)}
           />
         </div>
 
@@ -182,6 +242,25 @@ export function Player({ problem }: { problem: Problem }) {
             />
           ) : null}
 
+          {branching ? (
+            <section class="choices">
+              <h3>Chọn trường hợp để đi tiếp</h3>
+              {choices.map((child) => (
+                <button key={child.id} class="choice" onClick={() => goTo(child.id)}>
+                  {child.case_label?.vi ?? child.id}
+                </button>
+              ))}
+            </section>
+          ) : null}
+
+          {step.edge_type === 'contradiction' ? (
+            <p class="badge badge--contradiction">✗ Mâu thuẫn — nhánh đóng</p>
+          ) : null}
+
+          {step.edge_type === 'merge_ref' ? (
+            <p class="badge badge--merge">↰ Quay về bước tổng hợp</p>
+          ) : null}
+
           {problem.invariants?.length ? (
             <InvariantStrip
               invariants={problem.invariants}
@@ -192,9 +271,41 @@ export function Player({ problem }: { problem: Problem }) {
 
           {step.scene?.engine === 'graph' ? <GraphFacts state={analysis} /> : null}
 
-          {step.edge_type === 'contradiction' ? (
-            <p class="badge badge--contradiction">✗ Mâu thuẫn — nhánh đóng</p>
-          ) : null}
+          <nav class="controls">
+            <button onClick={goPrev} disabled={!step.parent} title="Phím ←">
+              ← Trước
+            </button>
+            <button
+              class="play"
+              onClick={() => setPlaying((v) => !v)}
+              disabled={branching}
+              title="Phím Space"
+            >
+              {playing ? '❚❚ Dừng' : '▶ Chạy'}
+            </button>
+            <button onClick={goNext} disabled={!nextStep(tree, step.id)} title="Phím →">
+              Sau →
+            </button>
+          </nav>
+
+          <nav class="controls">
+            {SPEEDS.map((value) => (
+              <button
+                key={value}
+                class={`tool${speed === value ? ' tool--on' : ''}`}
+                onClick={() => setSpeed(value)}
+              >
+                ×{value}
+              </button>
+            ))}
+            <button
+              class="tool"
+              onClick={() => upstream && goTo(upstream.id)}
+              disabled={!upstream}
+            >
+              ↑ Về điểm rẽ nhánh
+            </button>
+          </nav>
 
           <nav class="controls">
             <button
@@ -206,23 +317,8 @@ export function Player({ problem }: { problem: Problem }) {
             </button>
           </nav>
 
-          <nav class="controls">
-            <button onClick={() => setIndex((i) => Math.max(i - 1, 0))} disabled={index === 0}>
-              ← Trước
-            </button>
-            <span class="counter">
-              {index + 1} / {steps.length}
-            </span>
-            <button
-              onClick={() => setIndex((i) => Math.min(i + 1, steps.length - 1))}
-              disabled={index === steps.length - 1}
-            >
-              Sau →
-            </button>
-          </nav>
+          <TreeNavigator tree={tree} currentId={step.id} onSelect={goTo} />
 
-          {/* Bảng đo của M1: mỗi bước phải cho thấy auto-diff thật sự nhận ra
-              chuyện gì đã xảy ra, chứ không vẽ lại cả bàn. */}
           {diff ? (
             <p class="diagnostics">
               auto-diff: thêm {diff.entered.length} · mất {diff.exited.length} · đổi{' '}
@@ -235,50 +331,41 @@ export function Player({ problem }: { problem: Problem }) {
   );
 }
 
-/**
- * Đường đi từ gốc tới một step, theo `parent`.
- *
- * Bỏ qua `merge_ref` (G-04): nó là con trỏ quay lại, không phải một bước trên
- * đường đi — tính nó vào sẽ làm sparkline lặp lại một giá trị đã vẽ.
- */
-function pathTo(steps: readonly Step[], targetId: string): Step[] {
-  const byId = new Map(steps.map((step) => [step.id, step]));
-  const chain: Step[] = [];
+/** DAT-14: mở đúng step, đúng nhánh từ URL. */
+function readLocation(problem: Problem): { solutionId: string; stepId: string } {
+  const params = new URLSearchParams(location.search);
+  const solution =
+    problem.solutions.find((s) => s.id === params.get('sol')) ??
+    (problem.solutions[0] as Solution);
 
-  let cursor = byId.get(targetId);
-  const guard = new Set<string>();
-  while (cursor && !guard.has(cursor.id)) {
-    guard.add(cursor.id);
-    if (cursor.edge_type !== 'merge_ref') chain.unshift(cursor);
-    cursor = cursor.parent ? byId.get(cursor.parent) : undefined;
-  }
+  const wanted = params.get('step');
+  const exists = wanted !== null && solution.steps.some((s) => s.id === wanted);
+  const root = solution.steps.find((s) => s.parent === null)?.id ?? '';
 
-  return chain;
-}
-
-/**
- * Duyệt trước cây lời giải.
- *
- * Tạm thời thay cho tree navigator (PLY-02, M5): với lời giải tuyến tính nó cho
- * đúng thứ tự đọc, còn với lời giải phân nhánh nó cho một thứ tự *hợp lệ* nhưng
- * chưa phải trải nghiệm đúng — người học chưa được chọn nhánh.
- */
-function preorder(steps: readonly Step[]): Step[] {
-  const children = new Map<string | null, Step[]>();
-  for (const step of steps) {
-    const list = children.get(step.parent) ?? [];
-    list.push(step);
-    children.set(step.parent, list);
-  }
-
-  const out: Step[] = [];
-  const visit = (parent: string | null): void => {
-    for (const step of children.get(parent) ?? []) {
-      out.push(step);
-      visit(step.id);
-    }
+  return {
+    solutionId: solution.id,
+    // Deep-link trỏ tới step không tồn tại thì về gốc thay vì trang trắng: link cũ
+    // sẽ hỏng khi bài được sửa, và hỏng êm còn hơn hỏng ồn.
+    stepId: exists ? wanted : root,
   };
-  visit(null);
-
-  return out;
 }
+
+/**
+ * NFR-A3: `alt_text` do tác giả soạn; vắng thì tóm tắt đếm element theo loại.
+ *
+ * Fallback tự sinh không cố mô tả *ý nghĩa* — nó không biết. Nó chỉ nói trên hình
+ * có gì, và điều đó vẫn hơn một canvas hoàn toàn câm.
+ */
+function altFallback(step: Step): string {
+  if (!step.scene) return '';
+
+  const counts = new Map<string, number>();
+  for (const element of step.scene.elements) {
+    counts.set(element.type, (counts.get(element.type) ?? 0) + 1);
+  }
+
+  const parts = [...counts.entries()].map(([type, count]) => `${count} ${type}`);
+  return parts.length > 0 ? `Hình gồm ${parts.join(', ')}.` : 'Hình trống.';
+}
+
+export { SPEEDS };

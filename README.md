@@ -6,7 +6,7 @@ trên canvas tương tác, văn bản ↔ hình liên kết hai chiều, sandbox
 Vận hành theo mô hình **single-author brand engine**: engine là xưởng in riêng của
 một tác giả; sản phẩm công chúng là kho bài đã curate. Xem `docs/SRS-v1.0.md`.
 
-**Trạng thái:** Phase 1, M4 track kỹ thuật xong (Graph engine + analyzer trong worker). Còn chờ đo perf trên iPad để đóng gate G-A, và track content là việc của chính chủ. Xem `docs/PLAN-P1.md`.
+**Trạng thái:** Phase 1, M5 xong (tree navigator + deep-link + migrate). Còn chờ đo perf trên iPad (gate G-A) và 5 bài soạn tay (gate G-C). Xem `docs/PLAN-P1.md`.
 
 ## Bắt đầu
 
@@ -30,6 +30,7 @@ pnpm validate       # validate toàn kho bài
 npx tsx tools/pipeline/src/cli.ts validate packages/content [--strict]
 npx tsx tools/pipeline/src/cli.ts schema --out schema.json
 npx tsx tools/pipeline/src/cli.ts render mutilated-chessboard --step s2 --out s2.svg
+npx tsx tools/pipeline/src/cli.ts migrate --write
 ```
 
 `validate` chạy đúng bộ luật mà Studio và CI dùng (AUT-04): schema → cấu trúc cây →

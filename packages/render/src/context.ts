@@ -75,15 +75,34 @@ export function decorationAttrs(
   ctx: RenderContext,
   id: string,
   emphasis?: string,
+  /**
+   * Hệ số theo **độ đậm nét của engine**.
+   *
+   * Độ dày halo trong theme căn theo nét `base` (viền vùng tô). Engine dùng nét
+   * mảnh hơn phải thu halo theo cùng tỉ lệ, nếu không một cạnh đồ thị rộng 0.42
+   * sẽ đội viền 1.6 — gấp bốn lần chính nó, và cả $K_6$ biến thành mấy thanh xà
+   * đen. Cách khai đúng là `stroke.link / stroke.base`: "nét của tôi mảnh hơn nét
+   * tham chiếu chừng này".
+   */
+  weightScale = 1,
 ): Record<string, string | number> {
   if (ctx.invalid.has(id)) {
-    return halo(ctx.theme.stroke.invalid, ctx.theme.emphasis.anchorHaloWidth);
+    return halo(
+      ctx.theme.stroke.invalid,
+      ctx.theme.emphasis.anchorHaloWidth * weightScale,
+    );
   }
   if (ctx.highlight.has(id)) {
-    return halo(ctx.theme.emphasis.anchorHalo, ctx.theme.emphasis.anchorHaloWidth);
+    return halo(
+      ctx.theme.emphasis.anchorHalo,
+      ctx.theme.emphasis.anchorHaloWidth * weightScale,
+    );
   }
   if (emphasis === 'focus') {
-    return halo(ctx.theme.emphasis.focusHalo, ctx.theme.emphasis.focusHaloWidth);
+    return halo(
+      ctx.theme.emphasis.focusHalo,
+      ctx.theme.emphasis.focusHaloWidth * weightScale,
+    );
   }
   return {};
 }

@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M4 track kỹ thuật xong** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M5 xong (trừ schema freeze)** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -243,15 +243,17 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 
 **Track [C] là việc của chính chủ, không phải của máy.** §16 nói rõ 3–5 bài đầu phải soạn tay để Style Guide kết tinh từ thực tế; một Style Guide chắt ra từ bài do máy viết cũng là Style Guide bịa, chỉ bịa tinh vi hơn. Bài $R(3,3)=6$ ở đây là **fixture kỹ thuật** — nó chứng minh engine chạy, không đặt chuẩn biên tập.
 
-### M5 — Player hoàn chỉnh + **schema freeze** · Tuần 9–10 · [E]
+### M5 — Player hoàn chỉnh + **schema freeze** · Tuần 9–10 · [E] — **xong, trừ freeze**
 
-- PLY-02 tree navigator: **minimap cây đứng, thu gọn được** (OPQ-2 = a). Cần thuật toán layout cây (~2–3 ngày) + quy tắc thu gọn mặc định ở portrait. Đây là phần UX khó nhất của P1 — R-6.
-- PLY-05 "Thử từ đây" (fork scene sang sandbox, quay lại đúng step).
-- PLY-01/03/04 hoàn chỉnh: tốc độ, swipe, responsive, `prefers-reduced-motion`.
-- DAT-14 deep-link; NFR-A2 keyboard đầy đủ; NFR-A3 alt_text.
-- **Schema freeze → 1.0.0** (G-05) + `combviz migrate` chạy được trên toàn kho.
+- ✅ PLY-02 tree navigator: minimap cây đứng thu gọn được, breadcrumb, chọn nhánh ở case node, ✗ ở lá mâu thuẫn, ↰ ở merge_ref, nút "về điểm rẽ nhánh".
+- ✅ PLY-01 đầy đủ: Play/Pause, tốc độ ×0.5/×1/×2, phím ←/→/Space/Esc, vuốt trái–phải trên cảm ứng.
+- ✅ Auto-play **dừng** ở node rẽ nhánh — `nextStep` trả `null` ở đó, nên không cần luật riêng và không có đường nào lỡ chọn hộ người học.
+- ✅ DAT-14 deep-link `?sol=&step=`, URL cập nhật theo từng bước; link trỏ tới step không tồn tại thì về gốc êm.
+- ✅ NFR-A2 bàn phím đầy đủ, NFR-A3 `alt_text` kèm fallback tự sinh.
+- ✅ `combviz migrate` + cửa sổ tương thích `isReadableVersion` (DAT-02).
+- ⬜ **Schema freeze lên 1.0.0 — cố ý chưa làm.** Gate G-C buộc freeze *sau* 5 bài soạn tay, vì chỉ khi soạn thật mới lộ ra schema thiếu gì. Kho có 2 bài và chưa bài nào do chính chủ soạn. Freeze bây giờ là hứa tương thích cho một hợp đồng chưa được thử; bộ máy migrate thì đã sẵn, và nó cần có **trước** lúc freeze chứ không phải sau.
 
-**DoD:** bài case-branching điều hướng được đủ: chọn nhánh, thấy ✗ ở contradiction, breadcrumb đúng, "về điểm rẽ nhánh" hoạt động; deep-link mở đúng step trong nhánh.
+**DoD:** ✅ Kiểm bằng browser trên bài $R(3,3)=6$: ở điểm rẽ nhánh, Next và Play cùng tắt và hai nút chọn trường hợp hiện ra; đi 1 → 1a cho breadcrumb "Trường hợp 1 › 1a" và URL `step=s3`; qua merge_ref đáp xuống s7; "về điểm rẽ nhánh" từ s7 quay đúng về s1.
 
 ### M6 — Studio + pipeline + xuất bản · Tuần 10–12 · [E]
 

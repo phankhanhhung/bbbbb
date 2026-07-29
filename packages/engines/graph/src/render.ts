@@ -50,6 +50,7 @@ export const graphRenderer: EngineRenderer = {
     const config = (scene.config as GraphConfig) ?? {};
 
     const centre = centroid(graph);
+    const weight = ctx.theme.stroke.link / ctx.theme.stroke.base;
 
     return [
       el(
@@ -60,7 +61,7 @@ export const graphRenderer: EngineRenderer = {
         // cắt nhau, thứ tự file sẽ chôn đúng những cạnh đang mang lập luận.
         [...graph.edges]
           .sort((a, b) => weightOf(a, ctx) - weightOf(b, ctx))
-          .map((edge) => renderEdge(edge, graph, ctx)),
+          .map((edge) => renderEdge(edge, graph, ctx, weight)),
       ),
       el(
         'g',
@@ -74,7 +75,7 @@ export const graphRenderer: EngineRenderer = {
               fill: fillForClass(ctx, vertex.colorClass || undefined),
               stroke: ctx.theme.emphasis.focusHalo,
               'stroke-width': ctx.theme.stroke.link,
-              ...decorationAttrs(ctx, vertex.id, vertex.emphasis),
+              ...decorationAttrs(ctx, vertex.id, vertex.emphasis, weight),
             }),
           ];
 
@@ -123,7 +124,12 @@ export const graphRenderer: EngineRenderer = {
   },
 };
 
-function renderEdge(edge: Edge, graph: GraphModel, ctx: RenderContext): SvgNode {
+function renderEdge(
+  edge: Edge,
+  graph: GraphModel,
+  ctx: RenderContext,
+  weight: number,
+): SvgNode {
   const u = graph.byId.get(edge.u);
   const v = graph.byId.get(edge.v);
   if (!u || !v) return el('g', {});
@@ -143,7 +149,7 @@ function renderEdge(edge: Edge, graph: GraphModel, ctx: RenderContext): SvgNode 
       edge.colorClass > 0 ? ctx.theme.stroke.link * 1.6 : ctx.theme.stroke.link,
     'stroke-linecap': 'round',
     ...dashAttrs(edge.style),
-    ...decorationAttrs(ctx, edge.id, edge.emphasis),
+    ...decorationAttrs(ctx, edge.id, edge.emphasis, weight),
   });
 }
 

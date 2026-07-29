@@ -57,14 +57,28 @@ export {
   type ValidatorOutcome,
 } from './validator.js';
 
+export {
+  buildTree,
+  childrenOf,
+  pathTo,
+  breadcrumb,
+  branchPointAbove,
+  nextStep,
+  isBranchPoint,
+  isClosedBranch,
+  isMergeTarget,
+  preorder,
+  type SolutionTree,
+} from './tree.js';
+
 export { checkStructure } from './structure.js';
 export { createValidator, type Validator } from './validate.js';
+export { SCHEMA_VERSION } from './version.js';
+export {
+  migrateProblem,
+  isReadableVersion,
+  MIGRATIONS,
+  type Migration,
+  type MigrateResult,
+} from './migrate.js';
 
-/**
- * Phiên bản schema hiện tại.
- *
- * Giữ ở `0.x` cho tới hết M5 — trong giai đoạn 5 bài soạn tay, schema còn phải
- * đổi theo thực tế và việc hứa tương thích lúc này là hứa suông. Freeze lên
- * `1.0.0` là một gate có chủ đích (G-C), đi kèm `combviz migrate`.
- */
-export const SCHEMA_VERSION = '0.1.0';

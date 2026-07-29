@@ -6,6 +6,7 @@ import { createValidator } from '@combviz/schema';
 import { ENGINE_FRAGMENTS } from './engines.js';
 import { runValidate } from './commands/validate.js';
 import { runRender } from './commands/render.js';
+import { runMigrate } from './commands/migrate.js';
 
 /**
  * CLI của xưởng in (D-13).
@@ -30,8 +31,10 @@ const USAGE = `combviz — công cụ soạn/duyệt kho bài
       Render một scene ra SVG, chạy trong Node, không cần browser (REN-01).
       Không chỉ --step thì lấy step cuối của nhánh chính.
 
-Sẽ có ở các milestone sau: lint (M6), import-draft (M6), og (M6),
-migrate (M5), stats (M6).
+  combviz migrate [--root <content>] [--write]
+      Nâng toàn kho lên schema hiện tại (DAT-02). Mặc định chạy khô.
+
+Sẽ có ở các milestone sau: lint (M6), import-draft (M6), og (M6), stats (M6).
 `;
 
 async function main(argv: string[]): Promise<number> {
@@ -98,6 +101,22 @@ async function main(argv: string[]): Promise<number> {
       if (values.out) console.log(`Đã ghi SVG → ${values.out}`);
       else console.log(svg);
       return 0;
+    }
+
+    case 'migrate': {
+      const { values } = parseArgs({
+        args: rest,
+        options: {
+          root: { type: 'string', default: 'packages/content' },
+          write: { type: 'boolean', default: false },
+        },
+      });
+
+      const report = await runMigrate({
+        root: resolve(values.root),
+        write: values.write,
+      });
+      return report.failed > 0 ? 1 : 0;
     }
 
     case undefined:
