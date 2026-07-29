@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M7 track [E] xong + đã trả nợ kỹ thuật; content 8/25, chưa bài nào do chính chủ soạn** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M11 xong (4 engine, phủ ~73%); kho 43 bài, chưa bài nào do chính chủ soạn** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,36 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M11 — Cụm đếm/tập hợp: set engine + chu trình hoán vị + view song ánh · [E] — **xong**
+
+Ba hạng mục đầu của hàng đợi lãi/chi phí trong `docs/VIZ-COVERAGE.md` §7, gộp làm
+một milestone vì chúng dùng chung hạ tầng.
+
+- ✅ **`packages/engines/set`** (ST-01..03): bảng incidence và Venn ≤ 3 tập trên cùng một mô hình **quan hệ thuộc**. Cỡ tập suy ra từ token chứ không khai riêng — khai hai nơi thì có ngày hai nơi lệch nhau và không ai biết nơi nào đúng. Sáu validator, trong đó `antichain` mở khoá cụm Sperner. Ô của bảng là element **ngầm định** id `<token>__<set>`, kèm check `bounds/ambiguous-id` cấm `__` trong id tác giả đặt.
+- ✅ **Chu trình hoán vị**: `permutationCycles` + binding `cycles`, `sign`, `fixed_points`, và layout `cycles` đặt mỗi chu trình lên một vòng tròn riêng. Layout đó dùng lại `circle` cho từng nhóm thay vì viết công thức bán kính thứ hai — bản nháp đầu tiên viết công thức riêng và cho ra chu trình 2 phần tử với hai đỉnh cách nhau 6.4 thay vì 10.
+- ✅ **PRN-04 view song ánh** (phần nhấn liên động): scene thứ hai nằm **bên trong** `bijection`, không phải trường ngang hàng với `scene` — một cảnh thứ hai không kèm ánh xạ chỉ là hai hình đặt gần nhau. Rê vào một bên sáng bên kia, cộng danh sách cặp bấm được bằng bàn phím (NFR-A2).
+
+**Bốn lỗi renderer, cả bốn chỉ lộ ra khi render ra ảnh rồi nhìn:**
+
+1. **Mũi tên vẽ xen kẽ từng cạnh** nên halo của cạnh sau chôn mũi tên của cạnh trước. Chu trình 3 đỉnh cùng được nhấn thì mất cả ba mũi tên — đúng lúc hình đang phải nói về chiều.
+2. **Đầu mũi suy từ đoạn thẳng $u \to v$** trong khi nét là cung Bézier: đầu mũi trôi ra ngoài nét và chỉ sai hướng.
+3. **Pháp tuyến của cung dựng theo chiều cạnh**, nên hai cạnh ngược chiều cùng một cặp đỉnh — chu trình độ dài 2, thứ mọi bài hoán vị đều có — cong về cùng một phía và đè lên nhau.
+4. **Caption của set engine nằm ngoài khung hình.** Chân chữ ở đúng mép trên viewport nên chữ được vẽ đủ mà không ai đọc được. Chữa bằng cách cho viewport và vị trí caption ra từ **một** phép tính.
+
+**Và một lỗi cùng họ với "trường ma", đã kịp đi vào kho ở commit trước:** trong view
+bảng, không node nào mang key `x1` — chỉ có ô giao `x1__S` và nhãn `token-label-x1`.
+Nên anchor trỏ tới `x1`, một element khai tường minh và validate xanh, **không làm
+sáng thứ gì cả**. View Venn thì đúng từ đầu, nên lỗi này chỉ hiện ở một nửa engine.
+Chữa bằng "tay cầm" trong suốt cho mỗi hàng và mỗi cột.
+
+**Hạn chế đã biết, ghi ra để không ai trông đợi nhầm:** ánh xạ do tác giả khai và
+pane phải là scene tĩnh, nên bài dùng view này **không có sandbox** (khai
+`kind: "illustration"`), chưa có animation biến hình, và validate không kiểm được
+cặp có đúng về mặt toán học — nó chỉ kiểm id tồn tại đúng bên và cảnh báo khi ánh
+xạ không đơn ánh.
+
+**Mức phủ:** ~63% → **~73%**. Kho: 39 → **43 bài**.
 
 ### M10 — 20 bài showcase toàn bộ tính năng · [C]+[E] — **xong**
 

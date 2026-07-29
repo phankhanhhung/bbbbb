@@ -21,7 +21,8 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~board + graph~~ | ~~45%~~ | ~~55%~~ |
 | ~~+ sequence~~ | ~~55%~~ | ~~64%~~ |
 | ~~+ bảng đếm hai chiều PRN-03~~ | ~~60%~~ | ~~68%~~ |
-| **Hôm nay** (3 engine + bảng đếm hai chiều, mọi tính năng đã có bài dùng) | **~63%** | ~71% |
+| ~~+ set engine, chu trình hoán vị, view song ánh (M11)~~ | ~~63%~~ | ~~71%~~ |
+| **Hôm nay** (4 engine + bảng đếm hai chiều + view song ánh) | **~73%** | ~81% |
 | Còn lại trong hàng đợi §7 làm hết | **~88%** | ~97% |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
@@ -41,25 +42,25 @@ mất đúng M4.
 ## 2. Phân bố họ bài, và engine hiện có phủ tới đâu
 
 Trọng số cột 2 là tỉ trọng ước lượng trong đề tổ hợp thi đấu (IMO Shortlist C và
-tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà ba engine hiện có gánh nổi.
+tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bốn engine hiện có gánh nổi.
 
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
 | Lưới / phủ hình / tô màu | 15% | 92% | 13.8 | — (board: preset, quân, tile custom, bảng) |
 | Đồ thị | 22% | 82% | 18.0 | planarity (GR-05), matching (GR-06), tô mặt |
-| Đếm / song ánh / đếm hai chiều | 14% | 60% | 8.4 | **view song ánh (PRN-04)** |
+| Đếm / song ánh / đếm hai chiều | 14% | 80% | 11.2 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 90% | 14.4 | — (`engine-sequence`) |
 | Trò chơi | 7% | 10% | 0.7 | **game engine (GM-01..04)** |
-| Hệ tập hợp / siêu đồ thị | 8% | 25% | 2.0 | **set engine (ST-01..03)** — bảng incidence đã có, thiếu ngữ nghĩa thuộc |
+| Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
 | Hình học tổ hợp | 5% | 5% | 0.25 | **point/segment engine (PT-01..02)** |
-| Hoán vị / thứ tự | 6% | 55% | 3.3 | view hoán vị hai hàng + phân tích chu trình |
+| Hoán vị / thứ tự | 6% | 85% | 5.1 | poset/Hasse |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 5% | 0.15 | xem §6 — **không co lại theo engine** |
-| **Tổng** | **100%** | | **~63%** | |
+| **Tổng** | **100%** | | **~73%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
-24 bài quen thuộc, phân loại tay. Chính chủ đọc bảng này thấy sai chỗ nào thì sửa
+27 bài quen thuộc, phân loại tay. Chính chủ đọc bảng này thấy sai chỗ nào thì sửa
 chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 
 | Bài | Họ | Hôm nay |
@@ -74,14 +75,15 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Bổ đề bắt tay | đồ thị | ✅ có trong kho |
 | Turán $n=5$ | đồ thị | ✅ có trong kho |
 | Định lý Hall | đồ thị hai phía | 🟡 vẽ được, thiếu matching + đường tăng |
-| Cayley $n^{n-2}$ (mã Prüfer) | song ánh | ❌ cần view song ánh |
+| Cayley $n^{n-2}$ (mã Prüfer) | song ánh | 🟡 view song ánh đã có; thiếu analyzer sinh mã Prüfer |
 | Đồng nhất thức Vandermonde | đếm hai chiều | 🟡 bảng incidence đã có; còn cần nhãn tổng quát |
+| Tập con ↔ xâu nhị phân ($2^n$) | song ánh | ✅ có trong kho (view song ánh) |
 | Quy tắc nhân, hoán vị, tổ hợp, Pascal, đường đi lưới | đếm cơ bản | ✅ mười bài trong kho |
 | Đường đi lưới / số Catalan | đếm | ✅ bảng quy hoạch động trên board |
 | Erdős–Szekeres (dãy đơn điệu) | hoán vị | 🟡 vẽ được dãy, thiếu analyzer dãy con đơn điệu |
-| Hoán vị 15-puzzle (chẵn lẻ) | hoán vị | 🟡 `inversions` đã có; thiếu view hoán vị |
-| Định lý Sperner (phản xích) | hệ tập hợp | ❌ |
-| Định lý Dilworth | poset | ❌ |
+| Hoán vị 15-puzzle (chẵn lẻ) | hoán vị | ✅ `inversions` + `cycles`/`sign` + layout chu trình |
+| Định lý Sperner (phản xích) | hệ tập hợp | ✅ có trong kho (`engine-set`, validator `antichain`) |
+| Định lý Dilworth | poset | 🟡 `engine-set` vẽ được họ tập; thiếu layout Hasse |
 | Gộp đống sỏi theo mod | dãy / đa tập | ✅ engine sequence, chế độ `piles` |
 | Xoá hai số, viết $\|a-b\|$ | dãy / đa tập | ✅ có trong kho |
 | Chip-firing | quá trình | 🟡 vẽ và thao tác được, thiếu luật lan truyền |
@@ -91,10 +93,11 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Sylvester–Gallai | hình học | ❌ |
 | Phương pháp xác suất: tồn tại tô $K_n$ không $K_k$ đơn sắc | trừu tượng | ❌ §6 |
 
-**13 ✅ · 7 🟡 · 6 ❌** ⇒ ≈ 50% trọn vẹn, ≈ 63% nếu tính nửa điểm cho 🟡. Khớp với
-bảng trọng số ở trên, và hai cách đếm đó độc lập nhau.
+**16 ✅ · 7 🟡 · 4 ❌** trên 27 bài ⇒ 59% trọn vẹn, **72%** nếu tính nửa điểm cho 🟡.
+Khớp với 73% của bảng trọng số ở trên, và hai cách đếm đó độc lập nhau.
 
-*(Trước khi có Sequence engine: 9 ✅ · 4 🟡 · 11 ❌ ⇒ ≈ 46%.)*
+*(Trước Sequence engine: 9 ✅ · 4 🟡 · 11 ❌ ⇒ ≈ 46%. Trước M11: 13 ✅ · 7 🟡 · 6 ❌
+⇒ ≈ 63%.)*
 
 ---
 
@@ -244,9 +247,9 @@ trong SRS.
 
 | # | Việc | Lãi | Chi phí | Lãi/chi phí | Ghi chú |
 |---|---|---:|---:|---:|---|
-| 1 | **View hoán vị + chu trình** | +1.8 | 0.2 | **9.0** | Không phải engine mới: layout hai hàng + analyzer chu trình trên graph engine. `inversions` đã có sẵn trong DSL |
-| 2 | **Set/hypergraph engine** (ST-01..03) | +6.2 | 0.7 | **8.9** | Bảng incidence đã xong (PRN-03); còn thiếu ngữ nghĩa **thuộc** để DSL/validator lập luận được, cộng view container/Venn ≤ 3 tập |
-| 3 | **Bijection view** (PRN-04) | +2.8 | 0.5 | **5.6** | Hạ tầng **mới**: hai scene cạnh nhau + ánh xạ id↔id + animation biến hình. SRS gọi là flagship P2 và đánh giá đó đúng |
+| ~~1~~ | ~~**View hoán vị + chu trình**~~ ✅ M11 | +1.8 | xong | — | `permutationCycles` + binding `cycles`/`sign`/`fixed_points` + layout `cycles` |
+| ~~2~~ | ~~**Set/hypergraph engine**~~ ✅ M11 | +6.2 | xong | — | `packages/engines/set`: bảng incidence + Venn ≤ 3 tập, DSL `member`/`subset`/`common`, 6 validator |
+| ~~3~~ | ~~**Bijection view**~~ ✅ M11 (một phần) | +2.8 | xong | — | Hai pane + ánh xạ id↔id + nhấn liên động hai chiều. **Chưa có** animation biến hình theo từng cặp — xem hạn chế bên dưới |
 | 4 | **Point/segment engine** (PT-01..02) | +4.0 | 0.8 | **5.0** | Họ riêng biệt, không dùng lại được gì: toạ độ thực, bao lồi, đếm giao điểm |
 | 5 | **Hoàn tất graph** (GR-05 planarity, GR-06 matching, GR-07 ma trận kề) | +2.9 | 0.6 | **4.8** | Matching mở khoá cụm Hall/König — một trong những cụm nhiều bài nhất của graph thi đấu |
 | 6 | **Poset / Hasse** | +0.8 | 0.2 | **4.0** | Graph engine + layout phân tầng + analyzer chuỗi/phản xích |
@@ -256,8 +259,23 @@ trong SRS.
 Cộng dồn: **63 → ~88%**, tổng chi phí ≈ **5.5 M4**, tức khoảng 11 tuần ở nhịp
 35h/tuần nếu làm liên tục.
 
-**Hai việc đầu là nửa ngày tới một tuần và ăn ngay 8 điểm** — chúng ở đầu bảng vì
-phần lớn công việc đã nằm sẵn trong graph engine và trong bảng incidence.
+**M11 đã lấy ba hạng mục đầu**: kho đi từ 63.4% lên **73.2%** (+9.8, thấp hơn +10.8
+dự tính — view song ánh mới xong phần nhấn liên động, chưa có animation biến hình).
+Còn lại các hạng mục 4–8, tổng ≈ 4.1 M4.
+
+#### Hạn chế đã biết của view song ánh ở P1
+
+Ánh xạ do **tác giả khai**, không phải do máy tính ra, và pane phải là một scene
+tĩnh viết sẵn trong file. Ba hệ quả, nói ra để không ai trông đợi nhầm:
+
+- **Không có sandbox.** Người học sửa cấu hình bên trái thì bên phải không đổi
+  theo — nó không được tính từ đâu cả. Nên bài dùng view này khai
+  `kind: "illustration"`; ép `both` sẽ cho ra một hình nói dối.
+- **Không có animation biến hình** (phần còn lại của PRN-04). Hai pane nhấn liên
+  động, chưa có chuyển động nối một hình sang hình kia.
+- **Ánh xạ không được kiểm là song ánh thật.** Validate kiểm id có tồn tại đúng
+  bên, và **cảnh báo** khi không đơn ánh — nhưng nó không biết cặp có đúng về mặt
+  toán học hay không. Đó vẫn là việc của người duyệt.
 
 ### ~90% thì sao?
 

@@ -73,6 +73,12 @@ function checkEnginesUsed(
   for (const solution of problem.solutions) {
     for (const step of solution.steps) {
       if (step.scene) actual.add(step.scene.engine);
+      // Pane phải của view song ánh cũng là một scene, và rất hay dùng engine
+      // **khác** pane trái — tập con bên này, xâu nhị phân bên kia là đúng cặp
+      // mà PRN-04 sinh ra để phục vụ. Bỏ sót nó thì `engines_used` thiếu một
+      // engine, Player lazy-load theo danh sách đó (D-10) và nửa bên phải trắng
+      // trơn trong khi validate vẫn báo xanh.
+      if (step.bijection) actual.add(step.bijection.scene.engine);
     }
   }
 
@@ -166,6 +172,7 @@ function checkSolutionTree(
       checkAnchors(step, step.scene, path, engines, issues);
       checkSceneBounds(step.scene, `${path}/scene`, engines, issues);
     }
+    checkBijection(step, path, engines, issues);
   });
 
   checkDepth(solution, basePath, byId, issues);
@@ -337,6 +344,95 @@ function checkNarrative(step: Step, path: string, issues: ValidationIssue[]): vo
   }
 }
 
+/** Tập id tra cứu được của một scene: element khai tường minh + element ngầm định. */
+function knownIds(scene: Scene, engines: EngineRegistry): Set<string> {
+  const known = new Set(scene.elements.map((element) => element.id));
+  const fragment = engines.get(scene.engine);
+  if (fragment) {
+    for (const id of fragment.implicitElementIds(scene)) known.add(id);
+  }
+  return known;
+}
+
+/**
+ * PRN-04 — ánh xạ song ánh phải trỏ tới thứ có thật ở **đúng bên của nó**.
+ *
+ * Cùng một họ với anchor rot (ANC-02) và nguy hiểm hơn một bậc: một cặp trỏ sai
+ * bên vẫn "chạy" — pane kia đơn giản là không sáng lên khi rê chuột. Không có
+ * thông báo nào, và người đọc kết luận rằng phần tử đó không có ảnh, tức là
+ * **kết luận sai đúng cái điều bài toán đang chứng minh**.
+ */
+function checkBijection(
+  step: Step,
+  path: string,
+  engines: EngineRegistry,
+  issues: ValidationIssue[],
+): void {
+  const bijection = step.bijection;
+  if (!bijection) return;
+
+  if (!step.scene) {
+    issues.push({
+      code: 'structure/bijection-without-scene',
+      severity: 'error',
+      message: 'Step khai `bijection` nhưng không có `scene`: thiếu hẳn pane bên trái',
+      path: `${path}/bijection`,
+    });
+    return;
+  }
+
+  checkSceneBounds(bijection.scene, `${path}/bijection/scene`, engines, issues);
+
+  const left = knownIds(step.scene, engines);
+  const right = knownIds(bijection.scene, engines);
+
+  bijection.pairs.forEach(([a, b], i) => {
+    if (!left.has(a)) {
+      issues.push({
+        code: 'structure/bijection-unknown-element',
+        severity: 'error',
+        message: `Cặp ${i} trỏ tới "${a}", không có trong scene bên trái`,
+        path: `${path}/bijection/pairs/${i}/0`,
+        hint: right.has(a) ? '"' + a + '" có ở scene bên phải — có thể hai vế bị đảo' : undefined,
+      });
+    }
+    if (!right.has(b)) {
+      issues.push({
+        code: 'structure/bijection-unknown-element',
+        severity: 'error',
+        message: `Cặp ${i} trỏ tới "${b}", không có trong scene bên phải`,
+        path: `${path}/bijection/pairs/${i}/1`,
+        hint: left.has(b) ? '"' + b + '" có ở scene bên trái — có thể hai vế bị đảo' : undefined,
+      });
+    }
+  });
+
+  // Không đơn ánh là **cảnh báo**, không phải lỗi: đếm $k$-về-$1$ dùng đúng cấu
+  // trúc này. Nhưng nói ra thì tác giả biết mình đang khai một quan hệ mạnh hơn
+  // cái tên "song ánh", thay vì phát hiện ra khi hình vẽ sáng lên hai chỗ.
+  for (const [side, index, label] of [
+    ['trái', 0, 'left'],
+    ['phải', 1, 'right'],
+  ] as const) {
+    const seen = new Set<string>();
+    const repeated = new Set<string>();
+    for (const pair of bijection.pairs) {
+      const id = pair[index];
+      if (seen.has(id)) repeated.add(id);
+      seen.add(id);
+    }
+    if (repeated.size > 0) {
+      issues.push({
+        code: 'structure/bijection-not-injective',
+        severity: 'warning',
+        message: `Ánh xạ không đơn ánh phía bên ${side}: ${[...repeated].sort().join(', ')} xuất hiện nhiều lần`,
+        path: `${path}/bijection/pairs`,
+        hint: `Cố ý thì bỏ qua — đếm $k$-về-$1$ dùng đúng dạng này (phía ${label})`,
+      });
+    }
+  }
+}
+
 /**
  * ANC-02 — chống anchor rot, kiểm **cả hai chiều**.
  *
@@ -354,14 +450,7 @@ function checkAnchors(
   const spans = step.narrative ? parseAnchorMarkup(step.narrative.vi) : [];
   const usedKeys = new Set(spans.map((s) => s.key));
 
-  const known = new Set<string>();
-  for (const element of scene.elements) {
-    known.add(element.id);
-  }
-  const fragment = engines.get(scene.engine);
-  if (fragment) {
-    for (const id of fragment.implicitElementIds(scene)) known.add(id);
-  }
+  const known = knownIds(scene, engines);
 
   for (const span of spans) {
     if (!(span.key in anchors)) {

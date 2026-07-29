@@ -32,6 +32,34 @@ export const Anchor = Type.Object(
 );
 export type Anchor = Static<typeof Anchor>;
 
+/**
+ * PRN-04 — view song ánh: hai cấu hình cạnh nhau + ánh xạ id ↔ id.
+ *
+ * Scene thứ hai nằm **bên trong** object này, không nằm cạnh `scene` như một
+ * trường ngang hàng. Một cảnh thứ hai không kèm ánh xạ thì chỉ là hai hình đặt
+ * gần nhau, và người đọc không có cách nào biết cái nào ứng với cái nào — đúng
+ * thứ mà bài đếm bằng song ánh cần nói. Lồng vào trong thì hai thứ đó không thể
+ * lệch nhau: khai cái này là khai cả cái kia.
+ *
+ * `pairs` cho phép nhiều-về-một: đếm $k$-về-$1$ ("mỗi hình bên phải ứng với đúng
+ * $k$ hình bên trái, nên $|A| = k|B|$") là kỹ thuật đếm hai chiều chuẩn mực, và
+ * cấm nó đi thì mất hẳn một họ bài. Validate chỉ **cảnh báo** khi ánh xạ không
+ * đơn ánh, để tác giả biết mình đang khai một thứ mạnh hơn cái tên gọi.
+ */
+export const Bijection = Type.Object(
+  {
+    /** Cấu hình bên phải. Bên trái là `scene` của chính step. */
+    scene: Scene,
+    /** Mỗi cặp: `[id bên trái, id bên phải]`. */
+    pairs: Type.Array(Type.Tuple([EntityId, EntityId]), { minItems: 1, maxItems: 200 }),
+    /** Nhãn hai pane, ví dụ "Xâu nhị phân" ↔ "Đường đi lưới". */
+    label_left: Type.Optional(LangString),
+    label_right: Type.Optional(LangString),
+  },
+  { additionalProperties: false },
+);
+export type Bijection = Static<typeof Bijection>;
+
 export const Step = Type.Object(
   {
     id: EntityId,
@@ -54,6 +82,9 @@ export const Step = Type.Object(
 
     /** Vắng mặt chỉ hợp lệ với `merge_ref` (node con trỏ, không có hình riêng). */
     scene: Type.Optional(Scene),
+
+    /** PRN-04. Cần `scene` — kiểm ở tầng structure, không ở JSON Schema. */
+    bijection: Type.Optional(Bijection),
 
     /** Trạng thái panel nguyên lý gắn với step (invariant strip, partition view...). */
     widget_state: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
@@ -97,6 +128,12 @@ export interface Step {
   narrative?: { vi: string; en?: string };
   anchors?: Record<string, Anchor>;
   scene?: Scene;
+  bijection?: {
+    scene: Scene;
+    pairs: [string, string][];
+    label_left?: { vi: string; en?: string };
+    label_right?: { vi: string; en?: string };
+  };
   widget_state?: Record<string, unknown>;
   alt_text?: { vi: string; en?: string };
   author_notes?: string;

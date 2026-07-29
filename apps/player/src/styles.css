@@ -77,6 +77,81 @@ body {
   touch-action: none;
 }
 
+/* PRN-04 — hai pane song ánh. */
+.bijection {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.bijection__pane {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.bijection__pane svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+}
+
+.bijection__pane figcaption {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted, #555);
+}
+
+.bijection__link {
+  font-size: 1.5rem;
+  color: var(--muted, #555);
+}
+
+.bijection__pairs {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bijection__pairs button {
+  font-size: 0.75rem;
+  font-family: inherit;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.bijection__pairs button.is-active {
+  background: var(--ink, #1a1a1a);
+  color: var(--paper, #fff);
+}
+
+/*
+ * Dưới 720px hai pane xếp dọc. Ép cạnh nhau trên màn hẹp thì mỗi bên còn chưa
+ * tới 160px, và một cấu hình 8 phần tử ở cỡ đó thì không ai đối chiếu được với
+ * cái gì — đúng việc mà view này sinh ra để làm.
+ */
+@media (max-width: 720px) {
+  .bijection {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bijection__link {
+    text-align: center;
+  }
+}
+
 .narrative {
   font-size: 1rem;
   line-height: 1.75;

@@ -10,7 +10,16 @@ import type { SvgNode } from '../svg-node.js';
  */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const KEY_ATTR = 'data-k';
+
+/**
+ * Thuộc tính mang danh tính element trong DOM.
+ *
+ * Xuất ra ngoài vì lớp trên cần nó để **tra ngược**: từ một node chuột đang chỉ
+ * vào, tìm ra element nào của scene. Để mỗi nơi tự viết chuỗi `'data-k'` thì
+ * ngày nào đó đổi tên ở đây, chỗ kia im lặng hỏng — chuột rê mà không có gì
+ * sáng lên, không một thông báo.
+ */
+export const KEY_ATTR = 'data-k';
 
 export function patch(container: Element, nodes: readonly SvgNode[]): void {
   patchChildren(container, nodes);

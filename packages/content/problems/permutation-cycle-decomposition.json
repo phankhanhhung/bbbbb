@@ -94,55 +94,37 @@
                 "id": "v0",
                 "type": "vertex",
                 "label": "1",
-                "pos": [
-                  -26,
-                  -5.77
-                ]
+                "pos": [-26, -5.77]
               },
               {
                 "id": "v1",
                 "type": "vertex",
                 "label": "2",
-                "pos": [
-                  -31,
-                  2.89
-                ]
+                "pos": [-31, 2.89]
               },
               {
                 "id": "v2",
                 "type": "vertex",
                 "label": "3",
-                "pos": [
-                  -21,
-                  2.89
-                ]
+                "pos": [-21, 2.89]
               },
               {
                 "id": "v3",
                 "type": "vertex",
                 "label": "4",
-                "pos": [
-                  0,
-                  -5
-                ]
+                "pos": [0, -5]
               },
               {
                 "id": "v4",
                 "type": "vertex",
                 "label": "5",
-                "pos": [
-                  0,
-                  5
-                ]
+                "pos": [0, 5]
               },
               {
                 "id": "v5",
                 "type": "vertex",
                 "label": "6",
-                "pos": [
-                  26,
-                  0
-                ]
+                "pos": [26, 0]
               },
               {
                 "id": "e0",
@@ -169,17 +151,17 @@
                 "id": "e3",
                 "type": "edge",
                 "directed": true,
+                "multi_index": 1,
                 "u": "v3",
-                "v": "v4",
-                "multi_index": 1
+                "v": "v4"
               },
               {
                 "id": "e4",
                 "type": "edge",
                 "directed": true,
+                "multi_index": 2,
                 "u": "v4",
-                "v": "v3",
-                "multi_index": 2
+                "v": "v3"
               },
               {
                 "id": "e5",
@@ -225,10 +207,7 @@
                 "color_class": 1,
                 "emphasis": "focus",
                 "label": "1",
-                "pos": [
-                  -26,
-                  -5.77
-                ]
+                "pos": [-26, -5.77]
               },
               {
                 "id": "v1",
@@ -236,10 +215,7 @@
                 "color_class": 1,
                 "emphasis": "focus",
                 "label": "2",
-                "pos": [
-                  -31,
-                  2.89
-                ]
+                "pos": [-31, 2.89]
               },
               {
                 "id": "v2",
@@ -247,40 +223,28 @@
                 "color_class": 1,
                 "emphasis": "focus",
                 "label": "3",
-                "pos": [
-                  -21,
-                  2.89
-                ]
+                "pos": [-21, 2.89]
               },
               {
                 "id": "v3",
                 "type": "vertex",
                 "color_class": 2,
                 "label": "4",
-                "pos": [
-                  0,
-                  -5
-                ]
+                "pos": [0, -5]
               },
               {
                 "id": "v4",
                 "type": "vertex",
                 "color_class": 2,
                 "label": "5",
-                "pos": [
-                  0,
-                  5
-                ]
+                "pos": [0, 5]
               },
               {
                 "id": "v5",
                 "type": "vertex",
                 "color_class": 3,
                 "label": "6",
-                "pos": [
-                  26,
-                  0
-                ]
+                "pos": [26, 0]
               },
               {
                 "id": "e0",
@@ -314,18 +278,18 @@
                 "type": "edge",
                 "color_class": 2,
                 "directed": true,
+                "multi_index": 1,
                 "u": "v3",
-                "v": "v4",
-                "multi_index": 1
+                "v": "v4"
               },
               {
                 "id": "e4",
                 "type": "edge",
                 "color_class": 2,
                 "directed": true,
+                "multi_index": 2,
                 "u": "v4",
-                "v": "v3",
-                "multi_index": 2
+                "v": "v3"
               },
               {
                 "id": "e5",
@@ -371,30 +335,21 @@
                 "type": "vertex",
                 "color_class": 1,
                 "label": "1",
-                "pos": [
-                  -26,
-                  -5.77
-                ]
+                "pos": [-26, -5.77]
               },
               {
                 "id": "v1",
                 "type": "vertex",
                 "color_class": 1,
                 "label": "2",
-                "pos": [
-                  -31,
-                  2.89
-                ]
+                "pos": [-31, 2.89]
               },
               {
                 "id": "v2",
                 "type": "vertex",
                 "color_class": 1,
                 "label": "3",
-                "pos": [
-                  -21,
-                  2.89
-                ]
+                "pos": [-21, 2.89]
               },
               {
                 "id": "v3",
@@ -402,10 +357,7 @@
                 "color_class": 2,
                 "emphasis": "focus",
                 "label": "4",
-                "pos": [
-                  0,
-                  -5
-                ]
+                "pos": [0, -5]
               },
               {
                 "id": "v4",
@@ -413,20 +365,14 @@
                 "color_class": 2,
                 "emphasis": "focus",
                 "label": "5",
-                "pos": [
-                  0,
-                  5
-                ]
+                "pos": [0, 5]
               },
               {
                 "id": "v5",
                 "type": "vertex",
                 "color_class": 3,
                 "label": "6",
-                "pos": [
-                  26,
-                  0
-                ]
+                "pos": [26, 0]
               },
               {
                 "id": "e0",
@@ -458,9 +404,9 @@
                 "color_class": 2,
                 "emphasis": "focus",
                 "directed": true,
+                "multi_index": 1,
                 "u": "v3",
-                "v": "v4",
-                "multi_index": 1
+                "v": "v4"
               },
               {
                 "id": "e4",
@@ -468,9 +414,9 @@
                 "color_class": 2,
                 "emphasis": "focus",
                 "directed": true,
+                "multi_index": 2,
                 "u": "v4",
-                "v": "v3",
-                "multi_index": 2
+                "v": "v3"
               },
               {
                 "id": "e5",
@@ -518,55 +464,37 @@
                 "id": "v0",
                 "type": "vertex",
                 "label": "1",
-                "pos": [
-                  -26,
-                  -5.77
-                ]
+                "pos": [-26, -5.77]
               },
               {
                 "id": "v1",
                 "type": "vertex",
                 "label": "2",
-                "pos": [
-                  -31,
-                  2.89
-                ]
+                "pos": [-31, 2.89]
               },
               {
                 "id": "v2",
                 "type": "vertex",
                 "label": "3",
-                "pos": [
-                  -21,
-                  2.89
-                ]
+                "pos": [-21, 2.89]
               },
               {
                 "id": "v3",
                 "type": "vertex",
                 "label": "4",
-                "pos": [
-                  0,
-                  -5
-                ]
+                "pos": [0, -5]
               },
               {
                 "id": "v4",
                 "type": "vertex",
                 "label": "5",
-                "pos": [
-                  0,
-                  5
-                ]
+                "pos": [0, 5]
               },
               {
                 "id": "v5",
                 "type": "vertex",
                 "label": "6",
-                "pos": [
-                  26,
-                  0
-                ]
+                "pos": [26, 0]
               },
               {
                 "id": "e0",
@@ -593,17 +521,17 @@
                 "id": "e3",
                 "type": "edge",
                 "directed": true,
+                "multi_index": 1,
                 "u": "v3",
-                "v": "v4",
-                "multi_index": 1
+                "v": "v4"
               },
               {
                 "id": "e4",
                 "type": "edge",
                 "directed": true,
+                "multi_index": 2,
                 "u": "v4",
-                "v": "v3",
-                "multi_index": 2
+                "v": "v3"
               },
               {
                 "id": "e5",

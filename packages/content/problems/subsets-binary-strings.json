@@ -1,0 +1,514 @@
+{
+  "schema_version": "0.1.0",
+  "id": "subsets-binary-strings",
+  "statement": {
+    "vi": "Chứng minh rằng tập $\\{1,2,\\dots,n\\}$ có đúng $2^n$ tập con."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; ví dụ chuẩn mực của phép đếm bằng song ánh."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "set",
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "n",
+      "id": "inv-n",
+      "label": {
+        "vi": "Số phần tử"
+      }
+    },
+    {
+      "expr": "k",
+      "id": "inv-k",
+      "label": {
+        "vi": "Số tập"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Với mỗi tập con $S$, viết một xâu dài $4$: bit thứ $i$ bằng $1$ khi và chỉ khi [[a1|$i \\in S$]]. Ở đây $S = \\{1,3\\}$ cho xâu $1010$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "x1",
+                "x3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "Tập con S ⊆ {1,2,3,4}",
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "S",
+                "type": "set",
+                "label": "S",
+                "order": 0
+              },
+              {
+                "id": "x1",
+                "type": "token",
+                "color_class": 1,
+                "label": "1",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "x2",
+                "type": "token",
+                "label": "2",
+                "sets": []
+              },
+              {
+                "id": "x3",
+                "type": "token",
+                "color_class": 1,
+                "label": "3",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "x4",
+                "type": "token",
+                "label": "4",
+                "sets": []
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng cho thấy 1 và 3 thuộc S; xâu tương ứng là 1010."
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Tập con"
+            },
+            "label_right": {
+              "vi": "Xâu nhị phân"
+            },
+            "pairs": [
+              [
+                "x1",
+                "b1"
+              ],
+              [
+                "x2",
+                "b2"
+              ],
+              [
+                "x3",
+                "b3"
+              ],
+              [
+                "x4",
+                "b4"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "caption": "Xâu nhị phân",
+                "mode": "sequence",
+                "show_index": true
+              },
+              "elements": [
+                {
+                  "color_class": 1,
+                  "id": "b1",
+                  "pos": 0,
+                  "type": "item",
+                  "value": 1
+                },
+                {
+                  "id": "b2",
+                  "pos": 1,
+                  "type": "item",
+                  "value": 0
+                },
+                {
+                  "color_class": 1,
+                  "id": "b3",
+                  "pos": 2,
+                  "type": "item",
+                  "value": 1
+                },
+                {
+                  "id": "b4",
+                  "pos": 3,
+                  "type": "item",
+                  "value": 0
+                }
+              ],
+              "engine": "sequence"
+            }
+          }
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đổi tập con thì xâu đổi theo, và [[a2|từng phần tử]] vẫn ứng đúng một bit. $S = \\{2,3,4\\}$ cho $0111$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "x2",
+                "x3",
+                "x4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "Tập con S ⊆ {1,2,3,4}",
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "S",
+                "type": "set",
+                "label": "S",
+                "order": 0
+              },
+              {
+                "id": "x1",
+                "type": "token",
+                "label": "1",
+                "sets": []
+              },
+              {
+                "id": "x2",
+                "type": "token",
+                "color_class": 1,
+                "label": "2",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "x3",
+                "type": "token",
+                "color_class": 1,
+                "label": "3",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "x4",
+                "type": "token",
+                "color_class": 1,
+                "label": "4",
+                "sets": [
+                  "S"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "S = {2,3,4}; xâu tương ứng là 0111."
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Tập con"
+            },
+            "label_right": {
+              "vi": "Xâu nhị phân"
+            },
+            "pairs": [
+              [
+                "x1",
+                "b1"
+              ],
+              [
+                "x2",
+                "b2"
+              ],
+              [
+                "x3",
+                "b3"
+              ],
+              [
+                "x4",
+                "b4"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "caption": "Xâu nhị phân",
+                "mode": "sequence",
+                "show_index": true
+              },
+              "elements": [
+                {
+                  "id": "b1",
+                  "pos": 0,
+                  "type": "item",
+                  "value": 0
+                },
+                {
+                  "color_class": 1,
+                  "id": "b2",
+                  "pos": 1,
+                  "type": "item",
+                  "value": 1
+                },
+                {
+                  "color_class": 1,
+                  "id": "b3",
+                  "pos": 2,
+                  "type": "item",
+                  "value": 1
+                },
+                {
+                  "color_class": 1,
+                  "id": "b4",
+                  "pos": 3,
+                  "type": "item",
+                  "value": 1
+                }
+              ],
+              "engine": "sequence"
+            }
+          }
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tập rỗng cũng có ảnh: [[a3|xâu toàn $0$]]. Không phần tử nào bị bỏ sót, và không xâu nào thiếu tiền ảnh — đọc xâu là dựng lại được $S$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "x1",
+                "x2",
+                "x3",
+                "x4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "Tập con S ⊆ {1,2,3,4}",
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "S",
+                "type": "set",
+                "label": "S",
+                "order": 0
+              },
+              {
+                "id": "x1",
+                "type": "token",
+                "label": "1",
+                "sets": []
+              },
+              {
+                "id": "x2",
+                "type": "token",
+                "label": "2",
+                "sets": []
+              },
+              {
+                "id": "x3",
+                "type": "token",
+                "label": "3",
+                "sets": []
+              },
+              {
+                "id": "x4",
+                "type": "token",
+                "label": "4",
+                "sets": []
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "S rỗng; xâu tương ứng là 0000."
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Tập con"
+            },
+            "label_right": {
+              "vi": "Xâu nhị phân"
+            },
+            "pairs": [
+              [
+                "x1",
+                "b1"
+              ],
+              [
+                "x2",
+                "b2"
+              ],
+              [
+                "x3",
+                "b3"
+              ],
+              [
+                "x4",
+                "b4"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "caption": "Xâu nhị phân",
+                "mode": "sequence",
+                "show_index": true
+              },
+              "elements": [
+                {
+                  "id": "b1",
+                  "pos": 0,
+                  "type": "item",
+                  "value": 0
+                },
+                {
+                  "id": "b2",
+                  "pos": 1,
+                  "type": "item",
+                  "value": 0
+                },
+                {
+                  "id": "b3",
+                  "pos": 2,
+                  "type": "item",
+                  "value": 0
+                },
+                {
+                  "id": "b4",
+                  "pos": 3,
+                  "type": "item",
+                  "value": 0
+                }
+              ],
+              "engine": "sequence"
+            }
+          }
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tương ứng đó là **song ánh**, nên hai bên đếm ra cùng một số. Xâu dài $4$ có $2^4 = 16$, vậy $\\{1,2,3,4\\}$ có đúng [[a4|$16$ tập con]]."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "x1",
+                "x2",
+                "x3",
+                "x4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "Tập con S ⊆ {1,2,3,4}",
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "S",
+                "type": "set",
+                "label": "S",
+                "order": 0
+              },
+              {
+                "id": "x1",
+                "type": "token",
+                "color_class": 1,
+                "label": "1",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "x2",
+                "type": "token",
+                "color_class": 1,
+                "label": "2",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "x3",
+                "type": "token",
+                "color_class": 1,
+                "label": "3",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "x4",
+                "type": "token",
+                "color_class": 1,
+                "label": "4",
+                "sets": [
+                  "S"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Toàn bộ bốn phần tử thuộc S; đây là tập con cuối cùng trong 16 tập."
+          }
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

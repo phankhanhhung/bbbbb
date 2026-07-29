@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { command, createEditorState, execute } from '@combviz/editor';
 import { tryEvaluate, DETERMINISTIC_BUDGET } from '@combviz/dsl';
-import { createContext, createRenderer } from '@combviz/render';
+import { createContext, createRenderer, walk } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
 import type { Scene } from '@combviz/schema';
 import {
@@ -175,9 +175,49 @@ describe('renderer', () => {
   const renderer = createRenderer([setRenderer]);
   const ctx = createContext(defaultTheme);
 
+  /** Key theo **thứ tự vẽ** — key nằm ở cây node, không có trong chuỗi SVG. */
+  const keysOf = (scene: Scene): string[] => {
+    const out: string[] = [];
+    walk(renderer.render(scene, ctx), (node) => {
+      if (node.key !== undefined) out.push(node.key);
+    });
+    return out;
+  };
+
   it('view matrix vẽ đủ ô cho mọi cặp', () => {
-    const svg = renderer.toSvg(FAMILY, ctx);
-    expect(svg.match(/<rect/g)?.length).toBe(4 * 2 + 1); // +1 nền canvas
+    expect(keysOf(FAMILY).filter((k) => k.includes('__'))).toHaveLength(4 * 2);
+  });
+
+  it('view matrix có node mang đúng id của token và của set', () => {
+    // Anchor trỏ tới `x1` phải làm sáng được thứ gì đó. Trước sửa này bảng chỉ
+    // có ô giao `x1__a` và nhãn `token-label-x1`, nên anchor hợp lệ — validate
+    // xanh — vẫn không làm sáng gì cả, im lặng hoàn toàn.
+    const keys = new Set(keysOf(FAMILY));
+
+    for (const id of ['x1', 'x2', 'x3', 'x4', 'a', 'b']) {
+      expect(keys.has(id)).toBe(true);
+    }
+  });
+
+  it('tay cầm của hàng vẽ sau tay cầm của cột', () => {
+    // Hai tay cầm chồng nhau ở thân bảng; cái vẽ sau là cái chuột chạm phải.
+    // Ngược thứ tự thì bảng một cột nuốt sạch mọi thao tác trỏ vào ô.
+    const keys = keysOf(FAMILY);
+    expect(keys.indexOf('x1')).toBeGreaterThan(keys.indexOf('a'));
+  });
+
+  it('caption nằm trong khung hình, không nằm trên mép', () => {
+    const withCaption: Scene = {
+      ...FAMILY,
+      config: { view: 'matrix', caption: 'Họ tập con' },
+    };
+    const viewport = renderer.viewportOf(withCaption);
+    const y = Number(
+      /<text[^>]*y="(-?[\d.]+)"[^>]*>Họ tập con</.exec(renderer.toSvg(withCaption, ctx))?.[1],
+    );
+
+    expect(y).toBeGreaterThan(viewport.y);
+    expect(y).toBeLessThan(viewport.y + viewport.height);
   });
 
   it('`show_sums` in tổng hai chiều', () => {

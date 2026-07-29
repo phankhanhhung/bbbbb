@@ -316,3 +316,71 @@ describe('DAT-12 — id ổn định', () => {
     expect(codes(problem)).toContain('scene/duplicate-element-id');
   });
 });
+
+describe('PRN-04 — view song ánh', () => {
+  const BIJECTION_PATH = fileURLToPath(
+    new URL(
+      '../../../packages/content/problems/subsets-binary-strings.json',
+      import.meta.url,
+    ),
+  );
+
+  const loadBijection = (): Problem =>
+    JSON.parse(readFileSync(BIJECTION_PATH, 'utf8')) as Problem;
+
+  const stepOf = (problem: Problem): NonNullable<Problem['solutions'][0]['steps'][0]> =>
+    problem.solutions[0]!.steps[0]!;
+
+  it('bài mẫu validate sạch', () => {
+    expect(validator.validateProblem(loadBijection()).issues).toEqual([]);
+  });
+
+  it('bắt cặp trỏ tới element không có ở pane của nó', () => {
+    const problem = loadBijection();
+    stepOf(problem).bijection!.pairs[0]![1] = 'khong-ton-tai';
+
+    expect(codes(problem)).toContain('structure/bijection-unknown-element');
+  });
+
+  it('gợi ý đúng khi tác giả đảo hai vế', () => {
+    const problem = loadBijection();
+    const [a, b] = stepOf(problem).bijection!.pairs[0]!;
+    stepOf(problem).bijection!.pairs[0] = [b, a];
+
+    const issues = validator
+      .validateProblem(problem)
+      .issues.filter((i) => i.code === 'structure/bijection-unknown-element');
+
+    // Hai vế đảo nhau: cả hai đầu đều sai, và cả hai đều phải nói ra lý do thật.
+    expect(issues).toHaveLength(2);
+    expect(issues.every((i) => i.hint?.includes('đảo'))).toBe(true);
+  });
+
+  it('cảnh báo — không chặn — khi ánh xạ không đơn ánh', () => {
+    const problem = loadBijection();
+    const bijection = stepOf(problem).bijection!;
+    bijection.pairs[1] = [bijection.pairs[0]![0], bijection.pairs[1]![1]];
+
+    const issue = validator
+      .validateProblem(problem)
+      .issues.find((i) => i.code === 'structure/bijection-not-injective');
+
+    // Đếm $k$-về-$1$ dùng đúng cấu trúc này, nên đây phải là cảnh báo.
+    expect(issue?.severity).toBe('warning');
+  });
+
+  it('engines_used phải tính cả engine của pane phải (D-10)', () => {
+    const problem = loadBijection();
+    problem.engines_used = problem.engines_used.filter((e) => e !== 'sequence');
+
+    // Thiếu engine ở đây thì Player lazy-load hụt và nửa bên phải trắng trơn.
+    expect(codes(problem)).toContain('structure/engine-undeclared');
+  });
+
+  it('bijection không có scene bên trái là lỗi', () => {
+    const problem = loadBijection();
+    delete stepOf(problem).scene;
+
+    expect(codes(problem)).toContain('structure/bijection-without-scene');
+  });
+});

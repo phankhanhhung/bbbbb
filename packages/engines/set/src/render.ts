@@ -32,34 +32,58 @@ import {
  * sơ đồ Venn, còn Venn mạnh ở chỗ khác: nó cho thấy **vùng giao** như một vật
  * thể, thứ mà bảng không làm được.
  */
+/** Cỡ chữ caption, và chiều cao nó cần được chừa. */
+const CAPTION_SIZE = CELL * 0.36;
+
+/**
+ * Khung hình **và** chỗ đặt caption, tính một lần từ cùng một phép tính.
+ *
+ * Tách làm hai chỗ thì chúng trôi khỏi nhau, và bản nháp đầu tiên trôi đúng như
+ * vậy: viewport chừa chỗ cho nhãn cột còn caption được đặt bằng một hằng số
+ * riêng, cao hơn mép trên. Chữ vẫn được vẽ đủ, chỉ là nằm ngoài khung — không
+ * lỗi, không cảnh báo, và không ai đọc được.
+ */
+function layoutOf(scene: Scene): { viewport: Viewport; caption: { x: number; y: number } } {
+  const derived = deriveSet(scene);
+  const config = setConfig(scene);
+  const room = config.caption === undefined ? 0 : CAPTION_SIZE * 2;
+
+  const body =
+    derived.view === 'venn' && !vennTooManySets(derived)
+      ? (() => {
+          const r = VENN_R * 2.6;
+          return { x: -r, y: -r, width: r * 2.15, height: r * 2 };
+        })()
+      : (() => {
+          const rows = Math.max(1, derived.tokens.length);
+          const cols = Math.max(1, derived.sets.length);
+          const labelRoom = CELL * 1.6;
+          const sumRoom = config.show_sums ? CELL * 1.1 : 0;
+          return {
+            x: -PADDING - labelRoom,
+            y: -PADDING - CELL * 0.9,
+            width: cols * CELL + labelRoom + sumRoom + PADDING * 2,
+            height: rows * CELL + CELL * 0.9 + sumRoom + PADDING * 2,
+          };
+        })();
+
+  return {
+    viewport: { ...body, y: body.y - room, height: body.height + room },
+    caption: { x: body.x + PADDING, y: body.y - room + CAPTION_SIZE },
+  };
+}
+
 export const setRenderer: EngineRenderer = {
   id: 'set',
 
   defaultViewport(scene: Scene): Viewport {
-    const derived = deriveSet(scene);
-    const config = setConfig(scene);
-
-    if (derived.view === 'venn' && !vennTooManySets(derived)) {
-      const r = VENN_R * 2.6;
-      return { x: -r, y: -r, width: r * 2.15, height: r * 2 };
-    }
-
-    const rows = Math.max(1, derived.tokens.length);
-    const cols = Math.max(1, derived.sets.length);
-    const labelRoom = CELL * 1.6;
-    const sumRoom = config.show_sums ? CELL * 1.1 : 0;
-
-    return {
-      x: -PADDING - labelRoom,
-      y: -PADDING - CELL * 0.9,
-      width: cols * CELL + labelRoom + sumRoom + PADDING * 2,
-      height: rows * CELL + CELL * 0.9 + sumRoom + PADDING * 2,
-    };
+    return layoutOf(scene).viewport;
   },
 
   render(scene: Scene, ctx: RenderContext): SvgNode[] {
     const derived = deriveSet(scene);
     const config = setConfig(scene);
+    const { caption } = layoutOf(scene);
 
     const body =
       derived.view === 'venn' && !vennTooManySets(derived)
@@ -73,10 +97,14 @@ export const setRenderer: EngineRenderer = {
             text(
               'text',
               {
-                x: derived.view === 'venn' ? -VENN_R * 2.4 : 0,
-                y: derived.view === 'venn' ? -VENN_R * 2.2 : -CELL * 1.35,
+                // Vị trí caption suy từ **chính viewport** vừa tính. Đặt bằng một
+                // hằng số riêng thì hai bên trôi khỏi nhau, và bản nháp đầu tiên
+                // trôi đúng như vậy: chân chữ nằm trên mép trên của viewport, nên
+                // caption được vẽ đầy đủ mà không ai nhìn thấy nó.
+                x: caption.x,
+                y: caption.y,
                 'font-family': ctx.theme.type.uiFamily,
-                'font-size': CELL * 0.36,
+                'font-size': CAPTION_SIZE,
                 fill: ctx.theme.surface.guide,
               },
               config.caption,
@@ -172,6 +200,48 @@ function renderMatrix(
       ),
     );
   }
+
+  // "Tay cầm" cho mỗi hàng và mỗi cột, mang **đúng id của token hoặc của set**.
+  //
+  // View Venn đã có sẵn: ở đó mỗi tập là một đường tròn keyed `set.id`, mỗi phần
+  // tử là một chấm keyed `token.id`. View bảng thì không — nó chỉ có ô giao
+  // `x__S` và nhãn `token-label-x`. Hệ quả: anchor trỏ tới `x1` — một element
+  // khai tường minh, validate xanh — **không làm sáng thứ gì cả**. Không lỗi,
+  // không cảnh báo, và tác giả chỉ biết khi tự rê chuột lên đúng chỗ đó.
+  //
+  // `fill: 'transparent'` chứ không phải `'none'`: `none` thì hình không được tô,
+  // và một hình không được tô thì cũng không nhận được con trỏ chuột. Vẽ sau
+  // cùng để halo nằm trên, và để chính nó là thứ chuột chạm vào trước.
+  //
+  // Cột trước, hàng sau — hai tay cầm chồng lên nhau ở thân bảng và cái vẽ sau
+  // thắng. Quy ước: trỏ vào một ô thì được **phần tử** của hàng đó, trỏ lên dải
+  // tiêu đề (nằm ngoài mọi hàng) thì được **tập**. Ngược lại thì bảng một cột
+  // sẽ nuốt sạch mọi thao tác trỏ vào ô, vì cột đó phủ kín cả bảng.
+  derived.sets.forEach((set, c) => {
+    nodes.push(
+      keyed(set.id, 'rect', {
+        x: c * CELL,
+        y: -CELL * 0.8,
+        width: CELL,
+        height: derived.tokens.length * CELL + CELL * 0.8,
+        fill: 'transparent',
+        ...decorationAttrs(ctx, set.id, set.emphasis),
+      }),
+    );
+  });
+
+  derived.tokens.forEach((token, r) => {
+    nodes.push(
+      keyed(token.id, 'rect', {
+        x: -CELL * 0.9,
+        y: r * CELL,
+        width: derived.sets.length * CELL + CELL * 0.9,
+        height: CELL,
+        fill: 'transparent',
+        ...decorationAttrs(ctx, token.id, token.emphasis),
+      }),
+    );
+  });
 
   return nodes;
 }

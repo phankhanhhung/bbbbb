@@ -25,6 +25,7 @@ import { InvariantStrip } from './InvariantStrip.jsx';
 import { TreeNavigator } from './TreeNavigator.jsx';
 import { GraphFacts } from './GraphFacts.jsx';
 import { Sandbox } from './Sandbox.jsx';
+import { BijectionPanes } from './BijectionPanes.jsx';
 import { renderMath } from './math.js';
 import { useAnalyzer } from './useAnalyzer.js';
 
@@ -133,6 +134,18 @@ export function Player({
 
   useEffect(() => {
     const container = svgRef.current;
+
+    // Step song ánh vẽ ở component riêng, canvas chính không tồn tại lúc đó.
+    // Phải xoá **ký ức** của nó: giữ lại cây node cũ thì step thường kế tiếp sẽ
+    // được nội suy từ một scene chẳng liên quan gì — hình biến dạng từ cấu hình
+    // của hai step trước, một animation vô nghĩa mà không có lỗi nào báo.
+    if (step.bijection) {
+      previous.current = [];
+      lastStepId.current = step.id;
+      setDiff(null);
+      return;
+    }
+
     if (!renderer || !container || !step.scene) return;
 
     const next = renderer.render(step.scene, ctx);
@@ -240,24 +253,28 @@ export function Player({
       ) : null}
 
       <div class="player__body">
-        <div
-          class="canvas"
-          onPointerDown={(event: PointerEvent) => {
-            swipeStart.current = event.clientX;
-          }}
-          onPointerUp={onCanvasPointerUp}
-        >
-          <svg
-            ref={svgRef}
-            viewBox={
-              viewport
-                ? `${viewport.x} ${viewport.y} ${viewport.width} ${viewport.height}`
-                : '0 0 100 100'
-            }
-            role="img"
-            aria-label={step.alt_text?.vi ?? altFallback(step)}
-          />
-        </div>
+        {step.bijection && renderer ? (
+          <BijectionPanes step={step} renderer={renderer} />
+        ) : (
+          <div
+            class="canvas"
+            onPointerDown={(event: PointerEvent) => {
+              swipeStart.current = event.clientX;
+            }}
+            onPointerUp={onCanvasPointerUp}
+          >
+            <svg
+              ref={svgRef}
+              viewBox={
+                viewport
+                  ? `${viewport.x} ${viewport.y} ${viewport.width} ${viewport.height}`
+                  : '0 0 100 100'
+              }
+              role="img"
+              aria-label={step.alt_text?.vi ?? altFallback(step)}
+            />
+          </div>
+        )}
 
         <aside class="side">
           {!revealed ? (
