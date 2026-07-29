@@ -278,6 +278,27 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 2. Luật "step có hình mà không có anchor" đếm `elements.length > 0`, trong khi bàn cờ 8×8 sinh 64 ô từ `config` với `elements` rỗng (D-16) — tức là luật miễn trừ đúng những bài dùng engine board.
 3. `nextStepId` hứa không tái dùng id đã xoá nhưng chỉ lấy max trên step **đang còn**: xoá step cuối rồi thêm bước mới sẽ cấp lại đúng id đó, và một `merge_target` đang treo sẽ lặng lẽ trỏ sang step khác — tệ hơn nữa, validate đang báo đỏ sẽ **xanh trở lại** trong khi bài đã sai.
 
+### Ghi chú vận hành — "xanh ở local" không phải bằng chứng
+
+CI đỏ suốt bốn milestone kể từ commit thêm job `e2e` và `perf`, trong khi mọi lần
+chạy ở máy soạn đều xanh 14/14. Nguyên nhân không nằm trong test:
+
+`playwright.config.ts` đặt `reuseExistingServer: !process.env.CI`. Ở máy soạn có
+một `vite preview` còn sống từ lần chạy Playwright **đầu tiên**, nên mọi lần chạy
+sau đó dùng lại nó — và `webServer.command`, đường duy nhất CI đi, chưa từng được
+thực thi ở local lần nào. Con số "14/14" đúng, nhưng nó đo một cấu hình mà CI
+không bao giờ chạy.
+
+Trên runner, `vite preview` mặc định nghe ở `localhost`, phân giải ra `::1` trước;
+Playwright gõ cửa `127.0.0.1` rồi chờ hết 180 giây. Tiến trình vẫn sống nên lỗi
+hiện ra dưới dạng **timeout câm** — ba phút không một dòng log.
+
+Ba việc rút ra, đã áp dụng:
+
+1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
+2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
+3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
 ### M10 — 20 bài showcase toàn bộ tính năng · [C]+[E] — **xong**
 
 Mục tiêu khác các milestone trước: không phải thêm năng lực, mà **bắt mọi năng lực
