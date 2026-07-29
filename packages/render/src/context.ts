@@ -1,6 +1,7 @@
 import { colorClass, type Theme } from '@combviz/theme';
 import type { SceneElement } from '@combviz/schema';
 import { el, type SvgNode } from './svg-node.js';
+import { EMPTY_ATLAS, type LabelAtlas } from './labels.js';
 
 /**
  * Ngữ cảnh vẽ truyền xuống engine renderer.
@@ -36,12 +37,21 @@ export interface RenderContext {
    * vẽ**, nên nó sống sót qua animation và test được mà không cần DOM.
    */
   readonly invalid: ReadonlySet<string>;
+  /**
+   * D-07: bảng nhãn LaTeX đã dựng sẵn thành path.
+   *
+   * Truyền vào đây chứ không để engine tự import: cùng lý do với `theme`. Player
+   * nạp bảng theo `engines_used[]`, CLI đọc từ đĩa, test golden dựng bảng riêng
+   * — và cả ba vẫn dùng đúng một renderer.
+   */
+  readonly labels: LabelAtlas;
 }
 
 export interface ContextOptions {
   readonly patterns?: boolean;
   readonly highlight?: ReadonlySet<string>;
   readonly invalid?: ReadonlySet<string>;
+  readonly labels?: LabelAtlas;
 }
 
 const EMPTY: ReadonlySet<string> = new Set();
@@ -52,6 +62,7 @@ export function createContext(theme: Theme, options: ContextOptions = {}): Rende
     patterns: options.patterns ?? false,
     highlight: options.highlight ?? EMPTY,
     invalid: options.invalid ?? EMPTY,
+    labels: options.labels ?? EMPTY_ATLAS,
   };
 }
 

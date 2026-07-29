@@ -1,4 +1,4 @@
-import type { EngineRenderer } from '@combviz/render';
+import type { EngineRenderer, LabelAtlas } from '@combviz/render';
 import type { DslEnvironment } from '@combviz/dsl';
 import type { CommandRegistry, HitTest } from '@combviz/editor';
 import type { Scene, SceneValidator } from '@combviz/schema';
@@ -23,6 +23,14 @@ export interface LoadedEngine {
   colorSummary?(scene: Scene): Map<number, number>;
   /** BD-03 — độ phủ. Chỉ engine dạng lưới có. */
   coverage?(scene: Scene): { covered: number; total: number };
+  /**
+   * Engine này vẽ nhãn LaTeX trong canvas ⇒ cần label atlas (D-07).
+   *
+   * Khai ở đây chứ không kiểm tên engine ở chỗ gọi: bảng nhãn là một tệp riêng
+   * và nó chỉ nên được tải khi bài thật sự cần, đúng tinh thần D-10. Bài bàn cờ
+   * không phải tải bảng công thức.
+   */
+  readonly needsLabels?: boolean;
 }
 
 const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
@@ -93,6 +101,18 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       resolveValidator: module.resolveGameValidator,
     };
   },
+
+  derivation: async () => {
+    const module = await import('@combviz/engine-derivation');
+    return {
+      renderer: module.derivationRenderer,
+      commands: module.derivationCommands,
+      hitTest: module.derivationHitTest,
+      environment: module.derivationEnvironment,
+      resolveValidator: module.resolveDerivationValidator,
+      needsLabels: true,
+    };
+  },
 };
 
 const cache = new Map<string, LoadedEngine>();
@@ -110,4 +130,18 @@ export async function loadEngines(
   );
 
   return new Map(ids.filter((id) => cache.has(id)).map((id) => [id, cache.get(id)!]));
+}
+
+/**
+ * Nạp label atlas — **chỉ khi** có engine cần tới (D-07 + D-10).
+ *
+ * Bảng nhãn nặng theo số công thức trong kho, nên nó không được nằm trong bundle
+ * chung. Bài nào không có công thức trong canvas thì không tải một byte nào.
+ */
+export async function loadLabelAtlas(
+  engines: ReadonlyMap<string, LoadedEngine>,
+): Promise<LabelAtlas | null> {
+  if (![...engines.values()].some((e) => e.needsLabels)) return null;
+  const module = await import('../../../packages/content/labels.json');
+  return module.default as unknown as LabelAtlas;
 }

@@ -18,6 +18,7 @@ import {
   type Scene,
   type Step,
 } from '@combviz/schema';
+import { loadAtlas } from '../atlas.js';
 import { ENGINE_RENDERERS } from '../engines.js';
 
 /**
@@ -46,7 +47,7 @@ export async function runOg(options: OgOptions): Promise<number> {
 
   await mkdir(options.out, { recursive: true });
   const renderer = createRenderer(ENGINE_RENDERERS);
-  const ctx = createContext(defaultTheme);
+  const ctx = createContext(defaultTheme, { labels: await loadAtlas(options.root) });
   let made = 0;
 
   for (const file of files) {
@@ -138,7 +139,7 @@ function composeCard(
   ctx: ReturnType<typeof createContext>,
 ): string {
   const { ogWidth, ogHeight } = defaultTheme.brand;
-  const viewport = renderer.viewportOf(scene);
+  const viewport = renderer.viewportOf(scene, ctx);
 
   // Hình chiếm nửa trái, chữ nửa phải. Nhúng scene qua `<svg>` lồng với viewBox
   // riêng: nhờ vậy không phải scale toạ độ tay, và hình giữ nguyên tỉ lệ dù bàn

@@ -36,6 +36,12 @@ jobs:
       - name: Validate toàn kho
         run: pnpm validate
 
+      # Atlas nhãn LaTeX là **tệp sinh ra và cam kết vào git** (cùng loại với
+      # golden SVG). Cũ so với nội dung thì hình vẽ ra "⟨thiếu atlas: …⟩" — thấy
+      # được, nhưng phải thấy ở đây chứ không phải trên màn hình người học.
+      - name: Label atlas khớp nội dung
+        run: pnpm labels
+
       # Build là một phép kiểm riêng: typecheck xanh mà bundle vỡ là chuyện có
       # thật (import vòng, asset thiếu, entry point sai).
       - name: Build Player + Studio

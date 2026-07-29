@@ -4,6 +4,7 @@ import { createContext, createRenderer } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
 import type { Problem, Step } from '@combviz/schema';
 import { ENGINE_RENDERERS } from '../engines.js';
+import { loadAtlas } from '../atlas.js';
 
 /**
  * REN-01 — render một Scene ra SVG **không cần browser**.
@@ -47,8 +48,14 @@ export async function runRender(options: RenderOptions): Promise<string> {
     throw new Error(`Chưa có renderer cho engine "${step.scene.engine}"`);
   }
 
-  const ctx = createContext(defaultTheme, { patterns: options.patterns });
-  const viewport = renderer.viewportOf(step.scene);
+  const ctx = createContext(defaultTheme, {
+    patterns: options.patterns,
+    labels: await loadAtlas(options.root),
+  });
+  // Phải truyền `ctx`: khung nhìn của engine derivation phụ thuộc label atlas,
+  // và tính khung bằng bảng rỗng trong khi vẽ bằng bảng thật thì hai tỉ lệ lệch
+  // nhau — trình duyệt letterbox, hình dạt sang một bên giữa hai mảng trắng.
+  const viewport = renderer.viewportOf(step.scene, ctx);
   const width = options.width ?? 720;
 
   const svg = renderer.toSvg(step.scene, ctx, {

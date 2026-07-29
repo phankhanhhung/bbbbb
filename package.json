@@ -15,11 +15,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "validate": "tsx tools/pipeline/src/cli.ts validate packages/content",
-    "check": "pnpm index && pnpm typecheck && pnpm lint && pnpm test && pnpm validate",
+    "check": "pnpm index && pnpm typecheck && pnpm lint && pnpm test && pnpm validate && pnpm labels",
     "e2e": "playwright test --project=desktop --project=ipad",
     "e2e:perf": "playwright test --project=perf --workers=1",
     "coverage": "tsx tools/pipeline/src/cli.ts coverage",
-    "coverage:drafts": "tsx tools/pipeline/src/cli.ts coverage --drafts"
+    "coverage:drafts": "tsx tools/pipeline/src/cli.ts coverage --drafts",
+    "labels": "tsx tools/pipeline/src/cli.ts labels"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -37,5 +38,6 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ]
-  }
+  },
+  "dependencies": {}
 }

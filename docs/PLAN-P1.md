@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M17 xong (6 engine, phủ ~83%); kho 54 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M18 xong (7 engine, phủ ~85%); kho 56 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -239,7 +239,7 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 - ✅ GR-04 Hamilton backtracking, từ chối kèm lý do khi vượt 20 đỉnh.
 - ✅ **ENG-04** (hoãn từ M3): analyzer chạy trong Web Worker, cache theo hash scene, huỷ được.
 - ✅ Bài $R(3,3)=6$ — case-branching thật với `merge_ref`, 10 step, hai engine đã chạy song song trong Player.
-- ⬜ GR-08 nhãn LaTeX trong canvas — mới có nhãn text thuần; label atlas (D-07) vẫn để M6.
+- ✅ GR-08 nhãn LaTeX trong canvas — label atlas (D-07) làm ở **M18**: MathJax dựng path lúc build, `packages/content/labels.json` cam kết vào git, CI canh bằng `pnpm labels`.
 
 **DoD:** ⬜ Còn track [C]. Graph engine đã chạy đủ analyzer trên $K_6$ và cho kết quả đúng: 1 thành phần, không hai phía (chu trình lẻ dài 3), Euler không tồn tại (6 đỉnh bậc lẻ), có chu trình Hamilton qua 6 đỉnh.
 
@@ -299,45 +299,65 @@ Ba việc rút ra, đã áp dụng:
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
 
-### M17 — Game engine · [E] — **xong một phần, và phần thiếu là có chủ ý**
+### M18 — Derivation engine + label atlas D-07 · [E] — **xong**
 
-Hạng mục 7, đắt nhất trong hàng đợi.
+Hạng mục **cuối cùng** của hàng đợi §7 trong `docs/VIZ-COVERAGE.md`.
 
-> **Không mở DSL-03.** SRS đòi GM-01 "định nghĩa game bằng rule script
-> sandboxed" — một ngôn ngữ *có trạng thái*, chạy Web Worker với budget riêng
-> (NFR-S2). Tôi dùng **tập luật đóng** thay thế, vì (a) R-2 trong sổ rủi ro là
-> "DSL phình thành ngôn ngữ lập trình" và đối sách ghi rõ là grammar đóng,
-> (b) `COMBINE_RULES` của engine dãy đã có tiền lệ đúng như vậy, (c) ba luật
-> đóng phủ gần hết game thi đấu. **GM-01 vẫn còn nợ**, và game có luật riêng —
-> cờ trên đồ thị, Chomp, trò tô màu — chưa khai được.
+**Hai phần, và phần dưới là điều kiện của phần trên.**
 
-- ✅ Ba luật đóng có tham số: bốc theo khoảng (Nim là trường hợp không giới hạn), bốc theo tập cho trước, chia đống thành hai phần khác nhau.
-- ✅ Solver: giá trị Grundy + XOR cho luật chơi thường; **duyệt lùi** cho misère, vì lý thuyết Grundy không áp dụng được ở đó. Vượt trần thì từ chối kèm lý do (GM-03).
-- ✅ View `spectrum` — mọi thế một đống từ $0$ tới $N$, tô theo thắng/thua. Đây là view đắt giá hơn hẳn: phát biểu "thua đúng khi $n$ chia hết cho $k+1$" không phải câu để tin, nó là **một vệt sọc** hiện ra trên màn hình.
-- ✅ Lệnh đi **tự kiểm luật** — gọi đúng hàm sinh nước mà solver dùng. Nếu để lệnh sửa số viên tuỳ ý thì người học "thắng" bằng một nước không tồn tại, và sandbox mất hết ý nghĩa.
-- ✅ Hai bài: `take-stones-one-to-three`, `nim-three-piles-xor`.
+**D-07 — label atlas.** Nhãn LaTeX *trong canvas* không thể dùng KaTeX như
+narrative pane: KaTeX dựng ra HTML, nhét vào SVG phải qua `<foreignObject>`, mà
+resvg (REN-01/02) không hỗ trợ thẻ đó. Nhãn sẽ hiện trong Player rồi **biến mất**
+khỏi OG card — đúng loại lệch mà D-03 sinh ra để chặn, và G-02 đã ghi tên nó từ
+đầu. Cách làm: MathJax dựng path một lần lúc build (`pnpm labels --write`), khoá
+theo chính chuỗi LaTeX, ghi ra `packages/content/labels.json` và **cam kết vào
+git** như golden SVG. Player nạp bảng theo `needsLabels` của engine, nên bài bàn
+cờ không tải một byte nào (chunk riêng, 5.8KB gzip).
 
-**`claims` bắt hai lỗi của chính tôi trong milestone này** — và đó là lần đầu cơ
-chế M14 trả cổ tức trên nội dung mới:
+**Derivation engine.** Scene là các **dòng**; mỗi dòng là dãy **hạng tử**; mỗi
+hạng tử có `id`, `tex`, `role`, `color_class`. Dòng gióng theo dấu quan hệ, và
+`id` sống xuyên step — nên diff DAT-11/12 cho ra một *chuyển động* thay vì "xoá
+cái này thêm cái kia".
 
-1. Tôi viết "người đi trước thắng" cho $20$ viên bốc $1..3$. Sai: $20 = 4 \times 5$
-   là bội của $4$, nên người đi trước **thua**.
-2. Tôi viết Nim$(3,5,7)$ có "đúng $1$ nước thắng". Sai: có **$3$** — bốc một viên
-   từ bất kỳ đống nào đều đưa XOR về $0$.
+**Luật đáng giá nhất của milestone: `derivation/silent-drop`.** Hạng tử biến mất
+giữa hai bước mà không khai là **lỗi**. Lối ra: `cancelled: true` (triệt tiêu,
+hình gạch chéo) hoặc `becomes: "<id>"` (bị thay thế — và id đích phải có thật ở
+bước sau, nên lời khai vẫn kiểm được). Đánh rơi một hạng tử là lỗi đại số hay gặp
+nhất khi soạn tay, và nó không lộ ra vì dòng dưới trông vẫn hợp lý.
 
-Cả hai đều là loại lỗi mà đọc lại bằng mắt rất dễ trượt, và cả hai đều đỏ ngay ở
-`validate`.
+Luật này chạy lần đầu báo **14 lỗi trên chính bài telescoping tôi vừa viết, và cả
+14 đều không phải lỗi**. Đó là thông tin về *luật*, không về nội dung: nó cho
+thấy hai lằn ranh phải cắt — dấu phép toán và dấu quan hệ được miễn (chúng là
+chất kết dính, và mất một dấu trừ thì dòng công thức trông đã sai rồi), còn bước
+thay hẳn cách trình bày (không id nào đi tiếp) thì không so được. Đến bài Pascal
+nó lại báo tiếp, và lần này chỉ ra rằng **luật còn thiếu một lối ra**: một hạng
+tử có thể mất vì bị *thay thế*, không chỉ vì triệt tiêu. Đó là chỗ `becomes` ra
+đời.
 
-Solver đối chiếu **vét cạn** trên $5$ luật: hơn $500$ thế cho luật thường, hơn
-$100$ cho misère, cộng kiểm rằng **mọi** nước được báo là thắng thật sự đưa đối
-thủ vào thế thua. Lý thuyết Sprague–Grundy là một tầng gián tiếp (Grundy → XOR →
-thắng/thua), và một lỗi ở `mex` vẫn cho ra những con số trông hoàn toàn hợp lý.
+**Ba lỗi hình, cả ba chỉ lộ khi render ra ảnh và nhìn:**
 
-**Hai lỗi hình chỉ lộ khi nhìn:** đống $20$ viên vẽ thành một cột tỉ lệ $1:20$
-(nay chồng thành khối $4\times6$), và nhãn các đống nằm so le theo chiều cao từng
-cột nên một hàng "3, 5, 7" đọc ra như mấy con số rời rạc (nay chung một đường chân).
+- **Dòng chồng lên nhau.** Chiều cao dòng để hằng số $10$; một $\sum$ dạng trưng
+  bày cao gấp đôi thế. Nay chiều cao là cao–sâu **thật** của nhãn trong dòng.
+- **`align: 'left'` dịch âm.** "Gióng về mốc $0$" làm dòng có dấu quan hệ đứng
+  sau bị đẩy sang **trái** ra ngoài khung. Nay `left` nghĩa là dịch đúng $0$.
+- **Công thức dạt sang một bên giữa hai mảng trắng.** CLI gọi `viewportOf(scene)`
+  **thiếu ctx**, nên khung tính bằng bảng rỗng còn hình vẽ bằng bảng thật; tỉ lệ
+  lệch, trình duyệt letterbox. Đây là cái bẫy do chính tôi tạo ra khi cho `ctx`
+  thành tham số tuỳ chọn — đã rà lại **mọi** chỗ gọi (CLI, OG, Player, Sandbox,
+  Studio, BijectionPanes) và có test khoá.
 
-**Mức phủ:** ~80% → **~83%**. Kho: 51 → **53 bài**.
+Ngoài ra: MathJax **không ném** khi gặp lệnh LaTeX sai — nó vẽ nguyên chuỗi ra
+bằng chữ đỏ và trả về SVG hợp lệ. Phần sinh atlas bắt đúng chỗ đó, nếu không thì
+một lệnh gõ nhầm đi thẳng vào kho.
+
+**Mức phủ:** ~83% → **~85%** (cột "có hình mang thông tin": ~90% → **~97%**).
+Kho: 54 → **56 bài** (`telescoping-sum-fractions`, `pascal-identity-two-ways`).
+787 test, bundle 250.7KB gzip mỗi trang bài, e2e xanh.
+
+**Hàng đợi §7 đã cạn.** Từ đây không còn hạng mục "thêm một engine nữa" nào có
+lãi rõ ràng; phần thiếu còn lại là §6 (lập luận không mang nội dung không gian)
+cộng mấy mảnh đã ghi tên: tô mặt đồ thị, PT-03 tô vùng, GM-01 rule script,
+animation biến hình PRN-04.
 
 ### M17b — rà lại "engine game đã đủ mở chưa" · [E] — **xong**
 
@@ -379,6 +399,46 @@ trên đồ thị) thì thấy 65% không đứng vững — tập luật đóng
 số; chỉ có tôi kiểm lại điều mình đã khẳng định. Chi tiết ranh giới ở
 `docs/VIZ-COVERAGE.md` §4.
 
+### M17 — Game engine · [E] — **xong một phần, và phần thiếu là có chủ ý**
+
+Hạng mục 7, đắt nhất trong hàng đợi.
+
+> **Không mở DSL-03.** SRS đòi GM-01 "định nghĩa game bằng rule script
+> sandboxed" — một ngôn ngữ *có trạng thái*, chạy Web Worker với budget riêng
+> (NFR-S2). Tôi dùng **tập luật đóng** thay thế, vì (a) R-2 trong sổ rủi ro là
+> "DSL phình thành ngôn ngữ lập trình" và đối sách ghi rõ là grammar đóng,
+> (b) `COMBINE_RULES` của engine dãy đã có tiền lệ đúng như vậy, (c) ba luật
+> đóng phủ gần hết game thi đấu. **GM-01 vẫn còn nợ**, và game có luật riêng —
+> cờ trên đồ thị, Chomp, trò tô màu — chưa khai được.
+
+- ✅ Ba luật đóng có tham số: bốc theo khoảng (Nim là trường hợp không giới hạn), bốc theo tập cho trước, chia đống thành hai phần khác nhau.
+- ✅ Solver: giá trị Grundy + XOR cho luật chơi thường; **duyệt lùi** cho misère, vì lý thuyết Grundy không áp dụng được ở đó. Vượt trần thì từ chối kèm lý do (GM-03).
+- ✅ View `spectrum` — mọi thế một đống từ $0$ tới $N$, tô theo thắng/thua. Đây là view đắt giá hơn hẳn: phát biểu "thua đúng khi $n$ chia hết cho $k+1$" không phải câu để tin, nó là **một vệt sọc** hiện ra trên màn hình.
+- ✅ Lệnh đi **tự kiểm luật** — gọi đúng hàm sinh nước mà solver dùng. Nếu để lệnh sửa số viên tuỳ ý thì người học "thắng" bằng một nước không tồn tại, và sandbox mất hết ý nghĩa.
+- ✅ Hai bài: `take-stones-one-to-three`, `nim-three-piles-xor`.
+
+**`claims` bắt hai lỗi của chính tôi trong milestone này** — và đó là lần đầu cơ
+chế M14 trả cổ tức trên nội dung mới:
+
+1. Tôi viết "người đi trước thắng" cho $20$ viên bốc $1..3$. Sai: $20 = 4 \times 5$
+   là bội của $4$, nên người đi trước **thua**.
+2. Tôi viết Nim$(3,5,7)$ có "đúng $1$ nước thắng". Sai: có **$3$** — bốc một viên
+   từ bất kỳ đống nào đều đưa XOR về $0$.
+
+Cả hai đều là loại lỗi mà đọc lại bằng mắt rất dễ trượt, và cả hai đều đỏ ngay ở
+`validate`.
+
+Solver đối chiếu **vét cạn** trên $5$ luật: hơn $500$ thế cho luật thường, hơn
+$100$ cho misère, cộng kiểm rằng **mọi** nước được báo là thắng thật sự đưa đối
+thủ vào thế thua. Lý thuyết Sprague–Grundy là một tầng gián tiếp (Grundy → XOR →
+thắng/thua), và một lỗi ở `mex` vẫn cho ra những con số trông hoàn toàn hợp lý.
+
+**Hai lỗi hình chỉ lộ khi nhìn:** đống $20$ viên vẽ thành một cột tỉ lệ $1:20$
+(nay chồng thành khối $4\times6$), và nhãn các đống nằm so le theo chiều cao từng
+cột nên một hàng "3, 5, 7" đọc ra như mấy con số rời rạc (nay chung một đường chân).
+
+**Mức phủ:** ~80% → **~83%**. Kho: 51 → **53 bài**.
+
 ### M16 — Poset / sơ đồ Hasse · [E] — **xong**
 
 Hạng mục 6, và là **hạng mục rẻ cuối cùng** của hàng đợi.
@@ -405,7 +465,7 @@ nghĩa gốc nói được.
 **Mức phủ:** ~79% → **~80%**. Kho: 50 → **51 bài**.
 
 **Hàng đợi nay chỉ còn hai hạng mục, cả hai đều đắt** — game engine (cần DSL-03)
-và derivation engine (cần label atlas D-07). Phần "rẻ mà lãi" đã hết.
+và derivation engine (cần label atlas D-07). Phần "rẻ mà lãi" đã hết. *(M18 đã lấy nốt hạng mục này.)*
 
 ### M15 — Point/segment engine · [E] — **xong**
 
@@ -708,19 +768,18 @@ Hai gate này chặn theo hai hướng khác nhau: G-A chặn *niềm tin vào n
 ~~G-11~~, ~~G-12~~, ~~raster OG sang PNG~~ đã đóng ở vòng trau chuốt. Còn lại:
 
 3. ⬜ **Nhúng phông vào bản raster.** PNG hiện dùng phông **hệ thống**; máy thiếu phông thì resvg *âm thầm bỏ chữ* và ra một card đẹp, trống trơn. Đã có test đếm mực chặn kiểu lỗi đó, nhưng chặn ≠ chữa — card giống hệt nhau trên mọi máy thì phải bundle phông.
-4. ⬜ **Label atlas cho nhãn LaTeX trong canvas** (GR-08, D-07). `toReadableMath` lo được chữ trong OG card và chỉ mục; nhãn *trong hình* vẫn là text thuần.
+4. ✅ **Label atlas cho nhãn LaTeX trong canvas** (GR-08, D-07) — **xong ở M18**. Engine derivation dùng nó; các engine khác vẫn vẽ nhãn text thuần, và đó là đủ cho nội dung hiện có.
 5. ⬜ Pilot ≥10 học sinh + 2 GV (DoD §15.5).
 6. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
 
-**Về việc mở engine mới:** xem `docs/VIZ-COVERAGE.md`. Tóm tắt: sáu engine hiện có
-phủ khoảng **83%** đề tổ hợp thi đấu (board + graph một mình là ~45%). Hàng đợi §7
-chỉ còn **một** hạng mục — derivation engine, +1.35 — đưa lên ~85%. Trần thật khoảng
-**85%**, không phải 100%: khoảng 10–12% đề có lập luận **không mang nội dung không
+**Về việc mở engine mới:** xem `docs/VIZ-COVERAGE.md`. Tóm tắt: bảy engine hiện có
+phủ khoảng **85%** đề tổ hợp thi đấu (board + graph một mình là ~45%). Hàng đợi §7
+**đã cạn** — không còn hạng mục nào. Trần thật khoảng **85%**, không phải 100%: khoảng 10–12% đề có lập luận **không mang nội dung không
 gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái hình đẹp không gánh
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 54 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 56 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):

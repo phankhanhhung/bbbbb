@@ -14,13 +14,21 @@ import type { SvgNode } from './svg-node.js';
 export interface EngineRenderer {
   readonly id: string;
   render(scene: Scene, ctx: RenderContext): SvgNode[];
-  /** Khung nhìn mặc định khi scene không tự khai (DAT-21). */
-  defaultViewport(scene: Scene): Viewport;
+  /**
+   * Khung nhìn mặc định khi scene không tự khai (DAT-21).
+   *
+   * `ctx` là **tuỳ chọn** vì phần lớn engine đo được khung nhìn chỉ từ scene —
+   * bàn cờ biết mình mấy hàng mấy cột mà không cần biết theme. Engine nào bề
+   * rộng phụ thuộc thứ chỉ có trong ngữ cảnh (derivation cần label atlas mới
+   * biết một công thức rộng bao nhiêu) thì đọc thêm; gọi thiếu thì nó ước rộng
+   * hơn thực tế, tức hình có thể thừa lề chứ không bao giờ bị **cắt**.
+   */
+  defaultViewport(scene: Scene, ctx?: RenderContext): Viewport;
 }
 
 export interface SceneRenderer {
   render(scene: Scene, ctx: RenderContext): SvgNode[];
-  viewportOf(scene: Scene): Viewport;
+  viewportOf(scene: Scene, ctx?: RenderContext): Viewport;
   toSvg(scene: Scene, ctx: RenderContext, options?: Partial<SerializeOptions>): string;
   has(engineId: string): boolean;
 }
@@ -40,9 +48,9 @@ export function createRenderer(engines: readonly EngineRenderer[]): SceneRendere
     return ctx.patterns ? [patternDefs(ctx.theme), ...nodes] : nodes;
   }
 
-  function viewportOf(scene: Scene): Viewport {
+  function viewportOf(scene: Scene, ctx?: RenderContext): Viewport {
     if (scene.viewport) return scene.viewport;
-    return byId.get(scene.engine)?.defaultViewport(scene) ?? FALLBACK_VIEWPORT;
+    return byId.get(scene.engine)?.defaultViewport(scene, ctx) ?? FALLBACK_VIEWPORT;
   }
 
   return {
@@ -51,7 +59,7 @@ export function createRenderer(engines: readonly EngineRenderer[]): SceneRendere
     has: (engineId) => byId.has(engineId),
     toSvg(scene, ctx, options) {
       return toSvgString(render(scene, ctx), {
-        viewport: viewportOf(scene),
+        viewport: viewportOf(scene, ctx),
         background: ctx.theme.surface.canvas,
         ...options,
       });

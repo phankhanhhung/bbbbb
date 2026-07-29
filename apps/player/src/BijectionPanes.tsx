@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { createContext, type SceneRenderer } from '@combviz/render';
+import { createContext, type LabelAtlas, type SceneRenderer } from '@combviz/render';
 import { patch, KEY_ATTR, ELEMENT_ATTR } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
 import type { Step } from '@combviz/schema';
@@ -7,6 +7,8 @@ import type { Step } from '@combviz/schema';
 interface Props {
   readonly step: Step;
   readonly renderer: SceneRenderer;
+  /** D-07 — bảng nhãn LaTeX; `null` khi bài không có công thức trong canvas. */
+  readonly labels?: LabelAtlas | null;
 }
 
 interface Box {
@@ -53,7 +55,7 @@ export function matchScale(a: Box, b: Box): [Box, Box] {
  * cặp mà bài đếm song ánh hay dùng. Hình học thì mỗi engine một kiểu, còn cái
  * key thì renderer nào cũng gắn.
  */
-export function BijectionPanes({ step, renderer }: Props): preact.JSX.Element | null {
+export function BijectionPanes({ step, renderer, labels }: Props): preact.JSX.Element | null {
   const [active, setActive] = useState<string | null>(null);
   const leftRef = useRef<SVGSVGElement>(null);
   const rightRef = useRef<SVGSVGElement>(null);
@@ -82,7 +84,10 @@ export function BijectionPanes({ step, renderer }: Props): preact.JSX.Element | 
     return new Set([active, ...(partners.get(active) ?? [])]);
   }, [active, partners]);
 
-  const ctx = useMemo(() => createContext(defaultTheme, { highlight }), [highlight]);
+  const ctx = useMemo(
+    () => createContext(defaultTheme, { highlight, ...(labels ? { labels } : {}) }),
+    [highlight, labels],
+  );
 
   useEffect(() => {
     const left = leftRef.current;
@@ -96,8 +101,8 @@ export function BijectionPanes({ step, renderer }: Props): preact.JSX.Element | 
   if (!bijection || !step.scene) return null;
 
   const [leftBox, rightBox] = matchScale(
-    renderer.viewportOf(step.scene),
-    renderer.viewportOf(bijection.scene),
+    renderer.viewportOf(step.scene, ctx),
+    renderer.viewportOf(bijection.scene, ctx),
   );
 
   /**

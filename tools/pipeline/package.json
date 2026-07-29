@@ -10,6 +10,7 @@
     "@combviz/check": "workspace:*",
     "@combviz/dsl": "workspace:*",
     "@combviz/engine-board": "workspace:*",
+    "@combviz/engine-derivation": "workspace:*",
     "@combviz/engine-game": "workspace:*",
     "@combviz/engine-graph": "workspace:*",
     "@combviz/engine-point": "workspace:*",
@@ -19,6 +20,7 @@
     "@combviz/schema": "workspace:*",
     "@combviz/theme": "workspace:*",
     "@resvg/resvg-js": "^2.6.2",
+    "mathjax-full": "^3.2.2",
     "yaml": "^2.6.1"
   }
 }

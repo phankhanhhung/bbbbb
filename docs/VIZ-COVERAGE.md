@@ -1,6 +1,6 @@
 # CombViz — Kho bài tổ hợp: visualize được bao nhiêu phần trăm?
 
-Trạng thái: **ước lượng chuyên gia, không phải điều tra** · Cập nhật: 2026-07-29 (sau M17 — game engine; đã hạ số họ trò chơi, xem §4)
+Trạng thái: **ước lượng chuyên gia, không phải điều tra** · Cập nhật: 2026-07-29 (sau M18 — derivation engine + label atlas; hàng đợi §7 đã cạn)
 
 > **Đọc con số ở đây đúng cách.**
 >
@@ -24,16 +24,17 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~+ set engine, chu trình hoán vị, view song ánh (M11)~~ | ~~63%~~ | ~~71%~~ |
 | ~~+ view song ánh, set engine, chu trình hoán vị (M11)~~ | ~~73%~~ | ~~81%~~ |
 | ~~+ ghép cặp, tính phẳng, ma trận kề (M12)~~ | ~~76%~~ | ~~84%~~ |
-| **Hôm nay** (6 engine + poset/Hasse) | **~83%** | ~90% |
-| Còn lại trong hàng đợi §7 làm hết (chỉ còn derivation engine) | **~85%** | ~97% |
+| ~~Hôm nay (6 engine + poset/Hasse)~~ | ~~83%~~ | ~~90%~~ |
+| **Hôm nay** (7 engine — thêm derivation + label atlas) | **~85%** | **~97%** |
+| Hàng đợi §7 — **đã hết** | — | — |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
 | Thêm 4 view ngoài roadmap (§4) | **~85%** | ~92% |
-| ~~Thêm "derivation engine" (§4.5)~~ — nay là chính dòng trên | ~85% | **~97%** |
+| ~~Thêm "derivation engine" (§4.5)~~ ✅ M18 | ~85% | **~97%** |
 
 **100% không đạt được, và điều đó không phải vì thiếu công sức.** Xem §6.
 
-Nhưng khoảng cách từ 45% lên ~85% là việc kỹ thuật thuần tuý, đã có đường ray, và
+Khoảng cách từ 45% lên ~85% là việc kỹ thuật thuần tuý, đã đi hết, và
 kiến trúc hiện tại được dựng đúng để đi đường đó: `packages/schema` không biết
 engine nào tồn tại, renderer nhận engine từ ngoài, Player nạp engine theo
 `engines_used[]`. Thêm một engine là một milestone có biên giới rõ — graph engine
@@ -50,15 +51,15 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà năm engin
 |---|---:|---:|---:|---|
 | Lưới / phủ hình / tô màu | 15% | 92% | 13.8 | — (board: preset, quân, tile custom, bảng) |
 | Đồ thị | 22% | 94% | 20.7 | tô mặt (phần còn lại của GR-05), kiểm tính phẳng tổng quát |
-| Đếm / song ánh / đếm hai chiều | 14% | 80% | 11.2 | animation biến hình của PRN-04 |
+| Đếm / song ánh / đếm hai chiều | 14% | 85% | 11.9 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 90% | 14.4 | — (`engine-sequence`) |
 | Trò chơi | 7% | 57% | 3.99 | chỉ chơi được game **bốc đống**; nước ăn nhiều đống, luật nhớ lịch sử, và mọi game không-phải-đống đều chưa — cần GM-01 rule script thật |
 | Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
 | Hình học tổ hợp | 5% | 75% | 3.75 | tô vùng do các đoạn chia (PT-03), đường tròn |
 | Hoán vị / thứ tự | 6% | 95% | 5.7 | — (chu trình hoán vị + poset/Hasse + Dilworth) |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
-| Trừu tượng (xác suất, entropy, đại số) | 3% | 5% | 0.15 | xem §6 — **không co lại theo engine** |
-| **Tổng** | **100%** | | **~83%** | |
+| Trừu tượng (xác suất, entropy, đại số) | 3% | 25% | 0.75 | derivation gánh được phần *đại số*; xác suất và entropy thì **không** — xem §6 |
+| **Tổng** | **100%** | | **~85%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
@@ -80,7 +81,7 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Định lý König (ghép cặp = phủ đỉnh) | đồ thị hai phía | ✅ có trong kho |
 | Định lý Hall | đồ thị hai phía | ✅ có trong kho (ghép cặp + đường tăng + nhân chứng Hall) |
 | Cayley $n^{n-2}$ (mã Prüfer) | song ánh | 🟡 view song ánh đã có; thiếu analyzer sinh mã Prüfer |
-| Đồng nhất thức Vandermonde | đếm hai chiều | 🟡 bảng incidence đã có; còn cần nhãn tổng quát |
+| Đồng nhất thức Vandermonde | đếm hai chiều | 🟡 derivation viết được chuỗi biến đổi; thiếu bài trong kho |
 | Tập con ↔ xâu nhị phân ($2^n$) | song ánh | ✅ có trong kho (view song ánh) |
 | Quy tắc nhân, hoán vị, tổ hợp, Pascal, đường đi lưới | đếm cơ bản | ✅ mười bài trong kho |
 | Đường đi lưới / số Catalan | đếm | ✅ bảng quy hoạch động trên board |
@@ -105,9 +106,11 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Sylvester–Gallai | hình học | 🟡 có `line` và `aligned`; thiếu bài |
 | Năm điểm nguyên có trung điểm nguyên | hình học | ✅ có trong kho |
 | Đếm giao điểm đường chéo đa giác | đếm / hình học | ✅ có trong kho |
+| Tổng telescoping $\sum \frac{1}{k(k+1)}$ | đại số / đếm | ✅ có trong kho (derivation, gạch triệt tiêu từng cặp) |
+| Hệ thức Pascal chứng minh bằng đếm | đếm hai chiều | ✅ có trong kho (derivation, khai `becomes`) |
 | Phương pháp xác suất: tồn tại tô $K_n$ không $K_k$ đơn sắc | trừu tượng | ❌ §6 |
 
-**28 ✅ · 7 🟡 · 4 ❌** trên 39 bài ⇒ 72% trọn vẹn, **81%** nếu tính nửa điểm cho 🟡.
+**30 ✅ · 7 🟡 · 4 ❌** trên 41 bài ⇒ 73% trọn vẹn, **82%** nếu tính nửa điểm cho 🟡.
 
 Con số này **tụt** so với lần trước (88%) mà không có dòng code nào bị gỡ. Lý do
 nằm ở chính danh sách: tôi vừa thêm bảy dòng trò chơi, bốn trong số đó là ❌ (một
@@ -188,7 +191,7 @@ engine + **layout phân tầng** + analyzer chuỗi dài nhất / phản xích l
 Bảng DP, bảng thặng dư, bảng trạng thái. Gần với bảng incidence của ST-01 nhưng
 khác mục đích: ô mang **giá trị tính được**, không mang quan hệ thuộc. **+2 điểm.**
 
-### 4.5 Derivation engine — cách duy nhất tiến gần 100%
+### 4.5 ✅ Derivation engine — **đã làm** (M18)
 
 Đây là đề xuất khác loại với bốn cái trên, và là câu trả lời thật cho "tao muốn
 100%".
@@ -207,6 +210,29 @@ mất, hạng tử nào đổi màu".
 Thứ này biến **"bài không visualize được"** thành **"bài visualize bằng công thức
 có neo"**, và đó là cách duy nhất tao thấy để cột "có hình mang thông tin" chạm
 ~97%. Nó cũng cần label atlas (D-07, GR-08) — vốn đã nợ sẵn.
+
+**Đã làm ở M18.** `packages/engines/derivation`: scene là các **dòng**, mỗi dòng
+là dãy **hạng tử**, mỗi hạng tử có `id`, `tex`, `color_class`, `role`. Dòng gióng
+theo dấu quan hệ. Nhãn dựng sẵn thành path bằng MathJax lúc build (D-07), nên
+cùng một công thức hiện y hệt trong Player, trong OG card và trong test golden.
+
+Ba điều đáng ghi lại vì chúng vượt ngoài "một engine nữa":
+
+- **Danh tính hạng tử sống xuyên step.** Cùng `id` ⇒ diff của DAT-11/12 cho ra
+  một *chuyển động* thay vì "xoá cái này, thêm cái kia". Phép biến đổi đại số
+  trở thành thứ nhìn thấy được.
+- **`derivation/silent-drop`.** Hạng tử biến mất giữa hai bước mà không khai là
+  **lỗi**. Lối ra: `cancelled: true` (triệt tiêu, hình gạch chéo) hoặc
+  `becomes: "<id>"` (bị thay thế — và id đích phải **có thật** ở bước sau). Đây
+  là lỗi đại số hay gặp nhất khi soạn tay, và giờ máy đếm được nó.
+- **Nhãn thiếu atlas không im lặng.** Vẽ hẳn `⟨thiếu atlas: …⟩` ra hình, đồng
+  thời `pnpm labels` báo đỏ ở CI. Hai lớp, vì đây đúng loại lỗi mà kho này đã
+  học đắt: thứ gì hỏng lặng lẽ thì sống rất lâu.
+
+Giới hạn, nói thẳng: engine này **không hiểu công thức**. Nó xếp chỗ cho LaTeX
+chứ không phân tích cú pháp toán học, nên nó không biết $\frac{1}{k}-\frac{1}{k+1}$
+có bằng $\frac{1}{k(k+1)}$ hay không. Thứ nó kiểm được là *hình thức* của chuỗi
+biến đổi — và `derivation/silent-drop` là phần kiểm được có giá trị nhất trong đó.
 
 ---
 
@@ -262,7 +288,7 @@ là hiểu được, và ở bài đó thì niềm tin ấy sai.
 
 ---
 
-## 7. Còn lại gì để lên ~85%
+## 7. Hàng đợi — đã cạn
 
 Chi phí tính bằng **M4** — một engine graph, tức khoảng hai tuần ở nhịp 35h/tuần.
 "Lãi" là số điểm phủ thu được. Sắp theo **lãi trên chi phí**, không theo thứ tự
@@ -277,10 +303,13 @@ trong SRS.
 | ~~5~~ | ~~**Hoàn tất graph**~~ ✅ M12 (phần lớn) | +2.7 | xong | — | Ghép cặp + König + Hall, ma trận kề, tính phẳng qua hình vẽ và chặn Euler. **Chưa có**: tô mặt, kiểm tính phẳng tổng quát |
 | ~~6~~ | ~~**Poset / Hasse**~~ ✅ M16 | +0.6 | xong | — | Layout `hasse` + `analyzePoset`; Dilworth tính bằng **chính** lõi ghép cặp của GR-06 |
 | ~~7~~ | ~~**Game engine**~~ ✅ M17 (một phần) | +3.3 | xong | — | Tập luật **đóng** thay cho DSL-03: bốc theo khoảng / theo tập / chia đống, cộng Grundy, misère, phổ thắng-thua. Chơi được **game bốc đống**, không hơn — ranh giới ở §4. **Chưa có**: GM-01 rule script |
-| 8 | **Derivation engine** (§4.5) | +1.35 | 1.0 | **1.35** | Lãi thấp ở cột "gánh lập luận" nhưng đẩy cột "**có hình mang thông tin**" từ ~71% lên ~97%. Cần label atlas (D-07) trước |
+| ~~8~~ | ~~**Derivation engine**~~ ✅ M18 | +1.3 | xong | — | `packages/engines/derivation` + label atlas D-07 (MathJax build-time). Lãi thấp ở cột "gánh lập luận", nhưng đẩy cột "**có hình mang thông tin**" lên ~97% — và mang theo luật `derivation/silent-drop` |
 
-Cộng dồn: **63 → ~85%**, tổng chi phí ≈ **5.5 M4**, tức khoảng 11 tuần ở nhịp
-35h/tuần nếu làm liên tục.
+Cộng dồn: **63 → ~85%**. Hàng đợi §7 **đã cạn** — mọi hạng tử trong bảng đều
+xong. Phần còn thiếu từ đây trở đi không phải "thêm một engine nữa": nó là §6,
+những lập luận không mang nội dung không gian, cộng với các mảnh còn nợ đã ghi
+tên trong cột "còn thiếu gì" ở §2 (tô mặt đồ thị, PT-03 tô vùng, GM-01 rule
+script, animation biến hình PRN-04).
 
 **M11 đã lấy ba hạng mục đầu**: kho đi từ 63.4% lên **73.2%** (+9.8, thấp hơn +10.8
 dự tính — view song ánh mới xong phần nhấn liên động, chưa có animation biến hình).
@@ -383,12 +412,12 @@ tĩnh viết sẵn trong file. Ba hệ quả, nói ra để không ai trông đ�
 
 ### ~90% thì sao?
 
-Không tới được bằng cách thêm engine. Làm hết bảng trên ra **~85%**, và phần còn
-lại là ~12% ở §6 — những lập luận **không có nội dung không gian**. Con số đó
+Không tới được bằng cách thêm engine, và giờ thì đó không còn là dự đoán: bảng
+trên **đã làm hết** và dừng ở **~85%**. Phần còn lại là ~12% ở §6 — những lập luận **không có nội dung không gian**. Con số đó
 không co lại theo số engine, nên chênh lệch 85 → 90 phải mua bằng cách khác:
 hoặc chọn bài (không nhận vào kho những bài mà hình không nói được gì — hoàn toàn
 hợp lệ với một kho *đã curate*), hoặc chấp nhận đo bằng cột "có hình mang thông
-tin", nơi derivation engine đưa lên ~97%.
+tin", nơi derivation engine **đã** đưa lên ~97%.
 
 Nói thẳng: nếu chỉ tiêu là "90% bài trong **kho** có hình gánh được lập luận" thì
 đạt được, vì kho là do mình chọn. Nếu là "90% **đề tổ hợp thi đấu nói chung**" thì

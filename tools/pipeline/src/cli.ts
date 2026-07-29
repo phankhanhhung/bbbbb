@@ -8,6 +8,7 @@ import { runValidate } from './commands/validate.js';
 import { runRender } from './commands/render.js';
 import { runMigrate } from './commands/migrate.js';
 import { runFmt } from './commands/fmt.js';
+import { runLabels } from './commands/labels.js';
 import { runImportDraft } from './commands/import-draft.js';
 import { runOg } from './commands/og.js';
 import { runStats } from './commands/stats.js';
@@ -37,6 +38,10 @@ const USAGE = `combviz — công cụ soạn/duyệt kho bài
                               [--patterns] [--width <px>]
       Render một scene ra SVG, chạy trong Node, không cần browser (REN-01).
       Không chỉ --step thì lấy step cuối của nhánh chính.
+
+  combviz labels [--root <content>] [--write]
+      Dựng label atlas cho nhãn LaTeX **trong canvas** bằng MathJax (D-07).
+      Không --write thì chỉ kiểm atlas có cũ so với nội dung không (dùng ở CI).
 
   combviz fmt [--root <content>] [--write]
       Đưa file bài về định dạng chuẩn tắc (DAT-03). Mặc định chỉ kiểm.
@@ -145,6 +150,31 @@ async function main(argv: string[]): Promise<number> {
 
       const report = await runFmt({ root: resolve(values.root), write: values.write });
       return !values.write && report.changed > 0 ? 1 : 0;
+    }
+
+    case 'labels': {
+      const { values } = parseArgs({
+        args: rest,
+        options: {
+          root: { type: 'string', default: 'packages/content' },
+          write: { type: 'boolean', default: false },
+        },
+      });
+
+      const result = await runLabels({ root: resolve(values.root), write: values.write });
+      for (const failure of result.failures) {
+        console.error(`  LỖI  ${failure.tex}\n        ${failure.message}`);
+      }
+      for (const tex of result.missing) console.error(`  THIẾU  ${tex}`);
+      for (const tex of result.extra) console.error(`  THỪA   ${tex}`);
+      console.log(
+        values.write
+          ? `Đã ghi atlas: ${result.total} nhãn`
+          : result.stale
+            ? `Atlas CŨ: thiếu ${result.missing.length}, thừa ${result.extra.length} — chạy \`combviz labels --write\``
+            : `Atlas khớp nội dung: ${result.total} nhãn`,
+      );
+      return result.failures.length > 0 || (!values.write && result.stale) ? 1 : 0;
     }
 
     case 'import-draft': {

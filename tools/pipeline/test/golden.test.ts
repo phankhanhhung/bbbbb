@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { createContext, createRenderer } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
 import type { Problem } from '@combviz/schema';
+import type { LabelAtlas } from '@combviz/render';
 import { ENGINE_RENDERERS } from '../src/engines.js';
 
 /**
@@ -27,6 +28,12 @@ const CONTENT = fileURLToPath(new URL('../../../packages/content/problems', impo
 const GOLDEN = fileURLToPath(new URL('./__golden__', import.meta.url));
 
 const renderer = createRenderer(ENGINE_RENDERERS);
+
+// Atlas thật, không phải bảng rỗng: golden phải khoá **hình người xem thấy**, mà
+// nhãn thiếu atlas thì vẽ ra một dòng chữ báo lỗi trông chẳng giống công thức nào.
+const ATLAS = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../../packages/content/labels.json', import.meta.url)), 'utf8'),
+) as LabelAtlas;
 
 const problems = readdirSync(CONTENT, { withFileTypes: true, recursive: true })
   .filter((e) => e.isFile() && e.name.endsWith('.json'))
@@ -53,7 +60,7 @@ describe('golden SVG toàn kho', () => {
 
           // Bật pattern (NFR-A1): golden nên khoá luôn kênh dự phòng không màu,
           // vì đó chính là thứ dễ hỏng lặng lẽ nhất — không ai bật nó hằng ngày.
-          const ctx = createContext(defaultTheme, { patterns: true });
+          const ctx = createContext(defaultTheme, { patterns: true, labels: ATLAS });
           const svg = renderer.toSvg(scene, ctx);
 
           await expect(svg).toMatchFileSnapshot(

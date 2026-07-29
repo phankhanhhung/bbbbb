@@ -1,0 +1,589 @@
+{
+  "schema_version": "0.1.0",
+  "id": "telescoping-sum-fractions",
+  "statement": {
+    "vi": "Tính tổng $\\displaystyle\\sum_{k=1}^{n} \\frac{1}{k(k+1)}$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Tổng telescoping kinh điển; đối tượng của lập luận là công thức chứ không phải hình."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "invariant"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "derivation"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "n_terms",
+      "id": "inv-t",
+      "label": {
+        "vi": "Số hạng tử"
+      }
+    },
+    {
+      "expr": "cancelled",
+      "id": "inv-c",
+      "label": {
+        "vi": "Đã triệt tiêu"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cần tính [[a1|tổng này]]. Không có bàn cờ nào để vẽ, không có đồ thị nào — **đối tượng của lập luận chính là công thức**, nên thứ được vẽ ở đây cũng là nó."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "g-sum"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "relation"
+            },
+            "elements": [
+              {
+                "id": "r0",
+                "type": "row"
+              },
+              {
+                "id": "g-sum",
+                "type": "term",
+                "row": "r0",
+                "tex": "\\sum_{k=1}^{n}\\frac{1}{k(k+1)}"
+              },
+              {
+                "id": "g-eq",
+                "type": "term",
+                "role": "relation",
+                "row": "r0",
+                "tex": "="
+              },
+              {
+                "id": "g-q",
+                "type": "term",
+                "row": "r0",
+                "tex": "?"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tổng từ k bằng 1 đến n của 1 trên k nhân k cộng 1, bằng dấu hỏi."
+          },
+          "expects_violation": [
+            "cancelled:6"
+          ],
+          "verified": true,
+          "claims": [
+            "n_rows == 1",
+            "n_terms == 3"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chìa khoá là tách một hạng tử thành hiệu hai phần: [[a2|$\\frac{1}{k}$]] và [[a3|$\\frac{1}{k+1}$]]. Kiểm lại bằng quy đồng: $\\frac{1}{k} - \\frac{1}{k+1} = \\frac{(k+1)-k}{k(k+1)} = \\frac{1}{k(k+1)}$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "s-a"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "s-b"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "relation"
+            },
+            "elements": [
+              {
+                "id": "r0",
+                "type": "row"
+              },
+              {
+                "id": "g-sum",
+                "type": "term",
+                "row": "r0",
+                "tex": "\\sum_{k=1}^{n}\\frac{1}{k(k+1)}"
+              },
+              {
+                "id": "g-eq",
+                "type": "term",
+                "role": "relation",
+                "row": "r0",
+                "tex": "="
+              },
+              {
+                "id": "g-q",
+                "type": "term",
+                "row": "r0",
+                "tex": "?"
+              },
+              {
+                "id": "r1",
+                "type": "row",
+                "note": "tách phân thức"
+              },
+              {
+                "id": "s-l",
+                "type": "term",
+                "row": "r1",
+                "tex": "\\frac{1}{k(k+1)}"
+              },
+              {
+                "id": "s-eq",
+                "type": "term",
+                "role": "relation",
+                "row": "r1",
+                "tex": "="
+              },
+              {
+                "id": "s-a",
+                "type": "term",
+                "color_class": 1,
+                "row": "r1",
+                "tex": "\\frac{1}{k}"
+              },
+              {
+                "id": "s-m",
+                "type": "term",
+                "role": "op",
+                "row": "r1",
+                "tex": "-"
+              },
+              {
+                "id": "s-b",
+                "type": "term",
+                "color_class": 3,
+                "row": "r1",
+                "tex": "\\frac{1}{k+1}"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Dòng thứ hai: 1 trên k nhân k cộng 1 bằng 1 trên k trừ 1 trên k cộng 1."
+          },
+          "expects_violation": [
+            "cancelled:6"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Viết hẳn ra với $n = 4$. Mười lăm ký hiệu, và [[a4|hai màu]] cho thấy ngay chuyện gì sắp xảy ra: phần **trừ** của số hạng này trùng đúng phần **cộng** của số hạng kế."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "e2",
+                "e3",
+                "e4",
+                "e5",
+                "e6",
+                "e7"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "left"
+            },
+            "elements": [
+              {
+                "id": "r2",
+                "type": "row",
+                "note": "n = 4"
+              },
+              {
+                "id": "e1",
+                "type": "term",
+                "color_class": 1,
+                "row": "r2",
+                "tex": "\\frac{1}{1}"
+              },
+              {
+                "id": "e1m",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "-"
+              },
+              {
+                "id": "e2",
+                "type": "term",
+                "color_class": 3,
+                "row": "r2",
+                "tex": "\\frac{1}{2}"
+              },
+              {
+                "id": "e2p",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "+"
+              },
+              {
+                "id": "e3",
+                "type": "term",
+                "color_class": 1,
+                "row": "r2",
+                "tex": "\\frac{1}{2}"
+              },
+              {
+                "id": "e3m",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "-"
+              },
+              {
+                "id": "e4",
+                "type": "term",
+                "color_class": 3,
+                "row": "r2",
+                "tex": "\\frac{1}{3}"
+              },
+              {
+                "id": "e4p",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "+"
+              },
+              {
+                "id": "e5",
+                "type": "term",
+                "color_class": 1,
+                "row": "r2",
+                "tex": "\\frac{1}{3}"
+              },
+              {
+                "id": "e5m",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "-"
+              },
+              {
+                "id": "e6",
+                "type": "term",
+                "color_class": 3,
+                "row": "r2",
+                "tex": "\\frac{1}{4}"
+              },
+              {
+                "id": "e6p",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "+"
+              },
+              {
+                "id": "e7",
+                "type": "term",
+                "color_class": 1,
+                "row": "r2",
+                "tex": "\\frac{1}{4}"
+              },
+              {
+                "id": "e7m",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "-"
+              },
+              {
+                "id": "e8",
+                "type": "term",
+                "color_class": 3,
+                "row": "r2",
+                "tex": "\\frac{1}{5}"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Khai triển với n bằng 4: 1/1 − 1/2 + 1/2 − 1/3 + 1/3 − 1/4 + 1/4 − 1/5."
+          },
+          "expects_violation": [
+            "cancelled:6"
+          ],
+          "verified": true,
+          "claims": [
+            "n_terms == 15"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Gạch đi từng cặp: [[a5|sáu hạng tử]] triệt tiêu, chỉ [[a6|hai đầu mút]] sống sót. Đó là toàn bộ trò của tổng telescoping — nó **xẹp** lại như ống nhòm."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "e2",
+                "e3",
+                "e4",
+                "e5",
+                "e6",
+                "e7"
+              ]
+            },
+            "a6": {
+              "ids": [
+                "e1",
+                "e8"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "left"
+            },
+            "elements": [
+              {
+                "id": "r2",
+                "type": "row",
+                "note": "n = 4"
+              },
+              {
+                "id": "e1",
+                "type": "term",
+                "color_class": 1,
+                "row": "r2",
+                "tex": "\\frac{1}{1}"
+              },
+              {
+                "id": "e1m",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "-"
+              },
+              {
+                "id": "e2",
+                "type": "term",
+                "color_class": 3,
+                "cancelled": true,
+                "row": "r2",
+                "tex": "\\frac{1}{2}"
+              },
+              {
+                "id": "e2p",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "+"
+              },
+              {
+                "id": "e3",
+                "type": "term",
+                "color_class": 1,
+                "cancelled": true,
+                "row": "r2",
+                "tex": "\\frac{1}{2}"
+              },
+              {
+                "id": "e3m",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "-"
+              },
+              {
+                "id": "e4",
+                "type": "term",
+                "color_class": 3,
+                "cancelled": true,
+                "row": "r2",
+                "tex": "\\frac{1}{3}"
+              },
+              {
+                "id": "e4p",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "+"
+              },
+              {
+                "id": "e5",
+                "type": "term",
+                "color_class": 1,
+                "cancelled": true,
+                "row": "r2",
+                "tex": "\\frac{1}{3}"
+              },
+              {
+                "id": "e5m",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "-"
+              },
+              {
+                "id": "e6",
+                "type": "term",
+                "color_class": 3,
+                "cancelled": true,
+                "row": "r2",
+                "tex": "\\frac{1}{4}"
+              },
+              {
+                "id": "e6p",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "+"
+              },
+              {
+                "id": "e7",
+                "type": "term",
+                "color_class": 1,
+                "cancelled": true,
+                "row": "r2",
+                "tex": "\\frac{1}{4}"
+              },
+              {
+                "id": "e7m",
+                "type": "term",
+                "role": "op",
+                "row": "r2",
+                "tex": "-"
+              },
+              {
+                "id": "e8",
+                "type": "term",
+                "color_class": 3,
+                "row": "r2",
+                "tex": "\\frac{1}{5}"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng khai triển, sáu phân số ở giữa bị gạch chéo từng cặp."
+          },
+          "verified": true,
+          "claims": [
+            "cancelled == 6"
+          ]
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn lại đúng [[a7|hai hạng tử]], và lập luận trên không phụ thuộc $n = 4$ chỗ nào: với $n$ bất kỳ, mọi thứ ở giữa vẫn khử nhau từng cặp. Vậy tổng bằng $1 - \\frac{1}{n+1} = \\frac{n}{n+1}$."
+          },
+          "anchors": {
+            "a7": {
+              "ids": [
+                "e1",
+                "e8"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "left"
+            },
+            "elements": [
+              {
+                "id": "r3",
+                "type": "row",
+                "note": "n bất kỳ"
+              },
+              {
+                "id": "e1",
+                "type": "term",
+                "color_class": 1,
+                "row": "r3",
+                "tex": "\\frac{1}{1}"
+              },
+              {
+                "id": "e7m",
+                "type": "term",
+                "role": "op",
+                "row": "r3",
+                "tex": "-"
+              },
+              {
+                "id": "e8",
+                "type": "term",
+                "color_class": 3,
+                "row": "r3",
+                "tex": "\\frac{1}{n+1}"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Kết quả: 1 trừ 1 trên n cộng 1."
+          },
+          "expects_violation": [
+            "cancelled:6"
+          ],
+          "verified": true,
+          "claims": [
+            "n_terms == 3",
+            "cancelled == 0"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "cancelled:6"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

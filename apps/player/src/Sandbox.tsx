@@ -8,6 +8,7 @@ import {
 } from '@combviz/editor';
 import {
   createContext,
+  type LabelAtlas,
   createRenderer,
   toSvgString,
   watermarkNodes,
@@ -33,6 +34,8 @@ interface SandboxProps {
   validators: readonly SceneValidator[];
   invariants: readonly Invariant[];
   goalExpr?: string;
+  /** D-07 — bảng nhãn LaTeX; `null` khi bài không có công thức trong canvas. */
+  labels?: LabelAtlas | null;
   onClose?: () => void;
 }
 
@@ -63,6 +66,7 @@ export function Sandbox({
   validators,
   invariants,
   goalExpr,
+  labels,
   onClose,
 }: SandboxProps) {
   const renderer = useMemo(() => createRenderer([engine.renderer]), [engine]);
@@ -83,16 +87,18 @@ export function Sandbox({
   const pending = useRef<string | null>(null);
 
   const { state } = sandbox;
-  const viewport = renderer.viewportOf(state.scene);
 
   const ctx = useMemo(
     () =>
       createContext(defaultTheme, {
         highlight: state.selection,
         invalid: state.violations,
+        ...(labels ? { labels } : {}),
       }),
-    [state.selection, state.violations],
+    [state.selection, state.violations, labels],
   );
+
+  const viewport = renderer.viewportOf(state.scene, ctx);
 
   useEffect(() => {
     const container = svgRef.current;
@@ -242,7 +248,9 @@ export function Sandbox({
 
   const exportSvg = useCallback(() => {
     // REN-03: brand mark đóng vào mọi export và người học không tắt được.
-    const svg = toSvgString(renderer.render(state.scene, createContext(defaultTheme)), {
+    // Xuất SVG (SBX-05) phải dùng **cùng ngữ cảnh** đang hiển thị, nếu không thì
+    // file tải về thiếu hẳn công thức mà màn hình đang có.
+    const svg = toSvgString(renderer.render(state.scene, ctx), {
       viewport,
       background: defaultTheme.surface.canvas,
       overlay: watermarkNodes(defaultTheme, viewport),

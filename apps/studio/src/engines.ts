@@ -40,6 +40,13 @@ import {
   gameRenderer,
   gameSchemaFragment,
 } from '@combviz/engine-game';
+import {
+  derivationCommands,
+  derivationEnvironment,
+  derivationHitTest,
+  derivationRenderer,
+  derivationSchemaFragment,
+} from '@combviz/engine-derivation';
 import type { EngineDslModule } from '@combviz/check';
 import type { EngineRenderer } from '@combviz/render';
 import type { CommandRegistry, HitTest } from '@combviz/editor';
@@ -60,6 +67,7 @@ export const ENGINE_FRAGMENTS: readonly EngineSchemaFragment[] = [
   setSchemaFragment,
   pointSchemaFragment,
   gameSchemaFragment,
+  derivationSchemaFragment,
 ];
 
 export const ENGINE_DSL: Readonly<Record<string, EngineDslModule>> = {
@@ -69,6 +77,10 @@ export const ENGINE_DSL: Readonly<Record<string, EngineDslModule>> = {
   set: { fragment: setSchemaFragment, environment: setEnvironment },
   point: { fragment: pointSchemaFragment, environment: pointEnvironment },
   game: { fragment: gameSchemaFragment, environment: gameEnvironment },
+  derivation: {
+    fragment: derivationSchemaFragment,
+    environment: derivationEnvironment,
+  },
 };
 
 export const ENGINE_RENDERERS: readonly EngineRenderer[] = [
@@ -78,6 +90,7 @@ export const ENGINE_RENDERERS: readonly EngineRenderer[] = [
   setRenderer,
   pointRenderer,
   gameRenderer,
+  derivationRenderer,
 ];
 
 export const ENGINE_COMMANDS: Readonly<Record<string, CommandRegistry>> = {
@@ -87,6 +100,7 @@ export const ENGINE_COMMANDS: Readonly<Record<string, CommandRegistry>> = {
   set: setCommands,
   point: pointCommands,
   game: gameCommands,
+  derivation: derivationCommands,
 };
 
 export const ENGINE_HIT_TEST: Readonly<Record<string, HitTest>> = {
@@ -96,4 +110,5 @@ export const ENGINE_HIT_TEST: Readonly<Record<string, HitTest>> = {
   set: setHitTest,
   point: pointHitTest,
   game: gameHitTest,
+  derivation: derivationHitTest,
 };

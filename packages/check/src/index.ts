@@ -8,10 +8,12 @@ import {
 import { checkSemantics, type EngineDslModule } from './semantics.js';
 import { lintProblem } from './lint.js';
 import { checkTaxonomy, type Taxonomy } from './taxonomy.js';
+import { checkDerivation } from './derivation.js';
 
 export { checkSemantics, type EngineDslModule } from './semantics.js';
 export { lintProblem } from './lint.js';
 export { checkTaxonomy, type Taxonomy, type VocabEntry } from './taxonomy.js';
+export { checkDerivation } from './derivation.js';
 
 /**
  * Bộ kiểm đầy đủ của AUT-04, **một bộ cho ba nơi**: Studio, CLI và CI.
@@ -57,6 +59,7 @@ export function createChecker(options: CheckerOptions): Checker {
       if (!shape.issues.some((i) => i.code.startsWith('schema/'))) {
         issues.push(...checkSemantics(problem as Problem, options.dsl));
         issues.push(...lintProblem(problem as Problem, raw));
+        issues.push(...checkDerivation(problem as Problem));
         if (options.taxonomy) {
           issues.push(...checkTaxonomy(problem as Problem, options.taxonomy));
         }

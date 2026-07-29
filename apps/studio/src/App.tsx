@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { createChecker } from '@combviz/check';
-import { createContext, createRenderer } from '@combviz/render';
+import { createContext, createRenderer, type LabelAtlas } from '@combviz/render';
+import ATLAS_JSON from '../../../packages/content/labels.json';
 import { patch } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
 import { buildTree, preorder, type Step } from '@combviz/schema';
@@ -39,7 +40,16 @@ export function App() {
     [],
   );
   const renderer = useMemo(() => createRenderer(ENGINE_RENDERERS), []);
-  const ctx = useMemo(() => createContext(defaultTheme, { highlight: new Set(picked) }), [picked]);
+  // Studio nạp cả bộ, kể cả bảng nhãn: tác giả đang soạn thì phải thấy đúng thứ
+  // người học sẽ thấy, không phải một khung "thiếu atlas".
+  const ctx = useMemo(
+    () =>
+      createContext(defaultTheme, {
+        highlight: new Set(picked),
+        labels: ATLAS_JSON as unknown as LabelAtlas,
+      }),
+    [picked],
+  );
 
   const solution =
     problem?.solutions.find((s) => s.id === solutionId) ?? problem?.solutions[0];
@@ -112,7 +122,7 @@ export function App() {
     );
   }
 
-  const viewport = step.scene ? renderer.viewportOf(step.scene) : null;
+  const viewport = step.scene ? renderer.viewportOf(step.scene, ctx) : null;
   const elementIds = step.scene?.elements.map((e) => e.id) ?? [];
 
   const editStep = (fn: (current: Step) => Step): void => {

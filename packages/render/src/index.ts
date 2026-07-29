@@ -22,6 +22,22 @@ export {
   type ContextOptions,
 } from './context.js';
 
+export {
+  EMPTY_ATLAS,
+  UNITS_PER_EX,
+  labelScale,
+  lookupLabel,
+  labelWidth,
+  labelAscent,
+  labelDescent,
+  placeLabel,
+  missingLabel,
+  type LabelAtlas,
+  type LabelEntry,
+  type LabelNode,
+  type PlaceOptions,
+} from './labels.js';
+
 export { lerpNumber, lerpColor, lerpStructuredString, lerpAttr } from './lerp.js';
 export { easeInOutCubic, easingOf, clamp01, type EasingFn } from './easing.js';
 export { canonicalStringify, hashString, hashScene } from './hash.js';

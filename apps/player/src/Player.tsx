@@ -14,6 +14,7 @@ import {
   createContext,
   createRenderer,
   diffNodes,
+  type LabelAtlas,
   type NodeDiff,
   type SceneRenderer,
   type SvgNode,
@@ -21,7 +22,7 @@ import {
 import { animate } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
 import type { GraphAnalysis } from '@combviz/engine-graph';
-import { loadEngines, type LoadedEngine } from './engines.js';
+import { loadEngines, loadLabelAtlas, type LoadedEngine } from './engines.js';
 import { Narrative } from './Narrative.jsx';
 import { InvariantStrip } from './InvariantStrip.jsx';
 import { TreeNavigator } from './TreeNavigator.jsx';
@@ -48,6 +49,7 @@ export function Player({
   onBack?: () => void;
 }) {
   const [engines, setEngines] = useState<ReadonlyMap<string, LoadedEngine> | null>(null);
+  const [atlas, setAtlas] = useState<LabelAtlas | null>(null);
   const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
   const [forkedScene, setForkedScene] = useState<Scene | null>(null);
   // CMS-03: lời giải **che mặc định**. Trang bài mở ra là đề bài và sandbox —
@@ -74,7 +76,12 @@ export function Player({
   const lastStepId = useRef<string | null>(null);
 
   useEffect(() => {
-    void loadEngines(problem.engines_used).then(setEngines);
+    void loadEngines(problem.engines_used).then(async (loaded) => {
+      // Atlas nạp **sau** engine và chỉ khi cần: `loadLabelAtlas` hỏi chính các
+      // engine vừa nạp xem có ai vẽ công thức trong canvas không.
+      setAtlas(await loadLabelAtlas(loaded));
+      setEngines(loaded);
+    });
   }, [problem]);
 
   const renderer = useMemo<SceneRenderer | null>(
@@ -153,8 +160,9 @@ export function Player({
     () =>
       createContext(defaultTheme, {
         highlight: new Set(activeAnchor ? (step.anchors?.[activeAnchor]?.ids ?? []) : []),
+        ...(atlas ? { labels: atlas } : {}),
       }),
-    [activeAnchor, step],
+    [activeAnchor, step, atlas],
   );
 
   useEffect(() => {
@@ -219,7 +227,7 @@ export function Player({
     else if (delta > 48) goPrev();
   };
 
-  const viewport = renderer && step.scene ? renderer.viewportOf(step.scene) : null;
+  const viewport = renderer && step.scene ? renderer.viewportOf(step.scene, ctx) : null;
   const engine = step.scene ? engines?.get(step.scene.engine) : undefined;
 
   const sandboxValidators = useMemo(
@@ -244,6 +252,7 @@ export function Player({
           engine={engine}
           validators={sandboxValidators}
           invariants={problem.invariants ?? []}
+          labels={atlas}
           {...(problem.sandbox?.goal_expr ? { goalExpr: problem.sandbox.goal_expr } : {})}
           onClose={() => setForkedScene(null)}
         />
@@ -279,7 +288,7 @@ export function Player({
 
       <div class="player__body">
         {step.bijection && renderer ? (
-          <BijectionPanes step={step} renderer={renderer} />
+          <BijectionPanes step={step} renderer={renderer} labels={atlas} />
         ) : (
           <div
             class="canvas"

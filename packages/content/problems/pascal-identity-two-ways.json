@@ -1,0 +1,420 @@
+{
+  "schema_version": "0.1.0",
+  "id": "pascal-identity-two-ways",
+  "statement": {
+    "vi": "Chứng minh hệ thức Pascal $\\binom{n}{k} = \\binom{n-1}{k-1} + \\binom{n-1}{k}$ bằng lập luận đếm, không dùng công thức giai thừa."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Đếm hai chiều kinh điển; đối tượng của lập luận là chính đồng nhất thức."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "bijection",
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "derivation"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "n_terms",
+      "id": "inv-t",
+      "label": {
+        "vi": "Số hạng tử"
+      }
+    },
+    {
+      "expr": "n_rows",
+      "id": "inv-r",
+      "label": {
+        "vi": "Số dòng"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Đếm hai chiều"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hệ thức Pascal: [[a1|vế trái]] đếm số cách chọn $k$ phần tử từ $n$; [[a2|vế phải]] là tổng hai số hạng. Chứng minh bằng **đếm hai chiều** — không quy đồng giai thừa, mà chia tập cần đếm làm hai."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p-l"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "p-a",
+                "p-b"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "relation"
+            },
+            "elements": [
+              {
+                "id": "r0",
+                "type": "row"
+              },
+              {
+                "id": "p-l",
+                "type": "term",
+                "color_class": 5,
+                "row": "r0",
+                "tex": "\\binom{n}{k}"
+              },
+              {
+                "id": "p-eq",
+                "type": "term",
+                "role": "relation",
+                "row": "r0",
+                "tex": "="
+              },
+              {
+                "id": "p-a",
+                "type": "term",
+                "color_class": 1,
+                "row": "r0",
+                "tex": "\\binom{n-1}{k-1}"
+              },
+              {
+                "id": "p-p",
+                "type": "term",
+                "role": "op",
+                "row": "r0",
+                "tex": "+"
+              },
+              {
+                "id": "p-b",
+                "type": "term",
+                "color_class": 3,
+                "row": "r0",
+                "tex": "\\binom{n-1}{k}"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "n chọn k bằng n trừ 1 chọn k trừ 1, cộng n trừ 1 chọn k."
+          },
+          "verified": true,
+          "claims": [
+            "n_rows == 1",
+            "n_terms == 5"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mọi tập con $S$ cỡ $k$ hoặc [[a3|chứa phần tử $n$]], hoặc [[a4|không chứa]] — không có khả năng thứ ba, và hai khả năng không giao nhau. Vậy tổng hai số ấy đúng bằng vế trái."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "q-in"
+              ]
+            },
+            "a4": {
+              "ids": [
+                "q-out"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "relation"
+            },
+            "elements": [
+              {
+                "id": "r0",
+                "type": "row"
+              },
+              {
+                "id": "p-l",
+                "type": "term",
+                "color_class": 5,
+                "row": "r0",
+                "tex": "\\binom{n}{k}"
+              },
+              {
+                "id": "p-eq",
+                "type": "term",
+                "role": "relation",
+                "row": "r0",
+                "tex": "="
+              },
+              {
+                "id": "p-a",
+                "type": "term",
+                "color_class": 1,
+                "row": "r0",
+                "tex": "\\binom{n-1}{k-1}"
+              },
+              {
+                "id": "p-p",
+                "type": "term",
+                "role": "op",
+                "row": "r0",
+                "tex": "+"
+              },
+              {
+                "id": "p-b",
+                "type": "term",
+                "color_class": 3,
+                "row": "r0",
+                "tex": "\\binom{n-1}{k}"
+              },
+              {
+                "id": "r1",
+                "type": "row",
+                "note": "chia theo phần tử thứ n"
+              },
+              {
+                "id": "q-l",
+                "type": "term",
+                "color_class": 5,
+                "row": "r1",
+                "tex": "\\binom{n}{k}"
+              },
+              {
+                "id": "q-eq",
+                "type": "term",
+                "role": "relation",
+                "row": "r1",
+                "tex": "="
+              },
+              {
+                "id": "q-in",
+                "type": "term",
+                "color_class": 1,
+                "row": "r1",
+                "tex": "\\#\\{S : n \\in S\\}"
+              },
+              {
+                "id": "q-p",
+                "type": "term",
+                "role": "op",
+                "row": "r1",
+                "tex": "+"
+              },
+              {
+                "id": "q-out",
+                "type": "term",
+                "color_class": 3,
+                "row": "r1",
+                "tex": "\\#\\{S : n \\notin S\\}"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Dòng hai: n chọn k bằng số tập chứa n, cộng số tập không chứa n."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đếm từng phần. [[a5|Nếu $S$ chứa $n$]] thì $k-1$ phần tử còn lại chọn tự do trong $n-1$ phần tử đầu. [[a6|Nếu không chứa]] thì cả $k$ phần tử chọn trong $n-1$ phần tử đầu. Hai vế phải xuất hiện đúng ở đây, và không cần một phép tính nào."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "i-l",
+                "i-r"
+              ]
+            },
+            "a6": {
+              "ids": [
+                "o-l",
+                "o-r"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "relation"
+            },
+            "elements": [
+              {
+                "id": "r2",
+                "type": "row",
+                "note": "S chứa n"
+              },
+              {
+                "id": "i-l",
+                "type": "term",
+                "color_class": 1,
+                "becomes": "i-r",
+                "row": "r2",
+                "tex": "\\#\\{S : n \\in S\\}"
+              },
+              {
+                "id": "i-eq",
+                "type": "term",
+                "role": "relation",
+                "row": "r2",
+                "tex": "="
+              },
+              {
+                "id": "i-r",
+                "type": "term",
+                "color_class": 1,
+                "row": "r2",
+                "tex": "\\binom{n-1}{k-1}"
+              },
+              {
+                "id": "r3",
+                "type": "row",
+                "note": "S không chứa n"
+              },
+              {
+                "id": "o-l",
+                "type": "term",
+                "color_class": 3,
+                "becomes": "o-r",
+                "row": "r3",
+                "tex": "\\#\\{S : n \\notin S\\}"
+              },
+              {
+                "id": "o-eq",
+                "type": "term",
+                "role": "relation",
+                "row": "r3",
+                "tex": "="
+              },
+              {
+                "id": "o-r",
+                "type": "term",
+                "color_class": 3,
+                "row": "r3",
+                "tex": "\\binom{n-1}{k}"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai dòng: số tập chứa n bằng n trừ 1 chọn k trừ 1; số tập không chứa n bằng n trừ 1 chọn k."
+          },
+          "verified": true,
+          "claims": [
+            "n_rows == 2"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thay hai kết quả vào dòng trên là xong. [[a7|Hai số hạng]] giữ nguyên danh tính từ bước trước — chúng **trượt** vào chỗ mới chứ không phải hai ký hiệu mới trùng hình."
+          },
+          "anchors": {
+            "a7": {
+              "ids": [
+                "i-r",
+                "o-r"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "relation"
+            },
+            "elements": [
+              {
+                "id": "r4",
+                "type": "row",
+                "note": "thay vào"
+              },
+              {
+                "id": "q-l",
+                "type": "term",
+                "color_class": 5,
+                "row": "r4",
+                "tex": "\\binom{n}{k}"
+              },
+              {
+                "id": "q-eq",
+                "type": "term",
+                "role": "relation",
+                "row": "r4",
+                "tex": "="
+              },
+              {
+                "id": "i-r",
+                "type": "term",
+                "color_class": 1,
+                "row": "r4",
+                "tex": "\\binom{n-1}{k-1}"
+              },
+              {
+                "id": "q-p",
+                "type": "term",
+                "role": "op",
+                "row": "r4",
+                "tex": "+"
+              },
+              {
+                "id": "o-r",
+                "type": "term",
+                "color_class": 3,
+                "row": "r4",
+                "tex": "\\binom{n-1}{k}"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "n chọn k bằng n trừ 1 chọn k trừ 1 cộng n trừ 1 chọn k."
+          },
+          "verified": true,
+          "claims": [
+            "n_terms == 5",
+            "cancelled == 0"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "every-row-has-relation"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}
