@@ -1,0 +1,706 @@
+{
+  "schema_version": "0.1.0",
+  "id": "dilworth-divisors-twelve",
+  "statement": {
+    "vi": "Xét các ước của $12$, sắp theo quan hệ **chia hết**. Tìm phản xích lớn nhất, và chứng minh không phủ được bằng ít hơn từng ấy xích."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Định lý Dilworth, 1950; minh hoạ trên lưới ước của 12."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "extremal",
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "height",
+      "id": "inv-h",
+      "label": {
+        "vi": "Chiều cao (xích dài nhất)"
+      }
+    },
+    {
+      "expr": "width",
+      "id": "inv-w",
+      "label": {
+        "vi": "Chiều rộng (phản xích lớn nhất)"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Sáu ước của $12$, vẽ thành **sơ đồ Hasse**: [[a1|mũi tên]] $a \\to b$ nghĩa là $a \\mid b$ và không có ước nào nằm giữa. Đọc từ dưới lên: cao hơn thì chia hết cho nhiều hơn."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "ed1_d2",
+                "ed1_d3",
+                "ed2_d4",
+                "ed2_d6",
+                "ed3_d6",
+                "ed4_d12",
+                "ed6_d12"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "d1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [5, 0]
+              },
+              {
+                "id": "d2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [0, -12]
+              },
+              {
+                "id": "d3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [10, -12]
+              },
+              {
+                "id": "d4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, -24]
+              },
+              {
+                "id": "d6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [10, -24]
+              },
+              {
+                "id": "d12",
+                "type": "vertex",
+                "label": "12",
+                "pos": [5, -36]
+              },
+              {
+                "id": "ed1_d2",
+                "type": "edge",
+                "directed": true,
+                "u": "d1",
+                "v": "d2"
+              },
+              {
+                "id": "ed1_d3",
+                "type": "edge",
+                "directed": true,
+                "u": "d1",
+                "v": "d3"
+              },
+              {
+                "id": "ed2_d4",
+                "type": "edge",
+                "directed": true,
+                "u": "d2",
+                "v": "d4"
+              },
+              {
+                "id": "ed2_d6",
+                "type": "edge",
+                "directed": true,
+                "u": "d2",
+                "v": "d6"
+              },
+              {
+                "id": "ed3_d6",
+                "type": "edge",
+                "directed": true,
+                "u": "d3",
+                "v": "d6"
+              },
+              {
+                "id": "ed4_d12",
+                "type": "edge",
+                "directed": true,
+                "u": "d4",
+                "v": "d12"
+              },
+              {
+                "id": "ed6_d12",
+                "type": "edge",
+                "directed": true,
+                "u": "d6",
+                "v": "d12"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sơ đồ Hasse các ước của 12, bốn tầng."
+          },
+          "verified": true,
+          "claims": [
+            "height == 4",
+            "width == 2",
+            "minimal == 1",
+            "maximal == 1"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "**Xích** là dãy đôi một so sánh được. Xích dài nhất ở đây là [[a2|$1 \\mid 2 \\mid 4 \\mid 12$]], dài ${{height}}$ — đó là **chiều cao** của poset."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "d1",
+                "d2",
+                "d4",
+                "d12"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "d1",
+                "type": "vertex",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "1",
+                "pos": [5, 0]
+              },
+              {
+                "id": "d2",
+                "type": "vertex",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "2",
+                "pos": [0, -12]
+              },
+              {
+                "id": "d3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [10, -12]
+              },
+              {
+                "id": "d4",
+                "type": "vertex",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "4",
+                "pos": [0, -24]
+              },
+              {
+                "id": "d6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [10, -24]
+              },
+              {
+                "id": "d12",
+                "type": "vertex",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "12",
+                "pos": [5, -36]
+              },
+              {
+                "id": "ed1_d2",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "d1",
+                "v": "d2"
+              },
+              {
+                "id": "ed1_d3",
+                "type": "edge",
+                "directed": true,
+                "u": "d1",
+                "v": "d3"
+              },
+              {
+                "id": "ed2_d4",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "d2",
+                "v": "d4"
+              },
+              {
+                "id": "ed2_d6",
+                "type": "edge",
+                "directed": true,
+                "u": "d2",
+                "v": "d6"
+              },
+              {
+                "id": "ed3_d6",
+                "type": "edge",
+                "directed": true,
+                "u": "d3",
+                "v": "d6"
+              },
+              {
+                "id": "ed4_d12",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "d4",
+                "v": "d12"
+              },
+              {
+                "id": "ed6_d12",
+                "type": "edge",
+                "directed": true,
+                "u": "d6",
+                "v": "d12"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Xích bốn phần tử được làm nổi."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "**Phản xích** là tập đôi một **không** so sánh được. [[a3|$\\{4, 6\\}$]] là một: $4 \\nmid 6$ và $6 \\nmid 4$. Cỡ ${{width}}$ — đó là **chiều rộng**."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "d4",
+                "d6"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "d1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [5, 0]
+              },
+              {
+                "id": "d2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [0, -12]
+              },
+              {
+                "id": "d3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [10, -12]
+              },
+              {
+                "id": "d4",
+                "type": "vertex",
+                "color_class": 4,
+                "emphasis": "focus",
+                "label": "4",
+                "pos": [0, -24]
+              },
+              {
+                "id": "d6",
+                "type": "vertex",
+                "color_class": 4,
+                "emphasis": "focus",
+                "label": "6",
+                "pos": [10, -24]
+              },
+              {
+                "id": "d12",
+                "type": "vertex",
+                "label": "12",
+                "pos": [5, -36]
+              },
+              {
+                "id": "ed1_d2",
+                "type": "edge",
+                "directed": true,
+                "u": "d1",
+                "v": "d2"
+              },
+              {
+                "id": "ed1_d3",
+                "type": "edge",
+                "directed": true,
+                "u": "d1",
+                "v": "d3"
+              },
+              {
+                "id": "ed2_d4",
+                "type": "edge",
+                "directed": true,
+                "u": "d2",
+                "v": "d4"
+              },
+              {
+                "id": "ed2_d6",
+                "type": "edge",
+                "directed": true,
+                "u": "d2",
+                "v": "d6"
+              },
+              {
+                "id": "ed3_d6",
+                "type": "edge",
+                "directed": true,
+                "u": "d3",
+                "v": "d6"
+              },
+              {
+                "id": "ed4_d12",
+                "type": "edge",
+                "directed": true,
+                "u": "d4",
+                "v": "d12"
+              },
+              {
+                "id": "ed6_d12",
+                "type": "edge",
+                "directed": true,
+                "u": "d6",
+                "v": "d12"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai phần tử 4 và 6 được làm nổi, không có đường nối giữa chúng."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Phủ hết poset bằng bao nhiêu xích? [[a4|Hai]] là đủ: $\\{1,2,4,12\\}$ và $\\{3,6\\}$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "d1",
+                "d3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "d1",
+                "type": "vertex",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "1",
+                "pos": [5, 0]
+              },
+              {
+                "id": "d2",
+                "type": "vertex",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "2",
+                "pos": [0, -12]
+              },
+              {
+                "id": "d3",
+                "type": "vertex",
+                "color_class": 2,
+                "emphasis": "focus",
+                "label": "3",
+                "pos": [10, -12]
+              },
+              {
+                "id": "d4",
+                "type": "vertex",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "4",
+                "pos": [0, -24]
+              },
+              {
+                "id": "d6",
+                "type": "vertex",
+                "color_class": 2,
+                "emphasis": "focus",
+                "label": "6",
+                "pos": [10, -24]
+              },
+              {
+                "id": "d12",
+                "type": "vertex",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "12",
+                "pos": [5, -36]
+              },
+              {
+                "id": "ed1_d2",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "d1",
+                "v": "d2"
+              },
+              {
+                "id": "ed1_d3",
+                "type": "edge",
+                "directed": true,
+                "u": "d1",
+                "v": "d3"
+              },
+              {
+                "id": "ed2_d4",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "d2",
+                "v": "d4"
+              },
+              {
+                "id": "ed2_d6",
+                "type": "edge",
+                "directed": true,
+                "u": "d2",
+                "v": "d6"
+              },
+              {
+                "id": "ed3_d6",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "d3",
+                "v": "d6"
+              },
+              {
+                "id": "ed4_d12",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "d4",
+                "v": "d12"
+              },
+              {
+                "id": "ed6_d12",
+                "type": "edge",
+                "directed": true,
+                "u": "d6",
+                "v": "d12"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai xích tô hai màu, phủ hết sáu phần tử."
+          },
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Không thể phủ bằng **một** xích: [[a5|$4$ và $6$]] không so sánh được nên không cùng nằm trên một xích. Tổng quát mỗi xích chứa nhiều nhất một phần tử của một phản xích, nên số xích $\\ge$ cỡ phản xích lớn nhất. Điều **Dilworth** khẳng định là dấu bằng luôn xảy ra — hai con số ${{width}}$ trong bảng bên cạnh không bao giờ lệch nhau."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "d4",
+                "d6"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "d1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [5, 0]
+              },
+              {
+                "id": "d2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [0, -12]
+              },
+              {
+                "id": "d3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [10, -12]
+              },
+              {
+                "id": "d4",
+                "type": "vertex",
+                "color_class": 4,
+                "emphasis": "focus",
+                "label": "4",
+                "pos": [0, -24]
+              },
+              {
+                "id": "d6",
+                "type": "vertex",
+                "color_class": 4,
+                "emphasis": "focus",
+                "label": "6",
+                "pos": [10, -24]
+              },
+              {
+                "id": "d12",
+                "type": "vertex",
+                "label": "12",
+                "pos": [5, -36]
+              },
+              {
+                "id": "ed1_d2",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "d1",
+                "v": "d2"
+              },
+              {
+                "id": "ed1_d3",
+                "type": "edge",
+                "directed": true,
+                "u": "d1",
+                "v": "d3"
+              },
+              {
+                "id": "ed2_d4",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "d2",
+                "v": "d4"
+              },
+              {
+                "id": "ed2_d6",
+                "type": "edge",
+                "directed": true,
+                "u": "d2",
+                "v": "d6"
+              },
+              {
+                "id": "ed3_d6",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "d3",
+                "v": "d6"
+              },
+              {
+                "id": "ed4_d12",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "d4",
+                "v": "d12"
+              },
+              {
+                "id": "ed6_d12",
+                "type": "edge",
+                "directed": true,
+                "u": "d6",
+                "v": "d12"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Phản xích và hai xích hiện cùng lúc."
+          },
+          "verified": true,
+          "claims": [
+            "width == 2"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "hasse-diagram"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

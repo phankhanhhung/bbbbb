@@ -15,6 +15,7 @@ import {
   permutationCycles,
   planarity,
 } from './analyzers.js';
+import { analyzePoset } from './poset.js';
 import { buildGraph, type GraphModel } from './graph.js';
 
 /**
@@ -79,6 +80,7 @@ export function graphEnvironment(scene: Scene): DslEnvironment {
   const cyclesOf = permutationCycles(graph);
   const match = matching(graph).value;
   const plane = planarity(graph).value;
+  const order = analyzePoset(graph);
 
   const neighbours = new Map<string, Set<string>>(
     graph.vertices.map((v) => [
@@ -133,6 +135,20 @@ export function graphEnvironment(scene: Scene): DslEnvironment {
       crossings: plane ? plane.crossings.length : -1,
       faces: plane ? plane.faces : -1,
       max_planar_edges: plane ? plane.maxEdges : -1,
+
+      /**
+       * Thứ tự bộ phận: chiều cao (xích dài nhất) và chiều rộng (phản xích lớn
+       * nhất).
+       *
+       * Hai con số này **là** hai vế của định lý Dilworth và định lý Mirsky, nên
+       * đặt cạnh nhau trong bảng bất biến là cách rẻ nhất để người học tự thấy
+       * chúng đúng trên bài đang mở. Đồ thị có chu trình thì cả hai bằng $-1$:
+       * không phải poset, và trả $0$ sẽ đọc nhầm thành "rỗng".
+       */
+      height: order.isPoset ? order.height : -1,
+      width: order.isPoset ? order.width : -1,
+      minimal: order.minimal.length,
+      maximal: order.maximal.length,
     },
     builtins: {
       deg: (args, pos) => {

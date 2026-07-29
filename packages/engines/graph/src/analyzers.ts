@@ -555,6 +555,44 @@ export function matching(graph: GraphModel): AnalyzerResult<MatchingResult> {
     out.get(from)?.push({ to, edge: edge.id });
   }
 
+  const solved = solveBipartite(left, out);
+  const { partnerOf, edgeOf, greedy, augmentingPaths } = solved;
+
+  const matched = left.filter((l) => partnerOf.has(l));
+  const edges = matched.map((l) => edgeOf.get(l) as string);
+
+  return ok({
+    matching: edges,
+    size: edges.length,
+    partner: partnerOf,
+    greedy,
+    augmentingPaths,
+    ...konig(left, out, partnerOf),
+    ...hall(left, out, partnerOf),
+    left,
+  });
+}
+
+export interface BipartiteSolution {
+  readonly partnerOf: ReadonlyMap<string, string>;
+  readonly edgeOf: ReadonlyMap<string, string>;
+  readonly greedy: readonly string[];
+  readonly augmentingPaths: readonly (readonly string[])[];
+}
+
+/**
+ * Lõi ghép cặp hai phía, tách khỏi đồ thị.
+ *
+ * Nhận thẳng danh sách kề trái → phải chứ không nhận `GraphModel`, vì **hai** chỗ
+ * cần nó: `matching()` cho GR-06, và Dilworth cho poset — ở đó đồ thị hai phía
+ * là thứ *dựng ra* từ bao đóng bắc cầu chứ không có sẵn trong scene. Viết lần
+ * thứ hai là mời hai bản lệch nhau, và lệch ở một thuật toán mà kết quả sai vẫn
+ * trông hợp lý.
+ */
+export function solveBipartite(
+  left: readonly string[],
+  out: ReadonlyMap<string, readonly { to: string; edge: string }[]>,
+): BipartiteSolution {
   const partnerOf = new Map<string, string>();
   const edgeOf = new Map<string, string>();
 
@@ -605,19 +643,7 @@ export function matching(graph: GraphModel): AnalyzerResult<MatchingResult> {
     flip(endpoint, out, partnerOf, edgeOf, cameFrom, link);
   }
 
-  const matched = left.filter((l) => partnerOf.has(l));
-  const edges = matched.map((l) => edgeOf.get(l) as string);
-
-  return ok({
-    matching: edges,
-    size: edges.length,
-    partner: partnerOf,
-    greedy,
-    augmentingPaths,
-    ...konig(left, out, partnerOf),
-    ...hall(left, out, partnerOf),
-    left,
-  });
+  return { partnerOf, edgeOf, greedy, augmentingPaths };
 }
 
 /** Tìm đỉnh phải kết thúc một đường tăng xuất phát từ `l`. */
@@ -672,7 +698,7 @@ function flip(
  * $Z$ = các đỉnh tới được từ đỉnh trái chưa ghép, đi cạnh ngoài ghép từ trái và
  * cạnh trong ghép từ phải. Phủ là $(L \setminus Z) \cup (R \cap Z)$.
  */
-function konig(
+export function konig(
   left: readonly string[],
   out: ReadonlyMap<string, readonly { to: string; edge: string }[]>,
   partnerOf: ReadonlyMap<string, string>,

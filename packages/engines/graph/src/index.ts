@@ -10,12 +10,14 @@ import {
 import { buildGraph, VERTEX_RADIUS } from './graph.js';
 import { layoutPositions, type LayoutId } from './layout.js';
 import { bipartite, connectedComponents, matching, planarity } from './analyzers.js';
+import { analyzePoset } from './poset.js';
 import { EdgeElement, GRAPH_LIMITS, GraphConfig, VertexElement } from './schema.js';
 
 export * from './schema.js';
 export * from './graph.js';
 export * from './layout.js';
 export * from './analyzers.js';
+export * from './poset.js';
 export * from './dsl.js';
 export { graphRenderer } from './render.js';
 
@@ -454,6 +456,36 @@ const matchingSaturatesLeft: SceneValidator = {
   },
 };
 
+/**
+ * `hasse-diagram` — đồ thị là sơ đồ Hasse hợp lệ: có hướng, không chu trình, và
+ * **không cạnh nào thừa**.
+ *
+ * Cạnh bắc cầu không sai về quan hệ nhưng sai về hình: sơ đồ Hasse chỉ vẽ quan
+ * hệ phủ, nên một cạnh $a \to c$ vẽ thêm cạnh $a \to b \to c$ làm người đọc
+ * tưởng nó mang thông tin mới. `violations` trả về đúng những cạnh thừa ấy.
+ */
+const hasseDiagram: SceneValidator = {
+  id: 'hasse-diagram',
+  label: 'Sơ đồ Hasse hợp lệ',
+  check(scene) {
+    const result = analyzePoset(buildGraph(scene));
+    if (!result.isPoset) {
+      return {
+        ok: false,
+        violations: [...result.cycle],
+        message: 'Có chu trình có hướng nên không phải thứ tự bộ phận',
+      };
+    }
+    return result.redundantEdges.length === 0
+      ? { ok: true, violations: [] }
+      : {
+          ok: false,
+          violations: [...result.redundantEdges],
+          message: `${result.redundantEdges.length} cạnh bắc cầu vẽ thừa`,
+        };
+  },
+};
+
 const FIXED: readonly SceneValidator[] = [
   simpleGraph,
   connected,
@@ -462,6 +494,7 @@ const FIXED: readonly SceneValidator[] = [
   triangleFree,
   planeDrawing,
   matchingSaturatesLeft,
+  hasseDiagram,
 ];
 
 export function resolveGraphValidator(id: string): SceneValidator | null {

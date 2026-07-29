@@ -8,7 +8,7 @@ import { SPACING } from './graph.js';
  * hàng để thấy đồ thị hai phía, vòng tròn để thấy đối xứng), và nội dung thì
  * không được đổi mỗi lần mở trang.
  */
-export type LayoutId = 'circle' | 'grid' | 'bipartite' | 'line' | 'cycles';
+export type LayoutId = 'circle' | 'grid' | 'bipartite' | 'line' | 'cycles' | 'hasse';
 
 export interface LayoutOptions {
   /**
@@ -19,6 +19,14 @@ export interface LayoutOptions {
    * chu trình một vòng riêng thì nhìn là thấy.
    */
   readonly cycles?: readonly (readonly string[])[];
+  /**
+   * Với `hasse`: các tầng, từ **dưới lên** — `levels[0]` là phần tử tối tiểu.
+   *
+   * Sơ đồ Hasse đọc từ dưới lên: lớn hơn thì cao hơn. Trục $y$ của SVG hướng
+   * xuống, nên tầng $k$ đi xuống $-k$; ghi ra đây vì đó là chỗ dễ đảo ngược mà
+   * hình vẫn "trông có lý", chỉ là nói ngược quan hệ.
+   */
+  readonly levels?: readonly (readonly string[])[];
   /** Với `bipartite`: id các đỉnh thuộc phía trên. Còn lại xuống phía dưới. */
   readonly topSide?: readonly string[];
   /** Với `grid`: số cột. Vắng thì lấy xấp xỉ căn bậc hai. */
@@ -39,6 +47,8 @@ export function layoutPositions(
       return bipartite(ids, options.topSide ?? []);
     case 'cycles':
       return cycles(options.cycles ?? [ids]);
+    case 'hasse':
+      return hasse(options.levels ?? [ids]);
     case 'line':
       return line(ids);
   }
@@ -96,6 +106,21 @@ function bipartite(
 
   place(upper, 0);
   place(lower, SPACING * 2);
+
+  return positions;
+}
+
+/** Mỗi tầng một hàng, căn giữa theo tầng rộng nhất. */
+function hasse(levels: readonly (readonly string[])[]): Map<string, [number, number]> {
+  const positions = new Map<string, [number, number]>();
+  const width = Math.max(1, ...levels.map((l) => l.length)) - 1;
+
+  levels.forEach((level, k) => {
+    const offset = (width - (level.length - 1)) / 2;
+    level.forEach((id, i) => {
+      positions.set(id, [round((i + offset) * SPACING), round(-k * SPACING * 1.2)]);
+    });
+  });
 
   return positions;
 }
