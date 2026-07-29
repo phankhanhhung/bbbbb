@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M6 xong (trừ raster OG + schema freeze)** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M7 track [E] xong; content 8/25, chưa bài nào do chính chủ soạn** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -147,6 +147,8 @@ interface Engine {
 | **G-06** | AUT-KPI đo "median 5 bài cuối pilot" nhưng AUT-08 (công cụ đo) là **P2** | Cần một bản đo tối thiểu ở P1: `combviz stats` đọc log thời gian thủ công (file CSV owner tự ghi) — 2 giờ công, đủ để gate có răng |
 | **G-07** | LOC-04 (analytics) là P1 nhưng không nói dùng tool gì | Đề xuất Plausible/Umami self-host hoặc **tắt hẳn ở P1** — cookieless + không PII dễ nhất bằng cách không thu gì. Quyết cùng OPQ-3 |
 | **G-08** | SBX-05 export PNG cần render trong browser, REN-01 cần render trong Node — hai đường raster | Browser: `XMLSerializer` + `canvas.drawImage` từ SVG blob. Node: resvg. Cả hai ăn **cùng chuỗi SVG** từ D-03 ⇒ khác biệt chỉ ở rasterizer, chấp nhận được. Golden test so sánh ở mức SVG, không mức pixel |
+| **G-11** *(mới, M7)* | Bài dạng "thao tác lặp" (lật dấu một hàng/cột, gộp đống sỏi) **không có sandbox được**: board engine không có thao tác nào ứng với "lật một hàng", và không validator nào diễn tả được ràng buộc của chúng. `sign-flip-4x4` vì vậy là bài đầu tiên trong kho không có sandbox | Thêm thao tác `board/flip-line` vào command layer + validator tương ứng. Ưu tiên theo khung §16: cụm "invariant-centric" cần ≥ 5 bài, và phần lớn chúng có dạng này. Nếu không làm, DoD "100% có sandbox" trượt đúng ở cụm này |
+| **G-12** *(mới, M7)* | Không có validator "không chứa tam giác" — cụm bài Turán/Ramsey chỉ kiểm được gián tiếp qua `bipartite` (mạnh hơn hẳn) hoặc `no-mono-triangle` (dành cho đồ thị đã tô hai màu) | Thêm `triangle-free` vào graph validators. Rẻ (đã có adjacency), và mở khoá đúng cụm bài cực trị mà §16 liệt kê |
 | **G-09** *(mới, M1)* | Quân cờ vẽ bằng ký tự Unicode (`♞`). Render headless bằng resvg **không có phông** ⇒ quân biến mất khỏi OG card trong khi player vẫn hiện — đúng loại lệch mà D-03 sinh ra để tránh | Nhúng phông vào bước raster, hoặc chuyển quân sang path. Quyết ở M6 cùng label atlas (D-07). Bài seed dùng quân phải render thử headless trước khi publish |
 | **G-10** *(mới, M1)* | Theme khai độ dày nét bằng số tuyệt đối, nhưng mỗi engine có tỉ lệ toạ độ riêng ⇒ cùng token cho ra nét mảnh ở engine này, bè ở engine kia. Phát hiện khi halo anchor phủ kín cả quân domino | ✅ Chốt quy ước: **một ô / một khoảng cách đỉnh chuẩn = 10 đơn vị scene**, ghi trong `StrokeTokens`. Engine mới chọn tỉ lệ theo quy ước, không ngược lại |
 
@@ -276,15 +278,32 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 2. Luật "step có hình mà không có anchor" đếm `elements.length > 0`, trong khi bàn cờ 8×8 sinh 64 ô từ `config` với `elements` rỗng (D-16) — tức là luật miễn trừ đúng những bài dùng engine board.
 3. `nextStepId` hứa không tái dùng id đã xoá nhưng chỉ lấy max trên step **đang còn**: xoá step cuối rồi thêm bước mới sẽ cấp lại đúng id đó, và một `merge_target` đang treo sẽ lặng lẽ trỏ sang step khác — tệ hơn nữa, validate đang báo đỏ sẽ **xanh trở lại** trong khi bài đã sai.
 
-### M7 — Content sprint + hardening + pilot · Tuần 12–16 · [C]+[E]
+### M7 — Content sprint + hardening + pilot · Tuần 12–16 · [C]+[E] — **track [E] xong, track [C] mới 6/20**
 
-- **20 bài còn lại qua pipeline AUT-09**, theo khung phân bố §16: ≥10 grid, ≥10 graph, ≥5 invariant-centric, ≥8 case-branching thật, 100% có sandbox+validator.
-- Đo AUT-KPI trên 5 bài cuối.
-- Perf pass NFR-P1..P3 trên 3 bài nặng nhất, iPad thật.
-- Pilot: ≥10 học sinh đội tuyển + 2 GV, đo SUS, thu top-10 friction.
-- NFR-C1..C3, NFR-A1..A4, NFR-I1 kiểm tra checklist.
+**Hardening — xong:**
 
-**DoD:** đúng DoD Phase 1 §15 SRS, cả 6 mục.
+- ✅ **Golden SVG toàn kho** (§9): mọi step có scene, render kèm pattern (NFR-A1), snapshot ra file. Đây là lớp lưới duy nhất bắt được "hình đổi mà test vẫn xanh", và nó phải có **trước** content sprint chứ không phải sau — khi kho 25 bài, đây là thứ duy nhất phân biệt "tôi sửa một bài" với "tôi vừa đổi cả kho". Nó chứng minh mình ngay trong milestone này: sửa khung nhìn graph làm đỏ đúng 26 scene của 4 bài, không đụng scene board nào.
+- ✅ **E2E Playwright cho Player** (14 test × 2 profile): điều hướng cây, dừng ở điểm rẽ nhánh, breadcrumb, minimap, deep-link, link hỏng, anchor hai chiều bằng chuột **và** bàn phím, alt_text, reduced-motion, sandbox fork, lọc/tìm kho. Mỗi test ở đây từng là một lần mở browser bằng tay ở M4–M6.
+- ✅ **Ngân sách perf đo bằng script** (§13.1). Số thật, CPU bóp ×2–×4: chuyển step p95 **20.8ms** (ngân sách 150ms), frame khi tô quét p95 **17.4ms** ở ×2 (ngân sách 18ms), bundle **229.6KB** gzip (ngân sách 300KB), TTI 4G mô phỏng **~550ms** (ngân sách 3s).
+- ✅ `combviz coverage` — bảng điểm sprint theo DoD §15.1, đo được từ ngày đầu. Kho chết vì phân bố lệch thì chết lúc soạn xong bài 25, và lúc đó sửa nghĩa là soạn lại.
+- ✅ `combviz eval` — chạy biểu thức DSL trên từng step. Sinh ra từ chính việc soạn bài: câu hỏi hay gặp nhất không phải "file có hợp lệ không" mà "**hình có đúng thứ narrative vừa nói không**".
+- ⬜ Đo trên iPad Gen 9 thật (G-A). Script ở trên là **nửa script, không phải nửa thiết bị** — Chromium desktop bóp CPU không thay được Safari/A13.
+- ⬜ Pilot ≥10 học sinh + 2 GV, SUS ≥ 75. Không phải việc máy làm được.
+
+**Content — 6/20, và chúng là draft:**
+
+- ✅ 6 bài mới đi **trọn pipeline AUT-09**: `tromino-l-4x4`, `knight-closed-tour-5x5`, `sign-flip-4x4`, `handshake-odd-degree`, `konigsberg-seven-bridges`, `triangle-free-5-vertices`. Tất cả `status: draft`, mọi step `verified: false`, publish bị khoá — đúng thiết kế.
+- ✅ Từng bài đều được kiểm **bằng máy chứ không bằng mắt**: `combviz eval` đối chiếu hình với narrative (5 quân tromino phủ đúng 15 ô; bàn $5\times5$ đúng 13–12; ba nhánh Turán cho đúng $m = 4, 6, 5$ khớp $\Delta = 4, 3, 2$), rồi render ra ảnh và nhìn.
+- ⬜ 14 bài còn lại. Và quan trọng hơn: **chưa bài nào trong kho do chính chủ soạn** (G-C).
+
+**Bốn lỗi thật do content lôi ra** — không lỗi nào bị test cũ bắt, và cả bốn chỉ lộ ra khi có người thật sự soạn một bài thật:
+
+1. **`show_attacks` là trường ma.** Có trong schema từ M3, có lệnh bật/tắt, và renderer **bỏ qua hoàn toàn** — đặt `true` thì không có gì hiện ra, validate vẫn xanh. BD-02 là P1. Đã cài overlay, và cài bằng cách tách luật đi quân ra `attacks.ts` để DSL, validator và hình dùng **một** nguồn: hai bản cài của cùng một luật sẽ lệch, và người phát hiện sẽ là học sinh thấy ô được tô "bị khống chế" trong khi validator bảo không.
+2. **Nhãn đỉnh bị cắt ở mép khung nhìn.** `defaultViewport` của graph chỉ chừa lề quanh *tâm* đỉnh, nên nhãn "Đông" của Königsberg mất đuôi. Đã ước lượng bề rộng nhãn theo số ký tự (không đo được chữ khi chạy headless).
+3. **`source.year` chặn dưới ở 1890**, tức là chặn đúng những bài mở đầu ngành — Königsberg là Euler **1736**. Đã nới xuống 1600. Nới rẻ, thu hẹp đắt (OPQ-6).
+4. **Bố cục đỉnh có thể nói dối.** GR-02 nói toạ độ là nội dung sư phạm; xếp $K_{2,3}$ lên vòng tròn cho ra một ngôi sao, đúng đồ thị nhưng giấu mất chính điều narrative đang khẳng định ("chia $5$ đỉnh thành nhóm $2$ và nhóm $3$"). Lỗi này **không máy nào bắt được** — chỉ render ra ảnh rồi nhìn mới thấy.
+
+**DoD:** ⬜ Chưa đạt DoD Phase 1 §15. `combviz coverage --drafts` nói chính xác còn thiếu gì: 8/25 bài, grid 4/10, graph 4/10, bất biến 3/5, case-branching 3/8.
 
 ---
 
@@ -299,7 +318,7 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 | 6–9 | M4 graph engine | **5 bài soạn tay → Style Guide v1** | **G-B: Style Guide v1** (cuối T9) |
 | 9–10 | M5 player + freeze | rà 5 bài theo Style Guide | **G-C: schema 1.0.0 freeze** |
 | 10–12 | M6 studio + pipeline | | **G-D: 1 bài trọn pipeline** (cuối T12) |
-| 12–16 | hardening, perf, a11y | **20 bài qua pipeline** | **G-E: DoD P1** |
+| 12–16 | hardening, perf, a11y ✅ | **20 bài qua pipeline** — mới 6, và là draft | **G-E: DoD P1** ⬜ |
 
 **Ý nghĩa các gate — không phải mốc trang trí:**
 
@@ -345,20 +364,30 @@ Quyết định trước, để lúc gấp không phải quyết trong hoảng l
 
 ## 10. Việc tiếp theo
 
-**Hai việc chặn, và cả hai đều là việc của chính chủ — máy không làm hộ được:**
+**Hai việc chặn, cả hai là việc của chính chủ — máy không làm hộ được:**
 
-1. ⬜ **G-A — đo perf trên iPad Gen 9 thật.** Chưa đóng từ tuần 3. Từ M2 tới giờ mọi thứ xây trên giả định renderer đủ nhanh; đúng thì không mất gì, sai thì phải sửa lại nền của sáu milestone. Cái giá của việc trì hoãn tăng theo từng milestone và bây giờ đã là sáu.
-2. ⬜ **G-C — soạn tay 3–5 bài, rồi mới freeze schema `1.0.0`.** Kho có 2 bài, **cả hai là fixture kỹ thuật** dựng để thử engine chứ không phải bài do chính chủ soạn. §16 nói thẳng: Style Guide viết trước khi soạn bài nào là Style Guide bịa — nên `docs/STYLE-GUIDE.md` hiện chỉ ghi lại phần code đang ép và để trống phần biên tập. Điền bừa vào đó tệ hơn để trống, vì một quy ước bịa vẫn sẽ được lint enforce và sẽ định hình cả 25 bài.
+1. ⬜ **G-A — đo perf trên iPad Gen 9 thật.** Mở từ tuần 3. Đã có script đo (§9) và số trên Chromium bóp CPU đều nằm trong ngân sách, nhưng đó là **nửa script, không phải nửa thiết bị**: Safari/A13 không mô phỏng được. Một buổi chiều với một cái iPad đóng được gate này.
+2. ⬜ **G-C — soạn tay 3–5 bài, rồi mới freeze schema `1.0.0`.** Kho có 8 bài: 2 fixture kỹ thuật và 6 draft máy. **Không bài nào do chính chủ soạn.** §16 nói thẳng: Style Guide viết trước khi soạn bài nào là Style Guide bịa — nên `docs/STYLE-GUIDE.md` vẫn cố ý để trống phần biên tập. Sáu bài draft ở M7 là bằng chứng pipeline chạy được, **không** phải bằng chứng chuẩn biên tập đã có.
 
-Cả hai gate này chặn theo hai hướng khác nhau: G-A chặn *niềm tin vào nền*, G-C chặn *chuẩn của nội dung*. Đi tiếp M7 mà chưa đóng G-C nghĩa là soạn 20 bài theo một chuẩn chưa ai kiểm chứng.
+Hai gate này chặn theo hai hướng khác nhau: G-A chặn *niềm tin vào nền*, G-C chặn *chuẩn của nội dung*. Soạn nốt 17 bài khi G-C còn mở nghĩa là làm 17 bài theo một chuẩn chưa ai kiểm chứng — và sửa chuẩn sau đó tốn đúng bằng soạn lại.
 
 **Việc kỹ thuật còn nợ, xếp theo mức đau:**
 
-3. ⬜ Raster OG card sang PNG + nhúng phông (REN-02 nửa còn lại, G-09). Không có bước này thì mọi link chia sẻ đều không có ảnh — mà §11 xem OG card là kênh growth chính.
-4. ⬜ Label atlas cho nhãn LaTeX trong canvas (GR-08, D-07). Hiện nhãn trong hình là text thuần; LaTeX chỉ chạy ở narrative/statement/case_label.
-5. ⬜ Golden SVG snapshot toàn kho (§9). Có renderer thuần rồi thì đây là thứ rẻ nhất còn chưa dựng.
-6. ⬜ Playwright cho Player (điều hướng cây, anchor hai chiều, deep-link, reduced-motion). Hiện mỗi lần kiểm là mở browser bằng tay.
-7. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
+3. ⬜ **G-11 — thao tác `board/flip-line` + validator.** Chặn thẳng cụm "invariant-centric" (≥5 bài của §16) và chặn luôn DoD "100% có sandbox". `sign-flip-4x4` đang là bài duy nhất không có sandbox, và nó sẽ không phải bài cuối.
+4. ⬜ **G-12 — validator `triangle-free`** cho cụm cực trị. Rẻ, mở khoá vài bài.
+5. ⬜ Raster OG card sang PNG + nhúng phông (REN-02 nửa sau, G-09). Không có nó thì mọi link chia sẻ đều không ảnh — mà §11 xem OG card là kênh growth chính.
+6. ⬜ Label atlas cho nhãn LaTeX trong canvas (GR-08, D-07).
+7. ⬜ Pilot ≥10 học sinh + 2 GV (DoD §15.5).
+8. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
+
+**Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):
+
+```bash
+combviz coverage --drafts      # còn thiếu gì, theo đúng DoD §15.1
+combviz import-draft bai.json --write
+combviz eval <id>              # hình có khớp narrative không
+pnpm --filter @combviz/app-studio dev   # duyệt từng step rồi mới publish
+```
 
 ---
 

@@ -12,6 +12,8 @@ import { runImportDraft } from './commands/import-draft.js';
 import { runOg } from './commands/og.js';
 import { runStats } from './commands/stats.js';
 import { runIndex } from './commands/index-bank.js';
+import { runCoverage } from './commands/coverage.js';
+import { runEval } from './commands/eval-expr.js';
 
 /**
  * CLI của xưởng in (D-13).
@@ -54,6 +56,15 @@ const USAGE = `combviz — công cụ soạn/duyệt kho bài
 
   combviz stats [--log <file.jsonl>]
       Thời gian soạn/duyệt theo bài, đối chiếu AUT-KPI.
+
+  combviz eval <problem-id> [biểu-thức…] [--root <content>]
+      Chạy biểu thức DSL trên từng step. Không truyền biểu thức thì chạy các
+      invariant của bài — cách nhanh nhất kiểm hình có khớp narrative không.
+
+  combviz coverage [--root <content>] [--drafts] [--strict]
+      Bảng điểm content sprint theo DoD Phase 1 §15.1: phân bố grid/graph/
+      bất biến/case-branching, sandbox, lint, OG card.
+      --drafts: tính cả bài chưa published.
 `;
 
 async function main(argv: string[]): Promise<number> {
@@ -189,6 +200,45 @@ async function main(argv: string[]): Promise<number> {
 
       await runIndex({ root: resolve(values.root), out: resolve(values.out) });
       return 0;
+    }
+
+    case 'eval': {
+      const { values, positionals } = parseArgs({
+        args: rest,
+        options: { root: { type: 'string', default: 'packages/content' } },
+        allowPositionals: true,
+      });
+
+      const [problemId, ...expressions] = positionals;
+      if (!problemId) {
+        console.error('Thiếu <problem-id>.\n');
+        console.error(USAGE);
+        return 2;
+      }
+
+      const failures = await runEval({
+        root: resolve(values.root),
+        problemId,
+        expressions,
+      });
+      return failures > 0 ? 1 : 0;
+    }
+
+    case 'coverage': {
+      const { values } = parseArgs({
+        args: rest,
+        options: {
+          root: { type: 'string', default: 'packages/content' },
+          drafts: { type: 'boolean', default: false },
+          strict: { type: 'boolean', default: false },
+        },
+      });
+
+      const met = await runCoverage({
+        root: resolve(values.root),
+        includeDrafts: values.drafts,
+      });
+      return values.strict && !met ? 1 : 0;
     }
 
     case 'stats': {

@@ -1,0 +1,833 @@
+{
+  "schema_version": "0.1.0",
+  "id": "konigsberg-seven-bridges",
+  "statement": {
+    "vi": "Bảy cây cầu của Königsberg nối bốn vùng đất hai bên sông. Hỏi có thể đi một vòng dạo qua **mỗi** cây cầu đúng một lần hay không?"
+  },
+  "source": {
+    "contest": "Euler 1736",
+    "note": {
+      "vi": "Bài toán khai sinh lý thuyết đồ thị."
+    },
+    "year": 1736
+  },
+  "topics": [
+    "graph-basics"
+  ],
+  "techniques": [
+    "parity",
+    "contradiction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "count(vertices, v => deg(v) % 2 == 1)",
+      "id": "inv-bac-le",
+      "label": {
+        "vi": "Số vùng có lẻ cầu"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol-bac-le",
+      "label": {
+        "vi": "Đếm bậc lẻ"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thu mỗi vùng đất về một [[a1|đỉnh]] và mỗi cây cầu về một cạnh. Hình dạng bờ sông không còn quan trọng — chỉ còn ai nối với ai."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "vA",
+                "vB",
+                "vC",
+                "vD"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "vA",
+                "type": "vertex",
+                "label": "Bắc",
+                "pos": [-4, -10]
+              },
+              {
+                "id": "vB",
+                "type": "vertex",
+                "label": "Nam",
+                "pos": [-4, 10]
+              },
+              {
+                "id": "vC",
+                "type": "vertex",
+                "label": "Đảo",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "vD",
+                "type": "vertex",
+                "label": "Đông",
+                "pos": [10, 0]
+              },
+              {
+                "id": "e-CA-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CA-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CB-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CB-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vD"
+              },
+              {
+                "id": "e-AD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vA",
+                "v": "vD"
+              },
+              {
+                "id": "e-BD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vB",
+                "v": "vD"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn đỉnh Bắc, Nam, Đảo, Đông nối bằng bảy cạnh, trong đó có hai cặp cạnh song song."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Với một vùng **không** phải điểm đầu hay điểm cuối, mỗi lần bước vào phải có một lần bước ra. [[a2|Số cầu ở vùng đó]] vì thế phải chẵn."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "e-CA-0",
+                "e-CA-1",
+                "e-CB-0",
+                "e-CB-1",
+                "e-CD-0",
+                "e-AD-0",
+                "e-BD-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "vA",
+                "type": "vertex",
+                "label": "Bắc",
+                "pos": [-4, -10]
+              },
+              {
+                "id": "vB",
+                "type": "vertex",
+                "label": "Nam",
+                "pos": [-4, 10]
+              },
+              {
+                "id": "vC",
+                "type": "vertex",
+                "label": "Đảo",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "vD",
+                "type": "vertex",
+                "label": "Đông",
+                "pos": [10, 0]
+              },
+              {
+                "id": "e-CA-0",
+                "type": "edge",
+                "emphasis": "focus",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CA-1",
+                "type": "edge",
+                "emphasis": "focus",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CB-0",
+                "type": "edge",
+                "emphasis": "focus",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CB-1",
+                "type": "edge",
+                "emphasis": "focus",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CD-0",
+                "type": "edge",
+                "emphasis": "focus",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vD"
+              },
+              {
+                "id": "e-AD-0",
+                "type": "edge",
+                "emphasis": "focus",
+                "multi_index": 0,
+                "u": "vA",
+                "v": "vD"
+              },
+              {
+                "id": "e-BD-0",
+                "type": "edge",
+                "emphasis": "focus",
+                "multi_index": 0,
+                "u": "vB",
+                "v": "vD"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảy cạnh được làm nổi, mỗi đỉnh hiện số cạnh chạm vào nó."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đếm số cầu ở từng vùng: [[a3|cả bốn vùng]] đều có số cầu lẻ — $5, 3, 3, 3$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "vA",
+                "vB",
+                "vC",
+                "vD"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "vA",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Bắc",
+                "pos": [-4, -10]
+              },
+              {
+                "id": "vB",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Nam",
+                "pos": [-4, 10]
+              },
+              {
+                "id": "vC",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Đảo",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "vD",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Đông",
+                "pos": [10, 0]
+              },
+              {
+                "id": "e-CA-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CA-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CB-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CB-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vD"
+              },
+              {
+                "id": "e-AD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vA",
+                "v": "vD"
+              },
+              {
+                "id": "e-BD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vB",
+                "v": "vD"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn đỉnh được làm nổi kèm bậc 5, 3, 3, 3 — tất cả đều lẻ."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: vòng dạo khép kín"
+          },
+          "narrative": {
+            "vi": "Nếu điểm cuối trùng điểm đầu thì **mọi** vùng đều là vùng đi ngang qua, nên [[a4|mọi vùng]] phải có số cầu chẵn. Ở đây không vùng nào chẵn."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "vA",
+                "vB",
+                "vC",
+                "vD"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "vA",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Bắc",
+                "pos": [-4, -10]
+              },
+              {
+                "id": "vB",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Nam",
+                "pos": [-4, 10]
+              },
+              {
+                "id": "vC",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Đảo",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "vD",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Đông",
+                "pos": [10, 0]
+              },
+              {
+                "id": "e-CA-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CA-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CB-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CB-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vD"
+              },
+              {
+                "id": "e-AD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vA",
+                "v": "vD"
+              },
+              {
+                "id": "e-BD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vB",
+                "v": "vD"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cả bốn đỉnh làm nổi: trường hợp khép kín đòi mọi bậc chẵn."
+          },
+          "verified": false
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "contradiction",
+          "narrative": {
+            "vi": "Mâu thuẫn: [[a5|bốn vùng]] đều lẻ, không vùng nào chẵn."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "vA",
+                "vB",
+                "vC",
+                "vD"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "vA",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Bắc",
+                "pos": [-4, -10]
+              },
+              {
+                "id": "vB",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Nam",
+                "pos": [-4, 10]
+              },
+              {
+                "id": "vC",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Đảo",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "vD",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Đông",
+                "pos": [10, 0]
+              },
+              {
+                "id": "e-CA-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CA-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CB-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CB-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vD"
+              },
+              {
+                "id": "e-AD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vA",
+                "v": "vD"
+              },
+              {
+                "id": "e-BD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vB",
+                "v": "vD"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Nhánh khép kín đóng lại: không đỉnh nào có bậc chẵn."
+          },
+          "verified": false
+        },
+        {
+          "id": "s5",
+          "parent": "s2",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: vòng dạo mở"
+          },
+          "narrative": {
+            "vi": "Nếu điểm cuối khác điểm đầu thì chỉ [[a6|hai vùng ấy]] được phép lẻ, mọi vùng khác vẫn phải chẵn. Nhiều nhất $2$ vùng lẻ."
+          },
+          "anchors": {
+            "a6": {
+              "ids": [
+                "vC",
+                "vD"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "vA",
+                "type": "vertex",
+                "label": "Bắc",
+                "pos": [-4, -10]
+              },
+              {
+                "id": "vB",
+                "type": "vertex",
+                "label": "Nam",
+                "pos": [-4, 10]
+              },
+              {
+                "id": "vC",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Đảo",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "vD",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Đông",
+                "pos": [10, 0]
+              },
+              {
+                "id": "e-CA-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CA-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CB-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CB-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vD"
+              },
+              {
+                "id": "e-AD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vA",
+                "v": "vD"
+              },
+              {
+                "id": "e-BD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vB",
+                "v": "vD"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai đỉnh được làm nổi như điểm đầu và điểm cuối giả định."
+          },
+          "verified": false
+        },
+        {
+          "id": "s6",
+          "parent": "s5",
+          "edge_type": "contradiction",
+          "narrative": {
+            "vi": "Mâu thuẫn: có tới [[a7|bốn vùng]] lẻ chứ không phải hai. Cả hai trường hợp đều hỏng, nên vòng dạo ấy không tồn tại."
+          },
+          "anchors": {
+            "a7": {
+              "ids": [
+                "vA",
+                "vB",
+                "vC",
+                "vD"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "vA",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Bắc",
+                "pos": [-4, -10]
+              },
+              {
+                "id": "vB",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Nam",
+                "pos": [-4, 10]
+              },
+              {
+                "id": "vC",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Đảo",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "vD",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "Đông",
+                "pos": [10, 0]
+              },
+              {
+                "id": "e-CA-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CA-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vA"
+              },
+              {
+                "id": "e-CB-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CB-1",
+                "type": "edge",
+                "multi_index": 1,
+                "u": "vC",
+                "v": "vB"
+              },
+              {
+                "id": "e-CD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vC",
+                "v": "vD"
+              },
+              {
+                "id": "e-AD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vA",
+                "v": "vD"
+              },
+              {
+                "id": "e-BD-0",
+                "type": "edge",
+                "multi_index": 0,
+                "u": "vB",
+                "v": "vD"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Nhánh mở cũng đóng lại: bốn đỉnh bậc lẻ, quá hai."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(vertices, v => deg(v) % 2 == 1) <= 2",
+    "validators": [
+      "connected"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol-bac-le",
+    "step_id": "s2"
+  }
+}

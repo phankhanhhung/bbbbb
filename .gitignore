@@ -4,6 +4,10 @@ dist/
 *.tsbuildinfo
 coverage/
 
+# Playwright
+test-results/
+playwright-report/
+
 # Sinh lúc build, không commit
 packages/content/.index/
 packages/content/index.json

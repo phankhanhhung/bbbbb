@@ -57,6 +57,16 @@ export interface ObjectTokens {
   readonly pieceStroke: string;
   readonly pieceGlyph: string;
   readonly regionStroke: string;
+  /**
+   * Dấu ô bị khống chế (BD-02).
+   *
+   * Không dùng `color_class`: vùng khống chế là **thông tin phái sinh từ luật
+   * cờ**, không phải một lớp màu mà lời giải lập luận trên đó. Trộn hai thứ vào
+   * cùng bảng màu sẽ khiến một bài tô hai màu và một overlay attack trông như
+   * cùng một khẳng định.
+   */
+  readonly attackMark: string;
+  readonly attackMarkOpacity: number;
 }
 
 /**
@@ -142,6 +152,8 @@ export const defaultTheme: Theme = {
     pieceStroke: '#2A2A26',
     pieceGlyph: '#1A1A17',
     regionStroke: '#2A2A26',
+    attackMark: '#B3261E',
+    attackMarkOpacity: 0.55,
   },
   stroke: {
     hairline: 0.4,

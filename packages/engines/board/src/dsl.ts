@@ -9,6 +9,7 @@ import {
   type Value,
 } from '@combviz/dsl';
 import { cellColorClass, tileOffsets, type Offset } from './geometry.js';
+import { attacksCell, type AttackBoard } from './attacks.js';
 import { cellId } from './ids.js';
 import type { BoardConfig } from './schema.js';
 
@@ -211,66 +212,27 @@ function expectTwoElements(
 /**
  * Quân `a` có ăn được `b` không, theo luật cờ vua.
  *
- * Xe/tượng/hậu bị **chặn tầm**: quân đứng giữa che đường. Không mô hình hoá chặn
- * tầm thì bài "8 quân hậu" vẫn đúng (hậu nào cũng chặn hậu nào), nhưng bài xe
- * kiểu "đặt xe sao cho không ăn nhau, được phép dùng vật cản" thì sai — và loại
- * bài đó có thật trong đề thi.
+ * Luật thật nằm ở `attacks.ts`; hàm này chỉ dịch từ ngôn ngữ của DSL
+ * (`ElementValue`) sang ngôn ngữ hình học. Overlay BD-02 hỏi cùng một nguồn, nên
+ * hình và validator không thể bất đồng ý kiến về một thế cờ.
  */
 function attacks(a: ElementValue, b: ElementValue, derived: BoardDerived): boolean {
-  const ar = Number(a.props['row']);
-  const ac = Number(a.props['col']);
-  const br = Number(b.props['row']);
-  const bc = Number(b.props['col']);
-
   if (a.id === b.id) return false;
 
-  const dr = br - ar;
-  const dc = bc - ac;
-  const adr = Math.abs(dr);
-  const adc = Math.abs(dc);
-
-  switch (String(a.props['kind'])) {
-    case 'knight':
-      return (adr === 1 && adc === 2) || (adr === 2 && adc === 1);
-
-    case 'king':
-      return adr <= 1 && adc <= 1;
-
-    case 'pawn':
-      // Quy ước: tốt đi lên (hàng giảm dần), ăn chéo.
-      return dr === -1 && adc === 1;
-
-    case 'rook':
-      return (dr === 0 || dc === 0) && clearPath(ar, ac, br, bc, derived);
-
-    case 'bishop':
-      return adr === adc && clearPath(ar, ac, br, bc, derived);
-
-    case 'queen':
-      return (dr === 0 || dc === 0 || adr === adc) && clearPath(ar, ac, br, bc, derived);
-
-    default:
-      return false;
-  }
-}
-
-function clearPath(
-  ar: number,
-  ac: number,
-  br: number,
-  bc: number,
-  derived: BoardDerived,
-): boolean {
-  const stepR = Math.sign(br - ar);
-  const stepC = Math.sign(bc - ac);
-  const steps = Math.max(Math.abs(br - ar), Math.abs(bc - ac));
-
-  const occupied = new Set(
-    derived.pieces.map((p) => `${p.props['row']},${p.props['col']}`),
+  return attacksCell(
+    String(a.props['kind']),
+    [Number(a.props['row']), Number(a.props['col'])],
+    [Number(b.props['row']), Number(b.props['col'])],
+    attackBoard(derived),
   );
-
-  for (let i = 1; i < steps; i += 1) {
-    if (occupied.has(`${ar + stepR * i},${ac + stepC * i}`)) return false;
-  }
-  return true;
 }
+
+/** Bàn cờ dạng mà luật đi quân cần: kích thước + ô có quân đứng. */
+export function attackBoard(derived: BoardDerived): AttackBoard {
+  return {
+    rows: derived.rows,
+    cols: derived.cols,
+    occupied: new Set(derived.pieces.map((p) => `${p.props['row']},${p.props['col']}`)),
+  };
+}
+

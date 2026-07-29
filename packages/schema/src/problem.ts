@@ -48,7 +48,15 @@ export const SandboxConfig = Type.Object(
 export const ProblemSource = Type.Object(
   {
     contest: Type.String({ minLength: 1 }),
-    year: Type.Optional(Type.Integer({ minimum: 1890, maximum: 2100 })),
+    /**
+     * Cận dưới 1600, không phải 1890.
+     *
+     * 1890 (IMO đầu tiên còn muộn hơn) là con số đặt theo hình dung "kỳ thi hiện
+     * đại", và nó chặn đúng những bài mở đầu ngành: Königsberg là Euler 1736.
+     * Bài dân gian cổ điển chiếm phần đáng kể trong khung phân bố §16, nên cận
+     * dưới phải đủ chỗ cho chúng. Nới rẻ, thu hẹp đắt (OPQ-6).
+     */
+    year: Type.Optional(Type.Integer({ minimum: 1600, maximum: 2100 })),
     slot: Type.Optional(Type.String()),
     /** Ghi chú trích dẫn hiển thị dưới đề bài. */
     note: Type.Optional(LangString),

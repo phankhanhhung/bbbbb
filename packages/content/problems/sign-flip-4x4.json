@@ -1,0 +1,454 @@
+{
+  "schema_version": "0.1.0",
+  "id": "sign-flip-4x4",
+  "statement": {
+    "vi": "Bảng $4\\times4$ ghi số $1$ ở mọi ô, trừ đúng một ô ghi $-1$. Mỗi bước được đổi dấu toàn bộ một hàng hoặc một cột. Chứng minh không bao giờ đưa được bảng về toàn số $1$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; dạng bất biến kinh điển cho thao tác lặp."
+    }
+  },
+  "topics": [
+    "sequences",
+    "coloring"
+  ],
+  "techniques": [
+    "invariant",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "count(cells, c => c.color_class == 1)",
+      "id": "inv-so-am",
+      "label": {
+        "vi": "Số ô mang dấu −"
+      }
+    },
+    {
+      "expr": "count(cells, c => c.color_class == 1) % 2",
+      "id": "inv-chan-le",
+      "label": {
+        "vi": "… và tính chẵn lẻ của nó"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol-bat-bien",
+      "label": {
+        "vi": "Bất biến chẵn lẻ"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bảng bắt đầu với đúng [[a1|một ô mang dấu $-$]]. Đích cần tới là bảng không còn ô nào mang dấu $-$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-1-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-1-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-1-2": {
+                  "color_class": 1,
+                  "glyph": "−"
+                },
+                "cell-1-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                }
+              },
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bảng 4×4 toàn dấu cộng, riêng một ô ở hàng thứ hai mang dấu trừ."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thử đổi dấu [[a2|một hàng]]: cả bốn ô của hàng đó đổi dấu cùng lúc. Số ô dấu $-$ đi từ $1$ lên $3$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "hang-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-1-0": {
+                  "color_class": 1,
+                  "glyph": "−"
+                },
+                "cell-1-1": {
+                  "color_class": 1,
+                  "glyph": "−"
+                },
+                "cell-1-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-1-3": {
+                  "color_class": 1,
+                  "glyph": "−"
+                },
+                "cell-2-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                }
+              },
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "hang-1",
+                "type": "region",
+                "cells": [[1, 0], [1, 1], [1, 2], [1, 3]],
+                "label": "hàng 1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sau khi đổi dấu hàng thứ hai, hàng đó có ba dấu trừ và một dấu cộng."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nếu [[a3|hàng bị lật]] đang có $k$ ô dấu $-$ thì sau khi lật nó có $4-k$ ô. Số ô dấu $-$ của cả bảng đổi đi $4-2k$ — luôn là số chẵn."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "hang-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-1-0": {
+                  "color_class": 1,
+                  "glyph": "−"
+                },
+                "cell-1-1": {
+                  "color_class": 1,
+                  "glyph": "−"
+                },
+                "cell-1-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-1-3": {
+                  "color_class": 1,
+                  "glyph": "−"
+                },
+                "cell-2-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                }
+              },
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "hang-1",
+                "type": "region",
+                "emphasis": "focus",
+                "cells": [[1, 0], [1, 1], [1, 2], [1, 3]],
+                "label": "hàng 1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hàng vừa lật được làm nổi bật để đếm số ô đổi dấu."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "contradiction",
+          "narrative": {
+            "vi": "Vậy tính chẵn lẻ của số ô dấu $-$ không bao giờ đổi. Ban đầu nó là $1$ — số lẻ; [[a4|bảng toàn số $1$]] ứng với $0$ — số chẵn. Hai trạng thái đó không nối được với nhau."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "cell-1-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-0-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-1-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-1-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-1-2": {
+                  "color_class": 1,
+                  "glyph": "−"
+                },
+                "cell-1-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-2-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-0": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-1": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-2": {
+                  "color_class": 2,
+                  "glyph": "+"
+                },
+                "cell-3-3": {
+                  "color_class": 2,
+                  "glyph": "+"
+                }
+              },
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Quay lại bảng ban đầu với đúng một dấu trừ — trạng thái đích toàn dấu cộng nằm ở lớp chẵn lẻ khác."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol-bat-bien",
+    "step_id": "s1"
+  }
+}

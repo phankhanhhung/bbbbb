@@ -6,7 +6,9 @@ trên canvas tương tác, văn bản ↔ hình liên kết hai chiều, sandbox
 Vận hành theo mô hình **single-author brand engine**: engine là xưởng in riêng của
 một tác giả; sản phẩm công chúng là kho bài đã curate. Xem `docs/SRS-v1.0.md`.
 
-**Trạng thái:** Phase 1, M6 xong (Studio + pipeline soạn–duyệt–xuất bản). Còn chờ đo perf trên iPad (gate G-A) và 5 bài soạn tay (gate G-C) — cả hai là việc của chính chủ. Xem `docs/PLAN-P1.md`.
+**Trạng thái:** Phase 1, M7 track kỹ thuật xong (golden snapshot, E2E, ngân sách perf đo bằng script).
+Kho có **8 bài: 2 fixture + 6 draft chờ duyệt**, chưa bài nào do chính chủ soạn. Hai gate còn mở là
+việc của chính chủ: đo perf trên iPad thật (G-A) và soạn tay 3–5 bài (G-C). Xem `docs/PLAN-P1.md`.
 
 ## Bắt đầu
 
@@ -20,10 +22,22 @@ Từng phần:
 ```bash
 pnpm typecheck
 pnpm lint           # gồm luật phụ thuộc giữa các package
-pnpm test
+pnpm test           # unit + golden SVG toàn kho
 pnpm validate       # validate toàn kho bài
 pnpm index          # sinh packages/content/index.json (CMS-02)
+pnpm coverage       # bảng điểm content sprint
+pnpm e2e            # Playwright: Player trên profile desktop + iPad
+pnpm e2e:perf       # ngân sách NFR-P1..P3 — chạy một worker, xem bên dưới
 ```
+
+`pnpm e2e:perf` **phải** chạy một worker. Đo frame time trong khi hai worker khác đang
+dựng browser cho ra số của máy CI đang bận chứ không phải của Player: p95 nhảy từ 17.4ms
+lên 22ms mà không đổi một dòng code. Số đo sai còn tệ hơn không đo, vì nó dạy người ta bỏ
+qua màu đỏ.
+
+Golden SVG snapshot phủ **mọi step có hình trong kho**. Diff golden nở to là *thông tin*,
+không phải phiền phức — nó nói đúng bao nhiêu bài bị một thay đổi chạm tới. Nhìn diff
+trước, rồi mới `pnpm test -u`.
 
 `index.json` là **sinh lúc build, không commit**: nó là hàm thuần của kho bài, và
 một bản sao trong git chỉ tạo thêm một thứ có thể lệch. `pnpm install` sinh nó qua
@@ -41,7 +55,13 @@ npx tsx tools/pipeline/src/cli.ts import-draft draft.json --write
 npx tsx tools/pipeline/src/cli.ts og              # OG card (REN-02)
 npx tsx tools/pipeline/src/cli.ts index           # chỉ mục tìm kiếm (CMS-02)
 npx tsx tools/pipeline/src/cli.ts stats           # đối chiếu AUT-KPI
+npx tsx tools/pipeline/src/cli.ts coverage --drafts   # bảng điểm content sprint (DoD §15.1)
+npx tsx tools/pipeline/src/cli.ts eval knight-closed-tour-5x5 "count(cells, c => c.color_class == 1)"
 ```
+
+`coverage` chấm kho theo đúng khung phân bố của DoD Phase 1 và nói còn thiếu bao nhiêu
+bài loại nào. `eval` chạy một biểu thức DSL trên **từng step** — cách nhanh nhất để hỏi
+"hình có đúng thứ narrative vừa nói không", câu hỏi mà `validate` không trả lời.
 
 `validate` chạy đúng bộ luật mà Studio và CI dùng (AUT-04): schema → cấu trúc cây →
 anchor → bound → taxonomy → eval invariant và validator trên **mọi** step.
@@ -81,9 +101,11 @@ packages/
   content/           Kho bài JSON + controlled vocabulary
 apps/
   player/            SPA cho người học (Preact + Vite)
+  player/e2e/        Playwright: hành vi Player + ngân sách perf
   studio/            Công cụ soạn–duyệt cho chính chủ, chạy local
 tools/
-  pipeline/          CLI: validate, render, fmt, migrate, import-draft, og, index, stats
+  pipeline/          CLI: validate, render, fmt, migrate, import-draft, og, index,
+                     stats, coverage, eval
 docs/
   SRS-v1.0.md        Đặc tả yêu cầu — nguồn của mọi ID requirement
   PLAN-P1.md         Kế hoạch triển khai Phase 1

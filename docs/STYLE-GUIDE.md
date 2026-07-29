@@ -100,6 +100,21 @@ cũng kêu.
 Những mục dưới đây là **câu hỏi**, không phải câu trả lời. Điền chúng sau khi
 soạn xong 3–5 bài, bằng cách nhìn lại xem mình đã thực sự làm gì.
 
+> **Số liệu từ 6 bài draft máy (M7) — là *dữ liệu*, không phải *quyết định*.**
+>
+> | | |
+> |---|---|
+> | Số step mỗi bài | 3–8, trung vị 4 |
+> | Ký tự mỗi narrative | 90–190 |
+> | Câu mỗi step | 2–3 |
+> | Anchor mỗi step | đúng 1 ở mọi step |
+> | Độ sâu cây | 2 mức (chỉ Königsberg và Turán có nhánh) |
+>
+> Đọc bảng này như đọc nhật ký của một cái máy, không như đọc chuẩn. Nó nói
+> "pipeline chạy ra những con số này", không nói "những con số này là đúng".
+> Nếu bài chính chủ soạn ra khác hẳn — dài gấp đôi, ba anchor một step — thì
+> **bài chính chủ đúng**, và bảng này bị vứt.
+
 ### 2.1 Độ dài một step
 
 - [ ] Một step nên dài bao nhiêu? Hiện lint cảnh báo ở 420 ký tự và 4 câu — **hai

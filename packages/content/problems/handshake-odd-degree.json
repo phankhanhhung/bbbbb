@@ -1,0 +1,531 @@
+{
+  "schema_version": "0.1.0",
+  "id": "handshake-odd-degree",
+  "statement": {
+    "vi": "Trong một nhóm người bất kỳ, chứng minh rằng số người quen đúng một số lẻ người khác luôn là số chẵn."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bổ đề bắt tay; bài dân gian."
+    }
+  },
+  "topics": [
+    "graph-basics",
+    "counting"
+  ],
+  "techniques": [
+    "double-counting",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "sum(vertices, v => deg(v))",
+      "id": "inv-tong-bac",
+      "label": {
+        "vi": "Tổng mọi bậc"
+      }
+    },
+    {
+      "expr": "count(vertices, v => deg(v) % 2 == 1)",
+      "id": "inv-so-le",
+      "label": {
+        "vi": "Số đỉnh bậc lẻ"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol-dem-hai-chieu",
+      "label": {
+        "vi": "Đếm hai chiều"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Coi mỗi người là một [[a1|đỉnh]], mỗi cặp quen nhau là một cạnh. Câu hỏi thành: số đỉnh có bậc lẻ là chẵn hay lẻ?"
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v1",
+                "v2",
+                "v3",
+                "v4",
+                "v5",
+                "v6"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "B",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "C",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "D",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "E",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "F",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đồ thị sáu đỉnh, bảy cạnh, mỗi đỉnh ghi kèm bậc của nó."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đếm số cặp (đỉnh, cạnh chạm vào nó) theo hai cách. [[a2|Mỗi cạnh]] góp đúng $2$ vào tổng, nên tổng mọi bậc bằng $2m$ — một số chẵn."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-23",
+                "e-34",
+                "e-45",
+                "e-46",
+                "e-56"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "B",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "C",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "D",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "E",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "F",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cả bảy cạnh được làm nổi để đếm: mỗi cạnh đóng góp hai đơn vị vào tổng bậc."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tách tổng ấy làm hai phần: phần của [[a3|các đỉnh bậc chẵn]] hiển nhiên là số chẵn. Vậy phần còn lại — tổng bậc của các đỉnh bậc lẻ — cũng phải chẵn."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "v1",
+                "v2",
+                "v5",
+                "v6"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "B",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "emphasis": "dim",
+                "label": "C",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "emphasis": "dim",
+                "label": "D",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "E",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "F",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn đỉnh bậc chẵn được làm nổi, hai đỉnh bậc lẻ mờ đi."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một tổng các số lẻ chỉ chẵn khi số hạng của nó là chẵn. Vậy số [[a4|đỉnh bậc lẻ]] là số chẵn — điều phải chứng minh."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "v3",
+                "v4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "emphasis": "dim",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "emphasis": "dim",
+                "label": "B",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "C",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "D",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "emphasis": "dim",
+                "label": "E",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "emphasis": "dim",
+                "label": "F",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai đỉnh bậc lẻ được làm nổi; chúng đúng là một số chẵn đỉnh."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(vertices, v => deg(v) % 2 == 1) == 0",
+    "validators": [
+      "simple-graph"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol-dem-hai-chieu",
+    "step_id": "s3"
+  }
+}

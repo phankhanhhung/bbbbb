@@ -20,6 +20,7 @@ import {
   type Offset,
 } from './geometry.js';
 import { cellId } from './ids.js';
+import { attackedCells, cellCentre, type AttackBoard } from './attacks.js';
 import type { BoardConfig } from './schema.js';
 
 /**
@@ -50,8 +51,14 @@ export const boardRenderer: EngineRenderer = {
 
     const elements = [...scene.elements].sort(byLayer);
 
+    // Overlay nằm **giữa** ô và quân: nó phải đè lên màu ô để đọc được, nhưng
+    // không được che chính quân đang khống chế. Vắng thì không phát ra nhóm rỗng
+    // — mọi bàn cờ không dùng attack map phải cho ra đúng SVG như trước.
+    const attacks = renderAttackOverlay(config, elements, ctx);
+
     return [
       el('g', { class: 'cv-cells' }, renderCells(config, ctx)),
+      ...(attacks.length > 0 ? [el('g', { class: 'cv-attacks' }, attacks)] : []),
       el('g', { class: 'cv-elements' }, elements.flatMap((e) => renderElement(e, ctx))),
     ];
   },
@@ -115,6 +122,57 @@ function renderCells(config: BoardConfig, ctx: RenderContext): SvgNode[] {
   }
 
   return nodes;
+}
+
+/**
+ * BD-02 — overlay vùng khống chế cho những quân bật `show_attacks`.
+ *
+ * Vẽ dấu chứ không tô nền ô: nền ô đã mang `color_class`, mà ở phần lớn bài dùng
+ * attack map thì màu ô **cũng** đang mang nghĩa (bàn cờ tô xen kẽ). Đè một lớp
+ * nền thứ hai lên đó là cách chắc chắn để hai khẳng định khác nhau trông giống
+ * nhau. Một dấu nhỏ ở tâm ô thì cộng vào, không ghi đè.
+ */
+function renderAttackOverlay(
+  config: BoardConfig,
+  elements: readonly SceneElement[],
+  ctx: RenderContext,
+): SvgNode[] {
+  const pieces = elements.filter((e) => e.type === 'piece');
+  const shown = pieces.filter((e) => e['show_attacks'] === true);
+  if (shown.length === 0) return [];
+
+  const board: AttackBoard = {
+    rows: config.rows,
+    cols: config.cols,
+    occupied: new Set(
+      pieces.map((p) => {
+        const pos = p['pos'] as Offset;
+        return `${pos?.[0] ?? 0},${pos?.[1] ?? 0}`;
+      }),
+    ),
+  };
+
+  const holes = new Set((config.holes ?? []).map(([r, c]) => `${r},${c}`));
+  const marks: SvgNode[] = [];
+
+  for (const piece of shown) {
+    const pos = piece['pos'] as Offset;
+    for (const cell of attackedCells(String(piece['kind']), pos, board)) {
+      if (holes.has(`${cell[0]},${cell[1]}`)) continue;
+      const { x, y } = cellCentre(cell);
+      marks.push(
+        keyed(`${piece.id}-atk-${cell[0]}-${cell[1]}`, 'circle', {
+          cx: x,
+          cy: y,
+          r: CELL * 0.13,
+          fill: ctx.theme.object.attackMark,
+          opacity: ctx.theme.object.attackMarkOpacity,
+        }),
+      );
+    }
+  }
+
+  return marks;
 }
 
 function renderElement(element: SceneElement, ctx: RenderContext): SvgNode[] {

@@ -13,6 +13,16 @@ import { buildGraph, SPACING, VERTEX_RADIUS, type Edge, type GraphModel } from '
 import type { GraphConfig } from './schema.js';
 
 /**
+ * Bề rộng ước lượng của một ký tự nhãn, tính bằng đơn vị scene.
+ *
+ * `labelSize` của theme là 14 **px trên khung nhìn chuẩn**, còn khoảng cách đỉnh
+ * chuẩn là 10 đơn vị scene. Con số dưới đây là ước lượng thô cho chữ Latin có
+ * dấu ở cỡ đó; nó chỉ dùng để chừa lề, không dùng để đặt chữ, nên sai số vài
+ * phần trăm không ảnh hưởng gì ngoài một chút khoảng trắng thừa.
+ */
+const LABEL_CHAR_WIDTH = 1.6;
+
+/**
  * Renderer của Graph engine (GR-01, GR-08).
  *
  * Cạnh vẽ **trước** đỉnh: đỉnh phải nằm trên và che đầu mút cạnh, nếu không mỗi
@@ -30,11 +40,21 @@ export const graphRenderer: EngineRenderer = {
       return { x: -padding, y: -padding, width: padding * 2, height: padding * 2 };
     }
 
+    // Nhãn đỉnh nằm **ngoài** vòng tròn đỉnh, nên khung nhìn phải chừa chỗ cho
+    // chúng — nếu không, đỉnh ngoài cùng bên phải mất đuôi nhãn. Không đo được
+    // chiều rộng chữ khi chạy headless (REN-01), nên ước lượng theo số ký tự;
+    // ước lượng rộng tay hơn một chút vẫn rẻ hơn nhiều so với một chữ bị cắt.
+    const labelRoom =
+      (scene.config as GraphConfig)?.show_labels === false
+        ? 0
+        : Math.max(0, ...graph.vertices.map((v) => (v.label ?? '').length)) *
+          LABEL_CHAR_WIDTH;
+
     const xs = graph.vertices.map((v) => v.x);
     const ys = graph.vertices.map((v) => v.y);
-    const minX = Math.min(...xs) - VERTEX_RADIUS - padding;
+    const minX = Math.min(...xs) - VERTEX_RADIUS - padding - labelRoom;
     const minY = Math.min(...ys) - VERTEX_RADIUS - padding;
-    const maxX = Math.max(...xs) + VERTEX_RADIUS + padding;
+    const maxX = Math.max(...xs) + VERTEX_RADIUS + padding + labelRoom;
     const maxY = Math.max(...ys) + VERTEX_RADIUS + padding;
 
     return {
