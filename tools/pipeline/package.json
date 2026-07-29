@@ -9,6 +9,8 @@
   "dependencies": {
     "@combviz/engine-board": "workspace:*",
     "@combviz/schema": "workspace:*",
-    "yaml": "^2.6.1"
+    "yaml": "^2.6.1",
+    "@combviz/render": "workspace:*",
+    "@combviz/theme": "workspace:*"
   }
 }

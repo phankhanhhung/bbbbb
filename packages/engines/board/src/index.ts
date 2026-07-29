@@ -11,13 +11,12 @@ import {
   TileElement,
   type BoardConfig as BoardConfigType,
 } from './schema.js';
+import { cellId } from './ids.js';
 
 export * from './schema.js';
-
-/** Id ổn định của một ô (DAT-12). Vị trí là danh tính — ô không di chuyển. */
-export function cellId(row: number, col: number): string {
-  return `cell-${row}-${col}`;
-}
+export * from './geometry.js';
+export * from './ids.js';
+export { boardRenderer } from './render.js';
 
 export function isHole(config: BoardConfigType, row: number, col: number): boolean {
   return (config.holes ?? []).some(([r, c]) => r === row && c === col);

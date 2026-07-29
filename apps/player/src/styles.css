@@ -1,0 +1,157 @@
+/*
+ * Nguyên tắc UI (§6 SRS): canvas là nhân vật chính, chrome tối giản.
+ *
+ * Mọi màu ở đây là màu *giao diện*, không phải màu nội dung — màu nội dung nằm
+ * hết trong packages/theme (DAT-20). Chỗ này chỉ được nói về khung, không được
+ * nói về hình.
+ */
+
+:root {
+  --ink: #1a1a17;
+  --ink-soft: #6a6a62;
+  --paper: #fdfdfc;
+  --line: #e2e2dc;
+  --accent: #0072b2;
+  --halo: #e8b004;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-text-size-adjust: 100%;
+}
+
+.player {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.player__head h1 {
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0 0 0.25rem;
+}
+
+.source {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+/* NFR-C3: narrative đổi trục theo hướng màn hình. Dọc trên portrait, cạnh bên
+   trên landscape — không bao giờ ép canvas thành một dải hẹp. */
+.player__body {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .player__body {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    align-items: start;
+  }
+}
+
+.canvas {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.canvas svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* NFR-C2: pinch/pan trong canvas không được xung đột với cuộn trang. */
+  touch-action: none;
+}
+
+.narrative {
+  font-size: 1rem;
+  line-height: 1.75;
+  margin: 0 0 1rem;
+}
+
+.anchor {
+  border-bottom: 2px solid var(--accent);
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 0 1px;
+  transition: background-color 120ms ease;
+}
+
+.anchor--active {
+  background: var(--halo);
+}
+
+.anchor:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.badge {
+  display: inline-block;
+  margin: 0 0 1rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.badge--contradiction {
+  background: #fce8e6;
+  color: #a50e0e;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.controls button {
+  /* NFR-C2: hit target ≥ 44×44pt. */
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 1rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.controls button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.counter {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.diagnostics {
+  margin: 1rem 0 0;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}

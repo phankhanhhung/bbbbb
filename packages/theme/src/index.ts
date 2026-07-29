@@ -10,6 +10,7 @@ export {
   defaultTheme,
   type Theme,
   type SurfaceTokens,
+  type ObjectTokens,
   type StrokeTokens,
   type EmphasisTokens,
   type TypeTokens,

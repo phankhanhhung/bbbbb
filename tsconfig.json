@@ -1,7 +1,16 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node"]
+    "types": [
+      "node"
+    ],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
   },
   "include": [
     "packages/*/src/**/*.ts",
@@ -11,6 +20,9 @@
     "tools/*/src/**/*.ts",
     "tools/*/test/**/*.ts",
     "eslint.config.js",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx",
+    "apps/*/*.ts"
   ]
 }

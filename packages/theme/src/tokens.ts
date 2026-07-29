@@ -12,6 +12,7 @@ export interface Theme {
   readonly id: string;
   readonly colorClasses: readonly ColorClassToken[];
   readonly surface: SurfaceTokens;
+  readonly object: ObjectTokens;
   readonly stroke: StrokeTokens;
   readonly emphasis: EmphasisTokens;
   readonly type: TypeTokens;
@@ -24,7 +25,13 @@ export interface SurfaceTokens {
   readonly canvas: string;
   /** Nền phần tử chưa được gán color_class. */
   readonly neutral: string;
-  /** Nền vùng ngoài bàn / ô khuyết. */
+  /**
+   * Ô đã bị khoét.
+   *
+   * Phải **nhạt hơn** ô thường, không đậm hơn: đậm hơn thì mắt đọc thành "ô được
+   * nhấn mạnh", còn nhạt bằng nền thì đọc thành "chỗ trống" — mà chỗ trống mới
+   * là nghĩa đúng. Ô khuyết vẫn là element có id và vẫn trỏ tới được bằng anchor.
+   */
   readonly void: string;
   /** Lưới phụ trợ. */
   readonly guide: string;
@@ -32,6 +39,36 @@ export interface SurfaceTokens {
   readonly invalid: string;
 }
 
+/**
+ * Màu của **vật thể đặt lên** bàn (quân, tile), phân biệt với màu *ngữ nghĩa* của
+ * ô.
+ *
+ * Tách riêng vì chúng thuộc hai hệ khác nhau: `color_class` mang ý nghĩa toán học
+ * mà lời giải lập luận trên đó ("ô đen", "ô trắng"), còn quân domino thì mặc định
+ * không mang màu ngữ nghĩa nào — nó chỉ là vật che ô. Bài nào cần domino mang
+ * nghĩa thì gán `color_class` cho nó, và khi đó nó dùng bảng màu ngữ nghĩa.
+ */
+export interface ObjectTokens {
+  readonly tile: string;
+  readonly tileStroke: string;
+  /** Quân che ô nhưng để lọt màu ô bên dưới — xem chú thích ở board renderer. */
+  readonly tileOpacity: number;
+  readonly piece: string;
+  readonly pieceStroke: string;
+  readonly pieceGlyph: string;
+  readonly regionStroke: string;
+}
+
+/**
+ * Độ dày nét, tính bằng **đơn vị scene**, không phải pixel.
+ *
+ * Quy ước bắt buộc với mọi engine: **một ô bàn cờ / một khoảng cách đỉnh chuẩn =
+ * 10 đơn vị scene**. Không có quy ước này thì cùng một token cho ra nét mảnh ở
+ * engine dùng lưới lớn và nét bè ở engine dùng lưới nhỏ — và vì theme là nguồn
+ * brand duy nhất (DAT-20), sai lệch đó không sửa được ở từng bài.
+ *
+ * Engine mới phải chọn tỉ lệ toạ độ theo quy ước này, không phải ngược lại.
+ */
 export interface StrokeTokens {
   readonly hairline: number;
   readonly base: number;
@@ -84,24 +121,33 @@ export const defaultTheme: Theme = {
   surface: {
     canvas: '#FDFDFC',
     neutral: '#EDEDEA',
-    void: '#D8D8D2',
+    void: '#FDFDFC',
     guide: '#C4C4BD',
     invalid: '#FCE8E6',
   },
+  object: {
+    tile: '#5B5B54',
+    tileStroke: '#2A2A26',
+    tileOpacity: 0.62,
+    piece: '#FAFAF8',
+    pieceStroke: '#2A2A26',
+    pieceGlyph: '#1A1A17',
+    regionStroke: '#2A2A26',
+  },
   stroke: {
-    hairline: 0.5,
-    base: 1.5,
-    emphasis: 3,
-    region: 4,
+    hairline: 0.4,
+    base: 1.2,
+    emphasis: 1.6,
+    region: 1.8,
     invalid: '#C5221F',
   },
   emphasis: {
     focusScale: 1.08,
     focusHalo: '#1A1A1A',
-    focusHaloWidth: 3,
+    focusHaloWidth: 1.6,
     dimOpacity: 0.28,
     anchorHalo: '#E8B004',
-    anchorHaloWidth: 4,
+    anchorHaloWidth: 2,
   },
   type: {
     uiFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",

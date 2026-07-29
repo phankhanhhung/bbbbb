@@ -53,11 +53,13 @@ export default tseslint.config(
   },
 
   // --- Renderer phải chạy được ngoài browser ---------------------------------
+  //
+  // `src/dom/**` là ngoại lệ duy nhất và có chủ đích: đó là lớp mỏng đưa cây SVG
+  // vào DOM, được tách ra thành entry point riêng (`@combviz/render/dom`) để Node
+  // và CLI không bao giờ chạm phải. Mọi thứ còn lại trong render phải thuần.
   {
     files: ['packages/render/src/**/*.ts'],
-    languageOptions: {
-      globals: {},
-    },
+    ignores: ['packages/render/src/dom/**/*.ts'],
     rules: {
       'no-restricted-globals': [
         'error',

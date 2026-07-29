@@ -71,7 +71,8 @@ schema (hợp đồng)  →  renderer thuần (Scene → SVG, không biết chu�
 | **D-12** | Test: **Vitest** (schema, DSL, diff, analyzer) + **golden SVG snapshot** cho renderer + **Playwright** cho player interaction & perf trace | Renderer thuần ⇒ snapshot test cực rẻ và bắt regression thị giác — đúng thứ một brand cần |
 | **D-13** | CLI một binary `combviz` với subcommand: `validate` `lint` `import-draft` `render` `og` `migrate` `stats`. **Cùng code với Studio và CI** (AUT-04) | Ba nơi dùng một bộ luật là yêu cầu tường minh của AUT-04/NFR-D2 |
 | **D-14** | License **MIT cho code, CC BY-SA 4.0 cho nội dung**; engine open source. Đề bài **không** nằm trong license nội dung — tách thành `source { contest, note, url }` trong schema | OPQ-3. Engine mở là kênh growth theo đúng mô hình manim; brand nằm ở corpus và taste chứ không ở palette (§1.2 SRS). Tách đề bài là đối sách trực tiếp của R-5 |
-| **D-15** | Ô bàn cờ là element **ngầm định** sinh từ `config`, không materialize vào `elements[]`. Tô tay đi vào `cell_overrides` dạng thưa; preset lo phần còn lại | Bàn 40×40 mà nhét 1600 ô vào file thì diff git vô dụng (DAT-03) và ngưỡng 1MB (NFR-P4) bị đốt vào thứ suy ra được. Cũng là cách gỡ căng thẳng NFR-P1 ↔ NFR-P4: renderer gộp ô tĩnh cùng `color_class` thành một `<path>` |
+| **D-15** | Ô bàn cờ là element **ngầm định** sinh từ `config`, không materialize vào `elements[]`. Tô tay đi vào `cell_overrides` dạng thưa; preset lo phần còn lại | Bàn 40×40 mà nhét 1600 ô vào file thì diff git vô dụng (DAT-03) và ngưỡng 1MB (NFR-P4) bị đốt vào thứ suy ra được |
+| **D-15b** *(sửa ở M1)* | Nhưng khi **vẽ**, mỗi ô là một node riêng có key — **không** gộp ô cùng màu thành một `<path>` như dự tính ban đầu | Gộp thì ít node hơn, nhưng khoảnh khắc thị giác quan trọng nhất của dạng bài tiling là lúc bàn được tô xen kẽ; gộp biến chuyển màu của 62 ô thành một cú nháy. Tối ưu gộp chỉ đưa vào **sau khi** đo iPad cho thấy cần — đó là điều gate G-A trả lời, không phải điều ta đoán trước |
 | **D-16** | Ô khuyết **vẫn là** element trỏ tới được bằng anchor | "Bàn cờ khuyết hai ô góc đối nhau" — chính hai ô khuyết là thứ narrative trỏ vào. Khuyết là thuộc tính của ô, không phải sự vắng mặt |
 | **D-17** | Luật phụ thuộc giữa package enforce bằng **eslint làm CI đỏ**, không bằng quy ước | Ba ràng buộc kiến trúc quan trọng nhất đều có dạng "X không được import Y" (render↛DOM, schema↛engine, LLM↛runtime). Quy ước không giữ nổi chúng qua 16 tuần |
 
@@ -146,6 +147,8 @@ interface Engine {
 | **G-06** | AUT-KPI đo "median 5 bài cuối pilot" nhưng AUT-08 (công cụ đo) là **P2** | Cần một bản đo tối thiểu ở P1: `combviz stats` đọc log thời gian thủ công (file CSV owner tự ghi) — 2 giờ công, đủ để gate có răng |
 | **G-07** | LOC-04 (analytics) là P1 nhưng không nói dùng tool gì | Đề xuất Plausible/Umami self-host hoặc **tắt hẳn ở P1** — cookieless + không PII dễ nhất bằng cách không thu gì. Quyết cùng OPQ-3 |
 | **G-08** | SBX-05 export PNG cần render trong browser, REN-01 cần render trong Node — hai đường raster | Browser: `XMLSerializer` + `canvas.drawImage` từ SVG blob. Node: resvg. Cả hai ăn **cùng chuỗi SVG** từ D-03 ⇒ khác biệt chỉ ở rasterizer, chấp nhận được. Golden test so sánh ở mức SVG, không mức pixel |
+| **G-09** *(mới, M1)* | Quân cờ vẽ bằng ký tự Unicode (`♞`). Render headless bằng resvg **không có phông** ⇒ quân biến mất khỏi OG card trong khi player vẫn hiện — đúng loại lệch mà D-03 sinh ra để tránh | Nhúng phông vào bước raster, hoặc chuyển quân sang path. Quyết ở M6 cùng label atlas (D-07). Bài seed dùng quân phải render thử headless trước khi publish |
+| **G-10** *(mới, M1)* | Theme khai độ dày nét bằng số tuyệt đối, nhưng mỗi engine có tỉ lệ toạ độ riêng ⇒ cùng token cho ra nét mảnh ở engine này, bè ở engine kia. Phát hiện khi halo anchor phủ kín cả quân domino | ✅ Chốt quy ước: **một ô / một khoảng cách đỉnh chuẩn = 10 đơn vị scene**, ghi trong `StrokeTokens`. Engine mới chọn tỉ lệ theo quy ước, không ngược lại |
 
 ---
 
@@ -166,15 +169,24 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 
 **DoD:** ✅ `pnpm check` xanh: typecheck, lint, 33 test, validate toàn kho 0 lỗi 0 cảnh báo.
 
-### M1 — Walking skeleton (cược kiến trúc) · Tuần 2–3 · [E]
+### M1 — Walking skeleton (cược kiến trúc) · Tuần 2–3 · [E] — **code xong, chờ đo iPad**
 
 Đây là milestone quan trọng nhất. Mục tiêu duy nhất: chứng minh 3 cược ở §0.
 
-- `packages/render`: `render()`, `diff()`, `interpolate()` (D-03/D-05), `patch()`.
-- `engines/board` **tối thiểu**: board + cell + coloring preset checkerboard + tile domino. Chưa cần interaction.
-- `apps/player` **tối thiểu**: đọc file JSON, Prev/Next, narrative pane KaTeX, animation từ auto-diff.
-- Canonical scene hash (A-03), id policy (A-02).
-- **Đo perf trên iPad Gen 9 thật** với scene 300 element (R-3 yêu cầu budget từ tuần 2).
+- ✅ `packages/render`: `render()` thuần, `diff()`, `interpolate()` (D-03/D-05), `serialize()`, `hash()` (A-03); lớp DOM (`patch`, `animate`) tách sang entry point `@combviz/render/dom`.
+- ✅ `engines/board` renderer: bàn + ô + coloring preset + tile với xoay/lật + quân + region.
+- ✅ `apps/player`: đọc JSON, Prev/Next, phím ←/→/Space, narrative KaTeX, anchor hai chiều (ANC-01), animation từ auto-diff, `prefers-reduced-motion`.
+- ✅ `combviz render` — REN-01 chạy headless trong Node, **cùng renderer** mà Player dùng.
+- ✅ Golden SVG snapshot + 82 test.
+- ⬜ **Đo perf trên iPad Gen 9 thật** (R-3). Đây là phần duy nhất còn lại của gate G-A.
+
+**Kết quả đo được tới giờ:**
+
+| Cược | Trạng thái |
+|---|---|
+| 1. Auto-diff sinh animation đủ tốt (DAT-11/12) | ✅ Bước tô màu: `thêm 0 · mất 0 · đổi 62` — đúng 62 ô còn lại, không dựng lại bàn. Bước đặt quân: `thêm 3`. |
+| 2. 55fps trên iPad (NFR-P1) | ⬜ Chưa đo. Bundle Player **143KB gzip** / trần 300KB (NFR-P3) — đạt, còn dư cho engine sau. |
+| 3. Một renderer chạy cả browser lẫn headless (REN-01/04) | ✅ `combviz render` sinh SVG trong Node bằng đúng `boardRenderer`; eslint chặn DOM lọt vào `packages/render` (đã thử nghiệm cả hai chiều). |
 
 **DoD:** bài §4.7 chạy end-to-end trên iPad thật, chuyển step ≤150ms p95, kéo timeline mượt. Nếu trượt → **dừng, đánh giá lại Canvas fallback trước khi đi tiếp**. Không viết engine thứ hai khi cược này chưa xong.
 
