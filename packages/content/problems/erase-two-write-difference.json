@@ -61,7 +61,7 @@
           "parent": null,
           "edge_type": "seq",
           "narrative": {
-            "vi": "Bảng bắt đầu với [[a1|mười số từ $1$ đến $10$]]. Tổng của chúng là $55$ — một số lẻ."
+            "vi": "Bảng bắt đầu với [[a1|mười số từ $1$ đến $10$]]. Tổng của chúng là ${{total}}$ — một số lẻ."
           },
           "anchors": {
             "a1": {
@@ -160,7 +160,7 @@
           "parent": "s0",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Thử một bước: xoá $3$ và $8$, viết [[a2|$|3-8| = 5$]]. Tổng đi từ $55$ xuống $49$ — vẫn lẻ."
+            "vi": "Thử một bước: xoá $3$ và $8$, viết [[a2|$|3-8| = 5$]]. Tổng đi từ $55$ xuống ${{total}}$ — vẫn lẻ."
           },
           "anchors": {
             "a2": {

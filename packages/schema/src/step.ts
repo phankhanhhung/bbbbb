@@ -110,6 +110,22 @@ export const Step = Type.Object(
     expects_violation: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
 
     /**
+     * Khẳng định về scene mà validate phải kiểm được — biểu thức DSL trả `true`.
+     *
+     * `{{expr}}` trong narrative lo phần "in ra một con số": chữ và hình thành
+     * cùng một giá trị nên không thể lệch. Nhưng lời giải còn khẳng định những
+     * thứ **suy ra** từ scene chứ không đọc thẳng ra được — "cần ít nhất $3$
+     * bước" là một mệnh đề về $3$ nghịch thế, không phải là chính số đó. Chỗ ấy
+     * nội suy không với tới, và đó đúng là chỗ bài `sorting-adjacent-swaps` sai
+     * suốt nhiều commit.
+     *
+     * Khai ở đây thì con số trong đề bài buộc phải khớp scene, và ngày nào ai đó
+     * sửa scene mà quên sửa lời giải thì validate đỏ ngay — thay vì để người đọc
+     * phát hiện hộ.
+     */
+    claims: Type.Optional(Type.Array(Type.String({ minLength: 1 }), { maxItems: 8 })),
+
+    /**
      * AUT-09: cổng khoá publish. Draft từ LLM vào kho với `verified: false`;
      * chính chủ phải bật tay từng step trong Studio. Lưu trong file để git diff
      * đọc được ai đã duyệt cái gì ở commit nào.
@@ -138,5 +154,6 @@ export interface Step {
   alt_text?: { vi: string; en?: string };
   author_notes?: string;
   expects_violation?: string[];
+  claims?: string[];
   verified?: boolean;
 }

@@ -513,7 +513,10 @@
           "alt_text": {
             "vi": "Hai đỉnh bậc lẻ được làm nổi; chúng đúng là một số chẵn đỉnh."
           },
-          "verified": true
+          "verified": true,
+          "claims": [
+            "count(vertices, v => deg(v) % 2 == 1) % 2 == 0"
+          ]
         }
       ]
     }

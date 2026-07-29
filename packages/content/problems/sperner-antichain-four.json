@@ -236,7 +236,11 @@
           "alt_text": {
             "vi": "Bảng incidence 4 phần tử × 6 tập, mỗi cột đúng hai ô."
           },
-          "verified": true
+          "verified": true,
+          "claims": [
+            "incidences == 12",
+            "k == 6"
+          ]
         },
         {
           "id": "s2",

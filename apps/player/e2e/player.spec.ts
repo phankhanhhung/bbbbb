@@ -225,3 +225,20 @@ test.describe('Sandbox (SBX-01)', () => {
     await expect(page.getByText('thao tác ở đây không đổi lời giải')).toBeVisible();
   });
 });
+
+test.describe('Giá trị nội suy trong narrative', () => {
+  test('{{expr}} hiện ra thành số, không hiện markup thô', async ({ page }) => {
+    // Bài này từng ghi "có 4 cặp" trong khi bảng bất biến ngay cạnh hiện 3. Nay
+    // hai chỗ là **cùng một giá trị**, nên chúng không thể lệch nữa — test này
+    // canh chính đường render đó.
+    await page.goto('/?p=sorting-adjacent-swaps');
+    await reveal(page);
+
+    const narrative = page.locator('.narrative');
+    await expect(narrative).not.toContainText('{{');
+    await expect(narrative).toContainText('3');
+
+    // Và con số trong chữ khớp con số trong bảng bất biến.
+    await expect(page.locator('.invariant__value').first()).toHaveText('3');
+  });
+});

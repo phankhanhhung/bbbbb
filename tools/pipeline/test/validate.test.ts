@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { createValidator, type Problem } from '@combviz/schema';
-import { ENGINE_FRAGMENTS } from '../src/engines.js';
+import { createChecker } from '@combviz/check';
+import { ENGINE_DSL, ENGINE_FRAGMENTS } from '../src/engines.js';
 
 const EXAMPLE_PATH = fileURLToPath(
   new URL('../../../packages/content/problems/mutilated-chessboard.json', import.meta.url),
@@ -382,5 +383,90 @@ describe('PRN-04 — view song ánh', () => {
     delete stepOf(problem).scene;
 
     expect(codes(problem)).toContain('structure/bijection-without-scene');
+  });
+});
+
+/**
+ * Lớp lỗi mà M13 tìm ra bằng tay: lời kể ghi một con số, hình cho con số khác.
+ *
+ * `sorting-adjacent-swaps` viết "có $4$ cặp" trong khi `inversions` bằng $3$ —
+ * hai số mâu thuẫn nhau trên cùng một màn hình, qua nhiều commit, và không thứ
+ * gì kêu. Hai cơ chế dưới đây đóng lại lớp đó: `{{expr}}` bỏ hẳn bản sao, còn
+ * `claims` bắt những khẳng định suy ra mà nội suy không với tới.
+ */
+describe('chống lệch chữ–hình', () => {
+  // Kiểm ngữ nghĩa sống ở `packages/check`, không ở lớp schema — nên phải đi qua
+  // bộ đầy đủ, đúng bộ mà CLI và CI chạy (AUT-04).
+  const checker = createChecker({ fragments: ENGINE_FRAGMENTS, dsl: ENGINE_DSL });
+  const check = (problem: Problem): string[] =>
+    checker.check(problem, JSON.stringify(problem)).map((i) => i.code);
+
+  const withStep = (patch: Record<string, unknown>): Problem => {
+    const problem = loadExample();
+    Object.assign(problem.solutions[0]!.steps[0]!, patch);
+    return problem;
+  };
+
+  it('claim đúng thì qua', () => {
+    expect(check(withStep({ claims: ['rows == 8'] }))).not.toContain('semantics/claim-false');
+  });
+
+  it('claim sai là **lỗi**, không phải cảnh báo', () => {
+    const issue = checker
+      .check(withStep({ claims: ['rows == 7'] }), '')
+      .find((i) => i.code === 'semantics/claim-false');
+
+    // Một khẳng định sai trong lời giải toán không có phiên bản "cố ý".
+    expect(issue?.severity).toBe('error');
+    expect(issue?.message).toContain('false');
+  });
+
+  it('claim không chạy được cũng đỏ', () => {
+    expect(check(withStep({ claims: ['khong_co_binding == 1'] }))).toContain('dsl/eval-error');
+  });
+
+  it('`{{expr}}` trong narrative phải tính được', () => {
+    const problem = withStep({});
+    const step = problem.solutions[0]!.steps[0]!;
+    step.narrative!.vi = `Bàn có {{khong_co_binding}} hàng. ${step.narrative!.vi}`;
+
+    expect(check(problem)).toContain('dsl/eval-error');
+  });
+
+  it('`{{expr}}` hợp lệ thì im lặng', () => {
+    const problem = withStep({});
+    const step = problem.solutions[0]!.steps[0]!;
+    step.narrative!.vi = `Bàn có {{rows}} hàng. ${step.narrative!.vi}`;
+
+    expect(check(problem)).not.toContain('dsl/eval-error');
+  });
+});
+
+describe('chống lệch chữ–hình — các lỗ hổng', () => {
+  const checker = createChecker({ fragments: ENGINE_FRAGMENTS, dsl: ENGINE_DSL });
+
+  it('`{{expr}}` ở step không có scene là lỗi', () => {
+    const problem = loadExample();
+    const steps = problem.solutions[0]!.steps;
+    // Một step con trỏ, không có hình — không có gì để tính giá trị ra.
+    steps.push({
+      id: 'm-test',
+      parent: steps[0]!.id,
+      edge_type: 'merge_ref',
+      merge_target: steps[0]!.id,
+      narrative: { vi: 'Bàn có {{rows}} hàng.' },
+      verified: true,
+    });
+
+    expect(checker.check(problem, '').map((i) => i.code)).toContain(
+      'semantics/value-without-scene',
+    );
+  });
+
+  it('`{{expr}}` trong alt_text cũng được kiểm', () => {
+    const problem = loadExample();
+    problem.solutions[0]!.steps[0]!.alt_text = { vi: 'Bàn {{khong_co_binding}} hàng' };
+
+    expect(checker.check(problem, '').map((i) => i.code)).toContain('dsl/eval-error');
   });
 });

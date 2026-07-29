@@ -11,6 +11,7 @@ import type {
   Step,
   ValidationIssue,
 } from '@combviz/schema';
+import { parseValueMarkup } from '@combviz/schema';
 import type { DslEnvironment } from '@combviz/dsl';
 
 /**
@@ -133,7 +134,23 @@ function evalOnEveryStep(
   problem.solutions.forEach((solution, si) => {
     solution.steps.forEach((step, i) => {
       const scene = step.scene;
-      if (!scene) return;
+      const path0 = `/solutions/${si}/steps/${i}`;
+      if (!scene) {
+        // Step `merge_ref` không có hình, nên không có gì để tính `{{expr}}` ra.
+        // Không bắt ở đây thì nó lọt qua validate rồi hiện `{{…}}` thô lên màn
+        // hình — đúng loại lỗi mà cả cơ chế này sinh ra để chặn.
+        for (const text of [step.narrative?.vi, step.alt_text?.vi]) {
+          for (const span of parseValueMarkup(text ?? '')) {
+            issues.push({
+              code: 'semantics/value-without-scene',
+              severity: 'error',
+              message: `Step "${step.id}" dùng \`{{${span.expr}}}\` nhưng không có scene để tính`,
+              path: path0,
+            });
+          }
+        }
+        return;
+      }
 
       const dsl = engines[scene.engine];
       if (!dsl) return;
@@ -163,9 +180,87 @@ function evalOnEveryStep(
         }
       }
 
+      issues.push(...checkClaims(step, env, path));
+      issues.push(...checkValueMarkup(step, env, path));
       issues.push(...runValidators(problem, step, scene, path, engines));
     });
   });
+
+  return issues;
+}
+
+/**
+ * `claims` — khẳng định của lời giải, kiểm bằng chính scene của step.
+ *
+ * Sai là **lỗi**, không phải cảnh báo: một khẳng định sai trong lời giải toán
+ * không có phiên bản "cố ý". Khác hẳn `sandbox.validators`, thứ mà một step
+ * hoàn toàn có thể cố tình vi phạm để chỉ ra chỗ sai.
+ */
+function checkClaims(
+  step: Step,
+  env: DslEnvironment,
+  path: string,
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  (step.claims ?? []).forEach((claim, i) => {
+    const outcome = tryEvaluate(claim, env, DETERMINISTIC_BUDGET);
+    if (!outcome.ok) {
+      issues.push({
+        code: 'dsl/eval-error',
+        severity: 'error',
+        message: `Claim "${claim}" ở step "${step.id}" không chạy được: ${outcome.error}`,
+        path: `${path}/claims/${i}`,
+      });
+      return;
+    }
+    if (outcome.value !== true) {
+      issues.push({
+        code: 'semantics/claim-false',
+        severity: 'error',
+        message: `Step "${step.id}" khai "${claim}" nhưng scene cho ${JSON.stringify(outcome.value)}`,
+        path: `${path}/claims/${i}`,
+        hint: 'Lời giải và hình đang nói hai điều khác nhau — sửa một trong hai',
+      });
+    }
+  });
+
+  return issues;
+}
+
+/** `{{expr}}` trong narrative và alt_text phải tính được trên scene của step. */
+function checkValueMarkup(
+  step: Step,
+  env: DslEnvironment,
+  path: string,
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  for (const [field, text] of [
+    ['narrative', step.narrative?.vi],
+    ['alt_text', step.alt_text?.vi],
+  ] as const) {
+    if (!text) continue;
+    for (const span of parseValueMarkup(text)) {
+      const outcome = tryEvaluate(span.expr, env, DETERMINISTIC_BUDGET);
+      if (!outcome.ok) {
+        issues.push({
+          code: 'dsl/eval-error',
+          severity: 'error',
+          message: `\`{{${span.expr}}}\` ở step "${step.id}" không chạy được: ${outcome.error}`,
+          path: `${path}/${field}/vi`,
+          hint: 'Giá trị nội suy phải là biểu thức DSL chạy được trên scene của chính step này',
+        });
+      } else if (outcome.value === null || typeof outcome.value === 'object') {
+        issues.push({
+          code: 'semantics/value-not-printable',
+          severity: 'error',
+          message: `\`{{${span.expr}}}\` ở step "${step.id}" cho giá trị không in ra chữ được`,
+          path: `${path}/${field}/vi`,
+        });
+      }
+    }
+  }
 
   return issues;
 }

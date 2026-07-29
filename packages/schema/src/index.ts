@@ -37,6 +37,13 @@ export {
   type AnchorSpan,
 } from './anchor-markup.js';
 
+export {
+  parseValueMarkup,
+  renderValueMarkup,
+  stripValueMarkup,
+  type ValueSpan,
+} from './value-markup.js';
+
 export { toReadableMath, toSearchableText } from './math-text.js';
 
 export {

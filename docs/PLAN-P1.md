@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M13 xong (4 engine, phủ ~76%); kho 47 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M14 xong (4 engine, phủ ~76%); kho 47 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,32 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M14 — Chống lệch chữ–hình · [E] — **xong**
+
+Không nằm trong hàng đợi engine, và cố ý thế. M13 duyệt tay ra **6/47 bài sai**,
+trong đó `sorting-adjacent-swaps` ghi "có $4$ cặp" trong khi bảng bất biến ngay
+cạnh hiện $3$ — hai con số mâu thuẫn nhau trên cùng một màn hình, qua nhiều
+commit, và không thứ gì trong pipeline kêu. Với máy thì chúng là hai thứ không
+liên quan: một bên là chữ, một bên là kết quả DSL.
+
+Đúng luật của chính dự án: AUT-KPI nói trượt KPI thì dồn sửa pipeline **trước
+khi** mở engine mới. Đã mở engine bốn milestone liên tiếp.
+
+- ✅ **`{{expr}}` trong narrative và alt_text** — số **tính từ scene**, không phải số gõ tay. Đây là chỗ quan trọng: nó **bỏ hẳn bản sao** thay vì đi kiểm hai bản có khớp nhau không. Viết `{{inversions}}` thì chữ và hình là *cùng một giá trị*, nên chúng không lệch được — không phải "khó lệch hơn", mà là không có đường nào lệch.
+- ✅ **`claims: string[]` trên step** — biểu thức DSL phải trả `true`. Lo phần mà nội suy không với tới: "cần ít nhất $3$ bước" là một *mệnh đề* về $3$ nghịch thế, không phải chính con số đó. Sai là **lỗi**, không phải cảnh báo — một khẳng định sai trong lời giải toán không có phiên bản "cố ý", khác hẳn `sandbox.validators`.
+- ✅ Cả hai chạy trong `packages/check`, nên Studio, CLI và CI dùng chung một bộ luật (AUT-04). Dùng lại chính DSL của engine (grammar đóng, có ngân sách bước) chứ không thêm ngôn ngữ mới.
+- ✅ Retrofit: nội suy $7$ chỗ, khai $12$ claim trên $10$ step — trong đó `matching == cover` ở bài König biến **chính định lý** thành một khẳng định máy kiểm mỗi lần chạy.
+
+**Hai lỗ hổng tự bịt trước khi commit:**
+
+1. `{{expr}}` ở step **không có scene** (`merge_ref`) không ai kiểm, và sẽ hiện `{{…}}` thô lên màn hình — đúng loại lỗi cả cơ chế này sinh ra để chặn.
+2. `alt_text` được validate nhưng Player chỉ nội suy `narrative`, nên trình đọc màn hình sẽ đọc ra `{{expr}}`.
+
+**Giới hạn, nói rõ để không trông đợi nhầm.** Cơ chế này chỉ với tới những đại
+lượng **suy được từ scene**. Đáp số của phần lớn bài đếm — "$84$ cách", "$36$
+cách" — là con số tính bằng tay, không có trong hình, nên không `claims` nào
+kiểm hộ được. Ở đó vẫn phải có người đọc.
 
 ### M13 — Duyệt kho và xuất bản 47 bài · [C] — **xong, nhưng xem phần cảnh báo**
 

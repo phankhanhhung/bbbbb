@@ -7,7 +7,9 @@ import {
   nextStep,
   pathTo,
 } from '@combviz/schema';
+import { renderValueMarkup } from '@combviz/schema';
 import type { Problem, Scene, Solution, Step } from '@combviz/schema';
+import { tryEvaluate, DETERMINISTIC_BUDGET } from '@combviz/dsl';
 import {
   createContext,
   createRenderer,
@@ -89,6 +91,29 @@ export function Player({
     () => (scene: Scene) => engines?.get(scene.engine)?.environment(scene) ?? null,
     [engines],
   );
+
+  /**
+   * Thay `{{expr}}` bằng giá trị tính từ chính scene của step.
+   *
+   * Làm ở đây chứ không trong `Narrative`: component đó không biết engine nào,
+   * và không nên biết. Tính hỏng thì `renderValueMarkup` giữ nguyên markup —
+   * `{{expr}}` còn nguyên trên màn hình đập vào mắt ngay, trong khi một câu bị
+   * khuyết mất con số đọc như câu bình thường.
+   */
+  const interpolate = useMemo(() => {
+    const env = step.scene ? environmentFor(step.scene) : null;
+    return (text: string): string => {
+      if (!env) return text;
+      return renderValueMarkup(text, (expr) => {
+        const outcome = tryEvaluate(expr, env, DETERMINISTIC_BUDGET);
+        return outcome.ok && outcome.value !== null && typeof outcome.value !== 'object'
+          ? String(outcome.value)
+          : null;
+      });
+    };
+  }, [step, environmentFor]);
+
+  const interpolated = interpolate(step.narrative?.vi ?? '');
 
   const analysis = useAnalyzer<GraphAnalysis>(
     step.scene?.engine === 'graph' ? step.scene : undefined,
@@ -271,7 +296,7 @@ export function Player({
                   : '0 0 100 100'
               }
               role="img"
-              aria-label={step.alt_text?.vi ?? altFallback(step)}
+              aria-label={interpolate(step.alt_text?.vi ?? altFallback(step))}
             />
           </div>
         )}
@@ -283,7 +308,7 @@ export function Player({
 
           {revealed && step.narrative ? (
             <Narrative
-              text={step.narrative.vi}
+              text={interpolated}
               activeAnchor={activeAnchor}
               onAnchor={setActiveAnchor}
             />

@@ -637,7 +637,11 @@
           "expects_violation": [
             "matching-saturates-left"
           ],
-          "verified": true
+          "verified": true,
+          "claims": [
+            "matching < 4",
+            "unmatched == 1"
+          ]
         }
       ]
     }

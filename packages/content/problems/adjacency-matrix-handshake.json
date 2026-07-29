@@ -600,7 +600,7 @@
           "parent": "s2",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Cộng hết: $3+2+3+2 = 10 = 2 \\times 5$. Tổng bậc bằng **hai lần** số cạnh, vì mỗi cạnh đóng góp đúng $2$ vào bảng — đó là [[a4|bổ đề bắt tay]], và ở đây nó là một phép cộng chứ không phải một định lý phải tin."
+            "vi": "Cộng hết: $3+2+3+2 = {{sum(vertices, v => deg(v))}} = 2 \\times {{m}}$. Tổng bậc bằng **hai lần** số cạnh, vì mỗi cạnh đóng góp đúng $2$ vào bảng — đó là [[a4|bổ đề bắt tay]], và ở đây nó là một phép cộng chứ không phải một định lý phải tin."
           },
           "anchors": {
             "a4": {
@@ -773,7 +773,10 @@
               ],
               "engine": "graph"
             }
-          }
+          },
+          "claims": [
+            "sum(vertices, v => deg(v)) == 2 * m"
+          ]
         }
       ]
     }

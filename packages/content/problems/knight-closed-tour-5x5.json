@@ -82,7 +82,10 @@
             "vi": "Bàn 5×5 tô xen kẽ hai màu; bốn góc và ô giữa cùng một màu."
           },
           "author_notes": "Draft máy — chưa duyệt.",
-          "verified": true
+          "verified": true,
+          "claims": [
+            "count(cells, c => c.color_class == 1) - count(cells, c => c.color_class == 2) == 1"
+          ]
         },
         {
           "id": "s1",

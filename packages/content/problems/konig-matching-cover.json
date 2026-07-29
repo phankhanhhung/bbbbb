@@ -164,7 +164,7 @@
           "parent": "s0",
           "edge_type": "seq",
           "narrative": {
-            "vi": "[[a2|Ba cạnh]] đôi một không chung đỉnh: một ghép cặp cỡ $3$. Không thể hơn — mỗi phía chỉ có $3$ đỉnh."
+            "vi": "[[a2|Ba cạnh]] đôi một không chung đỉnh: một ghép cặp cỡ ${{matching}}$. Không thể hơn — mỗi phía chỉ có $3$ đỉnh."
           },
           "anchors": {
             "a2": {
@@ -597,7 +597,10 @@
           "alt_text": {
             "vi": "Ghép cặp ba cạnh và phủ ba đỉnh, cùng một hình."
           },
-          "verified": true
+          "verified": true,
+          "claims": [
+            "matching == cover"
+          ]
         }
       ]
     }

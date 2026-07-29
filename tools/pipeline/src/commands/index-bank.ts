@@ -1,6 +1,11 @@
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { stripAnchorMarkup, toSearchableText, type Problem } from '@combviz/schema';
+import {
+  stripAnchorMarkup,
+  stripValueMarkup,
+  toSearchableText,
+  type Problem,
+} from '@combviz/schema';
 import { loadTaxonomy } from '../taxonomy.js';
 
 /**
@@ -80,15 +85,15 @@ export async function runIndex(options: IndexOptions): Promise<number> {
 function toEntry(problem: Problem): IndexEntry {
   const steps = problem.solutions.flatMap((s) => s.steps);
   const narratives = steps
-    .map((step) => (step.narrative ? stripAnchorMarkup(step.narrative.vi) : ''))
+    .map((step) => (step.narrative ? stripValueMarkup(stripAnchorMarkup(step.narrative.vi)) : ''))
     .join(' ');
 
   return {
     id: problem.id,
     // Tiêu đề **giữ nguyên LaTeX** — Bank render bằng KaTeX. Chỉ `text` mới bị
     // tước, vì chỉ nó dùng để so khớp.
-    title: stripAnchorMarkup(problem.statement.vi),
-    text: toSearchableText(stripAnchorMarkup(`${problem.statement.vi} ${narratives}`)),
+    title: stripValueMarkup(stripAnchorMarkup(problem.statement.vi)),
+    text: toSearchableText(stripValueMarkup(stripAnchorMarkup(`${problem.statement.vi} ${narratives}`))),
     contest: problem.source.contest,
     ...(problem.source.year === undefined ? {} : { year: problem.source.year }),
     topics: problem.topics,

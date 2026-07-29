@@ -148,7 +148,10 @@
           "alt_text": {
             "vi": "Bốn đỉnh: một tam giác và một đỉnh ở giữa, sáu cạnh không cắt nhau."
           },
-          "verified": true
+          "verified": true,
+          "claims": [
+            "crossings == 0"
+          ]
         },
         {
           "id": "s1",
@@ -549,7 +552,7 @@
           "parent": "s3",
           "edge_type": "contradiction",
           "narrative": {
-            "vi": "Nhưng $K_5$ có $10$ cạnh, mà $10 > 9$. Mâu thuẫn — vậy [[a5|$K_5$]] không phẳng. Chú ý lập luận này không nhắc gì tới cách vẽ: nó loại **mọi** cách vẽ cùng một lúc."
+            "vi": "Nhưng $K_5$ có ${{m}}$ cạnh, mà ${{m}} > {{max_planar_edges}}$. Mâu thuẫn — vậy [[a5|$K_5$]] không phẳng. Chú ý lập luận này không nhắc gì tới cách vẽ: nó loại **mọi** cách vẽ cùng một lúc."
           },
           "anchors": {
             "a5": {
@@ -692,7 +695,10 @@
           "expects_violation": [
             "plane-drawing"
           ],
-          "verified": true
+          "verified": true,
+          "claims": [
+            "m > max_planar_edges"
+          ]
         }
       ]
     }

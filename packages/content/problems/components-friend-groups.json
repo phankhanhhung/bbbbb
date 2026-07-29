@@ -348,7 +348,7 @@
           "parent": "s1",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Cộng lại $3 + 6 = 9$, và [[a3|không cạnh nào]] được phép bắc qua giữa hai cụm. Vậy $9$ là nhiều nhất."
+            "vi": "Cộng lại $3 + 6 = 9$, và [[a3|không cạnh nào]] được phép bắc qua giữa hai cụm. Vậy ${{m}}$ là nhiều nhất."
           },
           "anchors": {
             "a3": {
