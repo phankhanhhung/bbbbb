@@ -294,6 +294,18 @@ async function main(argv: string[]): Promise<number> {
  * Lỗi khác thì **vẫn để nổ nguyên**: một bug trong pipeline mà bị bọc thành thông
  * báo lịch sự là một bug khó tìm hơn.
  */
+/**
+ * `combviz coverage | head` không được nổ.
+ *
+ * `head` đóng ống sau vài dòng, Node ném EPIPE, và người dùng nhận một stack
+ * trace thay vì mười dòng họ vừa xin. Đây là hành vi Unix bình thường của mọi
+ * lệnh in nhiều dòng — im lặng thoát là cách `ls` và `grep` vẫn làm.
+ */
+process.stdout.on('error', (error: NodeJS.ErrnoException) => {
+  if (error.code === 'EPIPE') process.exit(0);
+  throw error;
+});
+
 try {
   process.exitCode = await main(process.argv.slice(2));
 } catch (error) {

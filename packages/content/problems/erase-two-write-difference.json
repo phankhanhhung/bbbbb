@@ -1,0 +1,377 @@
+{
+  "schema_version": "0.1.0",
+  "id": "erase-two-write-difference",
+  "statement": {
+    "vi": "Trên bảng viết các số $1, 2, \\ldots, 10$. Mỗi bước, xoá hai số $a$ và $b$ rồi viết thêm $|a-b|$. Sau $9$ bước chỉ còn một số. Chứng minh số đó là số lẻ — nói riêng, nó không thể bằng $0$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; dạng bất biến chẵn lẻ trên đa tập."
+    }
+  },
+  "topics": [
+    "sequences",
+    "counting"
+  ],
+  "techniques": [
+    "invariant",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "total",
+      "id": "inv-tong",
+      "label": {
+        "vi": "Tổng các số trên bảng"
+      }
+    },
+    {
+      "expr": "total % 2",
+      "id": "inv-le",
+      "label": {
+        "vi": "… và tính chẵn lẻ của nó"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol-chan-le",
+      "label": {
+        "vi": "Bất biến chẵn lẻ của tổng"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bảng bắt đầu với [[a1|mười số từ $1$ đến $10$]]. Tổng của chúng là $55$ — một số lẻ."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "n0",
+                "n1",
+                "n2",
+                "n3",
+                "n4",
+                "n5",
+                "n6",
+                "n7",
+                "n8",
+                "n9"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Các số trên bảng",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "n0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "n1",
+                "type": "item",
+                "pos": 1,
+                "value": 2
+              },
+              {
+                "id": "n2",
+                "type": "item",
+                "pos": 2,
+                "value": 3
+              },
+              {
+                "id": "n3",
+                "type": "item",
+                "pos": 3,
+                "value": 4
+              },
+              {
+                "id": "n4",
+                "type": "item",
+                "pos": 4,
+                "value": 5
+              },
+              {
+                "id": "n5",
+                "type": "item",
+                "pos": 5,
+                "value": 6
+              },
+              {
+                "id": "n6",
+                "type": "item",
+                "pos": 6,
+                "value": 7
+              },
+              {
+                "id": "n7",
+                "type": "item",
+                "pos": 7,
+                "value": 8
+              },
+              {
+                "id": "n8",
+                "type": "item",
+                "pos": 8,
+                "value": 9
+              },
+              {
+                "id": "n9",
+                "type": "item",
+                "pos": 9,
+                "value": 10
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Mười cột sỏi cao dần từ 1 đến 10, kèm tổng bằng 55."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thử một bước: xoá $3$ và $8$, viết [[a2|$|3-8| = 5$]]. Tổng đi từ $55$ xuống $49$ — vẫn lẻ."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "n8"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Sau một bước",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "n0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "n1",
+                "type": "item",
+                "pos": 1,
+                "value": 2
+              },
+              {
+                "id": "n2",
+                "type": "item",
+                "pos": 2,
+                "value": 4
+              },
+              {
+                "id": "n3",
+                "type": "item",
+                "pos": 3,
+                "value": 5
+              },
+              {
+                "id": "n4",
+                "type": "item",
+                "pos": 4,
+                "value": 6
+              },
+              {
+                "id": "n5",
+                "type": "item",
+                "pos": 5,
+                "value": 7
+              },
+              {
+                "id": "n6",
+                "type": "item",
+                "pos": 6,
+                "value": 9
+              },
+              {
+                "id": "n7",
+                "type": "item",
+                "pos": 7,
+                "value": 10
+              },
+              {
+                "id": "n8",
+                "type": "item",
+                "color_class": 3,
+                "emphasis": "focus",
+                "pos": 8,
+                "value": 5
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Còn chín cột; cột mới mang giá trị 5 được làm nổi, tổng bằng 49."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Không phải may. Thay $a$ và $b$ bằng $|a-b|$ làm tổng giảm đi $a + b - |a-b|$, và đại lượng đó bằng [[a3|$2\\min(a,b)$]] — luôn chẵn. Vậy tính chẵn lẻ của tổng không bao giờ đổi."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "n8"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Tổng giảm một lượng chẵn",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "n0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "n1",
+                "type": "item",
+                "pos": 1,
+                "value": 2
+              },
+              {
+                "id": "n2",
+                "type": "item",
+                "pos": 2,
+                "value": 4
+              },
+              {
+                "id": "n3",
+                "type": "item",
+                "pos": 3,
+                "value": 5
+              },
+              {
+                "id": "n4",
+                "type": "item",
+                "pos": 4,
+                "value": 6
+              },
+              {
+                "id": "n5",
+                "type": "item",
+                "pos": 5,
+                "value": 7
+              },
+              {
+                "id": "n6",
+                "type": "item",
+                "pos": 6,
+                "value": 9
+              },
+              {
+                "id": "n7",
+                "type": "item",
+                "pos": 7,
+                "value": 10
+              },
+              {
+                "id": "n8",
+                "type": "item",
+                "color_class": 3,
+                "pos": 8,
+                "value": 5
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng chín cột, cột kết quả được tô màu để nhấn phép thay thế."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đến cuối chỉ còn [[a4|một số]], và nó chính là tổng lúc đó. Tổng vẫn lẻ như lúc đầu, nên số cuối cùng lẻ — riêng $0$ thì chẵn, nên không bao giờ ra $0$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "n0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Số cuối cùng",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "n0",
+                "type": "item",
+                "color_class": 3,
+                "emphasis": "focus",
+                "pos": 0,
+                "value": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một cột duy nhất mang giá trị lẻ; tổng bằng chính nó."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "n == 1",
+    "validators": [
+      "values-non-negative"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol-chan-le",
+    "step_id": "s0"
+  }
+}

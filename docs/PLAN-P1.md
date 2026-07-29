@@ -278,6 +278,23 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 2. Luật "step có hình mà không có anchor" đếm `elements.length > 0`, trong khi bàn cờ 8×8 sinh 64 ô từ `config` với `elements` rỗng (D-16) — tức là luật miễn trừ đúng những bài dùng engine board.
 3. `nextStepId` hứa không tái dùng id đã xoá nhưng chỉ lấy max trên step **đang còn**: xoá step cuối rồi thêm bước mới sẽ cấp lại đúng id đó, và một `merge_target` đang treo sẽ lặng lẽ trỏ sang step khác — tệ hơn nữa, validate đang báo đỏ sẽ **xanh trở lại** trong khi bài đã sai.
 
+### M8 — Sequence/Multiset engine · [E] — **xong**
+
+Ngoài lịch 16 tuần gốc: mở ra sau khi `docs/VIZ-COVERAGE.md` đo được rằng board +
+graph chỉ phủ ~45% đề tổ hợp, và họ bài thiếu nhất — "dãy số / thao tác lặp", 16%,
+lớn thứ hai sau đồ thị — **không có engine nào trong cả ba phase** vẽ nổi một đống sỏi.
+
+- ✅ `packages/engines/sequence`: hai chế độ `sequence` (có thứ tự) và `piles` (đa tập) trên **một** mô hình dữ liệu, vì chúng khác nhau ở *phép toán hợp lệ* chứ không khác ở dữ liệu.
+- ✅ Chín lệnh **chia theo chế độ**: đổi chỗ chỉ chạy ở `sequence`, gộp/tách chỉ chạy ở `piles`. Cùng bài học với G-11 — bất biến của "gộp đống" chỉ là bất biến *vì* người chơi không được đổi chỗ tuỳ ý.
+- ✅ Quy tắc gộp là **enum đóng** (`sum`, `abs-diff`, `product`, `max`, `min`), không phải biểu thức người dùng nhập: cho nhập biểu thức là mở cửa hậu cho DSL-03 (P3).
+- ✅ Binding `inversions` sẵn trong DSL — bất biến của cả họ bài hoán vị, và viết tay bằng `count` lồng nhau thì vừa $O(n^2)$ vừa dễ sai.
+- ✅ Công cụ Sandbox theo engine: `piles` hiện nút gộp, `sequence` hiện nút đổi chỗ.
+- ✅ Bài đầu tiên dùng nó: `erase-two-write-difference` — xoá hai số $a, b$ viết $|a-b|$, invariant strip cho thấy tổng $55 \to 49 \to 1$ mà tính chẵn lẻ đứng yên.
+
+**Ba lỗi khung nhìn chỉ lộ ra khi render ra ảnh rồi nhìn** — không test nào bắt được, vì SVG vẫn hợp lệ và mọi số vẫn đúng: con số dưới chân cột bị cắt (cột mọc lên phía âm của $y$), nhãn `Σ` nằm ngoài mép phải, và scene một phần tử bị trình duyệt phóng to hết cỡ vì khung khít quá.
+
+**Mức phủ:** ~45% → **~55%** (`docs/VIZ-COVERAGE.md`).
+
 ### M7 — Content sprint + hardening + pilot · Tuần 12–16 · [C]+[E] — **track [E] xong, track [C] mới 6/20**
 
 **Hardening — xong:**

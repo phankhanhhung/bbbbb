@@ -49,6 +49,17 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       resolveValidator: module.resolveGraphValidator,
     };
   },
+
+  sequence: async () => {
+    const module = await import('@combviz/engine-sequence');
+    return {
+      renderer: module.sequenceRenderer,
+      commands: module.sequenceCommands,
+      hitTest: module.sequenceHitTest,
+      environment: module.sequenceEnvironment,
+      resolveValidator: module.resolveSequenceValidator,
+    };
+  },
 };
 
 const cache = new Map<string, LoadedEngine>();

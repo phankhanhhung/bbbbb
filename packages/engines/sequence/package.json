@@ -1,5 +1,5 @@
 {
-  "name": "@combviz/check",
+  "name": "@combviz/engine-sequence",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,10 +8,10 @@
   },
   "dependencies": {
     "@combviz/dsl": "workspace:*",
+    "@combviz/editor": "workspace:*",
+    "@combviz/render": "workspace:*",
     "@combviz/schema": "workspace:*",
-    "@combviz/engine-sequence": "workspace:*"
-  },
-  "devDependencies": {
-    "@combviz/engine-board": "workspace:*"
+    "@combviz/theme": "workspace:*",
+    "@sinclair/typebox": "^0.34.13"
   }
 }

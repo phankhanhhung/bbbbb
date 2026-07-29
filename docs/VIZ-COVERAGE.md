@@ -1,6 +1,6 @@
 # CombViz — Kho bài tổ hợp: visualize được bao nhiêu phần trăm?
 
-Trạng thái: **ước lượng chuyên gia, không phải điều tra** · Cập nhật: 2026-07-29
+Trạng thái: **ước lượng chuyên gia, không phải điều tra** · Cập nhật: 2026-07-29 (sau khi có Sequence engine)
 
 > **Đọc con số ở đây đúng cách.**
 >
@@ -18,7 +18,8 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 
 | | Visualize **gánh được lập luận** | Có hình **mang thông tin** |
 |---|---|---|
-| Hôm nay (board + graph) | **~45%** | ~55% |
+| ~~board + graph~~ | ~~45%~~ | ~~55%~~ |
+| **Hôm nay** (board + graph + **sequence**) | **~55%** | ~64% |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
 | Thêm 4 view ngoài roadmap (§4) | **~85%** | ~92% |
@@ -37,21 +38,21 @@ mất đúng M4.
 ## 2. Phân bố họ bài, và engine hiện có phủ tới đâu
 
 Trọng số cột 2 là tỉ trọng ước lượng trong đề tổ hợp thi đấu (IMO Shortlist C và
-tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà board + graph gánh nổi.
+tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà ba engine hiện có gánh nổi.
 
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Vì sao thiếu |
 |---|---:|---:|---:|---|
 | Lưới / phủ hình / tô màu | 15% | 90% | 13.5 | — |
 | Đồ thị | 22% | 80% | 17.6 | thiếu planarity, matching, tô mặt |
 | Đếm / song ánh / đếm hai chiều | 14% | 25% | 3.5 | không có bảng incidence, không có view song ánh |
-| Dãy số / thao tác lặp / quá trình | 16% | 30% | 4.8 | **không có engine cho dãy số và đống sỏi** |
+| Dãy số / thao tác lặp / quá trình | 16% | **90%** ✅ | **14.4** | ~~không có engine~~ — `@combviz/engine-sequence` (2026-07-29) |
 | Trò chơi | 7% | 10% | 0.7 | vẽ được thế cờ, không có cây trò chơi / Grundy |
 | Hệ tập hợp / siêu đồ thị | 8% | 20% | 1.6 | chỉ mô hình hoá được phần nào bằng đồ thị hai phía |
 | Hình học tổ hợp | 5% | 5% | 0.25 | không có engine điểm–đoạn |
 | Hoán vị / thứ tự | 6% | 20% | 1.2 | chỉ vẽ được qua chu trình trên đồ thị |
 | Tổ hợp mang màu số học (thặng dư, chữ số) | 4% | 30% | 1.2 | lưới thặng dư gượng ép |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 5% | 0.15 | xem §6 |
-| **Tổng** | **100%** | | **~44.5%** | |
+| **Tổng** | **100%** | | **~54%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
@@ -73,20 +74,23 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Cayley $n^{n-2}$ (mã Prüfer) | song ánh | ❌ cần view song ánh |
 | Đồng nhất thức Vandermonde | đếm hai chiều | ❌ cần bảng incidence |
 | Đường đi lưới / số Catalan | đếm | 🟡 vẽ được lưới, thiếu phần đếm |
-| Erdős–Szekeres (dãy đơn điệu) | hoán vị | ❌ |
-| Hoán vị 15-puzzle (chẵn lẻ) | hoán vị | ❌ |
+| Erdős–Szekeres (dãy đơn điệu) | hoán vị | 🟡 vẽ được dãy, thiếu analyzer dãy con đơn điệu |
+| Hoán vị 15-puzzle (chẵn lẻ) | hoán vị | 🟡 `inversions` đã có; thiếu view hoán vị |
 | Định lý Sperner (phản xích) | hệ tập hợp | ❌ |
 | Định lý Dilworth | poset | ❌ |
-| Gộp đống sỏi theo mod | dãy / đa tập | ❌ **§16 xếp đây là cụm trọng tâm** |
-| Chip-firing | quá trình | ❌ |
+| Gộp đống sỏi theo mod | dãy / đa tập | ✅ engine sequence, chế độ `piles` |
+| Xoá hai số, viết $\|a-b\|$ | dãy / đa tập | ✅ có trong kho |
+| Chip-firing | quá trình | 🟡 vẽ và thao tác được, thiếu luật lan truyền |
 | Nim | trò chơi | ❌ |
 | Trò chơi tô đồ thị | trò chơi | 🟡 vẽ được thế, không chơi được |
 | Happy ending (4 điểm lồi) | hình học | ❌ |
 | Sylvester–Gallai | hình học | ❌ |
 | Phương pháp xác suất: tồn tại tô $K_n$ không $K_k$ đơn sắc | trừu tượng | ❌ §6 |
 
-**9 ✅ · 4 🟡 · 11 ❌** ⇒ ≈ 37.5% trọn vẹn, ≈ 46% nếu tính nửa điểm cho 🟡. Khớp
-với bảng trọng số ở trên, và hai cách đếm đó độc lập nhau.
+**11 ✅ · 7 🟡 · 7 ❌** ⇒ ≈ 44% trọn vẹn, ≈ 58% nếu tính nửa điểm cho 🟡. Khớp với
+bảng trọng số ở trên, và hai cách đếm đó độc lập nhau.
+
+*(Trước khi có Sequence engine: 9 ✅ · 4 🟡 · 11 ❌ ⇒ ≈ 46%.)*
 
 ---
 
@@ -111,25 +115,30 @@ flagship của P2. Đánh giá đó đúng: họ "đếm/song ánh" là 14% và 
 
 ---
 
-## 4. Bốn thứ roadmap SRS **chưa** có — và chúng chặn 13% nữa
+## 4. Bốn thứ roadmap SRS **chưa** có — một đã làm, ba còn lại chặn ~7%
 
-### 4.1 Sequence/Multiset engine — **khoảng trống lớn nhất**
+### 4.1 ✅ Sequence/Multiset engine — **đã làm** (2026-07-29)
 
 Họ "dãy số / thao tác lặp / quá trình" chiếm **16%**, lớn thứ hai sau đồ thị, và
-hiện phủ 30% bằng cách gượng ép nhét vào bàn cờ. §16 của SRS xếp "gộp đống sỏi
-theo mod" vào cụm invariant-centric và đòi ≥ 5 bài — nhưng **không engine nào
-trong cả ba phase vẽ được một đống sỏi**.
+trước engine này phủ 30% bằng cách gượng ép nhét vào bàn cờ. §16 của SRS xếp "gộp
+đống sỏi theo mod" vào cụm invariant-centric và đòi ≥ 5 bài — nhưng **không engine
+nào trong cả ba phase vẽ được một đống sỏi**.
 
-Dấu hiệu đã hiện ra trong thực tế: bài `sign-flip-4x4` phải chờ đến khi có
-`board/flip-line` (G-11) mới có sandbox, và nó vẫn chỉ là bảng ±1 — một dãy số
-thật (`a₁, a₂, …, aₙ` với phép thao tác) thì không có chỗ nào để đặt.
+Dấu hiệu đã hiện ra trong thực tế trước khi có engine: bài `sign-flip-4x4` phải chờ
+đến khi có `board/flip-line` (G-11) mới có sandbox, và nó vẫn chỉ là bảng ±1 — một
+dãy số thật (`a₁, a₂, …, aₙ` với phép thao tác) thì không có chỗ nào để đặt.
 
-Element cần: `token {value, group}`, `pile {count}`, `slot {index, value}`.
-Thao tác: gộp/tách/chuyển, đổi chỗ, cộng trừ theo nhóm. Analyzer: tổng, tổng theo
-mod, số nghịch thế.
+**Đã làm.** `packages/engines/sequence`: hai chế độ (`sequence` có thứ tự / `piles`
+đa tập) trên **một** mô hình dữ liệu, chín lệnh chia theo chế độ, bốn validator cố
+định + ba loại có tham số, binding `total` và `inversions`.
 
-**Ước tính: 16% × (30% → 90%) = +9.6 điểm.** Đắt nhất trong bảng này và cũng lãi
-nhất. Ngang cỡ graph engine (một M4).
+Quyết định đáng ghi: **tập lệnh chia theo `mode`**. Đổi chỗ chạy ở `sequence` và bị
+từ chối ở `piles`; gộp thì ngược lại. Đây là cùng bài học với `board/flip-line`
+(G-11) — bất biến của "gộp đống" chỉ là bất biến *vì* người chơi không được đổi chỗ
+tuỳ ý, nên ràng buộc phải nằm trong tập thao tác chứ không nằm trong lời dặn.
+
+**Thu về: 16% × (30% → 90%) = +9.6 điểm.** Kho có bài đầu tiên dùng nó:
+`erase-two-write-difference`.
 
 ### 4.2 Permutation / cycle view
 
@@ -227,7 +236,7 @@ là hiểu được, và ở bài đó thì niềm tin ấy sai.
 
 | # | Việc | Điểm phủ | Cỡ | Ghi chú |
 |---|---|---:|---|---|
-| 1 | **Sequence/Multiset engine** (§4.1) | +9.6 | ~1 M4 | Lớn nhất. Đang chặn cụm invariant-centric mà §16 đòi ≥5 bài |
+| ~~1~~ | ~~**Sequence/Multiset engine**~~ ✅ | +9.6 | xong | Kho: 45% → **55%** |
 | 2 | **PRN-03 bảng incidence** | +5 | nhỏ | Dùng lại được cho ST-01 và GR-07 |
 | 3 | **PRN-04 bijection view** | +5 | vừa | SRS gọi là flagship P2, đánh giá đó đúng |
 | 4 | **ST-01..03 Set engine** | +7 | ~0.7 M4 | Bảng incidence ở #2 là nửa việc rồi |
@@ -236,7 +245,7 @@ là hiểu được, và ở bài đó thì niềm tin ấy sai.
 | 7 | **GM game engine** | +6 | ~1.5 M4 | Đắt vì cần DSL-03 rule script + solver |
 | 8 | **Derivation engine** (§4.5) | +3 phủ, +5 "có hình" | ~1 M4 | Cần label atlas trước |
 
-Cộng dồn: 45 → **~88%**.
+Cộng dồn: 45 → 55 (đã đi) → **~88%**.
 
 **Một cảnh báo về thứ tự.** AUT-KPI là gate có răng: *trượt KPI thì dồn sửa
 pipeline **trước khi** mở engine mới* (SRS §7). Kho hiện có 8 bài và chưa bài nào
