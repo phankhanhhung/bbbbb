@@ -1,0 +1,790 @@
+{
+  "schema_version": "0.1.0",
+  "id": "triangle-free-5-vertices",
+  "statement": {
+    "vi": "Một đồ thị $5$ đỉnh không chứa tam giác nào thì có nhiều nhất $6$ cạnh. Chứng minh, và chỉ ra một đồ thị đạt đúng $6$ cạnh."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Trường hợp $n=5$ của định lý Turán; bài dân gian."
+    }
+  },
+  "topics": [
+    "graph-basics",
+    "counting"
+  ],
+  "techniques": [
+    "extremal",
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "m",
+      "id": "inv-m",
+      "label": {
+        "vi": "Số cạnh"
+      }
+    },
+    {
+      "expr": "max(vertices, v => deg(v))",
+      "id": "inv-delta",
+      "label": {
+        "vi": "Bậc lớn nhất Δ"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol-xet-bac-lon-nhat",
+      "label": {
+        "vi": "Xét đỉnh bậc lớn nhất"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Trước hết, $6$ cạnh là đạt được: [[a1|đồ thị này]] chia $5$ đỉnh thành nhóm $2$ và nhóm $3$, nối hết giữa hai nhóm. Trong mỗi nhóm không có cạnh nào nên không có tam giác."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e-va",
+                "e-vb",
+                "e-vc",
+                "e-wa",
+                "e-wb",
+                "e-wc"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v-v",
+                "type": "vertex",
+                "label": "v",
+                "pos": [-8, -6]
+              },
+              {
+                "id": "v-a",
+                "type": "vertex",
+                "label": "a",
+                "pos": [8, -10]
+              },
+              {
+                "id": "v-b",
+                "type": "vertex",
+                "label": "b",
+                "pos": [8, 0]
+              },
+              {
+                "id": "v-c",
+                "type": "vertex",
+                "label": "c",
+                "pos": [8, 10]
+              },
+              {
+                "id": "v-w",
+                "type": "vertex",
+                "label": "w",
+                "pos": [-8, 6]
+              },
+              {
+                "id": "e-va",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-v",
+                "v": "v-a"
+              },
+              {
+                "id": "e-vb",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-v",
+                "v": "v-b"
+              },
+              {
+                "id": "e-vc",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-v",
+                "v": "v-c"
+              },
+              {
+                "id": "e-wa",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-w",
+                "v": "v-a"
+              },
+              {
+                "id": "e-wb",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-w",
+                "v": "v-b"
+              },
+              {
+                "id": "e-wc",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-w",
+                "v": "v-c"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đồ thị hai phía 2–3 với sáu cạnh, không chứa tam giác."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giờ chặn trên. Gọi [[a2|$v$]] là một đỉnh có bậc lớn nhất, đặt $\\Delta = \\deg(v)$. Vì chỉ có $5$ đỉnh nên $\\Delta \\le 4$, và ta xét theo $\\Delta$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "v-v"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v-v",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "v",
+                "pos": [-8, -6]
+              },
+              {
+                "id": "v-a",
+                "type": "vertex",
+                "label": "a",
+                "pos": [8, -10]
+              },
+              {
+                "id": "v-b",
+                "type": "vertex",
+                "label": "b",
+                "pos": [8, 0]
+              },
+              {
+                "id": "v-c",
+                "type": "vertex",
+                "label": "c",
+                "pos": [8, 10]
+              },
+              {
+                "id": "v-w",
+                "type": "vertex",
+                "label": "w",
+                "pos": [-8, 6]
+              },
+              {
+                "id": "e-va",
+                "type": "edge",
+                "u": "v-v",
+                "v": "v-a"
+              },
+              {
+                "id": "e-vb",
+                "type": "edge",
+                "u": "v-v",
+                "v": "v-b"
+              },
+              {
+                "id": "e-vc",
+                "type": "edge",
+                "u": "v-v",
+                "v": "v-c"
+              },
+              {
+                "id": "e-wa",
+                "type": "edge",
+                "u": "v-w",
+                "v": "v-a"
+              },
+              {
+                "id": "e-wb",
+                "type": "edge",
+                "u": "v-w",
+                "v": "v-b"
+              },
+              {
+                "id": "e-wc",
+                "type": "edge",
+                "u": "v-w",
+                "v": "v-c"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đỉnh v được làm nổi làm đỉnh có bậc lớn nhất."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: $\\Delta = 4$"
+          },
+          "narrative": {
+            "vi": "$v$ kề [[a3|cả bốn đỉnh còn lại]]. Hai đỉnh nào trong bốn đỉnh đó mà kề nhau sẽ cùng $v$ tạo tam giác, nên giữa chúng không có cạnh nào. Đồ thị chỉ còn đúng $4$ cạnh."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "e-va",
+                "e-vb",
+                "e-vc",
+                "e-vw"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v-v",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "v",
+                "pos": [-8, -6]
+              },
+              {
+                "id": "v-a",
+                "type": "vertex",
+                "label": "a",
+                "pos": [8, -10]
+              },
+              {
+                "id": "v-b",
+                "type": "vertex",
+                "label": "b",
+                "pos": [8, 0]
+              },
+              {
+                "id": "v-c",
+                "type": "vertex",
+                "label": "c",
+                "pos": [8, 10]
+              },
+              {
+                "id": "v-w",
+                "type": "vertex",
+                "label": "w",
+                "pos": [-8, 6]
+              },
+              {
+                "id": "e-va",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-v",
+                "v": "v-a"
+              },
+              {
+                "id": "e-vb",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-v",
+                "v": "v-b"
+              },
+              {
+                "id": "e-vc",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-v",
+                "v": "v-c"
+              },
+              {
+                "id": "e-vw",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-v",
+                "v": "v-w"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hình sao: v nối tới cả bốn đỉnh kia, giữa chúng không cạnh nào."
+          },
+          "verified": false
+        },
+        {
+          "id": "m1",
+          "parent": "s2",
+          "edge_type": "merge_ref",
+          "merge_target": "s6",
+          "narrative": {
+            "vi": "$4 \\le 6$ — nhánh này xong."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: $\\Delta = 3$"
+          },
+          "narrative": {
+            "vi": "$v$ kề đúng ba đỉnh $a, b, c$; gọi $w$ là đỉnh còn lại. [[a4|Ba đỉnh $a, b, c$]] đôi một không kề nhau, nếu không sẽ có tam giác với $v$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "v-a",
+                "v-b",
+                "v-c"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v-v",
+                "type": "vertex",
+                "label": "v",
+                "pos": [-8, -6]
+              },
+              {
+                "id": "v-a",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "a",
+                "pos": [8, -10]
+              },
+              {
+                "id": "v-b",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "b",
+                "pos": [8, 0]
+              },
+              {
+                "id": "v-c",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "c",
+                "pos": [8, 10]
+              },
+              {
+                "id": "v-w",
+                "type": "vertex",
+                "emphasis": "dim",
+                "label": "w",
+                "pos": [-8, 6]
+              },
+              {
+                "id": "e-va",
+                "type": "edge",
+                "u": "v-v",
+                "v": "v-a"
+              },
+              {
+                "id": "e-vb",
+                "type": "edge",
+                "u": "v-v",
+                "v": "v-b"
+              },
+              {
+                "id": "e-vc",
+                "type": "edge",
+                "u": "v-v",
+                "v": "v-c"
+              },
+              {
+                "id": "e-wa",
+                "type": "edge",
+                "u": "v-w",
+                "v": "v-a"
+              },
+              {
+                "id": "e-wb",
+                "type": "edge",
+                "u": "v-w",
+                "v": "v-b"
+              },
+              {
+                "id": "e-wc",
+                "type": "edge",
+                "u": "v-w",
+                "v": "v-c"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba đỉnh kề v được làm nổi; giữa chúng không có cạnh."
+          },
+          "verified": false
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "$w$ không kề $v$, vì như vậy $v$ đã có bậc $4$. Nên mọi cạnh còn lại đều đi từ [[a5|$w$]] sang $a, b, c$ — nhiều nhất $3$ cạnh. Tổng cộng $3 + 3 = 6$."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "v-w"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v-v",
+                "type": "vertex",
+                "label": "v",
+                "pos": [-8, -6]
+              },
+              {
+                "id": "v-a",
+                "type": "vertex",
+                "label": "a",
+                "pos": [8, -10]
+              },
+              {
+                "id": "v-b",
+                "type": "vertex",
+                "label": "b",
+                "pos": [8, 0]
+              },
+              {
+                "id": "v-c",
+                "type": "vertex",
+                "label": "c",
+                "pos": [8, 10]
+              },
+              {
+                "id": "v-w",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "w",
+                "pos": [-8, 6]
+              },
+              {
+                "id": "e-va",
+                "type": "edge",
+                "u": "v-v",
+                "v": "v-a"
+              },
+              {
+                "id": "e-vb",
+                "type": "edge",
+                "u": "v-v",
+                "v": "v-b"
+              },
+              {
+                "id": "e-vc",
+                "type": "edge",
+                "u": "v-v",
+                "v": "v-c"
+              },
+              {
+                "id": "e-wa",
+                "type": "edge",
+                "u": "v-w",
+                "v": "v-a"
+              },
+              {
+                "id": "e-wb",
+                "type": "edge",
+                "u": "v-w",
+                "v": "v-b"
+              },
+              {
+                "id": "e-wc",
+                "type": "edge",
+                "u": "v-w",
+                "v": "v-c"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đỉnh w được làm nổi với ba cạnh của nó sang a, b, c."
+          },
+          "verified": false
+        },
+        {
+          "id": "m2",
+          "parent": "s4",
+          "edge_type": "merge_ref",
+          "merge_target": "s6",
+          "narrative": {
+            "vi": "$6 \\le 6$ — nhánh này xong, và đây chính là hình ở bước đầu."
+          },
+          "verified": false
+        },
+        {
+          "id": "s5",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 3: $\\Delta \\le 2$"
+          },
+          "narrative": {
+            "vi": "Mọi đỉnh có bậc $\\le 2$ nên tổng bậc $\\le 10$, tức [[a6|số cạnh]] $\\le 5$."
+          },
+          "anchors": {
+            "a6": {
+              "ids": [
+                "e-va",
+                "e-ab",
+                "e-bc",
+                "e-cw",
+                "e-wv"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v-v",
+                "type": "vertex",
+                "label": "v",
+                "pos": [-8, -6]
+              },
+              {
+                "id": "v-a",
+                "type": "vertex",
+                "label": "a",
+                "pos": [8, -10]
+              },
+              {
+                "id": "v-b",
+                "type": "vertex",
+                "label": "b",
+                "pos": [8, 0]
+              },
+              {
+                "id": "v-c",
+                "type": "vertex",
+                "label": "c",
+                "pos": [8, 10]
+              },
+              {
+                "id": "v-w",
+                "type": "vertex",
+                "label": "w",
+                "pos": [-8, 6]
+              },
+              {
+                "id": "e-va",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-v",
+                "v": "v-a"
+              },
+              {
+                "id": "e-ab",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-a",
+                "v": "v-b"
+              },
+              {
+                "id": "e-bc",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-b",
+                "v": "v-c"
+              },
+              {
+                "id": "e-cw",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-c",
+                "v": "v-w"
+              },
+              {
+                "id": "e-wv",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-w",
+                "v": "v-v"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Chu trình năm đỉnh: mọi bậc bằng 2, tổng cộng năm cạnh."
+          },
+          "verified": false
+        },
+        {
+          "id": "s6",
+          "parent": "s5",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ba trường hợp cho $4$, $6$ và $5$ cạnh, nên [[a7|số cạnh]] không vượt quá $6$. Trường hợp 2 đạt đúng $6$, nên chặn này là chặt."
+          },
+          "anchors": {
+            "a7": {
+              "ids": [
+                "e-va",
+                "e-vb",
+                "e-vc",
+                "e-wa",
+                "e-wb",
+                "e-wc"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v-v",
+                "type": "vertex",
+                "label": "v",
+                "pos": [-8, -6]
+              },
+              {
+                "id": "v-a",
+                "type": "vertex",
+                "label": "a",
+                "pos": [8, -10]
+              },
+              {
+                "id": "v-b",
+                "type": "vertex",
+                "label": "b",
+                "pos": [8, 0]
+              },
+              {
+                "id": "v-c",
+                "type": "vertex",
+                "label": "c",
+                "pos": [8, 10]
+              },
+              {
+                "id": "v-w",
+                "type": "vertex",
+                "label": "w",
+                "pos": [-8, 6]
+              },
+              {
+                "id": "e-va",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-v",
+                "v": "v-a"
+              },
+              {
+                "id": "e-vb",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-v",
+                "v": "v-b"
+              },
+              {
+                "id": "e-vc",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-v",
+                "v": "v-c"
+              },
+              {
+                "id": "e-wa",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-w",
+                "v": "v-a"
+              },
+              {
+                "id": "e-wb",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-w",
+                "v": "v-b"
+              },
+              {
+                "id": "e-wc",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v-w",
+                "v": "v-c"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Trở lại đồ thị hai phía 2–3 — hình đạt đúng sáu cạnh."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "m == 6",
+    "validators": [
+      "simple-graph",
+      "triangle-free"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol-xet-bac-lon-nhat",
+    "step_id": "s0"
+  }
+}

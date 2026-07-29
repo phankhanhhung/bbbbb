@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+coverage/
+
+# Playwright
+test-results/
+playwright-report/
+
+# Sinh lúc build, không commit
+packages/content/.index/
+packages/content/index.json
+packages/content/og/
+schema.json
+
+.DS_Store
+.env
+.env.local

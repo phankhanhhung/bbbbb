@@ -1,0 +1,112 @@
+import type { Scene, SceneElement } from '@combviz/schema';
+
+/** Khoảng cách đỉnh chuẩn, theo quy ước đơn vị scene ở `StrokeTokens`. */
+export const SPACING = 10;
+export const VERTEX_RADIUS = 2.3;
+
+export interface Vertex {
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
+  readonly label: string | undefined;
+  readonly colorClass: number;
+  readonly shape: string;
+  readonly emphasis: string | undefined;
+}
+
+export interface Edge {
+  readonly id: string;
+  readonly u: string;
+  readonly v: string;
+  readonly directed: boolean;
+  readonly multiIndex: number;
+  readonly colorClass: number;
+  readonly weight: number | undefined;
+  readonly label: string | undefined;
+  readonly style: string;
+  readonly emphasis: string | undefined;
+}
+
+/**
+ * Cấu trúc kề, dựng một lần cho mỗi scene.
+ *
+ * Cạnh **song song và khuyên đều được giữ** (§5.1): một số bài đếm dựa hẳn vào
+ * chúng. Vì vậy `neighbours` là danh sách chứ không phải tập hợp, và bậc đỉnh
+ * tính khuyên **hai lần** — đó là định nghĩa chuẩn, và nó là thứ làm bổ đề bắt
+ * tay đúng.
+ */
+export interface GraphModel {
+  readonly vertices: readonly Vertex[];
+  readonly edges: readonly Edge[];
+  readonly byId: ReadonlyMap<string, Vertex>;
+  /** Danh sách (đỉnh kề, id cạnh) cho mỗi đỉnh; cạnh song song xuất hiện nhiều lần. */
+  readonly adjacency: ReadonlyMap<string, readonly { to: string; edge: string }[]>;
+  readonly degree: ReadonlyMap<string, number>;
+}
+
+export function buildGraph(scene: Scene): GraphModel {
+  const vertices: Vertex[] = [];
+  const edges: Edge[] = [];
+
+  for (const element of scene.elements) {
+    if (element.type === 'vertex') vertices.push(toVertex(element));
+    else if (element.type === 'edge') edges.push(toEdge(element));
+  }
+
+  const byId = new Map(vertices.map((v) => [v.id, v]));
+  const adjacency = new Map<string, { to: string; edge: string }[]>();
+  const degree = new Map<string, number>();
+
+  for (const vertex of vertices) {
+    adjacency.set(vertex.id, []);
+    degree.set(vertex.id, 0);
+  }
+
+  for (const edge of edges) {
+    // Cạnh trỏ tới đỉnh không tồn tại bị bỏ qua ở đây; `validate` mới là chỗ báo
+    // lỗi đó, còn analyzer thì không được sập vì dữ liệu méo.
+    if (!byId.has(edge.u) || !byId.has(edge.v)) continue;
+
+    adjacency.get(edge.u)?.push({ to: edge.v, edge: edge.id });
+    degree.set(edge.u, (degree.get(edge.u) ?? 0) + 1);
+
+    if (edge.u === edge.v) {
+      // Khuyên đóng góp 2 vào bậc, nhưng chỉ là **một** mục kề — nếu ghi hai mục,
+      // thuật toán Euler sẽ đi qua nó hai lần.
+      degree.set(edge.u, (degree.get(edge.u) ?? 0) + 1);
+    } else {
+      adjacency.get(edge.v)?.push({ to: edge.u, edge: edge.id });
+      degree.set(edge.v, (degree.get(edge.v) ?? 0) + 1);
+    }
+  }
+
+  return { vertices, edges, byId, adjacency, degree };
+}
+
+function toVertex(element: SceneElement): Vertex {
+  const pos = (element['pos'] as [number, number] | undefined) ?? [0, 0];
+  return {
+    id: element.id,
+    x: pos[0],
+    y: pos[1],
+    label: element['label'] as string | undefined,
+    colorClass: Number(element.color_class ?? 0),
+    shape: String(element['shape'] ?? 'circle'),
+    emphasis: element.emphasis,
+  };
+}
+
+function toEdge(element: SceneElement): Edge {
+  return {
+    id: element.id,
+    u: String(element['u']),
+    v: String(element['v']),
+    directed: Boolean(element['directed']),
+    multiIndex: Number(element['multi_index'] ?? 0),
+    colorClass: Number(element.color_class ?? 0),
+    weight: element['weight'] as number | undefined,
+    label: element['label'] as string | undefined,
+    style: String(element['style'] ?? 'solid'),
+    emphasis: element.emphasis,
+  };
+}

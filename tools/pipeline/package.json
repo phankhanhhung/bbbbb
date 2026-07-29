@@ -1,0 +1,20 @@
+{
+  "name": "@combviz/pipeline",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "combviz": "./src/cli.ts"
+  },
+  "dependencies": {
+    "@combviz/engine-board": "workspace:*",
+    "@combviz/schema": "workspace:*",
+    "yaml": "^2.6.1",
+    "@combviz/render": "workspace:*",
+    "@combviz/theme": "workspace:*",
+    "@combviz/dsl": "workspace:*",
+    "@combviz/engine-graph": "workspace:*",
+    "@combviz/check": "workspace:*",
+    "@resvg/resvg-js": "^2.6.2"
+  }
+}

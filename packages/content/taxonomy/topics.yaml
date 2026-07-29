@@ -1,0 +1,34 @@
+# Controlled vocabulary cho `topics[]` (CMS-01).
+#
+# Không tag tự do: tag mọc tự phát là cách nhanh nhất để filter của CMS-02 trở
+# nên vô dụng. Thêm topic mới là một quyết định có chủ đích — sửa file này,
+# commit riêng, và rà lại xem bài cũ có nên gắn thêm không.
+
+topics:
+  - id: tiling
+    label:
+      vi: Phủ hình
+  - id: coloring
+    label:
+      vi: Tô màu
+  - id: pieces
+    label:
+      vi: Quân cờ
+  - id: graph-basics
+    label:
+      vi: Đồ thị cơ bản
+  - id: graph-coloring
+    label:
+      vi: Tô màu đồ thị
+  - id: matching
+    label:
+      vi: Ghép cặp
+  - id: counting
+    label:
+      vi: Đếm
+  - id: games
+    label:
+      vi: Trò chơi
+  - id: sequences
+    label:
+      vi: Dãy và thao tác lặp

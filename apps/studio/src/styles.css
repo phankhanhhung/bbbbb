@@ -1,0 +1,158 @@
+/*
+ * Studio: mật độ cao, tối ưu throughput.
+ *
+ * Ngược hẳn với Player — ở đó canvas là nhân vật chính và chrome tối giản. Ở đây
+ * người dùng là một power user đã thuộc công cụ, và thứ họ cần là **thấy nhiều
+ * thứ cùng lúc**: hình, văn bản, danh sách lỗi và bảng duyệt, không phải cuộn qua
+ * lại giữa chúng.
+ */
+
+:root {
+  --ink: #1a1a17;
+  --ink-soft: #6a6a62;
+  --paper: #fdfdfc;
+  --line: #e2e2dc;
+  --accent: #0072b2;
+  --bad: #a50e0e;
+  --ok: #137333;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  background: #f4f4f1;
+}
+
+.empty {
+  max-width: 34rem;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.studio { height: 100vh; display: flex; flex-direction: column; }
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.grow { flex: 1; }
+.filename { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+button {
+  min-height: 32px;
+  padding: 0 0.6rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:disabled { opacity: 0.45; cursor: default; }
+button.primary { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+button.danger { border-color: var(--bad); color: var(--bad); }
+
+.studio__body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 24rem;
+  gap: 1px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.pane { background: var(--paper); padding: 0.75rem; overflow: auto; }
+
+.frame { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+/* AUT-05: đúng tỉ lệ iPad ngang, để thấy narrative bị đẩy đi đâu. */
+.frame--ipad { max-width: 1024px; aspect-ratio: 1024 / 768; }
+.frame svg { display: block; width: 100%; height: auto; }
+
+.toggle { display: flex; align-items: center; gap: 0.4rem; margin: 0.5rem 0; color: var(--ink-soft); }
+
+h2 { font-size: 0.95rem; margin: 0 0 0.5rem; }
+h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); margin: 1rem 0 0.4rem; }
+
+.count { font-weight: 400; color: var(--ink-soft); }
+.count--bad { color: var(--bad); }
+.count--ok { color: var(--ok); }
+
+.hint { color: var(--ink-soft); margin: 0.25rem 0 0.75rem; }
+.error { color: var(--bad); }
+
+.field { display: block; margin-bottom: 0.6rem; }
+.field span { display: block; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 0.2rem; }
+.field textarea, .field input {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+.field textarea { font-family: ui-monospace, monospace; resize: vertical; }
+
+.ops { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.75rem 0; }
+
+.steps, .chips { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.step, .chip {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.78rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  cursor: pointer;
+}
+.step--on, .chip--on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.step--ok::after { content: ' ✓'; color: var(--ok); }
+
+.chip--draft { background: #f1f1ee; color: var(--ink-soft); }
+.chip--published { background: #e6f4ea; color: var(--ok); }
+
+.panel { margin-bottom: 1.25rem; }
+
+.issues { list-style: none; margin: 0; padding: 0; }
+.issue { padding: 0.4rem 0; border-bottom: 1px solid var(--line); }
+.issue__jump {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 0;
+  min-height: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.issue--error .issue__jump { color: var(--bad); }
+.issue__meta, .issue__hint { margin: 0.15rem 0 0; font-size: 0.75rem; color: var(--ink-soft); }
+
+.review { list-style: none; margin: 0 0 0.75rem; padding: 0; max-height: 18rem; overflow: auto; }
+.review__row { display: flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0; }
+.review__row.is-current { background: #eaf4fb; }
+.review__label {
+  flex: 1;
+  display: flex;
+  gap: 0.5rem;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 0.1rem 0;
+  min-height: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.review__id { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.review__text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

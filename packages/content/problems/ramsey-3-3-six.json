@@ -1,0 +1,1375 @@
+{
+  "schema_version": "0.1.0",
+  "id": "ramsey-3-3-six",
+  "statement": {
+    "vi": "Trong $6$ người bất kỳ, luôn tìm được $3$ người đôi một quen nhau, hoặc $3$ người đôi một không quen nhau."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Trường hợp $R(3,3)=6$; xuất hiện trong nhiều kỳ thi dưới các cách phát biểu khác nhau."
+    }
+  },
+  "topics": [
+    "graph-basics",
+    "graph-coloring"
+  ],
+  "techniques": [
+    "pigeonhole"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "hungpk"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol-dirichlet",
+      "label": {
+        "vi": "Dirichlet trên một đỉnh, rồi xét trường hợp"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Coi mỗi người là một đỉnh. Mỗi cặp nối bởi một cạnh: [[a1|màu 1 nếu quen]], màu 2 nếu lạ. Ta được $K_6$ tô hai màu."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e-12"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sáu đỉnh trên vòng tròn, nối đôi một, chưa tô màu."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Xét đỉnh $1$. Nó có [[a2|$5$ cạnh]]. Năm cạnh, hai màu — theo Dirichlet, có ít nhất $\\lceil 5/2 \\rceil = 3$ cạnh cùng màu."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-14",
+                "e-15",
+                "e-16"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm cạnh xuất phát từ đỉnh 1 được nhấn mạnh."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: ba cạnh đó màu 1"
+          },
+          "narrative": {
+            "vi": "Giả sử [[a3|ba cạnh $1\\!-\\!2$, $1\\!-\\!3$, $1\\!-\\!4$]] cùng màu 1. Xét ba cạnh giữa $2, 3, 4$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-14"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba cạnh từ đỉnh 1 tới các đỉnh 2, 3, 4 tô màu 1."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "1a: có một cạnh màu 1 giữa chúng"
+          },
+          "narrative": {
+            "vi": "Nếu cạnh $2\\!-\\!3$ màu 1 thì [[a4|$1, 2, 3$]] đôi một quen nhau — xong."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-23"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tam giác 1-2-3 toàn màu 1."
+          },
+          "expects_violation": [
+            "no-mono-triangle"
+          ],
+          "verified": true
+        },
+        {
+          "id": "m1",
+          "parent": "s3",
+          "edge_type": "merge_ref",
+          "merge_target": "s7",
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s2",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "1b: không cạnh nào giữa chúng màu 1"
+          },
+          "narrative": {
+            "vi": "Ngược lại, cả ba cạnh $2\\!-\\!3$, $2\\!-\\!4$, $3\\!-\\!4$ đều màu 2, nên [[a5|$2, 3, 4$]] đôi một không quen nhau — cũng xong."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "e-23",
+                "e-24",
+                "e-34"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tam giác 2-3-4 toàn màu 2."
+          },
+          "expects_violation": [
+            "no-mono-triangle"
+          ],
+          "verified": true
+        },
+        {
+          "id": "m2",
+          "parent": "s4",
+          "edge_type": "merge_ref",
+          "merge_target": "s7",
+          "verified": true
+        },
+        {
+          "id": "s5",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: ba cạnh đó màu 2"
+          },
+          "narrative": {
+            "vi": "Trường hợp còn lại chỉ là [[a6|đổi vai hai màu]]: ba cạnh từ đỉnh $1$ cùng màu 2."
+          },
+          "anchors": {
+            "a6": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-14"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "color_class": 2,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "color_class": 2,
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "color_class": 2,
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba cạnh từ đỉnh 1 tô màu 2."
+          },
+          "verified": true
+        },
+        {
+          "id": "s6",
+          "parent": "s5",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Lập luận y hệt: hoặc một cạnh giữa $2, 3, 4$ màu 2 cho [[a7|tam giác màu 2]], hoặc cả ba màu 1 cho tam giác màu 1."
+          },
+          "anchors": {
+            "a7": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-23"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "color_class": 2,
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tam giác 1-2-3 toàn màu 2."
+          },
+          "expects_violation": [
+            "no-mono-triangle"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s7",
+          "parent": "s6",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mọi trường hợp đều cho [[a8|một tam giác đơn sắc]]. Vậy trong $6$ người luôn có $3$ người đôi một quen hoặc đôi một lạ. $\\blacksquare$"
+          },
+          "anchors": {
+            "a8": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-23"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "color_class": 2,
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Kết luận: tam giác đơn sắc tồn tại trong mọi cách tô."
+          },
+          "expects_violation": [
+            "no-mono-triangle"
+          ],
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(edges, e => e.color_class == 0) == 0",
+    "validators": [
+      "simple-graph",
+      "no-mono-triangle"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol-dirichlet",
+    "step_id": "s3"
+  }
+}

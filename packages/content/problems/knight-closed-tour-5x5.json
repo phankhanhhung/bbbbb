@@ -1,0 +1,195 @@
+{
+  "schema_version": "0.1.0",
+  "id": "knight-closed-tour-5x5",
+  "statement": {
+    "vi": "Chứng minh quân mã không thể đi một hành trình đóng qua đủ $25$ ô của bàn $5\\times5$ — mỗi ô đúng một lần rồi về ô xuất phát."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; lập luận tô màu cổ điển cho hành trình mã."
+    }
+  },
+  "topics": [
+    "pieces",
+    "coloring"
+  ],
+  "techniques": [
+    "parity",
+    "contradiction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "count(cells, c => c.color_class == 1) - count(cells, c => c.color_class == 2)",
+      "id": "inv-chenh",
+      "label": {
+        "vi": "Số ô màu 1 − số ô màu 2"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol-to-mau",
+      "label": {
+        "vi": "Tô màu xen kẽ"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tô bàn $5\\times5$ xen kẽ như bàn cờ. [[a1|Bốn góc và ô tâm]] cùng màu 1, và đếm ra $13$ ô màu 1 so với $12$ ô màu 2."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-4",
+                "cell-4-0",
+                "cell-4-4",
+                "cell-2-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 5,
+              "rows": 5
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bàn 5×5 tô xen kẽ hai màu; bốn góc và ô giữa cùng một màu."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đặt [[a2|quân mã]] lên một ô màu 1. Mọi ô nó nhảy tới được đều là [[a3|ô màu 2]], nên mỗi nước mã luôn đổi màu ô đang đứng."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "ma"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "cell-0-1",
+                "cell-0-3",
+                "cell-1-0",
+                "cell-1-4",
+                "cell-3-0",
+                "cell-3-4",
+                "cell-4-1",
+                "cell-4-3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 5,
+              "rows": 5
+            },
+            "elements": [
+              {
+                "id": "ma",
+                "type": "piece",
+                "emphasis": "focus",
+                "kind": "knight",
+                "pos": [2, 2],
+                "show_attacks": true
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Quân mã ở ô giữa bàn 5×5, tám ô nó khống chế được đánh dấu và đều khác màu ô nó đứng."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "contradiction",
+          "narrative": {
+            "vi": "Hành trình đóng qua $25$ ô gồm đúng $25$ nước và phải về [[a4|ô xuất phát]]. Màu đổi sau mỗi nước, mà $25$ là số lẻ, nên ô cuối khác màu ô đầu — không thể trùng nó."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "cell-2-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 5,
+              "rows": 5
+            },
+            "elements": [
+              {
+                "id": "ma",
+                "type": "piece",
+                "emphasis": "focus",
+                "kind": "knight",
+                "pos": [2, 2]
+              },
+              {
+                "id": "vung-xuat-phat",
+                "type": "region",
+                "cells": [[2, 2]],
+                "label": "đầu = cuối?"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ô xuất phát của quân mã được khoanh lại, kèm câu hỏi hành trình có về được đúng ô đó không."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(pieces) >= 13",
+    "validators": [
+      "no-attacks"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol-to-mau",
+    "step_id": "s1"
+  }
+}

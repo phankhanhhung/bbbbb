@@ -1,0 +1,276 @@
+{
+  "schema_version": "0.1.0",
+  "id": "tromino-l-4x4",
+  "statement": {
+    "vi": "Bàn $4\\times4$ bỏ đi một ô bất kỳ. Chứng minh phần còn lại luôn phủ kín được bằng $5$ quân tromino chữ L."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; dạng quy nạp cổ điển của Golomb."
+    }
+  },
+  "topics": [
+    "tiling"
+  ],
+  "techniques": [
+    "induction",
+    "construction",
+    "monovariant"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "count(cells, c => !hole(c) && !covered(c))",
+      "id": "inv-trong",
+      "label": {
+        "vi": "Số ô chưa phủ"
+      },
+      "monotone": "non-increasing"
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol-chia-tu",
+      "label": {
+        "vi": "Chia bàn làm bốn"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bàn $4\\times4$ bỏ [[a1|một ô]] còn $15$ ô, và $15 = 5\\times3$. Số ô khớp với $5$ quân tromino, nên chưa có gì cản."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 4,
+              "holes": [[0, 0]],
+              "rows": 4
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bàn 4×4 khuyết ô góc trên trái."
+          },
+          "author_notes": "Draft máy — chưa duyệt. Ô khuyết vẽ ở góc; bước sau nói rõ vì sao được phép coi như vậy.",
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chia bàn thành [[a2|bốn phần $2\\times2$]]. Ô khuyết nằm trong đúng một phần; xoay bàn nếu cần, coi như nó ở phần trên trái."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "q-tl",
+                "q-tr",
+                "q-bl",
+                "q-br"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 4,
+              "holes": [[0, 0]],
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "q-tl",
+                "type": "region",
+                "cells": [[0, 0], [0, 1], [1, 0], [1, 1]]
+              },
+              {
+                "id": "q-tr",
+                "type": "region",
+                "cells": [[0, 2], [0, 3], [1, 2], [1, 3]]
+              },
+              {
+                "id": "q-bl",
+                "type": "region",
+                "cells": [[2, 0], [2, 1], [3, 0], [3, 1]]
+              },
+              {
+                "id": "q-br",
+                "type": "region",
+                "cells": [[2, 2], [2, 3], [3, 2], [3, 3]]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bàn 4×4 chia thành bốn khối 2×2, khối trên trái chứa ô khuyết."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đặt [[a3|một quân tromino ở tâm]] phủ đúng một ô của ba phần chưa khuyết. Giờ cả bốn phần đều khuyết đúng một ô."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "t-center"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 4,
+              "holes": [[0, 0]],
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "q-tl",
+                "type": "region",
+                "emphasis": "dim",
+                "cells": [[0, 0], [0, 1], [1, 0], [1, 1]]
+              },
+              {
+                "id": "q-tr",
+                "type": "region",
+                "emphasis": "dim",
+                "cells": [[0, 2], [0, 3], [1, 2], [1, 3]]
+              },
+              {
+                "id": "q-bl",
+                "type": "region",
+                "emphasis": "dim",
+                "cells": [[2, 0], [2, 1], [3, 0], [3, 1]]
+              },
+              {
+                "id": "q-br",
+                "type": "region",
+                "emphasis": "dim",
+                "cells": [[2, 2], [2, 3], [3, 2], [3, 3]]
+              },
+              {
+                "id": "t-center",
+                "type": "tile",
+                "emphasis": "focus",
+                "pos": [1, 1],
+                "rot": 180,
+                "shape": "tromino-l"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một quân tromino L đặt quanh tâm bàn, chạm vào ba khối 2×2 chưa khuyết."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một phần $2\\times2$ khuyết một ô chính là hình chữ L, nên [[a4|bốn quân còn lại]] phủ nốt. Tổng cộng $5$ quân, phủ kín $15$ ô."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "t-tl",
+                "t-tr",
+                "t-bl",
+                "t-br"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 4,
+              "holes": [[0, 0]],
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "t-center",
+                "type": "tile",
+                "pos": [1, 1],
+                "rot": 180,
+                "shape": "tromino-l"
+              },
+              {
+                "id": "t-tl",
+                "type": "tile",
+                "pos": [0, 0],
+                "rot": 180,
+                "shape": "tromino-l"
+              },
+              {
+                "id": "t-tr",
+                "type": "tile",
+                "pos": [0, 2],
+                "rot": 90,
+                "shape": "tromino-l"
+              },
+              {
+                "id": "t-bl",
+                "type": "tile",
+                "pos": [2, 0],
+                "rot": 270,
+                "shape": "tromino-l"
+              },
+              {
+                "id": "t-br",
+                "type": "tile",
+                "pos": [2, 2],
+                "rot": 180,
+                "shape": "tromino-l"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm quân tromino L phủ kín 15 ô còn lại của bàn 4×4."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(cells, c => !hole(c) && !covered(c)) == 0",
+    "validators": [
+      "tiles-no-overlap",
+      "tiles-in-bounds"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol-chia-tu",
+    "step_id": "s3"
+  }
+}

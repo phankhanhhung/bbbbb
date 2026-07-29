@@ -1,0 +1,101 @@
+# NFR-D2: CI validate **toàn kho** mỗi commit, bằng đúng bộ luật mà Studio dùng
+# (AUT-04). Kho nhỏ nên chạy cả kho rẻ hơn nhiều so với việc nghĩ cách chạy tăng
+# tiến — và chạy cả kho là thứ duy nhất bắt được anchor rot xuyên bài.
+
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint (gồm luật phụ thuộc giữa các package)
+        run: pnpm lint
+
+      - name: Unit tests + golden SVG toàn kho
+        run: pnpm test
+
+      - name: Validate toàn kho
+        run: pnpm validate
+
+      # Build là một phép kiểm riêng: typecheck xanh mà bundle vỡ là chuyện có
+      # thật (import vòng, asset thiếu, entry point sai).
+      - name: Build Player + Studio
+        run: |
+          pnpm --filter @combviz/app-player build
+          pnpm --filter @combviz/app-studio build
+
+      # Không làm CI đỏ: đây là bảng điểm content sprint, và kho **đang** thiếu
+      # bài theo đúng thiết kế. Nó có mặt ở đây để mỗi lần mở log là thấy còn
+      # thiếu gì, không phải để chặn merge.
+      - name: Bảng điểm content (chỉ để đọc)
+        run: pnpm coverage:drafts
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Cài Chromium cho Playwright
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: E2E Player (desktop + iPad)
+        run: pnpm e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-trace
+          path: test-results/
+          retention-days: 7
+
+  # Perf tách job riêng và **không làm CI đỏ**.
+  #
+  # Lý do là phương pháp đo, không phải sự dễ dãi: frame time bị vsync lượng tử
+  # hoá quanh 16.7ms, nên trên runner dùng chung — máy ảo, CPU chia sẻ, hàng xóm
+  # ồn — p95 dao động qua ngưỡng 18ms mà không đổi dòng code nào. Một gate đỏ
+  # ngẫu nhiên sẽ bị tắt trong hai tuần, và lúc đó ta mất cả phép đo lẫn niềm tin.
+  #
+  # Nên: đo, in số vào log, giữ lịch sử — và để **người** đọc xu hướng. Gate perf
+  # thật là G-A, đo tay trên iPad Gen 9, và không CI nào thay được nó.
+  perf:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - name: Ngân sách NFR-P1..P3 (một worker — xem README)
+        run: pnpm e2e:perf
