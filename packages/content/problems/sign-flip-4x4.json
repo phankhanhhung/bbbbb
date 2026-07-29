@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -148,7 +148,7 @@
             "vi": "Bảng 4×4 toàn dấu cộng, riêng một ô ở hàng thứ hai mang dấu trừ."
           },
           "author_notes": "Draft máy — chưa duyệt.",
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -248,7 +248,7 @@
           "alt_text": {
             "vi": "Sau khi đổi dấu hàng thứ hai, hàng đó có ba dấu trừ và một dấu cộng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -349,7 +349,7 @@
           "alt_text": {
             "vi": "Hàng vừa lật được làm nổi bật để đếm số ô đổi dấu."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -442,7 +442,7 @@
           "alt_text": {
             "vi": "Quay lại bảng ban đầu với đúng một dấu trừ — trạng thái đích toàn dấu cộng nằm ở lớp chẵn lẻ khác."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

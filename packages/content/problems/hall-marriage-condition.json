@@ -2,7 +2,7 @@
   "schema_version": "0.1.0",
   "id": "hall-marriage-condition",
   "statement": {
-    "vi": "Bốn người, ba việc; mỗi người chỉ làm được một số việc. Khi nào xếp được cho **mọi** người một việc riêng?"
+    "vi": "Bốn người, bốn việc; mỗi người chỉ làm được một số việc. Số người bằng số việc, nhưng vẫn có thể **không** xếp được cho mỗi người một việc riêng. Khi nào thì xếp được?"
   },
   "source": {
     "contest": "folklore",
@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -37,7 +37,7 @@
       "expr": "matching",
       "id": "inv-m",
       "label": {
-        "vi": "Cỡ ghép cặp"
+        "vi": "Ghép cặp **lớn nhất**"
       }
     },
     {
@@ -67,7 +67,7 @@
           "parent": null,
           "edge_type": "seq",
           "narrative": {
-            "vi": "Vẽ đồ thị hai phía: nối người với việc họ làm được. Xếp việc chính là tìm một [[a1|ghép cặp]] phủ hết phía người."
+            "vi": "Vẽ đồ thị hai phía: nối người với việc họ làm được. Xếp việc chính là tìm một [[a1|ghép cặp]] phủ hết phía người. Bốn người, bốn việc — nên phép đếm thô không nói được gì."
           },
           "anchors": {
             "a1": {
@@ -79,7 +79,8 @@
                 "e-l3r1",
                 "e-l3r2",
                 "e-l4r2",
-                "e-l4r3"
+                "e-l4r3",
+                "e-l4r4"
               ]
             }
           },
@@ -117,19 +118,25 @@
                 "id": "r1",
                 "type": "vertex",
                 "label": "X",
-                "pos": [12, -10]
+                "pos": [12, -15]
               },
               {
                 "id": "r2",
                 "type": "vertex",
                 "label": "Y",
-                "pos": [12, 0]
+                "pos": [12, -5]
               },
               {
                 "id": "r3",
                 "type": "vertex",
                 "label": "Z",
-                "pos": [12, 10]
+                "pos": [12, 5]
+              },
+              {
+                "id": "r4",
+                "type": "vertex",
+                "label": "T",
+                "pos": [12, 15]
               },
               {
                 "id": "e-l1r1",
@@ -178,149 +185,32 @@
                 "type": "edge",
                 "u": "l4",
                 "v": "r3"
+              },
+              {
+                "id": "e-l4r4",
+                "type": "edge",
+                "u": "l4",
+                "v": "r4"
               }
             ]
           },
           "alt_text": {
-            "vi": "Bốn người bên trái, ba việc bên phải, tám cạnh nối."
+            "vi": "Bốn người bên trái, bốn việc bên phải, chín cạnh nối."
           },
           "expects_violation": [
             "matching-saturates-left"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s1",
           "parent": "s0",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Thử tham lam: An lấy $X$, Dũng lấy $Y$. [[a2|Hai cặp]] — rồi tắc, vì Bình và Chi chỉ còn nhìn vào $X$, $Y$ đã có chủ."
+            "vi": "Thử xếp: An lấy $X$, Bình lấy $Y$, Dũng lấy $Z$. [[a2|Ba cặp]] — rồi tắc, vì Chi chỉ làm được $X$ và $Y$, mà cả hai đã có chủ."
           },
           "anchors": {
             "a2": {
-              "ids": [
-                "e-l1r1",
-                "e-l4r2"
-              ]
-            }
-          },
-          "scene": {
-            "engine": "graph",
-            "config": {
-              "show_labels": true
-            },
-            "elements": [
-              {
-                "id": "l1",
-                "type": "vertex",
-                "label": "An",
-                "pos": [-12, -15]
-              },
-              {
-                "id": "l2",
-                "type": "vertex",
-                "label": "Bình",
-                "pos": [-12, -5]
-              },
-              {
-                "id": "l3",
-                "type": "vertex",
-                "label": "Chi",
-                "pos": [-12, 5]
-              },
-              {
-                "id": "l4",
-                "type": "vertex",
-                "label": "Dũng",
-                "pos": [-12, 15]
-              },
-              {
-                "id": "r1",
-                "type": "vertex",
-                "label": "X",
-                "pos": [12, -10]
-              },
-              {
-                "id": "r2",
-                "type": "vertex",
-                "label": "Y",
-                "pos": [12, 0]
-              },
-              {
-                "id": "r3",
-                "type": "vertex",
-                "label": "Z",
-                "pos": [12, 10]
-              },
-              {
-                "id": "e-l1r1",
-                "type": "edge",
-                "color_class": 1,
-                "emphasis": "focus",
-                "u": "l1",
-                "v": "r1"
-              },
-              {
-                "id": "e-l1r2",
-                "type": "edge",
-                "u": "l1",
-                "v": "r2"
-              },
-              {
-                "id": "e-l2r1",
-                "type": "edge",
-                "u": "l2",
-                "v": "r1"
-              },
-              {
-                "id": "e-l2r2",
-                "type": "edge",
-                "u": "l2",
-                "v": "r2"
-              },
-              {
-                "id": "e-l3r1",
-                "type": "edge",
-                "u": "l3",
-                "v": "r1"
-              },
-              {
-                "id": "e-l3r2",
-                "type": "edge",
-                "u": "l3",
-                "v": "r2"
-              },
-              {
-                "id": "e-l4r2",
-                "type": "edge",
-                "color_class": 1,
-                "emphasis": "focus",
-                "u": "l4",
-                "v": "r2"
-              },
-              {
-                "id": "e-l4r3",
-                "type": "edge",
-                "u": "l4",
-                "v": "r3"
-              }
-            ]
-          },
-          "alt_text": {
-            "vi": "Hai cạnh được tô đậm: An–X và Dũng–Y."
-          },
-          "expects_violation": [
-            "matching-saturates-left"
-          ]
-        },
-        {
-          "id": "s2",
-          "parent": "s1",
-          "edge_type": "seq",
-          "narrative": {
-            "vi": "Đường tăng đẩy Dũng sang $Z$, nhường $Y$ lại. Được [[a3|ba cặp]] — và đó là tối đa."
-          },
-          "anchors": {
-            "a3": {
               "ids": [
                 "e-l1r1",
                 "e-l2r2",
@@ -362,19 +252,25 @@
                 "id": "r1",
                 "type": "vertex",
                 "label": "X",
-                "pos": [12, -10]
+                "pos": [12, -15]
               },
               {
                 "id": "r2",
                 "type": "vertex",
                 "label": "Y",
-                "pos": [12, 0]
+                "pos": [12, -5]
               },
               {
                 "id": "r3",
                 "type": "vertex",
                 "label": "Z",
-                "pos": [12, 10]
+                "pos": [12, 5]
+              },
+              {
+                "id": "r4",
+                "type": "vertex",
+                "label": "T",
+                "pos": [12, 15]
               },
               {
                 "id": "e-l1r1",
@@ -429,6 +325,12 @@
                 "emphasis": "focus",
                 "u": "l4",
                 "v": "r3"
+              },
+              {
+                "id": "e-l4r4",
+                "type": "edge",
+                "u": "l4",
+                "v": "r4"
               }
             ]
           },
@@ -437,24 +339,25 @@
           },
           "expects_violation": [
             "matching-saturates-left"
-          ]
+          ],
+          "verified": true
         },
         {
-          "id": "s3",
-          "parent": "s2",
+          "id": "s2",
+          "parent": "s1",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Chi không thể có việc, và lý do nói được thành lời: [[a4|An, Bình, Chi]] — ba người — cộng lại chỉ nhìn thấy [[a5|hai việc]] $X$ và $Y$. Ba người không nhét vừa hai việc."
+            "vi": "Đổi cách xếp cũng vô ích, và lý do nói được thành lời: [[a3|An, Bình, Chi]] — ba người — cộng lại chỉ làm được [[a4|hai việc]] $X$ và $Y$. Ba người không nhét vừa hai việc."
           },
           "anchors": {
-            "a4": {
+            "a3": {
               "ids": [
                 "l1",
                 "l2",
                 "l3"
               ]
             },
-            "a5": {
+            "a4": {
               "ids": [
                 "r1",
                 "r2"
@@ -503,7 +406,7 @@
                 "color_class": 4,
                 "emphasis": "focus",
                 "label": "X",
-                "pos": [12, -10]
+                "pos": [12, -15]
               },
               {
                 "id": "r2",
@@ -511,13 +414,19 @@
                 "color_class": 4,
                 "emphasis": "focus",
                 "label": "Y",
-                "pos": [12, 0]
+                "pos": [12, -5]
               },
               {
                 "id": "r3",
                 "type": "vertex",
                 "label": "Z",
-                "pos": [12, 10]
+                "pos": [12, 5]
+              },
+              {
+                "id": "r4",
+                "type": "vertex",
+                "label": "T",
+                "pos": [12, 15]
               },
               {
                 "id": "e-l1r1",
@@ -572,6 +481,12 @@
                 "type": "edge",
                 "u": "l4",
                 "v": "r3"
+              },
+              {
+                "id": "e-l4r4",
+                "type": "edge",
+                "u": "l4",
+                "v": "r4"
               }
             ]
           },
@@ -580,17 +495,18 @@
           },
           "expects_violation": [
             "matching-saturates-left"
-          ]
+          ],
+          "verified": true
         },
         {
-          "id": "s4",
-          "parent": "s3",
+          "id": "s3",
+          "parent": "s2",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Đó là **điều kiện Hall**: xếp được cho mọi người khi và chỉ khi mọi tập $S$ người đều nhìn thấy ít nhất $|S|$ việc. Một tập vi phạm là đủ để kết luận [[a6|Chi]] không thể có việc."
+            "vi": "Đó là **điều kiện Hall**: xếp được cho mọi người khi và chỉ khi mọi tập $S$ người đều làm được ít nhất $|S|$ việc. Một tập vi phạm là đủ để kết luận [[a5|Chi]] không thể có việc — kể cả khi số việc không hề thiếu."
           },
           "anchors": {
-            "a6": {
+            "a5": {
               "ids": [
                 "l3"
               ]
@@ -632,19 +548,25 @@
                 "id": "r1",
                 "type": "vertex",
                 "label": "X",
-                "pos": [12, -10]
+                "pos": [12, -15]
               },
               {
                 "id": "r2",
                 "type": "vertex",
                 "label": "Y",
-                "pos": [12, 0]
+                "pos": [12, -5]
               },
               {
                 "id": "r3",
                 "type": "vertex",
                 "label": "Z",
-                "pos": [12, 10]
+                "pos": [12, 5]
+              },
+              {
+                "id": "r4",
+                "type": "vertex",
+                "label": "T",
+                "pos": [12, 15]
               },
               {
                 "id": "e-l1r1",
@@ -677,6 +599,7 @@
               {
                 "id": "e-l3r1",
                 "type": "edge",
+                "color_class": 3,
                 "u": "l3",
                 "v": "r1"
               },
@@ -699,6 +622,12 @@
                 "emphasis": "focus",
                 "u": "l4",
                 "v": "r3"
+              },
+              {
+                "id": "e-l4r4",
+                "type": "edge",
+                "u": "l4",
+                "v": "r4"
               }
             ]
           },
@@ -707,7 +636,8 @@
           },
           "expects_violation": [
             "matching-saturates-left"
-          ]
+          ],
+          "verified": true
         }
       ]
     }
@@ -719,6 +649,6 @@
   },
   "og_step_ref": {
     "sol_id": "sol",
-    "step_id": "s3"
+    "step_id": "s2"
   }
 }

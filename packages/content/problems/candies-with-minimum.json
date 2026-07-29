@@ -27,7 +27,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -92,7 +92,7 @@
           "alt_text": {
             "vi": "Bốn cột, mỗi cột một viên."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -152,7 +152,7 @@
           "alt_text": {
             "vi": "Bốn cột với số lượng khác nhau, tổng bằng 10."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -206,7 +206,7 @@
           "alt_text": {
             "vi": "Cùng hình, cột đầu được tô nổi."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

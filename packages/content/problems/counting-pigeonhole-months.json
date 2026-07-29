@@ -27,7 +27,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -169,7 +169,7 @@
           "alt_text": {
             "vi": "Mười hai ngăn rỗng, mỗi ngăn ghi số tháng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -281,7 +281,7 @@
           "alt_text": {
             "vi": "Mười hai ngăn, mỗi ngăn đúng một viên, tổng bằng 12."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -383,7 +383,7 @@
           "alt_text": {
             "vi": "Một ngăn có hai viên, tổng bằng 13."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

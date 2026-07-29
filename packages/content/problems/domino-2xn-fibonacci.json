@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -86,7 +86,7 @@
           "expects_violation": [
             "full-cover"
           ],
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -159,7 +159,7 @@
           "alt_text": {
             "vi": "Sáu quân domino dựng đứng phủ kín bàn 2×6."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -233,7 +233,7 @@
           "alt_text": {
             "vi": "Bốn quân dựng đứng và hai quân nằm ngang phủ hai cột cuối."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -306,7 +306,7 @@
           "alt_text": {
             "vi": "Cùng hình, nhấn bốn cột đầu là phần bàn còn lại."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

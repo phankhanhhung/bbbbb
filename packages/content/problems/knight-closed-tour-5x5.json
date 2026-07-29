@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -82,7 +82,7 @@
             "vi": "Bàn 5×5 tô xen kẽ hai màu; bốn góc và ô giữa cùng một màu."
           },
           "author_notes": "Draft máy — chưa duyệt.",
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -133,7 +133,7 @@
           "alt_text": {
             "vi": "Quân mã ở ô giữa bàn 5×5, tám ô nó khống chế được đánh dấu và đều khác màu ô nó đứng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -177,7 +177,7 @@
           "alt_text": {
             "vi": "Ô xuất phát của quân mã được khoanh lại, kèm câu hỏi hành trình có về được đúng ô đó không."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

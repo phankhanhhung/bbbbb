@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "illustration",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -175,7 +175,7 @@
           "alt_text": {
             "vi": "Sáu đỉnh, mỗi đỉnh một mũi tên đi ra và một mũi tên đi vào."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -304,7 +304,7 @@
           "alt_text": {
             "vi": "Ba đỉnh đầu và các mũi tên giữa chúng được làm nổi."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -431,7 +431,7 @@
           "alt_text": {
             "vi": "Chu trình hai phần tử được làm nổi, điểm bất động đứng riêng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -545,7 +545,7 @@
           "alt_text": {
             "vi": "Cả sáu đỉnh tô theo ba chu trình khác màu."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -156,7 +156,8 @@
           },
           "alt_text": {
             "vi": "Sáu đỉnh chia hai phía, sáu cạnh tạo thành một chu trình."
-          }
+          },
+          "verified": true
         },
         {
           "id": "s1",
@@ -262,7 +263,8 @@
           },
           "alt_text": {
             "vi": "Ba cạnh rời nhau được tô đậm."
-          }
+          },
+          "verified": true
         },
         {
           "id": "s2",
@@ -368,7 +370,8 @@
           },
           "alt_text": {
             "vi": "Ba đỉnh phía trái được làm nổi."
-          }
+          },
+          "verified": true
         },
         {
           "id": "s3",
@@ -480,7 +483,8 @@
           },
           "alt_text": {
             "vi": "Ghép cặp và phủ hiện cùng lúc."
-          }
+          },
+          "verified": true
         },
         {
           "id": "s4",
@@ -592,7 +596,8 @@
           },
           "alt_text": {
             "vi": "Ghép cặp ba cạnh và phủ ba đỉnh, cùng một hình."
-          }
+          },
+          "verified": true
         }
       ]
     }

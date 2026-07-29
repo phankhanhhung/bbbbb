@@ -27,7 +27,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "illustration",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -92,7 +92,7 @@
           "alt_text": {
             "vi": "Bốn ô; ô đầu ghi 4, ba ô sau còn là dấu hỏi."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -147,7 +147,7 @@
           "alt_text": {
             "vi": "Ô thứ hai ghi 3."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -206,7 +206,7 @@
           "alt_text": {
             "vi": "Bốn ô ghi 4, 3, 2, 1."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

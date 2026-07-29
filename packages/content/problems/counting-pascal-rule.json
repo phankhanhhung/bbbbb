@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -133,7 +133,7 @@
           "alt_text": {
             "vi": "Tam giác Pascal sáu hàng, các số xếp theo bậc thang."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -226,7 +226,7 @@
           "alt_text": {
             "vi": "Một ô giữa bảng được làm nổi."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -321,7 +321,7 @@
           "alt_text": {
             "vi": "Hai ô ở hàng trên được làm nổi, chúng nằm ngay trên ô đang xét."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -418,7 +418,7 @@
           "alt_text": {
             "vi": "Ba ô được làm nổi: hai ô trên và ô tổng ở dưới."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

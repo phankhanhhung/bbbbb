@@ -27,7 +27,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -92,7 +92,7 @@
           "alt_text": {
             "vi": "Bảng 5×6 gồm 30 ô trống."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -152,7 +152,7 @@
           "alt_text": {
             "vi": "Tám ô đầu được tô màu thứ ba."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -265,7 +265,7 @@
           "alt_text": {
             "vi": "Bảng chia thành ba vùng màu và một vùng trắng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -373,7 +373,7 @@
           "alt_text": {
             "vi": "Năm ô cuối vẫn trắng, ứng với năm bạn không chơi gì."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

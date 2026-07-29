@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "illustration",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -139,6 +139,7 @@
           "alt_text": {
             "vi": "Đồ thị bốn đỉnh năm cạnh, và ma trận kề của nó."
           },
+          "verified": true,
           "bijection": {
             "label_left": {
               "vi": "Đồ thị"
@@ -316,6 +317,7 @@
           "alt_text": {
             "vi": "Cạnh 1–3 được làm nổi ở cả hai cách vẽ."
           },
+          "verified": true,
           "bijection": {
             "label_left": {
               "vi": "Đồ thị"
@@ -495,6 +497,7 @@
           "alt_text": {
             "vi": "Đỉnh 1 được làm nổi; hàng của nó có tổng bằng 3."
           },
+          "verified": true,
           "bijection": {
             "label_left": {
               "vi": "Đồ thị"
@@ -676,6 +679,7 @@
           "alt_text": {
             "vi": "Ma trận với các tổng hàng 3, 2, 3, 2 và tổng chung 10."
           },
+          "verified": true,
           "bijection": {
             "label_left": {
               "vi": "Đồ thị"

@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -77,7 +77,7 @@
             "vi": "Bàn 4×4 khuyết ô góc trên trái."
           },
           "author_notes": "Draft máy — chưa duyệt. Ô khuyết vẽ ở góc; bước sau nói rõ vì sao được phép coi như vậy.",
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -129,7 +129,7 @@
           "alt_text": {
             "vi": "Bàn 4×4 chia thành bốn khối 2×2, khối trên trái chứa ô khuyết."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -190,7 +190,7 @@
           "alt_text": {
             "vi": "Một quân tromino L đặt quanh tâm bàn, chạm vào ba khối 2×2 chưa khuyết."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -257,7 +257,7 @@
           "alt_text": {
             "vi": "Năm quân tromino L phủ kín 15 ô còn lại của bàn 4×4."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

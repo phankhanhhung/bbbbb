@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "illustration",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -243,7 +243,7 @@
           "alt_text": {
             "vi": "Cây nhị phân ba tầng, mỗi cạnh ghi 'có' hoặc 'không'."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -463,7 +463,7 @@
           "alt_text": {
             "vi": "Tám lá ở tầng cuối được làm nổi."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -683,7 +683,7 @@
           "alt_text": {
             "vi": "Cùng cây, nhấn mạnh tương ứng một-một giữa lá và tập con."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

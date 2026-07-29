@@ -226,13 +226,22 @@ function checkPublishReadiness(problem: Problem): ValidationIssue[] {
     });
   }
 
-  if (!problem.sandbox) {
+  /**
+   * Bài khai `illustration` **được miễn** sandbox, đúng như `combviz coverage`
+   * đã miễn từ M9.
+   *
+   * Hai luật cùng một kho mà nói ngược nhau thì một trong hai sẽ bị bỏ qua, và
+   * luật hay bị bỏ qua nhất là luật cảnh báo về thứ tác giả **cố ý** làm. Miễn ở
+   * đây không phải cửa lách: `illustration` là tuyên bố rằng bài này không có
+   * thao tác nào có nghĩa, và ép sandbox lên nó chỉ đẻ ra đồ chơi cho đủ chỉ tiêu.
+   */
+  if (!problem.sandbox && (problem.kind ?? 'illustration') !== 'illustration') {
     issues.push({
       code: 'lint/no-sandbox',
       severity: 'warning',
       message: 'Bài published nhưng không có sandbox',
       path: '/sandbox',
-      hint: 'DoD Phase 1: 100% bài có sandbox + validator',
+      hint: 'DoD Phase 1: 100% bài có sandbox + validator; bài không có thao tác nào có nghĩa thì khai `kind: "illustration"`',
     });
   }
 

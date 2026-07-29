@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M12 xong (4 engine, phủ ~76%); kho 47 bài, chưa bài nào do chính chủ soạn** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M13 xong (4 engine, phủ ~76%); kho 47 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,34 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M13 — Duyệt kho và xuất bản 47 bài · [C] — **xong, nhưng xem phần cảnh báo**
+
+> **Ai duyệt.** Chính chủ yêu cầu tôi tự duyệt. Tôi cũng là người soạn cả 47 bài,
+> nên AUT-09 ở milestone này **không** làm được việc mà nó sinh ra để làm: cổng
+> đó tồn tại đúng để chặn nội dung LLM tự cấp chứng nhận cho mình. Cờ `verified`
+> trong git ghi tên tôi, không phải chính chủ. G-C vẫn **chưa** đóng.
+
+Duyệt thật thì có kết quả thật: **6/47 bài có lỗi**, năm trong số đó là lỗi toán
+chứ không phải lỗi chữ. Tỉ lệ 13% ấy là lập luận mạnh nhất cho việc giữ cổng.
+
+| Bài | Lỗi | Chữa |
+|---|---|---|
+| `sorting-adjacent-swaps` | Dãy $3,1,4,2$ có **3** nghịch thế, không phải $4$ — đề, lời kể và đáp số đều sai. Tệ hơn: hình nhảy từ $2$ xuống $0$, trong khi bước ngay trước vừa khẳng định mỗi bước đổi đúng $1$ | Sửa đáp số về $3$, thêm bước còn thiếu để dãy đi $3 \to 2 \to 1 \to 0$ |
+| `sperner-antichain-four` | **Khẳng định chặn trên mà không chứng minh**: chỉ kiểm $12 = 12$ trên đúng một họ, thứ không chặn được phản xích bất kỳ | Đưa vào lập luận đếm dây chuyền cực đại ($4!$ dây chuyền, mỗi tập cỡ $2$ nằm trên $4$, nên $4|A| \le 24$) — và nó vẫn là đếm hai chiều |
+| `kings-domination-8x8` | Chặn dưới **không hợp lệ**: "chia bàn làm chín vùng, mỗi vùng cần một quân" — quân vua đứng ngoài một vùng vẫn khống chế được ô trong vùng đó | Thay bằng chín ô ở hàng/cột $1,4,7$: đôi một cách nhau $\ge 3$ nên không quân nào với tới hai ô |
+| `tetromino-straight-and-square` | Mô tả **sai** thứ quân $2\times2$ phủ ("hai ô một màu, hai ô màu kia"); thực tế là $1, 2, 1, 0$. Đó đúng là bước then chốt của lời giải | Sửa lời kể. Hình vốn đã đúng — chỉ chữ sai |
+| `hall-marriage-condition` | Ví dụ $4$ người / $3$ việc **không cần tới Hall**: Dirichlet đã xong. Và bảng bất biến ghi "ghép cặp $= 3$" trong khi lời kể nói "hai cặp" | Soạn lại thành $4$ người / $4$ việc, nên phép đếm thô không kết luận được gì; đổi nhãn bất biến thành "ghép cặp **lớn nhất**" |
+| `counting-lattice-paths` | Đề nói "lưới $4\times4$ **điểm**" còn hình là bàn $4\times4$ **ô** | Sửa đề |
+
+**Bốn lỗi hạ tầng lộ ra trong lúc duyệt:**
+
+1. **`**đậm**` chưa bao giờ được render** — `renderMath` chỉ xử lý `$…$`. 46 chỗ trên 23/47 bài hiện ra dấu sao thô, kể cả ở đề bài ngoài trang kho. Sửa vòng một vẫn sai: chữ đậm **bao quanh** một công thức rơi hai dấu sao vào hai đoạn khác nhau, nên phải xử lý ở mức cả chuỗi. Escape chạy trước, `<strong>` sinh sau — nội dung vẫn là dữ liệu (NFR-S1).
+2. **Player nạp bài tĩnh, liệt kê tay hai bài.** Kho liệt kê từ `index.json` nên bật `published` cho 47 bài sẽ cho một kho đầy bài bấm vào ra trang trắng. Chuyển sang `import.meta.glob` — danh sách sinh từ thư mục nên không thể lệch. Chunk đầu trang $165$KB gzip, còn xa trần $300$KB của NFR-P3.
+3. **`lint/no-sandbox` và `combviz coverage` nói ngược nhau** về bài `illustration`: coverage miễn từ M9, lint thì không. Hai luật cùng kho mà đá nhau thì một trong hai sẽ bị bỏ qua.
+4. **Nhãn cột dài đè lên nhau** trong bảng của set engine — `{1,2,3,4}` rộng gần hai ô. Cỡ chữ nay co theo nhãn dài nhất.
+
+**Kho: 2 published → 47.** Mọi step `verified: true`.
 
 ### M12 — Hoàn tất graph engine: ghép cặp, ma trận kề, tính phẳng · [E] — **xong**
 

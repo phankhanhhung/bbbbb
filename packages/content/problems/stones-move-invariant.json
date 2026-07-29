@@ -27,7 +27,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -102,7 +102,7 @@
           "alt_text": {
             "vi": "Ba cột sỏi cao 5, 8, 11 viên, tổng 24."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -151,7 +151,7 @@
           "alt_text": {
             "vi": "Ba cột 6, 8, 10; hai cột vừa đổi được tô nổi."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -203,7 +203,7 @@
           "alt_text": {
             "vi": "Ba cột bằng nhau, mỗi cột tám viên."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

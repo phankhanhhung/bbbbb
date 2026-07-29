@@ -27,7 +27,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "illustration",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -138,7 +138,7 @@
           "alt_text": {
             "vi": "Đồ thị bốn đỉnh có một khuyên và một cặp cạnh song song."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -226,7 +226,7 @@
           "alt_text": {
             "vi": "Khuyên ở đỉnh A được tô nổi; bậc của A bằng 3."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -316,7 +316,7 @@
           "alt_text": {
             "vi": "Hai cạnh song song được tô hai màu khác nhau."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

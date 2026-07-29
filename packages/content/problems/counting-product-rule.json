@@ -27,7 +27,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -78,7 +78,7 @@
           "alt_text": {
             "vi": "Bảng ba hàng bốn cột, hàng ghi tên áo, cột ghi tên quần."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -135,7 +135,7 @@
           "alt_text": {
             "vi": "Hàng đầu của bảng được tô, gồm bốn ô."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -225,7 +225,7 @@
           "alt_text": {
             "vi": "Cả bảng được tô; tổng theo hàng và theo cột đều cho 12 ô."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

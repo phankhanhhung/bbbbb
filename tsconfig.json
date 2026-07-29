@@ -23,6 +23,7 @@
     "vitest.config.ts",
     "apps/*/src/**/*.ts",
     "apps/*/src/**/*.tsx",
+    "apps/*/src/**/*.d.ts",
     "apps/*/*.ts"
   ]
 }

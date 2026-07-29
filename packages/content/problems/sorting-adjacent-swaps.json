@@ -2,7 +2,7 @@
   "schema_version": "0.1.0",
   "id": "sorting-adjacent-swaps",
   "statement": {
-    "vi": "Cho dãy $3, 1, 4, 2$. Mỗi bước được đổi chỗ hai số **đứng cạnh nhau**. Chứng minh cần ít nhất $4$ bước để đưa dãy về thứ tự tăng dần."
+    "vi": "Cho dãy $3, 1, 4, 2$. Mỗi bước được đổi chỗ hai số **đứng cạnh nhau**. Chứng minh cần ít nhất $3$ bước để đưa dãy về thứ tự tăng dần."
   },
   "source": {
     "contest": "folklore",
@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -54,7 +54,7 @@
           "parent": null,
           "edge_type": "seq",
           "narrative": {
-            "vi": "Đếm số **cặp nghịch thế**: cặp $(i,j)$ với $i$ đứng trước $j$ mà số ở $i$ lớn hơn. Dãy [[a1|$3,1,4,2$]] có $4$ cặp như vậy."
+            "vi": "Đếm số **cặp nghịch thế**: cặp $(i,j)$ với $i$ đứng trước $j$ mà số ở $i$ lớn hơn. Dãy [[a1|$3,1,4,2$]] có $3$ cặp như vậy: $(3,1)$, $(3,2)$, $(4,2)$."
           },
           "anchors": {
             "a1": {
@@ -106,14 +106,14 @@
           "expects_violation": [
             "sorted"
           ],
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
           "parent": "s0",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Đổi chỗ [[a2|hai số cạnh nhau]] chỉ động tới đúng **một** cặp: cặp gồm chính hai số đó. Nên mỗi bước làm số nghịch thế đổi đúng $1$ đơn vị."
+            "vi": "Đổi chỗ [[a2|hai số cạnh nhau]] chỉ động tới đúng **một** cặp: cặp gồm chính hai số đó. Nên mỗi bước làm số nghịch thế đổi đúng $1$ đơn vị. Đổi $3$ với $1$: còn $2$."
           },
           "anchors": {
             "a2": {
@@ -126,7 +126,7 @@
           "scene": {
             "engine": "sequence",
             "config": {
-              "caption": "Sau một lần đổi chỗ",
+              "caption": "Sau bước 1",
               "mode": "sequence",
               "show_index": true
             },
@@ -134,14 +134,12 @@
               {
                 "id": "i0",
                 "type": "item",
-                "color_class": 3,
                 "pos": 0,
                 "value": 1
               },
               {
                 "id": "i1",
                 "type": "item",
-                "color_class": 3,
                 "pos": 1,
                 "value": 3
               },
@@ -165,17 +163,74 @@
           "expects_violation": [
             "sorted"
           ],
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
           "parent": "s1",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Dãy tăng dần có $0$ nghịch thế. Đi từ $4$ về $0$ mà [[a3|mỗi bước đổi $1$]] thì cần ít nhất $4$ bước."
+            "vi": "Đổi $4$ với $2$: [[a3|còn đúng một cặp]] nghịch thế, là $(3,2)$."
           },
           "anchors": {
             "a3": {
+              "ids": [
+                "i2",
+                "i3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Sau bước 2",
+              "mode": "sequence",
+              "show_index": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 3
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 2
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 4
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Dãy 1, 3, 2, 4 — còn một cặp nghịch thế."
+          },
+          "expects_violation": [
+            "sorted"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Dãy tăng dần có $0$ nghịch thế. Đi từ $3$ về $0$ mà [[a4|mỗi bước đổi $1$]] thì cần ít nhất $3$ bước — và ba bước ở trên đạt đúng con số đó, nên chặn này là chặt."
+          },
+          "anchors": {
+            "a4": {
               "ids": [
                 "i0",
                 "i1",
@@ -187,7 +242,7 @@
           "scene": {
             "engine": "sequence",
             "config": {
-              "caption": "Đích: 0 nghịch thế",
+              "caption": "Đã sắp xếp",
               "mode": "sequence",
               "show_index": true
             },
@@ -221,7 +276,7 @@
           "alt_text": {
             "vi": "Bốn ô ghi 1, 2, 3, 4 theo thứ tự tăng."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }
@@ -235,6 +290,6 @@
   },
   "og_step_ref": {
     "sol_id": "sol",
-    "step_id": "s0"
+    "step_id": "s3"
   }
 }

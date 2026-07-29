@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -166,7 +166,7 @@
             "vi": "Đồ thị sáu đỉnh, bảy cạnh, mỗi đỉnh ghi kèm bậc của nó."
           },
           "author_notes": "Draft máy — chưa duyệt.",
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -285,7 +285,7 @@
           "alt_text": {
             "vi": "Cả bảy cạnh được làm nổi để đếm: mỗi cạnh đóng góp hai đơn vị vào tổng bậc."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -400,7 +400,7 @@
           "alt_text": {
             "vi": "Bốn đỉnh bậc chẵn được làm nổi, hai đỉnh bậc lẻ mờ đi."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -513,7 +513,7 @@
           "alt_text": {
             "vi": "Hai đỉnh bậc lẻ được làm nổi; chúng đúng là một số chẵn đỉnh."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -160,7 +160,7 @@
             "vi": "Đồ thị hai phía 2–3 với sáu cạnh, không chứa tam giác."
           },
           "author_notes": "Draft máy — chưa duyệt.",
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -255,7 +255,7 @@
           "alt_text": {
             "vi": "Đỉnh v được làm nổi làm đỉnh có bậc lớn nhất."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -348,7 +348,7 @@
           "alt_text": {
             "vi": "Hình sao: v nối tới cả bốn đỉnh kia, giữa chúng không cạnh nào."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "m1",
@@ -358,7 +358,7 @@
           "narrative": {
             "vi": "$4 \\le 6$ — nhánh này xong."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -461,7 +461,7 @@
           "alt_text": {
             "vi": "Ba đỉnh kề v được làm nổi; giữa chúng không có cạnh."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s4",
@@ -556,7 +556,7 @@
           "alt_text": {
             "vi": "Đỉnh w được làm nổi với ba cạnh của nó sang a, b, c."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "m2",
@@ -566,7 +566,7 @@
           "narrative": {
             "vi": "$6 \\le 6$ — nhánh này xong, và đây chính là hình ở bước đầu."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s5",
@@ -666,7 +666,7 @@
           "alt_text": {
             "vi": "Chu trình năm đỉnh: mọi bậc bằng 2, tổng cộng năm cạnh."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s6",
@@ -771,7 +771,7 @@
           "alt_text": {
             "vi": "Trở lại đồ thị hai phía 2–3 — hình đạt đúng sáu cạnh."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

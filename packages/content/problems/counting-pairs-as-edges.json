@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -101,7 +101,7 @@
           "alt_text": {
             "vi": "Năm đỉnh xếp thành ngũ giác, chưa có cạnh nào."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -232,7 +232,7 @@
           "alt_text": {
             "vi": "Bốn cạnh từ đỉnh A được làm nổi."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -370,7 +370,7 @@
           "alt_text": {
             "vi": "Đủ mười cạnh của đồ thị đầy đủ năm đỉnh."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

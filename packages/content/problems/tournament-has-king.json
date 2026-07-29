@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "illustration",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -175,7 +175,7 @@
           "alt_text": {
             "vi": "Đồ thị năm đỉnh với mười cạnh có hướng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -309,7 +309,7 @@
           "alt_text": {
             "vi": "Đỉnh A được làm nổi cùng các mũi tên đi ra từ nó."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -447,7 +447,7 @@
           "alt_text": {
             "vi": "Các mũi tên từ A tới những người A thắng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -586,7 +586,7 @@
           "alt_text": {
             "vi": "Đỉnh D được làm nổi như đối thủ giả định thắng A."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s4",
@@ -720,7 +720,7 @@
           "alt_text": {
             "vi": "Đường A → C → D minh hoạ trường hợp thứ hai."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

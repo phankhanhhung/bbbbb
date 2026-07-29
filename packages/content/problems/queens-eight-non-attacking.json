@@ -27,7 +27,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -75,7 +75,7 @@
           "alt_text": {
             "vi": "Một quân hậu giữa bàn cờ, mọi ô nó khống chế được đánh dấu."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -157,7 +157,7 @@
           "alt_text": {
             "vi": "Ba quân hậu đầu tiên, mỗi quân một hàng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -243,7 +243,7 @@
           "alt_text": {
             "vi": "Tám quân hậu trên bàn cờ, mỗi hàng và mỗi cột đúng một quân."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

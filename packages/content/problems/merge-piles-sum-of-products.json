@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -125,7 +125,7 @@
           "alt_text": {
             "vi": "Sáu cột sỏi, mỗi cột một viên."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -185,7 +185,7 @@
           "alt_text": {
             "vi": "Năm cột: một cột hai viên được tô nổi và bốn cột một viên."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -221,7 +221,7 @@
           "alt_text": {
             "vi": "Một cột duy nhất gồm sáu viên."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

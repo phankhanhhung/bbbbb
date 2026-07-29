@@ -27,7 +27,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -95,7 +95,7 @@
           "expects_violation": [
             "full-cover"
           ],
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -157,7 +157,7 @@
           "expects_violation": [
             "full-cover"
           ],
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -244,7 +244,7 @@
           "alt_text": {
             "vi": "Bốn quân pentomino L phủ kín bàn 4×5."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

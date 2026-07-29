@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -86,7 +86,7 @@
           "alt_text": {
             "vi": "Quân tượng giữa bàn với toàn bộ hai đường chéo được đánh dấu."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -132,7 +132,7 @@
           "alt_text": {
             "vi": "Đường chéo của quân tượng được khoanh, mọi ô trên đó cùng một màu."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -171,7 +171,7 @@
           "alt_text": {
             "vi": "Quân tượng ở góc bàn, chỉ khống chế được các ô cùng màu với nó."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

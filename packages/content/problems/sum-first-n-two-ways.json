@@ -30,7 +30,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "illustration",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -110,7 +110,7 @@
           "alt_text": {
             "vi": "Sáu ô ghi 1 đến 6, kèm tổng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "a1",
@@ -187,7 +187,7 @@
           "alt_text": {
             "vi": "Sáu ô tô thành ba cặp màu, mỗi cặp tổng bằng 7."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "a2",
@@ -256,7 +256,7 @@
           "alt_text": {
             "vi": "Cặp ô đầu và cuối được tô nổi."
           },
-          "verified": false
+          "verified": true
         }
       ]
     },
@@ -361,7 +361,7 @@
           "alt_text": {
             "vi": "Bậc thang gồm 21 ô tô màu."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "b1",
@@ -557,7 +557,7 @@
           "alt_text": {
             "vi": "Hai bậc thang hai màu ghép thành hình chữ nhật 6×7."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "b2",
@@ -743,7 +743,7 @@
           "alt_text": {
             "vi": "Một nửa hình chữ nhật được khoanh làm nổi."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

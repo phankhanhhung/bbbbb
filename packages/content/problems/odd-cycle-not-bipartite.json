@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -134,7 +134,7 @@
           "expects_violation": [
             "bipartite"
           ],
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -234,7 +234,7 @@
           "expects_violation": [
             "bipartite"
           ],
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -333,7 +333,7 @@
           "expects_violation": [
             "bipartite"
           ],
-          "verified": false
+          "verified": true
         }
       ]
     }

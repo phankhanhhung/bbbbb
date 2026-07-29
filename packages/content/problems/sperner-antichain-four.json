@@ -2,7 +2,7 @@
   "schema_version": "0.1.0",
   "id": "sperner-antichain-four",
   "statement": {
-    "vi": "Trên tập $\\{1,2,3,4\\}$, một **phản xích** là một họ tập con đôi một không chứa nhau. Chứng minh phản xích lớn nhất có $\\binom{4}{2} = 6$ tập."
+    "vi": "Trên tập $\\{1,2,3,4\\}$, một **phản xích** là một họ tập con đôi một không chứa nhau. Chỉ ra một phản xích có $6$ tập, và chứng minh không phản xích nào đông hơn."
   },
   "source": {
     "contest": "folklore",
@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -126,7 +126,7 @@
           "expects_violation": [
             "antichain"
           ],
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -236,30 +236,238 @@
           "alt_text": {
             "vi": "Bảng incidence 4 phần tử × 6 tập, mỗi cột đúng hai ô."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
           "parent": "s1",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Còn chặn trên: đếm hai chiều trên bảng. Mỗi cột có $2$ ô nên tổng là $6 \\times 2 = 12$; [[a3|mỗi hàng]] cũng có đúng $3$ ô, cho $4 \\times 3 = 12$. Hai con số khớp."
+            "vi": "Giờ chặn trên, và bậc thang này là chìa khoá. Một **dây chuyền cực đại** là $\\emptyset \\subset \\{1\\} \\subset \\{1,2\\} \\subset \\{1,2,3\\} \\subset \\{1,2,3,4\\}$: [[a3|mỗi tập chứa tập đứng trước]]. Phản xích cấm chứa nhau, nên nó lấy được **nhiều nhất một** tập từ mỗi dây chuyền."
           },
           "anchors": {
             "a3": {
               "ids": [
-                "x0__s0",
-                "x0__s1",
-                "x0__s2",
-                "x1__s0",
-                "x1__s3",
-                "x1__s4",
-                "x2__s1",
-                "x2__s3",
-                "x2__s5",
-                "x3__s2",
-                "x3__s4",
-                "x3__s5"
+                "c0",
+                "c1",
+                "c2",
+                "c3",
+                "c4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "Một dây chuyền cực đại",
+              "show_sums": false,
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "c0",
+                "type": "set",
+                "label": "∅",
+                "order": 0
+              },
+              {
+                "id": "c1",
+                "type": "set",
+                "label": "{1}",
+                "order": 1
+              },
+              {
+                "id": "c2",
+                "type": "set",
+                "label": "{1,2}",
+                "order": 2
+              },
+              {
+                "id": "c3",
+                "type": "set",
+                "label": "{1,2,3}",
+                "order": 3
+              },
+              {
+                "id": "c4",
+                "type": "set",
+                "label": "{1,2,3,4}",
+                "order": 4
+              },
+              {
+                "id": "x0",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "c1",
+                  "c2",
+                  "c3",
+                  "c4"
+                ]
+              },
+              {
+                "id": "x1",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "c2",
+                  "c3",
+                  "c4"
+                ]
+              },
+              {
+                "id": "x2",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "c3",
+                  "c4"
+                ]
+              },
+              {
+                "id": "x3",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "c4"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng bậc thang: năm tập lồng nhau từ rỗng tới toàn tập."
+          },
+          "expects_violation": [
+            "antichain"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đếm hai chiều trên các cặp (dây chuyền, tập của phản xích nằm trên nó). Có $4! = 24$ dây chuyền, và một tập cỡ $k$ nằm trên $k!\\,(4-k)!$ dây chuyền — nhỏ nhất tại $k=2$, bằng $4$. Mỗi dây chuyền góp nhiều nhất $1$ cặp, nên [[a4|$4\\,|A| \\le 24$]], tức $|A| \\le 6$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "s0",
+                "s1",
+                "s2",
+                "s3",
+                "s4",
+                "s5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "4·|A| ≤ 24 ⇒ |A| ≤ 6",
+              "show_sums": true,
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "s0",
+                "type": "set",
+                "label": "{1,2}",
+                "order": 0
+              },
+              {
+                "id": "s1",
+                "type": "set",
+                "label": "{1,3}",
+                "order": 1
+              },
+              {
+                "id": "s2",
+                "type": "set",
+                "label": "{1,4}",
+                "order": 2
+              },
+              {
+                "id": "s3",
+                "type": "set",
+                "label": "{2,3}",
+                "order": 3
+              },
+              {
+                "id": "s4",
+                "type": "set",
+                "label": "{2,4}",
+                "order": 4
+              },
+              {
+                "id": "s5",
+                "type": "set",
+                "label": "{3,4}",
+                "order": 5
+              },
+              {
+                "id": "x0",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "s0",
+                  "s1",
+                  "s2"
+                ]
+              },
+              {
+                "id": "x1",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "s0",
+                  "s3",
+                  "s4"
+                ]
+              },
+              {
+                "id": "x2",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "s1",
+                  "s3",
+                  "s5"
+                ]
+              },
+              {
+                "id": "x3",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "s2",
+                  "s4",
+                  "s5"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng sáu tập con cỡ hai với tổng hàng và tổng cột."
+          },
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chặn đạt được: [[a5|sáu tập cỡ $2$]] ở trên là một phản xích $6$ tập, và $6 \\cdot 4 = 24$ — chúng dùng trọn **mọi** dây chuyền, mỗi dây chuyền đúng một lần. Vậy $6$ là lớn nhất."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "s0",
+                "s1",
+                "s2",
+                "s3",
+                "s4",
+                "s5"
               ]
             }
           },
@@ -352,7 +560,7 @@
           "alt_text": {
             "vi": "Cùng bảng, kèm tổng theo hàng (đều 3) và theo cột (đều 2), tổng chung 12."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }
@@ -366,6 +574,6 @@
   },
   "og_step_ref": {
     "sol_id": "sol",
-    "step_id": "s1"
+    "step_id": "s4"
   }
 }

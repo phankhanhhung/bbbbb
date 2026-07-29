@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -153,7 +153,7 @@
             "vi": "Mười cột sỏi cao dần từ 1 đến 10, kèm tổng bằng 55."
           },
           "author_notes": "Draft máy — chưa duyệt.",
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -238,7 +238,7 @@
           "alt_text": {
             "vi": "Còn chín cột; cột mới mang giá trị 5 được làm nổi, tổng bằng 49."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -322,7 +322,7 @@
           "alt_text": {
             "vi": "Cùng chín cột, cột kết quả được tô màu để nhấn phép thay thế."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -359,7 +359,7 @@
           "alt_text": {
             "vi": "Một cột duy nhất mang giá trị lẻ; tổng bằng chính nó."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

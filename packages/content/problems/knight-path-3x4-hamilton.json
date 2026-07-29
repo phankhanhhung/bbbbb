@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "illustration",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -77,7 +77,7 @@
           "alt_text": {
             "vi": "Bàn 3×4 với một quân mã ở góc và các ô nó nhảy tới được."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -285,7 +285,7 @@
           "alt_text": {
             "vi": "Đồ thị 12 đỉnh vuông, cạnh nối các ô mà mã nhảy được."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -517,7 +517,7 @@
           "alt_text": {
             "vi": "Đường Hamilton được tô đậm, các đỉnh đánh số từ 1 đến 12."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

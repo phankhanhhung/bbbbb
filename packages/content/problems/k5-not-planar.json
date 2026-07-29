@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -147,7 +147,8 @@
           },
           "alt_text": {
             "vi": "Bốn đỉnh: một tam giác và một đỉnh ở giữa, sáu cạnh không cắt nhau."
-          }
+          },
+          "verified": true
         },
         {
           "id": "s1",
@@ -276,7 +277,8 @@
           },
           "expects_violation": [
             "plane-drawing"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s2",
@@ -404,7 +406,8 @@
           },
           "expects_violation": [
             "plane-drawing"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s3",
@@ -538,7 +541,8 @@
           },
           "expects_violation": [
             "plane-drawing"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s4",
@@ -687,7 +691,8 @@
           },
           "expects_violation": [
             "plane-drawing"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

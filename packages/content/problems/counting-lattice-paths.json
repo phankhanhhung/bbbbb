@@ -2,7 +2,7 @@
   "schema_version": "0.1.0",
   "id": "counting-lattice-paths",
   "statement": {
-    "vi": "Trên lưới $4\\times4$ điểm, đi từ ô góc trên trái tới ô góc dưới phải, mỗi bước chỉ được sang phải hoặc xuống dưới. Hỏi có bao nhiêu đường đi?"
+    "vi": "Trên bàn $4\\times4$ ô, đi từ ô góc trên trái tới ô góc dưới phải, mỗi bước chỉ được sang phải hoặc xuống dưới một ô. Hỏi có bao nhiêu đường đi?"
   },
   "source": {
     "contest": "folklore",
@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -127,7 +127,7 @@
           "alt_text": {
             "vi": "Bảng 4×4; hàng đầu và cột đầu đều ghi số 1."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -213,7 +213,7 @@
           "alt_text": {
             "vi": "Một ô giữa bảng và hai ô kề trước nó được làm nổi."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -291,7 +291,7 @@
           "alt_text": {
             "vi": "Ô góc dưới phải ghi số 20 và được làm nổi."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

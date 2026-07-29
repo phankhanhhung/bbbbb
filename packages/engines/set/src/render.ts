@@ -129,9 +129,26 @@ function renderMatrix(
 ): SvgNode[] {
   const nodes: SvgNode[] = [];
 
+  // Cỡ chữ nhãn cột co theo nhãn **dài nhất**, không cố định.
+  //
+  // Nhãn cột căn giữa ô rộng đúng một CELL, nên một nhãn như `{1,2,3,4}` tràn
+  // sang cả hai ô bên cạnh và ba nhãn liền nhau chồng thành một vệt không đọc
+  // được. Sàn 0.16 để nhãn dài bất thường thì nhỏ nhưng vẫn còn là chữ.
+  const longest = Math.max(1, ...derived.sets.map((s) => (s.label ?? '').length));
+  const colFont = Math.max(CELL * 0.16, Math.min(CELL * 0.36, (CELL * 0.95) / (0.55 * longest)));
+
   derived.sets.forEach((set, c) => {
     nodes.push(
-      label(`set-label-${set.id}`, c * CELL + CELL / 2, -CELL * 0.35, set.label, 'middle', ctx),
+      label(
+        `set-label-${set.id}`,
+        c * CELL + CELL / 2,
+        -CELL * 0.35,
+        set.label,
+        'middle',
+        ctx,
+        false,
+        colFont,
+      ),
     );
   });
 
@@ -348,6 +365,7 @@ function label(
   anchor: string,
   ctx: RenderContext,
   strong = false,
+  fontSize?: number,
 ): SvgNode {
   return {
     ...text(
@@ -358,7 +376,7 @@ function label(
         'text-anchor': anchor,
         'dominant-baseline': 'central',
         'font-family': ctx.theme.type.uiFamily,
-        'font-size': CELL * (strong ? 0.42 : 0.36),
+        'font-size': fontSize ?? CELL * (strong ? 0.42 : 0.36),
         'font-weight': strong ? 600 : 400,
         fill: strong ? ctx.theme.object.pieceGlyph : ctx.theme.surface.guide,
       },

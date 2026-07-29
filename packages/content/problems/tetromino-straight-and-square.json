@@ -29,7 +29,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -93,7 +93,7 @@
           "alt_text": {
             "vi": "Bàn 8×8 tô bốn màu thành các dải chéo."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -143,14 +143,14 @@
           "alt_text": {
             "vi": "Hai quân tetromino thẳng, một nằm ngang một nằm dọc, mỗi quân chạm bốn màu khác nhau."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
           "parent": "s1",
           "edge_type": "seq",
           "narrative": {
-            "vi": "[[a3|Quân vuông $2\\times2$]] thì không: nó luôn phủ hai ô của một màu và hai ô của màu kia, bỏ sót hai màu còn lại."
+            "vi": "[[a3|Quân vuông $2\\times2$]] thì không. Nó phủ **một** ô màu $a$, **hai** ô màu $a+1$, **một** ô màu $a+2$ — và **không** ô nào màu $a+3$, dù đặt ở đâu."
           },
           "anchors": {
             "a3": {
@@ -184,14 +184,14 @@
           "alt_text": {
             "vi": "Một quân tetromino vuông phủ hai ô cùng màu."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
           "parent": "s2",
           "edge_type": "contradiction",
           "narrative": {
-            "vi": "Nếu phủ được thì $15$ quân thẳng dùng hết $15$ ô mỗi màu, còn [[a4|quân vuông]] phải bù đúng một ô mỗi màu — mà nó không làm được. Mâu thuẫn."
+            "vi": "Nếu phủ được thì $15$ quân thẳng dùng đúng $15$ ô mỗi màu, nên [[a4|quân vuông]] phải bù đúng $1$ ô mỗi màu để lấp nốt $16$. Mà nó luôn bỏ trắng một màu. Mâu thuẫn."
           },
           "anchors": {
             "a4": {
@@ -239,7 +239,7 @@
           "alt_text": {
             "vi": "Quân vuông cùng vài quân thẳng trên bàn tô bốn màu chéo."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

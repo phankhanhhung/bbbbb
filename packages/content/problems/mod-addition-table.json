@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "illustration",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -166,7 +166,7 @@
           "alt_text": {
             "vi": "Bảng cộng modulo 5 với các ô giá trị 0 được tô."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -309,7 +309,7 @@
           "alt_text": {
             "vi": "Một hàng của bảng được khoanh; các giá trị trong hàng là 2, 3, 4, 0, 1."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -439,7 +439,7 @@
           "alt_text": {
             "vi": "Bảng đầy đủ kèm tổng theo hàng và theo cột, mỗi tổng bằng 1."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

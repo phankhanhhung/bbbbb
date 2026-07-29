@@ -27,7 +27,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "illustration",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -119,7 +119,7 @@
           "alt_text": {
             "vi": "Bảy ngôi sao xếp thành một hàng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -207,7 +207,7 @@
           "alt_text": {
             "vi": "Hàng bảy ngôi sao bị hai vạch đứt chia thành ba đoạn 3, 2, 2."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -295,7 +295,7 @@
           "alt_text": {
             "vi": "Hai vạch đứt đứng sát nhau, đoạn giữa rỗng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -388,7 +388,7 @@
           "alt_text": {
             "vi": "Hàng bảy ngôi sao với hai vạch ở vị trí khác."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

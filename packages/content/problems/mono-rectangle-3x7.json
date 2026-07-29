@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "illustration",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -138,7 +138,7 @@
           "alt_text": {
             "vi": "Lưới 3×7 đã tô hai màu, cột đầu được khoanh."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -278,7 +278,7 @@
           "alt_text": {
             "vi": "Sáu cột đầu, mỗi cột được khoanh riêng."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -388,7 +388,7 @@
           "alt_text": {
             "vi": "Hai cột cùng loại được làm nổi."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -491,7 +491,7 @@
           "alt_text": {
             "vi": "Bốn ô góc của một hình chữ nhật được khoanh, cả bốn cùng màu."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }

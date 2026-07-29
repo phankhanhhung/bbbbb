@@ -28,7 +28,7 @@
   "authors": [
     "draft-may"
   ],
-  "status": "draft",
+  "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
@@ -73,7 +73,7 @@
           "alt_text": {
             "vi": "Một quân xe với hàng và cột nó khống chế được đánh dấu."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s1",
@@ -109,7 +109,7 @@
           "alt_text": {
             "vi": "Quân xe ở hàng đầu, cột thứ ba."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s2",
@@ -151,7 +151,7 @@
           "alt_text": {
             "vi": "Hai quân xe, quân thứ hai ở cột khác cột quân thứ nhất."
           },
-          "verified": false
+          "verified": true
         },
         {
           "id": "s3",
@@ -206,7 +206,7 @@
           "alt_text": {
             "vi": "Bốn quân xe, mỗi hàng và mỗi cột đúng một quân."
           },
-          "verified": false
+          "verified": true
         }
       ]
     }
