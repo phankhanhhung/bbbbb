@@ -63,6 +63,30 @@ export const BoardConfig = Type.Object(
     /** Ô khuyết: bàn cờ bỏ góc, bàn hình chữ L... */
     holes: Type.Optional(Type.Array(Coord)),
     coloring_preset: Type.Optional(ColoringPreset),
+    /**
+     * PRN-03 — biến bàn thành **bảng có nhãn và tổng**.
+     *
+     * Đếm hai chiều là kỹ thuật nền của gần như mọi bài đếm, và hình của nó luôn
+     * là cùng một thứ: một bảng, đếm theo hàng, đếm theo cột, hai con số bằng
+     * nhau. Cái bảng đó khác bàn cờ đúng ba chi tiết — nhãn hàng, nhãn cột, và
+     * dòng tổng — nên nó là **tuỳ chọn của board engine**, không phải engine mới.
+     *
+     * `show_sums` đếm số ô **đã tô** trong mỗi hàng/cột. Đó là phép đếm mà bảng
+     * incidence cần: ô tô = "có quan hệ". Bảng chứa số (tam giác Pascal, bảng
+     * quy hoạch động) thì đơn giản là không bật nó.
+     */
+    table: Type.Optional(
+      Type.Object(
+        {
+          row_labels: Type.Optional(Type.Array(Type.String({ maxLength: 10 }))),
+          col_labels: Type.Optional(Type.Array(Type.String({ maxLength: 10 }))),
+          show_sums: Type.Optional(Type.Boolean({ default: false })),
+          /** Nhãn cho dòng/cột tổng. Mặc định "Σ". */
+          sum_label: Type.Optional(Type.String({ maxLength: 10 })),
+        },
+        { additionalProperties: false },
+      ),
+    ),
     /** Tô tay đè lên preset. Khoá là id ô: `cell-<r>-<c>`. */
     cell_overrides: Type.Optional(
       Type.Record(

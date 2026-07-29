@@ -93,7 +93,11 @@ export function viewportOf(scene: Scene): Viewport {
   const captionRoom = config.caption ? SLOT * 0.8 : 0;
 
   if (derived.mode === 'piles') {
-    const stones = Math.max(1, drawnStones(derived.tallest));
+    // Sàn chiều cao, cùng lý do với sàn bề rộng: mười hai ngăn mỗi ngăn một viên
+    // cho ra một khung dài ngoẵng và dẹt lét, trình duyệt fit theo bề rộng, và
+    // cả hình co lại thành một sợi chỉ không đọc được. Bốn viên là chỗ cân: đủ
+    // để mười hai ngăn còn ra hình cột, chưa tới mức chừa một khoảng trống to.
+    const stones = Math.max(4, drawnStones(derived.tallest));
     const top = -(stones * STONE_PITCH + STONE_R * 2) - captionRoom - PADDING;
     // Chân cột ở y = 0, con số ở y ≈ 0.55·SLOT ⇒ mép dưới phải qua khỏi nó.
     const bottom = SLOT * 0.95 + PADDING;

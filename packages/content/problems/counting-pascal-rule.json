@@ -1,0 +1,434 @@
+{
+  "schema_version": "0.1.0",
+  "id": "counting-pascal-rule",
+  "statement": {
+    "vi": "Chứng minh hằng đẳng thức $\\binom{n}{k} = \\binom{n-1}{k-1} + \\binom{n-1}{k}$ bằng cách đếm."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; đếm cơ bản."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "double-counting",
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Viết các số $\\binom{n}{k}$ thành một bảng: [[a1|hàng $n$]] chứa mọi $\\binom{n}{k}$ với $k$ chạy từ $0$ tới $n$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-4-0",
+                "cell-4-1",
+                "cell-4-2",
+                "cell-4-3",
+                "cell-4-4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "glyph": "1"
+                },
+                "cell-1-0": {
+                  "glyph": "1"
+                },
+                "cell-1-1": {
+                  "glyph": "1"
+                },
+                "cell-2-0": {
+                  "glyph": "1"
+                },
+                "cell-2-1": {
+                  "glyph": "2"
+                },
+                "cell-2-2": {
+                  "glyph": "1"
+                },
+                "cell-3-0": {
+                  "glyph": "1"
+                },
+                "cell-3-1": {
+                  "glyph": "3"
+                },
+                "cell-3-2": {
+                  "glyph": "3"
+                },
+                "cell-3-3": {
+                  "glyph": "1"
+                },
+                "cell-4-0": {
+                  "glyph": "1"
+                },
+                "cell-4-1": {
+                  "glyph": "4"
+                },
+                "cell-4-2": {
+                  "glyph": "6"
+                },
+                "cell-4-3": {
+                  "glyph": "4"
+                },
+                "cell-4-4": {
+                  "glyph": "1"
+                },
+                "cell-5-0": {
+                  "glyph": "1"
+                },
+                "cell-5-1": {
+                  "glyph": "5"
+                },
+                "cell-5-2": {
+                  "glyph": "10"
+                },
+                "cell-5-3": {
+                  "glyph": "10"
+                },
+                "cell-5-4": {
+                  "glyph": "5"
+                },
+                "cell-5-5": {
+                  "glyph": "1"
+                }
+              },
+              "cols": 6,
+              "rows": 6
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Tam giác Pascal sáu hàng, các số xếp theo bậc thang."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Xét [[a2|một ô bất kỳ]] không nằm ở mép. Nó đếm số cách chọn $k$ phần tử từ $n$ phần tử."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "cell-5-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "glyph": "1"
+                },
+                "cell-1-0": {
+                  "glyph": "1"
+                },
+                "cell-1-1": {
+                  "glyph": "1"
+                },
+                "cell-2-0": {
+                  "glyph": "1"
+                },
+                "cell-2-1": {
+                  "glyph": "2"
+                },
+                "cell-2-2": {
+                  "glyph": "1"
+                },
+                "cell-3-0": {
+                  "glyph": "1"
+                },
+                "cell-3-1": {
+                  "glyph": "3"
+                },
+                "cell-3-2": {
+                  "glyph": "3"
+                },
+                "cell-3-3": {
+                  "glyph": "1"
+                },
+                "cell-4-0": {
+                  "glyph": "1"
+                },
+                "cell-4-1": {
+                  "glyph": "4"
+                },
+                "cell-4-2": {
+                  "glyph": "6"
+                },
+                "cell-4-3": {
+                  "glyph": "4"
+                },
+                "cell-4-4": {
+                  "glyph": "1"
+                },
+                "cell-5-0": {
+                  "glyph": "1"
+                },
+                "cell-5-1": {
+                  "glyph": "5"
+                },
+                "cell-5-2": {
+                  "color_class": 3,
+                  "glyph": "10"
+                },
+                "cell-5-3": {
+                  "glyph": "10"
+                },
+                "cell-5-4": {
+                  "glyph": "5"
+                },
+                "cell-5-5": {
+                  "glyph": "1"
+                }
+              },
+              "cols": 6,
+              "rows": 6
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Một ô giữa bảng được làm nổi."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chia các cách chọn làm hai loại: có chứa phần tử cuối, hoặc không. Loại một cho $\\binom{n-1}{k-1}$, loại hai cho $\\binom{n-1}{k}$ — đúng [[a3|hai ô ngay phía trên]]."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "cell-4-1",
+                "cell-4-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "glyph": "1"
+                },
+                "cell-1-0": {
+                  "glyph": "1"
+                },
+                "cell-1-1": {
+                  "glyph": "1"
+                },
+                "cell-2-0": {
+                  "glyph": "1"
+                },
+                "cell-2-1": {
+                  "glyph": "2"
+                },
+                "cell-2-2": {
+                  "glyph": "1"
+                },
+                "cell-3-0": {
+                  "glyph": "1"
+                },
+                "cell-3-1": {
+                  "glyph": "3"
+                },
+                "cell-3-2": {
+                  "glyph": "3"
+                },
+                "cell-3-3": {
+                  "glyph": "1"
+                },
+                "cell-4-0": {
+                  "glyph": "1"
+                },
+                "cell-4-1": {
+                  "color_class": 3,
+                  "glyph": "4"
+                },
+                "cell-4-2": {
+                  "color_class": 3,
+                  "glyph": "6"
+                },
+                "cell-4-3": {
+                  "glyph": "4"
+                },
+                "cell-4-4": {
+                  "glyph": "1"
+                },
+                "cell-5-0": {
+                  "glyph": "1"
+                },
+                "cell-5-1": {
+                  "glyph": "5"
+                },
+                "cell-5-2": {
+                  "glyph": "10"
+                },
+                "cell-5-3": {
+                  "glyph": "10"
+                },
+                "cell-5-4": {
+                  "glyph": "5"
+                },
+                "cell-5-5": {
+                  "glyph": "1"
+                }
+              },
+              "cols": 6,
+              "rows": 6
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai ô ở hàng trên được làm nổi, chúng nằm ngay trên ô đang xét."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hai loại rời nhau và phủ hết, nên [[a4|ô dưới]] bằng tổng hai ô trên: $10 = 4 + 6$. Đó chính là hằng đẳng thức."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "cell-5-2",
+                "cell-4-1",
+                "cell-4-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "glyph": "1"
+                },
+                "cell-1-0": {
+                  "glyph": "1"
+                },
+                "cell-1-1": {
+                  "glyph": "1"
+                },
+                "cell-2-0": {
+                  "glyph": "1"
+                },
+                "cell-2-1": {
+                  "glyph": "2"
+                },
+                "cell-2-2": {
+                  "glyph": "1"
+                },
+                "cell-3-0": {
+                  "glyph": "1"
+                },
+                "cell-3-1": {
+                  "glyph": "3"
+                },
+                "cell-3-2": {
+                  "glyph": "3"
+                },
+                "cell-3-3": {
+                  "glyph": "1"
+                },
+                "cell-4-0": {
+                  "glyph": "1"
+                },
+                "cell-4-1": {
+                  "color_class": 3,
+                  "glyph": "4"
+                },
+                "cell-4-2": {
+                  "color_class": 3,
+                  "glyph": "6"
+                },
+                "cell-4-3": {
+                  "glyph": "4"
+                },
+                "cell-4-4": {
+                  "glyph": "1"
+                },
+                "cell-5-0": {
+                  "glyph": "1"
+                },
+                "cell-5-1": {
+                  "glyph": "5"
+                },
+                "cell-5-2": {
+                  "color_class": 3,
+                  "glyph": "10"
+                },
+                "cell-5-3": {
+                  "glyph": "10"
+                },
+                "cell-5-4": {
+                  "glyph": "5"
+                },
+                "cell-5-5": {
+                  "glyph": "1"
+                }
+              },
+              "cols": 6,
+              "rows": 6
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba ô được làm nổi: hai ô trên và ô tổng ở dưới."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(cells, c => c.color_class == 3) == 3",
+    "validators": []
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

@@ -6,9 +6,9 @@ trên canvas tương tác, văn bản ↔ hình liên kết hai chiều, sandbox
 Vận hành theo mô hình **single-author brand engine**: engine là xưởng in riêng của
 một tác giả; sản phẩm công chúng là kho bài đã curate. Xem `docs/SRS-v1.0.md`.
 
-**Trạng thái:** Phase 1 xong phần kỹ thuật, cộng engine thứ ba (dãy số / đa tập) — mức phủ đề tổ hợp
-đi từ ~45% lên ~55%, xem `docs/VIZ-COVERAGE.md`. Kho có **9 bài: 2 fixture + 7 draft chờ duyệt**,
-chưa bài nào do chính chủ soạn. Hai gate còn mở là việc của chính chủ: đo perf trên iPad thật (G-A)
+**Trạng thái:** Phase 1 xong phần kỹ thuật, cộng engine thứ ba (dãy số / đa tập) và bảng đếm hai
+chiều (PRN-03) — mức phủ đề tổ hợp đi từ ~45% lên ~60%, xem `docs/VIZ-COVERAGE.md`. Kho có
+**19 bài: 2 fixture + 17 draft chờ duyệt**, chưa bài nào do chính chủ soạn. Hai gate còn mở là việc của chính chủ: đo perf trên iPad thật (G-A)
 và soạn tay 3–5 bài (G-C). Xem `docs/PLAN-P1.md`.
 
 ## Bắt đầu

@@ -278,6 +278,16 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 2. Luật "step có hình mà không có anchor" đếm `elements.length > 0`, trong khi bàn cờ 8×8 sinh 64 ô từ `config` với `elements` rỗng (D-16) — tức là luật miễn trừ đúng những bài dùng engine board.
 3. `nextStepId` hứa không tái dùng id đã xoá nhưng chỉ lấy max trên step **đang còn**: xoá step cuối rồi thêm bước mới sẽ cấp lại đúng id đó, và một `merge_target` đang treo sẽ lặng lẽ trỏ sang step khác — tệ hơn nữa, validate đang báo đỏ sẽ **xanh trở lại** trong khi bài đã sai.
 
+### M9 — Cụm đếm cơ bản · [C]+[E] — **xong**
+
+- ✅ **PRN-03 sớm hơn lịch**: tuỳ chọn `table` của board engine — nhãn hàng/cột và **tổng theo hàng, tổng theo cột**. Đó chính là toàn bộ nội dung của "đếm hai chiều": không phải một công thức, mà hai con số bằng nhau mà người học tự đối chiếu được. Rẻ vì bảng khác bàn cờ đúng ba chi tiết, nên nó là tuỳ chọn của engine sẵn có chứ không phải engine mới.
+- ✅ **Mười bài đếm cơ bản**, mỗi bài một idiom thị giác khác nhau: quy tắc nhân (bảng), tam giác Pascal, đường đi trên lưới (bảng quy hoạch động), tổ hợp = số cạnh $K_5$, số tập con = cây nhị phân, chia kẹo = sao và vách, bù trừ hai tập, Dirichlet 13 người, bảng incidence 6×4, hoán vị $4!$.
+- ✅ **GR-08 nhãn cạnh** — `EdgeElement.label` có trong schema từ M4 và renderer **chưa bao giờ đọc nó**. Cùng lớp lỗi với `show_attacks`. Ở cây quyết định thì nhãn cạnh mang *toàn bộ* nội dung ("có"/"không"), nên thiếu nó là hình mất nghĩa.
+- ✅ Sàn tỉ lệ cho chế độ `piles`: mười hai ngăn mỗi ngăn một viên cho ra một khung dẹt lét và cả hình co thành sợi chỉ.
+- ✅ `coverage` đọc `kind`: bài khai `illustration` được **miễn** sandbox. Không phải cửa lách — nó là tuyên bố của tác giả rằng bài này không có thao tác nào có nghĩa, và ép sandbox lên mọi bài chỉ đẻ ra đồ chơi cho đủ chỉ tiêu.
+
+**Mức phủ:** ~55% → **~60%**. Kho: 9 → **19 bài**.
+
 ### M8 — Sequence/Multiset engine · [E] — **xong**
 
 Ngoài lịch 16 tuần gốc: mở ra sau khi `docs/VIZ-COVERAGE.md` đo được rằng board +

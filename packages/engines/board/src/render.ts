@@ -38,11 +38,20 @@ export const boardRenderer: EngineRenderer = {
     const config = scene.config as BoardConfig;
     const rows = config?.rows ?? 1;
     const cols = config?.cols ?? 1;
+
+    // Bảng (PRN-03) mọc thêm nhãn ở lề trái/trên và dòng tổng ở lề phải/dưới;
+    // quên chừa chỗ thì nhãn bị cắt đúng như nhãn đỉnh đồ thị từng bị.
+    const table = config?.table;
+    const left = table?.row_labels ? CELL * 1.4 : 0;
+    const top = table?.col_labels ? CELL * 0.9 : 0;
+    const right = table?.show_sums ? CELL * 1.1 : 0;
+    const bottom = table?.show_sums ? CELL * 0.9 : 0;
+
     return {
-      x: -BOARD_PADDING,
-      y: -BOARD_PADDING,
-      width: cols * CELL + BOARD_PADDING * 2,
-      height: rows * CELL + BOARD_PADDING * 2,
+      x: -BOARD_PADDING - left,
+      y: -BOARD_PADDING - top,
+      width: cols * CELL + BOARD_PADDING * 2 + left + right,
+      height: rows * CELL + BOARD_PADDING * 2 + top + bottom,
     };
   },
 
@@ -59,6 +68,7 @@ export const boardRenderer: EngineRenderer = {
 
     return [
       el('g', { class: 'cv-cells' }, renderCells(config, ctx)),
+      ...(config.table ? [el('g', { class: 'cv-table' }, renderTable(config, ctx))] : []),
       ...(attacks.length > 0 ? [el('g', { class: 'cv-attacks' }, attacks)] : []),
       el('g', { class: 'cv-elements' }, elements.flatMap((e) => renderElement(e, ctx))),
     ];
@@ -122,6 +132,89 @@ function renderCells(config: BoardConfig, ctx: RenderContext): SvgNode[] {
         );
       }
     }
+  }
+
+  return nodes;
+}
+
+/**
+ * PRN-03 — nhãn hàng/cột và dòng tổng.
+ *
+ * Tổng đếm **ô đã tô**, và cả hai chiều được đếm độc lập rồi in cạnh nhau. Đó
+ * chính là toàn bộ nội dung của "đếm hai chiều": không phải một công thức, mà
+ * hai con số bằng nhau mà người học tự đối chiếu được.
+ */
+function renderTable(config: BoardConfig, ctx: RenderContext): SvgNode[] {
+  const table = config.table;
+  if (!table) return [];
+
+  const holes = new Set((config.holes ?? []).map(([r, c]) => `${r},${c}`));
+  const marked = (r: number, c: number): boolean =>
+    !holes.has(`${r},${c}`) && cellColorClass(config, r, c) !== undefined;
+
+  const nodes: SvgNode[] = [];
+  const label = (
+    key: string,
+    x: number,
+    y: number,
+    value: string,
+    anchor: string,
+    strong = false,
+  ): void => {
+    // `text` là **nội dung**, không phải thuộc tính — đặt nhầm chỗ thì SVG hợp
+    // lệ, hiện ra `text="5"` và không một con số nào xuất hiện.
+    nodes.push({
+      ...text(
+        'text',
+        {
+          x,
+          y,
+          'text-anchor': anchor,
+          'dominant-baseline': 'central',
+          'font-family': ctx.theme.type.uiFamily,
+          'font-size': CELL * (strong ? 0.42 : 0.38),
+          'font-weight': strong ? 600 : 400,
+          fill: strong ? ctx.theme.object.pieceGlyph : ctx.theme.surface.guide,
+        },
+        value,
+      ),
+      key,
+    });
+  };
+
+  (table.row_labels ?? []).slice(0, config.rows).forEach((value, r) => {
+    label(`row-label-${r}`, -CELL * 0.3, r * CELL + CELL / 2, value, 'end');
+  });
+
+  (table.col_labels ?? []).slice(0, config.cols).forEach((value, c) => {
+    label(`col-label-${c}`, c * CELL + CELL / 2, -CELL * 0.35, value, 'middle');
+  });
+
+  if (table.show_sums) {
+    const mark = table.sum_label ?? 'Σ';
+    let grand = 0;
+
+    for (let r = 0; r < config.rows; r += 1) {
+      let sum = 0;
+      for (let c = 0; c < config.cols; c += 1) if (marked(r, c)) sum += 1;
+      grand += sum;
+      label(`row-sum-${r}`, config.cols * CELL + CELL * 0.4, r * CELL + CELL / 2, String(sum), 'start', true);
+    }
+
+    for (let c = 0; c < config.cols; c += 1) {
+      let sum = 0;
+      for (let r = 0; r < config.rows; r += 1) if (marked(r, c)) sum += 1;
+      label(`col-sum-${c}`, c * CELL + CELL / 2, config.rows * CELL + CELL * 0.4, String(sum), 'middle', true);
+    }
+
+    label(
+      'grand-sum',
+      config.cols * CELL + CELL * 0.4,
+      config.rows * CELL + CELL * 0.4,
+      `${mark} ${grand}`,
+      'start',
+      true,
+    );
   }
 
   return nodes;

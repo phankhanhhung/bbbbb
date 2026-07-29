@@ -19,7 +19,8 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | | Visualize **gánh được lập luận** | Có hình **mang thông tin** |
 |---|---|---|
 | ~~board + graph~~ | ~~45%~~ | ~~55%~~ |
-| **Hôm nay** (board + graph + **sequence**) | **~55%** | ~64% |
+| ~~+ sequence~~ | ~~55%~~ | ~~64%~~ |
+| **Hôm nay** (+ bảng đếm hai chiều PRN-03) | **~60%** | ~68% |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
 | Thêm 4 view ngoài roadmap (§4) | **~85%** | ~92% |
@@ -44,7 +45,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà ba engine 
 |---|---:|---:|---:|---|
 | Lưới / phủ hình / tô màu | 15% | 90% | 13.5 | — |
 | Đồ thị | 22% | 80% | 17.6 | thiếu planarity, matching, tô mặt |
-| Đếm / song ánh / đếm hai chiều | 14% | 25% | 3.5 | không có bảng incidence, không có view song ánh |
+| Đếm / song ánh / đếm hai chiều | 14% | **60%** | **8.4** | có bảng incidence có tổng (PRN-03); còn thiếu view song ánh (PRN-04) |
 | Dãy số / thao tác lặp / quá trình | 16% | **90%** ✅ | **14.4** | ~~không có engine~~ — `@combviz/engine-sequence` (2026-07-29) |
 | Trò chơi | 7% | 10% | 0.7 | vẽ được thế cờ, không có cây trò chơi / Grundy |
 | Hệ tập hợp / siêu đồ thị | 8% | 20% | 1.6 | chỉ mô hình hoá được phần nào bằng đồ thị hai phía |
@@ -52,7 +53,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà ba engine 
 | Hoán vị / thứ tự | 6% | 20% | 1.2 | chỉ vẽ được qua chu trình trên đồ thị |
 | Tổ hợp mang màu số học (thặng dư, chữ số) | 4% | 30% | 1.2 | lưới thặng dư gượng ép |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 5% | 0.15 | xem §6 |
-| **Tổng** | **100%** | | **~54%** | |
+| **Tổng** | **100%** | | **~59%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
@@ -72,8 +73,9 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Turán $n=5$ | đồ thị | ✅ có trong kho |
 | Định lý Hall | đồ thị hai phía | 🟡 vẽ được, thiếu matching + đường tăng |
 | Cayley $n^{n-2}$ (mã Prüfer) | song ánh | ❌ cần view song ánh |
-| Đồng nhất thức Vandermonde | đếm hai chiều | ❌ cần bảng incidence |
-| Đường đi lưới / số Catalan | đếm | 🟡 vẽ được lưới, thiếu phần đếm |
+| Đồng nhất thức Vandermonde | đếm hai chiều | 🟡 bảng incidence đã có; còn cần nhãn tổng quát |
+| Quy tắc nhân, hoán vị, tổ hợp, Pascal, đường đi lưới | đếm cơ bản | ✅ mười bài trong kho |
+| Đường đi lưới / số Catalan | đếm | ✅ bảng quy hoạch động trên board |
 | Erdős–Szekeres (dãy đơn điệu) | hoán vị | 🟡 vẽ được dãy, thiếu analyzer dãy con đơn điệu |
 | Hoán vị 15-puzzle (chẵn lẻ) | hoán vị | 🟡 `inversions` đã có; thiếu view hoán vị |
 | Định lý Sperner (phản xích) | hệ tập hợp | ❌ |
@@ -87,7 +89,7 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Sylvester–Gallai | hình học | ❌ |
 | Phương pháp xác suất: tồn tại tô $K_n$ không $K_k$ đơn sắc | trừu tượng | ❌ §6 |
 
-**11 ✅ · 7 🟡 · 7 ❌** ⇒ ≈ 44% trọn vẹn, ≈ 58% nếu tính nửa điểm cho 🟡. Khớp với
+**13 ✅ · 7 🟡 · 6 ❌** ⇒ ≈ 50% trọn vẹn, ≈ 63% nếu tính nửa điểm cho 🟡. Khớp với
 bảng trọng số ở trên, và hai cách đếm đó độc lập nhau.
 
 *(Trước khi có Sequence engine: 9 ✅ · 4 🟡 · 11 ❌ ⇒ ≈ 46%.)*
@@ -102,7 +104,7 @@ Cột cuối là mức phủ ước tính sau khi làm.
 | Hạng mục SRS | Phase | Mở khoá họ nào | Phủ sau đó |
 |---|---|---|---|
 | **ST-01..03** Set/Counting engine (Venn + **bảng incidence** + dot/bar đa tập) | P2 | hệ tập hợp, một phần đếm | 45 → 52% |
-| **PRN-03** Double counting (bảng incidence có tổng hàng/cột) | P2 | đếm hai chiều | 52 → 57% |
+| ~~**PRN-03** Double counting (bảng incidence có tổng hàng/cột)~~ ✅ | P2 | đếm hai chiều | **đã làm** — tuỳ chọn `table` của board engine |
 | **PRN-04** Bijection view (hai pane + ánh xạ id↔id + animation biến hình) | P2 | đếm bằng song ánh | 57 → 62% |
 | **PT-01..02** Point/Segment engine (điểm, đoạn, bao lồi) | P2 | hình học tổ hợp | 62 → 66% |
 | **GR-05..07** planarity, matching, ma trận kề | P2 | phần còn lại của đồ thị | 66 → 67% |

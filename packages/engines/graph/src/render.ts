@@ -75,6 +75,13 @@ export const graphRenderer: EngineRenderer = {
     return [
       el(
         'g',
+        { class: 'cv-edge-labels' },
+        (config.show_labels ?? true)
+          ? graph.edges.flatMap((edge) => renderEdgeLabel(edge, graph, ctx))
+          : [],
+      ),
+      el(
+        'g',
         { class: 'cv-edges' },
         // Vẽ theo **mức quan trọng**, không theo thứ tự trong file: cạnh chưa xét
         // trước, cạnh đã tô sau, cạnh được nhấn sau cùng. Trong $K_6$ có 15 cạnh
@@ -231,6 +238,55 @@ function centroid(graph: GraphModel): { x: number; y: number } {
     { x: 0, y: 0 },
   );
   return { x: sum.x / graph.vertices.length, y: sum.y / graph.vertices.length };
+}
+
+/**
+ * GR-08 — nhãn cạnh.
+ *
+ * `EdgeElement` có trường `label` từ M4 và renderer **chưa bao giờ đọc nó**: đặt
+ * `label: "có"` thì file hợp lệ, validate xanh, và trên hình không có gì. Cùng
+ * một lớp lỗi với `show_attacks` của board engine — trường ma.
+ *
+ * Nhãn đặt lệch khỏi đường nối theo phương vuông góc: đè lên chính đường nối thì
+ * chữ và nét cắt nhau, và ở cây quyết định — nơi nhãn cạnh mang **toàn bộ** nội
+ * dung ("có" / "không") — chữ đọc được là điều kiện để hình có nghĩa.
+ */
+function renderEdgeLabel(
+  edge: Edge,
+  graph: GraphModel,
+  ctx: RenderContext,
+): SvgNode[] {
+  if (!edge.label) return [];
+
+  const u = graph.byId.get(edge.u);
+  const v = graph.byId.get(edge.v);
+  if (!u || !v || edge.u === edge.v) return [];
+
+  const dx = v.x - u.x;
+  const dy = v.y - u.y;
+  const length = Math.hypot(dx, dy) || 1;
+  // Pháp tuyến đơn vị, cộng thêm độ lệch của cạnh song song để nhãn đi theo
+  // đúng đường cong của cạnh mình.
+  const offset = VERTEX_RADIUS * 0.9 + edge.multiIndex * VERTEX_RADIUS;
+
+  return [
+    {
+      ...text(
+        'text',
+        {
+          x: round((u.x + v.x) / 2 + (-dy / length) * offset),
+          y: round((u.y + v.y) / 2 + (dx / length) * offset),
+          'text-anchor': 'middle',
+          'dominant-baseline': 'central',
+          'font-family': ctx.theme.type.uiFamily,
+          'font-size': ctx.theme.type.badgeSize * 0.22,
+          fill: ctx.theme.surface.guide,
+        },
+        edge.label,
+      ),
+      key: `${edge.id}-label`,
+    },
+  ];
 }
 
 function labelAnchor(
