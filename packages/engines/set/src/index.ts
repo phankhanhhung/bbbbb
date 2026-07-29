@@ -19,6 +19,7 @@ import { SetConfig, SetElement, TokenElement, SET_LIMITS } from './schema.js';
 import { resolveSetValidator, SET_VALIDATOR_IDS } from './validators.js';
 
 export * from './schema.js';
+export { setTools } from './tools.js';
 export * from './derive.js';
 export * from './validators.js';
 export { setEnvironment } from './dsl.js';
@@ -51,6 +52,27 @@ const toggleMembership = defineCommand<{ token: string; set: string }>({
     const elements = [...scene.elements];
     elements[index] = { ...token, sets };
     return { ...scene, elements };
+  },
+});
+
+/**
+ * Bật/tắt quan hệ thuộc bằng **một cú bấm vào ô bảng incidence**.
+ *
+ * Cùng việc với `set/toggle-membership`, khác ở chỗ nhận id của ô thay vì hai id
+ * rời. Ô đã mang sẵn cả hai vế (`token__set`), nên bắt thanh công cụ tách chuỗi
+ * ra rồi ghép lại là đưa quy ước đặt id ra khỏi engine — và quy ước ấy đổi thì
+ * chỗ tách sẽ hỏng lặng lẽ.
+ */
+const toggleCell = defineCommand<{ cell: string }>({
+  type: 'set/toggle-cell',
+  label: () => 'Đổi quan hệ thuộc',
+  apply(scene, params) {
+    const at = params.cell.indexOf(INCIDENCE_SEP);
+    if (at <= 0) return null;
+    return toggleMembership.apply(scene, {
+      token: params.cell.slice(0, at),
+      set: params.cell.slice(at + INCIDENCE_SEP.length),
+    });
   },
 });
 
@@ -97,6 +119,7 @@ const removeElements = defineCommand<{ ids: readonly string[] }>({
 
 export const setCommands: CommandRegistry = {
   [toggleMembership.type]: toggleMembership,
+  [toggleCell.type]: toggleCell,
   [addToken.type]: addToken,
   [removeElements.type]: removeElements,
 };

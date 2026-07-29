@@ -1,6 +1,6 @@
 import type { EngineRenderer, LabelAtlas } from '@combviz/render';
 import type { DslEnvironment } from '@combviz/dsl';
-import type { CommandRegistry, HitTest } from '@combviz/editor';
+import type { CommandRegistry, HitTest, SandboxToolsFn } from '@combviz/editor';
 import type { Scene, SceneValidator } from '@combviz/schema';
 
 /**
@@ -17,6 +17,14 @@ export interface LoadedEngine {
   readonly renderer: EngineRenderer;
   readonly commands: CommandRegistry;
   readonly hitTest: HitTest;
+  /**
+   * Công cụ sandbox mà engine này thật sự có (SBX-01).
+   *
+   * Bắt buộc, không tuỳ chọn: một engine quên khai thì Sandbox của nó chỉ còn
+   * nút "Chọn" — trống trải nhưng **thành thật**. Trước đây nó mượn nguyên bộ
+   * công cụ bàn cờ và bấm cái nào cũng im lặng.
+   */
+  readonly sandboxTools: SandboxToolsFn;
   environment(scene: Scene): DslEnvironment;
   resolveValidator(id: string): SceneValidator | null;
   /** BD-06 — đếm ô theo color_class. Chỉ engine dạng lưới có. */
@@ -40,6 +48,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       renderer: module.boardRenderer,
       commands: module.boardCommands,
       hitTest: module.boardHitTest,
+      sandboxTools: module.boardTools,
       environment: module.boardEnvironment,
       resolveValidator: module.resolveBoardValidator,
       colorSummary: module.colorSummary,
@@ -53,6 +62,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       renderer: module.graphRenderer,
       commands: module.graphCommands,
       hitTest: module.graphHitTest,
+      sandboxTools: module.graphTools,
       environment: module.graphEnvironment,
       resolveValidator: module.resolveGraphValidator,
     };
@@ -64,6 +74,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       renderer: module.sequenceRenderer,
       commands: module.sequenceCommands,
       hitTest: module.sequenceHitTest,
+      sandboxTools: module.sequenceTools,
       environment: module.sequenceEnvironment,
       resolveValidator: module.resolveSequenceValidator,
     };
@@ -75,6 +86,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       renderer: module.setRenderer,
       commands: module.setCommands,
       hitTest: module.setHitTest,
+      sandboxTools: module.setTools,
       environment: module.setEnvironment,
       resolveValidator: module.resolveSetValidator,
     };
@@ -86,6 +98,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       renderer: module.pointRenderer,
       commands: module.pointCommands,
       hitTest: module.pointHitTest,
+      sandboxTools: module.pointTools,
       environment: module.pointEnvironment,
       resolveValidator: module.resolvePointValidator,
     };
@@ -97,6 +110,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       renderer: module.gameRenderer,
       commands: module.gameCommands,
       hitTest: module.gameHitTest,
+      sandboxTools: module.gameTools,
       environment: module.gameEnvironment,
       resolveValidator: module.resolveGameValidator,
     };
@@ -108,6 +122,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       renderer: module.derivationRenderer,
       commands: module.derivationCommands,
       hitTest: module.derivationHitTest,
+      sandboxTools: module.derivationTools,
       environment: module.derivationEnvironment,
       resolveValidator: module.resolveDerivationValidator,
       needsLabels: true,

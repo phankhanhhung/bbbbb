@@ -11,6 +11,7 @@ import { movesFromPile } from './solver.js';
 import { GAME_VALIDATOR_IDS, resolveGameValidator } from './validators.js';
 
 export * from './schema.js';
+export { gameTools } from './tools.js';
 export * from './model.js';
 export * from './solver.js';
 export * from './validators.js';

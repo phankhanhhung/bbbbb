@@ -21,6 +21,7 @@ import {
 import { resolveSequenceValidator, SEQUENCE_VALIDATOR_IDS } from './validators.js';
 
 export * from './schema.js';
+export { sequenceTools } from './tools.js';
 export * from './geometry.js';
 export * from './commands.js';
 export * from './validators.js';

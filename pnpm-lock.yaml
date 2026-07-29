@@ -184,6 +184,28 @@ importers:
       '@combviz/schema':
         specifier: workspace:*
         version: link:../schema
+    devDependencies:
+      '@combviz/engine-board':
+        specifier: workspace:*
+        version: link:../engines/board
+      '@combviz/engine-derivation':
+        specifier: workspace:*
+        version: link:../engines/derivation
+      '@combviz/engine-game':
+        specifier: workspace:*
+        version: link:../engines/game
+      '@combviz/engine-graph':
+        specifier: workspace:*
+        version: link:../engines/graph
+      '@combviz/engine-point':
+        specifier: workspace:*
+        version: link:../engines/point
+      '@combviz/engine-sequence':
+        specifier: workspace:*
+        version: link:../engines/sequence
+      '@combviz/engine-set':
+        specifier: workspace:*
+        version: link:../engines/set
 
   packages/engines/board:
     dependencies:

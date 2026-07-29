@@ -31,3 +31,10 @@ export {
 } from './selection.js';
 
 export { type HitTest, type ScenePoint } from './hit-test.js';
+
+export {
+  SELECT_TOOL,
+  type SandboxTool,
+  type SandboxToolsFn,
+  type ToolAction,
+} from './tool.js';

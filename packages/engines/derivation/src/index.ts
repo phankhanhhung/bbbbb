@@ -15,6 +15,7 @@ import {
 } from './validators.js';
 
 export * from './schema.js';
+export { derivationTools } from './tools.js';
 export * from './model.js';
 export * from './validators.js';
 export { derivationEnvironment } from './dsl.js';

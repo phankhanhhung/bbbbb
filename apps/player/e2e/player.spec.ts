@@ -224,6 +224,53 @@ test.describe('Sandbox (SBX-01)', () => {
     await page.getByRole('button', { name: 'Thử từ đây' }).click();
     await expect(page.getByText('thao tác ở đây không đổi lời giải')).toBeVisible();
   });
+
+  /**
+   * Thanh công cụ phải **thuộc về engine đang mở** (SBX-01).
+   *
+   * Lỗi gốc do chính chủ tìm ra khi bấm thử: sandbox bày y một bộ công cụ ở mọi
+   * bài — tám ô màu, các hình tile, "Xoá quân", "Lật hàng/cột" — trong khi bốn
+   * nút cuối chỉ có nghĩa trên bàn cờ. Ở bài đồ thị hay bài game, bấm vào không
+   * có gì xảy ra và cũng không có gì báo.
+   */
+  test('công cụ đổi theo engine, không phải một bộ dùng chung', async ({ page }) => {
+    await page.goto(CHESS);
+    await reveal(page);
+    await page.getByRole('button', { name: 'Thử từ đây' }).click();
+
+    const tools = page.locator('.sandbox__bar .tools').first();
+    await expect(tools.getByRole('button', { name: 'domino' })).toBeVisible();
+    await expect(tools.getByRole('button', { name: /Lật hàng/ })).toBeVisible();
+
+    // Cùng nút ấy **không** được có ở bài game.
+    await page.goto('/?p=nim-three-piles-xor');
+    await reveal(page);
+    await page.getByRole('button', { name: 'Thử từ đây' }).click();
+
+    const gameTools = page.locator('.sandbox__bar .tools').first();
+    await expect(gameTools.getByRole('button', { name: 'domino' })).toHaveCount(0);
+    await expect(gameTools.getByRole('button', { name: /Lật hàng/ })).toHaveCount(0);
+    // ...và nước đi thật thì phải có.
+    await expect(gameTools.getByRole('button', { name: /^Bốc / }).first()).toBeVisible();
+  });
+
+  test('bấm một nước đi trong sandbox game **thật sự** đổi thế', async ({ page }) => {
+    await page.goto('/?p=nim-three-piles-xor');
+    await reveal(page);
+    await page.getByRole('button', { name: 'Thử từ đây' }).click();
+
+    const before = await page.locator('.sandbox .canvas svg circle').count();
+    await page.getByRole('button', { name: /^Bốc 1$/ }).first().click();
+
+    const canvas = page.locator('.sandbox .canvas svg');
+    const box = (await canvas.boundingBox())!;
+    await page.mouse.click(box.x + box.width * 0.12, box.y + box.height * 0.4);
+
+    // Ít nhất một viên sỏi biến mất — nút không còn im lặng nữa.
+    await expect
+      .poll(async () => page.locator('.sandbox .canvas svg circle').count())
+      .toBeLessThan(before);
+  });
 });
 
 test.describe('Giá trị nội suy trong narrative', () => {

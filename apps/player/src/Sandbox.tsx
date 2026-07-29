@@ -4,6 +4,7 @@ import {
   applySelection,
   command,
   modeFromEvent,
+  SELECT_TOOL,
   type Selection,
 } from '@combviz/editor';
 import {
@@ -14,7 +15,7 @@ import {
   watermarkNodes,
 } from '@combviz/render';
 import { patch } from '@combviz/render/dom';
-import { colorClass, defaultTheme, MAX_COLOR_CLASS } from '@combviz/theme';
+import { colorClass, defaultTheme } from '@combviz/theme';
 import type { Invariant, Scene, SceneValidator } from '@combviz/schema';
 import type { LoadedEngine } from './engines.js';
 import { useSandbox } from './useSandbox.js';
@@ -39,26 +40,15 @@ interface SandboxProps {
   onClose?: () => void;
 }
 
-type Tool =
-  | { kind: 'select' }
-  | { kind: 'paint'; colorClass: number | null }
-  | { kind: 'tile'; shape: string }
-  | { kind: 'erase' }
-  /** G-11 — lật cả một hàng/cột, thao tác hợp lệ của họ bài "lật dấu". */
-  | { kind: 'flip'; axis: 'row' | 'col' }
-  /** Sequence engine: gộp hai phần tử theo một quy tắc trong tập đóng. */
-  | { kind: 'combine'; rule: string }
-  /** Sequence engine: đổi chỗ hai phần tử (chỉ ở mode `sequence`). */
-  | { kind: 'swap' };
-
-const TILE_SHAPES = ['domino', 'tromino-l', 'tetromino-o', 'tetromino-t'] as const;
-
-/** Quy tắc gộp mà Sandbox bày ra. Khớp với tập đóng ở `@combviz/engine-sequence`. */
-const COMBINE_RULES = [
-  { rule: 'sum', label: 'a+b' },
-  { rule: 'abs-diff', label: '|a−b|' },
-  { rule: 'max', label: 'max' },
-] as const;
+/**
+ * Công cụ đang bật — chỉ giữ **id**; mọi thứ khác đọc từ danh sách engine khai.
+ *
+ * Trước đây chỗ này là một union gõ cứng (`paint`/`tile`/`flip`/`combine`/…) và
+ * thanh công cụ hiện y hệt nhau ở cả bảy engine — trong đó năm engine không có
+ * lệnh nào khớp, nên bấm vào là im lặng không xảy ra gì. Xem
+ * `packages/editor/src/tool.ts`.
+ */
+type ToolState = { readonly id: string };
 
 export function Sandbox({
   scene,
@@ -80,13 +70,34 @@ export function Sandbox({
     environmentFor: engine.environment,
   });
 
-  const [tool, setTool] = useState<Tool>({ kind: 'paint', colorClass: 1 });
+  const [tool, setTool] = useState<ToolState>({ id: SELECT_TOOL.id });
   const svgRef = useRef<SVGSVGElement>(null);
   const painting = useRef<Set<string> | null>(null);
-  /** Phần tử đã chọn cho thao tác cần **hai** đối tượng (gộp, đổi chỗ). */
+  /** Phần tử đã chọn cho thao tác cần **hai** đối tượng (gộp, nối cạnh, đổi chỗ). */
   const pending = useRef<string | null>(null);
 
   const { state } = sandbox;
+
+  // Danh sách công cụ là hàm của **scene hiện tại**, không phải của bài: bốc hết
+  // một đống thì nước "bốc 5" biến mất khỏi thanh công cụ ngay lúc đó.
+  const tools = useMemo(
+    () => engine.sandboxTools(state.scene),
+    [engine, state.scene],
+  );
+  const action = useMemo(
+    () => tools.find((t) => t.id === tool.id)?.action ?? SELECT_TOOL.action,
+    [tools, tool],
+  );
+
+  // Công cụ đang bật biến mất khỏi danh sách thì rơi về "Chọn". Giữ lại một id
+  // không còn tồn tại nghĩa là mọi cú bấm sau đó rơi vào hư không — đúng cái lỗi
+  // mà cả lớp này sinh ra để dẹp.
+  useEffect(() => {
+    if (!tools.some((t) => t.id === tool.id)) {
+      pending.current = null;
+      setTool({ id: SELECT_TOOL.id });
+    }
+  }, [tools, tool]);
 
   const ctx = useMemo(
     () =>
@@ -126,46 +137,73 @@ export function Sandbox({
     [engine, state.scene, toScenePoint],
   );
 
+  /**
+   * Điều phối **một** cú bấm theo `action` mà engine khai.
+   *
+   * Toàn bộ tri thức riêng của từng engine — tên lệnh, tên tham số, tiền tố id —
+   * nằm ở phía engine. Chỗ này chỉ biết bảy dạng tương tác, và cả bảy đều là
+   * hình thức thao tác chứ không phải nội dung toán.
+   */
   const onPointerDown = useCallback(
     (event: PointerEvent) => {
       event.preventDefault();
       (event.currentTarget as Element).setPointerCapture(event.pointerId);
 
       const hits = hitsAt(event);
-      const cell = hits.find((id) => id.startsWith('cell-'));
-      const element = hits.find((id) => !id.startsWith('cell-'));
+      const pick = (prefix?: string): string | undefined =>
+        prefix === undefined
+          ? hits.find((id) => !id.startsWith('cell-')) ?? hits[0]
+          : hits.find((id) => id.startsWith(prefix));
 
-      if (tool.kind === 'paint') {
+      if (action.type === 'select') {
+        const mode = modeFromEvent(event);
+        const hit = pick();
+        sandbox.setSelection(
+          applySelection(state.selection, hit ? [hit] : [], mode) as Selection,
+        );
+        return;
+      }
+
+      if (action.type === 'paint') {
         // Gom cả nét quét thành **một** lệnh: undo phải hoàn tác cả vệt tô, không
         // phải từng ô một.
-        painting.current = new Set(cell ? [cell] : []);
+        const hit = pick(action.prefix);
+        painting.current = new Set(hit ? [hit] : []);
         return;
       }
 
-      if (tool.kind === 'erase' && element) {
-        sandbox.run(command('board/remove', { ids: [element] }));
-        return;
-      }
+      const target = pick(
+        action.type === 'one' || action.type === 'stamp' ? action.prefix : undefined,
+      );
 
-      // Thao tác hai bước của Sequence engine: bấm phần tử thứ nhất, rồi phần
-      // tử thứ hai. Không kéo-thả, vì trên cảm ứng kéo một đống sỏi sang một
-      // đống khác là một cử chỉ rất dễ trượt tay — mà lỡ tay ở đây có nghĩa là
-      // gộp nhầm hai đống và mất luôn mạch lập luận đang thử.
-      if ((tool.kind === 'combine' || tool.kind === 'swap') && element) {
-        const first = pending.current;
-        if (first === null) {
-          pending.current = element;
-          sandbox.setSelection(new Set([element]) as Selection);
-          return;
-        }
-        pending.current = null;
-        sandbox.setSelection(new Set() as Selection);
-        if (first === element) return;
-
+      if (action.type === 'one' && target) {
         sandbox.run(
-          tool.kind === 'combine'
-            ? command('sequence/combine', { a: first, b: element, rule: tool.rule })
-            : command('sequence/swap', { a: first, b: element }),
+          command(action.command, {
+            ...(action.params ?? {}),
+            [action.idParam]: action.asList ? [target] : target,
+          }),
+        );
+        return;
+      }
+
+      if (action.type === 'count' && target) {
+        sandbox.run(
+          command(action.command, {
+            [action.idParam]: target,
+            [action.countParam]: action.count,
+          }),
+        );
+        return;
+      }
+
+      if (action.type === 'stamp' && target) {
+        const [row, col] = target.slice('cell-'.length).split('-').map(Number);
+        sandbox.run(
+          command(action.command, {
+            ...(action.params ?? {}),
+            [action.idParam]: allocateId(state.scene, action.idPrefix),
+            [action.posParam]: [row ?? 0, col ?? 0],
+          }),
         );
         return;
       }
@@ -173,57 +211,82 @@ export function Sandbox({
       // Bấm vào một ô để lật **cả** hàng/cột chứa nó. Người học không tô được
       // từng ô một ở đây — và đó chính là điều làm bất biến trở thành bất biến:
       // luật của bài nằm trong thao tác, không nằm trong lời dặn.
-      if (tool.kind === 'flip' && cell) {
+      if (action.type === 'line') {
+        const cell = pick('cell-');
+        if (!cell) return;
         const [row, col] = cell.slice('cell-'.length).split('-').map(Number);
         sandbox.run(
-          command('board/flip-line', {
-            axis: tool.axis,
-            index: tool.axis === 'row' ? (row ?? 0) : (col ?? 0),
+          command(action.command, {
+            axis: action.axis,
+            index: action.axis === 'row' ? (row ?? 0) : (col ?? 0),
           }),
         );
         return;
       }
 
-      if (tool.kind === 'tile' && cell) {
-        const [row, col] = cell.slice('cell-'.length).split('-').map(Number);
-        sandbox.run(
-          command('board/place-tile', {
-            id: allocateId(state.scene, 't'),
-            shape: tool.shape,
-            pos: [row ?? 0, col ?? 0],
-          }),
-        );
-        return;
-      }
+      // Thao tác hai bước: bấm phần tử thứ nhất, rồi phần tử thứ hai. Không
+      // kéo-thả, vì trên cảm ứng kéo một đống sỏi sang đống khác là cử chỉ rất dễ
+      // trượt tay — mà lỡ tay ở đây nghĩa là gộp nhầm và mất mạch lập luận.
+      if (action.type === 'two' && target) {
+        const first = pending.current;
+        if (first === null) {
+          pending.current = target;
+          sandbox.setSelection(new Set([target]) as Selection);
+          return;
+        }
+        pending.current = null;
+        sandbox.setSelection(new Set() as Selection);
+        if (first === target) return;
 
-      if (tool.kind === 'select') {
-        const mode = modeFromEvent(event);
-        sandbox.setSelection(
-          applySelection(state.selection, element ? [element] : [], mode) as Selection,
+        sandbox.run(
+          command(action.command, {
+            ...(action.extra ?? {}),
+            ...(action.idParam
+              ? { [action.idParam]: allocateId(state.scene, action.idPrefix ?? 'x') }
+              : {}),
+            [action.params[0]]: first,
+            [action.params[1]]: target,
+          }),
         );
       }
     },
-    [hitsAt, sandbox, state.scene, state.selection, tool],
+    [action, hitsAt, sandbox, state.scene, state.selection],
   );
 
   const onPointerMove = useCallback(
     (event: PointerEvent) => {
-      if (!painting.current) return;
-      const cell = hitsAt(event).find((id) => id.startsWith('cell-'));
-      if (cell) painting.current.add(cell);
+      if (!painting.current || action.type !== 'paint') return;
+      const prefix = action.prefix;
+      const hit = hitsAt(event).find((id) =>
+        prefix === undefined ? !id.startsWith('cell-') : id.startsWith(prefix),
+      );
+      if (hit) painting.current.add(hit);
     },
-    [hitsAt],
+    [action, hitsAt],
   );
 
   const onPointerUp = useCallback(() => {
-    const cells = painting.current;
+    const picked = painting.current;
     painting.current = null;
-    if (!cells || cells.size === 0 || tool.kind !== 'paint') return;
+    if (!picked || picked.size === 0 || action.type !== 'paint') return;
 
     sandbox.run(
-      command('board/paint-cells', { cells: [...cells], color_class: tool.colorClass }),
+      command(action.command, {
+        ...(action.params ?? {}),
+        [action.idsParam]: [...picked],
+      }),
     );
-  }, [sandbox, tool]);
+  }, [action, sandbox]);
+
+  /** Lệnh xoá của engine này, đọc từ công cụ nó khai — không đoán tên `board/*`. */
+  const removeCommand = useMemo(() => {
+    for (const item of tools) {
+      if (item.action.type === 'one' && item.action.asList && /remove/.test(item.action.command)) {
+        return item.action.command;
+      }
+    }
+    return null;
+  }, [tools]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
@@ -233,18 +296,25 @@ export function Sandbox({
         if (event.shiftKey) sandbox.redo();
         else sandbox.undo();
       }
+      // Phím tắt cũng phải hỏi engine. Trước đây `Delete` luôn gọi `board/remove`
+      // và `R` luôn gọi `board/rotate-tile`, kể cả trên đồ thị hay chuỗi biến đổi
+      // — nơi hai lệnh ấy không tồn tại, nên phím bấm xong không có gì xảy ra.
       if (event.key === 'Delete' || event.key === 'Backspace') {
-        if (state.selection.size === 0) return;
+        if (state.selection.size === 0 || !removeCommand) return;
         event.preventDefault();
-        sandbox.run(command('board/remove', { ids: [...state.selection] }));
+        sandbox.run(command(removeCommand, { ids: [...state.selection] }));
       }
-      if (event.key.toLowerCase() === 'r' && state.selection.size === 1) {
+      if (
+        event.key.toLowerCase() === 'r' &&
+        state.selection.size === 1 &&
+        Object.hasOwn(engine.commands, 'board/rotate-tile')
+      ) {
         sandbox.run(command('board/rotate-tile', { id: [...state.selection][0], delta: 90 }));
       }
     };
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
-  }, [sandbox, state.selection]);
+  }, [engine, removeCommand, sandbox, state.selection]);
 
   const exportSvg = useCallback(() => {
     // REN-03: brand mark đóng vào mọi export và người học không tắt được.
@@ -265,82 +335,41 @@ export function Sandbox({
     <section class="sandbox">
       <header class="sandbox__bar">
         <div class="tools">
-          <ToolButton active={tool.kind === 'select'} onClick={() => setTool({ kind: 'select' })}>
-            Chọn
-          </ToolButton>
-
-          {Array.from({ length: MAX_COLOR_CLASS }, (_, i) => i + 1).map((index) => (
-            <button
-              key={index}
-              class={`swatch${
-                tool.kind === 'paint' && tool.colorClass === index ? ' swatch--on' : ''
-              }`}
-              style={{ background: colorClass(index).fill }}
-              title={`Tô màu ${index} (${colorClass(index).name})`}
-              aria-label={`Tô màu ${index}`}
-              onClick={() => setTool({ kind: 'paint', colorClass: index })}
-            />
-          ))}
-          <ToolButton
-            active={tool.kind === 'paint' && tool.colorClass === null}
-            onClick={() => setTool({ kind: 'paint', colorClass: null })}
-          >
-            Xoá màu
-          </ToolButton>
-
-          {TILE_SHAPES.map((shape) => (
-            <ToolButton
-              key={shape}
-              active={tool.kind === 'tile' && tool.shape === shape}
-              onClick={() => setTool({ kind: 'tile', shape })}
-            >
-              {shape}
-            </ToolButton>
-          ))}
-
-          <ToolButton active={tool.kind === 'erase'} onClick={() => setTool({ kind: 'erase' })}>
-            Xoá quân
-          </ToolButton>
-
-          {(['row', 'col'] as const).map((axis) => (
-            <ToolButton
-              key={axis}
-              active={tool.kind === 'flip' && tool.axis === axis}
-              onClick={() => setTool({ kind: 'flip', axis })}
-            >
-              ⇄ Lật {axis === 'row' ? 'hàng' : 'cột'}
-            </ToolButton>
-          ))}
-
-          {/* Công cụ của Sequence engine. Hiện theo `mode` của scene: phép hợp lệ
-              ở dãy có thứ tự khác hẳn phép hợp lệ ở đa tập, và thanh công cụ là
-              chỗ người học đọc ra điều đó. */}
-          {scene.engine === 'sequence' && (scene.config as { mode?: string })?.mode === 'piles'
-            ? COMBINE_RULES.map(({ rule, label }) => (
-                <ToolButton
-                  key={rule}
-                  active={tool.kind === 'combine' && tool.rule === rule}
-                  onClick={() => {
-                    pending.current = null;
-                    setTool({ kind: 'combine', rule });
-                  }}
-                >
-                  Gộp {label}
-                </ToolButton>
-              ))
-            : null}
-
-          {scene.engine === 'sequence' && (scene.config as { mode?: string })?.mode !== 'piles' ? (
-            <ToolButton
-              active={tool.kind === 'swap'}
-              onClick={() => {
-                pending.current = null;
-                setTool({ kind: 'swap' });
-              }}
-            >
-              ⇄ Đổi chỗ hai phần tử
-            </ToolButton>
-          ) : null}
+          {/* Thanh công cụ **là** danh sách engine khai, không phải bản chép tay.
+              Nút nào hiện ra thì lệnh sau nó chắc chắn nằm trong registry của
+              engine đang mở — đó là toàn bộ điểm của `SandboxTool`. */}
+          {tools.map((item) =>
+            item.swatch === undefined ? (
+              <ToolButton
+                key={item.id}
+                active={item.action.type !== 'run' && tool.id === item.id}
+                onClick={() => {
+                  pending.current = null;
+                  // `run` chạy ngay và **không** trở thành công cụ đang bật: nó
+                  // là một thao tác, không phải một chế độ.
+                  if (item.action.type === 'run') {
+                    sandbox.run(command(item.action.command, item.action.params ?? {}));
+                    return;
+                  }
+                  setTool({ id: item.id });
+                }}
+              >
+                {item.label}
+              </ToolButton>
+            ) : (
+              <button
+                key={item.id}
+                class={`swatch${tool.id === item.id ? ' swatch--on' : ''}`}
+                style={{ background: colorClass(item.swatch).fill }}
+                title={`${item.label} (${colorClass(item.swatch).name})`}
+                aria-label={item.label}
+                onClick={() => {
+                  pending.current = null;
+                  setTool({ id: item.id });
+                }}
+              />
+            ),
+          )}
         </div>
 
         <div class="tools">

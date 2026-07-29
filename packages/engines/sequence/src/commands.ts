@@ -48,6 +48,11 @@ export type CombineRule = keyof typeof COMBINE_RULES;
 
 export const COMBINE_RULE_IDS = Object.keys(COMBINE_RULES) as readonly CombineRule[];
 
+/** Nhãn của luật gộp — **một** bảng, dùng cho cả lịch sử undo lẫn thanh công cụ. */
+export function combineRuleLabel(rule: string): string {
+  return Object.hasOwn(RULE_LABELS, rule) ? (RULE_LABELS[rule as CombineRule] as string) : rule;
+}
+
 const RULE_LABELS: Readonly<Record<CombineRule, string>> = {
   sum: 'a + b',
   'abs-diff': '|a − b|',

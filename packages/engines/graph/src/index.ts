@@ -14,6 +14,7 @@ import { analyzePoset } from './poset.js';
 import { EdgeElement, GRAPH_LIMITS, GraphConfig, VertexElement } from './schema.js';
 
 export * from './schema.js';
+export { graphTools } from './tools.js';
 export * from './graph.js';
 export * from './layout.js';
 export * from './analyzers.js';

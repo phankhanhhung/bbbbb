@@ -15,6 +15,7 @@ import { cellId } from './ids.js';
 import { BOARD_VALIDATOR_IDS, resolveBoardValidator } from './validators.js';
 
 export * from './schema.js';
+export { boardTools } from './tools.js';
 export * from './geometry.js';
 export * from './ids.js';
 export { boardRenderer } from './render.js';

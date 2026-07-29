@@ -8,5 +8,14 @@
   },
   "dependencies": {
     "@combviz/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@combviz/engine-board": "workspace:*",
+    "@combviz/engine-derivation": "workspace:*",
+    "@combviz/engine-game": "workspace:*",
+    "@combviz/engine-graph": "workspace:*",
+    "@combviz/engine-point": "workspace:*",
+    "@combviz/engine-sequence": "workspace:*",
+    "@combviz/engine-set": "workspace:*"
   }
 }

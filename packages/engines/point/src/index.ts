@@ -17,6 +17,7 @@ import {
 import { POINT_VALIDATOR_IDS, resolvePointValidator } from './validators.js';
 
 export * from './schema.js';
+export { pointTools } from './tools.js';
 export * from './geometry.js';
 export * from './validators.js';
 export { pointEnvironment } from './dsl.js';

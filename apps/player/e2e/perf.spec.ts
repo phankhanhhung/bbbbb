@@ -51,7 +51,7 @@ interface Sweep {
  * số nhảy loạn giữa các lần chạy. Với ~240 frame thì nó mới nói được điều nó
  * hứa nói.
  */
-async function sweep(page: Page, cpuRate: number): Promise<Sweep> {
+async function sweep(page: Page, cpuRate: number, swatch = 0): Promise<Sweep> {
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: cpuRate });
 
@@ -68,7 +68,23 @@ async function sweep(page: Page, cpuRate: number): Promise<Sweep> {
     requestAnimationFrame(tick);
   });
 
+  // Bật **rõ ràng** công cụ tô trước khi quét. Trước đây phép đo dựa vào một mặc
+  // định ngầm (công cụ mặc định của sandbox là tô màu 1), và khi mặc định đổi
+  // thành "Chọn" thì phép quét vẫn chạy trơn tru, vẫn ra một con số đẹp — chỉ là
+  // nó đo thao tác *chọn* chứ không đo thao tác *tô*. Một phép đo sai còn tệ hơn
+  // không đo, vì nó dạy người ta bỏ qua màu xanh.
+  //
+  // Mỗi lượt quét dùng **một màu khác**: hàm này được gọi hai lần trên cùng một
+  // trang (gate ×2 rồi cảnh báo ×4), và tô lại đúng màu vừa tô thì hình không đổi
+  // — chốt canh bên dưới sẽ báo động nhầm.
+  await page.locator('.sandbox__bar .swatch').nth(swatch).click();
+
   const box = (await page.locator('.sandbox .canvas svg').boundingBox())!;
+  // Chỉ cần biết **hình có đổi không**. Đếm số màu phân biệt thì quá thô: bàn cờ
+  // đã sẵn ba màu trước khi tô một nét nào.
+  const snapshot = () => page.locator('.sandbox .canvas svg').innerHTML();
+  const before = await snapshot();
+
   await page.mouse.move(box.x + 8, box.y + 8);
   await page.mouse.down();
   for (let pass = 0; pass < 3; pass += 1) {
@@ -85,6 +101,10 @@ async function sweep(page: Page, cpuRate: number): Promise<Sweep> {
   const frames = (
     await page.evaluate(() => (globalThis as unknown as { __frames: number[] }).__frames)
   ).slice(5); // vài frame đầu là chi phí dựng sandbox, không phải chi phí tô
+
+  // Nét quét **phải** đổi được hình. Không có dòng này thì bài đo im lặng thành
+  // vô nghĩa đúng lúc nó ngừng tô được.
+  expect(await snapshot()).not.toBe(before);
 
   return {
     p50: quantile(frames, 0.5),
@@ -159,13 +179,13 @@ test.describe('Ngân sách perf', () => {
     // — hai bên mép ngân sách. Một gate đứng ở đó sẽ đỏ ngẫu nhiên, và một gate
     // đỏ ngẫu nhiên bị tắt trong hai tuần. Ở ×2 phép đo lặp lại được: p95 17.3ms,
     // dưới 2% frame vượt ngưỡng.
-    const gate = await sweep(page, 2);
+    const gate = await sweep(page, 2, 0);
     console.log(
       `NFR-P1 CPU ×2: p50=${gate.p50.toFixed(1)}ms p95=${gate.p95.toFixed(1)}ms` +
         ` · ${gate.overBudget.toFixed(1)}% frame > ${FRAME_BUDGET_MS}ms (n=${gate.count})`,
     );
 
-    const warn = await sweep(page, 4);
+    const warn = await sweep(page, 4, 1);
     console.log(
       `NFR-P1 CPU ×4 (cảnh báo sớm, không gate): p95=${warn.p95.toFixed(1)}ms` +
         ` · ${warn.overBudget.toFixed(1)}% frame > ${FRAME_BUDGET_MS}ms`,

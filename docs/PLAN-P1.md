@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M18 xong (7 engine, phủ ~85%); kho 56 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M19 xong (7 engine, phủ ~85%); kho 56 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,48 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M19 — Công cụ sandbox theo engine · [E] — **xong**
+
+Không phải hạng mục trong hàng đợi; đây là **lỗi chính chủ tìm ra khi bấm thử**:
+sandbox bày ra những chức năng không thuộc engine đang mở.
+
+**Chẩn đoán.** Thanh công cụ là một danh sách gõ cứng trong `apps/player`: tám ô
+màu, bốn hình tile, "Xoá quân", "Lật hàng/cột" — và **mọi** nút đều dispatch lệnh
+`board/*`. Nó hiện y hệt nhau ở cả bảy engine. Hậu quả đi cả hai chiều:
+
+- **Nút thừa.** Ở graph, set, point, game, derivation thì `board/paint-cells`
+  không nằm trong registry, `execute` trả "không áp được", và **không ai báo gì
+  cả**. Người học bấm một nút trông dùng được rồi nhận lại sự im lặng.
+- **Nút thiếu, và đây mới là phần tệ hơn.** Năm engine ấy có **13 lệnh** đã viết
+  từ lâu — `graph/add-edge`, `graph/set-color`, `set/toggle-membership`,
+  `point/toggle-segment`, `game/take`, `game/split`, `derivation/toggle-cancel`…
+  — mà không có một cái nút nào gọi tới. Sandbox của chúng là khung chết.
+- Phím tắt cũng thế: `Delete` luôn gọi `board/remove`, `R` luôn gọi
+  `board/rotate-tile`.
+- Và danh sách chép tay đã lệch khỏi engine: Player bày **3** luật gộp trong khi
+  engine dãy có **5**, nhãn cũng viết khác.
+
+**Sửa.** `SandboxTool` ở `packages/editor`: engine **tự khai** công cụ của nó, là
+hàm của `scene` chứ không phải hằng số. Player chỉ biết bảy dạng tương tác
+(`select`/`paint`/`one`/`two`/`stamp`/`line`/`run`/`count`) — toàn là hình thức
+thao tác, không có nội dung toán nào. Cùng một lỗi gốc với "trường ma": hai nguồn
+sự thật cho một câu hỏi. Giờ UI **hỏi** thay vì đoán.
+
+Kết quả nhìn thấy được: sandbox game bày ra **mỗi nước đi hợp lệ là một nút**
+("Bốc 1".."Bốc 7"), và số nút đổi theo thế — "bốc tối đa nửa đống" ở đống 7 có ba
+nút, ở đống 3 có một nút. Thanh công cụ *là* luật chơi.
+
+**Lưới canh:** `packages/editor/test/tool.test.ts` ép hai chiều — không nút nào
+gọi lệnh engine không có, và engine có lệnh thì phải có nút. Cộng hai e2e: công
+cụ đổi theo engine, và bấm một nước đi trong sandbox game **thật sự** đổi thế.
+
+**Một cái bẫy tự tạo, bắt được ngay:** đổi công cụ mặc định từ "tô màu 1" sang
+"Chọn" làm bài đo NFR-P1 **im lặng đo nhầm** — nó vẫn quét, vẫn ra con số đẹp,
+chỉ là đo thao tác chọn. Nay bài đo tự bấm công cụ tô và **khẳng định hình có
+đổi**; mỗi lượt quét dùng một màu khác, vì tô lại đúng màu cũ thì hình đứng yên.
+
+Kho không đổi: **56 bài**. 822 test, e2e 36 xanh, perf trong ngân sách.
 
 ### M18 — Derivation engine + label atlas D-07 · [E] — **xong**
 

@@ -2,6 +2,7 @@ import {
   boardCommands,
   boardEnvironment,
   boardHitTest,
+  boardTools,
   boardRenderer,
   boardSchemaFragment,
 } from '@combviz/engine-board';
@@ -9,6 +10,7 @@ import {
   graphCommands,
   graphEnvironment,
   graphHitTest,
+  graphTools,
   graphRenderer,
   graphSchemaFragment,
 } from '@combviz/engine-graph';
@@ -16,6 +18,7 @@ import {
   sequenceCommands,
   sequenceEnvironment,
   sequenceHitTest,
+  sequenceTools,
   sequenceRenderer,
   sequenceSchemaFragment,
 } from '@combviz/engine-sequence';
@@ -23,6 +26,7 @@ import {
   setCommands,
   setEnvironment,
   setHitTest,
+  setTools,
   setRenderer,
   setSchemaFragment,
 } from '@combviz/engine-set';
@@ -30,6 +34,7 @@ import {
   pointCommands,
   pointEnvironment,
   pointHitTest,
+  pointTools,
   pointRenderer,
   pointSchemaFragment,
 } from '@combviz/engine-point';
@@ -37,6 +42,7 @@ import {
   gameCommands,
   gameEnvironment,
   gameHitTest,
+  gameTools,
   gameRenderer,
   gameSchemaFragment,
 } from '@combviz/engine-game';
@@ -44,12 +50,13 @@ import {
   derivationCommands,
   derivationEnvironment,
   derivationHitTest,
+  derivationTools,
   derivationRenderer,
   derivationSchemaFragment,
 } from '@combviz/engine-derivation';
 import type { EngineDslModule } from '@combviz/check';
 import type { EngineRenderer } from '@combviz/render';
-import type { CommandRegistry, HitTest } from '@combviz/editor';
+import type { CommandRegistry, HitTest, SandboxToolsFn } from '@combviz/editor';
 import type { EngineSchemaFragment } from '@combviz/schema';
 
 /**
@@ -111,4 +118,20 @@ export const ENGINE_HIT_TEST: Readonly<Record<string, HitTest>> = {
   point: pointHitTest,
   game: gameHitTest,
   derivation: derivationHitTest,
+};
+
+/**
+ * Công cụ sandbox theo engine (SBX-01).
+ *
+ * Studio dùng đúng bảng này để bày thanh công cụ, cùng nguồn với Player — hai
+ * bảng công cụ khác nhau thì tác giả sẽ thử được thao tác mà người học không có.
+ */
+export const ENGINE_TOOLS: Readonly<Record<string, SandboxToolsFn>> = {
+  board: boardTools,
+  graph: graphTools,
+  sequence: sequenceTools,
+  set: setTools,
+  point: pointTools,
+  game: gameTools,
+  derivation: derivationTools,
 };
