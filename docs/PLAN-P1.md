@@ -1,6 +1,11 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: plan draft · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M0 xong** · Đối tượng: 1 người (Owner-Author)
+
+> **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
+> Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
+> Tree navigator = **(a) minimap cây đứng, thu gọn được**. Bound giữ nguyên 40×40 / 400 tile.
+> Tên brand chính thức: **CombViz**. License: **MIT cho code, CC BY-SA 4.0 cho nội dung**, engine open source.
 
 ---
 
@@ -31,19 +36,19 @@ schema (hợp đồng)  →  renderer thuần (Scene → SVG, không biết chu�
 
 ## 1. Giả định & việc cần chốt trước khi code
 
-| # | Giả định | Cần xác nhận |
+| # | Giả định | Trạng thái |
 |---|---|---|
-| A-1 | ~1 học kỳ ≈ 16 tuần, một người full-time. Nếu part-time, nhân đôi lịch và cắt theo §8 | Owner |
-| A-2 | Chrome là browser soạn bài (Studio cần File System Access API); Studio chạy **local**, không deploy công khai | Owner |
-| A-3 | Hosting static: Cloudflare Pages hoặc GitHub Pages; CI GitHub Actions | Owner |
-| A-4 | LLM cho AUT-09 truy cập được qua API từ máy local (tools/pipeline) | Owner |
+| A-1 | 16 tuần, một người, **35h/tuần** | ✅ chốt — lịch §7 giữ nguyên, không cắt scope |
+| A-2 | Chrome là browser soạn bài (Studio cần File System Access API); Studio chạy **local**, không deploy công khai | ✅ chốt |
+| A-3 | Hosting static Cloudflare Pages; CI GitHub Actions | ✅ chốt |
+| A-4 | LLM cho AUT-09 truy cập qua API từ máy local (tools/pipeline) | ✅ chốt; đo chi phí + số vòng lặp ở **M4**, không đợi M6 |
 
-**Chặn tiến độ nếu không chốt sớm:**
+**Câu hỏi mở của SRS — trạng thái:**
 
-- **OPQ-1 (tên brand + domain)** — chặn REN-02/03 (OG card + watermark cần brand mark). Deadline: **hết tuần 4**, trước khi publish bài đầu.
-- **OPQ-2 (UX tree navigator)** — chặn PLY-02. Prototype giấy **tuần 1**, không code trước khi có kết luận.
-- **OPQ-3 (license)** — chặn CMS-06 và bài đầu tiên. Deadline: **hết tuần 5**.
-- **OPQ-6 (bound board 40×40)** — chặn NFR-P4 và schema. Rà khi chốt seed list, **tuần 2**. Nới rẻ, thu hẹp đắt → nếu phân vân, đặt rộng.
+- **OPQ-1** ✅ **CombViz** là tên chính thức, đã vào `packages/theme` (`brand.name`). Việc còn lại: kiểm domain + handle YouTube/TikTok trước tuần 4.
+- **OPQ-2** ✅ **(a) minimap cây đứng, thu gọn được**. Prototype giấy tuần 1 giờ chỉ để chốt bố cục và G-03, không còn để chọn phương án.
+- **OPQ-3** ✅ **MIT cho code, CC BY-SA 4.0 cho nội dung** (gồm clip REN-04). Đề bài tách riêng qua `source`, không nằm trong license — xem D-14.
+- **OPQ-6** ✅ Giữ 40×40 / 400 tile; demo tromino dừng ở n = 4.
 - OPQ-4/5/7 thuộc P2, không chặn P1.
 
 ---
@@ -65,6 +70,10 @@ schema (hợp đồng)  →  renderer thuần (Scene → SVG, không biết chu�
 | **D-11** | Search: **MiniSearch** + tokenizer fold dấu tiếng Việt, index sinh lúc build | CMS-02, ≤500 bài, ~6KB gzip |
 | **D-12** | Test: **Vitest** (schema, DSL, diff, analyzer) + **golden SVG snapshot** cho renderer + **Playwright** cho player interaction & perf trace | Renderer thuần ⇒ snapshot test cực rẻ và bắt regression thị giác — đúng thứ một brand cần |
 | **D-13** | CLI một binary `combviz` với subcommand: `validate` `lint` `import-draft` `render` `og` `migrate` `stats`. **Cùng code với Studio và CI** (AUT-04) | Ba nơi dùng một bộ luật là yêu cầu tường minh của AUT-04/NFR-D2 |
+| **D-14** | License **MIT cho code, CC BY-SA 4.0 cho nội dung**; engine open source. Đề bài **không** nằm trong license nội dung — tách thành `source { contest, note, url }` trong schema | OPQ-3. Engine mở là kênh growth theo đúng mô hình manim; brand nằm ở corpus và taste chứ không ở palette (§1.2 SRS). Tách đề bài là đối sách trực tiếp của R-5 |
+| **D-15** | Ô bàn cờ là element **ngầm định** sinh từ `config`, không materialize vào `elements[]`. Tô tay đi vào `cell_overrides` dạng thưa; preset lo phần còn lại | Bàn 40×40 mà nhét 1600 ô vào file thì diff git vô dụng (DAT-03) và ngưỡng 1MB (NFR-P4) bị đốt vào thứ suy ra được. Cũng là cách gỡ căng thẳng NFR-P1 ↔ NFR-P4: renderer gộp ô tĩnh cùng `color_class` thành một `<path>` |
+| **D-16** | Ô khuyết **vẫn là** element trỏ tới được bằng anchor | "Bàn cờ khuyết hai ô góc đối nhau" — chính hai ô khuyết là thứ narrative trỏ vào. Khuyết là thuộc tính của ô, không phải sự vắng mặt |
+| **D-17** | Luật phụ thuộc giữa package enforce bằng **eslint làm CI đỏ**, không bằng quy ước | Ba ràng buộc kiến trúc quan trọng nhất đều có dạng "X không được import Y" (render↛DOM, schema↛engine, LLM↛runtime). Quy ước không giữ nổi chúng qua 16 tuần |
 
 ---
 
@@ -131,7 +140,7 @@ interface Engine {
 |---|---|---|
 | **G-01** | REN-02 nói "chính chủ chọn step tiêu biểu trong Studio" nhưng §4.2 **không có field** lưu lựa chọn đó | Thêm `og_step_ref: {sol_id, step_id}` vào Problem, optional, fallback = step cuối của nhánh chính. Sửa schema **trước** M6 |
 | **G-02** | GR-08 (nhãn LaTeX trong canvas) mâu thuẫn tiềm tàng với REN-01 headless | D-07: label atlas MathJax build-time. Hệ quả: nhãn canvas dùng **subset LaTeX** (không `\begin{array}`, không macro tự định nghĩa) — ghi vào Style Guide (AUT-10) |
-| **G-03** | `merge_ref` render thế nào trong tree navigator (PLY-02) chưa định nghĩa | Chốt trong prototype OPQ-2 tuần 1: đề xuất vẽ như cạnh đứt nét quay về node tổng hợp, navigation coi như "seq" nhưng breadcrumb reset về nhánh chính |
+| **G-03** | `merge_ref` render thế nào trong tree navigator (PLY-02) chưa định nghĩa | ✅ Chốt: minimap vẽ cạnh **đứt nét** từ leaf quay về node tổng hợp; node tổng hợp vẽ khác dạng (viên thuốc) để phân biệt với step thường; navigation coi merge_ref như một bước `seq` và breadcrumb reset về nhánh chính. Schema đã enforce: merge_ref là leaf, có `merge_target` trỏ tới step tồn tại, **không** mang scene riêng |
 | **G-04** | PLY-06 nói sparkline "theo tiến trình nhánh đang xem" — với `merge_ref` thì "nhánh" là gì | Định nghĩa: đường đi từ root tới step hiện tại theo `parent`, bỏ qua merge_ref. Ghi vào schema doc |
 | **G-05** | DAT-02 nói Player đọc được version hiện tại và n−1 minor, nhưng schema sẽ churn dữ dội trong 5 bài đầu | Đặt **schema freeze gate**: schema là `0.x` (không hứa tương thích) tới hết M5; sau 5 bài soạn tay, freeze `1.0.0`, từ đó mọi thay đổi đi kèm migrate CLI. Viết `migrate` CLI ngay tại lúc freeze, không hoãn |
 | **G-06** | AUT-KPI đo "median 5 bài cuối pilot" nhưng AUT-08 (công cụ đo) là **P2** | Cần một bản đo tối thiểu ở P1: `combviz stats` đọc log thời gian thủ công (file CSV owner tự ghi) — 2 giờ công, đủ để gate có răng |
@@ -144,15 +153,18 @@ interface Engine {
 
 Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có DoD kiểm được.
 
-### M0 — Nền móng & khử rủi ro quyết định · Tuần 1 · [E]
+### M0 — Nền móng & khử rủi ro quyết định · Tuần 1 · [E] — ✅ **XONG**
 
-- Monorepo, TS strict, eslint boundaries, CI skeleton (lint + typecheck + test).
-- `packages/theme`: tokens Okabe–Ito + pattern dự phòng (NFR-A1, DAT-20). Whitelist đóng — schema cấm style tự do ngay từ ngày đầu, đừng "thêm sau".
-- `packages/schema` v0: Problem/Solution/Step/Scene theo §4.2–4.4. File §4.7 validate pass.
-- **Prototype giấy tree navigator (OPQ-2)** + chốt G-03.
-- Chốt OPQ-6 sơ bộ (bound board).
+- ✅ Monorepo pnpm, TS strict, eslint boundaries (D-17), CI workflow (typecheck + lint + test + validate toàn kho).
+- ✅ `packages/theme`: tokens Okabe–Ito sắp lại cho tổ hợp (class 1/2 = cặp đậm/nhạt) + pattern dự phòng (NFR-A1, DAT-20).
+- ✅ `packages/schema` v0.1.0: Problem/Solution/Step/Scene theo §4.2–4.4; whitelist đóng; parser anchor markup; engine registry.
+- ✅ `packages/engines/board`: schema fragment + bound (NFR-P4) + luật đặt tile.
+- ✅ `tools/pipeline`: `combviz validate` (schema → cấu trúc cây → anchor → bound → taxonomy) và `combviz schema`.
+- ✅ Bài mẫu §4.7 dạng đầy đủ, validate sạch; 33 test xanh.
+- ✅ Taxonomy YAML (CMS-01) + ràng buộc chéo techniques↔widget của lint AUT-10.
+- ⬜ Prototype giấy tree navigator — chốt bố cục minimap (phương án đã chọn ở OPQ-2).
 
-**DoD:** `pnpm validate examples/mutilated-chessboard.json` chạy xanh; CI xanh.
+**DoD:** ✅ `pnpm check` xanh: typecheck, lint, 33 test, validate toàn kho 0 lỗi 0 cảnh báo.
 
 ### M1 — Walking skeleton (cược kiến trúc) · Tuần 2–3 · [E]
 
@@ -206,7 +218,7 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 
 ### M5 — Player hoàn chỉnh + **schema freeze** · Tuần 9–10 · [E]
 
-- PLY-02 tree navigator theo kết luận OPQ-2 (đây là phần UX khó nhất của P1 — R-6).
+- PLY-02 tree navigator: **minimap cây đứng, thu gọn được** (OPQ-2 = a). Cần thuật toán layout cây (~2–3 ngày) + quy tắc thu gọn mặc định ở portrait. Đây là phần UX khó nhất của P1 — R-6.
 - PLY-05 "Thử từ đây" (fork scene sang sandbox, quay lại đúng step).
 - PLY-01/03/04 hoàn chỉnh: tốc độ, swipe, responsive, `prefers-reduced-motion`.
 - DAT-14 deep-link; NFR-A2 keyboard đầy đủ; NFR-A3 alt_text.
@@ -293,14 +305,22 @@ Quyết định trước, để lúc gấp không phải quyết trong hoảng l
 
 ---
 
-## 10. Hành động tuần 1 (cụ thể)
+## 10. Việc tiếp theo
 
-1. `pnpm init` monorepo; dựng `packages/schema`, `packages/theme`; CI skeleton xanh.
-2. Viết TypeBox schema cho Problem/Solution/Step/Scene; port file §4.7 vào `packages/content/examples/`; `validate` chạy được.
-3. Theme tokens: Okabe–Ito 8 màu + 8 pattern; kiểm color-blind bằng simulator.
-4. Prototype giấy tree navigator, thử trên 1 bài case-branching thật (đề xuất: $R(3,3)=6$) → chốt OPQ-2 và G-03.
-5. Mượn/chuẩn bị iPad Gen 9 cho M1 — đo perf tuần 2 chứ không phải tuần 12.
-6. Mở issue cho từng OPQ với deadline ở §1.
+**Còn lại của tuần 1:**
+
+1. ⬜ Prototype giấy minimap cây, thử trên bài $R(3,3)=6$ (case-branching thật) → chốt bố cục, quy tắc thu gọn, cách vẽ merge_ref.
+2. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
+3. ⬜ Mượn/chuẩn bị iPad Gen 9 — perf đo từ tuần 2, không phải tuần 12 (R-3).
+4. ⬜ Thêm `LICENSE` (MIT) + `packages/content/LICENSE` (CC BY-SA 4.0) theo D-14.
+
+**Tuần 2–3 — M1 walking skeleton, milestone quan trọng nhất:**
+
+5. `packages/render`: `render(scene, theme) → SvgNode[]` thuần, `diff()`, `interpolate()` (D-05), `patch()` keyed theo element id.
+6. Board renderer tối thiểu: bàn + ô + coloring preset + tile domino. Gộp ô tĩnh cùng `color_class` thành một `<path>` (D-15).
+7. Canonical scene hash (A-03) + chính sách cấp id (A-02).
+8. Player tối thiểu: đọc JSON, Prev/Next, narrative KaTeX, animation từ auto-diff.
+9. **Đo trên iPad thật** → gate G-A.
 
 ---
 

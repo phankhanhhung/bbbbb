@@ -1,0 +1,13 @@
+{
+  "name": "@combviz/engine-board",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@combviz/schema": "workspace:*",
+    "@sinclair/typebox": "^0.34.13"
+  }
+}

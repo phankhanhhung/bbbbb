@@ -1,0 +1,18 @@
+Nội dung trong thư mục này (bài, lời giải, hình minh hoạ, và clip render từ chúng)
+được phát hành theo giấy phép Creative Commons Attribution-ShareAlike 4.0
+International (CC BY-SA 4.0).
+
+  https://creativecommons.org/licenses/by-sa/4.0/
+
+PHẠM VI — điều cần đọc kỹ:
+
+Giấy phép này áp cho phần do CombViz viết: lời giải, cách minh hoạ, cấu hình
+scene, narrative, và mọi sản phẩm render từ chúng.
+
+Giấy phép này KHÔNG áp cho **đề bài**. Đề bài trích từ các kỳ thi thuộc bản quyền
+của ban tổ chức tương ứng; chúng được trích dẫn kèm nguồn trong trường `source`
+của mỗi file problem. Người dùng lại nội dung có trách nhiệm tự kiểm tra quyền
+đối với phần đề bài.
+
+Mã nguồn của engine nằm ngoài thư mục này và theo giấy phép MIT (xem LICENSE ở
+thư mục gốc).

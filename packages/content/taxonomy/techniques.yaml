@@ -1,0 +1,42 @@
+# Controlled vocabulary cho `techniques[]` (CMS-01).
+#
+# `technique` là *cách nghĩ*, khác với `topic` là *đối tượng*. Một bài phủ hình
+# (topic) có thể giải bằng bất biến (technique) hoặc bằng đếm hai chiều.
+#
+# Cột `requires_widget` là ràng buộc chéo mà lint AUT-10 enforce: bài đã tag
+# `invariant` mà không khai `invariants[]` thì hoặc tag sai, hoặc bỏ sót widget —
+# cả hai đều nên chặn trước khi publish.
+
+techniques:
+  - id: invariant
+    label:
+      vi: Bất biến
+    requires_widget: invariants
+  - id: monovariant
+    label:
+      vi: Đơn biến
+    requires_widget: invariants
+  - id: parity
+    label:
+      vi: Tính chẵn lẻ
+  - id: pigeonhole
+    label:
+      vi: Dirichlet
+  - id: double-counting
+    label:
+      vi: Đếm hai chiều
+  - id: extremal
+    label:
+      vi: Cực trị
+  - id: bijection
+    label:
+      vi: Song ánh
+  - id: induction
+    label:
+      vi: Quy nạp
+  - id: contradiction
+    label:
+      vi: Phản chứng
+  - id: construction
+    label:
+      vi: Dựng hình

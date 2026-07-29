@@ -1,0 +1,152 @@
+{
+  "schema_version": "0.1.0",
+  "id": "mutilated-chessboard",
+  "statement": {
+    "vi": "Bàn cờ $8\\times8$ bỏ hai ô góc đối nhau. Chứng minh không thể phủ kín phần còn lại bằng $31$ quân domino $1\\times2$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; không rõ kỳ thi gốc."
+    }
+  },
+  "topics": ["tiling", "coloring"],
+  "techniques": ["invariant", "parity"],
+  "difficulty": {
+    "slot_proxy": "P1",
+    "author_rating": 2
+  },
+  "engines_used": ["board"],
+  "license": "CC-BY-SA-4.0",
+  "authors": ["hungpk"],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "id": "inv-bw",
+      "label": {
+        "vi": "Ô đen chưa phủ − ô trắng chưa phủ"
+      },
+      "expr": "count(cells, c => c.color_class==1 && !covered(c)) - count(cells, c => c.color_class==2 && !covered(c))"
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol-mau",
+      "label": {
+        "vi": "Lập luận tô màu"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bàn cờ khuyết [[a1|hai ô góc đối nhau]] còn $62$ ô."
+          },
+          "anchors": {
+            "a1": { "ids": ["cell-0-0", "cell-7-7"] }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "rows": 8,
+              "cols": 8,
+              "holes": [[0, 0], [7, 7]]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bàn cờ 8×8 chưa tô màu, khuyết ô góc trên trái và ô góc dưới phải."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tô xen kẽ hai màu. Hai ô bị bỏ [[a2|cùng màu]], nên còn $30$ ô màu 1 và $32$ ô màu 2."
+          },
+          "anchors": {
+            "a2": { "ids": ["cell-0-0", "cell-7-7"] }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "rows": 8,
+              "cols": 8,
+              "holes": [[0, 0], [7, 7]],
+              "coloring_preset": { "type": "checkerboard" }
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Cùng bàn cờ, đã tô xen kẽ hai màu; hai ô khuyết cùng thuộc màu 1."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "contradiction",
+          "narrative": {
+            "vi": "Mỗi [[a3|domino]] phủ đúng một ô mỗi màu, nên $31$ domino phủ $31{+}31$ — mâu thuẫn với $30{+}32$."
+          },
+          "anchors": {
+            "a3": { "ids": ["t1", "t2", "t3"] }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "rows": 8,
+              "cols": 8,
+              "holes": [[0, 0], [7, 7]],
+              "coloring_preset": { "type": "checkerboard" }
+            },
+            "elements": [
+              {
+                "id": "t1",
+                "type": "tile",
+                "shape": "domino",
+                "pos": [3, 3],
+                "rot": 0,
+                "emphasis": "focus"
+              },
+              {
+                "id": "t2",
+                "type": "tile",
+                "shape": "domino",
+                "pos": [5, 1],
+                "rot": 90,
+                "emphasis": "focus"
+              },
+              {
+                "id": "t3",
+                "type": "tile",
+                "shape": "domino",
+                "pos": [0, 2],
+                "rot": 0,
+                "emphasis": "focus"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba quân domino minh hoạ đặt trên bàn đã tô màu; mỗi quân phủ một ô mỗi màu."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": ["tiles-no-overlap", "tiles-in-bounds"],
+    "goal_expr": "count(cells, c => !covered(c)) == 0"
+  },
+  "og_step_ref": {
+    "sol_id": "sol-mau",
+    "step_id": "s1"
+  }
+}

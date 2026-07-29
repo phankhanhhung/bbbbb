@@ -1,0 +1,7 @@
+{
+  "name": "@combviz/content",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Kho bài + controlled vocabulary. Dữ liệu thuần, không có code (NFR-D1: git là source of truth)."
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@combviz/pipeline",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "combviz": "./src/cli.ts"
+  },
+  "dependencies": {
+    "@combviz/engine-board": "workspace:*",
+    "@combviz/schema": "workspace:*",
+    "yaml": "^2.6.1"
+  }
+}
