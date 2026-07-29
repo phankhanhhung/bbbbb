@@ -12,6 +12,13 @@ import {
   graphRenderer,
   graphSchemaFragment,
 } from '@combviz/engine-graph';
+import {
+  sequenceCommands,
+  sequenceEnvironment,
+  sequenceHitTest,
+  sequenceRenderer,
+  sequenceSchemaFragment,
+} from '@combviz/engine-sequence';
 import type { EngineDslModule } from '@combviz/check';
 import type { EngineRenderer } from '@combviz/render';
 import type { CommandRegistry, HitTest } from '@combviz/editor';
@@ -28,21 +35,29 @@ import type { EngineSchemaFragment } from '@combviz/schema';
 export const ENGINE_FRAGMENTS: readonly EngineSchemaFragment[] = [
   boardSchemaFragment,
   graphSchemaFragment,
+  sequenceSchemaFragment,
 ];
 
 export const ENGINE_DSL: Readonly<Record<string, EngineDslModule>> = {
   board: { fragment: boardSchemaFragment, environment: boardEnvironment },
   graph: { fragment: graphSchemaFragment, environment: graphEnvironment },
+  sequence: { fragment: sequenceSchemaFragment, environment: sequenceEnvironment },
 };
 
-export const ENGINE_RENDERERS: readonly EngineRenderer[] = [boardRenderer, graphRenderer];
+export const ENGINE_RENDERERS: readonly EngineRenderer[] = [
+  boardRenderer,
+  graphRenderer,
+  sequenceRenderer,
+];
 
 export const ENGINE_COMMANDS: Readonly<Record<string, CommandRegistry>> = {
   board: boardCommands,
   graph: graphCommands,
+  sequence: sequenceCommands,
 };
 
 export const ENGINE_HIT_TEST: Readonly<Record<string, HitTest>> = {
   board: boardHitTest,
   graph: graphHitTest,
+  sequence: sequenceHitTest,
 };

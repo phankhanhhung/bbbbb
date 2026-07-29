@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@combviz/dsl": "workspace:*",
-    "@combviz/schema": "workspace:*"
+    "@combviz/schema": "workspace:*",
+    "@combviz/engine-sequence": "workspace:*"
   },
   "devDependencies": {
     "@combviz/engine-board": "workspace:*"

@@ -1,0 +1,401 @@
+{
+  "schema_version": "0.1.0",
+  "id": "counting-pigeonhole-months",
+  "statement": {
+    "vi": "Trong một nhóm $13$ người, chứng minh luôn có hai người sinh cùng tháng."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; đếm cơ bản."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "pigeonhole"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "total",
+      "id": "inv-n",
+      "label": {
+        "vi": "Số người đã xếp"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Dựng [[a1|mười hai cái ngăn]], mỗi ngăn là một tháng. Mỗi người được bỏ vào ngăn ứng với tháng sinh."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3",
+                "i4",
+                "i5",
+                "i6",
+                "i7",
+                "i8",
+                "i9",
+                "i10",
+                "i11"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Mười hai tháng",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "label": "1",
+                "pos": 0,
+                "value": 0
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "label": "2",
+                "pos": 1,
+                "value": 0
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "label": "3",
+                "pos": 2,
+                "value": 0
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "label": "4",
+                "pos": 3,
+                "value": 0
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "label": "5",
+                "pos": 4,
+                "value": 0
+              },
+              {
+                "id": "i5",
+                "type": "item",
+                "label": "6",
+                "pos": 5,
+                "value": 0
+              },
+              {
+                "id": "i6",
+                "type": "item",
+                "label": "7",
+                "pos": 6,
+                "value": 0
+              },
+              {
+                "id": "i7",
+                "type": "item",
+                "label": "8",
+                "pos": 7,
+                "value": 0
+              },
+              {
+                "id": "i8",
+                "type": "item",
+                "label": "9",
+                "pos": 8,
+                "value": 0
+              },
+              {
+                "id": "i9",
+                "type": "item",
+                "label": "10",
+                "pos": 9,
+                "value": 0
+              },
+              {
+                "id": "i10",
+                "type": "item",
+                "label": "11",
+                "pos": 10,
+                "value": 0
+              },
+              {
+                "id": "i11",
+                "type": "item",
+                "label": "12",
+                "pos": 11,
+                "value": 0
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Mười hai ngăn rỗng, mỗi ngăn ghi số tháng."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giả sử không có hai người nào cùng tháng. Khi đó [[a2|mỗi ngăn]] chứa nhiều nhất một người, nên tổng số người nhiều nhất là $12$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3",
+                "i4",
+                "i5",
+                "i6",
+                "i7",
+                "i8",
+                "i9",
+                "i10",
+                "i11"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Mỗi ngăn nhiều nhất một người",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 1
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 1
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 1
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "pos": 4,
+                "value": 1
+              },
+              {
+                "id": "i5",
+                "type": "item",
+                "pos": 5,
+                "value": 1
+              },
+              {
+                "id": "i6",
+                "type": "item",
+                "pos": 6,
+                "value": 1
+              },
+              {
+                "id": "i7",
+                "type": "item",
+                "pos": 7,
+                "value": 1
+              },
+              {
+                "id": "i8",
+                "type": "item",
+                "pos": 8,
+                "value": 1
+              },
+              {
+                "id": "i9",
+                "type": "item",
+                "pos": 9,
+                "value": 1
+              },
+              {
+                "id": "i10",
+                "type": "item",
+                "pos": 10,
+                "value": 1
+              },
+              {
+                "id": "i11",
+                "type": "item",
+                "pos": 11,
+                "value": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Mười hai ngăn, mỗi ngăn đúng một viên, tổng bằng 12."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "contradiction",
+          "narrative": {
+            "vi": "Nhưng nhóm có $13$ người, nên [[a3|người thứ mười ba]] không còn ngăn trống nào — mâu thuẫn. Vậy phải có hai người cùng tháng."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "i0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Người thứ 13 phải vào chung một ngăn",
+              "mode": "piles",
+              "show_total": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "color_class": 3,
+                "pos": 0,
+                "value": 2
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 1
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 1
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 1
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "pos": 4,
+                "value": 1
+              },
+              {
+                "id": "i5",
+                "type": "item",
+                "pos": 5,
+                "value": 1
+              },
+              {
+                "id": "i6",
+                "type": "item",
+                "pos": 6,
+                "value": 1
+              },
+              {
+                "id": "i7",
+                "type": "item",
+                "pos": 7,
+                "value": 1
+              },
+              {
+                "id": "i8",
+                "type": "item",
+                "pos": 8,
+                "value": 1
+              },
+              {
+                "id": "i9",
+                "type": "item",
+                "pos": 9,
+                "value": 1
+              },
+              {
+                "id": "i10",
+                "type": "item",
+                "pos": 10,
+                "value": 1
+              },
+              {
+                "id": "i11",
+                "type": "item",
+                "pos": 11,
+                "value": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một ngăn có hai viên, tổng bằng 13."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "total == 13",
+    "validators": [
+      "values-non-negative"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

@@ -1,0 +1,695 @@
+{
+  "schema_version": "0.1.0",
+  "id": "counting-subsets-two-power",
+  "statement": {
+    "vi": "Một tập có $3$ phần tử. Chứng minh nó có đúng $2^3 = 8$ tập con."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; đếm cơ bản."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "bijection",
+    "induction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Dựng một tập con bằng cách đi qua từng phần tử và trả lời [[a1|có lấy hay không]]. Mỗi lần trả lời là một lần rẽ nhánh."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e-r0",
+                "e-r1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "r",
+                "type": "vertex",
+                "label": "∅",
+                "pos": [0, -24]
+              },
+              {
+                "id": "r0",
+                "type": "vertex",
+                "pos": [-30, -8]
+              },
+              {
+                "id": "r00",
+                "type": "vertex",
+                "pos": [-45, 8]
+              },
+              {
+                "id": "r000",
+                "type": "vertex",
+                "pos": [-52.5, 24]
+              },
+              {
+                "id": "r001",
+                "type": "vertex",
+                "pos": [-37.5, 24]
+              },
+              {
+                "id": "r01",
+                "type": "vertex",
+                "pos": [-15, 8]
+              },
+              {
+                "id": "r010",
+                "type": "vertex",
+                "pos": [-22.5, 24]
+              },
+              {
+                "id": "r011",
+                "type": "vertex",
+                "pos": [-7.5, 24]
+              },
+              {
+                "id": "r1",
+                "type": "vertex",
+                "pos": [30, -8]
+              },
+              {
+                "id": "r10",
+                "type": "vertex",
+                "pos": [15, 8]
+              },
+              {
+                "id": "r100",
+                "type": "vertex",
+                "pos": [7.5, 24]
+              },
+              {
+                "id": "r101",
+                "type": "vertex",
+                "pos": [22.5, 24]
+              },
+              {
+                "id": "r11",
+                "type": "vertex",
+                "pos": [45, 8]
+              },
+              {
+                "id": "r110",
+                "type": "vertex",
+                "pos": [37.5, 24]
+              },
+              {
+                "id": "r111",
+                "type": "vertex",
+                "pos": [52.5, 24]
+              },
+              {
+                "id": "e-r000",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r00",
+                "v": "r000"
+              },
+              {
+                "id": "e-r001",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r00",
+                "v": "r001"
+              },
+              {
+                "id": "e-r00",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r0",
+                "v": "r00"
+              },
+              {
+                "id": "e-r010",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r01",
+                "v": "r010"
+              },
+              {
+                "id": "e-r011",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r01",
+                "v": "r011"
+              },
+              {
+                "id": "e-r01",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r0",
+                "v": "r01"
+              },
+              {
+                "id": "e-r0",
+                "type": "edge",
+                "color_class": 1,
+                "label": "có",
+                "u": "r",
+                "v": "r0"
+              },
+              {
+                "id": "e-r100",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r10",
+                "v": "r100"
+              },
+              {
+                "id": "e-r101",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r10",
+                "v": "r101"
+              },
+              {
+                "id": "e-r10",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r1",
+                "v": "r10"
+              },
+              {
+                "id": "e-r110",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r11",
+                "v": "r110"
+              },
+              {
+                "id": "e-r111",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r11",
+                "v": "r111"
+              },
+              {
+                "id": "e-r11",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r1",
+                "v": "r11"
+              },
+              {
+                "id": "e-r1",
+                "type": "edge",
+                "color_class": 2,
+                "label": "không",
+                "u": "r",
+                "v": "r1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cây nhị phân ba tầng, mỗi cạnh ghi 'có' hoặc 'không'."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ba phần tử ⇒ ba lần rẽ, mỗi lần gấp đôi số nhánh: $1 \\to 2 \\to 4 \\to 8$. [[a2|Tám lá]] của cây ứng với tám tập con."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "r000",
+                "r001",
+                "r010",
+                "r011",
+                "r100",
+                "r101",
+                "r110",
+                "r111"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "r",
+                "type": "vertex",
+                "label": "∅",
+                "pos": [0, -24]
+              },
+              {
+                "id": "r0",
+                "type": "vertex",
+                "pos": [-30, -8]
+              },
+              {
+                "id": "r00",
+                "type": "vertex",
+                "pos": [-45, 8]
+              },
+              {
+                "id": "r000",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [-52.5, 24]
+              },
+              {
+                "id": "r001",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [-37.5, 24]
+              },
+              {
+                "id": "r01",
+                "type": "vertex",
+                "pos": [-15, 8]
+              },
+              {
+                "id": "r010",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [-22.5, 24]
+              },
+              {
+                "id": "r011",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [-7.5, 24]
+              },
+              {
+                "id": "r1",
+                "type": "vertex",
+                "pos": [30, -8]
+              },
+              {
+                "id": "r10",
+                "type": "vertex",
+                "pos": [15, 8]
+              },
+              {
+                "id": "r100",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [7.5, 24]
+              },
+              {
+                "id": "r101",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [22.5, 24]
+              },
+              {
+                "id": "r11",
+                "type": "vertex",
+                "pos": [45, 8]
+              },
+              {
+                "id": "r110",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [37.5, 24]
+              },
+              {
+                "id": "r111",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [52.5, 24]
+              },
+              {
+                "id": "e-r000",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r00",
+                "v": "r000"
+              },
+              {
+                "id": "e-r001",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r00",
+                "v": "r001"
+              },
+              {
+                "id": "e-r00",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r0",
+                "v": "r00"
+              },
+              {
+                "id": "e-r010",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r01",
+                "v": "r010"
+              },
+              {
+                "id": "e-r011",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r01",
+                "v": "r011"
+              },
+              {
+                "id": "e-r01",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r0",
+                "v": "r01"
+              },
+              {
+                "id": "e-r0",
+                "type": "edge",
+                "color_class": 1,
+                "label": "có",
+                "u": "r",
+                "v": "r0"
+              },
+              {
+                "id": "e-r100",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r10",
+                "v": "r100"
+              },
+              {
+                "id": "e-r101",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r10",
+                "v": "r101"
+              },
+              {
+                "id": "e-r10",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r1",
+                "v": "r10"
+              },
+              {
+                "id": "e-r110",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r11",
+                "v": "r110"
+              },
+              {
+                "id": "e-r111",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r11",
+                "v": "r111"
+              },
+              {
+                "id": "e-r11",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r1",
+                "v": "r11"
+              },
+              {
+                "id": "e-r1",
+                "type": "edge",
+                "color_class": 2,
+                "label": "không",
+                "u": "r",
+                "v": "r1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tám lá ở tầng cuối được làm nổi."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hai tập con khác nhau cho hai dãy trả lời khác nhau, và ngược lại — nên [[a3|lá]] và tập con là **song ánh**. Vậy số tập con đúng bằng $2^3 = 8$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "r000",
+                "r001",
+                "r010",
+                "r011",
+                "r100",
+                "r101",
+                "r110",
+                "r111"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "r",
+                "type": "vertex",
+                "label": "∅",
+                "pos": [0, -24]
+              },
+              {
+                "id": "r0",
+                "type": "vertex",
+                "pos": [-30, -8]
+              },
+              {
+                "id": "r00",
+                "type": "vertex",
+                "pos": [-45, 8]
+              },
+              {
+                "id": "r000",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [-52.5, 24]
+              },
+              {
+                "id": "r001",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [-37.5, 24]
+              },
+              {
+                "id": "r01",
+                "type": "vertex",
+                "pos": [-15, 8]
+              },
+              {
+                "id": "r010",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [-22.5, 24]
+              },
+              {
+                "id": "r011",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [-7.5, 24]
+              },
+              {
+                "id": "r1",
+                "type": "vertex",
+                "pos": [30, -8]
+              },
+              {
+                "id": "r10",
+                "type": "vertex",
+                "pos": [15, 8]
+              },
+              {
+                "id": "r100",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [7.5, 24]
+              },
+              {
+                "id": "r101",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [22.5, 24]
+              },
+              {
+                "id": "r11",
+                "type": "vertex",
+                "pos": [45, 8]
+              },
+              {
+                "id": "r110",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [37.5, 24]
+              },
+              {
+                "id": "r111",
+                "type": "vertex",
+                "emphasis": "focus",
+                "pos": [52.5, 24]
+              },
+              {
+                "id": "e-r000",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r00",
+                "v": "r000"
+              },
+              {
+                "id": "e-r001",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r00",
+                "v": "r001"
+              },
+              {
+                "id": "e-r00",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r0",
+                "v": "r00"
+              },
+              {
+                "id": "e-r010",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r01",
+                "v": "r010"
+              },
+              {
+                "id": "e-r011",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r01",
+                "v": "r011"
+              },
+              {
+                "id": "e-r01",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r0",
+                "v": "r01"
+              },
+              {
+                "id": "e-r0",
+                "type": "edge",
+                "color_class": 1,
+                "label": "có",
+                "u": "r",
+                "v": "r0"
+              },
+              {
+                "id": "e-r100",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r10",
+                "v": "r100"
+              },
+              {
+                "id": "e-r101",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r10",
+                "v": "r101"
+              },
+              {
+                "id": "e-r10",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r1",
+                "v": "r10"
+              },
+              {
+                "id": "e-r110",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r11",
+                "v": "r110"
+              },
+              {
+                "id": "e-r111",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r11",
+                "v": "r111"
+              },
+              {
+                "id": "e-r11",
+                "type": "edge",
+                "color_class": 2,
+                "u": "r1",
+                "v": "r11"
+              },
+              {
+                "id": "e-r1",
+                "type": "edge",
+                "color_class": 2,
+                "label": "không",
+                "u": "r",
+                "v": "r1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng cây, nhấn mạnh tương ứng một-một giữa lá và tập con."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

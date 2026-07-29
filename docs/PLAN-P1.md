@@ -278,6 +278,33 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 2. Luật "step có hình mà không có anchor" đếm `elements.length > 0`, trong khi bàn cờ 8×8 sinh 64 ô từ `config` với `elements` rỗng (D-16) — tức là luật miễn trừ đúng những bài dùng engine board.
 3. `nextStepId` hứa không tái dùng id đã xoá nhưng chỉ lấy max trên step **đang còn**: xoá step cuối rồi thêm bước mới sẽ cấp lại đúng id đó, và một `merge_target` đang treo sẽ lặng lẽ trỏ sang step khác — tệ hơn nữa, validate đang báo đỏ sẽ **xanh trở lại** trong khi bài đã sai.
 
+### M9 — Cụm đếm cơ bản · [C]+[E] — **xong**
+
+- ✅ **PRN-03 sớm hơn lịch**: tuỳ chọn `table` của board engine — nhãn hàng/cột và **tổng theo hàng, tổng theo cột**. Đó chính là toàn bộ nội dung của "đếm hai chiều": không phải một công thức, mà hai con số bằng nhau mà người học tự đối chiếu được. Rẻ vì bảng khác bàn cờ đúng ba chi tiết, nên nó là tuỳ chọn của engine sẵn có chứ không phải engine mới.
+- ✅ **Mười bài đếm cơ bản**, mỗi bài một idiom thị giác khác nhau: quy tắc nhân (bảng), tam giác Pascal, đường đi trên lưới (bảng quy hoạch động), tổ hợp = số cạnh $K_5$, số tập con = cây nhị phân, chia kẹo = sao và vách, bù trừ hai tập, Dirichlet 13 người, bảng incidence 6×4, hoán vị $4!$.
+- ✅ **GR-08 nhãn cạnh** — `EdgeElement.label` có trong schema từ M4 và renderer **chưa bao giờ đọc nó**. Cùng lớp lỗi với `show_attacks`. Ở cây quyết định thì nhãn cạnh mang *toàn bộ* nội dung ("có"/"không"), nên thiếu nó là hình mất nghĩa.
+- ✅ Sàn tỉ lệ cho chế độ `piles`: mười hai ngăn mỗi ngăn một viên cho ra một khung dẹt lét và cả hình co thành sợi chỉ.
+- ✅ `coverage` đọc `kind`: bài khai `illustration` được **miễn** sandbox. Không phải cửa lách — nó là tuyên bố của tác giả rằng bài này không có thao tác nào có nghĩa, và ép sandbox lên mọi bài chỉ đẻ ra đồ chơi cho đủ chỉ tiêu.
+
+**Mức phủ:** ~55% → **~60%**. Kho: 9 → **19 bài**.
+
+### M8 — Sequence/Multiset engine · [E] — **xong**
+
+Ngoài lịch 16 tuần gốc: mở ra sau khi `docs/VIZ-COVERAGE.md` đo được rằng board +
+graph chỉ phủ ~45% đề tổ hợp, và họ bài thiếu nhất — "dãy số / thao tác lặp", 16%,
+lớn thứ hai sau đồ thị — **không có engine nào trong cả ba phase** vẽ nổi một đống sỏi.
+
+- ✅ `packages/engines/sequence`: hai chế độ `sequence` (có thứ tự) và `piles` (đa tập) trên **một** mô hình dữ liệu, vì chúng khác nhau ở *phép toán hợp lệ* chứ không khác ở dữ liệu.
+- ✅ Chín lệnh **chia theo chế độ**: đổi chỗ chỉ chạy ở `sequence`, gộp/tách chỉ chạy ở `piles`. Cùng bài học với G-11 — bất biến của "gộp đống" chỉ là bất biến *vì* người chơi không được đổi chỗ tuỳ ý.
+- ✅ Quy tắc gộp là **enum đóng** (`sum`, `abs-diff`, `product`, `max`, `min`), không phải biểu thức người dùng nhập: cho nhập biểu thức là mở cửa hậu cho DSL-03 (P3).
+- ✅ Binding `inversions` sẵn trong DSL — bất biến của cả họ bài hoán vị, và viết tay bằng `count` lồng nhau thì vừa $O(n^2)$ vừa dễ sai.
+- ✅ Công cụ Sandbox theo engine: `piles` hiện nút gộp, `sequence` hiện nút đổi chỗ.
+- ✅ Bài đầu tiên dùng nó: `erase-two-write-difference` — xoá hai số $a, b$ viết $|a-b|$, invariant strip cho thấy tổng $55 \to 49 \to 1$ mà tính chẵn lẻ đứng yên.
+
+**Ba lỗi khung nhìn chỉ lộ ra khi render ra ảnh rồi nhìn** — không test nào bắt được, vì SVG vẫn hợp lệ và mọi số vẫn đúng: con số dưới chân cột bị cắt (cột mọc lên phía âm của $y$), nhãn `Σ` nằm ngoài mép phải, và scene một phần tử bị trình duyệt phóng to hết cỡ vì khung khít quá.
+
+**Mức phủ:** ~45% → **~55%** (`docs/VIZ-COVERAGE.md`).
+
 ### M7 — Content sprint + hardening + pilot · Tuần 12–16 · [C]+[E] — **track [E] xong, track [C] mới 6/20**
 
 **Hardening — xong:**
@@ -390,6 +417,17 @@ Hai gate này chặn theo hai hướng khác nhau: G-A chặn *niềm tin vào n
 4. ⬜ **Label atlas cho nhãn LaTeX trong canvas** (GR-08, D-07). `toReadableMath` lo được chữ trong OG card và chỉ mục; nhãn *trong hình* vẫn là text thuần.
 5. ⬜ Pilot ≥10 học sinh + 2 GV (DoD §15.5).
 6. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
+
+**Về việc mở engine mới:** xem `docs/VIZ-COVERAGE.md`. Tóm tắt: board + graph phủ
+khoảng **45%** đề tổ hợp thi đấu; đúng roadmap Phase 2–3 của SRS lên ~75%; thêm bốn
+view nữa (lớn nhất là **engine dãy số / đa tập**, đang chặn cụm invariant-centric mà
+§16 đòi ≥ 5 bài) lên ~88%. Trần thật khoảng 88%, không phải 100% — khoảng 10–12% đề
+có lập luận **không mang nội dung không gian** (xác suất, hàm sinh, tiệm cận), và với
+chúng, vẽ một cái hình đẹp không gánh lập luận là đường duy nhất phải tránh.
+
+Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
+engine mới. Kho có 8 bài, chưa bài nào do chính chủ soạn ⇒ việc trước engine thứ ba là
+G-C, không phải engine thứ ba.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):
 

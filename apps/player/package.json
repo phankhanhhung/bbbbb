@@ -20,7 +20,8 @@
     "@combviz/dsl": "workspace:*",
     "@combviz/editor": "workspace:*",
     "@combviz/engine-graph": "workspace:*",
-    "@combviz/check": "workspace:*"
+    "@combviz/check": "workspace:*",
+    "@combviz/engine-sequence": "workspace:*"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.9.3",

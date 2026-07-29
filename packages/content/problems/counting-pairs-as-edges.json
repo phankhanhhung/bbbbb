@@ -1,0 +1,388 @@
+{
+  "schema_version": "0.1.0",
+  "id": "counting-pairs-as-edges",
+  "statement": {
+    "vi": "Có $5$ bạn. Hỏi có bao nhiêu cách chọn ra một cặp hai bạn?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; đếm cơ bản."
+    }
+  },
+  "topics": [
+    "counting",
+    "graph-basics"
+  ],
+  "techniques": [
+    "double-counting",
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vẽ mỗi bạn thành một [[a1|đỉnh]], mỗi cặp thành một đoạn nối. Câu hỏi thành: hình này có bao nhiêu đoạn?"
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v0",
+                "v1",
+                "v2",
+                "v3",
+                "v4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [9.51, -3.09]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [5.88, 8.09]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [-5.88, 8.09]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [-9.51, -3.09]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm đỉnh xếp thành ngũ giác, chưa có cạnh nào."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Từ [[a2|đỉnh $A$]] có $4$ đoạn đi ra. Mỗi đỉnh cũng vậy, nên đếm theo đỉnh được $5 \\times 4 = 20$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "e01",
+                "e02",
+                "e03",
+                "e04"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "emphasis": "focus",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [9.51, -3.09]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [5.88, 8.09]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [-5.88, 8.09]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [-9.51, -3.09]
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e02",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "v0",
+                "v": "v2"
+              },
+              {
+                "id": "e03",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "v0",
+                "v": "v3"
+              },
+              {
+                "id": "e04",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "v0",
+                "v": "v4"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e14",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn cạnh từ đỉnh A được làm nổi."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nhưng cách đếm đó tính [[a3|mỗi đoạn]] **hai lần** — một lần từ mỗi đầu. Vậy số cặp là $20 / 2 = 10$, đúng bằng số đoạn trong hình."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "e01",
+                "e02",
+                "e03",
+                "e04",
+                "e12",
+                "e13",
+                "e14",
+                "e23",
+                "e24",
+                "e34"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 10,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [9.51, -3.09]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [5.88, 8.09]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [-5.88, 8.09]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [-9.51, -3.09]
+              },
+              {
+                "id": "e01",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e02",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v0",
+                "v": "v2"
+              },
+              {
+                "id": "e03",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v0",
+                "v": "v3"
+              },
+              {
+                "id": "e04",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v0",
+                "v": "v4"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e13",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e14",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e23",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e24",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e34",
+                "type": "edge",
+                "color_class": 1,
+                "u": "v3",
+                "v": "v4"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đủ mười cạnh của đồ thị đầy đủ năm đỉnh."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "m == 10",
+    "validators": [
+      "simple-graph"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

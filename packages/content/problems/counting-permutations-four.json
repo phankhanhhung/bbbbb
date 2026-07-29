@@ -1,0 +1,218 @@
+{
+  "schema_version": "0.1.0",
+  "id": "counting-permutations-four",
+  "statement": {
+    "vi": "Có bao nhiêu cách xếp $4$ bạn thành một hàng?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian; đếm cơ bản."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Xếp lần lượt từng chỗ. [[a1|Chỗ thứ nhất]] có $4$ bạn để chọn."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "i0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Số lựa chọn cho từng chỗ",
+              "mode": "sequence"
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "color_class": 3,
+                "pos": 0,
+                "value": 4
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "label": "?",
+                "pos": 1,
+                "value": 0
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "label": "?",
+                "pos": 2,
+                "value": 0
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "label": "?",
+                "pos": 3,
+                "value": 0
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn ô; ô đầu ghi 4, ba ô sau còn là dấu hỏi."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chọn xong chỗ đầu thì còn $3$ bạn, nên [[a2|chỗ thứ hai]] có $3$ cách — bất kể chỗ đầu chọn ai."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "i1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Số lựa chọn cho từng chỗ",
+              "mode": "sequence"
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 4
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "color_class": 3,
+                "pos": 1,
+                "value": 3
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "label": "?",
+                "pos": 2,
+                "value": 0
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "label": "?",
+                "pos": 3,
+                "value": 0
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ô thứ hai ghi 3."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tiếp tục như vậy được [[a3|$4, 3, 2, 1$]]. Vì mỗi lần chọn không phụ thuộc lần trước về **số cách**, tổng số hàng là $4 \\times 3 \\times 2 \\times 1 = 24$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "4 × 3 × 2 × 1 = 24",
+              "mode": "sequence"
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "color_class": 3,
+                "pos": 0,
+                "value": 4
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "color_class": 3,
+                "pos": 1,
+                "value": 3
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "color_class": 3,
+                "pos": 2,
+                "value": 2
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "color_class": 3,
+                "pos": 3,
+                "value": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn ô ghi 4, 3, 2, 1."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

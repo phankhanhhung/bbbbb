@@ -59,6 +59,9 @@ importers:
       '@combviz/engine-graph':
         specifier: workspace:*
         version: link:../../packages/engines/graph
+      '@combviz/engine-sequence':
+        specifier: workspace:*
+        version: link:../../packages/engines/sequence
       '@combviz/render':
         specifier: workspace:*
         version: link:../../packages/render
@@ -99,6 +102,9 @@ importers:
       '@combviz/engine-graph':
         specifier: workspace:*
         version: link:../../packages/engines/graph
+      '@combviz/engine-sequence':
+        specifier: workspace:*
+        version: link:../../packages/engines/sequence
       '@combviz/render':
         specifier: workspace:*
         version: link:../../packages/render
@@ -127,6 +133,9 @@ importers:
       '@combviz/dsl':
         specifier: workspace:*
         version: link:../dsl
+      '@combviz/engine-sequence':
+        specifier: workspace:*
+        version: link:../engines/sequence
       '@combviz/schema':
         specifier: workspace:*
         version: link:../schema
@@ -191,6 +200,27 @@ importers:
         specifier: ^0.34.13
         version: 0.34.52
 
+  packages/engines/sequence:
+    dependencies:
+      '@combviz/dsl':
+        specifier: workspace:*
+        version: link:../../dsl
+      '@combviz/editor':
+        specifier: workspace:*
+        version: link:../../editor
+      '@combviz/render':
+        specifier: workspace:*
+        version: link:../../render
+      '@combviz/schema':
+        specifier: workspace:*
+        version: link:../../schema
+      '@combviz/theme':
+        specifier: workspace:*
+        version: link:../../theme
+      '@sinclair/typebox':
+        specifier: ^0.34.13
+        version: 0.34.52
+
   packages/render:
     dependencies:
       '@combviz/schema':
@@ -228,6 +258,9 @@ importers:
       '@combviz/engine-graph':
         specifier: workspace:*
         version: link:../../packages/engines/graph
+      '@combviz/engine-sequence':
+        specifier: workspace:*
+        version: link:../../packages/engines/sequence
       '@combviz/render':
         specifier: workspace:*
         version: link:../../packages/render

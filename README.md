@@ -6,9 +6,10 @@ trên canvas tương tác, văn bản ↔ hình liên kết hai chiều, sandbox
 Vận hành theo mô hình **single-author brand engine**: engine là xưởng in riêng của
 một tác giả; sản phẩm công chúng là kho bài đã curate. Xem `docs/SRS-v1.0.md`.
 
-**Trạng thái:** Phase 1, M7 track kỹ thuật xong (golden snapshot, E2E, ngân sách perf đo bằng script).
-Kho có **8 bài: 2 fixture + 6 draft chờ duyệt**, chưa bài nào do chính chủ soạn. Hai gate còn mở là
-việc của chính chủ: đo perf trên iPad thật (G-A) và soạn tay 3–5 bài (G-C). Xem `docs/PLAN-P1.md`.
+**Trạng thái:** Phase 1 xong phần kỹ thuật, cộng engine thứ ba (dãy số / đa tập) và bảng đếm hai
+chiều (PRN-03) — mức phủ đề tổ hợp đi từ ~45% lên ~60%, xem `docs/VIZ-COVERAGE.md`. Kho có
+**19 bài: 2 fixture + 17 draft chờ duyệt**, chưa bài nào do chính chủ soạn. Hai gate còn mở là việc của chính chủ: đo perf trên iPad thật (G-A)
+và soạn tay 3–5 bài (G-C). Xem `docs/PLAN-P1.md`.
 
 ## Bắt đầu
 
@@ -103,6 +104,7 @@ packages/
   check/             Một bộ kiểm cho Studio + CLI + CI (AUT-04): schema, ngữ nghĩa, lint
   engines/board/     Grid/Board engine: schema, bound, renderer, DSL env, validator
   engines/graph/     Graph engine: multigraph, layout, analyzer, validator
+  engines/sequence/  Sequence/Multiset engine: dãy số và đống sỏi, thao tác lặp
   content/           Kho bài JSON + controlled vocabulary
 apps/
   player/            SPA cho người học (Preact + Vite)
@@ -115,6 +117,7 @@ docs/
   SRS-v1.0.md        Đặc tả yêu cầu — nguồn của mọi ID requirement
   PLAN-P1.md         Kế hoạch triển khai Phase 1
   STYLE-GUIDE.md     Quy ước biên tập — cố ý còn để trống phần chờ 5 bài soạn tay
+  VIZ-COVERAGE.md    Visualize được bao nhiêu % đề tổ hợp, và cần gì để hơn
 ```
 
 Luật phụ thuộc giữa các package được enforce bằng eslint (`eslint.config.js`) chứ

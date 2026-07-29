@@ -42,9 +42,20 @@ type Tool =
   | { kind: 'tile'; shape: string }
   | { kind: 'erase' }
   /** G-11 — lật cả một hàng/cột, thao tác hợp lệ của họ bài "lật dấu". */
-  | { kind: 'flip'; axis: 'row' | 'col' };
+  | { kind: 'flip'; axis: 'row' | 'col' }
+  /** Sequence engine: gộp hai phần tử theo một quy tắc trong tập đóng. */
+  | { kind: 'combine'; rule: string }
+  /** Sequence engine: đổi chỗ hai phần tử (chỉ ở mode `sequence`). */
+  | { kind: 'swap' };
 
 const TILE_SHAPES = ['domino', 'tromino-l', 'tetromino-o', 'tetromino-t'] as const;
+
+/** Quy tắc gộp mà Sandbox bày ra. Khớp với tập đóng ở `@combviz/engine-sequence`. */
+const COMBINE_RULES = [
+  { rule: 'sum', label: 'a+b' },
+  { rule: 'abs-diff', label: '|a−b|' },
+  { rule: 'max', label: 'max' },
+] as const;
 
 export function Sandbox({
   scene,
@@ -68,6 +79,8 @@ export function Sandbox({
   const [tool, setTool] = useState<Tool>({ kind: 'paint', colorClass: 1 });
   const svgRef = useRef<SVGSVGElement>(null);
   const painting = useRef<Set<string> | null>(null);
+  /** Phần tử đã chọn cho thao tác cần **hai** đối tượng (gộp, đổi chỗ). */
+  const pending = useRef<string | null>(null);
 
   const { state } = sandbox;
   const viewport = renderer.viewportOf(state.scene);
@@ -125,6 +138,29 @@ export function Sandbox({
 
       if (tool.kind === 'erase' && element) {
         sandbox.run(command('board/remove', { ids: [element] }));
+        return;
+      }
+
+      // Thao tác hai bước của Sequence engine: bấm phần tử thứ nhất, rồi phần
+      // tử thứ hai. Không kéo-thả, vì trên cảm ứng kéo một đống sỏi sang một
+      // đống khác là một cử chỉ rất dễ trượt tay — mà lỡ tay ở đây có nghĩa là
+      // gộp nhầm hai đống và mất luôn mạch lập luận đang thử.
+      if ((tool.kind === 'combine' || tool.kind === 'swap') && element) {
+        const first = pending.current;
+        if (first === null) {
+          pending.current = element;
+          sandbox.setSelection(new Set([element]) as Selection);
+          return;
+        }
+        pending.current = null;
+        sandbox.setSelection(new Set() as Selection);
+        if (first === element) return;
+
+        sandbox.run(
+          tool.kind === 'combine'
+            ? command('sequence/combine', { a: first, b: element, rule: tool.rule })
+            : command('sequence/swap', { a: first, b: element }),
+        );
         return;
       }
 
@@ -267,6 +303,36 @@ export function Sandbox({
               ⇄ Lật {axis === 'row' ? 'hàng' : 'cột'}
             </ToolButton>
           ))}
+
+          {/* Công cụ của Sequence engine. Hiện theo `mode` của scene: phép hợp lệ
+              ở dãy có thứ tự khác hẳn phép hợp lệ ở đa tập, và thanh công cụ là
+              chỗ người học đọc ra điều đó. */}
+          {scene.engine === 'sequence' && (scene.config as { mode?: string })?.mode === 'piles'
+            ? COMBINE_RULES.map(({ rule, label }) => (
+                <ToolButton
+                  key={rule}
+                  active={tool.kind === 'combine' && tool.rule === rule}
+                  onClick={() => {
+                    pending.current = null;
+                    setTool({ kind: 'combine', rule });
+                  }}
+                >
+                  Gộp {label}
+                </ToolButton>
+              ))
+            : null}
+
+          {scene.engine === 'sequence' && (scene.config as { mode?: string })?.mode !== 'piles' ? (
+            <ToolButton
+              active={tool.kind === 'swap'}
+              onClick={() => {
+                pending.current = null;
+                setTool({ kind: 'swap' });
+              }}
+            >
+              ⇄ Đổi chỗ hai phần tử
+            </ToolButton>
+          ) : null}
         </div>
 
         <div class="tools">

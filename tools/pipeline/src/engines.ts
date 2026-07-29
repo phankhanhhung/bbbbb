@@ -8,6 +8,11 @@ import {
   graphRenderer,
   graphSchemaFragment,
 } from '@combviz/engine-graph';
+import {
+  sequenceEnvironment,
+  sequenceRenderer,
+  sequenceSchemaFragment,
+} from '@combviz/engine-sequence';
 import type { EngineSchemaFragment } from '@combviz/schema';
 import type { EngineRenderer } from '@combviz/render';
 import type { EngineDslModule } from '@combviz/check';
@@ -24,6 +29,7 @@ import type { EngineDslModule } from '@combviz/check';
 export const ENGINE_FRAGMENTS: readonly EngineSchemaFragment[] = [
   boardSchemaFragment,
   graphSchemaFragment,
+  sequenceSchemaFragment,
 ];
 
 /**
@@ -33,7 +39,11 @@ export const ENGINE_FRAGMENTS: readonly EngineSchemaFragment[] = [
  * sẽ hỏng đầu tiên nếu ai đó lỡ đưa DOM vào `packages/render`. Lệnh `render`
  * chạy trong CI chính là chốt canh cửa đó.
  */
-export const ENGINE_RENDERERS: readonly EngineRenderer[] = [boardRenderer, graphRenderer];
+export const ENGINE_RENDERERS: readonly EngineRenderer[] = [
+  boardRenderer,
+  graphRenderer,
+  sequenceRenderer,
+];
 
 /**
  * Phần "chạy được" của engine: môi trường DSL + validator, tra theo engine id.
@@ -45,4 +55,5 @@ export const ENGINE_RENDERERS: readonly EngineRenderer[] = [boardRenderer, graph
 export const ENGINE_DSL: Readonly<Record<string, EngineDslModule>> = {
   board: { fragment: boardSchemaFragment, environment: boardEnvironment },
   graph: { fragment: graphSchemaFragment, environment: graphEnvironment },
+  sequence: { fragment: sequenceSchemaFragment, environment: sequenceEnvironment },
 };
