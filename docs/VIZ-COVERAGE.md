@@ -21,7 +21,8 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~board + graph~~ | ~~45%~~ | ~~55%~~ |
 | ~~+ sequence~~ | ~~55%~~ | ~~64%~~ |
 | ~~+ bảng đếm hai chiều PRN-03~~ | ~~60%~~ | ~~68%~~ |
-| **Hôm nay** (+ 20 bài showcase, mọi tính năng engine đã có bài dùng) | **~62%** | ~70% |
+| **Hôm nay** (3 engine + bảng đếm hai chiều, mọi tính năng đã có bài dùng) | **~63%** | ~71% |
+| Còn lại trong hàng đợi §7 làm hết | **~88%** | ~97% |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
 | Thêm 4 view ngoài roadmap (§4) | **~85%** | ~92% |
@@ -42,19 +43,19 @@ mất đúng M4.
 Trọng số cột 2 là tỉ trọng ước lượng trong đề tổ hợp thi đấu (IMO Shortlist C và
 tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà ba engine hiện có gánh nổi.
 
-| Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Vì sao thiếu |
+| Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
-| Lưới / phủ hình / tô màu | 15% | 90% | 13.5 | — |
-| Đồ thị | 22% | 80% | 17.6 | thiếu planarity, matching, tô mặt |
-| Đếm / song ánh / đếm hai chiều | 14% | **60%** | **8.4** | có bảng incidence có tổng (PRN-03); còn thiếu view song ánh (PRN-04) |
-| Dãy số / thao tác lặp / quá trình | 16% | **90%** ✅ | **14.4** | ~~không có engine~~ — `@combviz/engine-sequence` (2026-07-29) |
-| Trò chơi | 7% | 10% | 0.7 | vẽ được thế cờ, không có cây trò chơi / Grundy |
-| Hệ tập hợp / siêu đồ thị | 8% | 20% | 1.6 | chỉ mô hình hoá được phần nào bằng đồ thị hai phía |
-| Hình học tổ hợp | 5% | 5% | 0.25 | không có engine điểm–đoạn |
-| Hoán vị / thứ tự | 6% | 20% | 1.2 | chỉ vẽ được qua chu trình trên đồ thị |
-| Tổ hợp mang màu số học (thặng dư, chữ số) | 4% | 30% | 1.2 | lưới thặng dư gượng ép |
-| Trừu tượng (xác suất, entropy, đại số) | 3% | 5% | 0.15 | xem §6 |
-| **Tổng** | **100%** | | **~59%** | |
+| Lưới / phủ hình / tô màu | 15% | 92% | 13.8 | — (board: preset, quân, tile custom, bảng) |
+| Đồ thị | 22% | 82% | 18.0 | planarity (GR-05), matching (GR-06), tô mặt |
+| Đếm / song ánh / đếm hai chiều | 14% | 60% | 8.4 | **view song ánh (PRN-04)** |
+| Dãy số / thao tác lặp / quá trình | 16% | 90% | 14.4 | — (`engine-sequence`) |
+| Trò chơi | 7% | 10% | 0.7 | **game engine (GM-01..04)** |
+| Hệ tập hợp / siêu đồ thị | 8% | 25% | 2.0 | **set engine (ST-01..03)** — bảng incidence đã có, thiếu ngữ nghĩa thuộc |
+| Hình học tổ hợp | 5% | 5% | 0.25 | **point/segment engine (PT-01..02)** |
+| Hoán vị / thứ tự | 6% | 55% | 3.3 | view hoán vị hai hàng + phân tích chu trình |
+| Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
+| Trừu tượng (xác suất, entropy, đại số) | 3% | 5% | 0.15 | xem §6 — **không co lại theo engine** |
+| **Tổng** | **100%** | | **~63%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
@@ -235,10 +236,43 @@ là hiểu được, và ở bài đó thì niềm tin ấy sai.
 
 ---
 
-## 7. Thứ tự nên làm, theo lãi trên mỗi tuần
+## 7. Còn lại gì để lên ~88%
 
-| # | Việc | Điểm phủ | Cỡ | Ghi chú |
-|---|---|---:|---|---|
+Chi phí tính bằng **M4** — một engine graph, tức khoảng hai tuần ở nhịp 35h/tuần.
+"Lãi" là số điểm phủ thu được. Sắp theo **lãi trên chi phí**, không theo thứ tự
+trong SRS.
+
+| # | Việc | Lãi | Chi phí | Lãi/chi phí | Ghi chú |
+|---|---|---:|---:|---:|---|
+| 1 | **View hoán vị + chu trình** | +1.8 | 0.2 | **9.0** | Không phải engine mới: layout hai hàng + analyzer chu trình trên graph engine. `inversions` đã có sẵn trong DSL |
+| 2 | **Set/hypergraph engine** (ST-01..03) | +6.2 | 0.7 | **8.9** | Bảng incidence đã xong (PRN-03); còn thiếu ngữ nghĩa **thuộc** để DSL/validator lập luận được, cộng view container/Venn ≤ 3 tập |
+| 3 | **Bijection view** (PRN-04) | +2.8 | 0.5 | **5.6** | Hạ tầng **mới**: hai scene cạnh nhau + ánh xạ id↔id + animation biến hình. SRS gọi là flagship P2 và đánh giá đó đúng |
+| 4 | **Point/segment engine** (PT-01..02) | +4.0 | 0.8 | **5.0** | Họ riêng biệt, không dùng lại được gì: toạ độ thực, bao lồi, đếm giao điểm |
+| 5 | **Hoàn tất graph** (GR-05 planarity, GR-06 matching, GR-07 ma trận kề) | +2.9 | 0.6 | **4.8** | Matching mở khoá cụm Hall/König — một trong những cụm nhiều bài nhất của graph thi đấu |
+| 6 | **Poset / Hasse** | +0.8 | 0.2 | **4.0** | Graph engine + layout phân tầng + analyzer chuỗi/phản xích |
+| 7 | **Game engine** (GM-01..04) | +5.25 | 1.5 | **3.5** | Đắt nhất: cần DSL-03 rule script sandboxed + solver + mô hình lượt. Đúng như SRS xếp vào P3 |
+| 8 | **Derivation engine** (§4.5) | +1.35 | 1.0 | **1.35** | Lãi thấp ở cột "gánh lập luận" nhưng đẩy cột "**có hình mang thông tin**" từ ~71% lên ~97%. Cần label atlas (D-07) trước |
+
+Cộng dồn: **63 → ~88%**, tổng chi phí ≈ **5.5 M4**, tức khoảng 11 tuần ở nhịp
+35h/tuần nếu làm liên tục.
+
+**Hai việc đầu là nửa ngày tới một tuần và ăn ngay 8 điểm** — chúng ở đầu bảng vì
+phần lớn công việc đã nằm sẵn trong graph engine và trong bảng incidence.
+
+### ~90% thì sao?
+
+Không tới được bằng cách thêm engine. Làm hết bảng trên ra **~88%**, và phần còn
+lại là ~12% ở §6 — những lập luận **không có nội dung không gian**. Con số đó
+không co lại theo số engine, nên chênh lệch 88 → 90 phải mua bằng cách khác:
+hoặc chọn bài (không nhận vào kho những bài mà hình không nói được gì — hoàn toàn
+hợp lệ với một kho *đã curate*), hoặc chấp nhận đo bằng cột "có hình mang thông
+tin", nơi derivation engine đưa lên ~97%.
+
+Nói thẳng: nếu chỉ tiêu là "90% bài trong **kho** có hình gánh được lập luận" thì
+đạt được, vì kho là do mình chọn. Nếu là "90% **đề tổ hợp thi đấu nói chung**" thì
+không, và không phải vì thiếu công sức.
+
+---|---|---:|---|---|
 | ~~1~~ | ~~**Sequence/Multiset engine**~~ ✅ | +9.6 | xong | Kho: 45% → **55%** |
 | 2 | **PRN-03 bảng incidence** | +5 | nhỏ | Dùng lại được cho ST-01 và GR-07 |
 | 3 | **PRN-04 bijection view** | +5 | vừa | SRS gọi là flagship P2, đánh giá đó đúng |
