@@ -26,27 +26,50 @@ async function reveal(page: Page): Promise<void> {
 }
 
 test.describe('Kho bài (CMS-02)', () => {
+  /**
+   * Không khoá cứng **số bài trong kho**.
+   *
+   * Bản đầu tiên viết `toHaveCount(2)` và bấm vào thẻ đầu tiên. Nó đỏ ngay lần
+   * kho lớn lên — mà kho lớn lên là việc bình thường nhất của dự án này, nên
+   * một test đỏ vì lý do đó đang canh sai thứ. Ràng buộc đúng là **hành vi**:
+   * kho có bài, lọc thu hẹp được, và bấm vào một thẻ cụ thể thì mở đúng bài đó.
+   */
   test('liệt kê, lọc và mở được một bài', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('.bank__card')).toHaveCount(2);
+    const cards = page.locator('.bank__card');
+    const total = await cards.count();
+    expect(total).toBeGreaterThan(1);
 
     // Tìm kiếm chuẩn hoá dấu: học sinh gõ bàn phím điện thoại hay bỏ dấu.
-    await page.getByPlaceholder('Tìm trong đề bài và lời giải…').fill('ban co');
-    await expect(page.locator('.bank__card')).toHaveCount(1);
+    await page.getByPlaceholder('Tìm trong đề bài và lời giải…').fill('ban co khuyet hai o goc');
+    await expect(cards).toHaveCount(1);
+    expect(await cards.count()).toBeLessThan(total);
 
-    await page.locator('.bank__card').first().click();
+    await cards.first().click();
     await expect(page.locator('.player__head h1')).toContainText('Bàn cờ');
     await expect(page).toHaveURL(/p=mutilated-chessboard/);
   });
 
   test('tiêu đề render bằng KaTeX chứ không hiện tên lệnh thô', async ({ page }) => {
     await page.goto('/');
+    await page.getByPlaceholder('Tìm trong đề bài và lời giải…').fill('ban co khuyet hai o goc');
     const title = page.locator('.bank__title').first();
 
     await expect(title).not.toContainText('times');
     // Đề bài này có ba đoạn toán ($8\times8$, $31$, $1\times2$); ràng buộc ở đây
     // là "có render", không phải đếm đúng số đoạn — đếm sẽ vỡ khi sửa đề.
     expect(await title.locator('.katex').count()).toBeGreaterThan(0);
+  });
+
+  test('chữ **đậm** hiện ra là chữ đậm, không phải dấu sao', async ({ page }) => {
+    // 46 chỗ trên 23 bài dùng cú pháp này, và nó hiện thô suốt cho tới M13 —
+    // ở cả trang kho lẫn trong bài, mà không test nào kêu.
+    await page.goto('/');
+    await page.getByPlaceholder('Tìm trong đề bài và lời giải…').fill('chia 10 chiec keo');
+
+    const title = page.locator('.bank__title').first();
+    await expect(title.locator('strong')).toHaveCount(1);
+    await expect(title).not.toContainText('**');
   });
 });
 

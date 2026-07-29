@@ -327,6 +327,27 @@ chứ không phải lỗi chữ. Tỉ lệ 13% ấy là lập luận mạnh nh�
 
 **Kho: 2 published → 47.** Mọi step `verified: true`.
 
+**Hai test tôi phải sửa vì chính thay đổi này — nói rõ ra vì sửa test đang đỏ là
+việc dễ bị dùng để che lỗi:**
+
+- **`toHaveCount(2)` trong e2e kho bài.** Test khoá cứng số bài trong kho, nên nó
+  đỏ ngay lần kho lớn lên — mà kho lớn lên là việc bình thường nhất của dự án
+  này. Viết lại theo **hành vi**: kho có bài, lọc thu hẹp được, bấm vào một thẻ
+  cụ thể thì mở đúng bài đó. Thêm một test cho chữ đậm, thứ vừa hỏng suốt mà
+  không test nào kêu.
+- **Ngân sách NFR-P3 cộng mọi file trong `dist`.** Đúng khi mọi bài nằm trong
+  bundle; sai từ lúc bài tách thành chunk lười, vì khi đó nó đo **tổng dung lượng
+  site** chứ không đo thứ người dùng tải — bài thứ hai trăm sẽ làm CI đỏ trong
+  khi mỗi người đọc vẫn tải đúng chừng ấy byte. Nay đo những file **thật sự được
+  fetch** khi mở một trang bài đồ thị (đường nặng nhất, có cả analyzer worker):
+  **244.1KB gzip**, trần $300$. Tổng cả kho $330.7$KB vẫn được in ra để theo dõi
+  xu hướng, nhưng không gate.
+
+  Phép đo này không lách được bằng cách chia nhỏ chunk — chia bao nhiêu thì cũng
+  ngần ấy file bị fetch. Và nó phải chạy trong **context riêng**: cache đi theo
+  context, nên chạy sau một test khác thì vài chunk không xuất hiện trên mạng
+  nữa và con số tụt từ $244$ xuống $177$ tuỳ thứ tự test.
+
 ### M12 — Hoàn tất graph engine: ghép cặp, ma trận kề, tính phẳng · [E] — **xong**
 
 Hạng mục 5 của hàng đợi lãi/chi phí. Chọn nó vì matching mở khoá cụm Hall/König —

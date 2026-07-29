@@ -174,22 +174,56 @@ test.describe('Ngân sách perf', () => {
     expect(gate.p95).toBeLessThanOrEqual(FRAME_BUDGET_MS);
   });
 
-  test('NFR-P3 — bundle ≤ 300KB gzip, chưa tính phông KaTeX', () => {
-    const files = readdirSync(join(DIST, 'assets'));
+  test('NFR-P3 — bundle ≤ 300KB gzip, chưa tính phông KaTeX', async ({ browser }) => {
+    // Đo những file **thật sự được tải** khi mở một trang bài, không cộng mọi
+    // file trong `dist`.
+    //
+    // Cộng cả thư mục là đúng khi mọi bài nằm trong bundle. Từ lúc bài tách
+    // thành chunk lười, con số đó đo **tổng dung lượng site** chứ không đo thứ
+    // người dùng tải: bài thứ hai trăm sẽ làm CI đỏ trong khi mỗi người đọc vẫn
+    // tải đúng chừng ấy byte. Mà NFR-P3 nói về trang problem, và câu ngay dưới
+    // đây đo đúng trang đó trên 4G.
+    //
+    // Không tin `content-length` của server preview: nó có thể không nén. Lấy
+    // đường dẫn từ mạng rồi tự gzip file trên đĩa thì con số không phụ thuộc
+    // cấu hình server, và vẫn không thể lách bằng cách chia nhỏ chunk — chia
+    // bao nhiêu thì cũng ngần ấy file bị fetch.
+    // Context **riêng**, vì cache đi theo context: chạy sau một test khác thì
+    // vài chunk đã nằm sẵn trong cache và không xuất hiện trên mạng nữa. Đo kiểu
+    // đó cho ra 177KB hay 244KB tuỳ thứ tự test — một ngưỡng phụ thuộc thứ tự
+    // thì không canh được gì.
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    const fetched = new Set<string>();
+    page.on('response', (response) => {
+      const path = new URL(response.url()).pathname;
+      if (/\.(js|css)$/.test(path)) fetched.add(path.replace(/^\//, ''));
+    });
+
+    // Bài đồ thị: đường nặng nhất, vì nó kéo theo cả analyzer worker.
+    await page.goto('/?p=ramsey-3-3-six');
+    await expect(page.locator('.canvas svg')).toBeVisible();
 
     let bytes = 0;
-    const counted: string[] = [];
-    for (const name of files) {
-      // Phông KaTeX được SRS trừ ra: chúng tải lười và cache riêng.
-      if (!/\.(js|css)$/.test(name)) continue;
-      const path = join(DIST, 'assets', name);
+    for (const name of fetched) {
+      const path = join(DIST, name);
       if (!statSync(path).isFile()) continue;
       bytes += gzipSync(readFileSync(path)).byteLength;
-      counted.push(name);
     }
 
+    await context.close();
+
     const kb = bytes / 1024;
-    console.log(`NFR-P3 bundle = ${kb.toFixed(1)}KB gzip (${counted.length} file)`);
+    // In thêm tổng cả thư mục để còn theo dõi xu hướng — nhưng không gate nó.
+    const all = readdirSync(join(DIST, 'assets'))
+      .filter((n) => /\.(js|css)$/.test(n))
+      .reduce((n, name) => n + gzipSync(readFileSync(join(DIST, 'assets', name))).byteLength, 0);
+
+    console.log(
+      `NFR-P3 trang bài = ${kb.toFixed(1)}KB gzip (${fetched.size} file)` +
+        ` · cả kho ${(all / 1024).toFixed(1)}KB, không gate`,
+    );
     expect(kb).toBeLessThanOrEqual(BUNDLE_BUDGET_KB);
   });
 
