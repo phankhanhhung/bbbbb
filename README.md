@@ -115,6 +115,7 @@ docs/
   SRS-v1.0.md        Đặc tả yêu cầu — nguồn của mọi ID requirement
   PLAN-P1.md         Kế hoạch triển khai Phase 1
   STYLE-GUIDE.md     Quy ước biên tập — cố ý còn để trống phần chờ 5 bài soạn tay
+  VIZ-COVERAGE.md    Visualize được bao nhiêu % đề tổ hợp, và cần gì để hơn
 ```
 
 Luật phụ thuộc giữa các package được enforce bằng eslint (`eslint.config.js`) chứ

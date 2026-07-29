@@ -391,6 +391,17 @@ Hai gate này chặn theo hai hướng khác nhau: G-A chặn *niềm tin vào n
 5. ⬜ Pilot ≥10 học sinh + 2 GV (DoD §15.5).
 6. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
 
+**Về việc mở engine mới:** xem `docs/VIZ-COVERAGE.md`. Tóm tắt: board + graph phủ
+khoảng **45%** đề tổ hợp thi đấu; đúng roadmap Phase 2–3 của SRS lên ~75%; thêm bốn
+view nữa (lớn nhất là **engine dãy số / đa tập**, đang chặn cụm invariant-centric mà
+§16 đòi ≥ 5 bài) lên ~88%. Trần thật khoảng 88%, không phải 100% — khoảng 10–12% đề
+có lập luận **không mang nội dung không gian** (xác suất, hàm sinh, tiệm cận), và với
+chúng, vẽ một cái hình đẹp không gánh lập luận là đường duy nhất phải tránh.
+
+Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
+engine mới. Kho có 8 bài, chưa bài nào do chính chủ soạn ⇒ việc trước engine thứ ba là
+G-C, không phải engine thứ ba.
+
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):
 
 ```bash
