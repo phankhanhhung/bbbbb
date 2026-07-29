@@ -46,9 +46,16 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm --filter @combviz/app-player build && pnpm --filter @combviz/app-player preview --port 4173 --strictPort',
+    // Cổng và host khai trong `apps/player/vite.config.ts` — xem chú thích ở đó.
+    command:
+      'pnpm --filter @combviz/app-player build && pnpm --filter @combviz/app-player preview',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    // Cho stdout của server chảy vào log. Không có nó, một server không lên chỉ
+    // hiện ra sau ba phút im lặng rồi một dòng "Timed out" — đúng thứ đã xảy ra,
+    // và nó khiến việc chẩn đoán phải đoán mò thay vì đọc.
+    stdout: 'pipe',
+    stderr: 'pipe',
   },
 });
