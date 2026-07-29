@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M15 xong (5 engine, phủ ~79%); kho 50 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M16 xong (5 engine, phủ ~80%); kho 51 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,34 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M16 — Poset / sơ đồ Hasse · [E] — **xong**
+
+Hạng mục 6, và là **hạng mục rẻ cuối cùng** của hàng đợi.
+
+- ✅ `analyzePoset`: chiều cao (xích dài nhất), chiều rộng (phản xích lớn nhất), tối tiểu/tối đại, và **cạnh thừa** so với sơ đồ Hasse.
+- ✅ Layout `hasse`: mỗi tầng một hàng, đọc từ dưới lên.
+- ✅ Validator `hasse-diagram`; binding DSL `height`, `width`, `minimal`, `maximal`.
+- ✅ Bài `dilworth-divisors-twelve` trên lưới ước của $12$.
+
+**Điểm đắt giá nhất: Dilworth tính bằng *chính* lõi ghép cặp của GR-06.** Phủ
+xích nhỏ nhất trên DAG là $n - |M|$ với $M$ là ghép cặp tối đa trên đồ thị "tách
+đôi" của bao đóng bắc cầu, và nhân chứng phản xích lấy từ **phủ đỉnh König**:
+$A = \{v : v^{out} \notin C,\ v^{in} \notin C\}$. Nên M12 trả cổ tức ở đây —
+không viết lại thuật toán nào, chỉ tách lõi `solveBipartite` ra khỏi `matching()`
+để hai chỗ dùng chung. Viết lần thứ hai là mời hai bản lệch nhau, và lệch ở một
+thuật toán mà kết quả sai vẫn trông hợp lý. 64 test cũ của GR-06 vẫn xanh sau
+refactor.
+
+Chiều rộng đối chiếu **vét cạn** trên hơn $300$ DAG $5$ đỉnh, và nhân chứng phản
+xích được kiểm là phản xích thật với đúng cỡ. Ba tầng gián tiếp (ghép cặp → phủ
+König → phản xích) thì lỗi ở tầng nào cũng cho ra con số trông hợp lý; chỉ định
+nghĩa gốc nói được.
+
+**Mức phủ:** ~79% → **~80%**. Kho: 50 → **51 bài**.
+
+**Hàng đợi nay chỉ còn hai hạng mục, cả hai đều đắt** — game engine (cần DSL-03)
+và derivation engine (cần label atlas D-07). Phần "rẻ mà lãi" đã hết.
 
 ### M15 — Point/segment engine · [E] — **xong**
 

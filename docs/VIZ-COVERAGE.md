@@ -24,7 +24,7 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~+ set engine, chu trình hoán vị, view song ánh (M11)~~ | ~~63%~~ | ~~71%~~ |
 | ~~+ view song ánh, set engine, chu trình hoán vị (M11)~~ | ~~73%~~ | ~~81%~~ |
 | ~~+ ghép cặp, tính phẳng, ma trận kề (M12)~~ | ~~76%~~ | ~~84%~~ |
-| **Hôm nay** (5 engine: bàn cờ, đồ thị, dãy, tập hợp, điểm) | **~79%** | ~86% |
+| **Hôm nay** (5 engine + poset/Hasse) | **~80%** | ~87% |
 | Còn lại trong hàng đợi §7 làm hết | **~88%** | ~97% |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
@@ -55,10 +55,10 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà năm engin
 | Trò chơi | 7% | 10% | 0.7 | **game engine (GM-01..04)** |
 | Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
 | Hình học tổ hợp | 5% | 75% | 3.75 | tô vùng do các đoạn chia (PT-03), đường tròn |
-| Hoán vị / thứ tự | 6% | 85% | 5.1 | poset/Hasse |
+| Hoán vị / thứ tự | 6% | 95% | 5.7 | — (chu trình hoán vị + poset/Hasse + Dilworth) |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 5% | 0.15 | xem §6 — **không co lại theo engine** |
-| **Tổng** | **100%** | | **~79%** | |
+| **Tổng** | **100%** | | **~80%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
@@ -87,7 +87,7 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Erdős–Szekeres (dãy đơn điệu) | hoán vị | 🟡 vẽ được dãy, thiếu analyzer dãy con đơn điệu |
 | Hoán vị 15-puzzle (chẵn lẻ) | hoán vị | ✅ `inversions` + `cycles`/`sign` + layout chu trình |
 | Định lý Sperner (phản xích) | hệ tập hợp | ✅ có trong kho (`engine-set`, validator `antichain`) |
-| Định lý Dilworth | poset | 🟡 `engine-set` vẽ được họ tập; thiếu layout Hasse |
+| Định lý Dilworth | poset | ✅ có trong kho (sơ đồ Hasse + nhân chứng phản xích) |
 | Gộp đống sỏi theo mod | dãy / đa tập | ✅ engine sequence, chế độ `piles` |
 | Xoá hai số, viết $\|a-b\|$ | dãy / đa tập | ✅ có trong kho |
 | Chip-firing | quá trình | 🟡 vẽ và thao tác được, thiếu luật lan truyền |
@@ -99,13 +99,13 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Đếm giao điểm đường chéo đa giác | đếm / hình học | ✅ có trong kho |
 | Phương pháp xác suất: tồn tại tô $K_n$ không $K_k$ đơn sắc | trừu tượng | ❌ §6 |
 
-**22 ✅ · 7 🟡 · 2 ❌** trên 31 bài ⇒ 71% trọn vẹn, **82%** nếu tính nửa điểm cho 🟡.
-Hơi cao hơn 79% của bảng trọng số, và chênh lệch nhỏ ấy có thật: danh sách này
+**23 ✅ · 6 🟡 · 2 ❌** trên 31 bài ⇒ 74% trọn vẹn, **84%** nếu tính nửa điểm cho 🟡.
+Hơi cao hơn 80% của bảng trọng số, và chênh lệch nhỏ ấy có thật: danh sách này
 thiên về bài **kinh điển**, mà bài kinh điển thường là bài có hình đẹp — đó chính
 là lý do người ta nhớ chúng. Bảng trọng số ở trên là con số nên tin.
 
 *(Trước Sequence engine: 9 ✅ · 4 🟡 · 11 ❌ ⇒ ≈ 46%. Trước M11: ≈ 63%.
-Trước M12: ≈ 72%. Trước M15: 19 ✅ · 6 🟡 · 4 ❌ ⇒ ≈ 76%.)*
+Trước M12: ≈ 72%. Trước M15: ≈ 76%. Trước M16: 22 ✅ · 7 🟡 · 2 ❌ ⇒ ≈ 82%.)*
 
 ---
 
@@ -260,7 +260,7 @@ trong SRS.
 | ~~3~~ | ~~**Bijection view**~~ ✅ M11 (một phần) | +2.8 | xong | — | Hai pane + ánh xạ id↔id + nhấn liên động hai chiều. **Chưa có** animation biến hình theo từng cặp — xem hạn chế bên dưới |
 | ~~4~~ | ~~**Point/segment engine**~~ ✅ M15 | +3.5 | xong | — | `packages/engines/point`: bao lồi, thẳng hàng, đếm giao điểm, đường thẳng, lưới điểm. **Chưa có**: PT-03 tô vùng, đường tròn |
 | ~~5~~ | ~~**Hoàn tất graph**~~ ✅ M12 (phần lớn) | +2.7 | xong | — | Ghép cặp + König + Hall, ma trận kề, tính phẳng qua hình vẽ và chặn Euler. **Chưa có**: tô mặt, kiểm tính phẳng tổng quát |
-| 6 | **Poset / Hasse** | +0.8 | 0.2 | **4.0** | Graph engine + layout phân tầng + analyzer chuỗi/phản xích |
+| ~~6~~ | ~~**Poset / Hasse**~~ ✅ M16 | +0.6 | xong | — | Layout `hasse` + `analyzePoset`; Dilworth tính bằng **chính** lõi ghép cặp của GR-06 |
 | 7 | **Game engine** (GM-01..04) | +5.25 | 1.5 | **3.5** | Đắt nhất: cần DSL-03 rule script sandboxed + solver + mô hình lượt. Đúng như SRS xếp vào P3 |
 | 8 | **Derivation engine** (§4.5) | +1.35 | 1.0 | **1.35** | Lãi thấp ở cột "gánh lập luận" nhưng đẩy cột "**có hình mang thông tin**" từ ~71% lên ~97%. Cần label atlas (D-07) trước |
 
@@ -274,8 +274,12 @@ dự tính — view song ánh mới xong phần nhấn liên động, chưa có 
 mặt).
 
 **M15 lấy hạng mục 4**: 75.9% → **79.4%** (+3.5, thấp hơn dự tính +4.0 — phần hụt
-là PT-03 tô vùng và đường tròn, cả hai đều ngoài phạm vi P2). Còn lại hạng mục 6,
-7, 8 — tổng ≈ 2.7 M4.
+là PT-03 tô vùng và đường tròn, cả hai đều ngoài phạm vi P2).
+
+**M16 lấy hạng mục 6**: 79.4% → **80.0%** (+0.6, dự tính +0.8). Còn lại **hai**
+hạng mục, và cả hai đều đắt: game engine (+5.25, ~1.5 M4, cần DSL-03) và
+derivation engine (+1.35, ~1.0 M4, cần label atlas D-07). Phần "rẻ mà lãi" của
+hàng đợi đã hết.
 
 #### Hạn chế đã biết của kiểm tính phẳng
 
