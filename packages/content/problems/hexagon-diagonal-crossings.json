@@ -1,0 +1,866 @@
+{
+  "schema_version": "0.1.0",
+  "id": "hexagon-diagonal-crossings",
+  "statement": {
+    "vi": "Các đường chéo của một lục giác lồi cắt nhau tại bao nhiêu điểm? Và vì sao lục giác **đều** lại cho ít điểm hơn?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài đếm kinh điển, cộng cái bẫy đồng quy mà lục giác đều bày ra."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "point"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "intersections",
+      "id": "inv-p",
+      "label": {
+        "vi": "Số điểm giao"
+      }
+    },
+    {
+      "expr": "crossing_pairs",
+      "id": "inv-c",
+      "label": {
+        "vi": "Số cặp cắt nhau"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Lục giác lồi có [[a1|sáu cạnh]] và ${{n}}$ đỉnh. Nối mọi cặp đỉnh không kề nhau được các **đường chéo**."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e0",
+                "e1",
+                "e2",
+                "e3",
+                "e4",
+                "e5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "point",
+                "label": "A",
+                "pos": [0, -22]
+              },
+              {
+                "id": "v1",
+                "type": "point",
+                "label": "B",
+                "pos": [19.05, -11]
+              },
+              {
+                "id": "v2",
+                "type": "point",
+                "label": "C",
+                "pos": [19.05, 11]
+              },
+              {
+                "id": "v3",
+                "type": "point",
+                "label": "D",
+                "pos": [0, 22]
+              },
+              {
+                "id": "v4",
+                "type": "point",
+                "label": "E",
+                "pos": [-19.05, 11]
+              },
+              {
+                "id": "v5",
+                "type": "point",
+                "label": "F",
+                "pos": [-19.05, -11]
+              },
+              {
+                "id": "e0",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v0",
+                "b": "v1"
+              },
+              {
+                "id": "e1",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v1",
+                "b": "v2"
+              },
+              {
+                "id": "e2",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v2",
+                "b": "v3"
+              },
+              {
+                "id": "e3",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v3",
+                "b": "v4"
+              },
+              {
+                "id": "e4",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v4",
+                "b": "v5"
+              },
+              {
+                "id": "e5",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v5",
+                "b": "v0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Lục giác đều với sáu cạnh."
+          },
+          "verified": true,
+          "claims": [
+            "n == 6"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Có [[a2|chín đường chéo]]. Mỗi giao điểm nằm trong lục giác được xác định bởi **bốn** đỉnh: bốn đỉnh cho một tứ giác, và hai đường chéo của tứ giác ấy cắt nhau đúng một lần."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "d02",
+                "d03",
+                "d04",
+                "d13",
+                "d14",
+                "d15",
+                "d24",
+                "d25",
+                "d35"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_intersections": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "point",
+                "label": "A",
+                "pos": [0, -22]
+              },
+              {
+                "id": "v1",
+                "type": "point",
+                "label": "B",
+                "pos": [19.05, -11]
+              },
+              {
+                "id": "v2",
+                "type": "point",
+                "label": "C",
+                "pos": [19.05, 11]
+              },
+              {
+                "id": "v3",
+                "type": "point",
+                "label": "D",
+                "pos": [0, 22]
+              },
+              {
+                "id": "v4",
+                "type": "point",
+                "label": "E",
+                "pos": [-19.05, 11]
+              },
+              {
+                "id": "v5",
+                "type": "point",
+                "label": "F",
+                "pos": [-19.05, -11]
+              },
+              {
+                "id": "e0",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v0",
+                "b": "v1"
+              },
+              {
+                "id": "e1",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v1",
+                "b": "v2"
+              },
+              {
+                "id": "e2",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v2",
+                "b": "v3"
+              },
+              {
+                "id": "e3",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v3",
+                "b": "v4"
+              },
+              {
+                "id": "e4",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v4",
+                "b": "v5"
+              },
+              {
+                "id": "e5",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v5",
+                "b": "v0"
+              },
+              {
+                "id": "d02",
+                "type": "segment",
+                "a": "v0",
+                "b": "v2"
+              },
+              {
+                "id": "d03",
+                "type": "segment",
+                "a": "v0",
+                "b": "v3"
+              },
+              {
+                "id": "d04",
+                "type": "segment",
+                "a": "v0",
+                "b": "v4"
+              },
+              {
+                "id": "d13",
+                "type": "segment",
+                "a": "v1",
+                "b": "v3"
+              },
+              {
+                "id": "d14",
+                "type": "segment",
+                "a": "v1",
+                "b": "v4"
+              },
+              {
+                "id": "d15",
+                "type": "segment",
+                "a": "v1",
+                "b": "v5"
+              },
+              {
+                "id": "d24",
+                "type": "segment",
+                "a": "v2",
+                "b": "v4"
+              },
+              {
+                "id": "d25",
+                "type": "segment",
+                "a": "v2",
+                "b": "v5"
+              },
+              {
+                "id": "d35",
+                "type": "segment",
+                "a": "v3",
+                "b": "v5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Chín đường chéo với các giao điểm được đánh dấu."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy nếu không có ba đường chéo nào đồng quy thì số giao điểm là $\\binom{6}{4} = 15$ — mỗi bộ [[a3|bốn đỉnh]] một điểm, không trùng nhau."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "v0",
+                "v1",
+                "v2",
+                "v3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_intersections": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "point",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "A",
+                "pos": [0, -22]
+              },
+              {
+                "id": "v1",
+                "type": "point",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "B",
+                "pos": [19.05, -11]
+              },
+              {
+                "id": "v2",
+                "type": "point",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "C",
+                "pos": [19.05, 11]
+              },
+              {
+                "id": "v3",
+                "type": "point",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "D",
+                "pos": [0, 22]
+              },
+              {
+                "id": "v4",
+                "type": "point",
+                "label": "E",
+                "pos": [-19.05, 11]
+              },
+              {
+                "id": "v5",
+                "type": "point",
+                "label": "F",
+                "pos": [-19.05, -11]
+              },
+              {
+                "id": "e0",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v0",
+                "b": "v1"
+              },
+              {
+                "id": "e1",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v1",
+                "b": "v2"
+              },
+              {
+                "id": "e2",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v2",
+                "b": "v3"
+              },
+              {
+                "id": "e3",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v3",
+                "b": "v4"
+              },
+              {
+                "id": "e4",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v4",
+                "b": "v5"
+              },
+              {
+                "id": "e5",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v5",
+                "b": "v0"
+              },
+              {
+                "id": "d02",
+                "type": "segment",
+                "color_class": 3,
+                "emphasis": "focus",
+                "a": "v0",
+                "b": "v2"
+              },
+              {
+                "id": "d03",
+                "type": "segment",
+                "a": "v0",
+                "b": "v3"
+              },
+              {
+                "id": "d04",
+                "type": "segment",
+                "a": "v0",
+                "b": "v4"
+              },
+              {
+                "id": "d13",
+                "type": "segment",
+                "color_class": 3,
+                "emphasis": "focus",
+                "a": "v1",
+                "b": "v3"
+              },
+              {
+                "id": "d14",
+                "type": "segment",
+                "a": "v1",
+                "b": "v4"
+              },
+              {
+                "id": "d15",
+                "type": "segment",
+                "a": "v1",
+                "b": "v5"
+              },
+              {
+                "id": "d24",
+                "type": "segment",
+                "a": "v2",
+                "b": "v4"
+              },
+              {
+                "id": "d25",
+                "type": "segment",
+                "a": "v2",
+                "b": "v5"
+              },
+              {
+                "id": "d35",
+                "type": "segment",
+                "a": "v3",
+                "b": "v5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn đỉnh và hai đường chéo của tứ giác chúng tạo ra."
+          },
+          "verified": true,
+          "claims": [
+            "crossing_pairs == 15"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nhưng lục giác **đều** thì [[a4|ba đường chéo chính]] cùng đi qua tâm. Ba cặp cắt nhau ấy gộp thành **một** điểm, nên số điểm là $15 - 3 + 1 = {{intersections}}$, không phải $15$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "d03",
+                "d14",
+                "d25"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_intersections": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "point",
+                "label": "A",
+                "pos": [0, -22]
+              },
+              {
+                "id": "v1",
+                "type": "point",
+                "label": "B",
+                "pos": [19.05, -11]
+              },
+              {
+                "id": "v2",
+                "type": "point",
+                "label": "C",
+                "pos": [19.05, 11]
+              },
+              {
+                "id": "v3",
+                "type": "point",
+                "label": "D",
+                "pos": [0, 22]
+              },
+              {
+                "id": "v4",
+                "type": "point",
+                "label": "E",
+                "pos": [-19.05, 11]
+              },
+              {
+                "id": "v5",
+                "type": "point",
+                "label": "F",
+                "pos": [-19.05, -11]
+              },
+              {
+                "id": "e0",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v0",
+                "b": "v1"
+              },
+              {
+                "id": "e1",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v1",
+                "b": "v2"
+              },
+              {
+                "id": "e2",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v2",
+                "b": "v3"
+              },
+              {
+                "id": "e3",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v3",
+                "b": "v4"
+              },
+              {
+                "id": "e4",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v4",
+                "b": "v5"
+              },
+              {
+                "id": "e5",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v5",
+                "b": "v0"
+              },
+              {
+                "id": "d02",
+                "type": "segment",
+                "a": "v0",
+                "b": "v2"
+              },
+              {
+                "id": "d03",
+                "type": "segment",
+                "color_class": 3,
+                "emphasis": "focus",
+                "a": "v0",
+                "b": "v3"
+              },
+              {
+                "id": "d04",
+                "type": "segment",
+                "a": "v0",
+                "b": "v4"
+              },
+              {
+                "id": "d13",
+                "type": "segment",
+                "a": "v1",
+                "b": "v3"
+              },
+              {
+                "id": "d14",
+                "type": "segment",
+                "color_class": 3,
+                "emphasis": "focus",
+                "a": "v1",
+                "b": "v4"
+              },
+              {
+                "id": "d15",
+                "type": "segment",
+                "a": "v1",
+                "b": "v5"
+              },
+              {
+                "id": "d24",
+                "type": "segment",
+                "a": "v2",
+                "b": "v4"
+              },
+              {
+                "id": "d25",
+                "type": "segment",
+                "color_class": 3,
+                "emphasis": "focus",
+                "a": "v2",
+                "b": "v5"
+              },
+              {
+                "id": "d35",
+                "type": "segment",
+                "a": "v3",
+                "b": "v5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba đường chéo chính đồng quy tại tâm lục giác."
+          },
+          "verified": true,
+          "claims": [
+            "intersections == 13",
+            "crossing_pairs == 15"
+          ]
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bài học: công thức $\\binom{n}{4}$ đếm **cặp [[a5|đường chéo]] cắt nhau**, và nó chỉ bằng số **điểm** khi không có ba đường nào đồng quy. Bảng bên cạnh giữ cả hai con số để chỗ chênh không lẩn đi đâu được."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "d02",
+                "d03",
+                "d04",
+                "d13",
+                "d14",
+                "d15",
+                "d24",
+                "d25",
+                "d35"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_intersections": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "point",
+                "label": "A",
+                "pos": [0, -22]
+              },
+              {
+                "id": "v1",
+                "type": "point",
+                "label": "B",
+                "pos": [19.05, -11]
+              },
+              {
+                "id": "v2",
+                "type": "point",
+                "label": "C",
+                "pos": [19.05, 11]
+              },
+              {
+                "id": "v3",
+                "type": "point",
+                "label": "D",
+                "pos": [0, 22]
+              },
+              {
+                "id": "v4",
+                "type": "point",
+                "label": "E",
+                "pos": [-19.05, 11]
+              },
+              {
+                "id": "v5",
+                "type": "point",
+                "label": "F",
+                "pos": [-19.05, -11]
+              },
+              {
+                "id": "e0",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v0",
+                "b": "v1"
+              },
+              {
+                "id": "e1",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v1",
+                "b": "v2"
+              },
+              {
+                "id": "e2",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v2",
+                "b": "v3"
+              },
+              {
+                "id": "e3",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v3",
+                "b": "v4"
+              },
+              {
+                "id": "e4",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v4",
+                "b": "v5"
+              },
+              {
+                "id": "e5",
+                "type": "segment",
+                "color_class": 2,
+                "a": "v5",
+                "b": "v0"
+              },
+              {
+                "id": "d02",
+                "type": "segment",
+                "a": "v0",
+                "b": "v2"
+              },
+              {
+                "id": "d03",
+                "type": "segment",
+                "a": "v0",
+                "b": "v3"
+              },
+              {
+                "id": "d04",
+                "type": "segment",
+                "a": "v0",
+                "b": "v4"
+              },
+              {
+                "id": "d13",
+                "type": "segment",
+                "a": "v1",
+                "b": "v3"
+              },
+              {
+                "id": "d14",
+                "type": "segment",
+                "a": "v1",
+                "b": "v4"
+              },
+              {
+                "id": "d15",
+                "type": "segment",
+                "a": "v1",
+                "b": "v5"
+              },
+              {
+                "id": "d24",
+                "type": "segment",
+                "a": "v2",
+                "b": "v4"
+              },
+              {
+                "id": "d25",
+                "type": "segment",
+                "a": "v2",
+                "b": "v5"
+              },
+              {
+                "id": "d35",
+                "type": "segment",
+                "a": "v3",
+                "b": "v5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Toàn bộ chín đường chéo và mười ba điểm giao."
+          },
+          "verified": true,
+          "claims": [
+            "intersections < crossing_pairs"
+          ]
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

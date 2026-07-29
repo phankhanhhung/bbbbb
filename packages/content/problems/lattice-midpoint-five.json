@@ -1,0 +1,344 @@
+{
+  "schema_version": "0.1.0",
+  "id": "lattice-midpoint-five",
+  "statement": {
+    "vi": "Cho $5$ điểm trên mặt phẳng, mọi toạ độ đều nguyên. Chứng minh luôn có hai điểm mà **trung điểm** của chúng cũng có toạ độ nguyên."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài kinh điển; Dirichlet trên bốn lớp chẵn lẻ."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "pigeonhole",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "point"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "n",
+      "id": "inv-n",
+      "label": {
+        "vi": "Số điểm"
+      }
+    },
+    {
+      "expr": "collinear",
+      "id": "inv-c",
+      "label": {
+        "vi": "Bộ ba thẳng hàng"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Năm [[a1|điểm nguyên]] bất kỳ trên lưới. Trung điểm của $(x_1,y_1)$ và $(x_2,y_2)$ là $\\left(\\tfrac{x_1+x_2}{2}, \\tfrac{y_1+y_2}{2}\\right)$ — nguyên khi và chỉ khi hai toạ độ **cùng tính chẵn lẻ** theo từng chiều."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "A",
+                "B",
+                "C",
+                "D",
+                "E"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "grid": 10,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "A",
+                "type": "point",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "B",
+                "type": "point",
+                "label": "B",
+                "pos": [10, 0]
+              },
+              {
+                "id": "C",
+                "type": "point",
+                "label": "C",
+                "pos": [0, 10]
+              },
+              {
+                "id": "D",
+                "type": "point",
+                "label": "D",
+                "pos": [20, 20]
+              },
+              {
+                "id": "E",
+                "type": "point",
+                "label": "E",
+                "pos": [10, 30]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm điểm trên lưới toạ độ nguyên."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mỗi điểm rơi vào một trong [[a2|bốn lớp]] $(\\text{chẵn},\\text{chẵn})$, $(\\text{chẵn},\\text{lẻ})$, $(\\text{lẻ},\\text{chẵn})$, $(\\text{lẻ},\\text{lẻ})$. Có ${{n}}$ điểm mà chỉ $4$ lớp."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "A",
+                "B",
+                "C",
+                "D",
+                "E"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "grid": 10,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "A",
+                "type": "point",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "B",
+                "type": "point",
+                "label": "B",
+                "pos": [10, 0]
+              },
+              {
+                "id": "C",
+                "type": "point",
+                "label": "C",
+                "pos": [0, 10]
+              },
+              {
+                "id": "D",
+                "type": "point",
+                "label": "D",
+                "pos": [20, 20]
+              },
+              {
+                "id": "E",
+                "type": "point",
+                "label": "E",
+                "pos": [10, 30]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm điểm, mỗi điểm thuộc một trong bốn lớp chẵn lẻ."
+          },
+          "verified": true,
+          "claims": [
+            "n == 5"
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Dirichlet: hai điểm cùng lớp. Ở đây [[a3|$A$ và $D$]] cùng là $(\\text{chẵn},\\text{chẵn})$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "A",
+                "D"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "grid": 10,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "A",
+                "type": "point",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "B",
+                "type": "point",
+                "label": "B",
+                "pos": [10, 0]
+              },
+              {
+                "id": "C",
+                "type": "point",
+                "label": "C",
+                "pos": [0, 10]
+              },
+              {
+                "id": "D",
+                "type": "point",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "D",
+                "pos": [20, 20]
+              },
+              {
+                "id": "E",
+                "type": "point",
+                "label": "E",
+                "pos": [10, 30]
+              },
+              {
+                "id": "s-ad",
+                "type": "segment",
+                "color_class": 3,
+                "a": "A",
+                "b": "D"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai điểm A và D được làm nổi cùng đoạn nối."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cùng lớp thì hai hiệu toạ độ đều chẵn, nên [[a4|trung điểm $M$]] có toạ độ nguyên — nó nằm đúng trên một nút lưới."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "M"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "grid": 10,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "A",
+                "type": "point",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "B",
+                "type": "point",
+                "label": "B",
+                "pos": [10, 0]
+              },
+              {
+                "id": "C",
+                "type": "point",
+                "label": "C",
+                "pos": [0, 10]
+              },
+              {
+                "id": "D",
+                "type": "point",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "D",
+                "pos": [20, 20]
+              },
+              {
+                "id": "E",
+                "type": "point",
+                "label": "E",
+                "pos": [10, 30]
+              },
+              {
+                "id": "M",
+                "type": "point",
+                "color_class": 4,
+                "emphasis": "focus",
+                "label": "M",
+                "pos": [10, 10]
+              },
+              {
+                "id": "s-ad",
+                "type": "segment",
+                "color_class": 3,
+                "a": "A",
+                "b": "D"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Trung điểm của A và D nằm trên một nút lưới."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "lattice"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

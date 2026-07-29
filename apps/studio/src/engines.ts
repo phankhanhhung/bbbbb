@@ -26,6 +26,13 @@ import {
   setRenderer,
   setSchemaFragment,
 } from '@combviz/engine-set';
+import {
+  pointCommands,
+  pointEnvironment,
+  pointHitTest,
+  pointRenderer,
+  pointSchemaFragment,
+} from '@combviz/engine-point';
 import type { EngineDslModule } from '@combviz/check';
 import type { EngineRenderer } from '@combviz/render';
 import type { CommandRegistry, HitTest } from '@combviz/editor';
@@ -44,6 +51,7 @@ export const ENGINE_FRAGMENTS: readonly EngineSchemaFragment[] = [
   graphSchemaFragment,
   sequenceSchemaFragment,
   setSchemaFragment,
+  pointSchemaFragment,
 ];
 
 export const ENGINE_DSL: Readonly<Record<string, EngineDslModule>> = {
@@ -51,6 +59,7 @@ export const ENGINE_DSL: Readonly<Record<string, EngineDslModule>> = {
   graph: { fragment: graphSchemaFragment, environment: graphEnvironment },
   sequence: { fragment: sequenceSchemaFragment, environment: sequenceEnvironment },
   set: { fragment: setSchemaFragment, environment: setEnvironment },
+  point: { fragment: pointSchemaFragment, environment: pointEnvironment },
 };
 
 export const ENGINE_RENDERERS: readonly EngineRenderer[] = [
@@ -58,6 +67,7 @@ export const ENGINE_RENDERERS: readonly EngineRenderer[] = [
   graphRenderer,
   sequenceRenderer,
   setRenderer,
+  pointRenderer,
 ];
 
 export const ENGINE_COMMANDS: Readonly<Record<string, CommandRegistry>> = {
@@ -65,6 +75,7 @@ export const ENGINE_COMMANDS: Readonly<Record<string, CommandRegistry>> = {
   graph: graphCommands,
   sequence: sequenceCommands,
   set: setCommands,
+  point: pointCommands,
 };
 
 export const ENGINE_HIT_TEST: Readonly<Record<string, HitTest>> = {
@@ -72,4 +83,5 @@ export const ENGINE_HIT_TEST: Readonly<Record<string, HitTest>> = {
   graph: graphHitTest,
   sequence: sequenceHitTest,
   set: setHitTest,
+  point: pointHitTest,
 };

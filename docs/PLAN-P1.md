@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M14 xong (4 engine, phủ ~76%); kho 47 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M15 xong (5 engine, phủ ~79%); kho 50 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,29 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M15 — Point/segment engine · [E] — **xong**
+
+Hạng mục 4 của hàng đợi. Họ "hình học tổ hợp" chiếm 5% đề thi và trước milestone
+này phủ đúng **5%** — gần như trắng.
+
+- ✅ **`packages/engines/point`** (PT-01..02): điểm, đoạn, **đường thẳng**, đa giác; bao lồi, kiểm thẳng hàng, đếm giao điểm, lưới nền.
+- ✅ Tách khỏi graph engine là quyết định trung tâm, và lý do nằm ở chỗ hai engine **mâu thuẫn nhau về ý nghĩa toạ độ**. Ở graph, vị trí đỉnh là nội dung *sư phạm* (GR-02) — xếp vòng tròn cho thấy đối xứng — và bài học của M4 là *layout biết nói dối*. Ở đây thì ngược lại: thẳng hàng, lồi, cắt nhau đều là **mệnh đề của bài toán**, và nhích một điểm là đổi đáp án. Gộp chung thì sẽ có ngày ai đó hỏi bao lồi của một đồ thị hai phía và nhận được câu trả lời trông rất hợp lý.
+- ✅ Năm validator: `general-position`, `convex-position`, `no-crossings`, `hull-size:<k>`, `lattice`.
+- ✅ Ba bài: `lattice-midpoint-five`, `happy-ending-five-points` (cây ba nhánh theo cỡ bao lồi), `hexagon-diagonal-crossings`.
+
+**Bốn chỗ tự bắt được, ba trong số đó chỉ lộ ra khi nhìn hình:**
+
+1. **`intersections` đếm *cặp đoạn* chứ không đếm *điểm*.** Hai con số ấy khác nhau đúng khi có ba đoạn **đồng quy** — và lục giác đều có ba đường chéo chính gặp nhau ở tâm, nên $15$ cặp chỉ cho $13$ điểm. Bài "đếm giao điểm" hỏi số điểm; hình vẽ ra $13$ chấm trong khi con số ghi $15$ là đúng lớp lỗi M14 vừa dựng máy để chặn. Tách thành `intersections` (điểm) và `crossing_pairs` (cặp), rồi lấy chính chỗ chênh đó làm nội dung bài.
+2. **Thiếu hẳn khái niệm đường thẳng.** Bước "kéo dài đường qua $P_4$, $P_5$ — nó chia mặt phẳng làm hai nửa" vẽ ra một gạch ngắn nằm giữa hai chấm. Câu chữ nói *chia mặt phẳng*, hình không cho thấy gì. Thêm element `line`, kéo hết khung.
+3. **Trường hợp khó nhất của Happy Ending chỉ được một câu chữ.** Bao lồi $3$ đỉnh là chỗ duy nhất phải nghĩ, mà bản đầu gộp nó vào một câu cùng hai trường hợp kia. Tách thành nhánh riêng có hình, và toạ độ chọn bằng cách **quét** để tứ giác kết quả nhìn ra tứ giác thay vì một mảnh dăm.
+4. **`lattice` kiểm sai thứ**: nó kiểm toạ độ scene nguyên, trong khi toạ độ scene là $10\times$ toạ độ toán (G-10) — điểm ở $(5,5)$ có toạ độ nguyên nhưng nằm giữa hai nút lưới, và cả lập luận chẵn lẻ sụp theo. Nay kiểm theo `config.grid`, tức chính con số vẽ ra màn hình.
+
+Bao lồi được **đối chiếu với định nghĩa** trên hơn $200$ cấu hình con của lưới
+$4\times4$: $p$ là đỉnh bao khi và chỉ khi có một đường tựa qua nó. Test tính
+chất không bắt được lỗi biên của quét Andrew; chỉ định nghĩa gốc bắt được.
+
+**Mức phủ:** ~76% → **~79%**. Kho: 47 → **50 bài**.
 
 ### M14 — Chống lệch chữ–hình · [E] — **xong**
 

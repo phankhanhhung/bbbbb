@@ -18,6 +18,11 @@ import {
   setRenderer,
   setSchemaFragment,
 } from '@combviz/engine-set';
+import {
+  pointEnvironment,
+  pointRenderer,
+  pointSchemaFragment,
+} from '@combviz/engine-point';
 import type { EngineSchemaFragment } from '@combviz/schema';
 import type { EngineRenderer } from '@combviz/render';
 import type { EngineDslModule } from '@combviz/check';
@@ -36,6 +41,7 @@ export const ENGINE_FRAGMENTS: readonly EngineSchemaFragment[] = [
   graphSchemaFragment,
   sequenceSchemaFragment,
   setSchemaFragment,
+  pointSchemaFragment,
 ];
 
 /**
@@ -50,6 +56,7 @@ export const ENGINE_RENDERERS: readonly EngineRenderer[] = [
   graphRenderer,
   sequenceRenderer,
   setRenderer,
+  pointRenderer,
 ];
 
 /**
@@ -64,4 +71,5 @@ export const ENGINE_DSL: Readonly<Record<string, EngineDslModule>> = {
   graph: { fragment: graphSchemaFragment, environment: graphEnvironment },
   sequence: { fragment: sequenceSchemaFragment, environment: sequenceEnvironment },
   set: { fragment: setSchemaFragment, environment: setEnvironment },
+  point: { fragment: pointSchemaFragment, environment: pointEnvironment },
 };

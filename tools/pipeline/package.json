@@ -7,16 +7,17 @@
     "combviz": "./src/cli.ts"
   },
   "dependencies": {
-    "@combviz/engine-board": "workspace:*",
-    "@combviz/schema": "workspace:*",
-    "yaml": "^2.6.1",
-    "@combviz/render": "workspace:*",
-    "@combviz/theme": "workspace:*",
-    "@combviz/dsl": "workspace:*",
-    "@combviz/engine-graph": "workspace:*",
     "@combviz/check": "workspace:*",
-    "@resvg/resvg-js": "^2.6.2",
+    "@combviz/dsl": "workspace:*",
+    "@combviz/engine-board": "workspace:*",
+    "@combviz/engine-graph": "workspace:*",
+    "@combviz/engine-point": "workspace:*",
     "@combviz/engine-sequence": "workspace:*",
-    "@combviz/engine-set": "workspace:*"
+    "@combviz/engine-set": "workspace:*",
+    "@combviz/render": "workspace:*",
+    "@combviz/schema": "workspace:*",
+    "@combviz/theme": "workspace:*",
+    "@resvg/resvg-js": "^2.6.2",
+    "yaml": "^2.6.1"
   }
 }

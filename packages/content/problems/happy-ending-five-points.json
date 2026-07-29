@@ -1,0 +1,595 @@
+{
+  "schema_version": "0.1.0",
+  "id": "happy-ending-five-points",
+  "statement": {
+    "vi": "Cho $5$ điểm ở vị trí tổng quát (không có ba điểm nào thẳng hàng). Chứng minh luôn chọn được $4$ điểm tạo thành một **tứ giác lồi**."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài Happy Ending (Erdős–Szekeres–Klein), trường hợp n = 5."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "extremal"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "point"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "hull",
+      "id": "inv-h",
+      "label": {
+        "vi": "Đỉnh bao lồi"
+      }
+    },
+    {
+      "expr": "inside",
+      "id": "inv-i",
+      "label": {
+        "vi": "Điểm nằm trong"
+      }
+    },
+    {
+      "expr": "collinear",
+      "id": "inv-c",
+      "label": {
+        "vi": "Bộ ba thẳng hàng"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a1|Năm điểm]], không ba điểm nào thẳng hàng — bảng bên cạnh đếm ${{collinear}}$ bộ ba thẳng hàng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "P1",
+                "P2",
+                "P3",
+                "P4",
+                "P5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "P1",
+                "type": "point",
+                "label": "P₁",
+                "pos": [0, 0]
+              },
+              {
+                "id": "P2",
+                "type": "point",
+                "label": "P₂",
+                "pos": [30, 4]
+              },
+              {
+                "id": "P3",
+                "type": "point",
+                "label": "P₃",
+                "pos": [34, 26]
+              },
+              {
+                "id": "P4",
+                "type": "point",
+                "label": "P₄",
+                "pos": [8, 30]
+              },
+              {
+                "id": "P5",
+                "type": "point",
+                "label": "P₅",
+                "pos": [16, 15]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm điểm rải trên mặt phẳng."
+          },
+          "verified": true,
+          "claims": [
+            "collinear == 0",
+            "n == 5"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Xét [[a2|bao lồi]] của cả năm điểm. Nó có ${{hull}}$ đỉnh ở hình này — nhưng nói chung chỉ có ba khả năng: $5$, $4$ hoặc $3$ đỉnh. Xét từng khả năng."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "P1",
+                "P2",
+                "P3",
+                "P4",
+                "P5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_hull": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "P1",
+                "type": "point",
+                "label": "P₁",
+                "pos": [0, 0]
+              },
+              {
+                "id": "P2",
+                "type": "point",
+                "label": "P₂",
+                "pos": [30, 4]
+              },
+              {
+                "id": "P3",
+                "type": "point",
+                "label": "P₃",
+                "pos": [34, 26]
+              },
+              {
+                "id": "P4",
+                "type": "point",
+                "label": "P₄",
+                "pos": [8, 30]
+              },
+              {
+                "id": "P5",
+                "type": "point",
+                "label": "P₅",
+                "pos": [16, 15]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bao lồi của năm điểm được tô mờ."
+          },
+          "verified": true,
+          "claims": [
+            "hull == 4"
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: bao lồi có 4 đỉnh"
+          },
+          "narrative": {
+            "vi": "Bao lồi có $4$ đỉnh, nên [[a3|bốn đỉnh ấy]] **chính là** tứ giác lồi cần tìm — xong ngay."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "P1",
+                "P2",
+                "P3",
+                "P4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "P1",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₁",
+                "pos": [0, 0]
+              },
+              {
+                "id": "P2",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₂",
+                "pos": [30, 4]
+              },
+              {
+                "id": "P3",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₃",
+                "pos": [34, 26]
+              },
+              {
+                "id": "P4",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₄",
+                "pos": [8, 30]
+              },
+              {
+                "id": "P5",
+                "type": "point",
+                "emphasis": "dim",
+                "label": "P₅",
+                "pos": [16, 15]
+              },
+              {
+                "id": "quad",
+                "type": "polygon",
+                "color_class": 1,
+                "points": [
+                  "P1",
+                  "P2",
+                  "P3",
+                  "P4"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tứ giác lồi qua bốn đỉnh của bao."
+          },
+          "verified": true,
+          "claims": [
+            "hull == 4"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: bao lồi có 5 đỉnh"
+          },
+          "narrative": {
+            "vi": "Bao lồi có $5$ đỉnh: mọi điểm đều ở vị trí lồi, nên [[a4|lấy bốn điểm bất kỳ]] là được một tứ giác lồi."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "P1",
+                "P2",
+                "P3",
+                "P4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "P1",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₁",
+                "pos": [20, 0]
+              },
+              {
+                "id": "P2",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₂",
+                "pos": [39.02, 13.82]
+              },
+              {
+                "id": "P3",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₃",
+                "pos": [31.76, 36.18]
+              },
+              {
+                "id": "P4",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₄",
+                "pos": [8.24, 36.18]
+              },
+              {
+                "id": "P5",
+                "type": "point",
+                "emphasis": "dim",
+                "label": "P₅",
+                "pos": [0.98, 13.82]
+              },
+              {
+                "id": "quad",
+                "type": "polygon",
+                "color_class": 1,
+                "points": [
+                  "P1",
+                  "P2",
+                  "P3",
+                  "P4"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm điểm ở vị trí lồi; bốn trong số đó tạo tứ giác."
+          },
+          "verified": true,
+          "claims": [
+            "hull == 5",
+            "inside == 0"
+          ]
+        },
+        {
+          "id": "s4",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 3: bao lồi có 3 đỉnh"
+          },
+          "narrative": {
+            "vi": "Bao lồi có $3$ đỉnh: một tam giác với [[a5|hai điểm]] $P_4$, $P_5$ nằm hẳn bên trong. Đây là trường hợp duy nhất phải nghĩ."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "P4",
+                "P5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_hull": true,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "P1",
+                "type": "point",
+                "label": "P₁",
+                "pos": [0, 0]
+              },
+              {
+                "id": "P2",
+                "type": "point",
+                "label": "P₂",
+                "pos": [44, 0]
+              },
+              {
+                "id": "P3",
+                "type": "point",
+                "label": "P₃",
+                "pos": [22, 38]
+              },
+              {
+                "id": "P4",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₄",
+                "pos": [14, 24]
+              },
+              {
+                "id": "P5",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₅",
+                "pos": [26, 28]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tam giác với hai điểm bên trong."
+          },
+          "verified": true,
+          "claims": [
+            "hull == 3",
+            "inside == 2"
+          ]
+        },
+        {
+          "id": "s5",
+          "parent": "s4",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Kéo dài [[a6|đường thẳng qua $P_4$ và $P_5$]]. Nó chia mặt phẳng làm hai nửa, và ba đỉnh tam giác không thể chia đều — nên có **hai đỉnh cùng một nửa**."
+          },
+          "anchors": {
+            "a6": {
+              "ids": [
+                "L45"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "P1",
+                "type": "point",
+                "label": "P₁",
+                "pos": [0, 0]
+              },
+              {
+                "id": "P2",
+                "type": "point",
+                "label": "P₂",
+                "pos": [44, 0]
+              },
+              {
+                "id": "P3",
+                "type": "point",
+                "label": "P₃",
+                "pos": [22, 38]
+              },
+              {
+                "id": "P4",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₄",
+                "pos": [14, 24]
+              },
+              {
+                "id": "P5",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₅",
+                "pos": [26, 28]
+              },
+              {
+                "id": "L45",
+                "type": "line",
+                "color_class": 3,
+                "a": "P4",
+                "b": "P5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đường thẳng qua hai điểm trong, kéo dài hết khung và chia mặt phẳng làm hai nửa."
+          },
+          "verified": true
+        },
+        {
+          "id": "s6",
+          "parent": "s5",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ở đây [[a7|$P_1$ và $P_2$]] cùng nằm một phía. Bốn điểm $P_1, P_2, P_5, P_4$ khi đó tạo **tứ giác lồi** — hai điểm trong nằm trên biên chung, hai đỉnh kia ở cùng phía nên không ai lọt vào trong ai. Cả ba trường hợp đều xong."
+          },
+          "anchors": {
+            "a7": {
+              "ids": [
+                "P1",
+                "P2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "point",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "P1",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₁",
+                "pos": [0, 0]
+              },
+              {
+                "id": "P2",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₂",
+                "pos": [44, 0]
+              },
+              {
+                "id": "P3",
+                "type": "point",
+                "emphasis": "dim",
+                "label": "P₃",
+                "pos": [22, 38]
+              },
+              {
+                "id": "P4",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₄",
+                "pos": [14, 24]
+              },
+              {
+                "id": "P5",
+                "type": "point",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "P₅",
+                "pos": [26, 28]
+              },
+              {
+                "id": "quad",
+                "type": "polygon",
+                "color_class": 1,
+                "points": [
+                  "P1",
+                  "P2",
+                  "P5",
+                  "P4"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tứ giác lồi qua hai đỉnh tam giác và hai điểm trong."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "general-position"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s6"
+  }
+}
