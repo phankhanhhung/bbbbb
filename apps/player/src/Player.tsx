@@ -13,6 +13,7 @@ import type { Problem, Scene, Step } from '@combviz/schema';
 import { loadEngines, type LoadedEngine } from './engines.js';
 import { Narrative } from './Narrative.jsx';
 import { InvariantStrip } from './InvariantStrip.jsx';
+import { Sandbox } from './Sandbox.jsx';
 import { renderMath } from './math.js';
 
 /**
@@ -28,6 +29,7 @@ export function Player({ problem }: { problem: Problem }) {
   const [engines, setEngines] = useState<ReadonlyMap<string, LoadedEngine> | null>(null);
   const [index, setIndex] = useState(0);
   const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
+  const [forkedScene, setForkedScene] = useState<Scene | null>(null);
 
   const solution = problem.solutions[0]!;
   const steps = useMemo(() => preorder(solution.steps), [solution]);
@@ -106,6 +108,39 @@ export function Player({ problem }: { problem: Problem }) {
 
   const viewport = renderer && step.scene ? renderer.viewportOf(step.scene) : null;
 
+  const engine = step.scene ? engines?.get(step.scene.engine) : undefined;
+  const sandboxValidators = useMemo(
+    () =>
+      engine
+        ? (problem.sandbox?.validators ?? [])
+            .map((id) => engine.resolveValidator(id))
+            .filter((v): v is NonNullable<typeof v> => v !== null)
+        : [],
+    [engine, problem],
+  );
+
+  // PLY-05 "Thử từ đây": fork scene hiện tại sang Sandbox **mà không phá trạng
+  // thái Player** — đóng lại là quay về đúng step đang xem. Đây là cầu nối
+  // học-bằng-nghịch, và nó chỉ có nghĩa nếu đường quay lại không mất gì.
+  if (forkedScene && engine) {
+    return (
+      <div class="player">
+        <header class="player__head">
+          <h1 dangerouslySetInnerHTML={{ __html: renderMath(problem.statement.vi) }} />
+          <p class="source">Thử từ bước {step.id} — thao tác ở đây không đổi lời giải</p>
+        </header>
+        <Sandbox
+          scene={forkedScene}
+          engine={engine}
+          validators={sandboxValidators}
+          invariants={problem.invariants ?? []}
+          {...(problem.sandbox?.goal_expr ? { goalExpr: problem.sandbox.goal_expr } : {})}
+          onClose={() => setForkedScene(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div class="player">
       <header class="player__head">
@@ -150,6 +185,16 @@ export function Player({ problem }: { problem: Problem }) {
           {step.edge_type === 'contradiction' ? (
             <p class="badge badge--contradiction">✗ Mâu thuẫn — nhánh đóng</p>
           ) : null}
+
+          <nav class="controls">
+            <button
+              class="try"
+              onClick={() => step.scene && setForkedScene(step.scene)}
+              disabled={!engine}
+            >
+              Thử từ đây
+            </button>
+          </nav>
 
           <nav class="controls">
             <button onClick={() => setIndex((i) => Math.max(i - 1, 0))} disabled={index === 0}>

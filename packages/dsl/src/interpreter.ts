@@ -23,7 +23,24 @@ export interface Budget {
   readonly maxMs: number;
 }
 
+/** Ngân sách lúc chạy: đồng hồ 50ms theo DSL-02, ưu tiên giao diện không đứng. */
 export const DEFAULT_BUDGET: Budget = { maxSteps: 200_000, maxMs: 50 };
+
+/**
+ * Ngân sách cho `validate` và CI: **không có đồng hồ**.
+ *
+ * NFR-D2 bắt CI validate toàn kho mỗi commit, nên kết quả không được phụ thuộc
+ * vào việc máy chạy nhanh hay chậm. Với đồng hồ 50ms, một biểu thức nặng vừa
+ * phải sẽ xanh trên laptop và đỏ trên runner đang tải — bài bị chặn publish vì lý
+ * do không tái lập được, và không ai tin validate nữa.
+ *
+ * Đổi lại, chốt duy nhất là số bước; nó vẫn chặn được vòng lặp tổ hợp thật sự
+ * lớn, chỉ là chặn theo một tiêu chí tái lập được.
+ */
+export const DETERMINISTIC_BUDGET: Budget = {
+  maxSteps: 2_000_000,
+  maxMs: Number.POSITIVE_INFINITY,
+};
 
 export interface DslEnvironment {
   /** Tên truy cập được: tập hợp (`cells`, `tiles`) và hằng số (`rows`, `cols`). */

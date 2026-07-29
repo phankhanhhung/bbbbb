@@ -1,4 +1,9 @@
-import { compile, tryEvaluate, type CompiledExpression } from '@combviz/dsl';
+import {
+  compile,
+  DETERMINISTIC_BUDGET,
+  tryEvaluate,
+  type CompiledExpression,
+} from '@combviz/dsl';
 import type { Problem, Scene, ValidationIssue } from '@combviz/schema';
 import { ENGINE_DSL } from './engines.js';
 
@@ -117,7 +122,8 @@ function evalOnEveryStep(
       const path = `/solutions/${si}/steps/${i}`;
 
       for (const invariant of invariants) {
-        const outcome = tryEvaluate(invariant.expr, env);
+        // Ngân sách deterministic: CI không được đỏ vì runner đang tải (NFR-D2).
+        const outcome = tryEvaluate(invariant.expr, env, DETERMINISTIC_BUDGET);
         if (!outcome.ok) {
           issues.push({
             code: 'dsl/eval-error',

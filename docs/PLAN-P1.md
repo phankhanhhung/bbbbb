@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M2 xong** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M3 phần lớn xong** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -203,15 +203,22 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 
 **Lỗ hổng sandbox tìm ra ở đây:** tra tên bằng `bindings[name]` rơi xuống `Object.prototype`, nên `constructor`, `toString`, `valueOf` trở thành tên hợp lệ trỏ vào nội tại của JS — và `constructor(...)` gọi được thật. Sửa bằng `Object.hasOwn` ở cả ba chỗ tra (tên, thuộc tính element, tên hàm). Đây đúng là loại lỗ mà NFR-S1 nhắm tới; test bắt được vì nó hỏi thẳng câu "nội dung có với tới global của JS không".
 
-### M3 — Board engine đầy đủ + Sandbox · Tuần 5–7 · [E] — **tiếp theo**
+### M3 — Board engine đầy đủ + Sandbox · Tuần 5–7 · [E] — **phần lớn xong**
 
-- ENG-00..04: command layer, undo/redo ≥50, multi-select, zoom/pan, worker + cancel.
-- BD-01..03, BD-06 (summary strip theo color_class).
-- ANC-01/02 hai chiều trong Player.
-- SBX-01/02 (validator live, bật/tắt constraint), SBX-05 (export PNG/SVG).
-- PRN-01 live trong sandbox, PRN-02 partition view.
+- ✅ ENG-00/01: `packages/editor` — command layer, undo/redo (trần 60 bước), selection.
+- ✅ BD-01 (tô ô, kéo quét gom thành một lệnh, preset), BD-02 (đặt quân, attack overlay), BD-03 (đặt/xoay/lật/xoá tile, độ phủ), BD-06 (đếm theo color_class).
+- ✅ Hit-test hình học thuần (A-05) — không dùng `elementFromPoint`.
+- ✅ SBX-01 (sandbox theo problem) + SBX-02 (validator live, bật/tắt từng ràng buộc), PRN-01 (invariant live khi thao tác).
+- ✅ PLY-05 "Thử từ đây" — fork scene sang Sandbox, đóng lại quay về đúng step.
+- ✅ REN-03 watermark trong export.
+- ⬜ **ENG-02 zoom/pan** — chưa làm.
+- ⬜ **ENG-04 worker + cancel** — cố ý hoãn tới M4: board chưa có analyzer nào chạy quá 100ms, dựng worker cho việc không tồn tại là dựng thứ không test được. Graph engine mới thật sự cần.
+- ⬜ **ANC-01 chiều ngược** (chạm element → sáng span) — hạ tầng hit-test đã có, còn phần nối vào narrative.
+- ⬜ **SBX-01 cửa vào độc lập** (sandbox không cần problem, từ menu chính) — chờ định tuyến ở M6.
+- ⬜ **SBX-05 export PNG** — mới có SVG.
+- ⬜ **PRN-02 partition view.**
 
-**DoD:** sandbox board độc lập dùng được: đặt domino, thấy chồng lấn đỏ realtime, thấy invariant đổi live khi thao tác. Export PNG đúng theme.
+**DoD:** ✅ Kiểm bằng browser thật: đặt hai domino chồng nhau → "2 quân chồng lên nhau" + viền đỏ; invariant tụt từ −2 xuống −3 (cấu hình sai thì bất biến vỡ — đúng điều cần thấy); hoàn tác một lần khôi phục cả hai; kéo quét 5 ô đổi bảng đếm 30/32 → 28/29/5 và invariant sang −1.
 
 ### M4 — Mở cửa content + Graph engine · Tuần 6–9 · [E]+[C]
 

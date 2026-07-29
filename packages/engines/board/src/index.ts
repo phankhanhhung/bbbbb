@@ -20,6 +20,8 @@ export * from './ids.js';
 export { boardRenderer } from './render.js';
 export * from './dsl.js';
 export * from './validators.js';
+export * from './commands.js';
+export * from './hit-test.js';
 
 export function isHole(config: BoardConfigType, row: number, col: number): boolean {
   return (config.holes ?? []).some(([r, c]) => r === row && c === col);

@@ -25,6 +25,7 @@ export { canonicalStringify, hashString, hashScene } from './hash.js';
 export { diffNodes, isEmptyDiff, type NodeDiff } from './diff.js';
 export { interpolateNodes } from './interpolate.js';
 export { toSvgString, serializeNode, type SerializeOptions } from './serialize.js';
+export { watermarkNodes } from './watermark.js';
 export {
   createRenderer,
   type EngineRenderer,

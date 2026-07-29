@@ -112,9 +112,13 @@ describe('sandbox — nội dung problem là dữ liệu, không phải code (NF
     const many = Array.from({ length: 400 }, (_, i) => element(`e${i}`, { v: i }));
     const bigEnv: DslEnvironment = { bindings: { xs: many }, builtins: {} };
 
-    // 400 × 400 = 160 000 lần gọi lambda, mỗi lần vài node — vượt ngân sách mặc
-    // định. Chốt bằng số bước chứ không bằng đồng hồ, để CI không đỏ trên máy chậm.
-    const outcome = tryEvaluate('count(xs, a => count(xs, b => a.v == b.v) > 0)', bigEnv);
+    // Ngân sách tường minh, không đồng hồ: test phải khẳng định *chốt số bước*
+    // hoạt động. Nếu để mặc định, dưới tải nặng đồng hồ 50ms sẽ cắt trước và test
+    // đo nhầm thứ khác — chính nó từng flaky vì lý do này.
+    const outcome = tryEvaluate('count(xs, a => count(xs, b => a.v == b.v) > 0)', bigEnv, {
+      maxSteps: 10_000,
+      maxMs: Number.POSITIVE_INFINITY,
+    });
 
     expect(outcome.ok).toBe(false);
     expect(outcome.error).toMatch(/ngân sách/);
@@ -125,8 +129,9 @@ describe('sandbox — nội dung problem là dữ liệu, không phải code (NF
     const bigEnv: DslEnvironment = { bindings: { xs: many }, builtins: {} };
     const source = 'count(xs, a => count(xs, b => a.v == b.v) > 0)';
 
-    const first = tryEvaluate(source, bigEnv);
-    const second = tryEvaluate(source, bigEnv);
+    const budget = { maxSteps: 10_000, maxMs: Number.POSITIVE_INFINITY };
+    const first = tryEvaluate(source, bigEnv, budget);
+    const second = tryEvaluate(source, bigEnv, budget);
 
     expect(first).toEqual(second);
   });

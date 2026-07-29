@@ -1,6 +1,7 @@
 import type { EngineRenderer } from '@combviz/render';
 import type { DslEnvironment } from '@combviz/dsl';
-import type { Scene } from '@combviz/schema';
+import type { CommandRegistry, HitTest } from '@combviz/editor';
+import type { Scene, SceneValidator } from '@combviz/schema';
 
 /**
  * Composition root phía Player — **nạp động** theo `engines_used[]` (D-10).
@@ -14,13 +15,28 @@ import type { Scene } from '@combviz/schema';
  */
 export interface LoadedEngine {
   readonly renderer: EngineRenderer;
+  readonly commands: CommandRegistry;
+  readonly hitTest: HitTest;
   environment(scene: Scene): DslEnvironment;
+  resolveValidator(id: string): SceneValidator | null;
+  /** BD-06 — đếm ô theo color_class. Chỉ engine dạng lưới có. */
+  colorSummary?(scene: Scene): Map<number, number>;
+  /** BD-03 — độ phủ. Chỉ engine dạng lưới có. */
+  coverage?(scene: Scene): { covered: number; total: number };
 }
 
 const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
   board: async () => {
     const module = await import('@combviz/engine-board');
-    return { renderer: module.boardRenderer, environment: module.boardEnvironment };
+    return {
+      renderer: module.boardRenderer,
+      commands: module.boardCommands,
+      hitTest: module.boardHitTest,
+      environment: module.boardEnvironment,
+      resolveValidator: module.resolveBoardValidator,
+      colorSummary: module.colorSummary,
+      coverage: module.coverage,
+    };
   },
 };
 

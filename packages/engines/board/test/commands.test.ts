@@ -1,0 +1,196 @@
+import { describe, expect, it } from 'vitest';
+import { command, createEditorState, execute, undo } from '@combviz/editor';
+import type { Scene } from '@combviz/schema';
+import { boardCommands, colorSummary, coverage } from '../src/commands.js';
+import { boardHitTest, pointToCell } from '../src/hit-test.js';
+import { CELL } from '../src/geometry.js';
+import { resolveBoardValidator } from '../src/validators.js';
+
+const board = (overrides: Partial<Scene> = {}): Scene => ({
+  engine: 'board',
+  config: { rows: 8, cols: 8 },
+  elements: [],
+  ...overrides,
+});
+
+const run = (scene: Scene, type: string, params: unknown): Scene | null => {
+  const result = execute(createEditorState(scene), boardCommands, command(type, params));
+  return result.applied ? result.state.scene : null;
+};
+
+describe('BD-01 — tô màu', () => {
+  it('kéo quét nhiều ô là **một** lệnh, undo một lần là hết', () => {
+    const state = execute(
+      createEditorState(board()),
+      boardCommands,
+      command('board/paint-cells', {
+        cells: ['cell-0-0', 'cell-0-1', 'cell-0-2'],
+        color_class: 3,
+      }),
+    ).state;
+
+    expect(colorSummary(state.scene).get(3)).toBe(3);
+    // Undo từng ô một là undo vô dụng.
+    expect(colorSummary(undo(state).scene).size).toBe(0);
+  });
+
+  it('không tô được ô khuyết', () => {
+    const scene = board({ config: { rows: 8, cols: 8, holes: [[0, 0]] } });
+    expect(run(scene, 'board/paint-cells', { cells: ['cell-0-0'], color_class: 1 })).toBeNull();
+  });
+
+  it('không tô được ô ngoài bàn', () => {
+    expect(
+      run(board(), 'board/paint-cells', { cells: ['cell-99-99'], color_class: 1 }),
+    ).toBeNull();
+  });
+
+  it('tô lại đúng màu cũ thì không sinh bước lịch sử', () => {
+    const painted = run(board(), 'board/paint-cells', {
+      cells: ['cell-1-1'],
+      color_class: 2,
+    })!;
+
+    expect(
+      run(painted, 'board/paint-cells', { cells: ['cell-1-1'], color_class: 2 }),
+    ).toBeNull();
+  });
+
+  it('xoá màu gỡ hẳn override chứ không để lại rác', () => {
+    const painted = run(board(), 'board/paint-cells', {
+      cells: ['cell-1-1'],
+      color_class: 2,
+    })!;
+    const cleared = run(painted, 'board/paint-cells', {
+      cells: ['cell-1-1'],
+      color_class: null,
+    })!;
+
+    expect((cleared.config as { cell_overrides?: object }).cell_overrides).toEqual({});
+  });
+
+  it('preset áp cho cả bàn bằng một lệnh', () => {
+    const scene = run(board(), 'board/set-preset', {
+      preset: { type: 'checkerboard' },
+    })!;
+
+    const summary = colorSummary(scene);
+    expect(summary.get(1)).toBe(32);
+    expect(summary.get(2)).toBe(32);
+  });
+});
+
+describe('BD-03 — đặt và thao tác tile', () => {
+  it('đặt tile rồi đếm được độ phủ', () => {
+    const scene = run(board(), 'board/place-tile', {
+      id: 't1',
+      shape: 'domino',
+      pos: [0, 0],
+    })!;
+
+    expect(coverage(scene)).toEqual({ covered: 2, total: 64 });
+  });
+
+  it('id trùng bị từ chối', () => {
+    const scene = run(board(), 'board/place-tile', {
+      id: 't1',
+      shape: 'domino',
+      pos: [0, 0],
+    })!;
+
+    expect(
+      run(scene, 'board/place-tile', { id: 't1', shape: 'domino', pos: [4, 4] }),
+    ).toBeNull();
+  });
+
+  it('xoay bốn lần về đúng tư thế ban đầu', () => {
+    let scene = run(board(), 'board/place-tile', {
+      id: 't1',
+      shape: 'tromino-l',
+      pos: [2, 2],
+    })!;
+    for (let i = 0; i < 4; i += 1) {
+      scene = run(scene, 'board/rotate-tile', { id: 't1', delta: 90 })!;
+    }
+
+    expect(scene.elements[0]!['rot']).toBe(0);
+  });
+
+  it('cho phép kéo tới chỗ vi phạm — validator mới là nơi báo', () => {
+    // Chặn ở command sẽ biến sandbox thành cái hộp không nghịch được, mà cả điểm
+    // của nó là học bằng nghịch.
+    let scene = run(board(), 'board/place-tile', { id: 't1', shape: 'domino', pos: [0, 0] })!;
+    scene = run(scene, 'board/place-tile', { id: 't2', shape: 'domino', pos: [4, 4] })!;
+    scene = run(scene, 'board/move-element', { id: 't2', pos: [0, 1] })!;
+
+    expect(scene.elements).toHaveLength(2);
+    expect(resolveBoardValidator('tiles-no-overlap')!.check(scene).ok).toBe(false);
+  });
+
+  it('element khoá không di chuyển và không xoá được', () => {
+    const scene = board({
+      elements: [
+        { id: 't1', type: 'tile', shape: 'domino', pos: [0, 0], rot: 0, locked: true },
+      ],
+    });
+
+    expect(run(scene, 'board/move-element', { id: 't1', pos: [3, 3] })).toBeNull();
+    expect(run(scene, 'board/remove', { ids: ['t1'] })).toBeNull();
+  });
+
+  it('di chuyển tới đúng chỗ đang đứng thì không sinh bước lịch sử', () => {
+    const scene = run(board(), 'board/place-tile', {
+      id: 't1',
+      shape: 'domino',
+      pos: [2, 2],
+    })!;
+    expect(run(scene, 'board/move-element', { id: 't1', pos: [2, 2] })).toBeNull();
+  });
+});
+
+describe('BD-02 — quân', () => {
+  it('không đặt được quân ngoài bàn', () => {
+    expect(
+      run(board(), 'board/place-piece', { id: 'p1', kind: 'rook', pos: [9, 9] }),
+    ).toBeNull();
+  });
+
+  it('bật/tắt vùng khống chế', () => {
+    const scene = run(board(), 'board/place-piece', {
+      id: 'p1',
+      kind: 'rook',
+      pos: [0, 0],
+    })!;
+    const on = run(scene, 'board/toggle-attacks', { id: 'p1' })!;
+
+    expect(on.elements[0]!['show_attacks']).toBe(true);
+  });
+});
+
+describe('hit test (A-05)', () => {
+  it('điểm bên trong ô thuộc về ô đó, không làm tròn sang ô kế', () => {
+    // Ô (0,0) trải từ 0 tới 10; điểm 9.9 vẫn thuộc ô 0. Làm tròn sẽ khiến nửa sau
+    // của mỗi ô nhận nhầm sang ô kế tiếp.
+    expect(pointToCell({ x: 9.9, y: 0.1 })).toEqual([0, 0]);
+    expect(pointToCell({ x: CELL, y: 0 })).toEqual([0, 1]);
+  });
+
+  it('trả quân trước ô: chạm vào domino là chọn domino', () => {
+    const scene = board({
+      elements: [{ id: 't1', type: 'tile', shape: 'domino', pos: [1, 1], rot: 0 }],
+    });
+
+    const hits = boardHitTest(scene, { x: CELL * 1.5, y: CELL * 1.5 });
+
+    expect(hits[0]).toBe('t1');
+    expect(hits).toContain('cell-1-1');
+  });
+
+  it('chạm chỗ trống chỉ trả về ô', () => {
+    expect(boardHitTest(board(), { x: CELL * 5.5, y: CELL * 5.5 })).toEqual(['cell-5-5']);
+  });
+
+  it('chạm ngoài bàn không trả về gì', () => {
+    expect(boardHitTest(board(), { x: -5, y: -5 })).toEqual([]);
+  });
+});

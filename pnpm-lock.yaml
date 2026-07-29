@@ -41,6 +41,9 @@ importers:
       '@combviz/dsl':
         specifier: workspace:*
         version: link:../../packages/dsl
+      '@combviz/editor':
+        specifier: workspace:*
+        version: link:../../packages/editor
       '@combviz/engine-board':
         specifier: workspace:*
         version: link:../../packages/engines/board
@@ -75,11 +78,20 @@ importers:
         specifier: workspace:*
         version: link:../schema
 
+  packages/editor:
+    dependencies:
+      '@combviz/schema':
+        specifier: workspace:*
+        version: link:../schema
+
   packages/engines/board:
     dependencies:
       '@combviz/dsl':
         specifier: workspace:*
         version: link:../../dsl
+      '@combviz/editor':
+        specifier: workspace:*
+        version: link:../../editor
       '@combviz/render':
         specifier: workspace:*
         version: link:../../render

@@ -28,20 +28,29 @@ export interface RenderContext {
    * test được, và nó sống sót qua mọi khung animation.
    */
   readonly highlight: ReadonlySet<string>;
+  /**
+   * SBX-02: id các element đang vi phạm ràng buộc.
+   *
+   * Cùng lý do với `highlight` — trạng thái vi phạm là **một phần của thứ được
+   * vẽ**, nên nó sống sót qua animation và test được mà không cần DOM.
+   */
+  readonly invalid: ReadonlySet<string>;
 }
 
 export interface ContextOptions {
   readonly patterns?: boolean;
   readonly highlight?: ReadonlySet<string>;
+  readonly invalid?: ReadonlySet<string>;
 }
 
-const NO_HIGHLIGHT: ReadonlySet<string> = new Set();
+const EMPTY: ReadonlySet<string> = new Set();
 
 export function createContext(theme: Theme, options: ContextOptions = {}): RenderContext {
   return {
     theme,
     patterns: options.patterns ?? false,
-    highlight: options.highlight ?? NO_HIGHLIGHT,
+    highlight: options.highlight ?? EMPTY,
+    invalid: options.invalid ?? EMPTY,
   };
 }
 
@@ -57,6 +66,15 @@ export function highlightAttrs(
   ctx: RenderContext,
   id: string,
 ): Record<string, string | number> {
+  // Vi phạm thắng highlight: khi người học vừa trỏ vào một quân *và* quân đó
+  // đang đặt sai, thứ họ cần biết là chỗ sai.
+  if (ctx.invalid.has(id)) {
+    return {
+      stroke: ctx.theme.stroke.invalid,
+      'stroke-width': ctx.theme.emphasis.anchorHaloWidth,
+      'paint-order': 'stroke',
+    };
+  }
   if (!ctx.highlight.has(id)) return {};
   return {
     stroke: ctx.theme.emphasis.anchorHalo,

@@ -15,6 +15,7 @@ export {
   evaluate,
   applyLambda,
   DEFAULT_BUDGET,
+  DETERMINISTIC_BUDGET,
   type Budget,
   type DslEnvironment,
   type EngineBuiltin,

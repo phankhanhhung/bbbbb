@@ -225,3 +225,139 @@ body {
   background: #f1f1ee;
   color: var(--ink-soft);
 }
+
+/* --- Sandbox (SBX-01/02) -------------------------------------------------- */
+
+.sandbox__bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tool {
+  min-height: 44px;
+  padding: 0 0.7rem;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tool--on {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.tool:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Ô màu là hit target đủ lớn cho ngón tay (NFR-C2), không phải chấm nhỏ. */
+.swatch {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.swatch--on {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.sandbox__body {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .sandbox__body {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    align-items: start;
+  }
+}
+
+.constraints {
+  margin-bottom: 1rem;
+}
+
+.constraints h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.constraint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.constraint__label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.constraint__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.constraint__state.is-ok {
+  color: #137333;
+}
+
+.constraint__state.is-bad {
+  color: #a50e0e;
+  text-align: right;
+}
+
+.constraint__state.is-off {
+  color: var(--ink-soft);
+}
+
+.dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.badge--done {
+  background: #e6f4ea;
+  color: #137333;
+}
+
+.badge--todo {
+  background: #f1f1ee;
+  color: var(--ink-soft);
+}
+
+.try {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
