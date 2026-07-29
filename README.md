@@ -52,7 +52,7 @@ npx tsx tools/pipeline/src/cli.ts validate packages/content [--strict]
 npx tsx tools/pipeline/src/cli.ts render mutilated-chessboard --step s2 --out s2.svg
 npx tsx tools/pipeline/src/cli.ts fmt --write     # định dạng chuẩn tắc (DAT-03)
 npx tsx tools/pipeline/src/cli.ts import-draft draft.json --write
-npx tsx tools/pipeline/src/cli.ts og              # OG card (REN-02)
+npx tsx tools/pipeline/src/cli.ts og --png        # OG card SVG + PNG (REN-02)
 npx tsx tools/pipeline/src/cli.ts index           # chỉ mục tìm kiếm (CMS-02)
 npx tsx tools/pipeline/src/cli.ts stats           # đối chiếu AUT-KPI
 npx tsx tools/pipeline/src/cli.ts coverage --drafts   # bảng điểm content sprint (DoD §15.1)
@@ -62,6 +62,11 @@ npx tsx tools/pipeline/src/cli.ts eval knight-closed-tour-5x5 "count(cells, c =>
 `coverage` chấm kho theo đúng khung phân bố của DoD Phase 1 và nói còn thiếu bao nhiêu
 bài loại nào. `eval` chạy một biểu thức DSL trên **từng step** — cách nhanh nhất để hỏi
 "hình có đúng thứ narrative vừa nói không", câu hỏi mà `validate` không trả lời.
+
+`og --png` raster bằng resvg, không cần browser. Phông lấy từ **hệ thống**: máy thiếu
+phông thì resvg không báo lỗi, nó chỉ bỏ chữ đi — ra một card 1200×630 bố cục hoàn hảo và
+không một chữ nào. `tools/pipeline/test/og-raster.test.ts` rasterize chữ có dấu và ký tự
+quân cờ rồi đếm mực, nên kiểu lỗi đó làm đỏ CI thay vì lên Twitter.
 
 `validate` chạy đúng bộ luật mà Studio và CI dùng (AUT-04): schema → cấu trúc cây →
 anchor → bound → taxonomy → eval invariant và validator trên **mọi** step.

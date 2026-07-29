@@ -5,6 +5,7 @@ import {
   elementDecoration,
   fillForClass,
   groupAttrs,
+  inkForClass,
   keyed,
   text,
   type EngineRenderer,
@@ -112,7 +113,9 @@ function renderCells(config: BoardConfig, ctx: RenderContext): SvgNode[] {
               'dominant-baseline': 'central',
               'font-family': ctx.theme.type.uiFamily,
               'font-size': CELL * 0.55,
-              fill: ctx.theme.object.pieceGlyph,
+              // Mực theo lớp màu của **chính ô này**: một dấu "−" trên ô lớp 8
+              // vẽ bằng mực đen chung thì gần như biến mất.
+              fill: inkForClass(ctx, colorClassIndex),
             },
             glyph,
           ),
@@ -281,7 +284,7 @@ function renderPiece(element: SceneElement, ctx: RenderContext): SvgNode {
           'dominant-baseline': 'central',
           'font-family': ctx.theme.type.uiFamily,
           'font-size': CELL * 0.45,
-          fill: ctx.theme.object.pieceGlyph,
+          fill: inkForClass(ctx, element.color_class),
         },
         glyph,
       ),

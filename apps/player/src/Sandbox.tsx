@@ -40,7 +40,9 @@ type Tool =
   | { kind: 'select' }
   | { kind: 'paint'; colorClass: number | null }
   | { kind: 'tile'; shape: string }
-  | { kind: 'erase' };
+  | { kind: 'erase' }
+  /** G-11 — lật cả một hàng/cột, thao tác hợp lệ của họ bài "lật dấu". */
+  | { kind: 'flip'; axis: 'row' | 'col' };
 
 const TILE_SHAPES = ['domino', 'tromino-l', 'tetromino-o', 'tetromino-t'] as const;
 
@@ -123,6 +125,20 @@ export function Sandbox({
 
       if (tool.kind === 'erase' && element) {
         sandbox.run(command('board/remove', { ids: [element] }));
+        return;
+      }
+
+      // Bấm vào một ô để lật **cả** hàng/cột chứa nó. Người học không tô được
+      // từng ô một ở đây — và đó chính là điều làm bất biến trở thành bất biến:
+      // luật của bài nằm trong thao tác, không nằm trong lời dặn.
+      if (tool.kind === 'flip' && cell) {
+        const [row, col] = cell.slice('cell-'.length).split('-').map(Number);
+        sandbox.run(
+          command('board/flip-line', {
+            axis: tool.axis,
+            index: tool.axis === 'row' ? (row ?? 0) : (col ?? 0),
+          }),
+        );
         return;
       }
 
@@ -241,6 +257,16 @@ export function Sandbox({
           <ToolButton active={tool.kind === 'erase'} onClick={() => setTool({ kind: 'erase' })}>
             Xoá quân
           </ToolButton>
+
+          {(['row', 'col'] as const).map((axis) => (
+            <ToolButton
+              key={axis}
+              active={tool.kind === 'flip' && tool.axis === axis}
+              onClick={() => setTool({ kind: 'flip', axis })}
+            >
+              ⇄ Lật {axis === 'row' ? 'hàng' : 'cột'}
+            </ToolButton>
+          ))}
         </div>
 
         <div class="tools">

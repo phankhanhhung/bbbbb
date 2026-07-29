@@ -142,6 +142,21 @@ export function strokeForClass(ctx: RenderContext, index: number | undefined): s
   return index === undefined ? ctx.theme.surface.guide : colorClass(index).stroke;
 }
 
+/**
+ * Màu **chữ đặt chồng lên** một lớp màu.
+ *
+ * Bảng màu có sẵn token `on` cho từng lớp, đạt WCAG AA trên chính `fill` của lớp
+ * đó (có test ép ở `packages/theme`). Trước hàm này không renderer nào đọc nó:
+ * mọi glyph đều dùng một mực đen cố định, nên một dấu "−" trên ô lớp 8 (xám
+ * than) chỉ còn 1.7:1 — chữ vẫn ở đó, chỉ là không ai đọc được.
+ *
+ * Ô chưa có lớp màu thì vẫn dùng mực chung: nền của nó là màu trung tính, và
+ * `on` chỉ có nghĩa khi đã biết mình nằm trên cái gì.
+ */
+export function inkForClass(ctx: RenderContext, index: number | undefined): string {
+  return index === undefined ? ctx.theme.object.pieceGlyph : colorClass(index).on;
+}
+
 export function patternId(index: number): string {
   return `cv-pat-${index}`;
 }

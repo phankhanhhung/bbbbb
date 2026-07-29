@@ -37,6 +37,8 @@ export {
   type AnchorSpan,
 } from './anchor-markup.js';
 
+export { toReadableMath, toSearchableText } from './math-text.js';
+
 export {
   createEngineRegistry,
   type EngineSchemaFragment,

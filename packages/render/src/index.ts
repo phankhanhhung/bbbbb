@@ -11,6 +11,7 @@ export {
 export {
   createContext,
   fillForClass,
+  inkForClass,
   strokeForClass,
   patternId,
   patternDefs,

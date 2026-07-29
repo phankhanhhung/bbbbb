@@ -25,7 +25,11 @@ export interface ColorClassToken {
   readonly fill: string;
   /** Màu nét viền, đủ tương phản trên chính `fill`. */
   readonly stroke: string;
-  /** Màu chữ/nhãn đặt chồng lên `fill` (đạt WCAG AA với cỡ chữ nhãn). */
+  /**
+   * Màu chữ/nhãn đặt chồng lên `fill`.
+   *
+   * Đạt WCAG AA (≥ 4.5:1) trên chính `fill` — có test ép, không phải lời hứa.
+   */
   readonly on: string;
   /** Kênh dự phòng không phụ thuộc màu (NFR-A1). */
   readonly pattern: PatternId;
@@ -46,8 +50,11 @@ export type PatternId =
 export const COLOR_CLASSES: readonly ColorClassToken[] = [
   { index: 1, fill: '#0072B2', stroke: '#00456B', on: '#FFFFFF', pattern: 'solid', name: 'xanh đậm' },
   { index: 2, fill: '#9ED9F5', stroke: '#3E8BB5', on: '#0B2027', pattern: 'diagonal-right', name: 'xanh nhạt' },
-  { index: 3, fill: '#D55E00', stroke: '#8A3D00', on: '#FFFFFF', pattern: 'diagonal-left', name: 'cam đất' },
-  { index: 4, fill: '#009E73', stroke: '#006147', on: '#FFFFFF', pattern: 'dots', name: 'lục' },
+  // Chữ **đen** trên cam đất, không phải trắng: trắng trên #D55E00 chỉ đạt
+  // 3.87:1, trượt WCAG AA. Đây là ô duy nhất trong bảng mà trực giác "nền đậm
+  // thì chữ trắng" sai, và nó sai đúng ở mức không ai nhìn ra bằng mắt.
+  { index: 3, fill: '#D55E00', stroke: '#8A3D00', on: '#1A0C00', pattern: 'diagonal-left', name: 'cam đất' },
+  { index: 4, fill: '#009E73', stroke: '#006147', on: '#08201A', pattern: 'dots', name: 'lục' },
   { index: 5, fill: '#E69F00', stroke: '#9A6B00', on: '#1A1200', pattern: 'grid', name: 'hổ phách' },
   { index: 6, fill: '#CC79A7', stroke: '#8A4E70', on: '#1A0A14', pattern: 'horizontal', name: 'hồng tía' },
   { index: 7, fill: '#F0E442', stroke: '#9C9400', on: '#1A1900', pattern: 'vertical', name: 'vàng' },

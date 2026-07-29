@@ -345,11 +345,68 @@ const noMonoTriangle: SceneValidator = {
   },
 };
 
+/**
+ * Không chứa tam giác — ràng buộc của cả cụm bài cực trị kiểu Turán (§16).
+ *
+ * Khác `no-mono-triangle` ở một điểm quyết định: validator kia hỏi về **màu**
+ * cạnh và bỏ qua cạnh chưa tô, còn cái này hỏi về **sự tồn tại** của cạnh. Bài
+ * "đồ thị $n$ đỉnh không tam giác có nhiều nhất bao nhiêu cạnh" không có màu nào
+ * cả, nên trước khi có validator này nó chỉ kiểm gián tiếp được bằng
+ * `bipartite` — một ràng buộc mạnh hơn hẳn, tức là cấm nhầm cả những đồ thị hợp
+ * lệ (chu trình $5$ đỉnh không có tam giác mà cũng không hai phía).
+ *
+ * Cùng bound O(n³) và cùng lý do với `no-mono-triangle`.
+ */
+const triangleFree: SceneValidator = {
+  id: 'triangle-free',
+  label: 'Không có tam giác',
+  check(scene) {
+    const graph = buildGraph(scene);
+    if (graph.vertices.length > MONO_TRIANGLE_LIMIT) {
+      return {
+        ok: true,
+        violations: [],
+        message: `Bỏ qua: đồ thị quá ${MONO_TRIANGLE_LIMIT} đỉnh`,
+      };
+    }
+
+    // Khuyên (u == v) không tham gia tam giác; bỏ chúng ra để cạnh song song
+    // cũng không tự tạo "tam giác" giả.
+    const edgeOf = new Map<string, string>();
+    for (const edge of graph.edges) {
+      if (edge.u === edge.v) continue;
+      edgeOf.set([edge.u, edge.v].sort().join('~'), edge.id);
+    }
+
+    const ids = graph.vertices.map((v) => v.id);
+    for (let i = 0; i < ids.length; i += 1) {
+      for (let j = i + 1; j < ids.length; j += 1) {
+        const ab = edgeOf.get([ids[i] as string, ids[j] as string].sort().join('~'));
+        if (!ab) continue;
+        for (let k = j + 1; k < ids.length; k += 1) {
+          const bc = edgeOf.get([ids[j] as string, ids[k] as string].sort().join('~'));
+          const ca = edgeOf.get([ids[i] as string, ids[k] as string].sort().join('~'));
+          if (bc && ca) {
+            return {
+              ok: false,
+              violations: [ab, bc, ca],
+              message: 'Có tam giác',
+            };
+          }
+        }
+      }
+    }
+
+    return { ok: true, violations: [] };
+  },
+};
+
 const FIXED: readonly SceneValidator[] = [
   simpleGraph,
   connected,
   isBipartite,
   noMonoTriangle,
+  triangleFree,
 ];
 
 export function resolveGraphValidator(id: string): SceneValidator | null {

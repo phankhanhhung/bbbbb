@@ -48,8 +48,9 @@ const USAGE = `combviz — công cụ soạn/duyệt kho bài
       Nhận một draft (AUT-09): ép status=draft và verified=false trên mọi step,
       chạy đủ validate + lint. Chỉ đạt mới vào hàng đợi duyệt.
 
-  combviz og [--root <content>] [--out <dir>] [--problem <id>]
-      Sinh OG/social card cho từng bài (REN-02).
+  combviz og [--root <content>] [--out <dir>] [--problem <id>] [--png]
+      Sinh OG/social card cho từng bài (REN-02). --png raster thêm bản PNG —
+      mạng xã hội không đọc SVG.
 
   combviz index [--root <content>] [--out <file.json>]
       Sinh chỉ mục kho cho tìm kiếm client-side (CMS-02).
@@ -178,6 +179,7 @@ async function main(argv: string[]): Promise<number> {
           root: { type: 'string', default: 'packages/content' },
           out: { type: 'string', default: 'packages/content/.og' },
           problem: { type: 'string' },
+          png: { type: 'boolean', default: false },
         },
       });
 
@@ -185,6 +187,7 @@ async function main(argv: string[]): Promise<number> {
         root: resolve(values.root),
         out: resolve(values.out),
         ...(values.problem ? { problemId: values.problem } : {}),
+        png: values.png,
       });
       return 0;
     }
@@ -280,4 +283,24 @@ async function main(argv: string[]): Promise<number> {
   }
 }
 
-process.exitCode = await main(process.argv.slice(2));
+/**
+ * Lỗi cú pháp dòng lệnh phải đọc được, không phải một stack trace của Node.
+ *
+ * `parseArgs` ném `ERR_PARSE_ARGS_*` cho cờ sai, cờ thiếu giá trị, hay positional
+ * thừa — ba lỗi gõ nhầm thường gặp nhất. Để nguyên thì người dùng nhận mười dòng
+ * stack nội bộ của `node:internal/util/parse_args` và không có một chữ nào nói
+ * họ gõ sai chỗ nào.
+ *
+ * Lỗi khác thì **vẫn để nổ nguyên**: một bug trong pipeline mà bị bọc thành thông
+ * báo lịch sự là một bug khó tìm hơn.
+ */
+try {
+  process.exitCode = await main(process.argv.slice(2));
+} catch (error) {
+  const code = (error as { code?: string }).code ?? '';
+  if (!code.startsWith('ERR_PARSE_ARGS')) throw error;
+
+  console.error(`${(error as Error).message}\n`);
+  console.error(USAGE);
+  process.exitCode = 2;
+}

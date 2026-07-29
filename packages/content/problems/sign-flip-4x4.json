@@ -30,7 +30,7 @@
     "draft-may"
   ],
   "status": "draft",
-  "kind": "illustration",
+  "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
   "invariants": [
@@ -447,6 +447,10 @@
       ]
     }
   ],
+  "sandbox": {
+    "goal_expr": "count(cells, c => c.color_class == 1) == 0",
+    "validators": []
+  },
   "og_step_ref": {
     "sol_id": "sol-bat-bien",
     "step_id": "s1"

@@ -1,4 +1,5 @@
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
+import { Resvg } from '@resvg/resvg-js';
 import { join, relative } from 'node:path';
 import {
   createContext,
@@ -10,7 +11,13 @@ import {
   type SvgNode,
 } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
-import { stripAnchorMarkup, type Problem, type Scene, type Step } from '@combviz/schema';
+import {
+  stripAnchorMarkup,
+  toReadableMath,
+  type Problem,
+  type Scene,
+  type Step,
+} from '@combviz/schema';
 import { ENGINE_RENDERERS } from '../engines.js';
 
 /**
@@ -25,6 +32,8 @@ export interface OgOptions {
   root: string;
   out: string;
   problemId?: string;
+  /** REN-02: raster ra PNG. SVG đúng nhưng Twitter/Facebook không đọc được nó. */
+  png?: boolean;
 }
 
 export async function runOg(options: OgOptions): Promise<number> {
@@ -54,8 +63,15 @@ export async function runOg(options: OgOptions): Promise<number> {
     const target = join(options.out, `${problem.id}.svg`);
     await writeFile(target, `${svg}\n`, 'utf8');
 
+    if (options.png) {
+      const pngTarget = join(options.out, `${problem.id}.png`);
+      await writeFile(pngTarget, rasterize(svg));
+    }
+
     made += 1;
-    console.log(`✓ ${problem.id} → ${relative(process.cwd(), target)} (step ${step.id})`);
+    console.log(
+      `✓ ${problem.id} → ${relative(process.cwd(), target)}${options.png ? ' (+png)' : ''} (step ${step.id})`,
+    );
   }
 
   console.log(`\n${made} card`);
@@ -90,6 +106,27 @@ function pickOgStep(problem: Problem): Step | undefined {
     current = next;
   }
   return current;
+}
+
+/**
+ * REN-02 nửa sau — raster SVG thành PNG (D-08: resvg, không cần browser).
+ *
+ * Card SVG đúng đến từng nét nhưng **không dùng được ở đúng chỗ nó sinh ra để
+ * dùng**: Twitter, Facebook, Zalo đều không render `og:image` dạng SVG. Một card
+ * chỉ có bản SVG tức là mọi link chia sẻ đều trống ảnh — mà §11 xem OG card là
+ * kênh growth chính.
+ *
+ * Phông lấy từ hệ thống (G-09). Đây là chỗ mỏng nhất của đường này: máy không có
+ * phông thì resvg **âm thầm bỏ chữ**, ra một card đẹp mà trống trơn — nên có
+ * test riêng rasterize chữ tiếng Việt và ký tự quân cờ rồi soi xem có mực không.
+ */
+export function rasterize(svg: string): Buffer {
+  return new Resvg(svg, {
+    font: { loadSystemFonts: true },
+    background: defaultTheme.surface.canvas,
+  })
+    .render()
+    .asPng();
 }
 
 const CARD_PADDING = 48;
@@ -165,7 +202,9 @@ function composeCard(
 function titleLines(problem: Problem, x: number, width: number): SvgNode[] {
   const FONT = 34;
   const perLine = Math.floor(width / (FONT * 0.5));
-  const words = stripAnchorMarkup(problem.statement.vi).replace(/\$/g, '').split(/\s+/);
+  // resvg không có KaTeX. Không đổi ký hiệu sang Unicode ở đây thì card — thứ
+  // duy nhất người ta thấy khi ai đó chia sẻ link — hiện thẳng "5\times5".
+  const words = toReadableMath(stripAnchorMarkup(problem.statement.vi)).split(/\s+/);
 
   const lines: string[] = [];
   let current = '';

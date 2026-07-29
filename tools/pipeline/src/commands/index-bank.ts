@@ -1,6 +1,6 @@
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { stripAnchorMarkup, type Problem } from '@combviz/schema';
+import { stripAnchorMarkup, toSearchableText, type Problem } from '@combviz/schema';
 
 /**
  * `combviz index` — chỉ mục kho, sinh lúc build (CMS-02).
@@ -70,7 +70,7 @@ function toEntry(problem: Problem): IndexEntry {
     // Tiêu đề **giữ nguyên LaTeX** — Bank render bằng KaTeX. Chỉ `text` mới bị
     // tước, vì chỉ nó dùng để so khớp.
     title: stripAnchorMarkup(problem.statement.vi),
-    text: searchable(`${problem.statement.vi} ${narratives}`),
+    text: toSearchableText(stripAnchorMarkup(`${problem.statement.vi} ${narratives}`)),
     contest: problem.source.contest,
     ...(problem.source.year === undefined ? {} : { year: problem.source.year }),
     topics: problem.topics,
@@ -84,23 +84,4 @@ function toEntry(problem: Problem): IndexEntry {
     hasInvariants: (problem.invariants?.length ?? 0) > 0,
     hasSandbox: problem.sandbox !== undefined,
   };
-}
-
-/**
- * Tước LaTeX cho tìm kiếm.
- *
- * `$8\\times8$` thành "8 8": ký hiệu toán không phải từ khoá người ta gõ, và giữ
- * chúng lại chỉ làm nhiễu kết quả.
- *
- * Phải tước **cả tên lệnh**, không chỉ dấu `\`: bỏ mỗi backslash thì `\times`
- * còn lại "times", và gõ "time" sẽ tìm ra mọi bài có phép nhân — đúng loại kết
- * quả rác khiến người ta thôi tin ô tìm kiếm.
- */
-function searchable(text: string): string {
-  return stripAnchorMarkup(text)
-    .replace(/\$[^$]*\$/g, (math) =>
-      math.replace(/\\[a-zA-Z]+/g, ' ').replace(/[$_^{}\\]/g, ' '),
-    )
-    .replace(/\s+/g, ' ')
-    .trim();
 }

@@ -14,6 +14,7 @@
     "@combviz/theme": "workspace:*",
     "@combviz/dsl": "workspace:*",
     "@combviz/engine-graph": "workspace:*",
-    "@combviz/check": "workspace:*"
+    "@combviz/check": "workspace:*",
+    "@resvg/resvg-js": "^2.6.2"
   }
 }

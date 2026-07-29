@@ -119,7 +119,19 @@ export function measure(
     ),
     by('Case-branching thật', 8, (p) => p.solutions.some(hasRealBranching)),
     by('Có invariant strip', 10, (p) => (p.invariants?.length ?? 0) > 0),
-    by('Sandbox + validator', 0, (p) => (p.sandbox?.validators.length ?? 0) > 0, true),
+    // DoD viết "100% có sandbox + validator". Đọc theo **ý**: mỗi bài phải có
+    // một sandbox cho phản hồi bằng máy. Với họ bài "lật dấu", phản hồi đó là
+    // `goal_expr` chứ không phải validator — ràng buộc của bài nằm trong chính
+    // thao tác hợp lệ (`board/flip-line`), nên không có gì để một validator cấm.
+    // Đếm cả hai dạng, nhưng **in riêng** số bài có validator để không ai tưởng
+    // hai thứ là một.
+    by(
+      'Sandbox dùng được (validator hoặc goal)',
+      0,
+      (p) => (p.sandbox?.validators.length ?? 0) > 0 || p.sandbox?.goal_expr !== undefined,
+      true,
+    ),
+    by('… trong đó có validator', bank.length, (p) => (p.sandbox?.validators.length ?? 0) > 0),
     by('Sạch lint + validate', 0, lintClean, true),
     by('Có OG card', 0, hasOgCard, true),
   ];

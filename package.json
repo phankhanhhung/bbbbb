@@ -18,11 +18,13 @@
     "check": "pnpm index && pnpm typecheck && pnpm lint && pnpm test && pnpm validate",
     "e2e": "playwright test --project=desktop --project=ipad",
     "e2e:perf": "playwright test --project=perf --workers=1",
-    "coverage": "tsx tools/pipeline/src/cli.ts coverage"
+    "coverage": "tsx tools/pipeline/src/cli.ts coverage",
+    "coverage:drafts": "tsx tools/pipeline/src/cli.ts coverage --drafts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@playwright/test": "1.62.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^22.10.2",
     "eslint": "^9.17.0",
     "playwright": "^1.62.0",

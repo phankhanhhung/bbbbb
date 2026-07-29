@@ -1,6 +1,6 @@
 import { defineCommand, type CommandRegistry } from '@combviz/editor';
 import type { Scene, SceneElement } from '@combviz/schema';
-import { parseCellId } from './ids.js';
+import { cellId, parseCellId } from './ids.js';
 import { tileCells } from './dsl.js';
 import type { BoardConfig, ColoringPreset } from './schema.js';
 import { cellColorClass, type Offset } from './geometry.js';
@@ -237,7 +237,67 @@ const toggleAttacks = defineCommand<{ id: string }>({
   },
 });
 
+/**
+ * G-11 — hoán vị hai lớp màu trên **cả một hàng hoặc một cột**.
+ *
+ * Cả một họ bài tổ hợp có dạng "mỗi bước được lật dấu một hàng hoặc một cột" —
+ * bảng ±1, đèn bật/tắt, lật đồng xu. §16 xếp chúng vào cụm invariant-centric và
+ * đòi ≥ 5 bài. Trước lệnh này, những bài đó **không có sandbox được**: người học
+ * chỉ tô được từng ô một, mà tô từng ô thì phá luôn cái luật làm nên bài toán —
+ * bất biến chỉ tồn tại vì thao tác hợp lệ đụng vào **cả hàng cùng lúc**.
+ *
+ * Vì vậy đây không phải tiện ích. Nó là ràng buộc của bài toán, viết thành thao
+ * tác: người học không thể lách được bất biến, đúng như trên giấy.
+ *
+ * Ô khuyết bị bỏ qua, và ô chưa mang màu nào (`color_class` chưa đặt) cũng vậy —
+ * "chưa xét" không phải một lớp để lật.
+ */
+const flipLine = defineCommand<{
+  axis: 'row' | 'col';
+  index: number;
+  /** Cặp lớp màu hoán đổi cho nhau. Mặc định 1 ↔ 2. */
+  classes?: readonly [number, number];
+}>({
+  type: 'board/flip-line',
+
+  label: (params) =>
+    `Lật ${params.axis === 'row' ? 'hàng' : 'cột'} ${params.index}`,
+
+  apply(scene, params) {
+    const config = boardConfig(scene);
+    const [a, b] = params.classes ?? [1, 2];
+
+    const span = params.axis === 'row' ? config.cols : config.rows;
+    if (params.index < 0 || params.index >= (params.axis === 'row' ? config.rows : config.cols)) {
+      return null;
+    }
+
+    const overrides = { ...(config.cell_overrides ?? {}) };
+    let changed = false;
+
+    for (let i = 0; i < span; i += 1) {
+      const row = params.axis === 'row' ? params.index : i;
+      const col = params.axis === 'row' ? i : params.index;
+      if (isHoleAt(config, row, col)) continue;
+
+      const id = cellId(row, col);
+      // Đọc màu **hiệu dụng**: ô chưa có override vẫn có màu do preset sinh ra,
+      // và lật một hàng của bàn cờ tô sẵn phải đổi đúng những ô đó.
+      const current = cellColorClass(config, row, col);
+      const next = current === a ? b : current === b ? a : null;
+      if (next === null) continue;
+
+      overrides[id] = { ...overrides[id], color_class: next };
+      changed = true;
+    }
+
+    if (!changed) return null;
+    return withConfig(scene, { ...config, cell_overrides: overrides });
+  },
+});
+
 export const boardCommands: CommandRegistry = {
+  [flipLine.type]: flipLine,
   [paintCells.type]: paintCells,
   [setPreset.type]: setPreset,
   [placeTile.type]: placeTile,

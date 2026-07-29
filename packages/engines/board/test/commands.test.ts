@@ -3,7 +3,7 @@ import { command, createEditorState, execute, undo } from '@combviz/editor';
 import type { Scene } from '@combviz/schema';
 import { boardCommands, colorSummary, coverage } from '../src/commands.js';
 import { boardHitTest, pointToCell } from '../src/hit-test.js';
-import { CELL } from '../src/geometry.js';
+import { CELL, cellColorClass } from '../src/geometry.js';
 import { resolveBoardValidator } from '../src/validators.js';
 
 const board = (overrides: Partial<Scene> = {}): Scene => ({
@@ -192,5 +192,87 @@ describe('hit test (A-05)', () => {
 
   it('chạm ngoài bàn không trả về gì', () => {
     expect(boardHitTest(board(), { x: -5, y: -5 })).toEqual([]);
+  });
+});
+
+describe('G-11 — lật một hàng/cột', () => {
+  /** Bảng 4×4 toàn lớp 2, đúng một ô lớp 1 — dạng bài "lật dấu". */
+  const signBoard = (): Scene =>
+    board({
+      config: {
+        rows: 4,
+        cols: 4,
+        cell_overrides: Object.fromEntries(
+          Array.from({ length: 16 }, (_, i) => [
+            `cell-${Math.floor(i / 4)}-${i % 4}`,
+            { color_class: i === 6 ? 1 : 2 },
+          ]),
+        ),
+      },
+    });
+
+  const minusCount = (scene: Scene): number => colorSummary(scene).get(1) ?? 0;
+
+  it('lật cả hàng trong **một** lệnh, không phải bốn', () => {
+    const scene = run(signBoard(), 'board/flip-line', { axis: 'row', index: 1 })!;
+
+    // Hàng 1 có 1 ô lớp 1 ⇒ sau khi lật còn 3. Chính vì thao tác đụng cả hàng
+    // cùng lúc mà tính chẵn lẻ mới là bất biến.
+    expect(minusCount(scene)).toBe(3);
+  });
+
+  it('giữ **tính chẵn lẻ** của số ô lớp 1 qua mọi lần lật — chính là bài toán', () => {
+    let scene = signBoard();
+    const parity = minusCount(scene) % 2;
+
+    for (const step of [
+      { axis: 'row', index: 0 },
+      { axis: 'col', index: 2 },
+      { axis: 'row', index: 3 },
+      { axis: 'col', index: 0 },
+      { axis: 'row', index: 1 },
+    ] as const) {
+      scene = run(scene, 'board/flip-line', step)!;
+      expect(minusCount(scene) % 2).toBe(parity);
+    }
+  });
+
+  it('lật một cột của bàn cờ tô sẵn cũng đổi màu — đọc màu hiệu dụng, không chỉ override', () => {
+    const checker = board({
+      config: { rows: 4, cols: 4, coloring_preset: { type: 'checkerboard' } },
+    });
+    const before = colorSummary(checker);
+    const after = colorSummary(run(checker, 'board/flip-line', { axis: 'col', index: 0 })!);
+
+    // Cột 0 của bàn 4×4 xen kẽ có 2 ô mỗi lớp ⇒ tổng không đổi, nhưng từng ô thì đổi.
+    expect(after.get(1)).toBe(before.get(1));
+    expect(cellColorClass(
+      (run(checker, 'board/flip-line', { axis: 'col', index: 0 })!.config) as never,
+      0,
+      0,
+    )).not.toBe(cellColorClass(checker.config as never, 0, 0));
+  });
+
+  it('bỏ qua ô khuyết và ô chưa mang màu', () => {
+    const holed = board({ config: { rows: 2, cols: 2, holes: [[0, 0]] } });
+    // Không ô nào có màu ⇒ không có gì để lật ⇒ lệnh không áp dụng.
+    expect(run(holed, 'board/flip-line', { axis: 'row', index: 0 })).toBeNull();
+  });
+
+  it('từ chối chỉ số ngoài bàn', () => {
+    expect(run(signBoard(), 'board/flip-line', { axis: 'row', index: 9 })).toBeNull();
+    expect(run(signBoard(), 'board/flip-line', { axis: 'col', index: -1 })).toBeNull();
+  });
+
+  it('undo trả về đúng bảng trước đó — một lần lật là một mục lịch sử', () => {
+    const start = signBoard();
+    const state = execute(
+      createEditorState(start),
+      boardCommands,
+      command('board/flip-line', { axis: 'row', index: 1 }),
+    ).state;
+
+    expect(minusCount(state.scene)).toBe(3);
+    expect(minusCount(undo(state).scene)).toBe(1);
   });
 });

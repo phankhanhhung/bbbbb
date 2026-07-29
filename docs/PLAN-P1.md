@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M7 track [E] xong; content 8/25, chưa bài nào do chính chủ soạn** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M7 track [E] xong + đã trả nợ kỹ thuật; content 8/25, chưa bài nào do chính chủ soạn** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -147,8 +147,8 @@ interface Engine {
 | **G-06** | AUT-KPI đo "median 5 bài cuối pilot" nhưng AUT-08 (công cụ đo) là **P2** | Cần một bản đo tối thiểu ở P1: `combviz stats` đọc log thời gian thủ công (file CSV owner tự ghi) — 2 giờ công, đủ để gate có răng |
 | **G-07** | LOC-04 (analytics) là P1 nhưng không nói dùng tool gì | Đề xuất Plausible/Umami self-host hoặc **tắt hẳn ở P1** — cookieless + không PII dễ nhất bằng cách không thu gì. Quyết cùng OPQ-3 |
 | **G-08** | SBX-05 export PNG cần render trong browser, REN-01 cần render trong Node — hai đường raster | Browser: `XMLSerializer` + `canvas.drawImage` từ SVG blob. Node: resvg. Cả hai ăn **cùng chuỗi SVG** từ D-03 ⇒ khác biệt chỉ ở rasterizer, chấp nhận được. Golden test so sánh ở mức SVG, không mức pixel |
-| **G-11** *(mới, M7)* | Bài dạng "thao tác lặp" (lật dấu một hàng/cột, gộp đống sỏi) **không có sandbox được**: board engine không có thao tác nào ứng với "lật một hàng", và không validator nào diễn tả được ràng buộc của chúng. `sign-flip-4x4` vì vậy là bài đầu tiên trong kho không có sandbox | Thêm thao tác `board/flip-line` vào command layer + validator tương ứng. Ưu tiên theo khung §16: cụm "invariant-centric" cần ≥ 5 bài, và phần lớn chúng có dạng này. Nếu không làm, DoD "100% có sandbox" trượt đúng ở cụm này |
-| **G-12** *(mới, M7)* | Không có validator "không chứa tam giác" — cụm bài Turán/Ramsey chỉ kiểm được gián tiếp qua `bipartite` (mạnh hơn hẳn) hoặc `no-mono-triangle` (dành cho đồ thị đã tô hai màu) | Thêm `triangle-free` vào graph validators. Rẻ (đã có adjacency), và mở khoá đúng cụm bài cực trị mà §16 liệt kê |
+| **G-11** ✅ *(đóng)* | Bài dạng "thao tác lặp" (lật dấu một hàng/cột, gộp đống sỏi) **không có sandbox được**: board engine không có thao tác nào ứng với "lật một hàng", và không validator nào diễn tả được ràng buộc của chúng. `sign-flip-4x4` vì vậy là bài đầu tiên trong kho không có sandbox | ✅ Đã thêm `board/flip-line` + công cụ "⇄ Lật hàng/cột" trong Sandbox. Ràng buộc của bài nằm trong **thao tác hợp lệ**, nên không có validator nào để thêm — bất biến không lách được vì người học không tô được từng ô. `coverage` vì vậy đọc DoD theo ý: sandbox phải cho phản hồi máy (validator **hoặc** goal), và in riêng số bài có validator |
+| **G-12** ✅ *(đóng)* | Không có validator "không chứa tam giác" — cụm bài Turán/Ramsey chỉ kiểm được gián tiếp qua `bipartite` (mạnh hơn hẳn) hoặc `no-mono-triangle` (dành cho đồ thị đã tô hai màu) | ✅ Đã thêm `triangle-free`. Test ghim đúng chỗ nó khác `bipartite`: chu trình $5$ đỉnh không có tam giác nhưng **không** hai phía — `bipartite` cấm nhầm nó |
 | **G-09** *(mới, M1)* | Quân cờ vẽ bằng ký tự Unicode (`♞`). Render headless bằng resvg **không có phông** ⇒ quân biến mất khỏi OG card trong khi player vẫn hiện — đúng loại lệch mà D-03 sinh ra để tránh | Nhúng phông vào bước raster, hoặc chuyển quân sang path. Quyết ở M6 cùng label atlas (D-07). Bài seed dùng quân phải render thử headless trước khi publish |
 | **G-10** *(mới, M1)* | Theme khai độ dày nét bằng số tuyệt đối, nhưng mỗi engine có tỉ lệ toạ độ riêng ⇒ cùng token cho ra nét mảnh ở engine này, bè ở engine kia. Phát hiện khi halo anchor phủ kín cả quân domino | ✅ Chốt quy ước: **một ô / một khoảng cách đỉnh chuẩn = 10 đơn vị scene**, ghi trong `StrokeTokens`. Engine mới chọn tỉ lệ theo quy ước, không ngược lại |
 
@@ -303,6 +303,17 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 3. **`source.year` chặn dưới ở 1890**, tức là chặn đúng những bài mở đầu ngành — Königsberg là Euler **1736**. Đã nới xuống 1600. Nới rẻ, thu hẹp đắt (OPQ-6).
 4. **Bố cục đỉnh có thể nói dối.** GR-02 nói toạ độ là nội dung sư phạm; xếp $K_{2,3}$ lên vòng tròn cho ra một ngôi sao, đúng đồ thị nhưng giấu mất chính điều narrative đang khẳng định ("chia $5$ đỉnh thành nhóm $2$ và nhóm $3$"). Lỗi này **không máy nào bắt được** — chỉ render ra ảnh rồi nhìn mới thấy.
 
+**Vòng trau chuốt sau đó — trả nợ kỹ thuật, mỗi món đều do một lỗi thật gọi tên:**
+
+- ✅ **G-11 `board/flip-line`** + công cụ "⇄ Lật hàng/cột" trong Sandbox. Đây không phải tiện ích: người học tô từng ô thì phá mất chính luật làm nên bài toán. Ràng buộc viết thành thao tác ⇒ bất biến không lách được, đúng như trên giấy.
+- ✅ **G-12 validator `triangle-free`**, kèm test ghim chỗ nó khác `bipartite`: $C_5$ không có tam giác nhưng cũng không hai phía.
+- ✅ **REN-02 xong hẳn: `combviz og --png`** (resvg, D-08). Card SVG đúng đến từng nét nhưng Twitter/Facebook/Zalo không đọc SVG — tức là mọi link chia sẻ đều trống ảnh.
+- ✅ **`toReadableMath` / `toSearchableText`** trong `packages/schema`. OG card từng hiện thẳng `5\times5` — trên đúng cái ảnh mà mỗi link chia sẻ mang theo. Ba chỗ không có KaTeX (card, chỉ mục, alt_text) giờ dùng **một** cài đặt thay vì ba bản sao mỗi bản sai một kiểu.
+- ✅ **Test WCAG cho bảng màu** (NFR-A1). Nó lôi ra ngay hai lỗi: chữ trắng trên cam đất chỉ đạt **3.87:1** và trên lục **3.42:1** — cả hai trượt AA, và cả hai không ai nhìn ra bằng mắt.
+- ✅ **`inkForClass`** — token `on` của bảng màu **chưa từng được renderer nào đọc**: mọi glyph dùng một mực đen cố định, nên dấu "−" trên ô lớp 8 chỉ còn 1.7:1. Giờ mực theo lớp màu của chính ô đó, và test WCAG mới thành cái bảo vệ được người dùng thay vì chỉ bảo vệ một hằng số.
+- ✅ **CI chạy đủ**: build Player + Studio, E2E hai profile, bảng điểm content. Perf chạy **không chặn** — frame time trên runner dùng chung dao động qua ngưỡng 18ms mà không đổi dòng code nào, và một gate đỏ ngẫu nhiên sẽ bị tắt trong hai tuần.
+- ✅ **CLI báo lỗi cú pháp bằng tiếng người**, không phải stack trace của `node:internal/util/parse_args`.
+
 **DoD:** ⬜ Chưa đạt DoD Phase 1 §15. `combviz coverage --drafts` nói chính xác còn thiếu gì: 8/25 bài, grid 4/10, graph 4/10, bất biến 3/5, case-branching 3/8.
 
 ---
@@ -373,12 +384,12 @@ Hai gate này chặn theo hai hướng khác nhau: G-A chặn *niềm tin vào n
 
 **Việc kỹ thuật còn nợ, xếp theo mức đau:**
 
-3. ⬜ **G-11 — thao tác `board/flip-line` + validator.** Chặn thẳng cụm "invariant-centric" (≥5 bài của §16) và chặn luôn DoD "100% có sandbox". `sign-flip-4x4` đang là bài duy nhất không có sandbox, và nó sẽ không phải bài cuối.
-4. ⬜ **G-12 — validator `triangle-free`** cho cụm cực trị. Rẻ, mở khoá vài bài.
-5. ⬜ Raster OG card sang PNG + nhúng phông (REN-02 nửa sau, G-09). Không có nó thì mọi link chia sẻ đều không ảnh — mà §11 xem OG card là kênh growth chính.
-6. ⬜ Label atlas cho nhãn LaTeX trong canvas (GR-08, D-07).
-7. ⬜ Pilot ≥10 học sinh + 2 GV (DoD §15.5).
-8. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
+~~G-11~~, ~~G-12~~, ~~raster OG sang PNG~~ đã đóng ở vòng trau chuốt. Còn lại:
+
+3. ⬜ **Nhúng phông vào bản raster.** PNG hiện dùng phông **hệ thống**; máy thiếu phông thì resvg *âm thầm bỏ chữ* và ra một card đẹp, trống trơn. Đã có test đếm mực chặn kiểu lỗi đó, nhưng chặn ≠ chữa — card giống hệt nhau trên mọi máy thì phải bundle phông.
+4. ⬜ **Label atlas cho nhãn LaTeX trong canvas** (GR-08, D-07). `toReadableMath` lo được chữ trong OG card và chỉ mục; nhãn *trong hình* vẫn là text thuần.
+5. ⬜ Pilot ≥10 học sinh + 2 GV (DoD §15.5).
+6. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):
 
