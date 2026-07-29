@@ -60,6 +60,17 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       resolveValidator: module.resolveSequenceValidator,
     };
   },
+
+  set: async () => {
+    const module = await import('@combviz/engine-set');
+    return {
+      renderer: module.setRenderer,
+      commands: module.setCommands,
+      hitTest: module.setHitTest,
+      environment: module.setEnvironment,
+      resolveValidator: module.resolveSetValidator,
+    };
+  },
 };
 
 const cache = new Map<string, LoadedEngine>();

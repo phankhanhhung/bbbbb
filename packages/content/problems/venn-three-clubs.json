@@ -1,0 +1,670 @@
+{
+  "schema_version": "0.1.0",
+  "id": "venn-three-clubs",
+  "statement": {
+    "vi": "Một lớp $18$ bạn tham gia ba câu lạc bộ. Biết số bạn trong từng câu lạc bộ và từng phần giao, hãy đếm số bạn không tham gia câu lạc bộ nào."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "set"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "n",
+      "id": "inv-n",
+      "label": {
+        "vi": "Số bạn"
+      }
+    },
+    {
+      "expr": "count(tokens, x => x.degree == 0)",
+      "id": "inv-ngoai",
+      "label": {
+        "vi": "Số bạn không tham gia gì"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vẽ [[a1|ba câu lạc bộ]] thành ba vòng. Mỗi bạn là một chấm, và vị trí chấm do **chính** việc bạn ấy tham gia gì quyết định."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "A",
+                "B",
+                "C"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "18 bạn, ba câu lạc bộ",
+              "view": "venn"
+            },
+            "elements": [
+              {
+                "id": "A",
+                "type": "set",
+                "label": "bóng đá",
+                "order": 0
+              },
+              {
+                "id": "B",
+                "type": "set",
+                "label": "bóng rổ",
+                "order": 1
+              },
+              {
+                "id": "C",
+                "type": "set",
+                "label": "cờ vua",
+                "order": 2
+              },
+              {
+                "id": "p0",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p1",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p2",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p3",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p4",
+                "type": "token",
+                "label": "5",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p5",
+                "type": "token",
+                "label": "6",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p6",
+                "type": "token",
+                "label": "7",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p7",
+                "type": "token",
+                "label": "8",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "p8",
+                "type": "token",
+                "label": "9",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "p9",
+                "type": "token",
+                "label": "10",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p10",
+                "type": "token",
+                "label": "11",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p11",
+                "type": "token",
+                "label": "12",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p12",
+                "type": "token",
+                "label": "13",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "p13",
+                "type": "token",
+                "label": "14",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "p14",
+                "type": "token",
+                "label": "15",
+                "sets": [
+                  "B",
+                  "C"
+                ]
+              },
+              {
+                "id": "p15",
+                "type": "token",
+                "label": "16",
+                "sets": [
+                  "A",
+                  "B",
+                  "C"
+                ]
+              },
+              {
+                "id": "p16",
+                "type": "token",
+                "label": "17",
+                "sets": []
+              },
+              {
+                "id": "p17",
+                "type": "token",
+                "label": "18",
+                "sets": []
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sơ đồ Venn ba vòng với các chấm nằm đúng vùng của mình."
+          },
+          "expects_violation": [
+            "covers-universe"
+          ],
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đếm từ [[a2|vùng giao ba]] ra ngoài: $1$ bạn tham gia cả ba, rồi mới tới các vùng giao đôi. Đếm từ trong ra thì không bạn nào bị đếm hai lần."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "p15"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "Đếm từ vùng giao ba ra ngoài",
+              "view": "venn"
+            },
+            "elements": [
+              {
+                "id": "A",
+                "type": "set",
+                "label": "bóng đá",
+                "order": 0
+              },
+              {
+                "id": "B",
+                "type": "set",
+                "label": "bóng rổ",
+                "order": 1
+              },
+              {
+                "id": "C",
+                "type": "set",
+                "label": "cờ vua",
+                "order": 2
+              },
+              {
+                "id": "p0",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p1",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p2",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p3",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p4",
+                "type": "token",
+                "label": "5",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p5",
+                "type": "token",
+                "label": "6",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p6",
+                "type": "token",
+                "label": "7",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p7",
+                "type": "token",
+                "label": "8",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "p8",
+                "type": "token",
+                "label": "9",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "p9",
+                "type": "token",
+                "label": "10",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p10",
+                "type": "token",
+                "label": "11",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p11",
+                "type": "token",
+                "label": "12",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p12",
+                "type": "token",
+                "label": "13",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "p13",
+                "type": "token",
+                "label": "14",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "p14",
+                "type": "token",
+                "label": "15",
+                "sets": [
+                  "B",
+                  "C"
+                ]
+              },
+              {
+                "id": "p15",
+                "type": "token",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "16",
+                "sets": [
+                  "A",
+                  "B",
+                  "C"
+                ]
+              },
+              {
+                "id": "p16",
+                "type": "token",
+                "label": "17",
+                "sets": []
+              },
+              {
+                "id": "p17",
+                "type": "token",
+                "label": "18",
+                "sets": []
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Chấm ở vùng giao ba được làm nổi."
+          },
+          "expects_violation": [
+            "covers-universe"
+          ],
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cộng mọi vùng bên trong được $16$ bạn, nên [[a3|số bạn ngoài mọi vòng]] là $18 - 16 = 2$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "p16",
+                "p17"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "Còn 2 bạn ngoài mọi vòng",
+              "view": "venn"
+            },
+            "elements": [
+              {
+                "id": "A",
+                "type": "set",
+                "label": "bóng đá",
+                "order": 0
+              },
+              {
+                "id": "B",
+                "type": "set",
+                "label": "bóng rổ",
+                "order": 1
+              },
+              {
+                "id": "C",
+                "type": "set",
+                "label": "cờ vua",
+                "order": 2
+              },
+              {
+                "id": "p0",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p1",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p2",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p3",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p4",
+                "type": "token",
+                "label": "5",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p5",
+                "type": "token",
+                "label": "6",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p6",
+                "type": "token",
+                "label": "7",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p7",
+                "type": "token",
+                "label": "8",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "p8",
+                "type": "token",
+                "label": "9",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "p9",
+                "type": "token",
+                "label": "10",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p10",
+                "type": "token",
+                "label": "11",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p11",
+                "type": "token",
+                "label": "12",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p12",
+                "type": "token",
+                "label": "13",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "p13",
+                "type": "token",
+                "label": "14",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "p14",
+                "type": "token",
+                "label": "15",
+                "sets": [
+                  "B",
+                  "C"
+                ]
+              },
+              {
+                "id": "p15",
+                "type": "token",
+                "label": "16",
+                "sets": [
+                  "A",
+                  "B",
+                  "C"
+                ]
+              },
+              {
+                "id": "p16",
+                "type": "token",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "17",
+                "sets": []
+              },
+              {
+                "id": "p17",
+                "type": "token",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "18",
+                "sets": []
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai chấm nằm ngoài cả ba vòng được làm nổi."
+          },
+          "expects_violation": [
+            "covers-universe"
+          ],
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(tokens, x => x.degree == 0) == 0",
+    "validators": [
+      "covers-universe"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

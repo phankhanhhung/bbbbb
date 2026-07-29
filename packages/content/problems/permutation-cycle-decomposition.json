@@ -1,0 +1,629 @@
+{
+  "schema_version": "0.1.0",
+  "id": "permutation-cycle-decomposition",
+  "statement": {
+    "vi": "Mọi hoán vị đều phân tích duy nhất thành các chu trình rời nhau. Minh hoạ với $\\sigma = (1\\,3\\,2)(4\\,5)(6)$ và tính dấu của nó."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "sequences",
+    "counting"
+  ],
+  "techniques": [
+    "bijection",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "cycles",
+      "id": "inv-c",
+      "label": {
+        "vi": "Số chu trình"
+      }
+    },
+    {
+      "expr": "sign",
+      "id": "inv-sign",
+      "label": {
+        "vi": "Dấu hoán vị"
+      }
+    },
+    {
+      "expr": "fixed_points",
+      "id": "inv-fix",
+      "label": {
+        "vi": "Điểm bất động"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vẽ [[a1|mũi tên]] từ $i$ sang $\\sigma(i)$. Mỗi đỉnh có đúng một mũi tên đi ra và đúng một mũi tên đi vào — đó là điều làm nó thành hoán vị."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e0",
+                "e1",
+                "e2",
+                "e3",
+                "e4",
+                "e5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 12,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [
+                  -26,
+                  -5.77
+                ]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [
+                  -31,
+                  2.89
+                ]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [
+                  -21,
+                  2.89
+                ]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "4",
+                "pos": [
+                  0,
+                  -5
+                ]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [
+                  0,
+                  5
+                ]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "6",
+                "pos": [
+                  26,
+                  0
+                ]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "directed": true,
+                "u": "v0",
+                "v": "v2"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v0"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v1"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "directed": true,
+                "u": "v3",
+                "v": "v4",
+                "multi_index": 1
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v3",
+                "multi_index": 2
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "directed": true,
+                "u": "v5",
+                "v": "v5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sáu đỉnh, mỗi đỉnh một mũi tên đi ra và một mũi tên đi vào."
+          },
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đi theo mũi tên từ $1$: $1 \\to 3 \\to 2 \\to 1$. Vòng khép lại, và ta được [[a2|một chu trình dài $3$]]."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "v0",
+                "v1",
+                "v2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 12,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "1",
+                "pos": [
+                  -26,
+                  -5.77
+                ]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "2",
+                "pos": [
+                  -31,
+                  2.89
+                ]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "color_class": 1,
+                "emphasis": "focus",
+                "label": "3",
+                "pos": [
+                  -21,
+                  2.89
+                ]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "4",
+                "pos": [
+                  0,
+                  -5
+                ]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "5",
+                "pos": [
+                  0,
+                  5
+                ]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "color_class": 3,
+                "label": "6",
+                "pos": [
+                  26,
+                  0
+                ]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v0",
+                "v": "v2"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v1",
+                "v": "v0"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v2",
+                "v": "v1"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "color_class": 2,
+                "directed": true,
+                "u": "v3",
+                "v": "v4",
+                "multi_index": 1
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "color_class": 2,
+                "directed": true,
+                "u": "v4",
+                "v": "v3",
+                "multi_index": 2
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "color_class": 3,
+                "directed": true,
+                "u": "v5",
+                "v": "v5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba đỉnh đầu và các mũi tên giữa chúng được làm nổi."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Làm tiếp với các đỉnh chưa thăm được [[a3|$(4\\,5)$ và $(6)$]]. Ba chu trình, không chồng nhau, phủ hết — phân tích là duy nhất."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "v3",
+                "v4",
+                "v5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 12,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "1",
+                "pos": [
+                  -26,
+                  -5.77
+                ]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "2",
+                "pos": [
+                  -31,
+                  2.89
+                ]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "3",
+                "pos": [
+                  -21,
+                  2.89
+                ]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "color_class": 2,
+                "emphasis": "focus",
+                "label": "4",
+                "pos": [
+                  0,
+                  -5
+                ]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "color_class": 2,
+                "emphasis": "focus",
+                "label": "5",
+                "pos": [
+                  0,
+                  5
+                ]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "color_class": 3,
+                "label": "6",
+                "pos": [
+                  26,
+                  0
+                ]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "color_class": 1,
+                "directed": true,
+                "u": "v0",
+                "v": "v2"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "color_class": 1,
+                "directed": true,
+                "u": "v1",
+                "v": "v0"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "color_class": 1,
+                "directed": true,
+                "u": "v2",
+                "v": "v1"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v3",
+                "v": "v4",
+                "multi_index": 1
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "color_class": 2,
+                "emphasis": "focus",
+                "directed": true,
+                "u": "v4",
+                "v": "v3",
+                "multi_index": 2
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "color_class": 3,
+                "directed": true,
+                "u": "v5",
+                "v": "v5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Chu trình hai phần tử được làm nổi, điểm bất động đứng riêng."
+          },
+          "verified": false
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Dấu của hoán vị là $(-1)^{n-c}$ với $c$ là [[a4|số chu trình]]: ở đây $(-1)^{6-3} = -1$, nên $\\sigma$ là hoán vị **lẻ**."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "v0",
+                "v1",
+                "v2",
+                "v3",
+                "v4",
+                "v5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 12,
+              "show_degrees": false,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [
+                  -26,
+                  -5.77
+                ]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [
+                  -31,
+                  2.89
+                ]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [
+                  -21,
+                  2.89
+                ]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "4",
+                "pos": [
+                  0,
+                  -5
+                ]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [
+                  0,
+                  5
+                ]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "6",
+                "pos": [
+                  26,
+                  0
+                ]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "directed": true,
+                "u": "v0",
+                "v": "v2"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "directed": true,
+                "u": "v1",
+                "v": "v0"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "directed": true,
+                "u": "v2",
+                "v": "v1"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "directed": true,
+                "u": "v3",
+                "v": "v4",
+                "multi_index": 1
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "directed": true,
+                "u": "v4",
+                "v": "v3",
+                "multi_index": 2
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "directed": true,
+                "u": "v5",
+                "v": "v5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cả sáu đỉnh tô theo ba chu trình khác màu."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

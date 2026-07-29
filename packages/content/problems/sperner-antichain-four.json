@@ -1,0 +1,371 @@
+{
+  "schema_version": "0.1.0",
+  "id": "sperner-antichain-four",
+  "statement": {
+    "vi": "Trên tập $\\{1,2,3,4\\}$, một **phản xích** là một họ tập con đôi một không chứa nhau. Chứng minh phản xích lớn nhất có $\\binom{4}{2} = 6$ tập."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài dân gian."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "extremal",
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "set"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "incidences",
+      "id": "inv-inc",
+      "label": {
+        "vi": "Số cặp (phần tử, tập)"
+      }
+    },
+    {
+      "expr": "k",
+      "id": "inv-k",
+      "label": {
+        "vi": "Số tập trong họ"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nếu [[a1|một tập chứa tập kia]] thì hai tập đó không được cùng có mặt. Đây là điều kiện duy nhất."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "c0",
+                "c1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "Không được: {1} nằm trong {1,2}",
+              "view": "venn"
+            },
+            "elements": [
+              {
+                "id": "c0",
+                "type": "set",
+                "label": "{1}",
+                "order": 0
+              },
+              {
+                "id": "c1",
+                "type": "set",
+                "label": "{1,2}",
+                "order": 1
+              },
+              {
+                "id": "x0",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "c0",
+                  "c1"
+                ]
+              },
+              {
+                "id": "x1",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "c1"
+                ]
+              },
+              {
+                "id": "x2",
+                "type": "token",
+                "label": "3",
+                "sets": []
+              },
+              {
+                "id": "x3",
+                "type": "token",
+                "label": "4",
+                "sets": []
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sơ đồ Venn hai tập lồng nhau — cấu hình bị cấm."
+          },
+          "expects_violation": [
+            "antichain"
+          ],
+          "verified": false
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Lấy [[a2|toàn bộ tập con cỡ $2$]]: hai tập cùng cỡ mà khác nhau thì không thể chứa nhau. Vậy $6$ tập này là một phản xích."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "s0",
+                "s1",
+                "s2",
+                "s3",
+                "s4",
+                "s5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "Sáu tập con cỡ 2",
+              "show_sums": true,
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "s0",
+                "type": "set",
+                "label": "{1,2}",
+                "order": 0
+              },
+              {
+                "id": "s1",
+                "type": "set",
+                "label": "{1,3}",
+                "order": 1
+              },
+              {
+                "id": "s2",
+                "type": "set",
+                "label": "{1,4}",
+                "order": 2
+              },
+              {
+                "id": "s3",
+                "type": "set",
+                "label": "{2,3}",
+                "order": 3
+              },
+              {
+                "id": "s4",
+                "type": "set",
+                "label": "{2,4}",
+                "order": 4
+              },
+              {
+                "id": "s5",
+                "type": "set",
+                "label": "{3,4}",
+                "order": 5
+              },
+              {
+                "id": "x0",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "s0",
+                  "s1",
+                  "s2"
+                ]
+              },
+              {
+                "id": "x1",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "s0",
+                  "s3",
+                  "s4"
+                ]
+              },
+              {
+                "id": "x2",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "s1",
+                  "s3",
+                  "s5"
+                ]
+              },
+              {
+                "id": "x3",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "s2",
+                  "s4",
+                  "s5"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng incidence 4 phần tử × 6 tập, mỗi cột đúng hai ô."
+          },
+          "verified": false
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn chặn trên: đếm hai chiều trên bảng. Mỗi cột có $2$ ô nên tổng là $6 \\times 2 = 12$; [[a3|mỗi hàng]] cũng có đúng $3$ ô, cho $4 \\times 3 = 12$. Hai con số khớp."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "x0__s0",
+                "x0__s1",
+                "x0__s2",
+                "x1__s0",
+                "x1__s3",
+                "x1__s4",
+                "x2__s1",
+                "x2__s3",
+                "x2__s5",
+                "x3__s2",
+                "x3__s4",
+                "x3__s5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "6 × 2 = 12 = 4 × 3",
+              "show_sums": true,
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "s0",
+                "type": "set",
+                "label": "{1,2}",
+                "order": 0
+              },
+              {
+                "id": "s1",
+                "type": "set",
+                "label": "{1,3}",
+                "order": 1
+              },
+              {
+                "id": "s2",
+                "type": "set",
+                "label": "{1,4}",
+                "order": 2
+              },
+              {
+                "id": "s3",
+                "type": "set",
+                "label": "{2,3}",
+                "order": 3
+              },
+              {
+                "id": "s4",
+                "type": "set",
+                "label": "{2,4}",
+                "order": 4
+              },
+              {
+                "id": "s5",
+                "type": "set",
+                "label": "{3,4}",
+                "order": 5
+              },
+              {
+                "id": "x0",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "s0",
+                  "s1",
+                  "s2"
+                ]
+              },
+              {
+                "id": "x1",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "s0",
+                  "s3",
+                  "s4"
+                ]
+              },
+              {
+                "id": "x2",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "s1",
+                  "s3",
+                  "s5"
+                ]
+              },
+              {
+                "id": "x3",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "s2",
+                  "s4",
+                  "s5"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng bảng, kèm tổng theo hàng (đều 3) và theo cột (đều 2), tổng chung 12."
+          },
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "k == 6",
+    "validators": [
+      "antichain",
+      "sets-distinct"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

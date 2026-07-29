@@ -86,12 +86,20 @@ export const graphRenderer: EngineRenderer = {
         // Vẽ theo **mức quan trọng**, không theo thứ tự trong file: cạnh chưa xét
         // trước, cạnh đã tô sau, cạnh được nhấn sau cùng. Trong $K_6$ có 15 cạnh
         // cắt nhau, thứ tự file sẽ chôn đúng những cạnh đang mang lập luận.
-        [...graph.edges]
-          .sort((a, b) => weightOf(a, ctx) - weightOf(b, ctx))
-          .flatMap((edge) => [
-            ...renderEdge(edge, graph, ctx, weight),
-            ...renderArrow(edge, graph, ctx),
-          ]),
+        (() => {
+          const ordered = [...graph.edges].sort(
+            (a, b) => weightOf(a, ctx) - weightOf(b, ctx),
+          );
+          // Mũi tên vẽ thành **lớp riêng sau tất cả các cạnh**, không đi kèm từng
+          // cạnh. Halo của cạnh được nhấn dày hơn nét thường, mà các cạnh gặp
+          // nhau đúng ở đỉnh — nơi mũi tên đứng. Vẽ xen kẽ thì halo của cạnh sau
+          // chôn mũi tên của cạnh trước: trong chu trình 3 đỉnh cùng được nhấn,
+          // cả ba mũi tên biến mất và hình vẽ không còn nói được chiều nào.
+          return [
+            ...ordered.flatMap((edge) => renderEdge(edge, graph, ctx, weight)),
+            ...ordered.flatMap((edge) => renderArrow(edge, graph, ctx, weight)),
+          ];
+        })(),
       ),
       el(
         'g',
@@ -172,9 +180,7 @@ function renderEdge(
   const d =
     edge.u === edge.v ? loopPath(u.x, u.y, edge.multiIndex) : arcPath(u, v, edge.multiIndex);
 
-  // Cạnh đã tô màu dày hơn chút: nó mang lập luận, nên phải đọc được giữa đám
-  // cạnh chưa xét.
-  const width = edge.colorClass > 0 ? ctx.theme.stroke.link * 1.6 : ctx.theme.stroke.link;
+  const width = strokeWidthOf(edge, ctx);
   const decoration = decorationAttrs(ctx, edge.id, edge.emphasis, weight);
   const haloStroke = decoration['stroke'];
 
@@ -220,6 +226,28 @@ function dimAttrs(
   emphasis: string | undefined,
 ): Record<string, string | number> {
   return emphasis === 'dim' ? { opacity: ctx.theme.emphasis.dimOpacity } : {};
+}
+
+/**
+ * Cạnh đã tô màu dày hơn chút: nó mang lập luận, nên phải đọc được giữa đám cạnh
+ * chưa xét.
+ */
+function strokeWidthOf(edge: Edge, ctx: RenderContext): number {
+  return edge.colorClass > 0 ? ctx.theme.stroke.link * 1.6 : ctx.theme.stroke.link;
+}
+
+/**
+ * Bề ngang **thực tế** của một cạnh sau khi cộng halo.
+ *
+ * Mũi tên cần con số này: đầu mũi hẹp hơn dải nét thì nó nằm lọt hẳn bên trong,
+ * cùng màu với chính cạnh, và biến mất. Đó là điều đã xảy ra với chu trình 3
+ * đỉnh được nhấn — ba mũi tên đều được vẽ, không mũi nào nhìn thấy.
+ */
+function bandWidthOf(edge: Edge, ctx: RenderContext, weight: number): number {
+  const width = strokeWidthOf(edge, ctx);
+  const decoration = decorationAttrs(ctx, edge.id, edge.emphasis, weight);
+  if (typeof decoration['stroke'] !== 'string') return width;
+  return Number(decoration['stroke-width'] ?? width) + width;
 }
 
 /**
@@ -291,24 +319,30 @@ function renderVertexShape(
  * đầy đủ — nghĩa là mũi tên sẽ có trong browser và biến mất trên OG card. Một
  * tam giác tự vẽ thì ba đường render đều ra đúng một hình.
  */
-function renderArrow(edge: Edge, graph: GraphModel, ctx: RenderContext): SvgNode[] {
+function renderArrow(
+  edge: Edge,
+  graph: GraphModel,
+  ctx: RenderContext,
+  weight: number,
+): SvgNode[] {
   if (!edge.directed || edge.u === edge.v) return [];
 
   const u = graph.byId.get(edge.u);
   const v = graph.byId.get(edge.v);
   if (!u || !v) return [];
 
-  const dx = v.x - u.x;
-  const dy = v.y - u.y;
-  const length = Math.hypot(dx, dy) || 1;
-  const ux = dx / length;
-  const uy = dy / length;
-
-  // Đầu mũi đặt ngay mép vòng tròn đỉnh đích, không đặt ở tâm — đâm vào tâm thì
-  // mũi tên bị chính đỉnh che mất.
-  const tipX = v.x - ux * VERTEX_RADIUS;
-  const tipY = v.y - uy * VERTEX_RADIUS;
-  const size = VERTEX_RADIUS * 0.75;
+  // Đầu mũi đặt **trên chính đường đã vẽ**, ở chỗ nó rời khỏi mép đỉnh đích —
+  // không đặt ở tâm (mũi tên sẽ bị đỉnh che) và không suy ra từ đoạn thẳng
+  // $u \to v$ (với `multi_index > 0` cạnh là một cung, và đầu mũi sẽ trôi ra
+  // ngoài nét, chỉ lệch hướng: hình khai một chiều còn đường nối đi lối khác).
+  const c = controlPoint(u, v, edge.multiIndex);
+  const anchor = onQuadratic(u, c, v, VERTEX_RADIUS);
+  const tipX = anchor.x;
+  const tipY = anchor.y;
+  const ux = anchor.tx;
+  const uy = anchor.ty;
+  // Đầu mũi luôn rộng hơn dải nét của chính cạnh, kể cả khi cạnh đang đội halo.
+  const size = Math.max(VERTEX_RADIUS * 0.75, bandWidthOf(edge, ctx, weight) * 1.8);
   const baseX = tipX - ux * size;
   const baseY = tipY - uy * size;
   const halfWidth = size * 0.42;
@@ -324,6 +358,14 @@ function renderArrow(edge: Edge, graph: GraphModel, ctx: RenderContext): SvgNode
         `${round(baseX + uy * halfWidth)},${round(baseY - ux * halfWidth)}`,
       ].join(' '),
       fill: stroke,
+      // Viền mảnh màu nền quanh đầu mũi. Mũi tên hay dừng ngay mép một đỉnh
+      // **cùng `color_class` với nó** — hoán vị tô mỗi chu trình một màu là đúng
+      // trường hợp đó — và khi ấy tam giác xanh nằm trên đĩa xanh thì không còn
+      // là hình gì cả. Viền nền tách nó ra khỏi bất cứ thứ gì phía sau.
+      stroke: ctx.theme.surface.canvas,
+      'stroke-width': ctx.theme.stroke.link * 0.6,
+      'stroke-linejoin': 'round',
+      'paint-order': 'stroke',
       ...(edge.emphasis === 'dim' ? { opacity: ctx.theme.emphasis.dimOpacity } : {}),
     }),
   ];
@@ -345,21 +387,96 @@ function arcPath(
     return `M${round(u.x)} ${round(u.y)}L${round(v.x)} ${round(v.y)}`;
   }
 
-  // Cong luân phiên hai bên: cạnh 1 lệch trái, cạnh 2 lệch phải, cạnh 3 lệch
-  // trái xa hơn — bó cạnh song song mở ra đối xứng quanh đường thẳng.
+  const c = controlPoint(u, v, multiIndex);
+  return `M${round(u.x)} ${round(u.y)}Q${round(c.x)} ${round(c.y)} ${round(v.x)} ${round(v.y)}`;
+}
+
+interface CurvePoint {
+  readonly x: number;
+  readonly y: number;
+  /** Tiếp tuyến đã chuẩn hoá, theo chiều đi tới. */
+  readonly tx: number;
+  readonly ty: number;
+}
+
+/**
+ * Điểm trên cung Bézier bậc hai, cách điểm cuối `p2` đúng `back` đơn vị.
+ *
+ * Nhị phân trên tham số $t$ thay vì lùi theo tiếp tuyến từ $p_2$: cung càng cong
+ * thì hai cách càng lệch nhau, và lệch theo phương ngang — đầu mũi tên đứng bên
+ * cạnh nét chứ không nằm trên nó. Mười vòng đủ cho sai số dưới một phần nghìn
+ * khoảng cách đỉnh, và hàm này chỉ chạy một lần cho mỗi cạnh có hướng.
+ */
+function onQuadratic(
+  p0: { x: number; y: number },
+  c: { x: number; y: number },
+  p2: { x: number; y: number },
+  back: number,
+): CurvePoint {
+  const at = (t: number): { x: number; y: number } => {
+    const s = 1 - t;
+    return {
+      x: s * s * p0.x + 2 * s * t * c.x + t * t * p2.x,
+      y: s * s * p0.y + 2 * s * t * c.y + t * t * p2.y,
+    };
+  };
+
+  // Khoảng cách tới `p2` giảm đơn điệu khi $t$ tiến tới 1 trên các cung ta vẽ
+  // (độ phồng bị chặn ở `SPACING * 0.35 * step`), nên nhị phân là hợp lệ.
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 10; i += 1) {
+    const mid = (lo + hi) / 2;
+    const p = at(mid);
+    if (Math.hypot(p2.x - p.x, p2.y - p.y) > back) lo = mid;
+    else hi = mid;
+  }
+
+  const t = (lo + hi) / 2;
+  const point = at(t);
+  const dx = 2 * (1 - t) * (c.x - p0.x) + 2 * t * (p2.x - c.x);
+  const dy = 2 * (1 - t) * (c.y - p0.y) + 2 * t * (p2.y - c.y);
+  const length = Math.hypot(dx, dy) || 1;
+
+  return { x: point.x, y: point.y, tx: dx / length, ty: dy / length };
+}
+
+/**
+ * Điểm điều khiển của cung nối `u` → `v`.
+ *
+ * Tách ra vì **hai** chỗ cần nó: nét cạnh và hướng mũi tên. Khi mỗi chỗ tự tính
+ * lấy một kiểu thì chúng lệch nhau, và lệch một cách khó thấy — nét cong sang
+ * bên này còn đầu mũi chỉ sang bên kia.
+ *
+ * Cong luân phiên hai bên: cạnh 1 lệch trái, cạnh 2 lệch phải, cạnh 3 lệch trái
+ * xa hơn — bó cạnh song song mở ra đối xứng quanh đường thẳng. `multi_index = 0`
+ * trả về đúng trung điểm, tức đoạn thẳng.
+ */
+function controlPoint(
+  u: { x: number; y: number },
+  v: { x: number; y: number },
+  multiIndex: number,
+): { x: number; y: number } {
+  const mx = (u.x + v.x) / 2;
+  const my = (u.y + v.y) / 2;
+  if (multiIndex === 0) return { x: mx, y: my };
+
   const step = Math.ceil(multiIndex / 2);
   const side = multiIndex % 2 === 1 ? 1 : -1;
   const bulge = side * step * SPACING * 0.35;
 
-  const mx = (u.x + v.x) / 2;
-  const my = (u.y + v.y) / 2;
-  const dx = v.x - u.x;
-  const dy = v.y - u.y;
+  // Pháp tuyến dựng trên **cặp đỉnh**, không trên chiều của cạnh: lấy đầu nhỏ
+  // hơn theo thứ tự từ điển toạ độ làm gốc. Nếu không, hai cạnh ngược chiều giữa
+  // cùng một cặp — chu trình độ dài 2, đúng thứ mọi bài hoán vị đều có — đảo
+  // luôn hệ quy chiếu, và `multi_index` 1 với 2 cùng cong về một phía thay vì
+  // tách ra: hai cung đè lên nhau, trông như một cạnh có hai đầu mũi.
+  const flip = u.x > v.x || (u.x === v.x && u.y > v.y);
+  const [a, b] = flip ? [v, u] : [u, v];
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
   const length = Math.hypot(dx, dy) || 1;
-  const cx = mx - (dy / length) * bulge;
-  const cy = my + (dx / length) * bulge;
 
-  return `M${round(u.x)} ${round(u.y)}Q${round(cx)} ${round(cy)} ${round(v.x)} ${round(v.y)}`;
+  return { x: mx - (dy / length) * bulge, y: my + (dx / length) * bulge };
 }
 
 /** Khuyên: vòng tròn nhỏ phía trên đỉnh, to dần theo `multi_index`. */

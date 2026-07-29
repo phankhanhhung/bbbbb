@@ -8,6 +8,7 @@ import {
   type Value,
 } from '@combviz/dsl';
 import type { Scene } from '@combviz/schema';
+import { permutationCycles } from './analyzers.js';
 import { buildGraph, type GraphModel } from './graph.js';
 import { bipartite, connectedComponents } from './analyzers.js';
 
@@ -70,6 +71,7 @@ function derive(scene: Scene): GraphDerived {
 
 export function graphEnvironment(scene: Scene): DslEnvironment {
   const { graph, vertices, edges } = derive(scene);
+  const cyclesOf = permutationCycles(graph);
 
   const neighbours = new Map<string, Set<string>>(
     graph.vertices.map((v) => [
@@ -85,6 +87,17 @@ export function graphEnvironment(scene: Scene): DslEnvironment {
       n: graph.vertices.length,
       m: graph.edges.length,
       components: connectedComponents(graph).count,
+      /**
+       * Số chu trình khi đồ thị có hướng là một hoán vị, và **dấu** của nó.
+       *
+       * Bài "sắp xếp bằng đổi chỗ" xoay quanh đúng hai con số này; bắt tác giả
+       * tự nhẩm rồi viết vào narrative là mời một lỗi không ai kiểm được.
+       * Đồ thị không phải hoán vị thì cả hai bằng 0 — đọc ra ngay là "câu hỏi
+       * này không áp dụng" thay vì một con số trông có vẻ đúng.
+       */
+      cycles: cyclesOf.isPermutation ? cyclesOf.cycles.length : 0,
+      sign: cyclesOf.isPermutation ? cyclesOf.sign : 0,
+      fixed_points: cyclesOf.isPermutation ? cyclesOf.fixedPoints : 0,
     },
     builtins: {
       deg: (args, pos) => {

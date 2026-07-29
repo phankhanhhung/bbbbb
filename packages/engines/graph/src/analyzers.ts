@@ -370,6 +370,7 @@ export interface GraphAnalysis {
   readonly cycle: readonly string[];
   readonly euler: EulerResult;
   readonly hamilton: AnalyzerResult<HamiltonResult>;
+  readonly permutation: PermutationCycles;
 }
 
 /** Chạy toàn bộ analyzer. Dùng trong worker (ENG-04) và trong test. */
@@ -381,5 +382,93 @@ export function analyzeGraph(scene: Scene): GraphAnalysis {
     cycle: findCycle(graph),
     euler: eulerian(graph),
     hamilton: hamiltonian(graph),
+    permutation: permutationCycles(graph),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Phân tích chu trình của một hoán vị
+// ---------------------------------------------------------------------------
+
+export interface PermutationCycles {
+  /** Các chu trình, mỗi chu trình là dãy đỉnh theo thứ tự đi. */
+  readonly cycles: readonly (readonly string[])[];
+  /** Chỉ số chu trình của mỗi đỉnh, đánh số từ 1 để dùng thẳng làm color_class. */
+  readonly cycleOf: ReadonlyMap<string, number>;
+  /** Số điểm bất động (chu trình dài 1). */
+  readonly fixedPoints: number;
+  /**
+   * Dấu của hoán vị: `+1` nếu chẵn, `-1` nếu lẻ.
+   *
+   * Bằng $(-1)^{n - c}$ với $c$ là số chu trình — công thức này là **chính** cái
+   * mà cả họ bài "đổi chỗ" xoay quanh, nên nó phải là một con số đọc được chứ
+   * không phải một điều tác giả tự nhẩm rồi viết vào narrative.
+   */
+  readonly sign: 1 | -1;
+  /** `false` khi đồ thị không phải một hoán vị (có đỉnh ra ≠ 1 cạnh). */
+  readonly isPermutation: boolean;
+}
+
+/**
+ * Phân tích chu trình của hoán vị cho bởi đồ thị có hướng.
+ *
+ * Quy ước: mỗi đỉnh có **đúng một** cạnh có hướng đi ra, và cạnh $i \to j$ đọc là
+ * $\sigma(i) = j$. Đồ thị nào không thoả thì trả `isPermutation: false` thay vì
+ * đoán bừa — một "phân tích chu trình" của thứ không phải hoán vị là một câu trả
+ * lời sai được trình bày tự tin.
+ *
+ * Không dựng engine riêng cho hoán vị: một hoán vị **là** một đồ thị có hướng, và
+ * cái nó cần thêm chỉ là cách xếp đỉnh (layout hai hàng) cùng analyzer này.
+ */
+export function permutationCycles(graph: GraphModel): PermutationCycles {
+  const next = new Map<string, string>();
+  let valid = true;
+
+  for (const vertex of graph.vertices) {
+    const out = graph.edges.filter((e) => e.directed && e.u === vertex.id);
+    if (out.length !== 1) {
+      valid = false;
+      continue;
+    }
+    next.set(vertex.id, (out[0] as { v: string }).v);
+  }
+
+  if (!valid || next.size !== graph.vertices.length) {
+    return {
+      cycles: [],
+      cycleOf: new Map(),
+      fixedPoints: 0,
+      sign: 1,
+      isPermutation: false,
+    };
+  }
+
+  const cycleOf = new Map<string, number>();
+  const cycles: string[][] = [];
+
+  for (const vertex of graph.vertices) {
+    if (cycleOf.has(vertex.id)) continue;
+
+    const cycle: string[] = [];
+    let current = vertex.id;
+    while (!cycleOf.has(current)) {
+      cycleOf.set(current, cycles.length + 1);
+      cycle.push(current);
+      current = next.get(current) as string;
+    }
+
+    // Chỉ nhận khi vòng khép về đúng điểm xuất phát. Với ánh xạ một-một thì luôn
+    // vậy, nhưng kiểm rẻ hơn nhiều so với tin.
+    if (current === vertex.id) cycles.push(cycle);
+    else return { cycles: [], cycleOf: new Map(), fixedPoints: 0, sign: 1, isPermutation: false };
+  }
+
+  const n = graph.vertices.length;
+  return {
+    cycles,
+    cycleOf,
+    fixedPoints: cycles.filter((c) => c.length === 1).length,
+    sign: (n - cycles.length) % 2 === 0 ? 1 : -1,
+    isPermutation: true,
   };
 }

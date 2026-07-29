@@ -8,9 +8,17 @@ import { SPACING } from './graph.js';
  * hàng để thấy đồ thị hai phía, vòng tròn để thấy đối xứng), và nội dung thì
  * không được đổi mỗi lần mở trang.
  */
-export type LayoutId = 'circle' | 'grid' | 'bipartite' | 'line';
+export type LayoutId = 'circle' | 'grid' | 'bipartite' | 'line' | 'cycles';
 
 export interface LayoutOptions {
+  /**
+   * Với `cycles`: các nhóm đỉnh, mỗi nhóm xếp thành một vòng tròn riêng.
+   *
+   * Dùng cho hoán vị: một hoán vị vẽ trên **một** hàng thì các mũi tên chồng lên
+   * nhau và chu trình — thứ duy nhất bài toán nói tới — biến mất khỏi hình. Mỗi
+   * chu trình một vòng riêng thì nhìn là thấy.
+   */
+  readonly cycles?: readonly (readonly string[])[];
   /** Với `bipartite`: id các đỉnh thuộc phía trên. Còn lại xuống phía dưới. */
   readonly topSide?: readonly string[];
   /** Với `grid`: số cột. Vắng thì lấy xấp xỉ căn bậc hai. */
@@ -29,6 +37,8 @@ export function layoutPositions(
       return grid(ids, options.columns);
     case 'bipartite':
       return bipartite(ids, options.topSide ?? []);
+    case 'cycles':
+      return cycles(options.cycles ?? [ids]);
     case 'line':
       return line(ids);
   }
@@ -97,5 +107,42 @@ function line(ids: readonly string[]): Map<string, [number, number]> {
 }
 
 function round(value: number): number {
-  return Math.round(value * 100) / 100;
+  // `+ 0` biến `-0` thành `0`. Không phải chuyện thẩm mỹ: toạ độ đi thẳng vào
+  // file JSON, và một dấu trừ nhấp nháy theo hướng quay của vòng tròn sẽ làm
+  // diff git kêu ở những dòng chẳng có gì đổi.
+  return Math.round(value * 100) / 100 + 0;
+}
+
+/**
+ * Mỗi nhóm một vòng tròn, các vòng xếp ngang.
+ *
+ * Bán kính vòng theo số đỉnh của chính nó, nên chu trình dài không bị nén còn
+ * điểm bất động không phình ra thành một vòng tròn rỗng.
+ */
+function cycles(groups: readonly (readonly string[])[]): Map<string, [number, number]> {
+  const out = new Map<string, [number, number]>();
+  const gap = SPACING * 1.6;
+
+  // Dùng lại `circle` cho từng nhóm thay vì viết công thức bán kính thứ hai.
+  // Hai công thức song song là hai thứ để lệch nhau: bản nháp đầu tiên tính bán
+  // kính theo chu vi, và chu trình 2 phần tử ra hai đỉnh cách nhau 6.4 thay vì
+  // 10 — gần chạm nhau, trong khi `circle` cùng số đỉnh thì không.
+  const rings = groups.map((group) => circle(group));
+  const widths = rings.map((ring) => {
+    const xs = [...ring.values()].map(([x]) => x);
+    return Math.max(SPACING, Math.max(...xs) - Math.min(...xs));
+  });
+  const total = widths.reduce((a, w) => a + w, 0) + gap * Math.max(0, groups.length - 1);
+
+  let cursor = -total / 2;
+  rings.forEach((ring, gi) => {
+    const width = widths[gi] as number;
+    const centre = cursor + width / 2;
+    for (const [id, [x, y]] of ring) {
+      out.set(id, [round(centre + x), y]);
+    }
+    cursor += width + gap;
+  });
+
+  return out;
 }

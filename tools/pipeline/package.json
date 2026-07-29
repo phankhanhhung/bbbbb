@@ -16,6 +16,7 @@
     "@combviz/engine-graph": "workspace:*",
     "@combviz/check": "workspace:*",
     "@resvg/resvg-js": "^2.6.2",
-    "@combviz/engine-sequence": "workspace:*"
+    "@combviz/engine-sequence": "workspace:*",
+    "@combviz/engine-set": "workspace:*"
   }
 }

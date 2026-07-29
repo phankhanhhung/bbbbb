@@ -13,6 +13,11 @@ import {
   sequenceRenderer,
   sequenceSchemaFragment,
 } from '@combviz/engine-sequence';
+import {
+  setEnvironment,
+  setRenderer,
+  setSchemaFragment,
+} from '@combviz/engine-set';
 import type { EngineSchemaFragment } from '@combviz/schema';
 import type { EngineRenderer } from '@combviz/render';
 import type { EngineDslModule } from '@combviz/check';
@@ -30,6 +35,7 @@ export const ENGINE_FRAGMENTS: readonly EngineSchemaFragment[] = [
   boardSchemaFragment,
   graphSchemaFragment,
   sequenceSchemaFragment,
+  setSchemaFragment,
 ];
 
 /**
@@ -43,6 +49,7 @@ export const ENGINE_RENDERERS: readonly EngineRenderer[] = [
   boardRenderer,
   graphRenderer,
   sequenceRenderer,
+  setRenderer,
 ];
 
 /**
@@ -56,4 +63,5 @@ export const ENGINE_DSL: Readonly<Record<string, EngineDslModule>> = {
   board: { fragment: boardSchemaFragment, environment: boardEnvironment },
   graph: { fragment: graphSchemaFragment, environment: graphEnvironment },
   sequence: { fragment: sequenceSchemaFragment, environment: sequenceEnvironment },
+  set: { fragment: setSchemaFragment, environment: setEnvironment },
 };

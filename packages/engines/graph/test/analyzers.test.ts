@@ -217,4 +217,26 @@ describe('layout (GR-02)', () => {
     // Hai hàng lệch nhau sẽ làm mắt đọc nhầm rằng có tương ứng vị trí giữa hai phía.
     expect(mid(topXs)).toBeCloseTo(mid(bottomXs), 5);
   });
+
+  it('mỗi chu trình một vòng riêng, các vòng không chồng nhau', () => {
+    const positions = layoutPositions(['a', 'b', 'c', 'd', 'e'], 'cycles', {
+      cycles: [
+        ['a', 'b', 'c'],
+        ['d', 'e'],
+      ],
+    });
+
+    const xs = (ids: string[]) => ids.map((id) => positions.get(id)![0]);
+    // Nhóm sau nằm hẳn về bên phải nhóm trước — nếu hai vòng lồng vào nhau thì
+    // hình vẽ nói dối đúng cái điều bài toán muốn chỉ ra.
+    expect(Math.max(...xs(['a', 'b', 'c']))).toBeLessThan(Math.min(...xs(['d', 'e'])));
+  });
+
+  it('điểm bất động là một điểm, không phải một vòng tròn rỗng', () => {
+    const positions = layoutPositions(['a', 'b', 'c'], 'cycles', {
+      cycles: [['a', 'b'], ['c']],
+    });
+
+    expect(positions.get('c')).toEqual([expect.any(Number), 0]);
+  });
 });

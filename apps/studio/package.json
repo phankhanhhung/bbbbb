@@ -19,7 +19,8 @@
     "katex": "^0.16.11",
     "preact": "^10.25.4",
     "@combviz/engine-sequence": "workspace:*",
-    "@combviz/content": "workspace:*"
+    "@combviz/content": "workspace:*",
+    "@combviz/engine-set": "workspace:*"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.9.3",

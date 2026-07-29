@@ -21,7 +21,8 @@
     "@combviz/editor": "workspace:*",
     "@combviz/engine-graph": "workspace:*",
     "@combviz/check": "workspace:*",
-    "@combviz/engine-sequence": "workspace:*"
+    "@combviz/engine-sequence": "workspace:*",
+    "@combviz/engine-set": "workspace:*"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.9.3",
