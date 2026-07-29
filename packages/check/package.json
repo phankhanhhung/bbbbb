@@ -1,0 +1,16 @@
+{
+  "name": "@combviz/check",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@combviz/dsl": "workspace:*",
+    "@combviz/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@combviz/engine-board": "workspace:*"
+  }
+}

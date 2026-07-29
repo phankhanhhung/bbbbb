@@ -4,8 +4,27 @@ import {
   tryEvaluate,
   type CompiledExpression,
 } from '@combviz/dsl';
-import type { Problem, Scene, Step, ValidationIssue } from '@combviz/schema';
-import { ENGINE_DSL } from './engines.js';
+import type {
+  EngineSchemaFragment,
+  Problem,
+  Scene,
+  Step,
+  ValidationIssue,
+} from '@combviz/schema';
+import type { DslEnvironment } from '@combviz/dsl';
+
+/**
+ * Phần "chạy được" của engine: schema fragment + môi trường DSL.
+ *
+ * Nạp từ ngoài vào — package này không biết engine nào tồn tại, đúng như
+ * `packages/schema`.
+ */
+export interface EngineDslModule {
+  readonly fragment: EngineSchemaFragment;
+  environment(scene: Scene): DslEnvironment;
+}
+
+type DslRegistry = Readonly<Record<string, EngineDslModule>>;
 
 /**
  * Phần "eval invariant/validator mọi step" của AUT-04.
@@ -15,12 +34,12 @@ import { ENGINE_DSL } from './engines.js';
  * khai trong `sandbox` mà engine không có. Tất cả đều im lặng lúc chạy — người
  * học chỉ thấy một ô trống ở invariant strip và không biết đó là lỗi.
  */
-export function checkSemantics(problem: Problem): ValidationIssue[] {
+export function checkSemantics(problem: Problem, engines: DslRegistry): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   const invariants = compileInvariants(problem, issues);
-  issues.push(...checkSandbox(problem));
-  issues.push(...evalOnEveryStep(problem, invariants));
+  issues.push(...checkSandbox(problem, engines));
+  issues.push(...evalOnEveryStep(problem, invariants, engines));
 
   return issues;
 }
@@ -53,7 +72,7 @@ function compileInvariants(
   return compiled;
 }
 
-function checkSandbox(problem: Problem): ValidationIssue[] {
+function checkSandbox(problem: Problem, engines: DslRegistry): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const sandbox = problem.sandbox;
   if (!sandbox) return issues;
@@ -61,7 +80,7 @@ function checkSandbox(problem: Problem): ValidationIssue[] {
   // Validator tra theo engine của scene gốc: sandbox khởi tạo từ đề bài (SBX-01).
   const rootScene = firstScene(problem);
   const engineId = rootScene?.engine;
-  const dsl = engineId ? ENGINE_DSL[engineId] : undefined;
+  const dsl = engineId ? engines[engineId] : undefined;
 
   sandbox.validators.forEach((id, i) => {
     const fragment = engineId ? dsl?.fragment : undefined;
@@ -107,6 +126,7 @@ function checkSandbox(problem: Problem): ValidationIssue[] {
 function evalOnEveryStep(
   problem: Problem,
   invariants: readonly CompiledInvariant[],
+  engines: DslRegistry,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
@@ -115,7 +135,7 @@ function evalOnEveryStep(
       const scene = step.scene;
       if (!scene) return;
 
-      const dsl = ENGINE_DSL[scene.engine];
+      const dsl = engines[scene.engine];
       if (!dsl) return;
 
       const env = dsl.environment(scene);
@@ -143,7 +163,7 @@ function evalOnEveryStep(
         }
       }
 
-      issues.push(...runValidators(problem, step, scene, path));
+      issues.push(...runValidators(problem, step, scene, path, engines));
     });
   });
 
@@ -155,9 +175,10 @@ function runValidators(
   step: Step,
   scene: Scene,
   path: string,
+  engines: DslRegistry,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  const dsl = ENGINE_DSL[scene.engine];
+  const dsl = engines[scene.engine];
   if (!dsl) return issues;
 
   const expected = new Set(step.expects_violation ?? []);

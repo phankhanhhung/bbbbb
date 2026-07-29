@@ -37,10 +37,20 @@ const SPEEDS = [0.5, 1, 2] as const;
  * node rẽ nhánh, nên auto-play tự dừng ở đó mà không cần luật riêng — đúng điều
  * PLY-02 đòi.
  */
-export function Player({ problem }: { problem: Problem }) {
+export function Player({
+  problem,
+  onBack,
+}: {
+  problem: Problem;
+  onBack?: () => void;
+}) {
   const [engines, setEngines] = useState<ReadonlyMap<string, LoadedEngine> | null>(null);
   const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
   const [forkedScene, setForkedScene] = useState<Scene | null>(null);
+  // CMS-03: lời giải **che mặc định**. Trang bài mở ra là đề bài và sandbox —
+  // người học nên có cơ hội tự nghĩ trước khi thấy lời giải, và một cú bấm là
+  // ranh giới đủ để biến việc xem lời giải thành một lựa chọn có ý thức.
+  const [revealed, setRevealed] = useState(false);
   const [diff, setDiff] = useState<NodeDiff | null>(null);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(1);
@@ -206,12 +216,28 @@ export function Player({ problem }: { problem: Problem }) {
   return (
     <div class="player">
       <header class="player__head">
+        {onBack ? (
+          <button class="tool" onClick={onBack}>
+            ← Kho bài
+          </button>
+        ) : null}
         <h1 dangerouslySetInnerHTML={{ __html: renderMath(problem.statement.vi) }} />
         <p class="source">
           {problem.source.contest}
           {problem.source.year ? ` ${problem.source.year}` : ''} · {problem.license}
+          {problem.source.note ? ` · ${problem.source.note.vi}` : ''}
         </p>
       </header>
+
+      {!revealed ? (
+        <div class="reveal">
+          <p>Thử tự nghĩ hoặc nghịch sandbox trước đã.</p>
+          <button class="try" onClick={() => step.scene && setForkedScene(step.scene)}>
+            Mở sandbox
+          </button>{' '}
+          <button onClick={() => setRevealed(true)}>Xem lời giải</button>
+        </div>
+      ) : null}
 
       <div class="player__body">
         <div
@@ -234,7 +260,11 @@ export function Player({ problem }: { problem: Problem }) {
         </div>
 
         <aside class="side">
-          {step.narrative ? (
+          {!revealed ? (
+            <p class="hint">Lời giải đang ẩn.</p>
+          ) : null}
+
+          {revealed && step.narrative ? (
             <Narrative
               text={step.narrative.vi}
               activeAnchor={activeAnchor}
@@ -242,7 +272,7 @@ export function Player({ problem }: { problem: Problem }) {
             />
           ) : null}
 
-          {branching ? (
+          {revealed && branching ? (
             <section class="choices">
               <h3>Chọn trường hợp để đi tiếp</h3>
               {choices.map((child) => (
@@ -271,7 +301,7 @@ export function Player({ problem }: { problem: Problem }) {
 
           {step.scene?.engine === 'graph' ? <GraphFacts state={analysis} /> : null}
 
-          <nav class="controls">
+          <nav class="controls" hidden={!revealed}>
             <button onClick={goPrev} disabled={!step.parent} title="Phím ←">
               ← Trước
             </button>
@@ -288,7 +318,7 @@ export function Player({ problem }: { problem: Problem }) {
             </button>
           </nav>
 
-          <nav class="controls">
+          <nav class="controls" hidden={!revealed}>
             {SPEEDS.map((value) => (
               <button
                 key={value}
@@ -317,7 +347,9 @@ export function Player({ problem }: { problem: Problem }) {
             </button>
           </nav>
 
-          <TreeNavigator tree={tree} currentId={step.id} onSelect={goTo} />
+          {revealed ? (
+            <TreeNavigator tree={tree} currentId={step.id} onSelect={goTo} />
+          ) : null}
 
           {diff ? (
             <p class="diagnostics">

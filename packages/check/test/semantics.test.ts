@@ -1,22 +1,28 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import type { Problem } from '@combviz/schema';
-import { checkSemantics } from '../src/semantics.js';
+import { boardSchemaFragment, boardEnvironment } from '@combviz/engine-board';
+import type { Problem, ValidationIssue } from '@combviz/schema';
+import { checkSemantics, type EngineDslModule } from '../src/semantics.js';
+
+const ENGINES: Record<string, EngineDslModule> = {
+  board: { fragment: boardSchemaFragment, environment: boardEnvironment },
+};
 
 const EXAMPLE_PATH = fileURLToPath(
-  new URL('../../../packages/content/problems/mutilated-chessboard.json', import.meta.url),
+  new URL('../../content/problems/mutilated-chessboard.json', import.meta.url),
 );
 
 function loadExample(): Problem {
   return JSON.parse(readFileSync(EXAMPLE_PATH, 'utf8')) as Problem;
 }
 
-const codes = (problem: Problem): string[] => checkSemantics(problem).map((i) => i.code);
+const run = (problem: Problem): ValidationIssue[] => checkSemantics(problem, ENGINES);
+const codes = (problem: Problem): string[] => run(problem).map((i) => i.code);
 
 describe('AUT-04 — eval invariant/validator mọi step', () => {
   it('bài mẫu không sinh vấn đề nào', () => {
-    expect(checkSemantics(loadExample())).toEqual([]);
+    expect(run(loadExample())).toEqual([]);
   });
 
   it('bắt biểu thức invariant sai cú pháp', () => {
@@ -55,7 +61,7 @@ describe('AUT-04 — eval invariant/validator mọi step', () => {
     // là lỗi, và nó chỉ lộ ra nếu validate chạy trên **mọi** step.
     problem.invariants![0]!.expr = 'min(tiles, t => t.row)';
 
-    const issues = checkSemantics(problem).filter((i) => i.code === 'dsl/eval-error');
+    const issues = run(problem).filter((i) => i.code === 'dsl/eval-error');
 
     expect(issues.length).toBeGreaterThan(0);
     expect(issues[0]!.message).toContain('s0');
@@ -65,7 +71,7 @@ describe('AUT-04 — eval invariant/validator mọi step', () => {
     const problem = loadExample();
     problem.sandbox!.validators = ['tiles-no-overlap', 'khong-co-cai-nay'];
 
-    const issues = checkSemantics(problem);
+    const issues = run(problem);
     const unknown = issues.find((i) => i.code === 'sandbox/unknown-validator');
 
     expect(unknown).toBeDefined();
@@ -89,7 +95,7 @@ describe('AUT-04 — eval invariant/validator mọi step', () => {
     ];
     problem.solutions[0]!.steps[2]!.anchors = { a3: { ids: ['t1', 't2'] } };
 
-    const issue = checkSemantics(problem).find(
+    const issue = run(problem).find(
       (i) => i.code === 'validator/violated-in-step',
     );
 

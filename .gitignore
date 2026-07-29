@@ -6,6 +6,8 @@ coverage/
 
 # Sinh lúc build, không commit
 packages/content/.index/
+packages/content/index.json
+packages/content/og/
 schema.json
 
 .DS_Store

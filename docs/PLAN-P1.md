@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M5 xong (trừ schema freeze)** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M6 xong (trừ raster OG + schema freeze)** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -255,17 +255,26 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 
 **DoD:** ✅ Kiểm bằng browser trên bài $R(3,3)=6$: ở điểm rẽ nhánh, Next và Play cùng tắt và hai nút chọn trường hợp hiện ra; đi 1 → 1a cho breadcrumb "Trường hợp 1 › 1a" và URL `step=s3`; qua merge_ref đáp xuống s7; "về điểm rẽ nhánh" từ s7 quay đúng về s1.
 
-### M6 — Studio + pipeline + xuất bản · Tuần 10–12 · [E]
+### M6 — Studio + pipeline + xuất bản · Tuần 10–12 · [E] — **xong, trừ raster OG**
 
-- AUT-01 (duplicate scene → sửa canvas → save), AUT-02 (anchor tool), AUT-03 (thao tác cây), AUT-05 (preview bằng Player thật + khung iPad), AUT-06 (File System Access API).
-- AUT-04 hoàn chỉnh trong Studio: lỗi click-to-jump.
-- **AUT-09 draft pipeline**: `import-draft` → validate đầy đủ → chế độ duyệt từng step trong Studio → **khóa publish khi còn step chưa verified**. Cờ `verified` lưu trong file, git-diff đọc được.
-- **AUT-10 lint**: glossary, format `case_label`, ràng buộc chéo techniques↔widget, cảnh báo narrative dài.
-- CMS-01 (taxonomy YAML), CMS-02 (filter + search MiniSearch), CMS-03 (trang problem, lời giải che mặc định), CMS-06 (license bắt buộc).
-- REN-01 headless render, REN-02 OG card (cần G-01 + OPQ-1), REN-03 watermark.
-- G-06 `combviz stats`.
+- ✅ AUT-01 (nhân bản scene của cha → sửa → lưu), AUT-02 (anchor tool: bôi đen + chọn element → sinh `[[aN|…]]` và mục `anchors` **cùng lúc**), AUT-03 (thêm/xoá nhánh, xoá kéo theo cả cây con), AUT-05 (preview bằng đúng renderer thật + khung iPad 1024×768), AUT-06 (File System Access API, Ctrl/Cmd+S ghi thẳng vào repo).
+- ✅ AUT-04 **một bộ kiểm** cho ba nơi: `packages/check` được Studio, CLI và CI cùng gọi. Trước đó bộ kiểm nằm trong `tools/pipeline` và Studio không với tới được — mà một Studio kiểm khác CI thì đúng bằng không có cổng nào. Lỗi click-to-jump: bấm vào issue nhảy tới step tương ứng.
+- ✅ **AUT-09 draft pipeline**: `import-draft` ép `status=draft` và `verified=false` trên **mọi** step trước khi chạy validate + lint → chế độ duyệt từng step trong Studio → publish bị khoá khi còn step chưa duyệt. Không có nút "duyệt tất cả", và đó là chủ ý (R-8).
+- ✅ **AUT-10 lint**: glossary, format `case_label`, step không neo vào hình, khoảng trắng thừa, narrative quá nhiều câu, nhánh `case` mồ côi, thiếu `alt_text`/`og_step_ref`/sandbox khi publish, file chưa `fmt`. Mọi thứ ở đây là **cảnh báo** — lint chặn được thì đã nằm ở validate.
+- ✅ `docs/STYLE-GUIDE.md` (AUT-10) — cố ý chia "phần đã chốt" (những gì code đang ép) và "phần bỏ ngỏ" (chờ 5 bài soạn tay). Xem ghi chú dưới.
+- ✅ CMS-01 taxonomy YAML, CMS-02 filter + tìm kiếm client-side trên chỉ mục build-time, CMS-03 lời giải che mặc định, CMS-06 license bắt buộc.
+- ✅ REN-01 headless render, REN-02 OG card (`og_step_ref` từ G-01), REN-03 watermark.
+- ✅ G-06 `combviz stats`.
+- ⬜ **OG card mới ra SVG, chưa raster sang PNG.** Twitter/Facebook không đọc SVG, nên REN-02 chỉ **xong một nửa**: card đúng nhưng chưa dùng được ở đúng chỗ nó sinh ra để dùng. Bước raster là chỗ G-09 (phông cho ký tự quân cờ) đến hạn — hai việc này phải làm cùng nhau, vì raster mà thiếu phông thì quân cờ biến mất im lặng.
+- ⬜ Không dùng MiniSearch. Ở quy mô ≤ 500 bài, so khớp con chuỗi trên text đã chuẩn hoá dấu là đủ, và nó cho luôn thứ MiniSearch không cho: gõ "ban co" tìm ra "bàn cờ".
 
-**DoD:** một bài đi trọn vòng LLM draft → import → duyệt từng step → publish → OG card sinh tự động trong build. Thử publish bài còn step chưa verified → bị chặn.
+**DoD:** ✅ Kiểm bằng browser: Studio mở file thật, báo `0 lỗi · 0 cảnh báo`, `Duyệt 10/10`; bỏ tick một step → hiện `publish/step-not-verified` và nút publish đổi thành "Còn 1 bước chưa duyệt"; sửa narrative → lint kêu `anchor/unused`, `lint/no-anchor`, `lint/too-many-sentences` ngay. Kho hiện 2 card, lọc theo kỹ thuật và tìm "ban co" đều đúng.
+
+**Ba lỗi thật do test M6 lôi ra** — đáng ghi vì cả ba đều thuộc loại "xanh nhưng sai":
+
+1. `\b` trong regex glossary chỉ biết `[A-Za-z0-9_]`, nên `\bô vuông nhỏ\b` **không bao giờ khớp** — quá nửa bảng glossary chết câm. Một linter im lặng thì không tự tố cáo.
+2. Luật "step có hình mà không có anchor" đếm `elements.length > 0`, trong khi bàn cờ 8×8 sinh 64 ô từ `config` với `elements` rỗng (D-16) — tức là luật miễn trừ đúng những bài dùng engine board.
+3. `nextStepId` hứa không tái dùng id đã xoá nhưng chỉ lấy max trên step **đang còn**: xoá step cuối rồi thêm bước mới sẽ cấp lại đúng id đó, và một `merge_target` đang treo sẽ lặng lẽ trỏ sang step khác — tệ hơn nữa, validate đang báo đỏ sẽ **xanh trở lại** trong khi bài đã sai.
 
 ### M7 — Content sprint + hardening + pilot · Tuần 12–16 · [C]+[E]
 
@@ -336,24 +345,20 @@ Quyết định trước, để lúc gấp không phải quyết trong hoảng l
 
 ## 10. Việc tiếp theo
 
-**Chặn tiến độ:**
+**Hai việc chặn, và cả hai đều là việc của chính chủ — máy không làm hộ được:**
 
-0. ⬜ **Đo perf trên iPad Gen 9** — gate G-A vẫn chưa đóng. Mọi thứ sau M2 đều xây trên giả định renderer đủ nhanh; càng để lâu càng đắt nếu giả định sai.
+1. ⬜ **G-A — đo perf trên iPad Gen 9 thật.** Chưa đóng từ tuần 3. Từ M2 tới giờ mọi thứ xây trên giả định renderer đủ nhanh; đúng thì không mất gì, sai thì phải sửa lại nền của sáu milestone. Cái giá của việc trì hoãn tăng theo từng milestone và bây giờ đã là sáu.
+2. ⬜ **G-C — soạn tay 3–5 bài, rồi mới freeze schema `1.0.0`.** Kho có 2 bài, **cả hai là fixture kỹ thuật** dựng để thử engine chứ không phải bài do chính chủ soạn. §16 nói thẳng: Style Guide viết trước khi soạn bài nào là Style Guide bịa — nên `docs/STYLE-GUIDE.md` hiện chỉ ghi lại phần code đang ép và để trống phần biên tập. Điền bừa vào đó tệ hơn để trống, vì một quy ước bịa vẫn sẽ được lint enforce và sẽ định hình cả 25 bài.
 
-**Còn lại của tuần 1:**
+Cả hai gate này chặn theo hai hướng khác nhau: G-A chặn *niềm tin vào nền*, G-C chặn *chuẩn của nội dung*. Đi tiếp M7 mà chưa đóng G-C nghĩa là soạn 20 bài theo một chuẩn chưa ai kiểm chứng.
 
-1. ⬜ Prototype giấy minimap cây, thử trên bài $R(3,3)=6$ (case-branching thật) → chốt bố cục, quy tắc thu gọn, cách vẽ merge_ref.
-2. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
-3. ⬜ Mượn/chuẩn bị iPad Gen 9 — perf đo từ tuần 2, không phải tuần 12 (R-3).
-4. ⬜ Thêm `LICENSE` (MIT) + `packages/content/LICENSE` (CC BY-SA 4.0) theo D-14.
+**Việc kỹ thuật còn nợ, xếp theo mức đau:**
 
-**M3 — board engine đầy đủ + sandbox:**
-
-5. ENG-00..04: command layer, undo/redo ≥50, multi-select, zoom/pan, worker + cancel.
-6. BD-01..03 (tô quét, đặt/di chuyển quân, đặt tile với xoay/lật, phát hiện chồng lấn realtime), BD-06 summary strip.
-7. ANC-01/02 hai chiều đầy đủ trong Player (hiện mới có một chiều: span → hình).
-8. SBX-01/02 (validator live, bật/tắt từng ràng buộc), SBX-05 export PNG/SVG.
-9. PRN-01 live trong sandbox, PRN-02 partition view.
+3. ⬜ Raster OG card sang PNG + nhúng phông (REN-02 nửa còn lại, G-09). Không có bước này thì mọi link chia sẻ đều không có ảnh — mà §11 xem OG card là kênh growth chính.
+4. ⬜ Label atlas cho nhãn LaTeX trong canvas (GR-08, D-07). Hiện nhãn trong hình là text thuần; LaTeX chỉ chạy ở narrative/statement/case_label.
+5. ⬜ Golden SVG snapshot toàn kho (§9). Có renderer thuần rồi thì đây là thứ rẻ nhất còn chưa dựng.
+6. ⬜ Playwright cho Player (điều hướng cây, anchor hai chiều, deep-link, reduced-motion). Hiện mỗi lần kiểm là mở browser bằng tay.
+7. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
 
 ---
 

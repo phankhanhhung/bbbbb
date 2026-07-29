@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "index": "tsx ../../tools/pipeline/src/cli.ts index --root ../../packages/content --out ../../packages/content/index.json",
+    "dev": "pnpm index && vite",
+    "build": "pnpm index && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -18,7 +19,8 @@
     "preact": "^10.25.4",
     "@combviz/dsl": "workspace:*",
     "@combviz/editor": "workspace:*",
-    "@combviz/engine-graph": "workspace:*"
+    "@combviz/engine-graph": "workspace:*",
+    "@combviz/check": "workspace:*"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.9.3",

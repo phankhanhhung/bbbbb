@@ -10,26 +10,36 @@
       "vi": "Bài dân gian; không rõ kỳ thi gốc."
     }
   },
-  "topics": ["tiling", "coloring"],
-  "techniques": ["invariant", "parity"],
+  "topics": [
+    "tiling",
+    "coloring"
+  ],
+  "techniques": [
+    "invariant",
+    "parity"
+  ],
   "difficulty": {
-    "slot_proxy": "P1",
-    "author_rating": 2
+    "author_rating": 2,
+    "slot_proxy": "P1"
   },
-  "engines_used": ["board"],
+  "engines_used": [
+    "board"
+  ],
   "license": "CC-BY-SA-4.0",
-  "authors": ["hungpk"],
+  "authors": [
+    "hungpk"
+  ],
   "status": "published",
   "kind": "both",
   "created": "2026-07-29",
   "updated": "2026-07-29",
   "invariants": [
     {
+      "expr": "count(cells, c => c.color_class==1 && !covered(c)) - count(cells, c => c.color_class==2 && !covered(c))",
       "id": "inv-bw",
       "label": {
         "vi": "Ô đen chưa phủ − ô trắng chưa phủ"
-      },
-      "expr": "count(cells, c => c.color_class==1 && !covered(c)) - count(cells, c => c.color_class==2 && !covered(c))"
+      }
     }
   ],
   "solutions": [
@@ -47,14 +57,19 @@
             "vi": "Bàn cờ khuyết [[a1|hai ô góc đối nhau]] còn $62$ ô."
           },
           "anchors": {
-            "a1": { "ids": ["cell-0-0", "cell-7-7"] }
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-7-7"
+              ]
+            }
           },
           "scene": {
             "engine": "board",
             "config": {
-              "rows": 8,
               "cols": 8,
-              "holes": [[0, 0], [7, 7]]
+              "holes": [[0, 0], [7, 7]],
+              "rows": 8
             },
             "elements": []
           },
@@ -71,15 +86,22 @@
             "vi": "Tô xen kẽ hai màu. Hai ô bị bỏ [[a2|cùng màu]], nên còn $30$ ô màu 1 và $32$ ô màu 2."
           },
           "anchors": {
-            "a2": { "ids": ["cell-0-0", "cell-7-7"] }
+            "a2": {
+              "ids": [
+                "cell-0-0",
+                "cell-7-7"
+              ]
+            }
           },
           "scene": {
             "engine": "board",
             "config": {
-              "rows": 8,
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
               "cols": 8,
               "holes": [[0, 0], [7, 7]],
-              "coloring_preset": { "type": "checkerboard" }
+              "rows": 8
             },
             "elements": []
           },
@@ -96,40 +118,48 @@
             "vi": "Mỗi [[a3|domino]] phủ đúng một ô mỗi màu, nên $31$ domino phủ $31{+}31$ — mâu thuẫn với $30{+}32$."
           },
           "anchors": {
-            "a3": { "ids": ["t1", "t2", "t3"] }
+            "a3": {
+              "ids": [
+                "t1",
+                "t2",
+                "t3"
+              ]
+            }
           },
           "scene": {
             "engine": "board",
             "config": {
-              "rows": 8,
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
               "cols": 8,
               "holes": [[0, 0], [7, 7]],
-              "coloring_preset": { "type": "checkerboard" }
+              "rows": 8
             },
             "elements": [
               {
                 "id": "t1",
                 "type": "tile",
-                "shape": "domino",
+                "emphasis": "focus",
                 "pos": [3, 3],
                 "rot": 0,
-                "emphasis": "focus"
+                "shape": "domino"
               },
               {
                 "id": "t2",
                 "type": "tile",
-                "shape": "domino",
+                "emphasis": "focus",
                 "pos": [5, 1],
                 "rot": 90,
-                "emphasis": "focus"
+                "shape": "domino"
               },
               {
                 "id": "t3",
                 "type": "tile",
-                "shape": "domino",
+                "emphasis": "focus",
                 "pos": [0, 2],
                 "rot": 0,
-                "emphasis": "focus"
+                "shape": "domino"
               }
             ]
           },
@@ -142,8 +172,11 @@
     }
   ],
   "sandbox": {
-    "validators": ["tiles-no-overlap", "tiles-in-bounds"],
-    "goal_expr": "count(cells, c => !covered(c)) == 0"
+    "goal_expr": "count(cells, c => !covered(c)) == 0",
+    "validators": [
+      "tiles-no-overlap",
+      "tiles-in-bounds"
+    ]
   },
   "og_step_ref": {
     "sol_id": "sol-mau",

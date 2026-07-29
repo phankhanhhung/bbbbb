@@ -468,3 +468,72 @@ body {
 .play {
   font-variant-numeric: tabular-nums;
 }
+
+/* --- Kho bài (CMS-02) ----------------------------------------------------- */
+
+.bank__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.bank__filters input[type='search'] {
+  flex: 1 1 16rem;
+  min-height: 44px;
+  padding: 0 0.7rem;
+  font: inherit;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.bank__select { display: flex; flex-direction: column; gap: 0.2rem; }
+.bank__select span { font-size: 0.75rem; color: var(--ink-soft); }
+.bank__select select {
+  min-height: 44px;
+  padding: 0 0.5rem;
+  font: inherit;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.bank { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+
+.bank__card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.8rem 1rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.bank__card:hover, .bank__card:focus-visible { border-color: var(--accent); }
+.bank__title { display: block; font-size: 1rem; line-height: 1.5; margin-bottom: 0.3rem; }
+.bank__meta { display: block; font-size: 0.8rem; color: var(--ink-soft); margin-bottom: 0.4rem; }
+.bank__tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+.tag {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #f1f1ee;
+  color: var(--ink-soft);
+}
+.tag--feature { background: #eaf4fb; color: var(--accent); }
+
+/* CMS-03: lời giải che mặc định — đọc đề và nghịch sandbox trước đã. */
+.reveal {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  text-align: center;
+}
+.reveal p { margin: 0 0 0.6rem; color: var(--ink-soft); font-size: 0.9rem; }

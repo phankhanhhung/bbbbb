@@ -1,9 +1,9 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
-import { createValidator, formatIssue, type ValidationIssue } from '@combviz/schema';
-import { ENGINE_FRAGMENTS } from '../engines.js';
+import { formatIssue, type ValidationIssue } from '@combviz/schema';
+import { createChecker } from '@combviz/check';
+import { ENGINE_DSL, ENGINE_FRAGMENTS } from '../engines.js';
 import { checkTaxonomy, loadTaxonomy } from '../taxonomy.js';
-import { checkSemantics } from '../semantics.js';
 
 export interface ValidateOptions {
   /** Thư mục content (chứa `problems/` và `taxonomy/`). */
@@ -19,7 +19,7 @@ export interface ValidateReport {
 }
 
 export async function runValidate(options: ValidateOptions): Promise<ValidateReport> {
-  const validator = createValidator(ENGINE_FRAGMENTS);
+  const validator = createChecker({ fragments: ENGINE_FRAGMENTS, dsl: ENGINE_DSL });
   const taxonomy = await loadTaxonomy(options.root);
   const files = await findProblemFiles(join(options.root, 'problems'));
 
@@ -48,16 +48,13 @@ export async function runValidate(options: ValidateOptions): Promise<ValidateRep
       continue;
     }
 
-    const result = validator.validateProblem(parsed);
-    issues.push(...result.issues);
+    const found = validator.check(parsed, raw);
+    issues.push(...found);
 
-    // Taxonomy chỉ chạy khi hình dạng đã đúng — nếu không thì `problem.topics`
-    // có thể không tồn tại và ta sẽ báo lỗi giả chồng lên lỗi thật.
-    if (result.ok || !result.issues.some((i) => i.code.startsWith('schema/'))) {
+    // Taxonomy nằm ngoài `@combviz/check` vì nó cần đọc file YAML trong kho —
+    // Studio nạp vocabulary theo đường khác.
+    if (!found.some((i) => i.code.startsWith('schema/'))) {
       issues.push(...checkTaxonomy(parsed as never, taxonomy));
-      // Eval invariant/validator chỉ có nghĩa khi hình dạng đã đúng — chạy trên
-      // dữ liệu méo sẽ sinh lỗi DSL giả chồng lên lỗi thật.
-      issues.push(...checkSemantics(parsed as never));
     }
 
     const fileErrors = issues.filter((i) => i.severity === 'error').length;

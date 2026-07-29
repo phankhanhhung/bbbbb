@@ -8,12 +8,14 @@
     "node": ">=22"
   },
   "scripts": {
+    "index": "tsx tools/pipeline/src/cli.ts index",
+    "prepare": "pnpm index",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
     "validate": "tsx tools/pipeline/src/cli.ts validate packages/content",
-    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm validate"
+    "check": "pnpm index && pnpm typecheck && pnpm lint && pnpm test && pnpm validate"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

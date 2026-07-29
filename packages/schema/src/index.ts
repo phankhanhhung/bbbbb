@@ -74,6 +74,7 @@ export {
 export { checkStructure } from './structure.js';
 export { createValidator, type Validator } from './validate.js';
 export { SCHEMA_VERSION } from './version.js';
+export { formatProblem } from './format.js';
 export {
   migrateProblem,
   isReadableVersion,
