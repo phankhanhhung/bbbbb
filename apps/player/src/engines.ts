@@ -38,6 +38,17 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       coverage: module.coverage,
     };
   },
+
+  graph: async () => {
+    const module = await import('@combviz/engine-graph');
+    return {
+      renderer: module.graphRenderer,
+      commands: module.graphCommands,
+      hitTest: module.graphHitTest,
+      environment: module.graphEnvironment,
+      resolveValidator: module.resolveGraphValidator,
+    };
+  },
 };
 
 const cache = new Map<string, LoadedEngine>();

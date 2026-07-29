@@ -8,7 +8,21 @@ import type { Expr } from './ast.js';
  * `c.color_class == 1` luôn trả về true/false thay vì lan một giá trị rỗng qua
  * cả biểu thức rồi lỗi ở chỗ không liên quan.
  */
-export type Value = number | boolean | ElementValue | readonly Value[] | LambdaValue;
+export type Value =
+  | number
+  | boolean
+  /**
+   * Chuỗi chỉ để **so sánh**, không nối, không cắt.
+   *
+   * Cần vì element mang thuộc tính phân loại (`p.kind`, `t.shape`), và không có
+   * chuỗi thì phải bịa ra một builtin boolean cho từng loại quân — vừa cồng kềnh
+   * vừa phải sửa DSL mỗi lần engine thêm một loại. Grammar vẫn đóng: chuỗi là dữ
+   * liệu trơ, không có phép toán nào sinh ra chuỗi mới.
+   */
+  | string
+  | ElementValue
+  | readonly Value[]
+  | LambdaValue;
 
 export interface ElementValue {
   readonly kind: 'element';
@@ -38,6 +52,7 @@ export function isList(value: Value): value is readonly Value[] {
 export function typeName(value: Value): string {
   if (typeof value === 'number') return 'số';
   if (typeof value === 'boolean') return 'giá trị đúng/sai';
+  if (typeof value === 'string') return 'chuỗi';
   if (isElement(value)) return 'element';
   if (isLambda(value)) return 'hàm';
   if (isList(value)) return 'tập hợp';

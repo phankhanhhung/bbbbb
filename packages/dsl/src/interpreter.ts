@@ -99,6 +99,9 @@ export function evalExpr(expr: Expr, ctx: EvalContext): Value {
     case 'boolean':
       return expr.value;
 
+    case 'string':
+      return expr.value;
+
     case 'ident': {
       const scoped = ctx.scope.get(expr.name);
       if (scoped !== undefined) return scoped;

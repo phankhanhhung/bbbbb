@@ -6,7 +6,7 @@ trên canvas tương tác, văn bản ↔ hình liên kết hai chiều, sandbox
 Vận hành theo mô hình **single-author brand engine**: engine là xưởng in riêng của
 một tác giả; sản phẩm công chúng là kho bài đã curate. Xem `docs/SRS-v1.0.md`.
 
-**Trạng thái:** Phase 1, M3 phần lớn xong (command layer + Sandbox tương tác). Còn chờ đo perf trên iPad để đóng gate G-A. Xem `docs/PLAN-P1.md`.
+**Trạng thái:** Phase 1, M4 track kỹ thuật xong (Graph engine + analyzer trong worker). Còn chờ đo perf trên iPad để đóng gate G-A, và track content là việc của chính chủ. Xem `docs/PLAN-P1.md`.
 
 ## Bắt đầu
 
@@ -56,6 +56,7 @@ packages/
   dsl/               Expression DSL: parser Pratt, interpreter sandboxed
   editor/            Command layer, undo/redo, selection — nền của Sandbox và Studio
   engines/board/     Grid/Board engine: schema, bound, renderer, DSL env, validator
+  engines/graph/     Graph engine: multigraph, layout, analyzer, validator
   content/           Kho bài JSON + controlled vocabulary
 apps/
   player/            SPA cho người học (Preact + Vite)

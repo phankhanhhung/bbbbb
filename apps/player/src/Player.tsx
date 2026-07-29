@@ -10,11 +10,14 @@ import {
 import { animate } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
 import type { Problem, Scene, Step } from '@combviz/schema';
+import type { GraphAnalysis } from '@combviz/engine-graph';
 import { loadEngines, type LoadedEngine } from './engines.js';
 import { Narrative } from './Narrative.jsx';
 import { InvariantStrip } from './InvariantStrip.jsx';
 import { Sandbox } from './Sandbox.jsx';
 import { renderMath } from './math.js';
+import { useAnalyzer } from './useAnalyzer.js';
+import { GraphFacts } from './GraphFacts.jsx';
 
 /**
  * Walking skeleton của Player (M1).
@@ -58,6 +61,11 @@ export function Player({ problem }: { problem: Problem }) {
   );
 
   const [diff, setDiff] = useState<NodeDiff | null>(null);
+
+  // ENG-04: analyzer nặng chạy trong worker, cache theo hash scene, huỷ được.
+  const analysis = useAnalyzer<GraphAnalysis>(
+    step.scene?.engine === 'graph' ? step.scene : undefined,
+  );
 
   // Highlight là **đầu vào của render**, không phải lớp sửa DOM sau đó (ANC-01).
   // Nhờ vậy nó sống sót qua mọi khung animation và không có hai nguồn sự thật.
@@ -181,6 +189,8 @@ export function Player({ problem }: { problem: Problem }) {
               environmentFor={environmentFor}
             />
           ) : null}
+
+          {step.scene?.engine === 'graph' ? <GraphFacts state={analysis} /> : null}
 
           {step.edge_type === 'contradiction' ? (
             <p class="badge badge--contradiction">✗ Mâu thuẫn — nhánh đóng</p>

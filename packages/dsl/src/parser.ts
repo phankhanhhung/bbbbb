@@ -120,6 +120,10 @@ class Parser {
       return { kind: 'number', value: Number(token.value), pos: token.pos };
     }
 
+    if (token.type === 'string') {
+      return { kind: 'string', value: token.value, pos: token.pos };
+    }
+
     if (token.type === 'punct' && token.value === '(') {
       const expr = this.parseExpression(0);
       this.expectPunct(')');

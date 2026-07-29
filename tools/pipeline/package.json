@@ -12,6 +12,7 @@
     "yaml": "^2.6.1",
     "@combviz/render": "workspace:*",
     "@combviz/theme": "workspace:*",
-    "@combviz/dsl": "workspace:*"
+    "@combviz/dsl": "workspace:*",
+    "@combviz/engine-graph": "workspace:*"
   }
 }

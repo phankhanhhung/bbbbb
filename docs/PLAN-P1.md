@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M3 phần lớn xong** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M4 track kỹ thuật xong** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -220,7 +220,7 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 
 **DoD:** ✅ Kiểm bằng browser thật: đặt hai domino chồng nhau → "2 quân chồng lên nhau" + viền đỏ; invariant tụt từ −2 xuống −3 (cấu hình sai thì bất biến vỡ — đúng điều cần thấy); hoàn tác một lần khôi phục cả hai; kéo quét 5 ô đổi bảng đếm 30/32 → 28/29/5 và invariant sang −1.
 
-### M4 — Mở cửa content + Graph engine · Tuần 6–9 · [E]+[C]
+### M4 — Mở cửa content + Graph engine · Tuần 6–9 · [E]+[C] — **track [E] xong**
 
 **[C] từ tuần 6 — song song, ưu tiên cao hơn Graph khi xung đột:**
 
@@ -229,13 +229,19 @@ Ký hiệu: **[E]** track Engine · **[C]** track Content. Mỗi milestone có D
 - **Style Guide v1** kết tinh từ 5 bài này (AUT-10), không viết trước.
 - Bắt đầu đo thời gian soạn (G-06).
 
-**[E]:**
+**[E]:** ✅
 
-- `engines/graph`: GR-01, GR-02 (layout manual + circle/grid/bipartite), GR-08 (label atlas D-07).
-- GR-03 analyzer trong worker: bậc, liên thông, bipartite, chu trình, Euler.
-- GR-04 Hamilton backtracking ≤20 đỉnh, từ chối rõ ràng khi vượt bound.
+- ✅ `engines/graph`: schema (multigraph + khuyên), renderer, command, hit-test, môi trường DSL, validator.
+- ✅ GR-02 layout circle/grid/bipartite/line, bake thành toạ độ tĩnh.
+- ✅ GR-03 analyzer: bậc, liên thông, hai phía (kèm nhân chứng chu trình lẻ), chu trình, Euler (Hierholzer, trả cả đường đi cụ thể).
+- ✅ GR-04 Hamilton backtracking, từ chối kèm lý do khi vượt 20 đỉnh.
+- ✅ **ENG-04** (hoãn từ M3): analyzer chạy trong Web Worker, cache theo hash scene, huỷ được.
+- ✅ Bài $R(3,3)=6$ — case-branching thật với `merge_ref`, 10 step, hai engine đã chạy song song trong Player.
+- ⬜ GR-08 nhãn LaTeX trong canvas — mới có nhãn text thuần; label atlas (D-07) vẫn để M6.
 
-**DoD:** 5 bài soạn tay pass validate; Style Guide v1 trong repo; graph engine chạy đủ analyzer trên bài $K_6$ hai màu ($R(3,3)=6$).
+**DoD:** ⬜ Còn track [C]. Graph engine đã chạy đủ analyzer trên $K_6$ và cho kết quả đúng: 1 thành phần, không hai phía (chu trình lẻ dài 3), Euler không tồn tại (6 đỉnh bậc lẻ), có chu trình Hamilton qua 6 đỉnh.
+
+**Track [C] là việc của chính chủ, không phải của máy.** §16 nói rõ 3–5 bài đầu phải soạn tay để Style Guide kết tinh từ thực tế; một Style Guide chắt ra từ bài do máy viết cũng là Style Guide bịa, chỉ bịa tinh vi hơn. Bài $R(3,3)=6$ ở đây là **fixture kỹ thuật** — nó chứng minh engine chạy, không đặt chuẩn biên tập.
 
 ### M5 — Player hoàn chỉnh + **schema freeze** · Tuần 9–10 · [E]
 

@@ -1,8 +1,10 @@
 import type { Scene, SceneElement, Viewport } from '@combviz/schema';
 import {
+  decorationAttrs,
   el,
+  elementDecoration,
   fillForClass,
-  highlightAttrs,
+  groupAttrs,
   keyed,
   text,
   type EngineRenderer,
@@ -87,7 +89,7 @@ function renderCells(config: BoardConfig, ctx: RenderContext): SvgNode[] {
         fill: isHole ? ctx.theme.surface.void : fillForClass(ctx, colorClassIndex),
         stroke: ctx.theme.surface.guide,
         'stroke-width': ctx.theme.stroke.hairline,
-        ...highlightAttrs(ctx, cellId(r, c)),
+        ...decorationAttrs(ctx, cellId(r, c)),
       });
 
       nodes.push(rect);
@@ -169,7 +171,7 @@ function renderTile(element: SceneElement, ctx: RenderContext): SvgNode {
     stroke: ctx.theme.object.tileStroke,
     'stroke-width': ctx.theme.stroke.base,
     'stroke-linecap': 'square',
-    ...decorationAttrs(element, ctx),
+    ...elementDecoration(ctx, element),
   });
 
   return keyed(
@@ -177,7 +179,7 @@ function renderTile(element: SceneElement, ctx: RenderContext): SvgNode {
     'g',
     {
       transform: translate((pos?.[1] ?? 0) * CELL, (pos?.[0] ?? 0) * CELL),
-      ...dimAttrs(element, ctx),
+      ...groupAttrs(ctx, element),
     },
     [...cells, outline],
   );
@@ -200,7 +202,7 @@ function renderPiece(element: SceneElement, ctx: RenderContext): SvgNode {
     'g',
     {
       transform: translate((pos?.[1] ?? 0) * CELL, (pos?.[0] ?? 0) * CELL),
-      ...dimAttrs(element, ctx),
+      ...groupAttrs(ctx, element),
     },
     [
       el('circle', {
@@ -210,7 +212,7 @@ function renderPiece(element: SceneElement, ctx: RenderContext): SvgNode {
         fill,
         stroke: ctx.theme.object.pieceStroke,
         'stroke-width': ctx.theme.stroke.base,
-        ...decorationAttrs(element, ctx),
+        ...elementDecoration(ctx, element),
       }),
       text(
         'text',
@@ -234,7 +236,7 @@ function renderRegion(element: SceneElement, ctx: RenderContext): SvgNode {
   return keyed(
     element.id,
     'g',
-    dimAttrs(element, ctx),
+    groupAttrs(ctx, element),
     [
       el('path', {
         d: outlinePathAbsolute(cells),
@@ -242,7 +244,7 @@ function renderRegion(element: SceneElement, ctx: RenderContext): SvgNode {
         stroke: ctx.theme.object.regionStroke,
         'stroke-width': ctx.theme.stroke.region,
         'stroke-linecap': 'square',
-        ...decorationAttrs(element, ctx),
+        ...elementDecoration(ctx, element),
       }),
     ],
   );
@@ -264,42 +266,6 @@ function shiftPath(path: string, dx: number, dy: number): string {
     (_full, command: string, x: string, y: string) =>
       `${command}${Number(x) + dx} ${Number(y) + dy}`,
   );
-}
-
-/**
- * Phần trang trí đặt lên **nhóm**: chỉ những thuộc tính mà kế thừa là đúng.
- *
- * `opacity` trên `<g>` áp cho cả nhóm như một khối — đúng ý nghĩa của "dim".
- */
-function dimAttrs(
-  element: SceneElement,
-  ctx: RenderContext,
-): Record<string, string | number> {
-  return element.emphasis === 'dim' ? { opacity: ctx.theme.emphasis.dimOpacity } : {};
-}
-
-/**
- * Phần trang trí đặt lên **hình lá**: mọi thứ dùng `stroke`.
- *
- * Highlight của anchor thắng emphasis của tác giả khi cả hai cùng có: anchor là
- * phản hồi trực tiếp với thao tác của người học ngay lúc đó, còn emphasis là
- * trạng thái nền của step.
- */
-function decorationAttrs(
-  element: SceneElement,
-  ctx: RenderContext,
-): Record<string, string | number> {
-  const highlight = highlightAttrs(ctx, element.id);
-  if (Object.keys(highlight).length > 0) return highlight;
-
-  if (element.emphasis === 'focus') {
-    return {
-      stroke: ctx.theme.emphasis.focusHalo,
-      'stroke-width': ctx.theme.emphasis.focusHaloWidth,
-      'paint-order': 'stroke',
-    };
-  }
-  return {};
 }
 
 function translate(x: number, y: number): string {

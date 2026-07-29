@@ -4,7 +4,7 @@ import {
   tryEvaluate,
   type CompiledExpression,
 } from '@combviz/dsl';
-import type { Problem, Scene, ValidationIssue } from '@combviz/schema';
+import type { Problem, Scene, Step, ValidationIssue } from '@combviz/schema';
 import { ENGINE_DSL } from './engines.js';
 
 /**
@@ -143,7 +143,7 @@ function evalOnEveryStep(
         }
       }
 
-      issues.push(...runValidators(problem, scene, step.id, path));
+      issues.push(...runValidators(problem, step, scene, path));
     });
   });
 
@@ -152,13 +152,16 @@ function evalOnEveryStep(
 
 function runValidators(
   problem: Problem,
+  step: Step,
   scene: Scene,
-  stepId: string,
   path: string,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const dsl = ENGINE_DSL[scene.engine];
   if (!dsl) return issues;
+
+  const expected = new Set(step.expects_violation ?? []);
+  const seen = new Set<string>();
 
   for (const id of problem.sandbox?.validators ?? []) {
     const validator = dsl.fragment.resolveValidator(id);
@@ -166,16 +169,30 @@ function runValidators(
 
     const outcome = validator.check(scene);
     if (!outcome.ok) {
+      seen.add(id);
+      if (expected.has(id)) continue;
+
       issues.push({
         code: 'validator/violated-in-step',
         severity: 'warning',
-        message: `Step "${stepId}" vi phạm "${validator.label}": ${outcome.message ?? ''}`.trim(),
+        message: `Step "${step.id}" vi phạm "${validator.label}": ${outcome.message ?? ''}`.trim(),
         path,
-        hint:
-          'Nếu là chủ đích (bày ra cấu hình sai để chỉ chỗ sai) thì bỏ qua; ' +
-          'nếu không thì đây là lỗi soạn bài',
+        hint: `Nếu là chủ đích thì khai \`expects_violation: ["${id}"]\` trên step này`,
       });
     }
+  }
+
+  // Khai thừa: step từng cố ý vi phạm nhưng scene đã đổi và giờ không vi phạm nữa.
+  // Đó gần như luôn là lời giải chưa theo kịp hình.
+  for (const id of expected) {
+    if (seen.has(id)) continue;
+    issues.push({
+      code: 'validator/expected-violation-missing',
+      severity: 'warning',
+      message: `Step "${step.id}" khai cố ý vi phạm "${id}" nhưng thực tế không vi phạm`,
+      path,
+      hint: 'Scene đã đổi? Gỡ khai báo, hoặc sửa lại scene cho khớp lời giải',
+    });
   }
 
   return issues;

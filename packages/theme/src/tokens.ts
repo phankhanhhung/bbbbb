@@ -71,7 +71,16 @@ export interface ObjectTokens {
  */
 export interface StrokeTokens {
   readonly hairline: number;
+  /** Viền của một **vùng được tô**: phải đủ dày để tách vùng khỏi nền. */
   readonly base: number;
+  /**
+   * Nét mà **bản thân nó là vật thể**: cạnh đồ thị, đoạn thẳng.
+   *
+   * Mảnh hơn `base` nhiều, và đó không phải chuyện thẩm mỹ. Viền của một ô cần
+   * dày vì nó cạnh tranh với mảng màu bên trong; còn cạnh đồ thị thì độ dày là
+   * tuỳ ý, và $K_6$ vẽ bằng nét `base` biến thành một cục đen không đọc được.
+   */
+  readonly link: number;
   readonly emphasis: number;
   /** Viền `region` — nhóm ô có viền đậm (§5.2). */
   readonly region: number;
@@ -137,6 +146,7 @@ export const defaultTheme: Theme = {
   stroke: {
     hairline: 0.4,
     base: 1.2,
+    link: 0.42,
     emphasis: 1.6,
     region: 1.8,
     invalid: '#C5221F',

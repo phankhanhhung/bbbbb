@@ -14,7 +14,9 @@ export {
   strokeForClass,
   patternId,
   patternDefs,
-  highlightAttrs,
+  decorationAttrs,
+  elementDecoration,
+  groupAttrs,
   type RenderContext,
   type ContextOptions,
 } from './context.js';

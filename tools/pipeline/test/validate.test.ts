@@ -221,8 +221,17 @@ describe('engines_used', () => {
     problem.engines_used = ['graph'];
 
     const result = codes(problem);
+    // Scene dùng board nhưng engines_used chỉ khai graph: Player sẽ lazy-load
+    // nhầm engine và trang trắng.
     expect(result).toContain('structure/engine-undeclared');
-    expect(result).toContain('structure/unknown-engine');
+    expect(result).toContain('structure/engine-declared-unused');
+  });
+
+  it('bắt engine không tồn tại', () => {
+    const problem = loadExample();
+    problem.engines_used = ['engine-khong-co-that'];
+
+    expect(codes(problem)).toContain('structure/unknown-engine');
   });
 });
 

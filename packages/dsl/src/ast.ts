@@ -13,6 +13,7 @@
 export type Expr =
   | { kind: 'number'; value: number; pos: number }
   | { kind: 'boolean'; value: boolean; pos: number }
+  | { kind: 'string'; value: string; pos: number }
   | { kind: 'ident'; name: string; pos: number }
   | { kind: 'member'; object: Expr; property: string; pos: number }
   | { kind: 'unary'; op: UnaryOp; argument: Expr; pos: number }

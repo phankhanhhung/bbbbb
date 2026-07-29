@@ -1,0 +1,1510 @@
+{
+  "schema_version": "0.1.0",
+  "id": "ramsey-3-3-six",
+  "statement": {
+    "vi": "Trong $6$ ng\u01b0\u1eddi b\u1ea5t k\u1ef3, lu\u00f4n t\u00ecm \u0111\u01b0\u1ee3c $3$ ng\u01b0\u1eddi \u0111\u00f4i m\u1ed9t quen nhau, ho\u1eb7c $3$ ng\u01b0\u1eddi \u0111\u00f4i m\u1ed9t kh\u00f4ng quen nhau."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Tr\u01b0\u1eddng h\u1ee3p $R(3,3)=6$; xu\u1ea5t hi\u1ec7n trong nhi\u1ec1u k\u1ef3 thi d\u01b0\u1edbi c\u00e1c c\u00e1ch ph\u00e1t bi\u1ec3u kh\u00e1c nhau."
+    }
+  },
+  "topics": [
+    "graph-basics",
+    "graph-coloring"
+  ],
+  "techniques": [
+    "pigeonhole"
+  ],
+  "difficulty": {
+    "slot_proxy": "P1",
+    "author_rating": 3
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "hungpk"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "solutions": [
+    {
+      "id": "sol-dirichlet",
+      "label": {
+        "vi": "Dirichlet tr\u00ean m\u1ed9t \u0111\u1ec9nh, r\u1ed3i x\u00e9t tr\u01b0\u1eddng h\u1ee3p"
+      },
+      "steps": [
+        {
+          "verified": true,
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Coi m\u1ed7i ng\u01b0\u1eddi l\u00e0 m\u1ed9t \u0111\u1ec9nh. M\u1ed7i c\u1eb7p n\u1ed1i b\u1edfi m\u1ed9t c\u1ea1nh: [[a1|m\u00e0u 1 n\u1ebfu quen]], m\u00e0u 2 n\u1ebfu l\u1ea1. Ta \u0111\u01b0\u1ee3c $K_6$ t\u00f4 hai m\u00e0u."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e-12"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  -10
+                ],
+                "label": "1"
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  -5
+                ],
+                "label": "2"
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  5
+                ],
+                "label": "3"
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  10
+                ],
+                "label": "4"
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  5
+                ],
+                "label": "5"
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  -5
+                ],
+                "label": "6"
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "S\u00e1u \u0111\u1ec9nh tr\u00ean v\u00f2ng tr\u00f2n, n\u1ed1i \u0111\u00f4i m\u1ed9t, ch\u01b0a t\u00f4 m\u00e0u."
+          }
+        },
+        {
+          "verified": true,
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "X\u00e9t \u0111\u1ec9nh $1$. N\u00f3 c\u00f3 [[a2|$5$ c\u1ea1nh]]. N\u0103m c\u1ea1nh, hai m\u00e0u \u2014 theo Dirichlet, c\u00f3 \u00edt nh\u1ea5t $\\lceil 5/2 \\rceil = 3$ c\u1ea1nh c\u00f9ng m\u00e0u."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-14",
+                "e-15",
+                "e-16"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  -10
+                ],
+                "label": "1"
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  -5
+                ],
+                "label": "2"
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  5
+                ],
+                "label": "3"
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  10
+                ],
+                "label": "4"
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  5
+                ],
+                "label": "5"
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  -5
+                ],
+                "label": "6"
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2",
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3",
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4",
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5",
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6",
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "N\u0103m c\u1ea1nh xu\u1ea5t ph\u00e1t t\u1eeb \u0111\u1ec9nh 1 \u0111\u01b0\u1ee3c nh\u1ea5n m\u1ea1nh."
+          }
+        },
+        {
+          "verified": true,
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Tr\u01b0\u1eddng h\u1ee3p 1: ba c\u1ea1nh \u0111\u00f3 m\u00e0u 1"
+          },
+          "narrative": {
+            "vi": "Gi\u1ea3 s\u1eed [[a3|ba c\u1ea1nh $1\\!-\\!2$, $1\\!-\\!3$, $1\\!-\\!4$]] c\u00f9ng m\u00e0u 1. X\u00e9t ba c\u1ea1nh gi\u1eefa $2, 3, 4$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-14"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  -10
+                ],
+                "label": "1"
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  -5
+                ],
+                "label": "2"
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  5
+                ],
+                "label": "3"
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  10
+                ],
+                "label": "4"
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  5
+                ],
+                "label": "5"
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  -5
+                ],
+                "label": "6"
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2",
+                "color_class": 1
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3",
+                "color_class": 1
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4",
+                "color_class": 1
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba c\u1ea1nh t\u1eeb \u0111\u1ec9nh 1 t\u1edbi c\u00e1c \u0111\u1ec9nh 2, 3, 4 t\u00f4 m\u00e0u 1."
+          }
+        },
+        {
+          "verified": true,
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "1a: c\u00f3 m\u1ed9t c\u1ea1nh m\u00e0u 1 gi\u1eefa ch\u00fang"
+          },
+          "narrative": {
+            "vi": "N\u1ebfu c\u1ea1nh $2\\!-\\!3$ m\u00e0u 1 th\u00ec [[a4|$1, 2, 3$]] \u0111\u00f4i m\u1ed9t quen nhau \u2014 xong."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-23"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  -10
+                ],
+                "label": "1"
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  -5
+                ],
+                "label": "2"
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  5
+                ],
+                "label": "3"
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  10
+                ],
+                "label": "4"
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  5
+                ],
+                "label": "5"
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  -5
+                ],
+                "label": "6"
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2",
+                "color_class": 1,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3",
+                "color_class": 1,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4",
+                "color_class": 1
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3",
+                "color_class": 1,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tam gi\u00e1c 1-2-3 to\u00e0n m\u00e0u 1."
+          },
+          "expects_violation": [
+            "no-mono-triangle"
+          ]
+        },
+        {
+          "verified": true,
+          "id": "m1",
+          "parent": "s3",
+          "edge_type": "merge_ref",
+          "merge_target": "s7"
+        },
+        {
+          "verified": true,
+          "id": "s4",
+          "parent": "s2",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "1b: kh\u00f4ng c\u1ea1nh n\u00e0o gi\u1eefa ch\u00fang m\u00e0u 1"
+          },
+          "narrative": {
+            "vi": "Ng\u01b0\u1ee3c l\u1ea1i, c\u1ea3 ba c\u1ea1nh $2\\!-\\!3$, $2\\!-\\!4$, $3\\!-\\!4$ \u0111\u1ec1u m\u00e0u 2, n\u00ean [[a5|$2, 3, 4$]] \u0111\u00f4i m\u1ed9t kh\u00f4ng quen nhau \u2014 c\u0169ng xong."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "e-23",
+                "e-24",
+                "e-34"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  -10
+                ],
+                "label": "1"
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  -5
+                ],
+                "label": "2"
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  5
+                ],
+                "label": "3"
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  10
+                ],
+                "label": "4"
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  5
+                ],
+                "label": "5"
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  -5
+                ],
+                "label": "6"
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2",
+                "color_class": 1
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3",
+                "color_class": 1
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4",
+                "color_class": 1
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3",
+                "color_class": 2,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4",
+                "color_class": 2,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4",
+                "color_class": 2,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tam gi\u00e1c 2-3-4 to\u00e0n m\u00e0u 2."
+          },
+          "expects_violation": [
+            "no-mono-triangle"
+          ]
+        },
+        {
+          "verified": true,
+          "id": "m2",
+          "parent": "s4",
+          "edge_type": "merge_ref",
+          "merge_target": "s7"
+        },
+        {
+          "verified": true,
+          "id": "s5",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Tr\u01b0\u1eddng h\u1ee3p 2: ba c\u1ea1nh \u0111\u00f3 m\u00e0u 2"
+          },
+          "narrative": {
+            "vi": "Tr\u01b0\u1eddng h\u1ee3p c\u00f2n l\u1ea1i ch\u1ec9 l\u00e0 [[a6|\u0111\u1ed5i vai hai m\u00e0u]]: ba c\u1ea1nh t\u1eeb \u0111\u1ec9nh $1$ c\u00f9ng m\u00e0u 2."
+          },
+          "anchors": {
+            "a6": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-14"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  -10
+                ],
+                "label": "1"
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  -5
+                ],
+                "label": "2"
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  5
+                ],
+                "label": "3"
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  10
+                ],
+                "label": "4"
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  5
+                ],
+                "label": "5"
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  -5
+                ],
+                "label": "6"
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2",
+                "color_class": 2
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3",
+                "color_class": 2
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4",
+                "color_class": 2
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba c\u1ea1nh t\u1eeb \u0111\u1ec9nh 1 t\u00f4 m\u00e0u 2."
+          }
+        },
+        {
+          "verified": true,
+          "id": "s6",
+          "parent": "s5",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "L\u1eadp lu\u1eadn y h\u1ec7t: ho\u1eb7c m\u1ed9t c\u1ea1nh gi\u1eefa $2, 3, 4$ m\u00e0u 2 cho [[a7|tam gi\u00e1c m\u00e0u 2]], ho\u1eb7c c\u1ea3 ba m\u00e0u 1 cho tam gi\u00e1c m\u00e0u 1."
+          },
+          "anchors": {
+            "a7": {
+              "ids": [
+                "e-12",
+                "e-13",
+                "e-23"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  -10
+                ],
+                "label": "1"
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  -5
+                ],
+                "label": "2"
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  5
+                ],
+                "label": "3"
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  10
+                ],
+                "label": "4"
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  5
+                ],
+                "label": "5"
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  -5
+                ],
+                "label": "6"
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2",
+                "color_class": 2,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3",
+                "color_class": 2,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4",
+                "color_class": 2
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3",
+                "color_class": 2,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tam gi\u00e1c 1-2-3 to\u00e0n m\u00e0u 2."
+          },
+          "expects_violation": [
+            "no-mono-triangle"
+          ]
+        },
+        {
+          "verified": true,
+          "id": "s7",
+          "parent": "s6",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "M\u1ecdi tr\u01b0\u1eddng h\u1ee3p \u0111\u1ec1u cho m\u1ed9t tam gi\u00e1c \u0111\u01a1n s\u1eafc. V\u1eady trong $6$ ng\u01b0\u1eddi lu\u00f4n c\u00f3 $3$ ng\u01b0\u1eddi \u0111\u00f4i m\u1ed9t quen ho\u1eb7c \u0111\u00f4i m\u1ed9t l\u1ea1. $\\blacksquare$"
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  -10
+                ],
+                "label": "1"
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  -5
+                ],
+                "label": "2"
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "pos": [
+                  8.66,
+                  5
+                ],
+                "label": "3"
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "pos": [
+                  0,
+                  10
+                ],
+                "label": "4"
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  5
+                ],
+                "label": "5"
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "pos": [
+                  -8.66,
+                  -5
+                ],
+                "label": "6"
+              },
+              {
+                "id": "e-12",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2",
+                "color_class": 2,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-13",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3",
+                "color_class": 2,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-14",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4",
+                "color_class": 2
+              },
+              {
+                "id": "e-15",
+                "type": "edge",
+                "u": "v1",
+                "v": "v5"
+              },
+              {
+                "id": "e-16",
+                "type": "edge",
+                "u": "v1",
+                "v": "v6"
+              },
+              {
+                "id": "e-23",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3",
+                "color_class": 2,
+                "emphasis": "focus"
+              },
+              {
+                "id": "e-24",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "e-25",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "e-26",
+                "type": "edge",
+                "u": "v2",
+                "v": "v6"
+              },
+              {
+                "id": "e-34",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e-35",
+                "type": "edge",
+                "u": "v3",
+                "v": "v5"
+              },
+              {
+                "id": "e-36",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "e-45",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e-46",
+                "type": "edge",
+                "u": "v4",
+                "v": "v6"
+              },
+              {
+                "id": "e-56",
+                "type": "edge",
+                "u": "v5",
+                "v": "v6"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "K\u1ebft lu\u1eadn: tam gi\u00e1c \u0111\u01a1n s\u1eafc t\u1ed3n t\u1ea1i trong m\u1ecdi c\u00e1ch t\u00f4."
+          },
+          "expects_violation": [
+            "no-mono-triangle"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "simple-graph",
+      "no-mono-triangle"
+    ],
+    "goal_expr": "count(edges, e => e.color_class == 0) == 0"
+  },
+  "og_step_ref": {
+    "sol_id": "sol-dirichlet",
+    "step_id": "s3"
+  }
+}

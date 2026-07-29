@@ -65,6 +65,20 @@ export const Step = Type.Object(
     author_notes: Type.Optional(Type.String()),
 
     /**
+     * Ràng buộc mà step này **cố ý** vi phạm.
+     *
+     * Lời giải thường phải bày ra đúng thứ mà sandbox cấm: bài $R(3,3)=6$ kết
+     * luận bằng một tam giác đơn sắc, trong khi sandbox lấy "không có tam giác
+     * đơn sắc" làm luật chơi. Không có trường này thì tác giả phải sống chung với
+     * cảnh báo vĩnh viễn, và cảnh báo mà ai cũng bỏ qua thì không còn là cảnh báo.
+     *
+     * Khai ở đây biến chủ đích thành thứ đọc được. Đổi lại, validate sẽ báo khi
+     * khai **thừa** — step không còn vi phạm nữa mà khai báo vẫn nằm đó là dấu
+     * hiệu scene đã đổi mà lời giải chưa theo kịp.
+     */
+    expects_violation: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
+
+    /**
      * AUT-09: cổng khoá publish. Draft từ LLM vào kho với `verified: false`;
      * chính chủ phải bật tay từng step trong Studio. Lưu trong file để git diff
      * đọc được ai đã duyệt cái gì ở commit nào.
@@ -86,5 +100,6 @@ export interface Step {
   widget_state?: Record<string, unknown>;
   alt_text?: { vi: string; en?: string };
   author_notes?: string;
+  expects_violation?: string[];
   verified?: boolean;
 }

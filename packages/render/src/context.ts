@@ -1,4 +1,5 @@
 import { colorClass, type Theme } from '@combviz/theme';
+import type { SceneElement } from '@combviz/schema';
 import { el, type SvgNode } from './svg-node.js';
 
 /**
@@ -55,32 +56,60 @@ export function createContext(theme: Theme, options: ContextOptions = {}): Rende
 }
 
 /**
- * Viền highlight cho element đang được anchor trỏ tới.
+ * Trang trí đặt lên **hình lá** (rect, circle, path) — mọi thứ dùng `stroke`.
  *
- * **Chỉ đặt lên hình lá** (rect, circle, path), không bao giờ lên `<g>`: thuộc
- * tính `stroke` của SVG được kế thừa, nên đặt lên nhóm sẽ vẽ viền quanh *từng ô
- * con* của quân domino thay vì quanh đường bao của nó — quân trông thành cái
- * khung có gạch giữa. Cùng lý do áp cho `emphasis: "focus"`.
+ * Không bao giờ đặt lên `<g>`: `stroke` của SVG được kế thừa, nên đặt lên nhóm sẽ
+ * vẽ viền quanh *từng ô con* của quân domino thay vì quanh đường bao của nó.
+ *
+ * Sống ở tầng render chứ không ở từng engine, vì `emphasis` là thuộc tính **lõi**
+ * trong whitelist của DAT-20. Khi nó nằm rải trong từng engine, engine mới quên
+ * cài là chuyện đương nhiên — và nó quên một cách im lặng: hình vẫn vẽ ra, chỉ là
+ * `emphasis: "focus"` của tác giả không có tác dụng gì.
+ *
+ * Thứ tự ưu tiên: vi phạm → anchor → emphasis của tác giả. Vi phạm thắng vì khi
+ * người học vừa trỏ vào một quân *và* quân đó đang đặt sai, thứ họ cần biết là chỗ
+ * sai; anchor thắng emphasis vì anchor là phản hồi với thao tác ngay lúc đó, còn
+ * emphasis là trạng thái nền của step.
  */
-export function highlightAttrs(
+export function decorationAttrs(
   ctx: RenderContext,
   id: string,
+  emphasis?: string,
 ): Record<string, string | number> {
-  // Vi phạm thắng highlight: khi người học vừa trỏ vào một quân *và* quân đó
-  // đang đặt sai, thứ họ cần biết là chỗ sai.
   if (ctx.invalid.has(id)) {
-    return {
-      stroke: ctx.theme.stroke.invalid,
-      'stroke-width': ctx.theme.emphasis.anchorHaloWidth,
-      'paint-order': 'stroke',
-    };
+    return halo(ctx.theme.stroke.invalid, ctx.theme.emphasis.anchorHaloWidth);
   }
-  if (!ctx.highlight.has(id)) return {};
-  return {
-    stroke: ctx.theme.emphasis.anchorHalo,
-    'stroke-width': ctx.theme.emphasis.anchorHaloWidth,
-    'paint-order': 'stroke',
-  };
+  if (ctx.highlight.has(id)) {
+    return halo(ctx.theme.emphasis.anchorHalo, ctx.theme.emphasis.anchorHaloWidth);
+  }
+  if (emphasis === 'focus') {
+    return halo(ctx.theme.emphasis.focusHalo, ctx.theme.emphasis.focusHaloWidth);
+  }
+  return {};
+}
+
+/** Dạng nhận thẳng element, cho engine không phải tự bóc `emphasis`. */
+export function elementDecoration(
+  ctx: RenderContext,
+  element: SceneElement,
+): Record<string, string | number> {
+  return decorationAttrs(ctx, element.id, element.emphasis);
+}
+
+/**
+ * Trang trí đặt lên **nhóm**: chỉ những thuộc tính mà kế thừa là đúng.
+ *
+ * `opacity` trên `<g>` áp cho cả nhóm như một khối — đúng nghĩa của "dim".
+ */
+export function groupAttrs(
+  ctx: RenderContext,
+  element: SceneElement,
+): Record<string, string | number> {
+  return element.emphasis === 'dim' ? { opacity: ctx.theme.emphasis.dimOpacity } : {};
+}
+
+function halo(stroke: string, width: number): Record<string, string | number> {
+  return { stroke, 'stroke-width': width, 'paint-order': 'stroke' };
 }
 
 /** Mã tô cho một `color_class`, tôn trọng chế độ pattern. */

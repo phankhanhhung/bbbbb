@@ -2,6 +2,7 @@ import { DslError } from './ast.js';
 
 export type TokenType =
   | 'number'
+  | 'string'
   | 'ident'
   | 'op'
   | 'punct'
@@ -46,6 +47,29 @@ export function tokenize(source: string): Token[] {
 
     if (/\s/.test(char)) {
       i += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      const start = i;
+      i += 1;
+      let value = '';
+      while (i < source.length && source[i] !== '"') {
+        if (source[i] === '\\' && i + 1 < source.length) {
+          const escaped = source[i + 1] as string;
+          if (escaped !== '"' && escaped !== '\\') {
+            throw new DslError(`Chuỗi chỉ nhận \\" và \\\\, không nhận \\${escaped}`, i);
+          }
+          value += escaped;
+          i += 2;
+          continue;
+        }
+        value += source[i];
+        i += 1;
+      }
+      if (i >= source.length) throw new DslError('Chuỗi thiếu dấu " đóng', start);
+      i += 1;
+      tokens.push({ type: 'string', value, pos: start });
       continue;
     }
 
