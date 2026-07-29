@@ -11,6 +11,7 @@ import {
 } from '@combviz/render';
 import { buildGraph, SPACING, VERTEX_RADIUS, type Edge, type GraphModel } from './graph.js';
 import type { GraphConfig } from './schema.js';
+import { matrixViewport, renderMatrix } from './matrix.js';
 
 /**
  * Bề rộng ước lượng của một ký tự nhãn, tính bằng đơn vị scene.
@@ -35,6 +36,10 @@ export const graphRenderer: EngineRenderer = {
     const graph = buildGraph(scene);
     const config = scene.config as GraphConfig;
     const padding = config?.padding ?? 6;
+
+    if (config?.view === 'matrix') {
+      return matrixViewport(graph, config.show_sums === true);
+    }
 
     if (graph.vertices.length === 0) {
       return { x: -padding, y: -padding, width: padding * 2, height: padding * 2 };
@@ -68,6 +73,10 @@ export const graphRenderer: EngineRenderer = {
   render(scene: Scene, ctx: RenderContext): SvgNode[] {
     const graph = buildGraph(scene);
     const config = (scene.config as GraphConfig) ?? {};
+
+    if (config.view === 'matrix') {
+      return [el('g', { class: 'cv-matrix' }, renderMatrix(graph, ctx, config.show_sums === true))];
+    }
 
     const centre = centroid(graph);
     const weight = ctx.theme.stroke.link / ctx.theme.stroke.base;
@@ -117,7 +126,7 @@ export const graphRenderer: EngineRenderer = {
                   // nhãn — hai đỉnh cùng vai trò trông khác cỡ nhau. Đặt cố định
                   // phía trên thì với layout vòng tròn, nhãn của nửa dưới rơi thẳng
                   // vào giữa chùm cạnh.
-                  ...labelAnchor(vertex, centre),
+                  ...labelAnchor(vertex, centre, graph),
                   'font-family': ctx.theme.type.mathFamily,
                   'font-size': VERTEX_RADIUS * 1.05,
                   'font-style': 'italic',
@@ -556,17 +565,14 @@ function renderEdgeLabel(
 }
 
 function labelAnchor(
-  vertex: { x: number; y: number },
+  vertex: { id: string; x: number; y: number },
   centre: { x: number; y: number },
+  graph: GraphModel,
 ): Record<string, string | number> {
-  const dx = vertex.x - centre.x;
-  const dy = vertex.y - centre.y;
-  const length = Math.hypot(dx, dy);
   const gap = VERTEX_RADIUS + 1.1;
-
-  // Đỉnh nằm đúng tâm (đồ thị một đỉnh) không có hướng "ra ngoài" — đẩy lên trên.
-  const ux = length === 0 ? 0 : dx / length;
-  const uy = length === 0 ? -1 : dy / length;
+  const angle = labelDirection(vertex, centre, graph);
+  const ux = Math.cos(angle);
+  const uy = Math.sin(angle);
 
   return {
     x: round(vertex.x + ux * gap),
@@ -574,6 +580,52 @@ function labelAnchor(
     'text-anchor': ux > 0.3 ? 'start' : ux < -0.3 ? 'end' : 'middle',
     'dominant-baseline': uy > 0.3 ? 'hanging' : uy < -0.3 ? 'auto' : 'central',
   };
+}
+
+/**
+ * Hướng đặt nhãn: **giữa khoảng trống rộng nhất** giữa các cạnh kề.
+ *
+ * Quy tắc cũ là "hướng ra xa trọng tâm". Nó đúng cho vòng tròn và cho hai hàng,
+ * và sai hẳn cho đỉnh nằm gần tâm: ở $K_4$ vẽ với một đỉnh giữa tam giác, hướng
+ * đó gần như ngẫu nhiên — và nó rơi đúng dọc theo một cạnh, nên nhãn nằm đè lên
+ * cạnh ấy. Trọng tâm chỉ là **đại diện** cho thứ ta thật sự muốn tránh; tránh
+ * thẳng các cạnh thì đúng ở mọi hình, kể cả hai hình kia.
+ *
+ * Đỉnh cô lập không có cạnh nào để tránh — lúc đó mới quay về trọng tâm.
+ */
+function labelDirection(
+  vertex: { id: string; x: number; y: number },
+  centre: { x: number; y: number },
+  graph: GraphModel,
+): number {
+  const angles: number[] = [];
+  for (const { to } of graph.adjacency.get(vertex.id) ?? []) {
+    const other = graph.byId.get(to);
+    if (!other || (other.x === vertex.x && other.y === vertex.y)) continue;
+    angles.push(Math.atan2(other.y - vertex.y, other.x - vertex.x));
+  }
+
+  if (angles.length === 0) {
+    const dx = vertex.x - centre.x;
+    const dy = vertex.y - centre.y;
+    return Math.hypot(dx, dy) < 1e-9 ? -Math.PI / 2 : Math.atan2(dy, dx);
+  }
+
+  angles.sort((a, b) => a - b);
+
+  let best = -Math.PI / 2;
+  let widest = -1;
+  for (let i = 0; i < angles.length; i += 1) {
+    const from = angles[i] as number;
+    // Khoảng cuối vòng lại về khoảng đầu, cộng $2\pi$.
+    const to = i + 1 < angles.length ? (angles[i + 1] as number) : (angles[0] as number) + 2 * Math.PI;
+    if (to - from > widest) {
+      widest = to - from;
+      best = from + (to - from) / 2;
+    }
+  }
+
+  return best;
 }
 
 function dashAttrs(style: string): Record<string, string | number> {

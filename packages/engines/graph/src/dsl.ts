@@ -8,9 +8,14 @@ import {
   type Value,
 } from '@combviz/dsl';
 import type { Scene } from '@combviz/schema';
-import { permutationCycles } from './analyzers.js';
+import {
+  bipartite,
+  connectedComponents,
+  matching,
+  permutationCycles,
+  planarity,
+} from './analyzers.js';
 import { buildGraph, type GraphModel } from './graph.js';
-import { bipartite, connectedComponents } from './analyzers.js';
 
 /**
  * Trạng thái dẫn xuất của một scene đồ thị (A-04), memo theo hash scene.
@@ -72,6 +77,8 @@ function derive(scene: Scene): GraphDerived {
 export function graphEnvironment(scene: Scene): DslEnvironment {
   const { graph, vertices, edges } = derive(scene);
   const cyclesOf = permutationCycles(graph);
+  const match = matching(graph).value;
+  const plane = planarity(graph).value;
 
   const neighbours = new Map<string, Set<string>>(
     graph.vertices.map((v) => [
@@ -98,6 +105,34 @@ export function graphEnvironment(scene: Scene): DslEnvironment {
       cycles: cyclesOf.isPermutation ? cyclesOf.cycles.length : 0,
       sign: cyclesOf.isPermutation ? cyclesOf.sign : 0,
       fixed_points: cyclesOf.isPermutation ? cyclesOf.fixedPoints : 0,
+
+      /**
+       * Cụm Hall/König (GR-06).
+       *
+       * `matching` và `cover` bằng nhau **theo định lý König**, nên viết cả hai
+       * vào invariant strip là cách rẻ nhất để người học tự thấy định lý đó
+       * đúng trên bài đang mở, thay vì đọc một câu khẳng định.
+       *
+       * Đồ thị không hai phía thì cả ba bằng $-1$: thuật toán đường tăng không
+       * áp dụng được, và trả về 0 sẽ đọc nhầm thành "không ghép được cặp nào".
+       * $-1$ thì không ai nhầm với một phép đếm.
+       */
+      matching: match?.size ?? -1,
+      cover: match?.cover.length ?? -1,
+      unmatched: match ? match.left.length - match.size : -1,
+
+      /**
+       * Tính phẳng (GR-05). `crossings` đếm giao điểm **trong hình đã vẽ**, nên
+       * nó là một sự thật về hình chứ không phải về đồ thị — và đó chính là
+       * điều làm nó dùng được: "vẽ lại cho hết cắt nhau" là một mục tiêu người
+       * học kiểm được bằng mắt và invariant strip đếm hộ.
+       *
+       * `faces` chỉ có nghĩa khi hình đã hết giao điểm; khi còn cắt nhau thì
+       * bằng 0. Đồ thị không đơn thì cả hai bằng $-1$ (analyzer từ chối).
+       */
+      crossings: plane ? plane.crossings.length : -1,
+      faces: plane ? plane.faces : -1,
+      max_planar_edges: plane ? plane.maxEdges : -1,
     },
     builtins: {
       deg: (args, pos) => {

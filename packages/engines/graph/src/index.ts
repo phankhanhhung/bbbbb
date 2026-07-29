@@ -9,7 +9,7 @@ import {
 } from '@combviz/schema';
 import { buildGraph, VERTEX_RADIUS } from './graph.js';
 import { layoutPositions, type LayoutId } from './layout.js';
-import { bipartite, connectedComponents } from './analyzers.js';
+import { bipartite, connectedComponents, matching, planarity } from './analyzers.js';
 import { EdgeElement, GRAPH_LIMITS, GraphConfig, VertexElement } from './schema.js';
 
 export * from './schema.js';
@@ -401,12 +401,67 @@ const triangleFree: SceneValidator = {
   },
 };
 
+/**
+ * `plane-drawing` — hình vẽ hiện tại không có cạnh nào cắt nhau (GR-05).
+ *
+ * Ràng buộc về **hình**, không về đồ thị, và đó là chủ ý: nó biến "vẽ lại đồ thị
+ * này cho phẳng" thành một bài tập Sandbox chấm được. Người học kéo đỉnh, số
+ * giao điểm giảm dần, và khi về 0 thì họ vừa **chứng minh** đồ thị phẳng — bằng
+ * đúng cách một bài thi chấp nhận.
+ */
+const planeDrawing: SceneValidator = {
+  id: 'plane-drawing',
+  label: 'Không cạnh nào cắt nhau',
+  check(scene) {
+    const result = planarity(buildGraph(scene));
+    if (result.value === null) {
+      return { ok: true, violations: [], message: `Bỏ qua: ${result.refused ?? ''}` };
+    }
+    const crossings = result.value.crossings;
+    return crossings.length === 0
+      ? { ok: true, violations: [] }
+      : {
+          ok: false,
+          violations: [...new Set(crossings.flat())],
+          message: `${crossings.length} chỗ cắt nhau`,
+        };
+  },
+};
+
+/**
+ * `matching-saturates-left` — mọi đỉnh phía trái đều được ghép (GR-06).
+ *
+ * Ràng buộc trung tâm của cụm Hall: "ghép đủ" là mục tiêu, và khi không đạt thì
+ * `violations` trả về **đúng tập vi phạm Hall**, không phải một danh sách đỉnh
+ * lẻ tẻ. Người học nhìn thấy ngay tập nào quá đông so với hàng xóm của nó.
+ */
+const matchingSaturatesLeft: SceneValidator = {
+  id: 'matching-saturates-left',
+  label: 'Ghép cặp phủ hết một phía',
+  check(scene) {
+    const result = matching(buildGraph(scene));
+    if (result.value === null) {
+      return { ok: true, violations: [], message: `Bỏ qua: ${result.refused ?? ''}` };
+    }
+    const { size, left, hallViolator } = result.value;
+    return size === left.length
+      ? { ok: true, violations: [] }
+      : {
+          ok: false,
+          violations: [...hallViolator],
+          message: `Thiếu ${left.length - size} cặp; tập vi phạm Hall có ${hallViolator.length} đỉnh nhưng chỉ ${result.value.hallNeighbourhood.length} hàng xóm`,
+        };
+  },
+};
+
 const FIXED: readonly SceneValidator[] = [
   simpleGraph,
   connected,
   isBipartite,
   noMonoTriangle,
   triangleFree,
+  planeDrawing,
+  matchingSaturatesLeft,
 ];
 
 export function resolveGraphValidator(id: string): SceneValidator | null {

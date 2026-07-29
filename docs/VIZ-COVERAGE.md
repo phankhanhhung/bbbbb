@@ -22,7 +22,8 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~+ sequence~~ | ~~55%~~ | ~~64%~~ |
 | ~~+ bảng đếm hai chiều PRN-03~~ | ~~60%~~ | ~~68%~~ |
 | ~~+ set engine, chu trình hoán vị, view song ánh (M11)~~ | ~~63%~~ | ~~71%~~ |
-| **Hôm nay** (4 engine + bảng đếm hai chiều + view song ánh) | **~73%** | ~81% |
+| ~~+ view song ánh, set engine, chu trình hoán vị (M11)~~ | ~~73%~~ | ~~81%~~ |
+| **Hôm nay** (4 engine + song ánh + ghép cặp/tính phẳng/ma trận kề) | **~76%** | ~84% |
 | Còn lại trong hàng đợi §7 làm hết | **~88%** | ~97% |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
@@ -47,7 +48,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bốn engi
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
 | Lưới / phủ hình / tô màu | 15% | 92% | 13.8 | — (board: preset, quân, tile custom, bảng) |
-| Đồ thị | 22% | 82% | 18.0 | planarity (GR-05), matching (GR-06), tô mặt |
+| Đồ thị | 22% | 94% | 20.7 | tô mặt (phần còn lại của GR-05), kiểm tính phẳng tổng quát |
 | Đếm / song ánh / đếm hai chiều | 14% | 80% | 11.2 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 90% | 14.4 | — (`engine-sequence`) |
 | Trò chơi | 7% | 10% | 0.7 | **game engine (GM-01..04)** |
@@ -56,11 +57,11 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bốn engi
 | Hoán vị / thứ tự | 6% | 85% | 5.1 | poset/Hasse |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 5% | 0.15 | xem §6 — **không co lại theo engine** |
-| **Tổng** | **100%** | | **~73%** | |
+| **Tổng** | **100%** | | **~76%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
-27 bài quen thuộc, phân loại tay. Chính chủ đọc bảng này thấy sai chỗ nào thì sửa
+29 bài quen thuộc, phân loại tay. Chính chủ đọc bảng này thấy sai chỗ nào thì sửa
 chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 
 | Bài | Họ | Hôm nay |
@@ -72,9 +73,11 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Lật dấu bảng $4\times4$ | lưới + thao tác | ✅ (sau `board/flip-line`) |
 | $R(3,3)=6$ | đồ thị | ✅ có trong kho |
 | Bảy cầu Königsberg | đồ thị | ✅ có trong kho |
-| Bổ đề bắt tay | đồ thị | ✅ có trong kho |
+| Bổ đề bắt tay | đồ thị | ✅ có trong kho (thêm bản ma trận kề) |
 | Turán $n=5$ | đồ thị | ✅ có trong kho |
-| Định lý Hall | đồ thị hai phía | 🟡 vẽ được, thiếu matching + đường tăng |
+| $K_5$ không phẳng | đồ thị | ✅ có trong kho (chặn $e \\le 3v-6$) |
+| Định lý König (ghép cặp = phủ đỉnh) | đồ thị hai phía | ✅ có trong kho |
+| Định lý Hall | đồ thị hai phía | ✅ có trong kho (ghép cặp + đường tăng + nhân chứng Hall) |
 | Cayley $n^{n-2}$ (mã Prüfer) | song ánh | 🟡 view song ánh đã có; thiếu analyzer sinh mã Prüfer |
 | Đồng nhất thức Vandermonde | đếm hai chiều | 🟡 bảng incidence đã có; còn cần nhãn tổng quát |
 | Tập con ↔ xâu nhị phân ($2^n$) | song ánh | ✅ có trong kho (view song ánh) |
@@ -93,11 +96,11 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Sylvester–Gallai | hình học | ❌ |
 | Phương pháp xác suất: tồn tại tô $K_n$ không $K_k$ đơn sắc | trừu tượng | ❌ §6 |
 
-**16 ✅ · 7 🟡 · 4 ❌** trên 27 bài ⇒ 59% trọn vẹn, **72%** nếu tính nửa điểm cho 🟡.
-Khớp với 73% của bảng trọng số ở trên, và hai cách đếm đó độc lập nhau.
+**19 ✅ · 6 🟡 · 4 ❌** trên 29 bài ⇒ 66% trọn vẹn, **76%** nếu tính nửa điểm cho 🟡.
+Khớp với 76% của bảng trọng số ở trên, và hai cách đếm đó độc lập nhau.
 
 *(Trước Sequence engine: 9 ✅ · 4 🟡 · 11 ❌ ⇒ ≈ 46%. Trước M11: 13 ✅ · 7 🟡 · 6 ❌
-⇒ ≈ 63%.)*
+⇒ ≈ 63%. Trước M12: 16 ✅ · 7 🟡 · 4 ❌ ⇒ ≈ 72%.)*
 
 ---
 
@@ -251,7 +254,7 @@ trong SRS.
 | ~~2~~ | ~~**Set/hypergraph engine**~~ ✅ M11 | +6.2 | xong | — | `packages/engines/set`: bảng incidence + Venn ≤ 3 tập, DSL `member`/`subset`/`common`, 6 validator |
 | ~~3~~ | ~~**Bijection view**~~ ✅ M11 (một phần) | +2.8 | xong | — | Hai pane + ánh xạ id↔id + nhấn liên động hai chiều. **Chưa có** animation biến hình theo từng cặp — xem hạn chế bên dưới |
 | 4 | **Point/segment engine** (PT-01..02) | +4.0 | 0.8 | **5.0** | Họ riêng biệt, không dùng lại được gì: toạ độ thực, bao lồi, đếm giao điểm |
-| 5 | **Hoàn tất graph** (GR-05 planarity, GR-06 matching, GR-07 ma trận kề) | +2.9 | 0.6 | **4.8** | Matching mở khoá cụm Hall/König — một trong những cụm nhiều bài nhất của graph thi đấu |
+| ~~5~~ | ~~**Hoàn tất graph**~~ ✅ M12 (phần lớn) | +2.7 | xong | — | Ghép cặp + König + Hall, ma trận kề, tính phẳng qua hình vẽ và chặn Euler. **Chưa có**: tô mặt, kiểm tính phẳng tổng quát |
 | 6 | **Poset / Hasse** | +0.8 | 0.2 | **4.0** | Graph engine + layout phân tầng + analyzer chuỗi/phản xích |
 | 7 | **Game engine** (GM-01..04) | +5.25 | 1.5 | **3.5** | Đắt nhất: cần DSL-03 rule script sandboxed + solver + mô hình lượt. Đúng như SRS xếp vào P3 |
 | 8 | **Derivation engine** (§4.5) | +1.35 | 1.0 | **1.35** | Lãi thấp ở cột "gánh lập luận" nhưng đẩy cột "**có hình mang thông tin**" từ ~71% lên ~97%. Cần label atlas (D-07) trước |
@@ -261,7 +264,25 @@ Cộng dồn: **63 → ~88%**, tổng chi phí ≈ **5.5 M4**, tức khoảng 11
 
 **M11 đã lấy ba hạng mục đầu**: kho đi từ 63.4% lên **73.2%** (+9.8, thấp hơn +10.8
 dự tính — view song ánh mới xong phần nhấn liên động, chưa có animation biến hình).
-Còn lại các hạng mục 4–8, tổng ≈ 4.1 M4.
+
+**M12 lấy hạng mục 5**: 73.2% → **75.9%** (+2.7, sát dự tính +2.9; phần hụt là tô
+mặt). Còn lại các hạng mục 4, 6, 7, 8 — tổng ≈ 3.5 M4.
+
+#### Hạn chế đã biết của kiểm tính phẳng
+
+Không có thuật toán kiểm tính phẳng tổng quát (LR / PQ-tree). Có hai đường, và
+may thay đó là hai đường mà lời giải thi đấu thật sự dùng:
+
+- **Chứng minh phẳng** — kiểm rằng hình tác giả vẽ không có cạnh nào cắt nhau.
+  Toạ độ đỉnh ở dự án này vốn là nội dung (GR-02), nên hình trong file *chính là*
+  chứng chỉ. Đây cũng là cách duy nhất một bài thi chấp nhận.
+- **Chứng minh không phẳng** — chặn $e \le 3v-6$, hoặc $2v-4$ khi không có tam
+  giác. Giết $K_5$ và $K_{3,3}$ ngay.
+
+Ngoài hai đường đó, kết luận là **`unknown`**, và đó là câu trả lời trung thực:
+một hình vẽ vụng không nói lên điều gì về đồ thị. Đồ thị không đơn hoặc có cạnh
+vẽ cong thì analyzer **từ chối** — chặn Euler chỉ đúng cho đồ thị đơn, và phân
+tích giao điểm bằng đoạn thẳng không mô tả đúng một cạnh cong.
 
 #### Hạn chế đã biết của view song ánh ở P1
 

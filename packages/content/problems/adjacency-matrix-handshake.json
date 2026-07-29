@@ -1,0 +1,781 @@
+{
+  "schema_version": "0.1.0",
+  "id": "adjacency-matrix-handshake",
+  "statement": {
+    "vi": "Viết đồ thị thành ma trận kề. Đọc được gì từ tổng theo hàng, và từ tổng cả bảng?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bổ đề bắt tay nhìn qua ma trận kề."
+    }
+  },
+  "topics": [
+    "graph-basics",
+    "counting"
+  ],
+  "techniques": [
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "illustration",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "m",
+      "id": "inv-m",
+      "label": {
+        "vi": "Số cạnh"
+      }
+    },
+    {
+      "expr": "sum(vertices, v => deg(v))",
+      "id": "inv-d",
+      "label": {
+        "vi": "Tổng bậc"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cùng một đồ thị, hai cách viết. Ô $(i,j)$ tô đậm khi có [[a1|cạnh]] nối $i$ với $j$ — nên bảng **đối xứng** qua đường chéo: cạnh không có chiều."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "ev1v2",
+                "ev2v3",
+                "ev3v4",
+                "ev4v1",
+                "ev1v3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -12]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [12, 0]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [0, 12]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "ev1v2",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "ev2v3",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "ev3v4",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "ev4v1",
+                "type": "edge",
+                "u": "v4",
+                "v": "v1"
+              },
+              {
+                "id": "ev1v3",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đồ thị bốn đỉnh năm cạnh, và ma trận kề của nó."
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Đồ thị"
+            },
+            "label_right": {
+              "vi": "Ma trận kề"
+            },
+            "pairs": [
+              [
+                "ev1v2",
+                "ev1v2"
+              ],
+              [
+                "ev2v3",
+                "ev2v3"
+              ],
+              [
+                "ev3v4",
+                "ev3v4"
+              ],
+              [
+                "ev4v1",
+                "ev4v1"
+              ],
+              [
+                "ev1v3",
+                "ev1v3"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "show_labels": true,
+                "show_sums": true,
+                "view": "matrix"
+              },
+              "elements": [
+                {
+                  "id": "v1",
+                  "label": "1",
+                  "pos": [0, -12],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v2",
+                  "label": "2",
+                  "pos": [12, 0],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v3",
+                  "label": "3",
+                  "pos": [0, 12],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v4",
+                  "label": "4",
+                  "pos": [-12, 0],
+                  "type": "vertex"
+                },
+                {
+                  "id": "ev1v2",
+                  "type": "edge",
+                  "u": "v1",
+                  "v": "v2"
+                },
+                {
+                  "id": "ev2v3",
+                  "type": "edge",
+                  "u": "v2",
+                  "v": "v3"
+                },
+                {
+                  "id": "ev3v4",
+                  "type": "edge",
+                  "u": "v3",
+                  "v": "v4"
+                },
+                {
+                  "id": "ev4v1",
+                  "type": "edge",
+                  "u": "v4",
+                  "v": "v1"
+                },
+                {
+                  "id": "ev1v3",
+                  "type": "edge",
+                  "u": "v1",
+                  "v": "v3"
+                }
+              ],
+              "engine": "graph"
+            }
+          }
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Rê vào [[a2|một cạnh]] thì hai ô đối xứng cùng sáng: mỗi cạnh được bảng đếm **hai lần**, một lần ở hàng $i$ và một lần ở hàng $j$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "ev1v3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -12]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [12, 0]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [0, 12]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "ev1v2",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "ev2v3",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "ev3v4",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "ev4v1",
+                "type": "edge",
+                "u": "v4",
+                "v": "v1"
+              },
+              {
+                "id": "ev1v3",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "v1",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cạnh 1–3 được làm nổi ở cả hai cách vẽ."
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Đồ thị"
+            },
+            "label_right": {
+              "vi": "Ma trận kề"
+            },
+            "pairs": [
+              [
+                "ev1v2",
+                "ev1v2"
+              ],
+              [
+                "ev2v3",
+                "ev2v3"
+              ],
+              [
+                "ev3v4",
+                "ev3v4"
+              ],
+              [
+                "ev4v1",
+                "ev4v1"
+              ],
+              [
+                "ev1v3",
+                "ev1v3"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "show_labels": true,
+                "show_sums": true,
+                "view": "matrix"
+              },
+              "elements": [
+                {
+                  "id": "v1",
+                  "label": "1",
+                  "pos": [0, -12],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v2",
+                  "label": "2",
+                  "pos": [12, 0],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v3",
+                  "label": "3",
+                  "pos": [0, 12],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v4",
+                  "label": "4",
+                  "pos": [-12, 0],
+                  "type": "vertex"
+                },
+                {
+                  "id": "ev1v2",
+                  "type": "edge",
+                  "u": "v1",
+                  "v": "v2"
+                },
+                {
+                  "id": "ev2v3",
+                  "type": "edge",
+                  "u": "v2",
+                  "v": "v3"
+                },
+                {
+                  "id": "ev3v4",
+                  "type": "edge",
+                  "u": "v3",
+                  "v": "v4"
+                },
+                {
+                  "id": "ev4v1",
+                  "type": "edge",
+                  "u": "v4",
+                  "v": "v1"
+                },
+                {
+                  "color_class": 3,
+                  "emphasis": "focus",
+                  "id": "ev1v3",
+                  "type": "edge",
+                  "u": "v1",
+                  "v": "v3"
+                }
+              ],
+              "engine": "graph"
+            }
+          }
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tổng theo hàng $i$ đếm số cạnh chạm đỉnh $i$ — đúng định nghĩa **bậc**. [[a3|Đỉnh $1$]] có bậc $3$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "v1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "1",
+                "pos": [0, -12]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [12, 0]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [0, 12]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "ev1v2",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "ev2v3",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "ev3v4",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "ev4v1",
+                "type": "edge",
+                "u": "v4",
+                "v": "v1"
+              },
+              {
+                "id": "ev1v3",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đỉnh 1 được làm nổi; hàng của nó có tổng bằng 3."
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Đồ thị"
+            },
+            "label_right": {
+              "vi": "Ma trận kề"
+            },
+            "pairs": [
+              [
+                "ev1v2",
+                "ev1v2"
+              ],
+              [
+                "ev2v3",
+                "ev2v3"
+              ],
+              [
+                "ev3v4",
+                "ev3v4"
+              ],
+              [
+                "ev4v1",
+                "ev4v1"
+              ],
+              [
+                "ev1v3",
+                "ev1v3"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "show_labels": true,
+                "show_sums": true,
+                "view": "matrix"
+              },
+              "elements": [
+                {
+                  "color_class": 3,
+                  "emphasis": "focus",
+                  "id": "v1",
+                  "label": "1",
+                  "pos": [0, -12],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v2",
+                  "label": "2",
+                  "pos": [12, 0],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v3",
+                  "label": "3",
+                  "pos": [0, 12],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v4",
+                  "label": "4",
+                  "pos": [-12, 0],
+                  "type": "vertex"
+                },
+                {
+                  "id": "ev1v2",
+                  "type": "edge",
+                  "u": "v1",
+                  "v": "v2"
+                },
+                {
+                  "id": "ev2v3",
+                  "type": "edge",
+                  "u": "v2",
+                  "v": "v3"
+                },
+                {
+                  "id": "ev3v4",
+                  "type": "edge",
+                  "u": "v3",
+                  "v": "v4"
+                },
+                {
+                  "id": "ev4v1",
+                  "type": "edge",
+                  "u": "v4",
+                  "v": "v1"
+                },
+                {
+                  "id": "ev1v3",
+                  "type": "edge",
+                  "u": "v1",
+                  "v": "v3"
+                }
+              ],
+              "engine": "graph"
+            }
+          }
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cộng hết: $3+2+3+2 = 10 = 2 \\times 5$. Tổng bậc bằng **hai lần** số cạnh, vì mỗi cạnh đóng góp đúng $2$ vào bảng — đó là [[a4|bổ đề bắt tay]], và ở đây nó là một phép cộng chứ không phải một định lý phải tin."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "ev1v2",
+                "ev2v3",
+                "ev3v4",
+                "ev4v1",
+                "ev1v3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -12]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [12, 0]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [0, 12]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "ev1v2",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "ev2v3",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "ev3v4",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "ev4v1",
+                "type": "edge",
+                "u": "v4",
+                "v": "v1"
+              },
+              {
+                "id": "ev1v3",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ma trận với các tổng hàng 3, 2, 3, 2 và tổng chung 10."
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Đồ thị"
+            },
+            "label_right": {
+              "vi": "Ma trận kề"
+            },
+            "pairs": [
+              [
+                "ev1v2",
+                "ev1v2"
+              ],
+              [
+                "ev2v3",
+                "ev2v3"
+              ],
+              [
+                "ev3v4",
+                "ev3v4"
+              ],
+              [
+                "ev4v1",
+                "ev4v1"
+              ],
+              [
+                "ev1v3",
+                "ev1v3"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "show_labels": true,
+                "show_sums": true,
+                "view": "matrix"
+              },
+              "elements": [
+                {
+                  "id": "v1",
+                  "label": "1",
+                  "pos": [0, -12],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v2",
+                  "label": "2",
+                  "pos": [12, 0],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v3",
+                  "label": "3",
+                  "pos": [0, 12],
+                  "type": "vertex"
+                },
+                {
+                  "id": "v4",
+                  "label": "4",
+                  "pos": [-12, 0],
+                  "type": "vertex"
+                },
+                {
+                  "id": "ev1v2",
+                  "type": "edge",
+                  "u": "v1",
+                  "v": "v2"
+                },
+                {
+                  "id": "ev2v3",
+                  "type": "edge",
+                  "u": "v2",
+                  "v": "v3"
+                },
+                {
+                  "id": "ev3v4",
+                  "type": "edge",
+                  "u": "v3",
+                  "v": "v4"
+                },
+                {
+                  "id": "ev4v1",
+                  "type": "edge",
+                  "u": "v4",
+                  "v": "v1"
+                },
+                {
+                  "id": "ev1v3",
+                  "type": "edge",
+                  "u": "v1",
+                  "v": "v3"
+                }
+              ],
+              "engine": "graph"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

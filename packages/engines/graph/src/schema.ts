@@ -59,6 +59,25 @@ export const GraphConfig = Type.Object(
     show_degrees: Type.Optional(Type.Boolean({ default: false })),
     /** Khung nhìn suy ra từ toạ độ đỉnh; lề quanh chúng. */
     padding: Type.Optional(Type.Number({ minimum: 0, default: 6 })),
+    /**
+     * GR-07 — vẽ **cùng một đồ thị** dưới dạng ma trận kề thay vì đỉnh–cạnh.
+     *
+     * Không phải hai engine, cũng không phải hai scene: cùng dữ liệu, cùng id.
+     * Ô $(u,v)$ mang **đúng id của cạnh** nối chúng, nên anchor trỏ vào một cạnh
+     * làm sáng cả đoạn thẳng lẫn ô ma trận mà không cần khai gì thêm — đó là
+     * "đồng bộ hai chiều" của GR-07, ở dạng rẻ nhất và khó sai nhất.
+     *
+     * Giá trị sư phạm nằm ở chỗ nó là cầu sang đếm hai chiều: tổng theo hàng là
+     * bậc đỉnh, tổng cả bảng là hai lần số cạnh, và bổ đề bắt tay hiện ra thành
+     * một bảng đối xứng chứ không phải một công thức.
+     */
+    view: Type.Optional(
+      Type.Union([Type.Literal('node-link'), Type.Literal('matrix')], {
+        default: 'node-link',
+      }),
+    ),
+    /** Với `view: "matrix"`: hiện tổng hàng (bậc đỉnh) và tổng cả bảng. */
+    show_sums: Type.Optional(Type.Boolean({ default: false })),
   },
   { additionalProperties: false },
 );

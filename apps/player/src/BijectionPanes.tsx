@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { createContext, type SceneRenderer } from '@combviz/render';
-import { patch, KEY_ATTR } from '@combviz/render/dom';
+import { patch, KEY_ATTR, ELEMENT_ATTR } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
 import type { Step } from '@combviz/schema';
 
@@ -111,10 +111,14 @@ export function BijectionPanes({ step, renderer }: Props): preact.JSX.Element | 
   const onPoint = (event: Event): void => {
     let node = event.target as Element | null;
     while (node) {
-      const key = node.getAttribute?.(KEY_ATTR);
-      if (key !== null && key !== undefined && partners.has(key)) {
-        setActive(key);
-        return;
+      // `data-el` trước `data-k`: khi một element được vẽ thành nhiều node, chỉ
+      // `data-el` nói được node này thuộc về ai.
+      for (const attr of [ELEMENT_ATTR, KEY_ATTR]) {
+        const id = node.getAttribute?.(attr);
+        if (id !== null && id !== undefined && partners.has(id)) {
+          setActive(id);
+          return;
+        }
       }
       node = node.parentElement;
     }
@@ -177,7 +181,12 @@ export function BijectionPanes({ step, renderer }: Props): preact.JSX.Element | 
               onMouseEnter={() => setActive(a)}
               onMouseLeave={() => setActive(null)}
             >
-              {a} ↔ {b}
+              {/*
+                Hai vế trùng id là chuyện thường và có nghĩa: đồ thị và ma trận kề
+                của nó là **cùng** một tập element vẽ hai kiểu (GR-07), nên cặp
+                đúng là "e ứng với chính e". Hiện "e ↔ e" thì đọc như một lỗi.
+              */}
+              {a === b ? a : `${a} ↔ ${b}`}
             </button>
           </li>
         ))}

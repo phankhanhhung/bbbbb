@@ -362,7 +362,9 @@ export type GraphAnalyzerId =
   | 'bipartite'
   | 'cycle'
   | 'euler'
-  | 'hamilton';
+  | 'hamilton'
+  | 'matching'
+  | 'planarity';
 
 export interface GraphAnalysis {
   readonly components: Components;
@@ -371,6 +373,8 @@ export interface GraphAnalysis {
   readonly euler: EulerResult;
   readonly hamilton: AnalyzerResult<HamiltonResult>;
   readonly permutation: PermutationCycles;
+  readonly matching: AnalyzerResult<MatchingResult>;
+  readonly planarity: AnalyzerResult<PlanarityResult>;
 }
 
 /** Chạy toàn bộ analyzer. Dùng trong worker (ENG-04) và trong test. */
@@ -383,6 +387,8 @@ export function analyzeGraph(scene: Scene): GraphAnalysis {
     euler: eulerian(graph),
     hamilton: hamiltonian(graph),
     permutation: permutationCycles(graph),
+    matching: matching(graph),
+    planarity: planarity(graph),
   };
 }
 
@@ -471,4 +477,442 @@ export function permutationCycles(graph: GraphModel): PermutationCycles {
     sign: (n - cycles.length) % 2 === 0 ? 1 : -1,
     isPermutation: true,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Ghép cặp trên đồ thị hai phía (GR-06)
+// ---------------------------------------------------------------------------
+
+export interface MatchingResult {
+  /** Id cạnh của một ghép cặp **tối đa**. */
+  readonly matching: readonly string[];
+  readonly size: number;
+  /** Bạn ghép của mỗi đỉnh; đỉnh chưa ghép thì vắng mặt. */
+  readonly partner: ReadonlyMap<string, string>;
+  /**
+   * Ghép cặp tham lam ban đầu, và các **đường tăng** đã dùng để đi từ đó lên
+   * tối đa — theo đúng thứ tự thuật toán tìm ra.
+   *
+   * Đây là phần sư phạm thật sự của GR-06. "Ghép cặp tối đa là thế này" không
+   * dạy ai điều gì; thứ dạy được là *vì sao* nó tối đa: tham lam cho một kết
+   * quả, một đường tăng lật nó lên cao hơn một đơn vị, rồi tới lúc không còn
+   * đường tăng nào — và **đó** là định lý Berge. Tác giả dựng từng bước từ
+   * danh sách này.
+   */
+  readonly greedy: readonly string[];
+  /** Mỗi đường tăng là một dãy **đỉnh**, bắt đầu và kết thúc ở đỉnh chưa ghép. */
+  readonly augmentingPaths: readonly (readonly string[])[];
+  /**
+   * König: phủ đỉnh nhỏ nhất, và $|\text{phủ}| = |\text{ghép cặp}|$.
+   *
+   * Dựng từ chính ghép cặp tối đa (dựng Z rồi lấy $(L \setminus Z) \cup (R \cap Z)$),
+   * nên hai con số bằng nhau **theo cấu tạo** chứ không phải theo may mắn.
+   */
+  readonly cover: readonly string[];
+  /**
+   * Hall: một tập $S$ ở phía trái với $|N(S)| < |S|$; rỗng khi phía trái bão hoà.
+   *
+   * Nhân chứng cho chiều "không có ghép cặp bão hoà" của định lý Hall — thứ mà
+   * lời giải phải chỉ ra tận tay, không phải khẳng định suông.
+   */
+  readonly hallViolator: readonly string[];
+  /** $N(S)$ của `hallViolator`. */
+  readonly hallNeighbourhood: readonly string[];
+  /** Phía trái, theo phân hoạch hai phía (lớp 1). */
+  readonly left: readonly string[];
+}
+
+/**
+ * Ghép cặp tối đa bằng đường tăng (thuật toán Kuhn), $O(V \cdot E)$.
+ *
+ * Chỉ chạy trên đồ thị **hai phía**. Đồ thị tổng quát cần thuật toán bông hoa
+ * của Edmonds — gấp mấy lần độ phức tạp cho một họ bài gần như không xuất hiện
+ * ở đề thi, trong khi cụm Hall/König thì hai phía là toàn bộ nội dung. Không
+ * hai phía thì **từ chối kèm lý do**, không trả về một ghép cặp "gần đúng" mà
+ * chỗ gọi tưởng là tối đa.
+ *
+ * Khuyên bị bỏ qua: một cạnh nối đỉnh với chính nó không ghép được ai với ai.
+ */
+export function matching(graph: GraphModel): AnalyzerResult<MatchingResult> {
+  const parts = bipartite(graph);
+  if (!parts.bipartite) {
+    return refuse(
+      'Đồ thị không hai phía nên thuật toán đường tăng không áp dụng được; ' +
+        'ghép cặp trên đồ thị tổng quát cần thuật toán bông hoa (ngoài phạm vi P1)',
+    );
+  }
+
+  const left = graph.vertices.filter((v) => parts.side.get(v.id) === 1).map((v) => v.id);
+  const leftSet = new Set(left);
+
+  // Cạnh kề, đã bỏ khuyên và quy về chiều trái → phải.
+  const out = new Map<string, { to: string; edge: string }[]>();
+  for (const id of left) out.set(id, []);
+  for (const edge of graph.edges) {
+    if (edge.u === edge.v) continue;
+    const [from, to] = leftSet.has(edge.u) ? [edge.u, edge.v] : [edge.v, edge.u];
+    if (!leftSet.has(from)) continue;
+    out.get(from)?.push({ to, edge: edge.id });
+  }
+
+  const partnerOf = new Map<string, string>();
+  const edgeOf = new Map<string, string>();
+
+  const link = (l: string, r: string, edge: string): void => {
+    partnerOf.set(l, r);
+    partnerOf.set(r, l);
+    edgeOf.set(l, edge);
+    edgeOf.set(r, edge);
+  };
+
+  // Bước 1 — tham lam. Không chỉ để chạy nhanh hơn: nó là **bước đầu tiên mà
+  // người học tự làm được**, và đường tăng chỉ có nghĩa khi đã có cái gì đó để
+  // cải thiện.
+  for (const l of left) {
+    if (partnerOf.has(l)) continue;
+    for (const { to, edge } of out.get(l) ?? []) {
+      if (!partnerOf.has(to)) {
+        link(l, to, edge);
+        break;
+      }
+    }
+  }
+  const greedy = left.filter((l) => partnerOf.has(l)).map((l) => edgeOf.get(l) as string);
+
+  // Bước 2 — đường tăng cho từng đỉnh trái còn trống.
+  const augmentingPaths: string[][] = [];
+  for (const start of left) {
+    if (partnerOf.has(start)) continue;
+
+    const cameFrom = new Map<string, string>();
+    const seen = new Set<string>();
+    const endpoint = augment(start, out, partnerOf, seen, cameFrom);
+    if (endpoint === null) continue;
+
+    // Dựng lại đường **trước khi** lật, rồi mới lật: lật xong thì `partnerOf`
+    // đã đổi và đường đi không còn đọc lại được.
+    const path = [endpoint];
+    for (let cursor = endpoint; cameFrom.has(cursor); ) {
+      const l = cameFrom.get(cursor) as string;
+      path.push(l);
+      const previous = partnerOf.get(l);
+      if (previous === undefined) break;
+      path.push(previous);
+      cursor = previous;
+    }
+    augmentingPaths.push([...path].reverse());
+
+    flip(endpoint, out, partnerOf, edgeOf, cameFrom, link);
+  }
+
+  const matched = left.filter((l) => partnerOf.has(l));
+  const edges = matched.map((l) => edgeOf.get(l) as string);
+
+  return ok({
+    matching: edges,
+    size: edges.length,
+    partner: partnerOf,
+    greedy,
+    augmentingPaths,
+    ...konig(left, out, partnerOf),
+    ...hall(left, out, partnerOf),
+    left,
+  });
+}
+
+/** Tìm đỉnh phải kết thúc một đường tăng xuất phát từ `l`. */
+function augment(
+  l: string,
+  out: ReadonlyMap<string, readonly { to: string; edge: string }[]>,
+  partnerOf: ReadonlyMap<string, string>,
+  seen: Set<string>,
+  cameFrom: Map<string, string>,
+): string | null {
+  for (const { to } of out.get(l) ?? []) {
+    if (seen.has(to)) continue;
+    seen.add(to);
+    cameFrom.set(to, l);
+
+    const held = partnerOf.get(to);
+    if (held === undefined) return to;
+
+    const found = augment(held, out, partnerOf, seen, cameFrom);
+    if (found !== null) return found;
+  }
+  return null;
+}
+
+/** Lật đường tăng: cạnh ngoài ghép thành trong, trong thành ngoài. */
+function flip(
+  endpoint: string,
+  out: ReadonlyMap<string, readonly { to: string; edge: string }[]>,
+  partnerOf: Map<string, string>,
+  edgeOf: Map<string, string>,
+  cameFrom: ReadonlyMap<string, string>,
+  link: (l: string, r: string, edge: string) => void,
+): void {
+  let r = endpoint;
+  for (;;) {
+    const l = cameFrom.get(r) as string;
+    const previous = partnerOf.get(l);
+    const edge = (out.get(l) ?? []).find((e) => e.to === r)?.edge as string;
+
+    link(l, r, edge);
+    if (previous === undefined) return;
+
+    partnerOf.delete(previous);
+    edgeOf.delete(previous);
+    r = previous;
+  }
+}
+
+/**
+ * Phủ đỉnh nhỏ nhất theo chứng minh của König.
+ *
+ * $Z$ = các đỉnh tới được từ đỉnh trái chưa ghép, đi cạnh ngoài ghép từ trái và
+ * cạnh trong ghép từ phải. Phủ là $(L \setminus Z) \cup (R \cap Z)$.
+ */
+function konig(
+  left: readonly string[],
+  out: ReadonlyMap<string, readonly { to: string; edge: string }[]>,
+  partnerOf: ReadonlyMap<string, string>,
+): { cover: string[] } {
+  const inZ = new Set<string>();
+  const queue = left.filter((l) => !partnerOf.has(l));
+  for (const l of queue) inZ.add(l);
+
+  while (queue.length > 0) {
+    const l = queue.shift() as string;
+    for (const { to } of out.get(l) ?? []) {
+      if (inZ.has(to)) continue;
+      inZ.add(to);
+      const held = partnerOf.get(to);
+      if (held !== undefined && !inZ.has(held)) {
+        inZ.add(held);
+        queue.push(held);
+      }
+    }
+  }
+
+  const cover = left.filter((l) => !inZ.has(l));
+  for (const l of left) {
+    for (const { to } of out.get(l) ?? []) {
+      if (inZ.has(to) && !cover.includes(to)) cover.push(to);
+    }
+  }
+  return { cover };
+}
+
+/**
+ * Nhân chứng vi phạm điều kiện Hall.
+ *
+ * Cùng tập $Z$ của König: khi phía trái không bão hoà, $S = L \cap Z$ thoả
+ * $|N(S)| < |S|$ — và đó chính là tập mà lời giải cần chỉ ra.
+ */
+function hall(
+  left: readonly string[],
+  out: ReadonlyMap<string, readonly { to: string; edge: string }[]>,
+  partnerOf: ReadonlyMap<string, string>,
+): { hallViolator: string[]; hallNeighbourhood: string[] } {
+  if (left.every((l) => partnerOf.has(l))) {
+    return { hallViolator: [], hallNeighbourhood: [] };
+  }
+
+  const inZ = new Set<string>();
+  const queue = left.filter((l) => !partnerOf.has(l));
+  for (const l of queue) inZ.add(l);
+
+  while (queue.length > 0) {
+    const l = queue.shift() as string;
+    for (const { to } of out.get(l) ?? []) {
+      const held = partnerOf.get(to);
+      if (held !== undefined && !inZ.has(held)) {
+        inZ.add(held);
+        queue.push(held);
+      }
+    }
+  }
+
+  const violator = left.filter((l) => inZ.has(l));
+  const neighbourhood: string[] = [];
+  for (const l of violator) {
+    for (const { to } of out.get(l) ?? []) {
+      if (!neighbourhood.includes(to)) neighbourhood.push(to);
+    }
+  }
+  return { hallViolator: violator, hallNeighbourhood: neighbourhood };
+}
+
+// ---------------------------------------------------------------------------
+// Tính phẳng (GR-05)
+// ---------------------------------------------------------------------------
+
+export interface PlanarityResult {
+  /**
+   * Kết luận về **đồ thị**, không phải về hình vẽ.
+   *
+   * - `planar` — hình tác giả vẽ không có giao điểm nào, và đó là **chứng chỉ**:
+   *   một cách nhúng phẳng cụ thể, kiểm được bằng mắt.
+   * - `not-planar` — số cạnh vượt chặn Euler, nên không cách vẽ nào cứu được.
+   * - `unknown` — hình có giao điểm nhưng chặn Euler chưa loại trừ. Nói thẳng
+   *   là "chưa biết" thay vì đoán: hình xấu không chứng minh được điều gì cả.
+   */
+  readonly verdict: 'planar' | 'not-planar' | 'unknown';
+  /** Các cặp cạnh cắt nhau **trong hình đã vẽ**, mỗi cặp một lần. */
+  readonly crossings: readonly (readonly [string, string])[];
+  readonly edges: number;
+  /** Chặn Euler: $3v - 6$, hoặc $2v - 4$ khi đồ thị không có tam giác. */
+  readonly maxEdges: number;
+  readonly triangleFree: boolean;
+  /** Số mặt theo công thức Euler; chỉ có nghĩa khi `verdict === 'planar'`. */
+  readonly faces: number;
+}
+
+/**
+ * Kiểm tính phẳng bằng **chính hình mà tác giả đã vẽ**, cộng chặn Euler.
+ *
+ * Đây không phải thuật toán kiểm tính phẳng tổng quát (LR / PQ-tree), và chỗ
+ * này phải nói thẳng: hàm dưới đây **không** trả lời được cho mọi đồ thị. Nó
+ * trả lời được cho hai trường hợp, và may thay đó là hai trường hợp mà lời giải
+ * thi đấu thực sự dùng:
+ *
+ *   - Cần chứng minh **phẳng**: cách duy nhất được chấp nhận trong một bài thi
+ *     là *vẽ ra* một cách nhúng. Ở dự án này toạ độ đỉnh vốn đã là nội dung
+ *     (GR-02), nên hình trong file **chính là** chứng chỉ — chỉ cần kiểm rằng
+ *     không cạnh nào cắt nhau.
+ *   - Cần chứng minh **không phẳng**: $e > 3v - 6$ (hoặc $2v-4$ khi không có
+ *     tam giác) là lập luận chuẩn mực, và nó giết $K_5$ với $K_{3,3}$ ngay.
+ *
+ * Còn lại là `unknown`, và đó là câu trả lời trung thực chứ không phải thiếu
+ * sót che giấu: một hình vẽ vụng không nói lên điều gì về đồ thị. Đồ thị không
+ * đơn (khuyên, cạnh bội) hoặc có cạnh vẽ cong thì **từ chối** — phân tích đoạn
+ * thẳng không mô tả đúng hình đó, và chặn Euler chỉ đúng cho đồ thị đơn.
+ */
+export function planarity(graph: GraphModel): AnalyzerResult<PlanarityResult> {
+  const n = graph.vertices.length;
+  if (n > GRAPH_LIMITS.maxPlanarityVertices) {
+    return refuse(
+      `Đồ thị có ${n} đỉnh, vượt trần ${GRAPH_LIMITS.maxPlanarityVertices} của kiểm tính phẳng`,
+    );
+  }
+
+  if (graph.edges.some((e) => e.u === e.v)) {
+    return refuse('Đồ thị có khuyên: chặn Euler chỉ đúng cho đồ thị đơn');
+  }
+  if (graph.edges.some((e) => e.multiIndex > 0)) {
+    return refuse('Có cạnh vẽ cong (`multi_index`): kiểm giao điểm bằng đoạn thẳng không mô tả đúng hình đó');
+  }
+  const pairs = new Set(graph.edges.map((e) => [e.u, e.v].sort().join(' ')));
+  if (pairs.size < graph.edges.length) {
+    return refuse('Đồ thị có cạnh bội: chặn Euler chỉ đúng cho đồ thị đơn');
+  }
+
+  const triangleFree = !hasTriangle(graph);
+  const maxEdges = n < 3 ? graph.edges.length : (triangleFree ? 2 * n - 4 : 3 * n - 6);
+  const crossings = drawingCrossings(graph);
+  const components = connectedComponents(graph).count;
+
+  const verdict: PlanarityResult['verdict'] =
+    crossings.length === 0
+      ? 'planar'
+      : graph.edges.length > maxEdges
+        ? 'not-planar'
+        : 'unknown';
+
+  return ok({
+    verdict,
+    crossings,
+    edges: graph.edges.length,
+    maxEdges,
+    triangleFree,
+    // Euler mở rộng cho đồ thị nhiều thành phần: $v - e + f = 1 + c$.
+    faces: verdict === 'planar' ? graph.edges.length - n + 1 + components : 0,
+  });
+}
+
+function hasTriangle(graph: GraphModel): boolean {
+  const neighbours = new Map<string, Set<string>>(
+    graph.vertices.map((v) => [
+      v.id,
+      new Set((graph.adjacency.get(v.id) ?? []).map((e) => e.to)),
+    ]),
+  );
+  for (const edge of graph.edges) {
+    const a = neighbours.get(edge.u);
+    const b = neighbours.get(edge.v);
+    if (!a || !b) continue;
+    for (const w of a) {
+      if (w !== edge.u && w !== edge.v && b.has(w)) return true;
+    }
+  }
+  return false;
+}
+
+/** Các cặp cạnh cắt nhau trong hình, bỏ qua cặp dùng chung đầu mút. */
+function drawingCrossings(graph: GraphModel): (readonly [string, string])[] {
+  const out: [string, string][] = [];
+
+  for (let i = 0; i < graph.edges.length; i += 1) {
+    for (let j = i + 1; j < graph.edges.length; j += 1) {
+      const a = graph.edges[i] as GraphModel['edges'][number];
+      const b = graph.edges[j] as GraphModel['edges'][number];
+      if (a.u === b.u || a.u === b.v || a.v === b.u || a.v === b.v) continue;
+
+      const p1 = graph.byId.get(a.u);
+      const p2 = graph.byId.get(a.v);
+      const p3 = graph.byId.get(b.u);
+      const p4 = graph.byId.get(b.v);
+      if (!p1 || !p2 || !p3 || !p4) continue;
+
+      if (segmentsCross(p1, p2, p3, p4)) out.push([a.id, b.id]);
+    }
+  }
+
+  return out;
+}
+
+interface Point {
+  readonly x: number;
+  readonly y: number;
+}
+
+/** Tích có hướng, dùng để biết `c` nằm bên nào của $ab$. */
+function cross(a: Point, b: Point, c: Point): number {
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+const EPS = 1e-9;
+
+function segmentsCross(p1: Point, p2: Point, p3: Point, p4: Point): boolean {
+  const d1 = cross(p3, p4, p1);
+  const d2 = cross(p3, p4, p2);
+  const d3 = cross(p1, p2, p3);
+  const d4 = cross(p1, p2, p4);
+
+  // Cắt thật sự: mỗi đoạn có hai đầu nằm hai bên đoạn kia.
+  if (
+    ((d1 > EPS && d2 < -EPS) || (d1 < -EPS && d2 > EPS)) &&
+    ((d3 > EPS && d4 < -EPS) || (d3 < -EPS && d4 > EPS))
+  ) {
+    return true;
+  }
+
+  // Suy biến: một đầu mút nằm **trên** đoạn kia, hoặc hai đoạn trùng phương và
+  // chồng nhau. Hai cạnh không chung đỉnh mà chạm nhau thì hình đó cũng không
+  // phải một cách nhúng phẳng hợp lệ, nên tính là cắt.
+  return (
+    (Math.abs(d1) <= EPS && onSegment(p3, p4, p1)) ||
+    (Math.abs(d2) <= EPS && onSegment(p3, p4, p2)) ||
+    (Math.abs(d3) <= EPS && onSegment(p1, p2, p3)) ||
+    (Math.abs(d4) <= EPS && onSegment(p1, p2, p4))
+  );
+}
+
+function onSegment(a: Point, b: Point, c: Point): boolean {
+  return (
+    Math.min(a.x, b.x) - EPS <= c.x &&
+    c.x <= Math.max(a.x, b.x) + EPS &&
+    Math.min(a.y, b.y) - EPS <= c.y &&
+    c.y <= Math.max(a.y, b.y) + EPS
+  );
 }

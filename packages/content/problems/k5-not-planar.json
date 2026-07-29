@@ -1,0 +1,704 @@
+{
+  "schema_version": "0.1.0",
+  "id": "k5-not-planar",
+  "statement": {
+    "vi": "Chứng minh rằng $K_5$ — năm đỉnh đôi một nối nhau — không vẽ được trên mặt phẳng mà không có cạnh nào cắt nhau."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài kinh điển; chặn $e \\le 3v-6$ là công cụ chuẩn mực của họ bài tính phẳng."
+    }
+  },
+  "topics": [
+    "graph-basics"
+  ],
+  "techniques": [
+    "extremal",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "m",
+      "id": "inv-e",
+      "label": {
+        "vi": "Số cạnh"
+      }
+    },
+    {
+      "expr": "max_planar_edges",
+      "id": "inv-b",
+      "label": {
+        "vi": "Chặn Euler $3v-6$"
+      }
+    },
+    {
+      "expr": "crossings",
+      "id": "inv-x",
+      "label": {
+        "vi": "Chỗ cắt nhau trong hình"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "$K_4$ **vẽ được**: đặt [[a1|một đỉnh vào giữa]] tam giác thì không cạnh nào cắt nhau. Bảng bên cạnh đếm $0$ chỗ cắt — hình này là một chứng minh, không phải một lời hứa."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "d"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -11]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "2",
+                "pos": [-10, 6]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "3",
+                "pos": [10, 6]
+              },
+              {
+                "id": "d",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 0]
+              },
+              {
+                "id": "fab",
+                "type": "edge",
+                "u": "a",
+                "v": "b"
+              },
+              {
+                "id": "fbc",
+                "type": "edge",
+                "u": "b",
+                "v": "c"
+              },
+              {
+                "id": "fca",
+                "type": "edge",
+                "u": "c",
+                "v": "a"
+              },
+              {
+                "id": "fad",
+                "type": "edge",
+                "u": "a",
+                "v": "d"
+              },
+              {
+                "id": "fbd",
+                "type": "edge",
+                "u": "b",
+                "v": "d"
+              },
+              {
+                "id": "fcd",
+                "type": "edge",
+                "u": "c",
+                "v": "d"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn đỉnh: một tam giác và một đỉnh ở giữa, sáu cạnh không cắt nhau."
+          }
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thêm đỉnh thứ năm, nối hết: $K_5$ có [[a2|mười cạnh]]. Vẽ trên vòng tròn thì năm đường chéo cắt nhau — nhưng hình xấu **không chứng minh được gì**. Phải chặn từ phía khác."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "eab",
+                "eac",
+                "ead",
+                "eae",
+                "ebc",
+                "ebd",
+                "ebe",
+                "ecd",
+                "ece",
+                "ede"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -12]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "2",
+                "pos": [11.41, -3.71]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "3",
+                "pos": [7.05, 9.71]
+              },
+              {
+                "id": "d",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-7.05, 9.71]
+              },
+              {
+                "id": "e",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-11.41, -3.71]
+              },
+              {
+                "id": "eab",
+                "type": "edge",
+                "u": "a",
+                "v": "b"
+              },
+              {
+                "id": "eac",
+                "type": "edge",
+                "u": "a",
+                "v": "c"
+              },
+              {
+                "id": "ead",
+                "type": "edge",
+                "u": "a",
+                "v": "d"
+              },
+              {
+                "id": "eae",
+                "type": "edge",
+                "u": "a",
+                "v": "e"
+              },
+              {
+                "id": "ebc",
+                "type": "edge",
+                "u": "b",
+                "v": "c"
+              },
+              {
+                "id": "ebd",
+                "type": "edge",
+                "u": "b",
+                "v": "d"
+              },
+              {
+                "id": "ebe",
+                "type": "edge",
+                "u": "b",
+                "v": "e"
+              },
+              {
+                "id": "ecd",
+                "type": "edge",
+                "u": "c",
+                "v": "d"
+              },
+              {
+                "id": "ece",
+                "type": "edge",
+                "u": "c",
+                "v": "e"
+              },
+              {
+                "id": "ede",
+                "type": "edge",
+                "u": "d",
+                "v": "e"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm đỉnh trên vòng tròn, mười cạnh, các đường chéo cắt nhau."
+          },
+          "expects_violation": [
+            "plane-drawing"
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giả sử vẽ được. Công thức Euler cho $v - e + f = 2$. Mỗi mặt viền bởi [[a3|ít nhất $3$ cạnh]], mỗi cạnh viền đúng $2$ mặt, nên $3f \\le 2e$, tức $f \\le \\tfrac{2e}{3}$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "eab",
+                "eac",
+                "ead"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -12]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "2",
+                "pos": [11.41, -3.71]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "3",
+                "pos": [7.05, 9.71]
+              },
+              {
+                "id": "d",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-7.05, 9.71]
+              },
+              {
+                "id": "e",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-11.41, -3.71]
+              },
+              {
+                "id": "eab",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "a",
+                "v": "b"
+              },
+              {
+                "id": "eac",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "a",
+                "v": "c"
+              },
+              {
+                "id": "ead",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "a",
+                "v": "d"
+              },
+              {
+                "id": "eae",
+                "type": "edge",
+                "u": "a",
+                "v": "e"
+              },
+              {
+                "id": "ebc",
+                "type": "edge",
+                "u": "b",
+                "v": "c"
+              },
+              {
+                "id": "ebd",
+                "type": "edge",
+                "u": "b",
+                "v": "d"
+              },
+              {
+                "id": "ebe",
+                "type": "edge",
+                "u": "b",
+                "v": "e"
+              },
+              {
+                "id": "ecd",
+                "type": "edge",
+                "u": "c",
+                "v": "d"
+              },
+              {
+                "id": "ece",
+                "type": "edge",
+                "u": "c",
+                "v": "e"
+              },
+              {
+                "id": "ede",
+                "type": "edge",
+                "u": "d",
+                "v": "e"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba cạnh viền một mặt tam giác được làm nổi."
+          },
+          "expects_violation": [
+            "plane-drawing"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thay vào: $2 = v - e + f \\le v - e + \\tfrac{2e}{3} = v - \\tfrac{e}{3}$, nên $e \\le 3v - 6$. Với [[a4|$v = 5$]] thì $e \\le 9$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "a",
+                "b",
+                "c",
+                "d",
+                "e"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "1",
+                "pos": [0, -12]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "2",
+                "pos": [11.41, -3.71]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "3",
+                "pos": [7.05, 9.71]
+              },
+              {
+                "id": "d",
+                "type": "vertex",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "4",
+                "pos": [-7.05, 9.71]
+              },
+              {
+                "id": "e",
+                "type": "vertex",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "5",
+                "pos": [-11.41, -3.71]
+              },
+              {
+                "id": "eab",
+                "type": "edge",
+                "u": "a",
+                "v": "b"
+              },
+              {
+                "id": "eac",
+                "type": "edge",
+                "u": "a",
+                "v": "c"
+              },
+              {
+                "id": "ead",
+                "type": "edge",
+                "u": "a",
+                "v": "d"
+              },
+              {
+                "id": "eae",
+                "type": "edge",
+                "u": "a",
+                "v": "e"
+              },
+              {
+                "id": "ebc",
+                "type": "edge",
+                "u": "b",
+                "v": "c"
+              },
+              {
+                "id": "ebd",
+                "type": "edge",
+                "u": "b",
+                "v": "d"
+              },
+              {
+                "id": "ebe",
+                "type": "edge",
+                "u": "b",
+                "v": "e"
+              },
+              {
+                "id": "ecd",
+                "type": "edge",
+                "u": "c",
+                "v": "d"
+              },
+              {
+                "id": "ece",
+                "type": "edge",
+                "u": "c",
+                "v": "e"
+              },
+              {
+                "id": "ede",
+                "type": "edge",
+                "u": "d",
+                "v": "e"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm đỉnh được làm nổi."
+          },
+          "expects_violation": [
+            "plane-drawing"
+          ]
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "contradiction",
+          "narrative": {
+            "vi": "Nhưng $K_5$ có $10$ cạnh, mà $10 > 9$. Mâu thuẫn — vậy [[a5|$K_5$]] không phẳng. Chú ý lập luận này không nhắc gì tới cách vẽ: nó loại **mọi** cách vẽ cùng một lúc."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "eab",
+                "eac",
+                "ead",
+                "eae",
+                "ebc",
+                "ebd",
+                "ebe",
+                "ecd",
+                "ece",
+                "ede"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "padding": 9,
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -12]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "2",
+                "pos": [11.41, -3.71]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "3",
+                "pos": [7.05, 9.71]
+              },
+              {
+                "id": "d",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-7.05, 9.71]
+              },
+              {
+                "id": "e",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-11.41, -3.71]
+              },
+              {
+                "id": "eab",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "a",
+                "v": "b"
+              },
+              {
+                "id": "eac",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "a",
+                "v": "c"
+              },
+              {
+                "id": "ead",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "a",
+                "v": "d"
+              },
+              {
+                "id": "eae",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "a",
+                "v": "e"
+              },
+              {
+                "id": "ebc",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "b",
+                "v": "c"
+              },
+              {
+                "id": "ebd",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "b",
+                "v": "d"
+              },
+              {
+                "id": "ebe",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "b",
+                "v": "e"
+              },
+              {
+                "id": "ecd",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "c",
+                "v": "d"
+              },
+              {
+                "id": "ece",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "c",
+                "v": "e"
+              },
+              {
+                "id": "ede",
+                "type": "edge",
+                "color_class": 3,
+                "emphasis": "focus",
+                "u": "d",
+                "v": "e"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Toàn bộ mười cạnh của K5 được làm nổi."
+          },
+          "expects_violation": [
+            "plane-drawing"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "plane-drawing"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s4"
+  }
+}

@@ -1,0 +1,609 @@
+{
+  "schema_version": "0.1.0",
+  "id": "konig-matching-cover",
+  "statement": {
+    "vi": "Trên đồ thị hai phía, cỡ ghép cặp lớn nhất bằng cỡ phủ đỉnh nhỏ nhất."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Định lý König–Egerváry, 1931."
+    }
+  },
+  "topics": [
+    "graph-basics",
+    "matching"
+  ],
+  "techniques": [
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "draft",
+  "kind": "both",
+  "created": "2026-07-29",
+  "updated": "2026-07-29",
+  "invariants": [
+    {
+      "expr": "matching",
+      "id": "inv-m",
+      "label": {
+        "vi": "Ghép cặp lớn nhất"
+      }
+    },
+    {
+      "expr": "cover",
+      "id": "inv-c",
+      "label": {
+        "vi": "Phủ đỉnh nhỏ nhất"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một đồ thị hai phía sáu đỉnh, [[a1|sáu cạnh]] — chu trình độ dài $6$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e-l1r1",
+                "e-l1r2",
+                "e-l2r2",
+                "e-l2r3",
+                "e-l3r3",
+                "e-l3r1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "l1",
+                "type": "vertex",
+                "label": "u₁",
+                "pos": [-12, -10]
+              },
+              {
+                "id": "l2",
+                "type": "vertex",
+                "label": "u₂",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "l3",
+                "type": "vertex",
+                "label": "u₃",
+                "pos": [-12, 10]
+              },
+              {
+                "id": "r1",
+                "type": "vertex",
+                "label": "w₁",
+                "pos": [12, -10]
+              },
+              {
+                "id": "r2",
+                "type": "vertex",
+                "label": "w₂",
+                "pos": [12, 0]
+              },
+              {
+                "id": "r3",
+                "type": "vertex",
+                "label": "w₃",
+                "pos": [12, 10]
+              },
+              {
+                "id": "e-l1r1",
+                "type": "edge",
+                "u": "l1",
+                "v": "r1"
+              },
+              {
+                "id": "e-l1r2",
+                "type": "edge",
+                "u": "l1",
+                "v": "r2"
+              },
+              {
+                "id": "e-l2r2",
+                "type": "edge",
+                "u": "l2",
+                "v": "r2"
+              },
+              {
+                "id": "e-l2r3",
+                "type": "edge",
+                "u": "l2",
+                "v": "r3"
+              },
+              {
+                "id": "e-l3r3",
+                "type": "edge",
+                "u": "l3",
+                "v": "r3"
+              },
+              {
+                "id": "e-l3r1",
+                "type": "edge",
+                "u": "l3",
+                "v": "r1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sáu đỉnh chia hai phía, sáu cạnh tạo thành một chu trình."
+          }
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a2|Ba cạnh]] đôi một không chung đỉnh: một ghép cặp cỡ $3$. Không thể hơn — mỗi phía chỉ có $3$ đỉnh."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "e-l1r1",
+                "e-l2r2",
+                "e-l3r3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "l1",
+                "type": "vertex",
+                "label": "u₁",
+                "pos": [-12, -10]
+              },
+              {
+                "id": "l2",
+                "type": "vertex",
+                "label": "u₂",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "l3",
+                "type": "vertex",
+                "label": "u₃",
+                "pos": [-12, 10]
+              },
+              {
+                "id": "r1",
+                "type": "vertex",
+                "label": "w₁",
+                "pos": [12, -10]
+              },
+              {
+                "id": "r2",
+                "type": "vertex",
+                "label": "w₂",
+                "pos": [12, 0]
+              },
+              {
+                "id": "r3",
+                "type": "vertex",
+                "label": "w₃",
+                "pos": [12, 10]
+              },
+              {
+                "id": "e-l1r1",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "l1",
+                "v": "r1"
+              },
+              {
+                "id": "e-l1r2",
+                "type": "edge",
+                "u": "l1",
+                "v": "r2"
+              },
+              {
+                "id": "e-l2r2",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "l2",
+                "v": "r2"
+              },
+              {
+                "id": "e-l2r3",
+                "type": "edge",
+                "u": "l2",
+                "v": "r3"
+              },
+              {
+                "id": "e-l3r3",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "l3",
+                "v": "r3"
+              },
+              {
+                "id": "e-l3r1",
+                "type": "edge",
+                "u": "l3",
+                "v": "r1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba cạnh rời nhau được tô đậm."
+          }
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Phủ đỉnh: chọn [[a3|ba đỉnh]] sao cho mọi cạnh đều chạm ít nhất một đỉnh đã chọn. Ba đỉnh phía trái là đủ."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "l1",
+                "l2",
+                "l3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "l1",
+                "type": "vertex",
+                "color_class": 5,
+                "emphasis": "focus",
+                "label": "u₁",
+                "pos": [-12, -10]
+              },
+              {
+                "id": "l2",
+                "type": "vertex",
+                "color_class": 5,
+                "emphasis": "focus",
+                "label": "u₂",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "l3",
+                "type": "vertex",
+                "color_class": 5,
+                "emphasis": "focus",
+                "label": "u₃",
+                "pos": [-12, 10]
+              },
+              {
+                "id": "r1",
+                "type": "vertex",
+                "label": "w₁",
+                "pos": [12, -10]
+              },
+              {
+                "id": "r2",
+                "type": "vertex",
+                "label": "w₂",
+                "pos": [12, 0]
+              },
+              {
+                "id": "r3",
+                "type": "vertex",
+                "label": "w₃",
+                "pos": [12, 10]
+              },
+              {
+                "id": "e-l1r1",
+                "type": "edge",
+                "u": "l1",
+                "v": "r1"
+              },
+              {
+                "id": "e-l1r2",
+                "type": "edge",
+                "u": "l1",
+                "v": "r2"
+              },
+              {
+                "id": "e-l2r2",
+                "type": "edge",
+                "u": "l2",
+                "v": "r2"
+              },
+              {
+                "id": "e-l2r3",
+                "type": "edge",
+                "u": "l2",
+                "v": "r3"
+              },
+              {
+                "id": "e-l3r3",
+                "type": "edge",
+                "u": "l3",
+                "v": "r3"
+              },
+              {
+                "id": "e-l3r1",
+                "type": "edge",
+                "u": "l3",
+                "v": "r1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba đỉnh phía trái được làm nổi."
+          }
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Không thể phủ bằng $2$ đỉnh: [[a4|ba cạnh của ghép cặp]] đôi một rời nhau, nên mỗi cạnh **đòi riêng** một đỉnh. Vậy phủ $\\ge 3$, và ta đã có phủ $= 3$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "e-l1r1",
+                "e-l2r2",
+                "e-l3r3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "l1",
+                "type": "vertex",
+                "color_class": 5,
+                "emphasis": "focus",
+                "label": "u₁",
+                "pos": [-12, -10]
+              },
+              {
+                "id": "l2",
+                "type": "vertex",
+                "color_class": 5,
+                "emphasis": "focus",
+                "label": "u₂",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "l3",
+                "type": "vertex",
+                "color_class": 5,
+                "emphasis": "focus",
+                "label": "u₃",
+                "pos": [-12, 10]
+              },
+              {
+                "id": "r1",
+                "type": "vertex",
+                "label": "w₁",
+                "pos": [12, -10]
+              },
+              {
+                "id": "r2",
+                "type": "vertex",
+                "label": "w₂",
+                "pos": [12, 0]
+              },
+              {
+                "id": "r3",
+                "type": "vertex",
+                "label": "w₃",
+                "pos": [12, 10]
+              },
+              {
+                "id": "e-l1r1",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "l1",
+                "v": "r1"
+              },
+              {
+                "id": "e-l1r2",
+                "type": "edge",
+                "u": "l1",
+                "v": "r2"
+              },
+              {
+                "id": "e-l2r2",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "l2",
+                "v": "r2"
+              },
+              {
+                "id": "e-l2r3",
+                "type": "edge",
+                "u": "l2",
+                "v": "r3"
+              },
+              {
+                "id": "e-l3r3",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "l3",
+                "v": "r3"
+              },
+              {
+                "id": "e-l3r1",
+                "type": "edge",
+                "u": "l3",
+                "v": "r1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ghép cặp và phủ hiện cùng lúc."
+          }
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chiều $\\text{ghép} \\le \\text{phủ}$ đúng với mọi đồ thị: [[a5|mỗi cạnh của ghép cặp]] ăn mất một đỉnh phủ riêng. Điều **König** khẳng định là ở đồ thị hai phía thì dấu bằng luôn xảy ra — hai con số trong bảng bên cạnh không bao giờ lệch nhau."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "e-l1r1",
+                "e-l2r2",
+                "e-l3r3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "l1",
+                "type": "vertex",
+                "color_class": 5,
+                "emphasis": "focus",
+                "label": "u₁",
+                "pos": [-12, -10]
+              },
+              {
+                "id": "l2",
+                "type": "vertex",
+                "color_class": 5,
+                "emphasis": "focus",
+                "label": "u₂",
+                "pos": [-12, 0]
+              },
+              {
+                "id": "l3",
+                "type": "vertex",
+                "color_class": 5,
+                "emphasis": "focus",
+                "label": "u₃",
+                "pos": [-12, 10]
+              },
+              {
+                "id": "r1",
+                "type": "vertex",
+                "label": "w₁",
+                "pos": [12, -10]
+              },
+              {
+                "id": "r2",
+                "type": "vertex",
+                "label": "w₂",
+                "pos": [12, 0]
+              },
+              {
+                "id": "r3",
+                "type": "vertex",
+                "label": "w₃",
+                "pos": [12, 10]
+              },
+              {
+                "id": "e-l1r1",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "l1",
+                "v": "r1"
+              },
+              {
+                "id": "e-l1r2",
+                "type": "edge",
+                "u": "l1",
+                "v": "r2"
+              },
+              {
+                "id": "e-l2r2",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "l2",
+                "v": "r2"
+              },
+              {
+                "id": "e-l2r3",
+                "type": "edge",
+                "u": "l2",
+                "v": "r3"
+              },
+              {
+                "id": "e-l3r3",
+                "type": "edge",
+                "color_class": 1,
+                "emphasis": "focus",
+                "u": "l3",
+                "v": "r3"
+              },
+              {
+                "id": "e-l3r1",
+                "type": "edge",
+                "u": "l3",
+                "v": "r1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ghép cặp ba cạnh và phủ ba đỉnh, cùng một hình."
+          }
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "bipartite"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

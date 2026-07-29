@@ -21,6 +21,17 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
  */
 export const KEY_ATTR = 'data-k';
 
+/**
+ * Element **ngữ nghĩa** mà một node thuộc về, khi nó khác danh tính DOM.
+ *
+ * Một element có thể được vẽ thành nhiều node: ma trận kề vẽ mỗi cạnh thành hai
+ * ô đối xứng (GR-07). Hai ô đó bắt buộc phải mang `data-k` khác nhau — diff và
+ * nội suy gộp theo key, nên trùng key thì ô này nội suy từ ô kia và trượt ngang
+ * qua bảng. Nhưng cả hai vẫn **là** một cạnh, và lớp trên cần biết điều đó để
+ * rê chuột vào ô nào cũng ra đúng cạnh ấy.
+ */
+export const ELEMENT_ATTR = 'data-el';
+
 export function patch(container: Element, nodes: readonly SvgNode[]): void {
   patchChildren(container, nodes);
 }

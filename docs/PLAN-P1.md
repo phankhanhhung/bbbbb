@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M11 xong (4 engine, phủ ~73%); kho 43 bài, chưa bài nào do chính chủ soạn** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Trạng thái: **đang chạy, M12 xong (4 engine, phủ ~76%); kho 47 bài, chưa bài nào do chính chủ soạn** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,25 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M12 — Hoàn tất graph engine: ghép cặp, ma trận kề, tính phẳng · [E] — **xong**
+
+Hạng mục 5 của hàng đợi lãi/chi phí. Chọn nó vì matching mở khoá cụm Hall/König —
+một trong những cụm nhiều bài nhất của graph thi đấu — và vì cả ba việc đều dùng
+lại graph engine sẵn có chứ không mở engine mới.
+
+- ✅ **GR-06 ghép cặp hai phía**: thuật toán Kuhn, cộng ba thứ mà lời giải thật sự cần và analyzer phải trả tận tay — **đường tăng** (theo đúng thứ tự thuật toán dùng, nên tác giả dựng được từng bước), **phủ đỉnh König** (dựng từ chính ghép cặp, nên $|\text{phủ}| = |\text{ghép}|$ theo cấu tạo), và **nhân chứng Hall** (tập $S$ với $|N(S)| < |S|$). Đồ thị không hai phía thì **từ chối kèm lý do** thay vì trả về một con số trông có vẻ đúng.
+- ✅ **GR-07 ma trận kề**: một tuỳ chọn `view` của graph engine, không phải engine thứ hai. Ô chỉ về **cạnh** qua `data-el`, nên anchor và highlight viết một lần đúng cho cả hai view — đó là "đồng bộ hai chiều" ở dạng rẻ nhất và khó sai nhất.
+- ✅ **GR-05 tính phẳng, phần làm được**: kiểm giao điểm trên **chính hình tác giả vẽ** (hình sạch = chứng chỉ phẳng, đúng cách một bài thi chấp nhận) cộng chặn Euler $e \le 3v-6$ / $2v-4$ (giết $K_5$, $K_{3,3}$). Ngoài hai đường đó trả về **`unknown`** — và đó là câu trả lời trung thực, không phải thiếu sót che giấu.
+- ✅ Hai validator Sandbox: `plane-drawing` (biến "vẽ lại cho hết cắt nhau" thành bài tập chấm được) và `matching-saturates-left` (trả về đúng tập vi phạm Hall khi trượt).
+- ✅ Bốn bài: `hall-marriage-condition`, `konig-matching-cover`, `adjacency-matrix-handshake`, `k5-not-planar`.
+
+**Hai lỗi đáng ghi:**
+
+1. **Hai ô đối xứng của ma trận dùng chung một key.** `patch` gộp theo key nên nửa trên bảng biến mất, và `interpolate` cũng gộp theo key trên **cả cây** nên ô dưới sẽ trượt ngang qua bảng mỗi lần chuyển step. Không lộ ra ở SVG tĩnh — chỉ lộ trong Player. Chữa bằng cách tách **danh tính DOM** (`data-k`, phải duy nhất) khỏi **element ngữ nghĩa** (`data-el`, được phép trùng), đúng cách `decorationAttrs` vốn đã tách sẵn.
+2. **Hướng đặt nhãn đỉnh suy từ trọng tâm.** Đúng cho vòng tròn và hai hàng, sai hẳn cho đỉnh nằm gần tâm: ở $K_4$ vẽ một đỉnh giữa tam giác, hướng đó gần như ngẫu nhiên và rơi đúng dọc một cạnh. Trọng tâm chỉ là *đại diện* cho thứ ta muốn tránh; nay nhãn đặt vào **giữa khoảng trống rộng nhất giữa các cạnh kề** — đúng ở mọi hình, kể cả hai hình kia.
+
+**Mức phủ:** ~73% → **~76%**. Kho: 43 → **47 bài**.
 
 ### M11 — Cụm đếm/tập hợp: set engine + chu trình hoán vị + view song ánh · [E] — **xong**
 
