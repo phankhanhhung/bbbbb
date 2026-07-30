@@ -63,7 +63,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 
 ### Kiểm chứng bằng bài cụ thể
 
-39 bài quen thuộc, phân loại tay. Chính chủ đọc bảng này thấy sai chỗ nào thì sửa
+41 bài quen thuộc, phân loại tay. Chính chủ đọc bảng này thấy sai chỗ nào thì sửa
 chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 
 | Bài | Họ | Hôm nay |
