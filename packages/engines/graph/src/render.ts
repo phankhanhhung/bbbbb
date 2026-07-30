@@ -6,6 +6,7 @@ import {
   fillForClass,
   keyed,
   text,
+  type AttrValue,
   type EngineRenderer,
   type RenderContext,
   type SvgNode,
@@ -349,9 +350,24 @@ function renderFaces(
   const nodes: SvgNode[] = [];
 
   for (const face of faces) {
-    if (!Object.hasOwn(colours, face.id)) continue;
-    const colour = colours[face.id] as number;
     if (Math.abs(face.area) < 1e-9) continue;
+
+    // Mặt **không** khai màu vẫn được vẽ, chỉ là vẽ bằng `fill: 'none'`.
+    //
+    // Trước hạng mục này nó bị `continue` bỏ qua hẳn, và hệ quả là một anchor
+    // trỏ vào nó không làm sáng gì — `euler-formula-faces` có ba step dính đúng
+    // thế, validate xanh cả ba. Mặt là thứ mà cả họ bài tô bản đồ chỉ tay vào
+    // ("[[a1|mặt giữa]] có bốn cạnh"), nên không neo được là mất hẳn câu ấy.
+    //
+    // Cùng thủ pháp mà bảng incidence của `set` đã dùng: một hình vô hình làm
+    // chỗ bám. Khác một điểm — ở đây `fill: 'none'` chứ không `'transparent'`,
+    // vì mặt **không** cần nhận con trỏ: `graphHitTest` trả lời chuyện đó bằng
+    // hình học, không bằng DOM.
+    const colour = Object.hasOwn(colours, face.id) ? (colours[face.id] as number) : null;
+    const paint: Record<string, AttrValue> =
+      colour === null
+        ? { fill: 'none' }
+        : { fill: fillForClass(ctx, colour), 'fill-opacity': 0.5 };
 
     // Mặt ngoài vô hạn: tô **phần thấy được** của nó, tức cả khung trừ đi phần
     // trong biên. Một `<path>` hai đường con với `fill-rule="evenodd"` cho ra đúng
@@ -370,10 +386,10 @@ function renderFaces(
             d:
               `M${round(box.x)} ${round(box.y)}h${round(box.width)}v${round(box.height)}` +
               `h${round(-box.width)}Z${ring}Z`,
-            fill: fillForClass(ctx, colour),
+            ...paint,
             'fill-rule': 'evenodd',
-            'fill-opacity': 0.5,
             stroke: 'none',
+            ...decorationAttrs(ctx, face.id),
           }),
         );
       }
@@ -390,11 +406,11 @@ function renderFaces(
     nodes.push(
       keyed(face.id, 'polygon', {
         points,
-        fill: fillForClass(ctx, colour),
         // Mờ hơn hẳn quân cờ: nền mặt nằm **dưới** cạnh và đỉnh, và cả lập luận
         // của bài tô bản đồ nằm ở chỗ đọc được cạnh nào ngăn hai mặt nào.
-        'fill-opacity': 0.5,
+        ...paint,
         stroke: 'none',
+        ...decorationAttrs(ctx, face.id),
       }),
     );
   }

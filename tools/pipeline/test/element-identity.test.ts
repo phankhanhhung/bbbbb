@@ -166,11 +166,6 @@ const DEBT: readonly DebtRule[] = [
     id: /^mx-/,
   },
   {
-    why: 'graph: mặt phẳng (`face-*`) chưa nhận highlight',
-    engine: 'graph',
-    id: /^face-/,
-  },
-  {
     why: 'set/dots: set không gọi `decorationAttrs`; token bị truyền id ô giao',
     engine: 'set',
     view: /^dots$/,
