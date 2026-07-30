@@ -45,6 +45,26 @@ describe('golden SVG toàn kho', () => {
     expect(problems.length).toBeGreaterThan(0);
   });
 
+  it('không có snapshot mồ côi', () => {
+    // `toMatchFileSnapshot` **không tự dọn**: xoá một step thì golden của nó nằm
+    // lại vĩnh viễn, không ai so nữa và không gì báo. Kho từng có đúng một file
+    // như thế (`hall-marriage-condition--sol--s4.svg`) — 305 file cho 304 scene.
+    const expected = new Set(
+      problems.flatMap((problem) =>
+        problem.solutions.flatMap((solution) =>
+          solution.steps
+            .filter((step) => step.scene !== undefined && renderer.has(step.scene.engine))
+            .map((step) => `${problem.id}--${solution.id}--${step.id}.svg`),
+        ),
+      ),
+    );
+    const orphans = readdirSync(GOLDEN)
+      .filter((name) => name.endsWith('.svg'))
+      .filter((name) => !expected.has(name));
+
+    expect(orphans, `golden không còn scene nào sinh ra: ${orphans.join(', ')}`).toEqual([]);
+  });
+
   for (const problem of problems) {
     const scenes = problem.solutions.flatMap((solution) =>
       solution.steps
