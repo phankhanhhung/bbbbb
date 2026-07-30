@@ -276,3 +276,120 @@ describe('G-11 — lật một hàng/cột', () => {
     expect(minusCount(undo(state).scene)).toBe(1);
   });
 });
+
+describe('BD-08 — lật chùm ô (lights-out)', () => {
+  /** Bàn $n \times n$ **sáng hết**: mọi ô lớp 2. */
+  const lit = (n: number): Scene =>
+    board({
+      config: {
+        rows: n,
+        cols: n,
+        cell_overrides: Object.fromEntries(
+          Array.from({ length: n * n }, (_, i) => [
+            `cell-${Math.floor(i / n)}-${i % n}`,
+            { color_class: 2 },
+          ]),
+        ),
+      },
+    });
+
+  const press = (scene: Scene, row: number, col: number): Scene =>
+    run(scene, 'board/toggle-cross', { cell: `cell-${row}-${col}` })!;
+
+  const onCount = (scene: Scene): number => colorSummary(scene).get(2) ?? 0;
+
+  it('bấm giữa bàn vuông đổi đúng 5 ô, bấm góc đổi đúng 3', () => {
+    expect(onCount(press(lit(3), 1, 1))).toBe(9 - 5);
+    expect(onCount(press(lit(3), 0, 0))).toBe(9 - 3);
+  });
+
+  it('bấm hai lần là không bấm — nhờ vậy lời giải là một **tập** ô', () => {
+    const twice = press(press(lit(3), 1, 2), 1, 2);
+    expect(colorSummary(twice)).toEqual(colorSummary(lit(3)));
+  });
+
+  it('hai lần bấm **giao hoán** — nhờ vậy thứ tự bấm không phải một chiều tìm kiếm', () => {
+    const ab = press(press(lit(4), 0, 1), 2, 3);
+    const ba = press(press(lit(4), 2, 3), 0, 1);
+    expect(ab.config).toEqual(ba.config);
+  });
+
+  it('ô chưa tô tính là lớp 1 — bàn trống nghĩa là tắt hết đèn', () => {
+    const blank = board({ config: { rows: 3, cols: 3 } });
+    const after = press(blank, 1, 1);
+    // Năm ô bật lên, bốn ô còn lại vẫn "chưa tô" nên chưa có màu hiệu dụng.
+    expect(colorSummary(after).get(2)).toBe(5);
+  });
+
+  it('bỏ qua ô khuyết; bấm ra ngoài bàn thì lệnh không áp dụng', () => {
+    const holed = board({
+      config: {
+        rows: 3,
+        cols: 3,
+        holes: [[0, 1]],
+        cell_overrides: { 'cell-0-1': { color_class: 2 } },
+      },
+    });
+    const after = press(holed, 1, 1)!;
+    expect(cellColorClass(after.config as never, 0, 1)).toBe(2);
+
+    expect(run(lit(3), 'board/toggle-cross', { cell: 'cell-9-9' })).toBeNull();
+    expect(run(lit(3), 'board/toggle-cross', { cell: 'không-phải-ô' })).toBeNull();
+  });
+
+  it('luật `neighbours` **không** đổi ô được bấm', () => {
+    const after = run(lit(3), 'board/toggle-cross', {
+      cell: 'cell-1-1',
+      rule: 'neighbours',
+    })!;
+    expect(cellColorClass(after.config as never, 1, 1)).toBe(2);
+    expect(onCount(after)).toBe(9 - 4);
+  });
+
+  it('luật lạ bị từ chối, không im lặng chạy như `cross`', () => {
+    expect(run(lit(3), 'board/toggle-cross', { cell: 'cell-1-1', rule: 'toString' })).toBeNull();
+  });
+
+  /**
+   * Kiểm chứng bằng **vét cạn**, không bằng ví dụ chọn tay.
+   *
+   * Trên bàn $3 \times 3$, ma trận lật trên $GF(2)$ khả nghịch: $512$ tập ô bấm
+   * cho ra $512$ trạng thái đôi một khác nhau, nên **mọi** cấu hình đèn giải được
+   * và giải được đúng một cách. Đây là lý do bài $3 \times 3$ là bài mở đầu tốt —
+   * không có "hoa văn câm" nào để bàn về, chuyện đó để dành cho $5 \times 5$.
+   */
+  it('mọi cấu hình đèn 3×3 giải được, và đúng một cách', () => {
+    const reached = new Map<string, number>();
+
+    for (let mask = 0; mask < 512; mask += 1) {
+      let scene = board({ config: { rows: 3, cols: 3 } });
+      for (let i = 0; i < 9; i += 1) {
+        if ((mask >> i) & 1) scene = press(scene, Math.floor(i / 3), i % 3);
+      }
+      const key = Array.from({ length: 9 }, (_, i) =>
+        cellColorClass(scene.config as never, Math.floor(i / 3), i % 3) ?? 1,
+      ).join('');
+      reached.set(key, (reached.get(key) ?? 0) + 1);
+    }
+
+    expect(reached.size).toBe(512);
+  });
+
+  it('bốn góc cộng ô giữa tắt hết đèn bàn 3×3 — và validator công nhận', () => {
+    let scene = lit(3);
+    for (const [r, c] of [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]] as const) {
+      scene = press(scene, r, c);
+    }
+
+    const validator = resolveBoardValidator('all-cells:1')!;
+    expect(validator.check(scene).ok).toBe(true);
+    // Còn thiếu một cú bấm thì chưa xong — validator không cho qua non.
+    expect(validator.check(press(scene, 0, 0)).ok).toBe(false);
+  });
+
+  it('validator `all-cells` bỏ qua ô khuyết', () => {
+    const holed = board({ config: { rows: 2, cols: 2, holes: [[0, 0]] } });
+    // Ba ô còn lại chưa tô ⇒ tính là lớp 1 ⇒ đã "tắt hết".
+    expect(resolveBoardValidator('all-cells:1')!.check(holed).ok).toBe(true);
+  });
+});

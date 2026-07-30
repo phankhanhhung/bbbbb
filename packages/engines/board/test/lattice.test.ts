@@ -405,6 +405,59 @@ describe('nối lưới vào engine', () => {
     // Nhưng vẫn có tô màu và xoá — hai thứ không giả định hình ô.
     expect(ids(scene({ lattice: 'hex', rows: 4, cols: 4 }))).toContain('paint-1');
     expect(ids(scene({ lattice: 'hex', rows: 4, cols: 4 }))).toContain('erase');
+    // BD-08: nút lật chùm thì **có** ở mọi lưới — chùm ô kề là khái niệm lưới nào
+    // cũng có, khác hẳn "hàng thứ 2" hay quân domino.
+    for (const config of [
+      { rows: 4, cols: 4 },
+      { lattice: 'hex', rows: 4, cols: 4 },
+      { lattice: 'triangle', rows: 4, cols: 4 },
+    ]) {
+      expect({ config, ids: ids(scene(config)).includes('spread-cross') }).toEqual({
+        config,
+        ids: true,
+      });
+    }
+  });
+
+  /**
+   * BD-08 trên ba lưới — lãi trực tiếp của BD-07.
+   *
+   * Lệnh lật chùm không biết mình đang chạy trên lưới nào; nó hỏi `neighbours()`.
+   * Vì thế "bấm một ô đổi bao nhiêu ô" là câu hỏi của **hình học**, và test này
+   * kiểm đúng điều đó thay vì kiểm ba con số gõ tay: số ô đổi phải bằng
+   * $1 + \deg$, với $\deg$ đọc từ chính module lưới.
+   */
+  it('lật chùm chạy đúng trên cả ba lưới mà không viết ba lần', () => {
+    const run = (s: Scene, params: unknown): Scene | null => {
+      const r = execute(createEditorState(s), boardCommands, command('board/toggle-cross', params));
+      return r.applied ? r.state.scene : null;
+    };
+
+    for (const [lattice, rows, cols, row, col] of [
+      ['square', 4, 4, 1, 1],
+      ['hex', 5, 5, 2, 2],
+      ['triangle', 4, 4, 2, 2],
+    ] as const) {
+      const config = { ...(lattice === 'square' ? {} : { lattice }), rows, cols };
+      const after = run(scene(config), { cell: `cell-${row}-${col}` })!;
+      const changed = allCells(lattice, rows, cols).filter(
+        ([r, c]) => cellColorClass(after.config as BoardConfig, r, c) === 2,
+      ).length;
+
+      expect({ lattice, changed }).toEqual({
+        lattice,
+        changed: 1 + neighbours(lattice, rows, cols, row, col).length,
+      });
+    }
+  });
+
+  it('lật chùm trên bàn ong không đụng ô ngoài hàng của lưới tam giác', () => {
+    const run = (s: Scene, params: unknown): Scene | null => {
+      const r = execute(createEditorState(s), boardCommands, command('board/toggle-cross', params));
+      return r.applied ? r.state.scene : null;
+    };
+    // `cell-0-1` không tồn tại trên lưới tam giác (hàng 0 chỉ có một ô).
+    expect(run(scene({ lattice: 'triangle', rows: 4, cols: 4 }), { cell: 'cell-0-1' })).toBeNull();
   });
 
   it('id ô ngầm định đếm theo hàng của lưới', () => {

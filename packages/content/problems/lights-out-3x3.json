@@ -1,0 +1,431 @@
+{
+  "schema_version": "0.1.0",
+  "id": "lights-out-3x3",
+  "statement": {
+    "vi": "Bàn $3\\times3$ có chín bóng đèn, tất cả đang sáng. Mỗi lượt được bấm một ô; khi đó ô ấy và mọi ô kề nó đổi trạng thái sáng ↔ tắt. Hỏi có tắt được hết đèn không?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Trò chơi Lights Out (Tiger Electronics, 1995); bản $3\\times3$ là bài mở đầu kinh điển của đại số tuyến tính trên $GF(2)$."
+    }
+  },
+  "topics": [
+    "coloring",
+    "sequences"
+  ],
+  "techniques": [
+    "parity",
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "count(cells, c => c.color_class == 1)",
+      "id": "inv-con-sang",
+      "label": {
+        "vi": "Số đèn còn sáng"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol-dem-le",
+      "label": {
+        "vi": "Đếm số lần mỗi ô bị chạm"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bàn $3\\times3$, [[a1|cả chín đèn đang sáng]]. Mỗi lượt được bấm một ô; ô ấy **và** các ô kề nó đổi trạng thái sáng ↔ tắt. Tắt hết đèn được không?"
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                }
+              },
+              "cols": 3,
+              "rows": 3
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bàn 3×3 với cả chín ô đều sáng."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "expects_violation": [
+            "all-cells:2"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thử bấm [[a2|ô giữa]]: năm ô đổi trạng thái cùng lúc — chính nó và bốn ô kề. Bấm ô góc thì chỉ ba ô đổi, vì góc chỉ có hai ô kề."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "cell-1-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-0": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-2": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-2-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-2-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                }
+              },
+              "cols": 3,
+              "rows": 3
+            },
+            "elements": [
+              {
+                "id": "chum",
+                "type": "region",
+                "emphasis": "focus",
+                "cells": [
+                  [1, 1],
+                  [2, 1],
+                  [0, 1],
+                  [1, 2],
+                  [1, 0]
+                ],
+                "label": "chùm ô đổi"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sau khi bấm ô giữa, hình chữ thập năm ô đã tắt, bốn ô góc còn sáng."
+          },
+          "expects_violation": [
+            "all-cells:2"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hai nhận xét biến bài toán thành hữu hạn. Thứ nhất, bấm một ô **hai lần** thì mọi thứ về chỗ cũ — nên không bao giờ cần bấm một ô quá một lần. Thứ hai, hai cú bấm **giao hoán**: mỗi ô chỉ quan tâm nó bị chạm bao nhiêu lần, không quan tâm thứ tự. Vậy một lời giải không phải một dãy thao tác mà chỉ là một **tập con** của [[a5|chín ô]] — nhiều nhất $2^9 = 512$ khả năng."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-1",
+                "cell-0-2",
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2",
+                "cell-2-0",
+                "cell-2-1",
+                "cell-2-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                }
+              },
+              "cols": 3,
+              "rows": 3
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Quay lại bàn sáng hết: mọi lời giải chỉ là một tập con các ô cần bấm."
+          },
+          "expects_violation": [
+            "all-cells:2"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bấm [[a3|bốn góc và ô giữa]] — năm ô, đánh dấu chấm tròn. Không cần thử hết $512$ tập: một ô tắt đi khi và chỉ khi nó bị chạm một số **lẻ** lần, nên chỉ phải đếm số lần chạm của từng ô."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-2",
+                "cell-1-1",
+                "cell-2-0",
+                "cell-2-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1,
+                  "glyph": "●"
+                },
+                "cell-0-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "●"
+                },
+                "cell-1-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-1": {
+                  "color_class": 1,
+                  "glyph": "●"
+                },
+                "cell-1-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-0": {
+                  "color_class": 1,
+                  "glyph": "●"
+                },
+                "cell-2-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-2": {
+                  "color_class": 1,
+                  "glyph": "●"
+                }
+              },
+              "cols": 3,
+              "rows": 3
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bàn 3×3 vẫn sáng hết; bốn ô góc và ô giữa được đánh dấu chấm tròn — đó là tập ô sẽ bấm."
+          },
+          "expects_violation": [
+            "all-cells:2"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ô góc bị chạm đúng $1$ lần — chỉ chính nó được bấm, hai ô kề nó thì không. Ô giữa cũng $1$ lần, vì bốn góc không kề nó. Còn ô cạnh bị chạm $3$ lần: hai góc kề và ô giữa. $1$ và $3$ đều lẻ, nên [[a4|cả chín đèn]] cùng tắt."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "cell-0-1",
+                "cell-1-1",
+                "cell-0-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-0-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-0-2": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-0": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-2": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-2-0": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-2-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-2-2": {
+                  "color_class": 2,
+                  "glyph": "·"
+                }
+              },
+              "cols": 3,
+              "rows": 3
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bàn 3×3 tối hoàn toàn — mọi đèn đã tắt."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(cells, c => c.color_class == 1) == 0",
+    "validators": [
+      "all-cells:2"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol-dem-le",
+    "step_id": "s3"
+  }
+}

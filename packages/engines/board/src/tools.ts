@@ -2,6 +2,7 @@ import { SELECT_TOOL, type SandboxTool } from '@combviz/editor';
 import type { Scene } from '@combviz/schema';
 import { MAX_COLOR_CLASS } from '@combviz/theme';
 import { latticeOf, TILE_SHAPES } from './geometry.js';
+import { spreadRuleLabel, SPREAD_RULE_IDS } from './commands.js';
 import type { BoardConfig } from './schema.js';
 
 /** Hình tile bày ra thanh công cụ — tập con dễ dùng của `TILE_SHAPES`. */
@@ -45,6 +46,22 @@ export function boardTools(scene?: Scene): readonly SandboxTool[] {
       prefix: 'cell-',
     },
   });
+
+  // BD-08 — nút lật chùm có ở **cả ba lưới**, khác hẳn hai nhóm dưới. Chùm ô kề
+  // là khái niệm mọi lưới đều có; ô vuông ba mảnh và "hàng thứ 2" thì không.
+  for (const rule of SPREAD_RULE_IDS) {
+    tools.push({
+      id: `spread-${rule}`,
+      label: `✳ ${spreadRuleLabel(rule)}`,
+      action: {
+        type: 'one',
+        command: 'board/toggle-cross',
+        idParam: 'cell',
+        params: { rule },
+        prefix: 'cell-',
+      },
+    });
+  }
 
   // Quân polyomino và phép lật hàng/cột chỉ có nghĩa trên lưới vuông — lệnh cũng
   // từ chối chúng ở đó. Bày nút mà lệnh từ chối là đúng cái bệnh mà lớp

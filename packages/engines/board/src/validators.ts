@@ -5,7 +5,7 @@ import {
   type ValidatorOutcome,
 } from '@combviz/schema';
 import { deriveBoard, piecesAttack, tileCells } from './dsl.js';
-import { cellColorClass, latticeOf } from './geometry.js';
+import { cellColorClass, FLIP_CLASSES, latticeOf } from './geometry.js';
 import { cellsInRow, neighbours } from './lattice.js';
 import { cellId } from './ids.js';
 import type { BoardConfig } from './schema.js';
@@ -205,6 +205,44 @@ function properColouring(maxColours: number | null): SceneValidator {
   };
 }
 
+/**
+ * `all-cells:<k>` — mọi ô đang mang lớp màu $k$ (BD-08).
+ *
+ * Đích của họ bài lights-out: "tắt hết đèn được không". Ô chưa tô tính là
+ * `FLIP_CLASSES[0]` — cùng quy ước với lệnh lật, đọc từ cùng một hằng số, nên
+ * không có cửa cho chuyện người học bấm đúng mà bảng vẫn đỏ.
+ *
+ * Đi qua `cellsInRow` nên nó đúng trên cả ba lưới, y như `proper-colouring`: một
+ * bài lights-out trên bàn ong chấm được ngay mà không phải viết thêm gì.
+ */
+function allCells(target: number): SceneValidator {
+  return {
+    id: `all-cells:${target}`,
+    label: `Mọi ô mang màu ${target}`,
+    check(scene: Scene): ValidatorOutcome {
+      const config = scene.config as BoardConfig | undefined;
+      if (!config || typeof config.rows !== 'number') return OK;
+
+      const lattice = latticeOf(config);
+      const holes = new Set((config.holes ?? []).map(([r, c]) => `${r},${c}`));
+      const violations: string[] = [];
+
+      for (let r = 0; r < config.rows; r += 1) {
+        for (let c = 0; c < cellsInRow(lattice, config.cols, r); c += 1) {
+          if (holes.has(`${r},${c}`)) continue;
+          if ((cellColorClass(config, r, c) ?? FLIP_CLASSES[0]) !== target) {
+            violations.push(cellId(r, c));
+          }
+        }
+      }
+
+      return violations.length === 0
+        ? OK
+        : { ok: false, violations, message: `${violations.length} ô chưa về màu ${target}` };
+    },
+  };
+}
+
 function piecesPerLine(axis: 'row' | 'col', expected: number): SceneValidator {
   const label =
     axis === 'row' ? `Mỗi hàng đúng ${expected} quân` : `Mỗi cột đúng ${expected} quân`;
@@ -264,6 +302,7 @@ export function resolveBoardValidator(id: string): SceneValidator | null {
     return piecesPerLine(name === 'pieces-per-row' ? 'row' : 'col', arg);
   }
   if (name === 'proper-colouring' && arg !== undefined) return properColouring(arg);
+  if (name === 'all-cells' && arg !== undefined) return allCells(arg);
 
   return null;
 }
@@ -273,4 +312,5 @@ export const BOARD_VALIDATOR_IDS: readonly string[] = [
   'pieces-per-row:<k>',
   'pieces-per-col:<k>',
   'proper-colouring:<k>',
+  'all-cells:<k>',
 ];

@@ -25,7 +25,8 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~+ view song ánh, set engine, chu trình hoán vị (M11)~~ | ~~73%~~ | ~~81%~~ |
 | ~~+ ghép cặp, tính phẳng, ma trận kề (M12)~~ | ~~76%~~ | ~~84%~~ |
 | ~~Hôm nay (6 engine + poset/Hasse)~~ | ~~83%~~ | ~~90%~~ |
-| **Hôm nay** (7 engine — thêm derivation + label atlas) | **~85%** | **~97%** |
+| ~~Hôm nay (7 engine — thêm derivation + label atlas)~~ | ~~≈85%~~ | ~~≈97%~~ |
+| **Hôm nay** (7 engine, sau M22–M29: lưới phi vuông, lan truyền, analyzer mới) | **~87%** | **~97%** |
 | Hàng đợi §7 — **đã hết** | — | — |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
@@ -49,17 +50,17 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
-| Lưới / phủ hình / tô màu | 15% | 94% | 14.1 | quân ghép trên lưới phi vuông (`BD-09`); lan truyền trên bàn cờ (`BD-08`, lights-out) |
+| Lưới / phủ hình / tô màu | 15% | 96% | 14.4 | quân ghép trên lưới phi vuông (`BD-09`) |
 | Đồ thị | 22% | 95% | 20.9 | tô mặt (phần còn lại của GR-05), analyzer cây (`GR-10`), kiểm tính phẳng tổng quát |
 | Đếm / song ánh / đếm hai chiều | 14% | 87% | 12.2 | animation biến hình của PRN-04 |
-| Dãy số / thao tác lặp / quá trình | 16% | 95% | 15.2 | — (`SQ-02` xong; phần bàn cờ là `BD-08`) |
+| Dãy số / thao tác lặp / quá trình | 16% | 96% | 15.4 | — (`SQ-02` và `BD-08` đều xong) |
 | Trò chơi | 7% | 66% | 4.62 | thế phải là **đa tập số** cộng nhiều nhất một con số nhớ; mọi game không-phải-đống vẫn chưa — cần GM-01 rule script thật |
 | Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
 | Hình học tổ hợp | 5% | 75% | 3.75 | tô vùng do các đoạn chia (PT-03), đường tròn |
 | Hoán vị / thứ tự | 6% | 97% | 5.8 | — (chu trình hoán vị + poset/Hasse + Dilworth + dãy con đơn điệu) |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 25% | 0.75 | derivation gánh được phần *đại số*; xác suất và entropy thì **không** — xem §6 |
-| **Tổng** | **100%** | | **~85%** | |
+| **Tổng** | **100%** | | **~87%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
@@ -96,7 +97,7 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Xoá hai số, viết $\|a-b\|$ | dãy / đa tập | ✅ có trong kho |
 | Chip-firing | quá trình | ✅ có trong kho (SQ-02: `sequence/fire`, tính abel kiểm bằng máy) |
 | Dãy Ducci (hiệu tuyệt đối vòng quanh) | quá trình | ✅ có trong kho (SQ-02: `sequence/step`) |
-| Lights-out (lật chữ thập) | lưới + quá trình | ❌ cần `BD-08` — lan truyền phía **bàn cờ** |
+| Lights-out (lật chữ thập) | lưới + quá trình | ✅ có trong kho (BD-08: `board/toggle-cross`, chạy trên cả ba lưới) |
 | Nim | trò chơi | ✅ có trong kho (XOR + giá trị Grundy) |
 | Bốc sỏi $1..k$ | trò chơi | ✅ có trong kho (phổ thắng-thua) |
 | Trò Grundy (chia đống không đều) | trò chơi | ✅ đối chiếu vét cạn, khớp dãy Grundy đã biết |

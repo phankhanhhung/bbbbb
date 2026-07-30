@@ -17,6 +17,20 @@ export const CELL = UNITS_PER_CELL;
 /** Lề quanh bàn, để viền nhấn mạnh và nhãn không bị cắt. */
 export const BOARD_PADDING = 4;
 
+/**
+ * Cặp lớp màu mặc định của họ bài "lật" (G-11, BD-08).
+ *
+ * Không phải hằng số tiện tay: ba chỗ phải đồng ý với nhau về nó — lệnh lật hàng,
+ * lệnh lật chùm, và validator chấm "đã tắt hết đèn chưa". Lệch một chỗ thì người
+ * học bấm đúng lời giải mà bảng vẫn báo sai, và không có test nào bắt được vì mỗi
+ * bên tự nhất quán.
+ *
+ * Phần tử đầu là **trạng thái nghỉ**: ô chưa tô màu nào tính là lớp này. Nhờ vậy
+ * một bàn trống nghĩa là "mọi đèn đang tắt", tác giả không phải gõ 64 dòng
+ * `color_class: 1` chỉ để nói một điều mặc nhiên.
+ */
+export const FLIP_CLASSES: readonly [number, number] = [1, 2];
+
 export type Offset = readonly [number, number];
 
 /**

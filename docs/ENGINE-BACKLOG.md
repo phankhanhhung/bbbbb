@@ -37,7 +37,7 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 66 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười bài của M22–M28):
+Đo trên 67 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười một bài của M22–M29):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
@@ -76,7 +76,7 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | ~~4~~ | ~~`SQ-01` analyzer dãy con đơn điệu~~ ✅ M26 | sequence | Erdős–Szekeres | rẻ | ~~🟡 "thiếu analyzer dãy con đơn điệu"~~ |
 | ~~5~~ | ~~`GR-09` analyzer mã Prüfer~~ ✅ M27 | graph | Cayley $n^{n-2}$ | rẻ | ~~🟡 "thiếu analyzer sinh mã Prüfer"~~ |
 | 6a | ~~`SQ-02` lan truyền trên dãy~~ ✅ M28 | sequence | chip-firing, Ducci | vừa | ~~🟡 "thiếu luật lan truyền"~~ |
-| 6b | `BD-08` lan truyền trên bàn cờ | board | lights-out | vừa | ❌ dòng lights-out ở VIZ-COVERAGE §2 |
+| ~~6b~~ | ~~`BD-08` lan truyền trên bàn cờ~~ ✅ M29 | board | lights-out | vừa | ~~❌ dòng lights-out ở VIZ-COVERAGE §2~~ |
 | ~~7~~ | ~~`BD-07` lưới tam giác / lục giác~~ ✅ M24 | board | phủ hình phi vuông | vừa | ~~§2 — engine **không vẽ được**~~ |
 | 8 | `GR-05` tô mặt sau embedding | graph | công thức Euler, tô mặt | vừa | SRS `GR-05` [P2] |
 | 9 | `GR-07` ma trận đồng bộ hai chiều | graph | đếm hai chiều | vừa | SRS `GR-07` [P2] |
@@ -108,12 +108,15 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
   và vì thế bài ấy khai `illustration` chứ không phải `challenge`. Đây là họ hình
   mới song song với `TILE_SHAPES`, không phải sửa lưới; xong nó thì
   `triangle-lozenge-parity` lên `challenge` được ngay.
-- **BD-08 [P2] SHOULD** — **lan truyền trên bàn cờ**: lights-out (bấm một ô thì
-  lật cả chữ thập). Nửa còn lại của hạng mục #6 sau khi `SQ-02` xong ở M28. Rẻ hơn
-  tưởng vì `neighbours()` của `lattice.ts` đã có sẵn cho **cả ba lưới** — một lệnh
-  `board/toggle-cross` chạy đúng trên bàn vuông, bàn ong và lưới tam giác mà không
-  phải viết ba lần. Vẫn phải là **tập luật đóng**, cùng khuôn với `GameRule` và
-  `COMBINE_RULES` — không phải script.
+- **BD-08 ✅ (M29)** — **lan truyền trên bàn cờ**: lệnh `board/toggle-cross`, tập
+  luật đóng `SPREAD_RULES` (`cross`, `neighbours`) cùng khuôn với `GameRule` và
+  `COMBINE_RULES`. Đúng như dự đoán, `neighbours()` của `lattice.ts` khiến nó chạy
+  trên **cả ba lưới** mà không viết ba lần: chữ thập bốn ô trên bàn vuông, sáu ô
+  trên bàn ong, ba ô trên lưới tam giác — nút công cụ vì thế bày ở mọi lưới, khác
+  hẳn polyomino và `flip-line`. Kèm validator `all-cells:<k>` và bài
+  `lights-out-3x3`. Cặp lớp mặc định về **một** chỗ (`FLIP_CLASSES`) vì lệnh lật
+  hàng, lệnh lật chùm và validator phải đồng ý với nhau — lệch một chỗ thì người
+  học bấm đúng lời giải mà bảng vẫn báo sai.
 - **BD-05 [P2] SHOULD** — công cụ **vẽ** vùng khuyết và region tuỳ ý (config đã có
   từ P1); **[P2] MAY** torus wrap. Torus mở một họ nhỏ nhưng thật.
 

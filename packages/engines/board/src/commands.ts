@@ -3,7 +3,8 @@ import type { Scene, SceneElement } from '@combviz/schema';
 import { cellId, parseCellId } from './ids.js';
 import { tileCells } from './dsl.js';
 import type { BoardConfig, ColoringPreset } from './schema.js';
-import { cellColorClass, latticeOf, type Offset } from './geometry.js';
+import { cellColorClass, FLIP_CLASSES, latticeOf, type Offset } from './geometry.js';
+import { inBoard, neighbours } from './lattice.js';
 
 /**
  * Command của Grid/Board (BD-01..03).
@@ -257,6 +258,97 @@ const toggleAttacks = defineCommand<{ id: string }>({
  * Ô khuyết bị bỏ qua, và ô chưa mang màu nào (`color_class` chưa đặt) cũng vậy —
  * "chưa xét" không phải một lớp để lật.
  */
+/**
+ * Luật lan truyền trên bàn — tập **đóng** (BD-08).
+ *
+ * `cross` là lights-out kinh điển: bấm một ô thì nó **và** các ô kề đổi trạng
+ * thái. `neighbours` là biến thể chỉ đổi các ô kề, không đổi ô được bấm — cùng họ,
+ * khác hẳn bài, vì với nó việc bấm hai lần vẫn về chỗ cũ nhưng lời giải khác.
+ *
+ * Enum chứ không phải biểu thức, cùng lý do đã ghi ở `COMBINE_RULES` và
+ * `GameRule`: cho nhập biểu thức là mở cửa hậu cho DSL-03.
+ */
+const SPREAD_RULES = {
+  cross: true,
+  neighbours: false,
+} as const;
+
+export type SpreadRule = keyof typeof SPREAD_RULES;
+export const SPREAD_RULE_IDS = Object.keys(SPREAD_RULES) as readonly SpreadRule[];
+
+const SPREAD_LABELS: Readonly<Record<SpreadRule, string>> = {
+  cross: 'Lật ô và các ô kề',
+  neighbours: 'Lật các ô kề (không lật ô bấm)',
+};
+
+export function spreadRuleLabel(rule: string): string {
+  return Object.hasOwn(SPREAD_LABELS, rule) ? (SPREAD_LABELS[rule as SpreadRule] as string) : rule;
+}
+
+/**
+ * BD-08 — bấm một ô, lật cả chùm ô quanh nó (lights-out).
+ *
+ * Chạy đúng trên **cả ba lưới** mà không phải viết ba lần: danh sách ô kề đọc từ
+ * `neighbours()` của `lattice.ts`, nên trên bàn vuông là chữ thập bốn ô, trên bàn
+ * ong là sáu ô, trên lưới tam giác là ba. Đây là lãi trực tiếp của BD-07 — hình
+ * học nằm ở **một** chỗ nên tính năng sau không phải biết lưới nào.
+ *
+ * Ô khuyết bị bỏ qua. Ô **chưa mang màu** tính là lớp thứ nhất — khác `flip-line`,
+ * và khác có chủ ý: một bàn trống là một bàn ở **trạng thái nghỉ**, nên bắt tác
+ * giả tô sẵn cả bàn chỉ để nói "chưa ai đụng vào" là bắt gõ thừa. Lớp thứ nhất
+ * nghĩa là gì thì tuỳ bài đặt, chỗ này không giả định.
+ */
+const toggleCross = defineCommand<{
+  cell: string;
+  rule?: SpreadRule;
+  /** Cặp lớp màu hoán đổi cho nhau. Mặc định 1 ↔ 2. */
+  classes?: readonly [number, number];
+}>({
+  type: 'board/toggle-cross',
+  label: (params) => spreadRuleLabel(params.rule ?? 'cross'),
+
+  apply(scene, params) {
+    const config = boardConfig(scene);
+    const lattice = latticeOf(config);
+    const cell = parseCellId(params.cell);
+    if (!cell) return null;
+
+    const { row, col } = cell;
+    // `inBoard` chứ không phải `inBounds`: trên lưới tam giác hàng $r$ chỉ có
+    // $2r+1$ ô, nên "trong khung chữ nhật" không đồng nghĩa "có thật".
+    if (!inBoard(lattice, config.rows, config.cols, row, col)) return null;
+
+    // `Object.hasOwn` chứ không phải `!== undefined`: tra thẳng thì `rule:
+    // 'toString'` lấy được hàm trên prototype, và một giá trị truthy ở đây nghĩa
+    // là luật lạ **chạy im lặng** như `cross`. Cùng cái bẫy đã ghi ở DSL-03.
+    const rule = params.rule ?? 'cross';
+    if (!Object.hasOwn(SPREAD_RULES, rule)) return null;
+    const includeSelf = SPREAD_RULES[rule];
+
+    const [a, b] = params.classes ?? FLIP_CLASSES;
+    const targets = [
+      ...(includeSelf ? ([[row, col]] as const) : []),
+      ...neighbours(lattice, config.rows, config.cols, row, col),
+    ];
+
+    const overrides = { ...(config.cell_overrides ?? {}) };
+    let changed = false;
+
+    for (const [r, c] of targets) {
+      if (isHoleAt(config, r, c)) continue;
+      const id = cellId(r, c);
+      // Chưa tô nghĩa là **lớp thứ nhất**: bàn trống là bàn tắt hết đèn.
+      const current = cellColorClass(config, r, c) ?? a;
+      const next = current === a ? b : current === b ? a : null;
+      if (next === null) continue;
+      overrides[id] = { ...overrides[id], color_class: next };
+      changed = true;
+    }
+
+    return changed ? { ...scene, config: { ...config, cell_overrides: overrides } } : null;
+  },
+});
+
 const flipLine = defineCommand<{
   axis: 'row' | 'col';
   index: number;
@@ -271,7 +363,7 @@ const flipLine = defineCommand<{
   apply(scene, params) {
     const config = boardConfig(scene);
     if (latticeOf(config) !== 'square') return null;
-    const [a, b] = params.classes ?? [1, 2];
+    const [a, b] = params.classes ?? FLIP_CLASSES;
 
     const span = params.axis === 'row' ? config.cols : config.rows;
     if (params.index < 0 || params.index >= (params.axis === 'row' ? config.rows : config.cols)) {
@@ -304,6 +396,7 @@ const flipLine = defineCommand<{
 
 export const boardCommands: CommandRegistry = {
   [flipLine.type]: flipLine,
+  [toggleCross.type]: toggleCross,
   [paintCells.type]: paintCells,
   [setPreset.type]: setPreset,
   [placeTile.type]: placeTile,

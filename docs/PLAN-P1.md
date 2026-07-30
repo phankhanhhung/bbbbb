@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M28 xong (7 engine, phủ ~86%); kho 66 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M29 xong (7 engine, phủ ~87%); kho 67 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -299,10 +299,63 @@ Ba việc rút ra, đã áp dụng:
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
 
+### M29 — Lan truyền trên bàn cờ (BD-08) · [E] — **xong**
+
+Nửa **bàn cờ** của hạng mục #6, và nó đóng hạng mục ấy. Một lệnh —
+`board/toggle-cross` — cộng một validator và một bài.
+
+**Dự đoán ở cuối M28 đúng, và lý do nó đúng là lãi của BD-07.** Lệnh này không biết
+mình đang chạy trên lưới nào: nó hỏi `neighbours()` của `lattice.ts` xem ô nào kề ô
+được bấm, và nhận về bốn ô trên bàn vuông, sáu trên bàn ong, ba trên lưới tam giác.
+Vì thế **một** lệnh phục vụ cả ba lưới, và nút công cụ của nó bày ở **mọi** lưới —
+khác hẳn polyomino và `flip-line`, hai thứ chỉ có nghĩa trên ô vuông và bị chặn ở
+cả `checkBounds` lẫn lệnh. Đó là thứ mà "hình học nằm ở một chỗ" trả lại: tính năng
+sau không phải biết lưới nào tồn tại.
+
+Hai luật, và chúng là một **enum đóng** (`SPREAD_RULES`), cùng khuôn với `GameRule`
+và `COMBINE_RULES`:
+
+- **`cross`** — lights-out kinh điển: ô được bấm **và** các ô kề đổi trạng thái.
+- **`neighbours`** — chỉ các ô kề, không đổi ô được bấm. Cùng họ, khác hẳn bài: bấm
+  hai lần vẫn về chỗ cũ, nhưng lời giải là một tập ô khác.
+
+**Ba con số của họ bài này phải đọc từ một chỗ.** Lệnh lật hàng (`flip-line`), lệnh
+lật chùm, và validator `all-cells:<k>` đều cần biết cặp lớp màu mặc định là gì và ô
+**chưa tô** tính là lớp nào. Ba bản sao của một quy ước thì lệch một chỗ là người
+học bấm đúng lời giải mà bảng vẫn báo sai — và không test nào bắt được, vì mỗi bên
+tự nhất quán. Nay nó là `FLIP_CLASSES` trong `geometry.ts`, đọc từ đúng một chỗ.
+
+**Một lỗ bảo mật nhỏ do test bắt.** `rule: "toString"` tra thẳng vào `SPREAD_RULES`
+lấy được hàm trên prototype; giá trị truthy ấy khiến luật lạ **chạy im lặng** như
+`cross` thay vì bị từ chối. `Object.hasOwn` ở chỗ tra — cùng luật mà DSL đã theo từ
+đầu (DSL-03), giờ áp cả ở tập lệnh.
+
+**Kiểm chứng bằng vét cạn, không bằng ví dụ chọn tay.** Test chạy cả $512$ tập ô
+bấm trên bàn $3\times3$ **qua chính lệnh** và đếm số trạng thái tới được: đúng
+$512$. Ma trận lật trên $GF(2)$ vì thế khả nghịch, nên mọi cấu hình đèn giải được
+và giải được **đúng một cách** — không có "hoa văn câm" nào, chuyện đó dành cho
+$5\times5$. Một test khác kiểm số ô đổi trên cả ba lưới bằng $1 + \deg$, với $\deg$
+đọc từ chính module lưới chứ không gõ tay.
+
+**Bài mới:** `lights-out-3x3`. Tập ô bấm — bốn góc cộng ô giữa — do script soạn tìm
+bằng vét cạn, không phải tra sách, và mọi scene trong bài do máy sinh từ luật.
+
+**Hai lỗi ở hình, cả hai chỉ thấy khi render ra PNG và nhìn.** Thứ nhất: bản đầu tô
+ô **tắt** bằng xanh đậm và ô **sáng** bằng xanh nhạt, nên ô tắt trông nổi hơn ô
+sáng — hình nói ngược lời. Đảo hai lớp. Thứ hai: bước "bấm ô nào" ban đầu ghi số
+lần chạm lên cả chín ô **và** khoanh viền năm ô được bấm; trên bàn ba ô thì nét
+viền region dày ngang nửa ô, năm khung cạnh nhau dính thành một mạng đen và không
+đọc ra ô nào được khoanh. Sửa bằng cách bỏ hẳn con số khỏi hình — nó là một câu
+ngắn, viết vào lời giải là đủ — và đánh dấu tập ô bấm bằng một glyph. Glyph đầu tiên
+thử là `✳`, và nó **cũng sai**: cạnh `☀` thì hai hoa thị gần như không phân biệt
+được. `●` thì rõ ngay.
+
+1078 test, 67 bài 0 lỗi 0 cảnh báo, **0 golden cũ đổi**.
+
 ### M28 — Luật lan truyền cho dãy (SQ-02) · [E] — **xong**
 
-Nửa **dãy** của hạng mục #6. Nửa còn lại — lights-out trên bàn cờ (`BD-08`) — vẫn
-mở, và bảng §1 của backlog nay tách thành `6a`/`6b` để không ai đọc nhầm là xong cả.
+Nửa **dãy** của hạng mục #6. Nửa còn lại — lights-out trên bàn cờ (`BD-08`) — đóng
+ở M29; bảng §1 của backlog tách thành `6a`/`6b` từ đây để không ai đọc nhầm là xong cả.
 
 Hai lệnh, và chúng khác nhau về **bản chất**, không phải về giao diện:
 
@@ -1296,7 +1349,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 66 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 67 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):
