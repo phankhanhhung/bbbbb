@@ -49,9 +49,16 @@ const KEY_ORDER: Readonly<Record<string, readonly string[]>> = {
     'narrative',
     'anchors',
     'scene',
+    // `bijection` và `choreography` là hai thứ *gắn vào* scene, nên chúng đi ngay
+    // sau nó. Thiếu tên trong bảng này không sai — key lạ rơi xuống cuối theo
+    // alphabet, vẫn ổn định — nhưng nó đẩy pane phải và timeline xuống dưới
+    // `verified`, tức là xa nhất khỏi thứ chúng nói về.
+    'bijection',
+    'choreography',
     'widget_state',
     'alt_text',
     'author_notes',
+    'claims',
     'expects_violation',
     'verified',
   ],

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "take-at-most-half",
   "statement": {
     "vi": "Trên bàn có $40$ viên sỏi. Hai người lần lượt bốc, mỗi lượt được bốc ít nhất $1$ viên và **nhiều nhất một nửa** số viên đang có. Ai không bốc được nữa thì thua. Hỏi ai có chiến lược thắng?"
@@ -88,14 +88,14 @@
           "alt_text": {
             "vi": "Một đống bốn mươi viên sỏi."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "total == 40",
             "moves == 20"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         },
         {
           "id": "s2",
@@ -215,14 +215,14 @@
           "alt_text": {
             "vi": "Trở lại đống bốn mươi viên — thế thắng của người sắp đi."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "winning == true",
             "winning_moves == 1"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         },
         {
           "id": "s5",
@@ -257,10 +257,10 @@
           "alt_text": {
             "vi": "Đống ba mươi mốt viên — thế thua của người sắp đi."
           },
-          "verified": true,
           "claims": [
             "winning == false"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

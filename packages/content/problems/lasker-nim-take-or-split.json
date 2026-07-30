@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "lasker-nim-take-or-split",
   "statement": {
     "vi": "Ba đống sỏi có $1$, $2$ và $3$ viên. Mỗi lượt, người đi **hoặc** bốc bất kì số viên dương từ một đống, **hoặc** chia một đống thành hai đống khác rỗng mà không bốc viên nào. Ai bốc viên cuối cùng thì thắng. Hỏi ai có chiến lược thắng?"
@@ -102,11 +102,11 @@
           "alt_text": {
             "vi": "Ba đống một, hai và ba viên, dưới mỗi đống ghi g bằng một, hai, ba."
           },
-          "verified": true,
           "claims": [
             "xor == 0",
             "winning == false"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -161,15 +161,15 @@
           "alt_text": {
             "vi": "Cùng ba đống, nhưng dưới đống ba viên ghi g bằng bốn."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "xor == 7",
             "winning == true",
             "winning_moves == 1"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         },
         {
           "id": "s2",
@@ -230,12 +230,12 @@
           "alt_text": {
             "vi": "Bốn đống một, hai, một, hai viên; Grundy một, hai, một, hai."
           },
-          "verified": true,
           "claims": [
             "xor == 0",
             "winning == false",
             "n == 4"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s3",
@@ -298,14 +298,14 @@
           "alt_text": {
             "vi": "Bốn đống một, hai, ba, bốn viên; dưới chúng ghi g bằng một, hai, bốn, ba."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "sum(piles, p => p.grundy) == 10",
             "winning == true"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         }
       ]
     }

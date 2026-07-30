@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "chip-firing-abelian",
   "statement": {
     "vi": "Trên một vòng tròn gồm $5$ ô có tất cả $4$ hạt. Mỗi bước, chọn một ô có ít nhất $2$ hạt, lấy đi $2$ hạt từ ô đó và cho mỗi ô kề $1$ hạt. Chứng minh quá trình dừng sau hữu hạn bước, và cấu hình cuối **không phụ thuộc** thứ tự chọn."
@@ -114,14 +114,14 @@
           "alt_text": {
             "vi": "Năm ô mang các số ba, một, không, không, không."
           },
-          "expects_violation": [
-            "stable"
-          ],
-          "verified": true,
           "claims": [
             "total == 4",
             "unstable == 1"
-          ]
+          ],
+          "expects_violation": [
+            "stable"
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -182,14 +182,14 @@
           "alt_text": {
             "vi": "Năm ô mang các số một, hai, không, không, một."
           },
-          "expects_violation": [
-            "stable"
-          ],
-          "verified": true,
           "claims": [
             "total == 4",
             "unstable == 1"
-          ]
+          ],
+          "expects_violation": [
+            "stable"
+          ],
+          "verified": true
         },
         {
           "id": "s2",
@@ -250,14 +250,14 @@
           "alt_text": {
             "vi": "Năm ô mang các số không, một, một, không, hai."
           },
-          "expects_violation": [
-            "stable"
-          ],
-          "verified": true,
           "claims": [
             "total == 4",
             "unstable == 1"
-          ]
+          ],
+          "expects_violation": [
+            "stable"
+          ],
+          "verified": true
         },
         {
           "id": "s3",
@@ -318,12 +318,12 @@
           "alt_text": {
             "vi": "Năm ô mang các số một, một, một, một, không."
           },
-          "verified": true,
           "claims": [
             "total == 4",
             "unstable == 0",
             "zeros == 1"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "nim-three-piles-xor",
   "statement": {
     "vi": "Nim ba đống $3$, $5$, $7$: mỗi lượt bốc **bao nhiêu tuỳ ý** từ **một** đống. Ai bốc viên cuối cùng thì thắng. Ai có chiến lược thắng, và chiến lược đó là gì?"
@@ -100,14 +100,14 @@
           "alt_text": {
             "vi": "Ba đống sỏi 3, 5, 7 viên."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "n == 3",
             "total == 15"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -212,14 +212,14 @@
           "alt_text": {
             "vi": "Cả ba đống được làm nổi."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "winning == true",
             "winning_moves == 3"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         },
         {
           "id": "s3",
@@ -267,11 +267,11 @@
           "alt_text": {
             "vi": "Ba đống 3, 5, 6 — thế thua của người sắp đi."
           },
-          "verified": true,
           "claims": [
             "xor == 0",
             "winning == false"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

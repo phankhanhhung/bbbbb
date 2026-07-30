@@ -80,14 +80,21 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | ~~7~~ | ~~`BD-07` lưới tam giác / lục giác~~ ✅ M24 | board | phủ hình phi vuông | vừa | ~~§2 — engine **không vẽ được**~~ |
 | ~~8~~ | ~~`GR-05` tô mặt sau embedding~~ ✅ M33 | graph | công thức Euler, tô mặt | vừa | ~~SRS `GR-05` [P2]~~ |
 | ~~9~~ | ~~`GR-07` ma trận đồng bộ hai chiều~~ ✅ M34 | graph | đếm hai chiều | vừa | ~~SRS `GR-07` [P2]~~ |
-| 10 | `PRN-04` animation biến hình | cross | **cả họ song ánh (14%)** | đắt | §2 "còn thiếu: animation biến hình của PRN-04" |
+| ~~10~~ | ~~`PRN-04` animation biến hình~~ ✅ M37 | cross | cả họ song ánh (14%) | đắt | ~~§2 "còn thiếu: animation biến hình của PRN-04"~~ |
 | ~~11~~ | ~~`BD-05` vùng khuyết vẽ tay + torus~~ ✅ M31 | board | bài trên hình xuyến | vừa | ~~SRS `BD-05` [P2]~~ |
 | ~~12~~ | ~~`ST-03` dot/bar cho đa tập~~ ✅ M35 | set | đếm theo lớp | rẻ | ~~SRS `ST-03` [P2]~~ |
 | ~~13~~ | ~~`GM-08` phổ **hai chiều**~~ ✅ M23 | game | quy luật Wythoff nhìn thành hai tia | vừa | ~~§2.6 — `spectrum` là bảng một chiều~~ |
 
-`PRN-04` là hạng mục **trọng số cao nhất** trong bảng — nó là khoảng trống duy nhất
-còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưng nó phụ thuộc
-`CHO-05` (morph) của PRD, nên nó thuộc P1 của PRD chứ không phải việc engine.
+~~`PRN-04` là hạng mục **trọng số cao nhất** trong bảng~~ — xong ở **M37**, cùng
+lúc với lớp choreography mà nó phụ thuộc (`CHO-05`). **Bảng đã cạn.**
+
+Một ghi chú đáng giữ về cách nó *không* được làm. Đường ngắn nhất tưởng là: đổi
+key của pane phải thành key ảnh ngược rồi ném vào `interpolateNodes`. Nó chạy
+được ở bài mà hai pane cùng engine và **hỏng lặng lẽ** ở bài mà hai pane khác
+engine — dạng phổ biến nhất của chứng minh song ánh — vì phép nội suy ấy khớp
+theo *dáng cây*, mà mỗi engine dựng một dáng khác nhau. Thứ duy nhất bảy engine
+dùng chung là **toạ độ scene** (G-10), nên phép biến hình xuyên engine phải nói
+bằng toạ độ.
 
 ---
 
@@ -311,15 +318,17 @@ thiếu năng lực. Nên hạng mục đúng ở đây là **soạn bài**, kh�
 
 - **DV-01** — gióng theo **nhiều** mốc (biến đổi ba cột). Chưa bài nào đòi.
 - **DV-02** — morph một hạng tử thành hạng tử khác (`becomes` đã khai quan hệ; phần
-  còn thiếu là chuyển động). Trùng phạm vi `CHO-05`, nên làm cùng nó.
+  còn thiếu là chuyển động). Lớp `CHO-05` đã có từ **M37** và `move`/`morph` gọi
+  được ngay; việc còn lại là dịch quan hệ `becomes` thành pha, chưa làm.
 
 ---
 
 ## 3. Hai hạng mục xuyên engine, và cả hai thuộc PRD
 
-- **PRN-04 [P2] SHOULD** — **animation biến hình** cho view song ánh. Trọng số cao
-  nhất trong cả tài liệu này: nó là khoảng trống **duy nhất** còn lại của họ "Đếm /
-  song ánh / đếm hai chiều" — 14% đề thi, đang ở 85%. Phụ thuộc `CHO-05`.
+- ~~**PRN-04 [P2] SHOULD** — **animation biến hình** cho view song ánh~~ ✅ **M37**.
+  Nút "Biến hình" gộp hai pane thành một khung chung, mỗi phần tử trượt tới ảnh
+  của nó rồi mới đổi vai. Kèm thanh kéo — đó là kênh duy nhất dùng được bằng bàn
+  phím (NFR-A2) và là cách người tắt chuyển động vẫn xem được từng chặng (NFR-A4).
 - **PRN-06 [P3] MAY** — dựng có tham số (quy nạp): slider $n$, sinh Scene theo $n$.
   **Trùng gần hết** `EXP-01..03` của PRD. Đừng làm hai lần: nếu lớp Experiment tới
   thì PRN-06 là một use case của nó, không phải một tính năng riêng.

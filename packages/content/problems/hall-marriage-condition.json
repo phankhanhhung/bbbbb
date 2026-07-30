@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "hall-marriage-condition",
   "statement": {
     "vi": "Bốn người, bốn việc; mỗi người chỉ làm được một số việc. Số người bằng số việc, nhưng vẫn có thể **không** xếp được cho mỗi người một việc riêng. Khi nào thì xếp được?"
@@ -634,14 +634,14 @@
           "alt_text": {
             "vi": "Chi được làm nổi: người duy nhất không có việc."
           },
-          "expects_violation": [
-            "matching-saturates-left"
-          ],
-          "verified": true,
           "claims": [
             "matching < 4",
             "unmatched == 1"
-          ]
+          ],
+          "expects_violation": [
+            "matching-saturates-left"
+          ],
+          "verified": true
         }
       ]
     }

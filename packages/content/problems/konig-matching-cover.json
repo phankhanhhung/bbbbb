@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "konig-matching-cover",
   "statement": {
     "vi": "Trên đồ thị hai phía, cỡ ghép cặp lớn nhất bằng cỡ phủ đỉnh nhỏ nhất."
@@ -597,10 +597,10 @@
           "alt_text": {
             "vi": "Ghép cặp ba cạnh và phủ ba đỉnh, cùng một hình."
           },
-          "verified": true,
           "claims": [
             "matching == cover"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

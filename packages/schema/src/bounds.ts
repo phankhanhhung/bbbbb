@@ -23,6 +23,14 @@ export const GLOBAL_BOUNDS = {
   softMaxTreeDepth: 4,
   /** Cảnh báo mềm của AUT-10: narrative quá dài thì step nên tách đôi. */
   softMaxNarrativeChars: 420,
+  /**
+   * Giới hạn **mềm** độ dài timeline một step, ms (CHO-02).
+   *
+   * Cùng họ với `softMaxNarrativeChars` và cùng lý do: một step là một ý. Hai
+   * chục giây chuyển động cho một ý nghĩa là ý ấy có nhiều hơn một phần, và
+   * người xem không tua lại được nửa sau mà không xem lại nửa đầu.
+   */
+  softMaxTimelineMs: 20_000,
 } as const;
 
 export interface EngineBounds {

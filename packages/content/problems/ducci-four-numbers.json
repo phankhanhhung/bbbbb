@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "ducci-four-numbers",
   "statement": {
     "vi": "Viết bốn số nguyên không âm trên một vòng tròn. Mỗi bước, thay đồng thời mỗi số bằng **hiệu tuyệt đối** giữa nó và số kế tiếp theo chiều kim đồng hồ. Chứng minh rằng sau hữu hạn bước, cả bốn số đều bằng $0$."
@@ -109,15 +109,15 @@
           "alt_text": {
             "vi": "Bốn ô mang các số một, hai, ba, năm."
           },
-          "expects_violation": [
-            "all-zero"
-          ],
-          "verified": true,
           "claims": [
             "n == 4",
             "total == 11",
             "zeros == 0"
-          ]
+          ],
+          "expects_violation": [
+            "all-zero"
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -173,14 +173,14 @@
           "alt_text": {
             "vi": "Bốn ô mang các số một, một, hai, bốn."
           },
-          "expects_violation": [
-            "all-zero"
-          ],
-          "verified": true,
           "claims": [
             "total == 8",
             "zeros == 0"
-          ]
+          ],
+          "expects_violation": [
+            "all-zero"
+          ],
+          "verified": true
         },
         {
           "id": "s2",
@@ -236,14 +236,14 @@
           "alt_text": {
             "vi": "Bốn ô mang các số không, không, hai, hai."
           },
-          "expects_violation": [
-            "all-zero"
-          ],
-          "verified": true,
           "claims": [
             "zeros == 2",
             "total == 4"
-          ]
+          ],
+          "expects_violation": [
+            "all-zero"
+          ],
+          "verified": true
         },
         {
           "id": "s3",
@@ -299,14 +299,14 @@
           "alt_text": {
             "vi": "Bốn ô đều mang số hai."
           },
-          "expects_violation": [
-            "all-zero"
-          ],
-          "verified": true,
           "claims": [
             "total == 8",
             "zeros == 0"
-          ]
+          ],
+          "expects_violation": [
+            "all-zero"
+          ],
+          "verified": true
         },
         {
           "id": "s4",
@@ -362,11 +362,11 @@
           "alt_text": {
             "vi": "Bốn ô đều mang số không."
           },
-          "verified": true,
           "claims": [
             "zeros == 4",
             "total == 0"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

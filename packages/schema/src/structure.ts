@@ -173,6 +173,7 @@ function checkSolutionTree(
       checkSceneBounds(step.scene, `${path}/scene`, engines, issues);
     }
     checkBijection(step, path, engines, issues);
+    checkChoreography(step, path, engines, issues);
   });
 
   checkDepth(solution, basePath, byId, issues);
@@ -430,6 +431,149 @@ function checkBijection(
         hint: `Cố ý thì bỏ qua — đếm $k$-về-$1$ dùng đúng dạng này (phía ${label})`,
       });
     }
+  }
+}
+
+/**
+ * CHO-07/08/09 — choreography phải neo được, trỏ được, và **đọc được khi tắt
+ * chuyển động**.
+ *
+ * Ba loại lỗi ở đây im lặng hoàn toàn lúc chạy, đó là lý do chúng phải bị bắt ở
+ * đây: pha trỏ tới element không tồn tại thì đơn giản là không có gì nhúc nhích;
+ * pha neo vào anchor không khai thì Player không sáng được câu nào; và hai pha
+ * dùng chung một anchor thì bộ đếm pha ở chế độ giảm chuyển động in ra đúng một
+ * câu hai lần — người tắt animation mất hẳn một bước lập luận (NFR-A4).
+ */
+function checkChoreography(
+  step: Step,
+  path: string,
+  engines: EngineRegistry,
+  issues: ValidationIssue[],
+): void {
+  const choreography = step.choreography;
+  if (!choreography) return;
+
+  if (!step.scene) {
+    issues.push({
+      code: 'structure/choreography-without-scene',
+      severity: 'error',
+      message: 'Step khai `choreography` nhưng không có `scene`: không có gì để dàn dựng',
+      path: `${path}/choreography`,
+    });
+    return;
+  }
+
+  // Id tra được gồm **cả hai pane**: CHO-05 morph một element sang ảnh của nó ở
+  // song ánh, và ảnh ấy nằm ở scene bên phải theo đúng định nghĩa.
+  const known = knownIds(step.scene, engines);
+  if (step.bijection) {
+    for (const id of knownIds(step.bijection.scene, engines)) known.add(id);
+  }
+
+  const anchors = step.anchors ?? {};
+  const seenIds = new Set<string>();
+  const anchorUse = new Map<string, string[]>();
+  let end = 0;
+
+  choreography.phases.forEach((phase, i) => {
+    const at = `${path}/choreography/phases/${i}`;
+    end = Math.max(end, phase.at + phase.duration);
+
+    if (seenIds.has(phase.id)) {
+      issues.push({
+        code: 'structure/duplicate-phase-id',
+        severity: 'error',
+        message: `Phase id "${phase.id}" bị trùng trong step "${step.id}"`,
+        path: `${at}/id`,
+        hint: 'Hai pha cùng id thì scrub bar không phân biệt được chúng',
+      });
+    }
+    seenIds.add(phase.id);
+
+    if (!Object.hasOwn(anchors, phase.anchor)) {
+      issues.push({
+        code: 'structure/phase-unknown-anchor',
+        severity: 'error',
+        message: `Phase "${phase.id}" neo vào anchor "${phase.anchor}" mà bảng anchors không có`,
+        path: `${at}/anchor`,
+        hint: 'CHO-07: pha không nói được nó giải thích câu nào là animation trang trí (NG-07)',
+      });
+    }
+    // Gom nhãn chứ không chỉ đếm: hai pha chung anchor **có nhãn riêng** thì bộ
+    // đếm pha vẫn phân biệt được chúng, và đó là cách đúng để dàn dựng nhiều
+    // nhịp cho cùng một câu.
+    anchorUse.set(phase.anchor, [...(anchorUse.get(phase.anchor) ?? []), phase.label?.vi ?? '']);
+
+    phase.targets.forEach((id, j) => {
+      if (!known.has(id)) {
+        issues.push({
+          code: 'structure/phase-unknown-element',
+          severity: 'error',
+          message: `Phase "${phase.id}" tác động lên element "${id}" không có trong scene`,
+          path: `${at}/targets/${j}`,
+          hint: 'Cùng họ anchor rot (ANC-02): pha vẫn chạy, chỉ là không có gì nhúc nhích',
+        });
+      }
+    });
+
+    const needsTarget = phase.kind === 'move' || phase.kind === 'morph';
+    if (needsTarget && phase.to === undefined) {
+      issues.push({
+        code: 'structure/phase-missing-to',
+        severity: 'error',
+        message: `Phase "${phase.id}" kiểu "${phase.kind}" nhưng không khai \`to\`: không biết đi đâu`,
+        path: `${at}/to`,
+      });
+    } else if (!needsTarget && phase.to !== undefined) {
+      issues.push({
+        code: 'structure/phase-stray-to',
+        severity: 'warning',
+        message: `Phase "${phase.id}" kiểu "${phase.kind}" khai \`to\` nhưng kiểu này không dùng tới`,
+        path: `${at}/to`,
+        hint: 'Có lẽ định dùng "move" hoặc "morph"',
+      });
+    }
+
+    if (phase.to !== undefined) {
+      if (!known.has(phase.to)) {
+        issues.push({
+          code: 'structure/phase-unknown-element',
+          severity: 'error',
+          message: `Phase "${phase.id}" đi tới element "${phase.to}" không có trong scene`,
+          path: `${at}/to`,
+        });
+      } else if (phase.targets.includes(phase.to)) {
+        issues.push({
+          code: 'structure/phase-self-target',
+          severity: 'warning',
+          message: `Phase "${phase.id}" đưa "${phase.to}" về chính chỗ nó đang đứng`,
+          path: `${at}/to`,
+          hint: 'Pha chạy đủ thời lượng mà không có gì chuyển động — thời gian chết',
+        });
+      }
+    }
+  });
+
+  for (const [key, labels] of anchorUse) {
+    if (labels.length > 1 && new Set(labels).size < labels.length) {
+      issues.push({
+        code: 'structure/phases-share-anchor',
+        severity: 'warning',
+        message: `${labels.length} pha cùng neo vào anchor "${key}" mà không có nhãn phân biệt`,
+        path: `${path}/choreography/phases`,
+        hint: 'CHO-09: bộ đếm pha ở chế độ giảm chuyển động sẽ in một câu nhiều lần — đặt `label` cho từng pha',
+      });
+    }
+  }
+
+  if (end > GLOBAL_BOUNDS.softMaxTimelineMs) {
+    issues.push({
+      code: 'structure/timeline-too-long',
+      severity: 'warning',
+      message: `Timeline dài ${(end / 1000).toFixed(1)}s (ngưỡng mềm ${GLOBAL_BOUNDS.softMaxTimelineMs / 1000}s)`,
+      path: `${path}/choreography/phases`,
+      hint: 'Một step là một ý — cân nhắc tách đôi',
+    });
   }
 }
 

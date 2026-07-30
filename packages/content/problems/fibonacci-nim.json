@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "fibonacci-nim",
   "statement": {
     "vi": "Trên bàn có $20$ viên sỏi. Người đi đầu bốc ít nhất $1$ viên nhưng **không được bốc hết**. Từ đó trở đi, mỗi lượt được bốc ít nhất $1$ viên và **nhiều nhất gấp đôi** số viên đối thủ vừa bốc. Ai bốc viên cuối cùng thì thắng. Hỏi ai có chiến lược thắng?"
@@ -96,15 +96,15 @@
           "alt_text": {
             "vi": "Một đống hai mươi viên sỏi; dưới hình ghi nước mở màn được bốc từ một tới mười chín."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "moves == 19",
             "winning == true",
             "last_take == 0"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -188,12 +188,12 @@
           "alt_text": {
             "vi": "Đống mười tám viên; dưới hình ghi đối thủ vừa bốc hai nên được bốc từ một tới bốn."
           },
-          "verified": true,
           "claims": [
             "winning == false",
             "moves == 4",
             "last_take == 2"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s3",
@@ -230,11 +230,11 @@
           "alt_text": {
             "vi": "Đống mười ba viên; dưới hình ghi đối thủ vừa bốc một nên được bốc từ một tới hai."
           },
-          "verified": true,
           "claims": [
             "winning == false",
             "moves == 2"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s4",
@@ -270,11 +270,11 @@
           "alt_text": {
             "vi": "Đống hai mươi mốt viên sỏi ở thế mở màn."
           },
-          "verified": true,
           "claims": [
             "winning == false",
             "moves == 20"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

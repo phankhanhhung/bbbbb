@@ -50,6 +50,18 @@ describe('migrate', () => {
     expect(migrateProblem({ id: 'x' }).issues).toHaveLength(1);
   });
 
+  it('nâng thật từ 0.1.0 lên hiện tại, giữ nguyên mọi dữ liệu khác', () => {
+    // Bước nhảy 0.1.0 → 0.2.0 (thêm `Step.choreography`) không đổi dữ liệu, nên
+    // test này chủ yếu khẳng định **cơ chế** chạy: trước migration đầu tiên,
+    // vòng lặp trong `migrateProblem` chưa từng đi qua một lần nào.
+    const before = { schema_version: '0.1.0', id: 'x', solutions: [{ id: 'sol' }] };
+    const result = migrateProblem({ ...before });
+
+    expect(result.issues).toEqual([]);
+    expect(result.applied).toHaveLength(1);
+    expect(result.problem).toEqual({ ...before, schema_version: SCHEMA_VERSION });
+  });
+
   it('chuỗi migration là một đường thẳng, không có nhánh hay vòng', () => {
     // Hai migration cùng `from` nghĩa là có hai đường nâng cấp khác nhau, và
     // `find` sẽ lặng lẽ chọn cái đầu — kho nâng theo đường nào là chuyện may rủi.

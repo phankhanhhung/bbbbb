@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "euclid-game-two-piles",
   "statement": {
     "vi": "Hai đống sỏi có $25$ và $7$ viên. Mỗi lượt, người đi chọn một đống rồi bốc khỏi đống ấy một **bội số dương của số viên ở đống kia** (không được bốc quá số viên đang có). Ai không còn nước đi thì thua. Hỏi ai có chiến lược thắng?"
@@ -94,15 +94,15 @@
           "alt_text": {
             "vi": "Hai đống sỏi, một đống hai mươi lăm viên và một đống bảy viên."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "moves == 3",
             "winning == true",
             "winning_moves == 1"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -143,11 +143,11 @@
           "alt_text": {
             "vi": "Hai đống: mười một viên và bảy viên."
           },
-          "verified": true,
           "claims": [
             "winning == false",
             "moves == 1"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s2",
@@ -188,14 +188,14 @@
           "alt_text": {
             "vi": "Hai đống: bốn viên và bảy viên."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "winning == true",
             "winning_moves == 1"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         },
         {
           "id": "s3",
@@ -237,10 +237,10 @@
           "alt_text": {
             "vi": "Lưới mười bảy nhân mười bảy; các ô thua tô đậm thành một nêm quanh đường chéo, cộng hai trục. Ô (11,7) được khoanh."
           },
-          "verified": true,
           "claims": [
             "winning == false"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s4",
@@ -281,14 +281,14 @@
           "alt_text": {
             "vi": "Trở lại hai đống hai mươi lăm và bảy viên — thế thắng của người sắp đi."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "winning == true",
             "moves == 3"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         }
       ]
     }

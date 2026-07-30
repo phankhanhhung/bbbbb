@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "take-stones-one-to-three",
   "statement": {
     "vi": "Trên bàn có $20$ viên sỏi. Hai người lần lượt bốc $1$, $2$ hoặc $3$ viên. Ai bốc viên **cuối cùng** thì thắng. Hỏi ai có chiến lược thắng?"
@@ -89,11 +89,11 @@
           "alt_text": {
             "vi": "Một đống hai mươi viên sỏi."
           },
-          "verified": true,
           "claims": [
             "total == 20",
             "moves == 3"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -254,10 +254,10 @@
           "alt_text": {
             "vi": "Trở lại đống hai mươi viên — thế thua của người sắp đi."
           },
-          "verified": true,
           "claims": [
             "winning == false"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

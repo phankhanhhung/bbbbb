@@ -369,6 +369,12 @@ function renderMatrix(
           stroke: ctx.theme.surface.guide,
           'stroke-width': ctx.theme.stroke.hairline,
           ...decorationAttrs(ctx, incidenceId(token.id, set.id), inside ? token.emphasis : undefined),
+          // Ô giao mang **hai** danh tính: key `x__S` là chính nó, còn `data-el`
+          // nói nó là mực của phần tử `x`. Cần cả hai vì `x1` được vẽ thành
+          // nhiều node và cái node *đeo* key `x1` lại là tay cầm trong suốt ở
+          // dưới cùng — thứ mà lớp biến hình (PRN-04) sẽ dời đi mà không ai
+          // thấy gì. Cùng cơ chế mà view chấm và ma trận kề đã dùng.
+          'data-el': token.id,
         }),
       );
     });

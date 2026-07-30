@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "adjacency-matrix-handshake",
   "statement": {
     "vi": "Viết đồ thị thành ma trận kề. Đọc được gì từ tổng theo hàng, và từ tổng cả bảng?"
@@ -136,10 +136,6 @@
               }
             ]
           },
-          "alt_text": {
-            "vi": "Đồ thị bốn đỉnh hình thoi: đỉnh 1 và 3 nối với cả 2 lẫn 4, và nối với nhau."
-          },
-          "verified": true,
           "bijection": {
             "label_left": {
               "vi": "Đồ thị"
@@ -233,7 +229,11 @@
               ],
               "engine": "graph"
             }
-          }
+          },
+          "alt_text": {
+            "vi": "Đồ thị bốn đỉnh hình thoi: đỉnh 1 và 3 nối với cả 2 lẫn 4, và nối với nhau."
+          },
+          "verified": true
         },
         {
           "id": "s1",
@@ -315,10 +315,6 @@
               }
             ]
           },
-          "alt_text": {
-            "vi": "Ma trận kề 4×4, các ô có cạnh tô đậm và đối xứng qua đường chéo chính."
-          },
-          "verified": true,
           "bijection": {
             "label_left": {
               "vi": "Đồ thị"
@@ -414,7 +410,11 @@
               ],
               "engine": "graph"
             }
-          }
+          },
+          "alt_text": {
+            "vi": "Ma trận kề 4×4, các ô có cạnh tô đậm và đối xứng qua đường chéo chính."
+          },
+          "verified": true
         },
         {
           "id": "s2",
@@ -497,10 +497,6 @@
               }
             ]
           },
-          "alt_text": {
-            "vi": "Cùng ma trận ấy, thêm cột tổng bên phải: mỗi hàng cộng lại ra bậc của đỉnh."
-          },
-          "verified": true,
           "bijection": {
             "label_left": {
               "vi": "Đồ thị"
@@ -596,7 +592,11 @@
               ],
               "engine": "graph"
             }
-          }
+          },
+          "alt_text": {
+            "vi": "Cùng ma trận ấy, thêm cột tổng bên phải: mỗi hàng cộng lại ra bậc của đỉnh."
+          },
+          "verified": true
         },
         {
           "id": "s3",
@@ -681,10 +681,6 @@
               }
             ]
           },
-          "alt_text": {
-            "vi": "Ma trận với cột tổng và tổng chung: 3+2+3+2 = 10 = 2 × 5."
-          },
-          "verified": true,
           "bijection": {
             "label_left": {
               "vi": "Đồ thị"
@@ -779,9 +775,13 @@
               "engine": "graph"
             }
           },
+          "alt_text": {
+            "vi": "Ma trận với cột tổng và tổng chung: 3+2+3+2 = 10 = 2 × 5."
+          },
           "claims": [
             "sum(vertices, v => deg(v)) == 2 * m"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

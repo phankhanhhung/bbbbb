@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "knight-closed-tour-5x5",
   "statement": {
     "vi": "Chứng minh quân mã không thể đi một hành trình đóng qua đủ $25$ ô của bàn $5\\times5$ — mỗi ô đúng một lần rồi về ô xuất phát."
@@ -82,10 +82,10 @@
             "vi": "Bàn 5×5 tô xen kẽ hai màu; bốn góc và ô giữa cùng một màu."
           },
           "author_notes": "Draft máy — chưa duyệt.",
-          "verified": true,
           "claims": [
             "count(cells, c => c.color_class == 1) - count(cells, c => c.color_class == 2) == 1"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s1",

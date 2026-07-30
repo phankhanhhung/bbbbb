@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "hexagon-diagonal-crossings",
   "statement": {
     "vi": "Các đường chéo của một lục giác lồi cắt nhau tại bao nhiêu điểm? Và vì sao lục giác **đều** lại cho ít điểm hơn?"
@@ -162,10 +162,10 @@
           "alt_text": {
             "vi": "Lục giác đều với sáu cạnh."
           },
-          "verified": true,
           "claims": [
             "n == 6"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -508,10 +508,10 @@
           "alt_text": {
             "vi": "Bốn đỉnh và hai đường chéo của tứ giác chúng tạo ra."
           },
-          "verified": true,
           "claims": [
             "crossing_pairs == 15"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s3",
@@ -679,11 +679,11 @@
           "alt_text": {
             "vi": "Ba đường chéo chính đồng quy tại tâm lục giác."
           },
-          "verified": true,
           "claims": [
             "intersections == 13",
             "crossing_pairs == 15"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s4",
@@ -851,10 +851,10 @@
           "alt_text": {
             "vi": "Toàn bộ chín đường chéo và mười ba điểm giao."
           },
-          "verified": true,
           "claims": [
             "intersections < crossing_pairs"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

@@ -19,7 +19,23 @@ export interface Migration {
   apply(problem: Record<string, unknown>): Record<string, unknown>;
 }
 
-export const MIGRATIONS: readonly Migration[] = [];
+export const MIGRATIONS: readonly Migration[] = [
+  {
+    from: '0.1.0',
+    to: '0.2.0',
+    summary: 'thêm Step.choreography (optional) — không đổi dữ liệu, chỉ đóng dấu phiên bản',
+    /**
+     * Migration **không đổi gì**, và nó vẫn phải tồn tại.
+     *
+     * Thêm một trường optional thì bài cũ đã hợp lệ sẵn ở schema mới. Cám dỗ là
+     * bỏ qua hẳn bước nhảy: cứ để kho ở `0.1.0` và nới `isReadableVersion`.
+     * Nhưng thế thì `schema_version` trong file thôi không còn cho biết file ấy
+     * đã đi qua những bước nào — và đó là toàn bộ công dụng của nó. Một bước
+     * nhảy đồng nhất là rẻ; một kho mà phiên bản không nói lên sự thật thì không.
+     */
+    apply: (problem) => problem,
+  },
+];
 
 export interface MigrateResult {
   readonly problem: Record<string, unknown>;
