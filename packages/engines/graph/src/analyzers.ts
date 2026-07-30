@@ -606,6 +606,145 @@ export function pruferDecode(
 }
 
 // ---------------------------------------------------------------------------
+// Hình dạng của một cây (GR-10)
+// ---------------------------------------------------------------------------
+
+export interface TreeShape {
+  /** Đường kính, đếm bằng **số cạnh** — không phải số đỉnh. */
+  readonly diameter: number;
+  /** Một đường dài nhất, theo thứ tự từ đầu này sang đầu kia. */
+  readonly diameterPath: readonly string[];
+  /** Độ lệch tâm của từng đỉnh: khoảng cách tới đỉnh xa nhất. */
+  readonly eccentricity: ReadonlyMap<string, number>;
+  /** Tâm — đỉnh có độ lệch tâm nhỏ nhất. Cây nào cũng có **một hoặc hai**. */
+  readonly centre: readonly string[];
+  /**
+   * Trọng tâm — đỉnh mà bỏ đi thì phần còn lại vỡ thành các mảnh **nhỏ nhất có
+   * thể**. Cũng luôn có một hoặc hai, và hai thì kề nhau.
+   */
+  readonly centroid: readonly string[];
+  /** Cỡ mảnh lớn nhất còn lại khi bỏ mỗi đỉnh — đại lượng mà trọng tâm cực tiểu hoá. */
+  readonly largestPiece: ReadonlyMap<string, number>;
+  readonly leaves: readonly string[];
+  /** Dãy bậc, sắp **giảm dần**. Tổng của nó luôn là $2(n-1)$. */
+  readonly degreeSequence: readonly number[];
+}
+
+/** Khoảng cách từ một đỉnh tới mọi đỉnh khác, và đỉnh xa nhất. */
+function bfsFrom(
+  graph: GraphModel,
+  source: string,
+): { dist: Map<string, number>; parent: Map<string, string>; far: string } {
+  const dist = new Map<string, number>([[source, 0]]);
+  const parent = new Map<string, string>();
+  const queue = [source];
+  let far = source;
+
+  for (let head = 0; head < queue.length; head += 1) {
+    const current = queue[head] as string;
+    if ((dist.get(current) as number) > (dist.get(far) as number)) far = current;
+    for (const { to } of graph.adjacency.get(current) ?? []) {
+      if (dist.has(to)) continue;
+      dist.set(to, (dist.get(current) as number) + 1);
+      parent.set(to, current);
+      queue.push(to);
+    }
+  }
+
+  return { dist, parent, far };
+}
+
+/**
+ * Đo một cây: đường kính, tâm, trọng tâm, lá, dãy bậc (GR-10).
+ *
+ * **Vì sao tâm và trọng tâm là hai thứ.** Cả hai đều trả lời "đâu là giữa cây",
+ * nhưng bằng hai câu hỏi khác nhau, và với phần lớn cây thì hai câu ấy cho hai
+ * đáp án khác nhau:
+ *
+ *   - **Tâm** cực tiểu hoá *khoảng cách xa nhất* — nó nằm giữa đường kính. Câu
+ *     hỏi của nó là "đứng đâu thì chỗ xa nhất gần nhất".
+ *   - **Trọng tâm** cực tiểu hoá *mảnh lớn nhất còn lại khi bỏ nó đi*. Câu hỏi
+ *     của nó là "chặt đâu thì cây vỡ đều nhất".
+ *
+ * Một cây hình sao có cán dài cho thấy khác biệt ấy rõ nhất: tâm trôi ra giữa cán
+ * còn trọng tâm nằm lại ở đỉnh sao. Bắt tác giả tự nhẩm hai đỉnh này rồi viết vào
+ * narrative là mời một lỗi mà không ai kiểm được.
+ *
+ * Không phải cây thì **từ chối kèm lý do**, không trả một con số trông hợp lý:
+ * "đường kính" của một đồ thị không liên thông là vô hạn, và trả về đường kính
+ * của một thành phần là một câu trả lời sai được trình bày tự tin.
+ */
+export function treeShape(graph: GraphModel): AnalyzerResult<TreeShape> {
+  if (!isTree(graph)) {
+    return refuse('Đồ thị không phải cây (cần liên thông, đơn, và m = n − 1)');
+  }
+
+  const ids = graph.vertices.map((v) => v.id);
+  const n = ids.length;
+
+  // Hai lần BFS: từ một đỉnh bất kỳ tới đỉnh xa nhất $u$, rồi từ $u$ tới $v$.
+  // Trên **cây** thì $uv$ chắc chắn là một đường kính — mệnh đề chuẩn, và nó chỉ
+  // đúng vì cây không có chu trình.
+  const first = bfsFrom(graph, ids[0] as string);
+  const fromU = bfsFrom(graph, first.far);
+  const end = fromU.far;
+  const diameter = fromU.dist.get(end) as number;
+
+  const diameterPath: string[] = [];
+  for (let cursor: string | undefined = end; cursor !== undefined; cursor = fromU.parent.get(cursor)) {
+    diameterPath.unshift(cursor);
+  }
+
+  // Độ lệch tâm bằng BFS từ **mọi** đỉnh. $O(n^2)$ với $n \le 300$ là chín vạn
+  // phép — rẻ hơn nhiều so với chi phí đọc hiểu mẹo "ecc = max khoảng cách tới hai
+  // đầu đường kính", vốn đúng nhưng cần một chứng minh mà người sửa code sau
+  // không có sẵn trong đầu.
+  const eccentricity = new Map<string, number>();
+  for (const id of ids) {
+    const { dist } = bfsFrom(graph, id);
+    eccentricity.set(id, Math.max(...[...dist.values()]));
+  }
+  const minEcc = Math.min(...[...eccentricity.values()]);
+  const centre = ids.filter((id) => eccentricity.get(id) === minEcc);
+
+  // Trọng tâm: gốc hoá cây tại `ids[0]`, tính cỡ cây con. Bỏ đỉnh $v$ thì các mảnh
+  // là từng cây con của con nó, cộng phần trên $n - size(v)$.
+  const root = ids[0] as string;
+  const { parent } = bfsFrom(graph, root);
+  const order = [...bfsFrom(graph, root).dist.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([id]) => id);
+
+  const size = new Map<string, number>(ids.map((id) => [id, 1]));
+  for (const id of order) {
+    const up = parent.get(id);
+    if (up !== undefined) size.set(up, (size.get(up) as number) + (size.get(id) as number));
+  }
+
+  const largestPiece = new Map<string, number>();
+  for (const id of ids) {
+    let biggest = id === root ? 0 : n - (size.get(id) as number);
+    for (const { to } of graph.adjacency.get(id) ?? []) {
+      if (parent.get(to) === id) biggest = Math.max(biggest, size.get(to) as number);
+    }
+    largestPiece.set(id, biggest);
+  }
+  const minPiece = Math.min(...[...largestPiece.values()]);
+  const centroid = ids.filter((id) => largestPiece.get(id) === minPiece);
+
+  return ok({
+    diameter,
+    diameterPath,
+    eccentricity,
+    centre,
+    centroid,
+    largestPiece,
+    leaves: ids.filter((id) => (graph.degree.get(id) ?? 0) === 1),
+    degreeSequence: ids.map((id) => graph.degree.get(id) ?? 0).sort((a, b) => b - a),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Ghép cặp trên đồ thị hai phía (GR-06)
 // ---------------------------------------------------------------------------
 

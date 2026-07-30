@@ -14,6 +14,7 @@ import {
   connectedComponents,
   findCycle,
   isTree,
+  treeShape,
   matching,
   planarity,
 } from './analyzers.js';
@@ -553,6 +554,42 @@ export function resolveGraphValidator(id: string): SceneValidator | null {
   if (found) return found;
 
   const { name, arg } = parseValidatorId(id);
+
+  /**
+   * `diameter:<k>` — cây có đường kính đúng $k$ (GR-10).
+   *
+   * Mục tiêu sandbox của họ bài "dựng một cây thoả …": người học kéo cạnh cho tới
+   * khi hình đúng, và bảng chấm chứ không phải mắt họ. Đo bằng **cạnh**, cùng quy
+   * ước với binding `diameter` — hai chỗ đọc một con số từ cùng một analyzer.
+   *
+   * Chưa phải cây thì nói ra **điều đó** trước, không nói "đường kính sai": người
+   * đang nối dở một cây cần biết mình còn thiếu cạnh, không cần một con số.
+   */
+  if (name === 'diameter' && arg !== undefined) {
+    return {
+      id,
+      label: `Cây có đường kính ${arg}`,
+      check(scene) {
+        const graph = buildGraph(scene);
+        const shape = treeShape(graph);
+        if (!shape.value) {
+          return {
+            ok: false,
+            violations: graph.vertices.map((v) => v.id),
+            message: shape.refused ?? 'Chưa phải cây',
+          };
+        }
+        if (shape.value.diameter === arg) return { ok: true, violations: [] };
+        return {
+          ok: false,
+          // Chỉ ra **đường** đang quá dài (hoặc quá ngắn), không tô đỏ cả cây:
+          // người học đang sửa thì thứ họ cần thấy là đường nào đang hỏng.
+          violations: [...shape.value.diameterPath],
+          message: `Đường kính đang là ${shape.value.diameter}, cần ${arg}`,
+        };
+      },
+    };
+  }
   if (name === 'max-degree' && arg !== undefined) {
     return {
       id,
@@ -575,6 +612,7 @@ export function resolveGraphValidator(id: string): SceneValidator | null {
 export const GRAPH_VALIDATOR_IDS: readonly string[] = [
   ...FIXED.map((v) => v.id),
   'max-degree:<k>',
+  'diameter:<k>',
 ];
 
 // ---------------------------------------------------------------------------

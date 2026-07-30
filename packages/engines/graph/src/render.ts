@@ -10,10 +10,17 @@ import {
   type RenderContext,
   type SvgNode,
 } from '@combviz/render';
-import { buildGraph, SPACING, VERTEX_RADIUS, type Edge, type GraphModel } from './graph.js';
+import {
+  buildGraph,
+  SPACING,
+  VERTEX_RADIUS,
+  type Edge,
+  type GraphModel,
+  type Vertex,
+} from './graph.js';
 import type { GraphConfig } from './schema.js';
 import { matrixViewport, renderMatrix } from './matrix.js';
-import { pruferCode } from './analyzers.js';
+import { pruferCode, treeShape } from './analyzers.js';
 
 /**
  * Bề rộng ước lượng của một ký tự nhãn, tính bằng đơn vị scene.
@@ -223,8 +230,12 @@ export const graphRenderer: EngineRenderer = {
     const centre = centroid(graph);
     const weight = ctx.theme.stroke.link / ctx.theme.stroke.base;
 
+    // GR-10 — sống lưng đường kính, vẽ **dưới** các cạnh để không chôn chúng.
+    const spine = config.show_diameter ? renderDiameter(graph, ctx) : [];
+
     return [
       ...(config.show_prufer ? [el('g', { class: 'cv-prufer' }, renderPrufer(scene, ctx))] : []),
+      ...(spine.length > 0 ? [el('g', { class: 'cv-diameter' }, spine)] : []),
       el(
         'g',
         { class: 'cv-edge-labels' },
@@ -306,6 +317,64 @@ export const graphRenderer: EngineRenderer = {
     ];
   },
 };
+
+/**
+ * GR-10 — **sống lưng** của cây: đường kính vẽ thành một dải mờ chạy dưới các cạnh.
+ *
+ * Vì sao là một dải chứ không phải tô màu từng cạnh: đường kính là **một vật** —
+ * một đường đi — chứ không phải một tập cạnh rời. Tô từng cạnh thì người đọc phải
+ * tự nối chúng lại bằng mắt, và ở cây có nhiều nhánh thì nối nhầm rất dễ.
+ *
+ * Đỉnh **tâm** được đánh dấu ngay trên dải, vì mệnh đề "tâm nằm giữa đường kính"
+ * là thứ hình này sinh ra để nói. Trọng tâm thì **không** đánh dấu ở đây, và lý do
+ * không phải là nó nằm ngoài dải — nhiều khi nó nằm trên. Lý do là nó **không được
+ * định nghĩa bằng đường kính** chút nào: nó cực tiểu hoá cỡ mảnh, không cực tiểu
+ * hoá khoảng cách. Vẽ nó lên dải sẽ gợi ý một quan hệ không có, và gợi ý ấy sai ở
+ * đúng chỗ mà cả họ bài này muốn phân biệt. Muốn chỉ trọng tâm thì neo vào đỉnh —
+ * `v.is_centroid` có sẵn cho biểu thức, và anchor là công cụ đúng cho việc chỉ trỏ.
+ *
+ * Không phải cây thì **không vẽ gì**: hình im lặng chứ không vẽ một đường đi
+ * trông có vẻ đúng trong một đồ thị mà "đường kính" chưa được định nghĩa.
+ */
+function renderDiameter(graph: GraphModel, ctx: RenderContext): SvgNode[] {
+  const shape = treeShape(graph).value;
+  if (!shape || shape.diameterPath.length < 2) return [];
+
+  const points = shape.diameterPath
+    .map((id) => graph.byId.get(id))
+    .filter((v): v is Vertex => v !== undefined);
+  if (points.length < 2) return [];
+
+  const d = points
+    .map((v, i) => `${i === 0 ? 'M' : 'L'}${round(v.x)} ${round(v.y)}`)
+    .join('');
+
+  return [
+    keyed('diameter-spine', 'path', {
+      d,
+      fill: 'none',
+      stroke: ctx.theme.emphasis.focusHalo,
+      'stroke-width': VERTEX_RADIUS * 1.6,
+      'stroke-opacity': 0.22,
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+    }),
+    ...shape.centre
+      .map((id) => graph.byId.get(id))
+      .filter((v): v is Vertex => v !== undefined)
+      .map((v) =>
+        keyed(`centre-${v.id}`, 'circle', {
+          cx: round(v.x),
+          cy: round(v.y),
+          r: round(VERTEX_RADIUS * 1.55),
+          fill: 'none',
+          stroke: ctx.theme.emphasis.focusHalo,
+          'stroke-width': ctx.theme.stroke.base,
+          'stroke-dasharray': `${round(VERTEX_RADIUS * 0.5)} ${round(VERTEX_RADIUS * 0.4)}`,
+        }),
+      ),
+  ];
+}
 
 /**
  * Một cạnh, cộng vòng halo khi nó được nhấn.

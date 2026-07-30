@@ -1,0 +1,615 @@
+{
+  "schema_version": "0.1.0",
+  "id": "tree-centre-vs-centroid",
+  "statement": {
+    "vi": "Với một cây, có hai cách hiểu chữ \"giữa\": **tâm** là đỉnh mà khoảng cách tới đỉnh xa nhất là nhỏ nhất; **trọng tâm** là đỉnh mà bỏ nó đi thì mảnh lớn nhất còn lại là nhỏ nhất. Chứng tỏ hai đỉnh ấy có thể khác nhau, và chỉ ra chúng trên một cây cụ thể."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Tâm (Jordan, 1869) và trọng tâm là hai khái niệm cổ điển về \"giữa cây\"; cây bé nhất phân biệt được chúng có $5$ đỉnh."
+    }
+  },
+  "topics": [
+    "graph-basics"
+  ],
+  "techniques": [
+    "extremal"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "diameter",
+      "id": "inv-d",
+      "label": {
+        "vi": "Đường kính (số cạnh)"
+      }
+    },
+    {
+      "expr": "radius",
+      "id": "inv-r",
+      "label": {
+        "vi": "Bán kính"
+      }
+    },
+    {
+      "expr": "centroid_piece",
+      "id": "inv-p",
+      "label": {
+        "vi": "Mảnh lớn nhất khi bỏ trọng tâm"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Hai câu hỏi, hai đỉnh"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một cây $7$ đỉnh: ba lá $p,q,r$ mọc quanh [[a1|đỉnh $a$]], rồi một cán $a - b - c - d$ chạy sang phải. Câu hỏi tưởng chỉ có một đáp án: **đâu là giữa cây này**?"
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "va"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "va",
+                "type": "vertex",
+                "label": "a",
+                "pos": [0, 0]
+              },
+              {
+                "id": "vp",
+                "type": "vertex",
+                "label": "p",
+                "pos": [-10, -9]
+              },
+              {
+                "id": "vq",
+                "type": "vertex",
+                "label": "q",
+                "pos": [-13, 0]
+              },
+              {
+                "id": "vr",
+                "type": "vertex",
+                "label": "r",
+                "pos": [-10, 9]
+              },
+              {
+                "id": "vb",
+                "type": "vertex",
+                "label": "b",
+                "pos": [11, 0]
+              },
+              {
+                "id": "vc",
+                "type": "vertex",
+                "label": "c",
+                "pos": [22, 0]
+              },
+              {
+                "id": "vd",
+                "type": "vertex",
+                "label": "d",
+                "pos": [33, 0]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "va",
+                "v": "vp"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "va",
+                "v": "vq"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "va",
+                "v": "vr"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "va",
+                "v": "vb"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "vb",
+                "v": "vc"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "vc",
+                "v": "vd"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cây bảy đỉnh: ba lá quanh đỉnh a bên trái, rồi cán a–b–c–d kéo sang phải."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cách hỏi thứ nhất: **đứng đâu thì chỗ xa nhất là gần nhất?** Với mỗi đỉnh, đo khoảng cách tới đỉnh xa nhất — gọi là độ lệch tâm. Đường kính của cây là ${{diameter}}$ cạnh, chạy từ một lá bên trái sang $d$; [[a2|đỉnh $b$]] có độ lệch tâm nhỏ nhất, và nó nằm đúng giữa đường ấy. Đó là **tâm**."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "vb"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_diameter": true
+            },
+            "elements": [
+              {
+                "id": "va",
+                "type": "vertex",
+                "label": "a",
+                "pos": [0, 0]
+              },
+              {
+                "id": "vp",
+                "type": "vertex",
+                "label": "p",
+                "pos": [-10, -9]
+              },
+              {
+                "id": "vq",
+                "type": "vertex",
+                "label": "q",
+                "pos": [-13, 0]
+              },
+              {
+                "id": "vr",
+                "type": "vertex",
+                "label": "r",
+                "pos": [-10, 9]
+              },
+              {
+                "id": "vb",
+                "type": "vertex",
+                "color_class": 3,
+                "label": "b",
+                "pos": [11, 0]
+              },
+              {
+                "id": "vc",
+                "type": "vertex",
+                "label": "c",
+                "pos": [22, 0]
+              },
+              {
+                "id": "vd",
+                "type": "vertex",
+                "label": "d",
+                "pos": [33, 0]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "va",
+                "v": "vp"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "va",
+                "v": "vq"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "va",
+                "v": "vr"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "va",
+                "v": "vb"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "vb",
+                "v": "vc"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "vc",
+                "v": "vd"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng cây ấy, đường kính vẽ thành dải mờ và đỉnh b được khoanh — đó là tâm."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cách hỏi thứ hai: **chặt đâu thì cây vỡ đều nhất?** Bỏ [[a3|đỉnh $a$]] thì còn lại bốn mảnh, mảnh lớn nhất có ${{centroid_piece}}$ đỉnh. Bỏ $b$ thì mảnh bên trái có tới $4$ đỉnh — tệ hơn. Đỉnh cực tiểu hoá mảnh lớn nhất là **trọng tâm**, và ở đây nó là $a$, **không** phải $b$."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "va"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "va",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "a",
+                "pos": [0, 0]
+              },
+              {
+                "id": "vp",
+                "type": "vertex",
+                "label": "p",
+                "pos": [-10, -9]
+              },
+              {
+                "id": "vq",
+                "type": "vertex",
+                "label": "q",
+                "pos": [-13, 0]
+              },
+              {
+                "id": "vr",
+                "type": "vertex",
+                "label": "r",
+                "pos": [-10, 9]
+              },
+              {
+                "id": "vb",
+                "type": "vertex",
+                "label": "b",
+                "pos": [11, 0]
+              },
+              {
+                "id": "vc",
+                "type": "vertex",
+                "label": "c",
+                "pos": [22, 0]
+              },
+              {
+                "id": "vd",
+                "type": "vertex",
+                "label": "d",
+                "pos": [33, 0]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "va",
+                "v": "vp"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "va",
+                "v": "vq"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "va",
+                "v": "vr"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "va",
+                "v": "vb"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "vb",
+                "v": "vc"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "vc",
+                "v": "vd"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng cây ấy, đỉnh a được tô đậm — đó là trọng tâm."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy [[a4|tâm và trọng tâm]] là hai đỉnh khác nhau, và khác vì hai câu hỏi khác nhau: tâm cân bằng **khoảng cách**, trọng tâm cân bằng **số đỉnh**. Kéo cán dài thêm thì tâm còn trôi xa nữa, trong khi trọng tâm ở lại chỗ ba lá níu nó."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "va",
+                "vb"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_diameter": true
+            },
+            "elements": [
+              {
+                "id": "va",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "a",
+                "pos": [0, 0]
+              },
+              {
+                "id": "vp",
+                "type": "vertex",
+                "label": "p",
+                "pos": [-10, -9]
+              },
+              {
+                "id": "vq",
+                "type": "vertex",
+                "label": "q",
+                "pos": [-13, 0]
+              },
+              {
+                "id": "vr",
+                "type": "vertex",
+                "label": "r",
+                "pos": [-10, 9]
+              },
+              {
+                "id": "vb",
+                "type": "vertex",
+                "color_class": 3,
+                "label": "b",
+                "pos": [11, 0]
+              },
+              {
+                "id": "vc",
+                "type": "vertex",
+                "label": "c",
+                "pos": [22, 0]
+              },
+              {
+                "id": "vd",
+                "type": "vertex",
+                "label": "d",
+                "pos": [33, 0]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "va",
+                "v": "vp"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "va",
+                "v": "vq"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "va",
+                "v": "vr"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "va",
+                "v": "vb"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "vb",
+                "v": "vc"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "vc",
+                "v": "vd"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cây với cả hai đỉnh được đánh dấu: trọng tâm a bên trái, tâm b trên dải đường kính."
+          },
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Điều **luôn** đúng thì lại giống nhau ở cả hai: mỗi thứ có đúng một hoặc hai đỉnh, và nếu hai thì chúng kề nhau. Ở [[a5|đây]] cây có ${{centres}}$ tâm và ${{centroids}}$ trọng tâm. Còn dãy bậc ${{degree_sequence}}$ cộng lại bằng $2(n-1) = 12$ — đúng bổ đề bắt tay, vì cây có $n-1$ cạnh."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "va",
+                "vp",
+                "vq",
+                "vr",
+                "vb",
+                "vc",
+                "vd"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "va",
+                "type": "vertex",
+                "label": "a",
+                "pos": [0, 0]
+              },
+              {
+                "id": "vp",
+                "type": "vertex",
+                "label": "p",
+                "pos": [-10, -9]
+              },
+              {
+                "id": "vq",
+                "type": "vertex",
+                "label": "q",
+                "pos": [-13, 0]
+              },
+              {
+                "id": "vr",
+                "type": "vertex",
+                "label": "r",
+                "pos": [-10, 9]
+              },
+              {
+                "id": "vb",
+                "type": "vertex",
+                "label": "b",
+                "pos": [11, 0]
+              },
+              {
+                "id": "vc",
+                "type": "vertex",
+                "label": "c",
+                "pos": [22, 0]
+              },
+              {
+                "id": "vd",
+                "type": "vertex",
+                "label": "d",
+                "pos": [33, 0]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "va",
+                "v": "vp"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "va",
+                "v": "vq"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "va",
+                "v": "vr"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "va",
+                "v": "vb"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "vb",
+                "v": "vc"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "vc",
+                "v": "vd"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cây bảy đỉnh với badge bậc trên từng đỉnh."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "diameter == 4",
+    "validators": [
+      "tree",
+      "diameter:4"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

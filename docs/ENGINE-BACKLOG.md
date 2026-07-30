@@ -152,8 +152,20 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
   `prufer_code` / `leaves` và per-vertex `in_code`, cùng validator `tree`. Kèm bài
   `cayley-prufer-bijection`. Test khứ hồi duyệt **mọi** dãy độ dài $n-2$ với
   $n \le 5$ — tức dựng ra công thức Cayley chứ không tra nó.
-- **GR-10 [P2] SHOULD** — **analyzer cây**: đường kính, tâm/trọng tâm, đếm lá, dãy
-  bậc. Hôm nay chỉ có liên thông chung. Họ bài về cây là họ thường trực.
+- **GR-10 ✅ (M32)** — **analyzer cây**: `treeShape` trả đường kính (đếm bằng
+  **cạnh**), đường đi đạt nó, độ lệch tâm từng đỉnh, tâm, trọng tâm, lá và dãy bậc.
+  Binding `diameter`/`radius`/`centres`/`centroids`/`centroid_piece`/
+  `degree_sequence`, per-vertex `ecc`/`piece`/`is_centre`/`is_centroid`/`leaf`,
+  validator `diameter:<k>`, view `show_diameter`. Không phải cây thì cả cụm **vắng
+  mặt** — cùng luật với `prufer_code`.
+
+  Điểm sư phạm là **tâm ≠ trọng tâm**: hai câu hỏi nghe giống nhau ("đâu là giữa
+  cây") cho hai đáp án khác nhau, vì một bên cân bằng khoảng cách còn bên kia cân
+  bằng số đỉnh. Bài `tree-centre-vs-centroid`.
+
+  Test dựng **mọi** cây có nhãn tới $n = 7$ bằng cách giải mã Prüfer — dùng chính
+  song ánh của M27 làm bộ sinh — rồi kiểm ba định lý trên từng cây: một hoặc hai
+  tâm, một hoặc hai trọng tâm, và hai thì kề nhau.
 - **GR-05 [P2] SHOULD** — phần còn lại: **planar embedding rồi tô mặt.** Đã có
   chứng minh phẳng qua hình vẽ và chặn Euler; thiếu embedding nên chưa tô mặt được.
 - **GR-07 [P2] MAY** — ma trận kề **đồng bộ hai chiều** với canvas (chọn ô ↔ sáng

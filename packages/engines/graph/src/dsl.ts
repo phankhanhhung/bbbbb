@@ -16,6 +16,7 @@ import {
   permutationCycles,
   planarity,
   pruferCode,
+  treeShape,
 } from './analyzers.js';
 import { analyzePoset } from './poset.js';
 import { buildGraph, type GraphModel } from './graph.js';
@@ -50,6 +51,11 @@ function derive(scene: Scene): GraphDerived {
   // trên số 0 sẽ đạt, bài trông như đã kiểm, mà con số ấy không có nghĩa gì.
   const prufer = pruferCode(graph).value;
 
+  // GR-10 — cùng luật với `prufer`: đồ thị không phải cây thì hai thuộc tính này
+  // **vắng mặt**, không mang giá trị 0. "Độ lệch tâm" của một đỉnh trong đồ thị
+  // không liên thông là vô hạn, và $0$ đọc nhầm thành "đỉnh này là tâm".
+  const tree = treeShape(graph).value;
+
   const vertices = graph.vertices.map((v) =>
     element(v.id, {
       label: v.label ?? '',
@@ -60,6 +66,16 @@ function derive(scene: Scene): GraphDerived {
       x: v.x,
       y: v.y,
       ...(prufer ? { in_code: prufer.occurrences.get(v.id) ?? 0 } : {}),
+      ...(tree
+        ? {
+            ecc: tree.eccentricity.get(v.id) ?? 0,
+            /** Mảnh lớn nhất còn lại nếu bỏ đỉnh này — đại lượng trọng tâm cực tiểu hoá. */
+            piece: tree.largestPiece.get(v.id) ?? 0,
+            is_centre: tree.centre.includes(v.id),
+            is_centroid: tree.centroid.includes(v.id),
+            leaf: (graph.degree.get(v.id) ?? 0) === 1,
+          }
+        : {}),
     }),
   );
 
@@ -86,6 +102,7 @@ function derive(scene: Scene): GraphDerived {
 export function graphEnvironment(scene: Scene): DslEnvironment {
   const { graph, vertices, edges } = derive(scene);
   const prufer = pruferCode(graph).value;
+  const tree = treeShape(graph).value;
   const cyclesOf = permutationCycles(graph);
   const match = matching(graph).value;
   const plane = planarity(graph).value;
@@ -116,6 +133,33 @@ export function graphEnvironment(scene: Scene): DslEnvironment {
        */
       is_tree: isTree(graph),
       leaves: graph.vertices.filter((v) => (graph.degree.get(v.id) ?? 0) === 1).length,
+
+      /**
+       * Hình dạng cây (GR-10).
+       *
+       * `diameter` đếm bằng **cạnh**, không phải đỉnh — đó là quy ước chuẩn, và
+       * viết ra ở đây vì hai cách đếm lệch nhau đúng $1$, tức là đúng loại lệch
+       * không ai nhìn ra khi đọc lại.
+       *
+       * `centres` và `centroids` là **số lượng**, không phải danh sách: cả hai
+       * luôn bằng $1$ hoặc $2$, và một claim `centres == 2` nói được ngay điều
+       * đáng nói. Muốn chỉ ra *đỉnh nào* thì dùng `v.is_centre` — nó neo vào một
+       * đỉnh cụ thể, đúng việc của anchor.
+       *
+       * Không phải cây thì cả cụm **vắng mặt**.
+       */
+      ...(tree
+        ? {
+            diameter: tree.diameter,
+            radius: Math.min(...[...tree.eccentricity.values()]),
+            centres: tree.centre.length,
+            centroids: tree.centroid.length,
+            /** Cỡ mảnh lớn nhất khi bỏ trọng tâm. Với cây $n$ đỉnh nó luôn $\le n/2$. */
+            centroid_piece: Math.min(...[...tree.largestPiece.values()]),
+            /** Dãy bậc giảm dần, nối bằng dấu phẩy: `"3,2,1,1,1"`. */
+            degree_sequence: tree.degreeSequence.join(','),
+          }
+        : {}),
       ...(prufer
         ? {
             prufer_code: prufer.code

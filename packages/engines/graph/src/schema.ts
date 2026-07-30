@@ -89,6 +89,16 @@ export const GraphConfig = Type.Object(
      * Đồ thị không phải cây thì hàng ô ấy **không** vẽ; hình nói ra lý do.
      */
     show_prufer: Type.Optional(Type.Boolean({ default: false })),
+    /**
+     * GR-10 — vẽ **đường kính** của cây thành một dải chạy dưới các cạnh, và
+     * khoanh đỉnh **tâm** nằm trên dải ấy.
+     *
+     * Mệnh đề "tâm nằm giữa đường kính" là một dòng chữ trong sách và một hình vẽ
+     * ở đây; hình thì kiểm được bằng mắt. Trọng tâm cố ý **không** vẽ lên dải: nó
+     * thường không nằm trên đường kính, và vẽ nó ở đó sẽ gợi ý một quan hệ không
+     * có. Đồ thị không phải cây thì không vẽ gì.
+     */
+    show_diameter: Type.Optional(Type.Boolean({ default: false })),
   },
   { additionalProperties: false },
 );
