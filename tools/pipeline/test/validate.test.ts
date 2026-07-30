@@ -384,6 +384,90 @@ describe('PRN-04 — view song ánh', () => {
 
     expect(codes(problem)).toContain('structure/bijection-without-scene');
   });
+
+  /**
+   * CHO-01..09 — dàn dựng phải neo được, trỏ được, đọc được khi tắt chuyển động.
+   *
+   * Dùng chính bài song ánh làm nền vì `morph` (CHO-05) sống đúng ở đây: một phần
+   * tử biến thành ảnh của nó ở pane bên kia, và đích nằm ở **scene bên phải**.
+   */
+  describe('CHO — choreography', () => {
+    const withPhases = (
+      ...phases: Record<string, unknown>[]
+    ): Problem => {
+      const problem = loadBijection();
+      (stepOf(problem) as Record<string, unknown>)['choreography'] = { phases };
+      return problem;
+    };
+
+    const morph = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
+      id: 'ph1',
+      kind: 'morph',
+      targets: ['x1'],
+      to: 'b1',
+      at: 0,
+      duration: 600,
+      anchor: 'a1',
+      ...over,
+    });
+
+    it('pha morph sang pane bên phải là hợp lệ', () => {
+      expect(validator.validateProblem(withPhases(morph())).issues).toEqual([]);
+    });
+
+    it('bắt pha trỏ tới element không tồn tại', () => {
+      // Im lặng hoàn toàn lúc chạy: pha vẫn chạy đủ thời lượng, chỉ là không có
+      // gì nhúc nhích.
+      expect(codes(withPhases(morph({ targets: ['khong-ton-tai'] })))).toContain(
+        'structure/phase-unknown-element',
+      );
+      expect(codes(withPhases(morph({ to: 'khong-ton-tai' })))).toContain(
+        'structure/phase-unknown-element',
+      );
+    });
+
+    it('CHO-07 — bắt pha neo vào anchor không khai', () => {
+      expect(codes(withPhases(morph({ anchor: 'a9' })))).toContain(
+        'structure/phase-unknown-anchor',
+      );
+    });
+
+    it('move/morph thiếu `to` là lỗi; kiểu khác thừa `to` là cảnh báo', () => {
+      const missing = morph();
+      delete missing['to'];
+      expect(codes(withPhases(missing))).toContain('structure/phase-missing-to');
+
+      const stray = validator
+        .validateProblem(withPhases(morph({ kind: 'focus' })))
+        .issues.find((i) => i.code === 'structure/phase-stray-to');
+      expect(stray?.severity).toBe('warning');
+    });
+
+    it('bắt id pha trùng nhau', () => {
+      expect(codes(withPhases(morph(), morph({ at: 600 })))).toContain(
+        'structure/duplicate-phase-id',
+      );
+    });
+
+    it('CHO-09 — cảnh báo khi hai pha chung anchor mà không có nhãn phân biệt', () => {
+      const shared = withPhases(morph(), morph({ id: 'ph2', at: 600 }));
+      expect(codes(shared)).toContain('structure/phases-share-anchor');
+
+      // Có nhãn riêng thì bộ đếm pha vẫn phân biệt được — không cảnh báo nữa.
+      const labelled = withPhases(
+        morph({ label: { vi: 'gộp lại' } }),
+        morph({ id: 'ph2', at: 600, label: { vi: 'tách ra' } }),
+      );
+      expect(codes(labelled)).not.toContain('structure/phases-share-anchor');
+    });
+
+    it('choreography không có scene là lỗi', () => {
+      const problem = withPhases(morph());
+      delete stepOf(problem).scene;
+
+      expect(codes(problem)).toContain('structure/choreography-without-scene');
+    });
+  });
 });
 
 /**

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "dilworth-divisors-twelve",
   "statement": {
     "vi": "Xét các ước của $12$, sắp theo quan hệ **chia hết**. Tìm phản xích lớn nhất, và chứng minh không phủ được bằng ít hơn từng ấy xích."
@@ -173,13 +173,13 @@
           "alt_text": {
             "vi": "Sơ đồ Hasse các ước của 12, bốn tầng."
           },
-          "verified": true,
           "claims": [
             "height == 4",
             "width == 2",
             "minimal == 1",
             "maximal == 1"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -687,10 +687,10 @@
           "alt_text": {
             "vi": "Phản xích và hai xích hiện cùng lúc."
           },
-          "verified": true,
           "claims": [
             "width == 2"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

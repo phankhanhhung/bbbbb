@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "telescoping-sum-fractions",
   "statement": {
     "vi": "Tính tổng $\\displaystyle\\sum_{k=1}^{n} \\frac{1}{k(k+1)}$."
@@ -102,14 +102,14 @@
           "alt_text": {
             "vi": "Tổng từ k bằng 1 đến n của 1 trên k nhân k cộng 1, bằng dấu hỏi."
           },
-          "expects_violation": [
-            "cancelled:6"
-          ],
-          "verified": true,
           "claims": [
             "n_rows == 1",
             "n_terms == 3"
-          ]
+          ],
+          "expects_violation": [
+            "cancelled:6"
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -348,13 +348,13 @@
           "alt_text": {
             "vi": "Khai triển với n bằng 4: 1/1 − 1/2 + 1/2 − 1/3 + 1/3 − 1/4 + 1/4 − 1/5."
           },
+          "claims": [
+            "n_terms == 15"
+          ],
           "expects_violation": [
             "cancelled:6"
           ],
-          "verified": true,
-          "claims": [
-            "n_terms == 15"
-          ]
+          "verified": true
         },
         {
           "id": "s3",
@@ -508,10 +508,10 @@
           "alt_text": {
             "vi": "Cùng khai triển, sáu phân số ở giữa bị gạch chéo từng cặp."
           },
-          "verified": true,
           "claims": [
             "cancelled == 6"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s4",
@@ -565,14 +565,14 @@
           "alt_text": {
             "vi": "Kết quả: 1 trừ 1 trên n cộng 1."
           },
-          "expects_violation": [
-            "cancelled:6"
-          ],
-          "verified": true,
           "claims": [
             "n_terms == 3",
             "cancelled == 0"
-          ]
+          ],
+          "expects_violation": [
+            "cancelled:6"
+          ],
+          "verified": true
         }
       ]
     }

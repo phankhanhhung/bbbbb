@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "subsets-binary-strings",
   "statement": {
     "vi": "Chứng minh rằng tập $\\{1,2,\\dots,n\\}$ có đúng $2^n$ tập con."
@@ -115,10 +115,6 @@
               }
             ]
           },
-          "alt_text": {
-            "vi": "Bảng cho thấy 1 và 3 thuộc S; xâu tương ứng là 1010."
-          },
-          "verified": true,
           "bijection": {
             "label_left": {
               "vi": "Tập con"
@@ -180,7 +176,11 @@
               ],
               "engine": "sequence"
             }
-          }
+          },
+          "alt_text": {
+            "vi": "Bảng cho thấy 1 và 3 thuộc S; xâu tương ứng là 1010."
+          },
+          "verified": true
         },
         {
           "id": "s1",
@@ -246,10 +246,6 @@
               }
             ]
           },
-          "alt_text": {
-            "vi": "S = {2,3,4}; xâu tương ứng là 0111."
-          },
-          "verified": true,
           "bijection": {
             "label_left": {
               "vi": "Tập con"
@@ -312,7 +308,11 @@
               ],
               "engine": "sequence"
             }
-          }
+          },
+          "alt_text": {
+            "vi": "S = {2,3,4}; xâu tương ứng là 0111."
+          },
+          "verified": true
         },
         {
           "id": "s2",
@@ -370,10 +370,6 @@
               }
             ]
           },
-          "alt_text": {
-            "vi": "S rỗng; xâu tương ứng là 0000."
-          },
-          "verified": true,
           "bijection": {
             "label_left": {
               "vi": "Tập con"
@@ -433,7 +429,11 @@
               ],
               "engine": "sequence"
             }
-          }
+          },
+          "alt_text": {
+            "vi": "S rỗng; xâu tương ứng là 0000."
+          },
+          "verified": true
         },
         {
           "id": "s3",

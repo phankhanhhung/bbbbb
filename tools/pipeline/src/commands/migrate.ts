@@ -1,6 +1,6 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
-import { formatIssue, migrateProblem, SCHEMA_VERSION } from '@combviz/schema';
+import { formatIssue, formatProblem, migrateProblem, SCHEMA_VERSION } from '@combviz/schema';
 
 /**
  * `combviz migrate` — nâng toàn kho lên schema hiện tại (DAT-02).
@@ -59,7 +59,13 @@ export async function runMigrate(options: MigrateOptions): Promise<MigrateReport
     for (const step of result.applied) console.log(`      ${step}`);
 
     if (options.write) {
-      await writeFile(file, `${JSON.stringify(result.problem, null, 2)}\n`, 'utf8');
+      // `formatProblem`, không phải `JSON.stringify`: DAT-03 nói định dạng file
+      // phải chuẩn tắc, và diff git là công cụ review chính (§4.1). Nâng phiên
+      // bản mà xáo lại thứ tự khoá toàn kho thì cái diff duy nhất người ta cần
+      // đọc — dòng `schema_version` — chìm nghỉm giữa vài nghìn dòng nhiễu.
+      //
+      // Nhánh này chưa từng chạy: `MIGRATIONS` rỗng cho tới migration đầu tiên.
+      await writeFile(file, formatProblem(result.problem), 'utf8');
     }
   }
 

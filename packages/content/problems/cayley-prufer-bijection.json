@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "cayley-prufer-bijection",
   "statement": {
     "vi": "Có bao nhiêu **cây có nhãn** trên $n$ đỉnh $1, 2, \\dots, n$? Chứng minh rằng số ấy bằng $n^{n-2}$ (công thức Cayley)."
@@ -136,13 +136,13 @@
           "alt_text": {
             "vi": "Cây năm đỉnh: đỉnh 1 nối 4, 4 nối 5, 5 nối 2 và 3; badge bậc hiện trên mỗi đỉnh."
           },
-          "verified": true,
           "claims": [
             "is_tree == true",
             "n == 5",
             "m == 4",
             "leaves == 3"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -225,10 +225,10 @@
           "alt_text": {
             "vi": "Vẫn cây ấy, thêm một hàng ba ô dưới hình ghi bốn, năm, năm."
           },
-          "verified": true,
           "claims": [
             "prufer_code == \"4,5,5\""
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s2",
@@ -312,10 +312,10 @@
           "alt_text": {
             "vi": "Vẫn hình ấy, nhấn vào đỉnh năm và hai ô mã mang nhãn năm."
           },
-          "verified": true,
           "claims": [
             "forall(vertices, v => v.deg == v.in_code + 1)"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s3",
@@ -396,11 +396,11 @@
           "alt_text": {
             "vi": "Cây hình sao: đỉnh ba ở giữa nối cả bốn đỉnh còn lại; hàng mã ghi ba, ba, ba."
           },
-          "verified": true,
           "claims": [
             "prufer_code == \"3,3,3\"",
             "leaves == 4"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s4",
@@ -483,11 +483,11 @@
           "alt_text": {
             "vi": "Trở lại cây đầu tiên cùng hàng mã bốn, năm, năm."
           },
-          "verified": true,
           "claims": [
             "prufer_code == \"4,5,5\"",
             "is_tree == true"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

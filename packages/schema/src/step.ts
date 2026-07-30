@@ -60,6 +60,79 @@ export const Bijection = Type.Object(
 );
 export type Bijection = Static<typeof Bijection>;
 
+/**
+ * Một **pha** của choreography (CHO-01..09).
+ *
+ * `anchor` **bắt buộc**, và đó là quyết định trung tâm của cả lớp này. CHO-07 nói
+ * mỗi pha phải đồng bộ với một anchor hoặc một đoạn narrative, và NG-07 gọi thứ
+ * không có ràng buộc ấy bằng đúng tên của nó: animation **trang trí**. Một pha
+ * không nói được nó đang giải thích câu nào thì không phải một pha giải thích.
+ *
+ * Thời gian tính bằng **mili-giây trong timeline của step**, không phải giây thực
+ * cũng không phải "beat" trừu tượng: CHO-08 đòi cùng `t` cho cùng khung ở mọi nơi,
+ * nên đơn vị phải là một con số tuyệt đối mà cả Player lẫn render headless đọc
+ * giống nhau.
+ */
+export const ChoreographyPhase = Type.Object(
+  {
+    id: EntityId,
+    /**
+     * `focus`/`dim` đổi cách vẽ; `show`/`hide` đổi độ hiện; `move` đưa element tới
+     * chỗ của element khác; `morph` vừa đưa vừa biến hình (CHO-05).
+     *
+     * Tập **đóng**, cùng lý do đã ghi ở `GameRule` và `SPREAD_RULES`: cho tác giả
+     * mô tả chuyển động bằng biểu thức là mở lại DSL-03 bằng cửa sau.
+     */
+    kind: Type.Union([
+      Type.Literal("focus"),
+      Type.Literal("dim"),
+      Type.Literal("show"),
+      Type.Literal("hide"),
+      Type.Literal("move"),
+      Type.Literal("morph"),
+    ]),
+    /** Element chịu tác động. Rỗng là vô nghĩa, nên tối thiểu một. */
+    targets: Type.Array(EntityId, { minItems: 1, maxItems: 200 }),
+    /** Đích của `move`/`morph`: id element mà target đi tới. */
+    to: Type.Optional(EntityId),
+    /** Mốc bắt đầu, ms tính từ đầu timeline của step. */
+    at: Type.Integer({ minimum: 0, maximum: 60_000 }),
+    /** Thời lượng, ms. `0` nghĩa là đổi tức thì — hợp lệ và hay dùng cho `show`. */
+    duration: Type.Integer({ minimum: 0, maximum: 60_000 }),
+    easing: Type.Optional(
+      Type.Union([Type.Literal("linear"), Type.Literal("ease-in-out")], {
+        default: "ease-in-out",
+      }),
+    ),
+    /** CHO-07 — khoá anchor mà pha này giải thích. Bắt buộc, xem chú thích trên. */
+    anchor: Type.String({ pattern: ANCHOR_KEY_PATTERN }),
+    /** Nhãn ngắn cho bộ đếm pha ở chế độ giảm chuyển động (CHO-09). */
+    label: Type.Optional(LangString),
+  },
+  { additionalProperties: false },
+);
+export type ChoreographyPhase = Static<typeof ChoreographyPhase>;
+
+/**
+ * Timeline nhiều pha của một step (CHO-01..CHO-10).
+ *
+ * **Không** nằm trong renderer. Renderer vẫn là `Scene → SvgNode[]` thuần; lớp
+ * này đọc `(nodes, choreography, t)` và cũng thuần. Nhét thời gian vào renderer là
+ * giết D-03, và kéo theo REN-01/02/04 — cùng một phép tính phải chạy được cả trong
+ * browser lẫn trong Node.
+ *
+ * CHO-10: animation tự động giữa hai snapshot vẫn còn và vẫn là **fallback**. Có
+ * `choreography` nghĩa là tác giả nói rõ chuyện gì xảy ra trong step; không có thì
+ * Player vẫn nội suy hai snapshot như cũ, và đó không phải "đã có choreography".
+ */
+export const Choreography = Type.Object(
+  {
+    phases: Type.Array(ChoreographyPhase, { minItems: 1, maxItems: 40 }),
+  },
+  { additionalProperties: false },
+);
+export type Choreography = Static<typeof Choreography>;
+
 export const Step = Type.Object(
   {
     id: EntityId,
@@ -85,6 +158,12 @@ export const Step = Type.Object(
 
     /** PRN-04. Cần `scene` — kiểm ở tầng structure, không ở JSON Schema. */
     bijection: Type.Optional(Bijection),
+
+    /**
+     * CHO-01..10 — timeline nhiều pha. Ràng buộc chéo (anchor có thật, target có
+     * thật, pha không tràn) kiểm ở tầng structure.
+     */
+    choreography: Type.Optional(Choreography),
 
     /** Trạng thái panel nguyên lý gắn với step (invariant strip, partition view...). */
     widget_state: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
@@ -144,6 +223,19 @@ export interface Step {
   narrative?: { vi: string; en?: string };
   anchors?: Record<string, Anchor>;
   scene?: Scene;
+  choreography?: {
+    phases: {
+      id: string;
+      kind: 'focus' | 'dim' | 'show' | 'hide' | 'move' | 'morph';
+      targets: string[];
+      to?: string;
+      at: number;
+      duration: number;
+      easing?: 'linear' | 'ease-in-out';
+      anchor: string;
+      label?: { vi: string; en?: string };
+    }[];
+  };
   bijection?: {
     scene: Scene;
     pairs: [string, string][];

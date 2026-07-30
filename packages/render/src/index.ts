@@ -55,6 +55,15 @@ export { easeInOutCubic, easingOf, clamp01, type EasingFn } from './easing.js';
 export { canonicalStringify, hashString, hashScene } from './hash.js';
 export { diffNodes, isEmptyDiff, type NodeDiff } from './diff.js';
 export { interpolateNodes } from './interpolate.js';
+export {
+  timelineLength,
+  phaseProgress,
+  activePhases,
+  applyChoreography,
+  type Phase,
+  type Choreography,
+  type PositionLookup,
+} from './choreography.js';
 export { toSvgString, serializeNode, type SerializeOptions } from './serialize.js';
 export { watermarkNodes } from './watermark.js';
 export {

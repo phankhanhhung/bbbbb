@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "triangle-lozenge-parity",
   "statement": {
     "vi": "Tam giác đều cạnh $n$ được chia thành $n^2$ tam giác đơn vị bởi các đường song song với ba cạnh. Một **hình thoi** là hình ghép từ hai tam giác đơn vị chung cạnh. Chứng minh rằng với mọi $n \\ge 1$, không thể lát kín tam giác ấy bằng các hình thoi."
@@ -90,14 +90,14 @@
           "alt_text": {
             "vi": "Tam giác đều chia thành hai mươi lăm tam giác đơn vị, chưa tô màu."
           },
-          "expects_violation": [
-            "full-cover"
-          ],
-          "verified": true,
           "claims": [
             "count(cells) == 25",
             "rows == 5"
-          ]
+          ],
+          "expects_violation": [
+            "full-cover"
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -133,14 +133,14 @@
           "alt_text": {
             "vi": "Cùng tam giác ấy, ô hướng lên tô đậm và ô hướng xuống tô nhạt."
           },
-          "expects_violation": [
-            "full-cover"
-          ],
-          "verified": true,
           "claims": [
             "count(cells, c => c.color_class == 1) == 15",
             "count(cells, c => c.color_class == 2) == 10"
-          ]
+          ],
+          "expects_violation": [
+            "full-cover"
+          ],
+          "verified": true
         },
         {
           "id": "s2",
@@ -195,14 +195,14 @@
           "alt_text": {
             "vi": "Ba hình thoi tô đậm ở ba tư thế khác nhau, mỗi hình gồm một ô đậm và một ô nhạt."
           },
-          "expects_violation": [
-            "full-cover"
-          ],
-          "verified": true,
           "claims": [
             "count(tiles) == 3",
             "sum(tiles, t => t.size) == 6"
-          ]
+          ],
+          "expects_violation": [
+            "full-cover"
+          ],
+          "verified": true
         },
         {
           "id": "s3",
@@ -308,14 +308,14 @@
           "alt_text": {
             "vi": "Mười hình thoi phủ hai mươi ô; năm ô hướng lên dọc theo cạnh phải không được phủ."
           },
-          "expects_violation": [
-            "full-cover"
-          ],
-          "verified": true,
           "claims": [
             "count(tiles) == 10",
             "sum(tiles, t => t.size) == 20"
-          ]
+          ],
+          "expects_violation": [
+            "full-cover"
+          ],
+          "verified": true
         }
       ]
     }

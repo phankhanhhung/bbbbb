@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "hex-board-three-colours",
   "statement": {
     "vi": "Một bàn ong gồm các ô lục giác đều; hai ô chung cạnh gọi là **kề nhau**. Cần tô mỗi ô một màu sao cho hai ô kề nhau luôn khác màu. Hỏi ít nhất bao nhiêu màu là đủ?"
@@ -91,14 +91,14 @@
           "alt_text": {
             "vi": "Bàn ong năm hàng sáu cột, chưa tô màu; ba ô kề nhau được khoanh viền đậm."
           },
-          "expects_violation": [
-            "proper-colouring:3"
-          ],
-          "verified": true,
           "claims": [
             "count(cells) == 30",
             "exists(cells, a => a.row == 1 && a.col == 1 && exists(cells, b => adjacent(a, b) && exists(cells, c => adjacent(a, c) && adjacent(b, c))))"
-          ]
+          ],
+          "expects_violation": [
+            "proper-colouring:3"
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -143,13 +143,13 @@
           "alt_text": {
             "vi": "Cùng bàn ong tô hai màu theo dải chéo; trong ba ô được khoanh có hai ô cùng màu và chúng kề nhau."
           },
+          "claims": [
+            "exists(cells, a => exists(cells, b => adjacent(a, b) && a.color_class == b.color_class))"
+          ],
           "expects_violation": [
             "proper-colouring:3"
           ],
-          "verified": true,
-          "claims": [
-            "exists(cells, a => exists(cells, b => adjacent(a, b) && a.color_class == b.color_class))"
-          ]
+          "verified": true
         },
         {
           "id": "s1x",
@@ -239,12 +239,12 @@
           "alt_text": {
             "vi": "Cùng bàn ong tô ba màu theo dải chéo; ba ô được khoanh mang ba màu khác nhau."
           },
-          "verified": true,
           "claims": [
             "forall(cells, a => forall(cells, b => !(adjacent(a, b) && a.color_class == b.color_class)))",
             "max(cells, c => c.color_class) == 3",
             "count(cells, c => c.color_class == 1) + count(cells, c => c.color_class == 2) + count(cells, c => c.color_class == 3) == 30"
-          ]
+          ],
+          "verified": true
         }
       ]
     }

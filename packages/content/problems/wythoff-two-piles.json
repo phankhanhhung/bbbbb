@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "wythoff-two-piles",
   "statement": {
     "vi": "Hai đống sỏi có $10$ và $15$ viên. Hai người lần lượt đi; mỗi lượt được bốc bất kì số viên dương từ **một** đống, **hoặc** bốc cùng một số viên dương từ **cả hai** đống. Ai bốc viên cuối cùng thì thắng. Hỏi ai có chiến lược thắng?"
@@ -103,16 +103,16 @@
           "alt_text": {
             "vi": "Hai đống sỏi, một đống mười viên và một đống mười lăm viên."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "total == 25",
             "moves == 35",
             "winning == true",
             "winning_moves == 3"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         },
         {
           "id": "s1",
@@ -162,11 +162,11 @@
           "alt_text": {
             "vi": "Hai đống: một viên và hai viên."
           },
-          "verified": true,
           "claims": [
             "winning == false",
             "moves == 4"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s2",
@@ -216,10 +216,10 @@
           "alt_text": {
             "vi": "Hai đống: ba viên và năm viên."
           },
-          "verified": true,
           "claims": [
             "winning == false"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s3",
@@ -270,10 +270,10 @@
           "alt_text": {
             "vi": "Lưới hai mươi mốt nhân hai mươi mốt; các ô thua tô đậm thành hai tia toả ra từ gốc, kẹp lấy đường chéo. Ô (8,13) được khoanh."
           },
-          "verified": true,
           "claims": [
             "winning == false"
-          ]
+          ],
+          "verified": true
         },
         {
           "id": "s4",
@@ -323,14 +323,14 @@
           "alt_text": {
             "vi": "Trở lại hai đống mười và mười lăm viên — thế thắng của người sắp đi."
           },
-          "expects_violation": [
-            "hand-opponent-a-loss"
-          ],
-          "verified": true,
           "claims": [
             "winning == true",
             "winning_moves == 3"
-          ]
+          ],
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
         }
       ]
     }

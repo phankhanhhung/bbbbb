@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "tetromino-straight-and-square",
   "statement": {
     "vi": "Chứng minh không thể phủ kín bàn $8\\times8$ bằng $15$ quân tetromino thẳng $1\\times4$ và $1$ quân tetromino vuông $2\\times2$."
