@@ -9,7 +9,13 @@ import {
   type Value,
 } from '@combviz/dsl';
 import { cellColorClass, latticeOf, tileOffsets, type Offset } from './geometry.js';
-import { cellsInRow, neighbours, type Lattice } from './lattice.js';
+import {
+  cellsInRow,
+  isLatticeShape,
+  latticeTileCells,
+  neighbours,
+  type Lattice,
+} from './lattice.js';
 import { attacksCell, type AttackBoard } from './attacks.js';
 import { cellId } from './ids.js';
 import type { BoardConfig } from './schema.js';
@@ -63,15 +69,15 @@ function computeDerived(scene: Scene): BoardDerived {
   const holes = new Set((config?.holes ?? []).map(([r, c]) => `${r},${c}`));
   const occupancy = new Map<string, readonly Offset[]>();
   const coveredCells = new Set<string>();
+  const lattice = latticeOf(config);
 
   for (const item of scene.elements) {
     if (item.type !== 'tile') continue;
-    const cells = tileCells(item);
+    const cells = tileCells(item, lattice);
     occupancy.set(item.id, cells);
     for (const [r, c] of cells) coveredCells.add(`${r},${c}`);
   }
 
-  const lattice = latticeOf(config);
   const cells: ElementValue[] = [];
   for (let r = 0; r < rows; r += 1) {
     for (let c = 0; c < cellsInRow(lattice, cols, r); c += 1) {
@@ -97,10 +103,16 @@ function computeDerived(scene: Scene): BoardDerived {
         shape: String(e['shape']),
         row: Number((e['pos'] as Offset)?.[0] ?? 0),
         col: Number((e['pos'] as Offset)?.[1] ?? 0),
-        rot: Number(e['rot'] ?? 0),
-        flip: Boolean(e['flip']),
         size: (occupancy.get(e.id) ?? []).length,
         color_class: Number(e.color_class ?? 0),
+        // Hai họ hình mang **hai** bộ thuộc tính tư thế, và chỉ bộ đúng mới hiện
+        // ra (BD-09). Quân trên lưới tam giác không có `rot` vì phép quay $90°$
+        // không phải phép đối xứng của lưới ấy; trả về `rot: 0` cho nó là bịa ra
+        // một con số đúng cú pháp và vô nghĩa — cùng lý do mà `xor`/`grundy` vắng
+        // mặt ở game engine khi luật chơi không phải Nim.
+        ...(isLatticeShape(String(e['shape']))
+          ? { dir: Number(e['dir'] ?? 0) }
+          : { rot: Number(e['rot'] ?? 0), flip: Boolean(e['flip']) }),
       }),
     );
 
@@ -127,10 +139,29 @@ function computeDerived(scene: Scene): BoardDerived {
   return { cells, tiles, pieces, regions, rows, cols, lattice, occupancy };
 }
 
-export function tileCells(item: SceneElement): readonly Offset[] {
+/**
+ * Các ô mà một quân phủ.
+ *
+ * **Hai họ hình, một hàm** (BD-09). Polyomino là một tập offset tịnh tiến tới
+ * `pos`; quân trên lưới phi vuông là một đường đi trên đồ thị kề, bắt đầu từ `pos`.
+ * Hai mô hình khác nhau vì hai lưới khác nhau về toán — xem `LATTICE_SHAPES` — chứ
+ * không phải vì lịch sử. Nhưng mọi thứ phía sau (validator chồng lấn, đếm phủ,
+ * lệnh xoá) chỉ cần **tập ô**, nên chúng gặp nhau ở đúng đây và không chỗ nào khác
+ * phải biết có hai họ.
+ *
+ * Cần `lattice` vì thế: một quân không còn tự mô tả được nếu không biết nó nằm trên
+ * lưới nào.
+ */
+export function tileCells(item: SceneElement, lattice: Lattice = 'square'): readonly Offset[] {
   const pos = (item['pos'] as Offset) ?? [0, 0];
+  const shape = String(item['shape']);
+
+  if (isLatticeShape(shape)) {
+    return latticeTileCells(lattice, shape, Number(item['dir'] ?? 0), pos[0], pos[1]);
+  }
+
   const offsets = tileOffsets(
-    String(item['shape']),
+    shape,
     Number(item['rot'] ?? 0),
     Boolean(item['flip']),
     item['offsets'] as Offset[] | undefined,

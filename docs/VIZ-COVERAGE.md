@@ -26,7 +26,7 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~+ ghép cặp, tính phẳng, ma trận kề (M12)~~ | ~~76%~~ | ~~84%~~ |
 | ~~Hôm nay (6 engine + poset/Hasse)~~ | ~~83%~~ | ~~90%~~ |
 | ~~Hôm nay (7 engine — thêm derivation + label atlas)~~ | ~~≈85%~~ | ~~≈97%~~ |
-| **Hôm nay** (7 engine, sau M22–M29: lưới phi vuông, lan truyền, analyzer mới) | **~87%** | **~97%** |
+| **Hôm nay** (7 engine, sau M22–M30: lưới phi vuông, lan truyền, quân ghép, analyzer mới) | **~88%** | **~97%** |
 | Hàng đợi §7 — **đã hết** | — | — |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
@@ -50,7 +50,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
-| Lưới / phủ hình / tô màu | 15% | 96% | 14.4 | quân ghép trên lưới phi vuông (`BD-09`) |
+| Lưới / phủ hình / tô màu | 15% | 98% | 14.7 | vùng khuyết vẽ tay và torus (`BD-05`) |
 | Đồ thị | 22% | 95% | 20.9 | tô mặt (phần còn lại của GR-05), analyzer cây (`GR-10`), kiểm tính phẳng tổng quát |
 | Đếm / song ánh / đếm hai chiều | 14% | 87% | 12.2 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 96% | 15.4 | — (`SQ-02` và `BD-08` đều xong) |
@@ -60,7 +60,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 | Hoán vị / thứ tự | 6% | 97% | 5.8 | — (chu trình hoán vị + poset/Hasse + Dilworth + dãy con đơn điệu) |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 25% | 0.75 | derivation gánh được phần *đại số*; xác suất và entropy thì **không** — xem §6 |
-| **Tổng** | **100%** | | **~87%** | |
+| **Tổng** | **100%** | | **~88%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
@@ -76,7 +76,7 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Lật dấu bảng $4\times4$ | lưới + thao tác | ✅ (sau `board/flip-line`) |
 | Lát tam giác đều bằng hình thoi | lưới **tam giác** | ✅ có trong kho (BD-07, đếm hai màu lên/xuống) |
 | Tô màu bàn ong lục giác | lưới **lục giác** | ✅ có trong kho (sắc số $= 3$; phép tô ba màu do máy kiểm) |
-| Lát bằng hình thoi / tribone như **quân kéo thả** | lưới phi vuông | ❌ quân ghép mới chỉ có họ polyomino (ô vuông) — xem `BD-09` |
+| Lát bằng hình thoi / tribone như **quân kéo thả** | lưới phi vuông | ✅ có trong kho (BD-09: `lozenge`, khai bằng đường đi trên đồ thị kề) |
 | $R(3,3)=6$ | đồ thị | ✅ có trong kho |
 | Bảy cầu Königsberg | đồ thị | ✅ có trong kho |
 | Bổ đề bắt tay | đồ thị | ✅ có trong kho (thêm bản ma trận kề) |

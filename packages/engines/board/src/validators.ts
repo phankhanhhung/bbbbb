@@ -6,7 +6,7 @@ import {
 } from '@combviz/schema';
 import { deriveBoard, piecesAttack, tileCells } from './dsl.js';
 import { cellColorClass, FLIP_CLASSES, latticeOf } from './geometry.js';
-import { cellsInRow, neighbours } from './lattice.js';
+import { cellsInRow, inBoard, neighbours } from './lattice.js';
 import { cellId } from './ids.js';
 import type { BoardConfig } from './schema.js';
 
@@ -26,10 +26,11 @@ const tilesNoOverlap: SceneValidator = {
   check(scene: Scene): ValidatorOutcome {
     const owner = new Map<string, string>();
     const violations = new Set<string>();
+    const lattice = latticeOf(scene.config as BoardConfig | undefined);
 
     for (const item of scene.elements) {
       if (item.type !== 'tile') continue;
-      for (const [r, c] of tileCells(item)) {
+      for (const [r, c] of tileCells(item, lattice)) {
         const key = `${r},${c}`;
         const previous = owner.get(key);
         if (previous) {
@@ -57,16 +58,18 @@ const tilesInBounds: SceneValidator = {
     const config = scene.config as BoardConfig;
     const holes = new Set((config?.holes ?? []).map(([r, c]) => `${r},${c}`));
     const violations: string[] = [];
+    const lattice = latticeOf(config);
 
     for (const item of scene.elements) {
       if (item.type !== 'tile') continue;
-      const cells = tileCells(item);
+      const cells = tileCells(item, lattice);
       const bad = cells.some(
         ([r, c]) =>
-          r < 0 ||
-          c < 0 ||
-          r >= config.rows ||
-          c >= config.cols ||
+          // `inBoard` chứ không phải so với `rows`/`cols`: trên lưới tam giác hàng
+          // $r$ chỉ có $2r+1$ ô, nên một hình thoi thò ra khỏi cạnh xiên vẫn có
+          // chỉ số cột nhỏ hơn `cols`. So bằng chữ nhật là bỏ sót đúng cái lỗi mà
+          // người học dễ tạo ra nhất trên lưới này.
+          !inBoard(lattice, config.rows, config.cols, r, c) ||
           // Ô khuyết không phải là ô: phủ lên nó cũng là tràn biên, chỉ là kiểu
           // tràn mà mắt khó thấy hơn.
           holes.has(`${r},${c}`),

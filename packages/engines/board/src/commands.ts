@@ -4,7 +4,14 @@ import { cellId, parseCellId } from './ids.js';
 import { tileCells } from './dsl.js';
 import type { BoardConfig, ColoringPreset } from './schema.js';
 import { cellColorClass, FLIP_CLASSES, latticeOf, type Offset } from './geometry.js';
-import { inBoard, neighbours } from './lattice.js';
+import {
+  cellCount,
+  directionCount,
+  inBoard,
+  isLatticeShape,
+  latticeTileCells,
+  neighbours,
+} from './lattice.js';
 
 /**
  * Command của Grid/Board (BD-01..03).
@@ -93,23 +100,42 @@ const setPreset = defineCommand<{ preset: ColoringPreset | null }>({
   },
 });
 
-/** BD-03 — đặt tile. Id do phía gọi cấp (`allocateId`). */
+/**
+ * BD-03 / BD-09 — đặt tile. Id do phía gọi cấp (`allocateId`).
+ *
+ * Hai họ hình đi hai đường, và **lưới quyết định họ nào hợp lệ**, không phải tham
+ * số quyết định. Polyomino là hình ghép từ ô **vuông**: đặt nó trên lưới tam giác
+ * thì nó vẫn "đặt" được nếu để yên, và vẽ ra một hình chữ nhật nằm chồng lên mấy ô
+ * méo — không lỗi, không cảnh báo, chỉ là sai. Ngược lại, hình thoi trên bàn vuông
+ * cũng vô nghĩa như thế. Cả hai chiều bị từ chối ở đây, cùng chỗ mà `checkBounds`
+ * từ chối lúc soạn.
+ */
 const placeTile = defineCommand<{
   id: string;
   shape: string;
   pos: Offset;
   rot?: number;
+  /** BD-09 — chỉ số hướng của quân trên lưới phi vuông. */
+  dir?: number;
   flip?: boolean;
   color_class?: number;
 }>({
   type: 'board/place-tile',
   label: (params) => `Đặt ${params.shape}`,
   apply(scene, params) {
-    // Polyomino là hình ghép từ ô **vuông**. Trên lưới tam giác hay lục giác nó
-    // vẫn "đặt" được nếu để yên, và vẽ ra một hình chữ nhật nằm chồng lên mấy ô
-    // méo — không lỗi, không cảnh báo, chỉ là sai. Từ chối ở đây, cùng chỗ mà
-    // `checkBounds` từ chối lúc soạn.
-    if (latticeOf(boardConfig(scene)) !== 'square') return null;
+    const config = boardConfig(scene);
+    const lattice = latticeOf(config);
+    const onLattice = isLatticeShape(params.shape);
+
+    if (onLattice) {
+      // Hình có lưới của nó; đặt sai lưới thì không có ô nào để phủ.
+      if (latticeTileCells(lattice, params.shape, params.dir ?? 0, 0, 0).length === 0) {
+        return null;
+      }
+    } else if (lattice !== 'square') {
+      return null;
+    }
+
     if (scene.elements.some((e) => e.id === params.id)) return null;
 
     const element: SceneElement = {
@@ -117,8 +143,11 @@ const placeTile = defineCommand<{
       type: 'tile',
       shape: params.shape,
       pos: [params.pos[0], params.pos[1]],
-      rot: params.rot ?? 0,
-      ...(params.flip ? { flip: true } : {}),
+      // `rot` và `dir` loại trừ nhau: phép quay $90°$ không phải phép đối xứng của
+      // lưới tam giác, nên một quân mang cả hai là một quân không có tư thế xác
+      // định. Ghi đúng một trường, và schema chặn trường còn lại.
+      ...(onLattice ? { dir: params.dir ?? 0 } : { rot: params.rot ?? 0 }),
+      ...(!onLattice && params.flip ? { flip: true } : {}),
       ...(params.color_class === undefined ? {} : { color_class: params.color_class }),
     };
 
@@ -180,7 +209,19 @@ const moveElement = defineCommand<{ id: string; pos: Offset }>({
   },
 });
 
-/** BD-03 — xoay tile tại chỗ. */
+/**
+ * BD-03 / BD-09 — xoay tile tại chỗ.
+ *
+ * **Một nút, hai phép quay khác nhau về toán.** Với polyomino, `delta` là số **độ**
+ * và tư thế chạy vòng $0 \to 90 \to 180 \to 270$. Với quân trên lưới phi vuông,
+ * `delta` là số **nấc hướng** và tư thế chạy vòng qua `directionCount` hướng của
+ * lưới — ba nấc trên lưới tam giác, sáu trên bàn ong.
+ *
+ * Không quy hai thứ về một đơn vị được: nhóm quay của lưới tam giác sinh bởi $60°$
+ * chứ không phải $90°$, nên "xoay $90°$ một hình thoi" cho ra hình không nằm trên
+ * lưới nào. Người học vẫn bấm **một** nút và thấy quân đổi tư thế; chỗ khác nhau
+ * nằm dưới nút, đúng chỗ nó nên nằm.
+ */
 const rotateTile = defineCommand<{ id: string; delta: number }>({
   type: 'board/rotate-tile',
   label: () => 'Xoay',
@@ -191,14 +232,32 @@ const rotateTile = defineCommand<{ id: string; delta: number }>({
     const current = scene.elements[index] as SceneElement;
     if (current.type !== 'tile' || current['locked']) return null;
 
-    const rot = (((Number(current['rot'] ?? 0) + params.delta) % 360) + 360) % 360;
     const elements = [...scene.elements];
+
+    if (isLatticeShape(String(current['shape']))) {
+      const n = directionCount(latticeOf(boardConfig(scene)));
+      // `delta` của polyomino tính bằng độ (±90), của quân lưới tính bằng nấc. Quy
+      // về nấc bằng dấu, không bằng phép chia: một nút bấm là "quay một nấc", và
+      // "một nấc" là bao nhiêu độ thì tuỳ lưới.
+      const stepsBy = params.delta === 0 ? 0 : params.delta > 0 ? 1 : -1;
+      const dir = (((Number(current['dir'] ?? 0) + stepsBy) % n) + n) % n;
+      elements[index] = { ...current, dir };
+      return withElements(scene, elements);
+    }
+
+    const rot = (((Number(current['rot'] ?? 0) + params.delta) % 360) + 360) % 360;
     elements[index] = { ...current, rot };
     return withElements(scene, elements);
   },
 });
 
-/** BD-03 — lật tile. */
+/**
+ * BD-03 — lật tile.
+ *
+ * Từ chối quân trên lưới phi vuông. Không phải vì khó cài: hình thoi **đối xứng
+ * tâm**, nên lật nó cho ra đúng chính nó, và một nút không đổi gì là một nút nói
+ * dối. Hình lưới nào cần phép lật thật thì lúc ấy thêm, kèm bài cần nó.
+ */
 const flipTile = defineCommand<{ id: string }>({
   type: 'board/flip-tile',
   label: () => 'Lật',
@@ -208,6 +267,7 @@ const flipTile = defineCommand<{ id: string }>({
 
     const current = scene.elements[index] as SceneElement;
     if (current.type !== 'tile' || current['locked']) return null;
+    if (isLatticeShape(String(current['shape']))) return null;
 
     const elements = [...scene.elements];
     elements[index] = { ...current, flip: !current['flip'] };
@@ -419,14 +479,20 @@ export function coverage(scene: Scene): { covered: number; total: number } {
   const holes = new Set((config.holes ?? []).map(([r, c]) => `${r},${c}`));
   const covered = new Set<string>();
 
+  const lattice = latticeOf(config);
+
   for (const element of scene.elements) {
     if (element.type !== 'tile') continue;
-    for (const [r, c] of tileCells(element)) {
-      if (inBounds(config, r, c) && !holes.has(`${r},${c}`)) covered.add(`${r},${c}`);
+    for (const [r, c] of tileCells(element, lattice)) {
+      if (inBoard(lattice, config.rows, config.cols, r, c) && !holes.has(`${r},${c}`)) {
+        covered.add(`${r},${c}`);
+      }
     }
   }
 
-  return { covered: covered.size, total: config.rows * config.cols - holes.size };
+  // `cellCount` chứ không phải `rows × cols`: tam giác cạnh $n$ có $n^2$ ô nhưng
+  // hàng cuối đã có $2n-1$ ô — hai con số chỉ tình cờ bằng nhau.
+  return { covered: covered.size, total: cellCount(lattice, config.rows, config.cols) - holes.size };
 }
 
 /** BD-06 — đếm ô theo `color_class`, phục vụ lập luận đếm-theo-màu. */

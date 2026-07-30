@@ -11,17 +11,21 @@ import { boardSchemaFragment } from '../src/index.js';
 import { resolveBoardValidator } from '../src/validators.js';
 import { boardRenderer } from '../src/render.js';
 import { boardTools } from '../src/tools.js';
-import { CELL, cellColorClass, outlinePath } from '../src/geometry.js';
+import { CELL, cellColorClass, outlinePath, tileOffsets, type Offset } from '../src/geometry.js';
 import {
   cellAt,
   cellCount,
   cellPolygon,
   cellsInRow,
   centreOf,
+  directionCount,
   inBoard,
   latticeExtent,
+  latticeTileCells,
   neighbours,
+  oppositeDirection,
   outlineOfCells,
+  step,
   type Lattice,
 } from '../src/lattice.js';
 import type { BoardConfig } from '../src/schema.js';
@@ -210,6 +214,160 @@ describe('quan hệ kề', () => {
           });
         }
       }
+    }
+  });
+});
+
+/**
+ * Hướng đi (BD-09).
+ *
+ * Đây là tầng mà quân ghép trên lưới phi vuông đứng lên, nên test ở đây là **bất
+ * biến đại số**, không phải giá trị tra bảng: bước theo một hướng rồi bước ngược
+ * lại phải về chỗ cũ, và mọi hướng phải trỏ tới một ô **kề** thật sự. Hai điều đó
+ * đúng thì hình thoi không thể rời khỏi lưới, dù đặt ở đâu.
+ */
+describe('hướng đi', () => {
+  const LATTICES = [
+    ['square', 6, 6],
+    ['hex', 6, 6],
+    ['triangle', 7, 7],
+  ] as const;
+
+  it('đi rồi quay lại thì về đúng chỗ cũ — ở mọi ô, mọi hướng, cả ba lưới', () => {
+    for (const [lattice, rows, cols] of LATTICES) {
+      for (const [r, c] of allCells(lattice, rows, cols)) {
+        for (let d = 0; d < directionCount(lattice); d += 1) {
+          const [nr, nc] = step(lattice, r, c, d);
+          const back = step(lattice, nr, nc, oppositeDirection(lattice, d));
+          expect({ lattice, from: [r, c], d, back }).toEqual({
+            lattice,
+            from: [r, c],
+            d,
+            back: [r, c],
+          });
+        }
+      }
+    }
+  });
+
+  it('mọi hướng trỏ tới một ô **kề** — `step` và `neighbours` cùng một quan hệ', () => {
+    for (const [lattice, rows, cols] of LATTICES) {
+      for (const [r, c] of allCells(lattice, rows, cols)) {
+        const near = neighbours(lattice, rows, cols, r, c);
+        const stepped: string[] = [];
+        for (let d = 0; d < directionCount(lattice); d += 1) {
+          const [nr, nc] = step(lattice, r, c, d);
+          if (inBoard(lattice, rows, cols, nr, nc)) stepped.push(`${nr},${nc}`);
+        }
+        // Cùng **tập** ô: `neighbours` lọc biên còn `step` không, nên chỉ so được
+        // sau khi lọc. Số lượng bằng nhau thì không có hướng nào trùng hướng nào.
+        expect({ lattice, at: [r, c], set: [...stepped].sort() }).toEqual({
+          lattice,
+          at: [r, c],
+          set: near.map(([a, b]) => `${a},${b}`).sort(),
+        });
+      }
+    }
+  });
+
+  it('trên lưới tam giác, hướng qua cạnh ngang **tự nghịch đảo**', () => {
+    // Không phải trường hợp đặc biệt phải nhớ: lưới tam giác có hai loại ô, và
+    // hướng 2 đưa loại này sang loại kia rồi ngược lại.
+    expect(oppositeDirection('triangle', 2)).toBe(2);
+    expect(step('triangle', 3, 4, 2)).toEqual([4, 5]);
+    expect(step('triangle', 4, 5, 2)).toEqual([3, 4]);
+  });
+
+  it('chỉ số hướng cuộn vòng, kể cả số âm', () => {
+    for (const [lattice] of LATTICES) {
+      const n = directionCount(lattice);
+      expect(step(lattice, 3, 3, n)).toEqual(step(lattice, 3, 3, 0));
+      expect(step(lattice, 3, 3, -1)).toEqual(step(lattice, 3, 3, n - 1));
+    }
+  });
+});
+
+/**
+ * Quân ghép trên lưới phi vuông (BD-09).
+ *
+ * Điểm cần chứng minh không phải "hình thoi gồm hai ô" — mà là **tịnh tiến không
+ * bảo toàn hình** trên lưới tam giác, tức là lý do cả mô hình offset của polyomino
+ * không dùng lại được. Có test nói ra điều đó thì ai định "đơn giản hoá" bằng cách
+ * gộp hai họ hình sẽ thấy ngay vì sao không gộp được.
+ */
+describe('quân ghép trên lưới phi vuông', () => {
+  it('hình thoi gồm đúng hai ô kề nhau, ở cả ba hướng', () => {
+    for (let dir = 0; dir < 3; dir += 1) {
+      const cells = latticeTileCells('triangle', 'lozenge', dir, 3, 2);
+      expect({ dir, size: cells.length }).toEqual({ dir, size: 2 });
+      const [a, b] = cells as [Offset, Offset];
+      expect({
+        dir,
+        adjacent: neighbours('triangle', 8, 8, a[0], a[1]).some(
+          ([r, c]) => r === b[0] && c === b[1],
+        ),
+      }).toEqual({ dir, adjacent: true });
+    }
+  });
+
+  it('ba hướng cho **ba** hình thoi khác nhau, và đó là tất cả hình thoi chứa ô ấy', () => {
+    const sets = new Set<string>();
+    for (let dir = 0; dir < 3; dir += 1) {
+      sets.add(
+        latticeTileCells('triangle', 'lozenge', dir, 4, 3)
+          .map(([r, c]) => `${r},${c}`)
+          .sort()
+          .join('|'),
+      );
+    }
+    // Một tam giác có đúng ba cạnh ⇒ đúng ba hình thoi chứa nó. Không thiếu tư
+    // thế nào, không thừa tư thế nào.
+    expect(sets.size).toBe(3);
+    expect(neighbours('triangle', 8, 8, 4, 3)).toHaveLength(3);
+  });
+
+  it('**tịnh tiến không bảo toàn hình** — lý do mô hình offset không dùng lại được', () => {
+    // Cùng `dir`, hai ô neo khác tính chẵn lẻ ⇒ hai hình khác nhau. Với polyomino
+    // trên lưới vuông thì điều này không bao giờ xảy ra.
+    const fromUp = latticeTileCells('triangle', 'lozenge', 2, 3, 2);
+    const fromDown = latticeTileCells('triangle', 'lozenge', 2, 3, 3);
+
+    const shape = (cells: readonly Offset[]): string => {
+      const [a, b] = cells as [Offset, Offset];
+      return `${b[0] - a[0]},${b[1] - a[1]}`;
+    };
+    expect(shape(fromUp)).not.toBe(shape(fromDown));
+
+    // Còn trên lưới vuông thì hình **giữ nguyên**: đó là điều làm cho `translate`
+    // của renderer hợp lệ ở đó và không hợp lệ ở đây.
+    const sq = (r: number, c: number): string =>
+      tileOffsets('domino', 0, false)
+        .map(([dr, dc]) => `${r + dr},${c + dc}`)
+        .join('|');
+    expect(sq(0, 0)).toBe('0,0|0,1');
+    expect(sq(1, 1)).toBe('1,1|1,2');
+  });
+
+  it('hình đặt sai lưới trả về **rỗng**, không trả về hình méo', () => {
+    expect(latticeTileCells('square', 'lozenge', 0, 1, 1)).toEqual([]);
+    expect(latticeTileCells('hex', 'lozenge', 0, 1, 1)).toEqual([]);
+    expect(latticeTileCells('triangle', 'khong-co-hinh-nay', 0, 1, 1)).toEqual([]);
+    // Tra qua prototype cũng không lọt.
+    expect(latticeTileCells('triangle', 'toString', 0, 1, 1)).toEqual([]);
+  });
+
+  it('phủ kín một tam giác cạnh 2 bằng hai hình thoi là **không** làm được', () => {
+    // Tam giác cạnh $n$ có $n(n+1)/2$ ô ngửa và $n(n-1)/2$ ô úp; mỗi hình thoi phủ
+    // đúng một ô mỗi loại. Hai số ấy chỉ bằng nhau khi $n = 0$ — chính là bài
+    // `triangle-lozenge-parity`. Ở đây kiểm bằng cách đếm, trên lưới thật.
+    for (const n of [2, 3, 4, 5]) {
+      let up = 0;
+      let down = 0;
+      for (const [, c] of allCells('triangle', n, n)) {
+        if (c % 2 === 0) up += 1;
+        else down += 1;
+      }
+      expect({ n, up, down }).toEqual({ n, up: (n * (n + 1)) / 2, down: (n * (n - 1)) / 2 });
     }
   });
 });
@@ -449,6 +607,121 @@ describe('nối lưới vào engine', () => {
         changed: 1 + neighbours(lattice, rows, cols, row, col).length,
       });
     }
+  });
+
+  it('BD-09 — hình thoi đặt được trên lưới tam giác, polyomino thì không, và ngược lại', () => {
+    const run = (s: Scene, type: string, params: unknown): Scene | null => {
+      const r = execute(createEditorState(s), boardCommands, command(type, params));
+      return r.applied ? r.state.scene : null;
+    };
+    const tri = scene({ lattice: 'triangle', rows: 4, cols: 4 });
+    const sq = scene({ rows: 4, cols: 4 });
+
+    expect(run(tri, 'board/place-tile', { id: 't', shape: 'lozenge', pos: [2, 2] })).not.toBeNull();
+    expect(run(tri, 'board/place-tile', { id: 't', shape: 'domino', pos: [2, 2] })).toBeNull();
+    // Chiều ngược lại cũng bị chặn: hình thoi trên bàn vuông vô nghĩa y như vậy.
+    expect(run(sq, 'board/place-tile', { id: 't', shape: 'lozenge', pos: [1, 1] })).toBeNull();
+  });
+
+  it('BD-09 — quân lưới mang `dir`, **không** mang `rot`; xoay là đổi nấc hướng', () => {
+    const run = (s: Scene, type: string, params: unknown): Scene | null => {
+      const r = execute(createEditorState(s), boardCommands, command(type, params));
+      return r.applied ? r.state.scene : null;
+    };
+    const tri = scene({ lattice: 'triangle', rows: 5, cols: 5 });
+
+    const placed = run(tri, 'board/place-tile', {
+      id: 't',
+      shape: 'lozenge',
+      pos: [3, 2],
+      rot: 90,
+    })!;
+    const tile = placed.elements[0] as Record<string, unknown>;
+    expect(tile['dir']).toBe(0);
+    // `rot: 90` truyền vào bị **bỏ**, không được ghi im lặng: một quân mang cả hai
+    // là một quân không có tư thế xác định.
+    expect(tile['rot']).toBeUndefined();
+
+    // Ba nấc rồi về chỗ cũ — nhóm quay của lưới tam giác, không phải của lưới vuông.
+    let cursor = placed;
+    const seen: unknown[] = [];
+    for (let i = 0; i < 3; i += 1) {
+      cursor = run(cursor, 'board/rotate-tile', { id: 't', delta: 90 })!;
+      seen.push((cursor.elements[0] as Record<string, unknown>)['dir']);
+    }
+    expect(seen).toEqual([1, 2, 0]);
+
+    // Lật thì bị từ chối hẳn: hình thoi đối xứng tâm nên lật ra chính nó.
+    expect(run(placed, 'board/flip-tile', { id: 't' })).toBeNull();
+  });
+
+  it('BD-09 — validator chồng lấn và tràn biên hiểu đúng hình thoi', () => {
+    const overlap = scene({ lattice: 'triangle', rows: 4, cols: 4 }, [
+      { id: 'a', type: 'tile', shape: 'lozenge', pos: [3, 2], dir: 1 },
+      { id: 'b', type: 'tile', shape: 'lozenge', pos: [3, 3], dir: 0 },
+    ]);
+    // Cả hai cùng chứa ô (3,3) ⇒ chồng nhau, dù `pos` khác nhau.
+    expect(resolveBoardValidator('tiles-no-overlap')!.check(overlap).ok).toBe(false);
+
+    // Thò ra khỏi **cạnh xiên**: cột 7 không tồn tại ở hàng 3 (chỉ có 7 ô, 0..6),
+    // nhưng vẫn nhỏ hơn `cols` = 4 × ... — so bằng chữ nhật là bỏ sót.
+    const spill = scene({ lattice: 'triangle', rows: 4, cols: 4 }, [
+      { id: 'a', type: 'tile', shape: 'lozenge', pos: [3, 6], dir: 1 },
+    ]);
+    expect(resolveBoardValidator('tiles-in-bounds')!.check(spill).ok).toBe(false);
+  });
+
+  it('BD-09 — bound bắt lẫn `rot`/`dir` và hình đặt sai lưới', () => {
+    expect(
+      codes(
+        scene({ lattice: 'triangle', rows: 4, cols: 4 }, [
+          { id: 'a', type: 'tile', shape: 'lozenge', pos: [2, 2], rot: 90 },
+        ]),
+      ),
+    ).toContain('bounds/rot-on-lattice-shape');
+
+    expect(
+      codes(scene({ rows: 4, cols: 4 }, [{ id: 'a', type: 'tile', shape: 'domino', pos: [1, 1], rot: 0, dir: 2 }])),
+    ).toContain('bounds/dir-on-polyomino');
+
+    expect(
+      codes(scene({ lattice: 'hex', rows: 4, cols: 4 }, [{ id: 'a', type: 'tile', shape: 'lozenge', pos: [1, 1] }])),
+    ).toContain('bounds/shape-wrong-lattice');
+
+    expect(
+      codes(
+        scene({ lattice: 'triangle', rows: 4, cols: 4 }, [
+          { id: 'a', type: 'tile', shape: 'lozenge', pos: [2, 2], dir: 4 },
+        ]),
+      ),
+    ).toContain('bounds/dir-out-of-range');
+
+    // Và một hình thoi khai đúng thì sạch — bound không bắt oan.
+    expect(
+      codes(
+        scene({ lattice: 'triangle', rows: 4, cols: 4 }, [
+          { id: 'a', type: 'tile', shape: 'lozenge', pos: [2, 2], dir: 1 },
+        ]),
+      ),
+    ).toEqual([]);
+  });
+
+  it('BD-09 — thanh công cụ bày quân của **đúng lưới đang dùng**', () => {
+    const ids = (s: Scene): string[] => boardTools(s).map((t) => t.id);
+    expect(ids(scene({ lattice: 'triangle', rows: 4, cols: 4 }))).toContain('tile-lozenge');
+    expect(ids(scene({ lattice: 'hex', rows: 4, cols: 4 }))).not.toContain('tile-lozenge');
+    expect(ids(scene({ rows: 4, cols: 4 }))).not.toContain('tile-lozenge');
+  });
+
+  it('BD-09 — chạm vào hình thoi thì chọn được nó, không chỉ chọn ô dưới nó', () => {
+    const s = scene({ lattice: 'triangle', rows: 5, cols: 5 }, [
+      { id: 'q', type: 'tile', shape: 'lozenge', pos: [3, 2], dir: 2 },
+    ]);
+    // Ô thứ hai của hình thoi — chạm vào đó phải trúng quân, đó là điều kiện để
+    // kéo thả được. Trước BD-09, hình thoi chỉ là một `region` nên không kéo được.
+    const [, second] = latticeTileCells('triangle', 'lozenge', 2, 3, 2) as [Offset, Offset];
+    const centre = centreOf('triangle', 5, 5, second[0], second[1]);
+    expect(boardHitTest(s, centre)).toContain('q');
   });
 
   it('lật chùm trên bàn ong không đụng ô ngoài hàng của lưới tam giác', () => {

@@ -1,7 +1,12 @@
 import type { HitTest, ScenePoint } from '@combviz/editor';
 import type { Scene } from '@combviz/schema';
 import { CELL, latticeOf, tileOffsets, type Offset } from './geometry.js';
-import { cellAt } from './lattice.js';
+import {
+  cellAt,
+  isLatticeShape,
+  latticeTileCells,
+  type Lattice,
+} from './lattice.js';
 import { cellId } from './ids.js';
 import { tileCells } from './dsl.js';
 import type { BoardConfig } from './schema.js';
@@ -40,11 +45,12 @@ export const boardHitTest: HitTest = (scene: Scene, point: ScenePoint): string[]
   const [row, col] = cell ?? [-1, -1];
 
   const hits: string[] = [];
+  const lattice = latticeOf(config);
 
   // Duyệt ngược mảng: element vẽ sau nằm trên, nên nó được chạm trước.
   const ordered = [...scene.elements].sort((a, b) => (b.layer ?? 0) - (a.layer ?? 0));
   for (const element of ordered) {
-    if (occupies(element, row, col)) hits.push(element.id);
+    if (occupies(element, lattice, row, col)) hits.push(element.id);
   }
 
   if (cell !== null && row >= 0 && col >= 0) hits.push(cellId(row, col));
@@ -54,11 +60,12 @@ export const boardHitTest: HitTest = (scene: Scene, point: ScenePoint): string[]
 
 function occupies(
   element: Scene['elements'][number],
+  lattice: Lattice,
   row: number,
   col: number,
 ): boolean {
   if (element.type === 'tile') {
-    return tileCells(element).some(([r, c]) => r === row && c === col);
+    return tileCells(element, lattice).some(([r, c]) => r === row && c === col);
   }
 
   if (element.type === 'piece') {
@@ -76,13 +83,23 @@ function occupies(
 
 /**
  * Ô mà một tile sẽ phủ nếu đặt ở `pos` — dùng để vẽ bóng xem trước khi kéo thả.
+ *
+ * Nhận `lattice` vì với quân lưới phi vuông, bóng xem trước **đổi hình** theo ô
+ * đang trỏ tới: cùng một hình thoi rê qua tam giác hướng lên và tam giác hướng
+ * xuống cho ra hai hình khác nhau. Đó chính là thứ người học cần thấy trước khi
+ * thả (BD-09).
  */
 export function previewCells(
   shape: string,
   pos: Offset,
   rot: number,
   flip: boolean,
+  lattice: Lattice = 'square',
+  dir = 0,
 ): Offset[] {
+  if (isLatticeShape(shape)) {
+    return [...latticeTileCells(lattice, shape, dir, pos[0], pos[1])];
+  }
   return tileOffsets(shape, rot, flip, undefined).map(
     ([dr, dc]) => [pos[0] + dr, pos[1] + dc] as Offset,
   );

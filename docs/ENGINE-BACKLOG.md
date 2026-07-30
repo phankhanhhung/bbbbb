@@ -102,12 +102,17 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
   region, validator và DSL không phải biết gì; chỗ duy nhất biết là `lattice.ts`.
   Kèm hai bài: `triangle-lozenge-parity` (lưới tam giác) và `hex-board-three-colours` (lưới lục giác). Ba tính năng **chỉ có nghĩa trên lưới vuông**
   — polyomino, bảng PRN-03, luật đi quân cờ — bị chặn ở cả `checkBounds` lẫn lệnh.
-- **BD-09 [P2] MAY** — **quân ghép trên lưới phi vuông**: hình thoi, tribone như
-  *element* kéo thả được, không phải `region` vẽ viền. Hôm nay bài lát tam giác
-  phải khai từng hình thoi bằng một region, nên sandbox không kéo thả được chúng —
-  và vì thế bài ấy khai `illustration` chứ không phải `challenge`. Đây là họ hình
-  mới song song với `TILE_SHAPES`, không phải sửa lưới; xong nó thì
-  `triangle-lozenge-parity` lên `challenge` được ngay.
+- **BD-09 ✅ (M30)** — **quân ghép trên lưới phi vuông**: `LATTICE_SHAPES` +
+  `latticeTileCells` ở `lattice.ts`, hình `lozenge`, trường `dir` trên `tile`.
+  `triangle-lozenge-parity` nay là `challenge` kéo thả được, đúng như dự đoán.
+
+  Chỗ khác với dự đoán: **không** dựng được song song với `TILE_SHAPES` bằng cùng
+  mô hình. Mô hình polyomino là "tập offset, tịnh tiến tới `pos`, xoay $90°$", và
+  cả ba mệnh đề đều hỏng ngoài lưới vuông — tịnh tiến không bảo toàn hình (ô cột
+  chẵn hướng lên, cột lẻ hướng xuống), còn $90°$ không phải phép đối xứng của lưới
+  tam giác hay lục giác. Hình vì thế khai bằng **đường đi trên đồ thị kề**, và tư
+  thế mang trong `dir` (nấc hướng) chứ không trong `rot` (độ). Hai trường loại trừ
+  nhau, `checkBounds` chặn cả hai chiều lẫn lộn.
 - **BD-08 ✅ (M29)** — **lan truyền trên bàn cờ**: lệnh `board/toggle-cross`, tập
   luật đóng `SPREAD_RULES` (`cross`, `neighbours`) cùng khuôn với `GameRule` và
   `COMBINE_RULES`. Đúng như dự đoán, `neighbours()` của `lattice.ts` khiến nó chạy

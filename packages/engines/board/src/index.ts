@@ -13,7 +13,15 @@ import {
 } from './schema.js';
 import { cellId } from './ids.js';
 import { latticeOf } from './geometry.js';
-import { cellCount, cellsInRow, inBoard } from './lattice.js';
+import {
+  cellCount,
+  cellsInRow,
+  directionCount,
+  inBoard,
+  isLatticeShape,
+  LATTICE_SHAPES,
+  type LatticeShape,
+} from './lattice.js';
 import { BOARD_VALIDATOR_IDS, resolveBoardValidator } from './validators.js';
 
 export * from './schema.js';
@@ -164,10 +172,95 @@ export const boardSchemaFragment: EngineSchemaFragment = {
     }
 
     issues.push(...checkTilePlacement(scene, config, path));
+    issues.push(...checkTilePose(scene, config, path));
 
     return issues;
   },
 };
+
+/**
+ * Tư thế của quân phải khớp **họ hình** của nó (BD-09).
+ *
+ * Hai họ mang tư thế bằng hai trường, và một quân mang nhầm trường là một quân
+ * không có tư thế xác định — nhưng nó **vẫn vẽ ra được**, ở tư thế mặc định, nên
+ * lỗi này thuộc loại chỉ lộ ra khi tác giả nhìn hình và thấy quân nằm sai chỗ. Bắt
+ * lúc soạn thì rẻ hơn nhiều.
+ *
+ * Cả hai chiều đều chặn, và chặn cả `flip`: hình thoi đối xứng tâm nên lật nó ra
+ * chính nó, và một trường không đổi gì là một trường nói dối.
+ */
+function checkTilePose(
+  scene: Scene,
+  config: BoardConfigType,
+  path: string,
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const lattice = latticeOf(config);
+
+  scene.elements.forEach((item, i) => {
+    if (item.type !== 'tile') return;
+    const shape = String(item['shape']);
+    const where = `${path}/elements/${i}`;
+
+    if (!isLatticeShape(shape)) {
+      if (item['dir'] !== undefined) {
+        issues.push({
+          code: 'bounds/dir-on-polyomino',
+          severity: 'error',
+          message: `Quân \`${shape}\` là polyomino nên dùng \`rot\`, không dùng \`dir\``,
+          path: where,
+          hint: '`dir` là chỉ số hướng của lưới phi vuông; polyomino quay theo độ',
+        });
+      }
+      return;
+    }
+
+    const spec = LATTICE_SHAPES[shape] as LatticeShape;
+    if (spec.lattice !== lattice) {
+      issues.push({
+        code: 'bounds/shape-wrong-lattice',
+        severity: 'error',
+        message: `Quân \`${shape}\` chỉ đặt được trên lưới \`${spec.lattice}\`, bàn đang là \`${lattice}\``,
+        path: where,
+        hint: 'Hình được khai bằng đường đi trên đồ thị kề của một lưới cụ thể',
+      });
+    }
+
+    if (item['rot'] !== undefined) {
+      issues.push({
+        code: 'bounds/rot-on-lattice-shape',
+        severity: 'error',
+        message: `Quân \`${shape}\` dùng \`dir\`, không dùng \`rot\``,
+        path: where,
+        hint: 'Phép quay 90° không phải phép đối xứng của lưới tam giác hay lục giác',
+      });
+    }
+
+    if (item['flip'] === true) {
+      issues.push({
+        code: 'bounds/flip-on-lattice-shape',
+        severity: 'error',
+        message: `Quân \`${shape}\` không lật được`,
+        path: where,
+        hint: 'Hình thoi đối xứng tâm: lật nó ra chính nó',
+      });
+    }
+
+    const n = directionCount(lattice);
+    const dir = Number(item['dir'] ?? 0);
+    if (dir >= n) {
+      issues.push({
+        code: 'bounds/dir-out-of-range',
+        severity: 'error',
+        message: `\`dir\` = ${dir} nhưng lưới \`${lattice}\` chỉ có ${n} hướng`,
+        path: where,
+        hint: 'Chỉ số hướng đếm từ 0',
+      });
+    }
+  });
+
+  return issues;
+}
 
 /**
  * Luật riêng của lưới phi vuông (BD-07).
@@ -218,12 +311,14 @@ function checkLattice(
     );
   }
 
-  if (scene.elements.some((e) => e.type === 'tile')) {
+  if (
+    scene.elements.some((e) => e.type === 'tile' && !isLatticeShape(String(e['shape'])))
+  ) {
     refuse(
       'bounds/tile-needs-square',
       'Quân polyomino chỉ đặt được trên lưới vuông',
       'elements',
-      'Polyomino là hình ghép từ ô vuông; lưới tam giác và lục giác cần một họ hình khác (chưa có)',
+      'Polyomino là hình ghép từ ô vuông; lưới phi vuông dùng họ hình riêng (BD-09) — xem `LATTICE_SHAPES`',
     );
   }
 

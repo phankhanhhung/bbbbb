@@ -156,19 +156,42 @@ const TileShape = Type.Union([
   Type.Literal('tetromino-s'),
   Type.Literal('tetromino-l'),
   Type.Literal('custom'),
+  /**
+   * BD-09 — quân của lưới **phi vuông**. Xem `LATTICE_SHAPES` ở `lattice.ts`.
+   *
+   * Nằm chung một enum với polyomino vì phía sau chúng là **một** loại element:
+   * mọi thứ đọc quân đều chỉ cần tập ô nó phủ. Nhưng chúng mang tư thế bằng hai
+   * trường khác nhau, và `checkBounds` không cho lẫn.
+   */
+  Type.Literal('lozenge'),
 ]);
 
+/**
+ * Một quân ghép trên bàn.
+ *
+ * **`rot` và `dir` là hai hệ toạ độ tư thế, không phải hai cách viết một thứ**
+ * (BD-09). `rot` đo bằng **độ** và chỉ nhận $0/90/180/270$ — đó là nhóm quay của
+ * lưới vuông. `dir` đo bằng **nấc hướng** của lưới đang dùng: ba nấc trên lưới tam
+ * giác, sáu trên bàn ong.
+ *
+ * Không gộp được, vì $90°$ **không phải** phép đối xứng của lưới tam giác hay lưới
+ * lục giác — nhóm quay của chúng sinh bởi $60°$. Xoay một hình thoi đi $90°$ cho ra
+ * một hình không nằm trên lưới nào cả. Vì vậy `rot` để trống ở quân lưới chứ không
+ * mang giá trị $0$ giả: một trường có mặt là một trường có nghĩa.
+ *
+ * `checkBounds` chặn cả hai chiều lẫn lộn, nên không có scene nào mang cả hai.
+ */
 export const TileElement = defineElement('tile', {
   shape: TileShape,
   /** Bắt buộc khi `shape: "custom"`: danh sách offset so với `pos`. */
   offsets: Type.Optional(Type.Array(Coord)),
   pos: Coord,
-  rot: Type.Union([
-    Type.Literal(0),
-    Type.Literal(90),
-    Type.Literal(180),
-    Type.Literal(270),
-  ]),
+  /** Của polyomino. Vắng mặt ở quân lưới phi vuông. */
+  rot: Type.Optional(
+    Type.Union([Type.Literal(0), Type.Literal(90), Type.Literal(180), Type.Literal(270)]),
+  ),
+  /** BD-09 — của quân lưới phi vuông. Vắng mặt ở polyomino. */
+  dir: Type.Optional(Type.Integer({ minimum: 0, maximum: 5 })),
   flip: Type.Optional(Type.Boolean({ default: false })),
 });
 

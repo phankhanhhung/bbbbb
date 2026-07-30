@@ -29,7 +29,7 @@
     "draft-may"
   ],
   "status": "published",
-  "kind": "illustration",
+  "kind": "both",
   "created": "2026-07-30",
   "updated": "2026-07-30",
   "invariants": [
@@ -41,10 +41,17 @@
       }
     },
     {
-      "expr": "sum(regions, r => r.size)",
+      "expr": "sum(tiles, t => t.size)",
       "id": "inv-c",
       "label": {
         "vi": "Số ô đã phủ"
+      }
+    },
+    {
+      "expr": "count(cells, c => !covered(c))",
+      "id": "inv-con-trong",
+      "label": {
+        "vi": "Số ô còn trống"
       }
     }
   ],
@@ -83,6 +90,9 @@
           "alt_text": {
             "vi": "Tam giác đều chia thành hai mươi lăm tam giác đơn vị, chưa tô màu."
           },
+          "expects_violation": [
+            "full-cover"
+          ],
           "verified": true,
           "claims": [
             "count(cells) == 25",
@@ -123,6 +133,9 @@
           "alt_text": {
             "vi": "Cùng tam giác ấy, ô hướng lên tô đậm và ô hướng xuống tô nhạt."
           },
+          "expects_violation": [
+            "full-cover"
+          ],
           "verified": true,
           "claims": [
             "count(cells, c => c.color_class == 1) == 15",
@@ -134,7 +147,7 @@
           "parent": "s1",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Một hình thoi là hai ô chung cạnh, nên nó phủ **đúng một ô mỗi màu** — xem [[a3|ba hình thoi]] này, đặt ngang, đặt xiên trái, đặt xiên phải đều vậy. Vậy một cách lát kín bằng hình thoi sẽ phủ số ô hai màu **bằng nhau**."
+            "vi": "Một hình thoi là hai ô chung cạnh, nên nó phủ **đúng một ô mỗi màu** — xem [[a3|ba hình thoi]] này, và một tam giác chỉ có ba cạnh nên đó là **toàn bộ** các tư thế. Vậy một cách lát kín bằng hình thoi sẽ phủ số ô hai màu **bằng nhau**."
           },
           "anchors": {
             "a3": {
@@ -158,28 +171,37 @@
             "elements": [
               {
                 "id": "lz0",
-                "type": "region",
-                "cells": [[1, 0], [1, 1]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [1, 0],
+                "shape": "lozenge"
               },
               {
                 "id": "lz1",
-                "type": "region",
-                "cells": [[3, 2], [3, 3]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [3, 3],
+                "shape": "lozenge"
               },
               {
                 "id": "lz2",
-                "type": "region",
-                "cells": [[4, 6], [4, 7]]
+                "type": "tile",
+                "dir": 2,
+                "pos": [2, 0],
+                "shape": "lozenge"
               }
             ]
           },
           "alt_text": {
-            "vi": "Ba hình thoi khoanh viền đậm, mỗi hình gồm một ô đậm và một ô nhạt."
+            "vi": "Ba hình thoi tô đậm ở ba tư thế khác nhau, mỗi hình gồm một ô đậm và một ô nhạt."
           },
+          "expects_violation": [
+            "full-cover"
+          ],
           "verified": true,
           "claims": [
-            "count(regions) == 3",
-            "sum(regions, r => r.size) == 6"
+            "count(tiles) == 3",
+            "sum(tiles, t => t.size) == 6"
           ]
         },
         {
@@ -187,7 +209,7 @@
           "parent": "s2",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Nhưng $15 \\ne 10$, nên **không lát kín được**. Xếp thử tối đa: ${{count(regions)}}$ hình thoi phủ ${{sum(regions, r => r.size)}}$ ô, và [[a4|năm ô]] hướng lên còn trơ lại — đúng bằng hiệu $n = 5$, không phải ngẫu nhiên. Với $n$ bất kỳ, hiệu là $n \\ge 1$ nên kết luận giữ nguyên."
+            "vi": "Nhưng $15 \\ne 10$, nên **không lát kín được**. Xếp thử tối đa: ${{count(tiles)}}$ hình thoi phủ ${{sum(tiles, t => t.size)}}$ ô, và [[a4|năm ô]] hướng lên còn trơ lại — đúng bằng hiệu $n = 5$, không phải ngẫu nhiên. Với $n$ bất kỳ, hiệu là $n \\ge 1$ nên kết luận giữ nguyên."
           },
           "anchors": {
             "a4": {
@@ -213,70 +235,98 @@
             "elements": [
               {
                 "id": "lz0",
-                "type": "region",
-                "cells": [[1, 0], [1, 1]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [1, 0],
+                "shape": "lozenge"
               },
               {
                 "id": "lz1",
-                "type": "region",
-                "cells": [[2, 0], [2, 1]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [2, 0],
+                "shape": "lozenge"
               },
               {
                 "id": "lz2",
-                "type": "region",
-                "cells": [[2, 2], [2, 3]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [2, 2],
+                "shape": "lozenge"
               },
               {
                 "id": "lz3",
-                "type": "region",
-                "cells": [[3, 0], [3, 1]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [3, 0],
+                "shape": "lozenge"
               },
               {
                 "id": "lz4",
-                "type": "region",
-                "cells": [[3, 2], [3, 3]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [3, 2],
+                "shape": "lozenge"
               },
               {
                 "id": "lz5",
-                "type": "region",
-                "cells": [[3, 4], [3, 5]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [3, 4],
+                "shape": "lozenge"
               },
               {
                 "id": "lz6",
-                "type": "region",
-                "cells": [[4, 0], [4, 1]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [4, 0],
+                "shape": "lozenge"
               },
               {
                 "id": "lz7",
-                "type": "region",
-                "cells": [[4, 2], [4, 3]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [4, 2],
+                "shape": "lozenge"
               },
               {
                 "id": "lz8",
-                "type": "region",
-                "cells": [[4, 4], [4, 5]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [4, 4],
+                "shape": "lozenge"
               },
               {
                 "id": "lz9",
-                "type": "region",
-                "cells": [[4, 6], [4, 7]]
+                "type": "tile",
+                "dir": 1,
+                "pos": [4, 6],
+                "shape": "lozenge"
               }
             ]
           },
           "alt_text": {
             "vi": "Mười hình thoi phủ hai mươi ô; năm ô hướng lên dọc theo cạnh phải không được phủ."
           },
+          "expects_violation": [
+            "full-cover"
+          ],
           "verified": true,
           "claims": [
-            "count(regions) == 10",
-            "sum(regions, r => r.size) == 20"
+            "count(tiles) == 10",
+            "sum(tiles, t => t.size) == 20"
           ]
         }
       ]
     }
   ],
   "sandbox": {
-    "validators": []
+    "goal_expr": "count(cells, c => !covered(c)) == 0",
+    "validators": [
+      "tiles-no-overlap",
+      "tiles-in-bounds",
+      "full-cover"
+    ]
   },
   "og_step_ref": {
     "sol_id": "sol",

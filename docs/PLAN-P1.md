@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M29 xong (7 engine, phủ ~87%); kho 67 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M30 xong (7 engine, phủ ~88%); kho 67 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,81 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M30 — Quân ghép trên lưới phi vuông (BD-09) · [E] — **xong**
+
+Hạng mục cuối của họ "lưới / phủ hình" trong bảng §1. Trước nó, lưới tam giác và
+lục giác **không có quân nào kéo thả được**: bài lát hình thoi phải khai từng hình
+thoi bằng một `region` — hai ô khoanh viền, người học không cầm được — nên nó chỉ
+là `illustration`.
+
+**Dự đoán ở backlog sai một nửa, và nửa sai mới là phần đáng ghi.** Backlog viết
+"đây là họ hình mới **song song** với `TILE_SHAPES`". Song song thì đúng về vị trí
+trong kiến trúc, nhưng **không** dùng lại được mô hình. Mô hình polyomino gồm ba
+mệnh đề, và cả ba đều hỏng ngay khi rời lưới vuông:
+
+- *"Một hình là một tập offset $(\Delta r, \Delta c)$."* Trên lưới tam giác, ô cột
+  chẵn hướng **lên** còn ô cột lẻ hướng **xuống**. Cùng một tập offset đặt ở hai ô
+  khác tính chẵn lẻ cho ra hai hình khác nhau — nên offset không mô tả nổi một
+  quân.
+- *"Đặt quân = tịnh tiến tập offset tới `pos`."* Hệ quả của điều trên: tịnh tiến
+  **không bảo toàn hình**. Dời một hình thoi từ tam giác ngửa sang tam giác úp là
+  **lật** nó, không phải dời nó.
+- *"Xoay = cộng $90°$."* $90°$ không phải phép đối xứng của lưới tam giác hay lưới
+  lục giác — nhóm quay của chúng sinh bởi $60°$. Xoay một hình thoi đi $90°$ cho ra
+  một hình **không nằm trên lưới nào cả**.
+
+Thay bằng: một hình là một **đường đi trên đồ thị kề**. Bắt đầu ở ô neo, mỗi bước
+rẽ theo một hướng tương đối so với `dir`. Nhờ vậy hình luôn gồm ô có thật và luôn
+liền nhau, ở bất kỳ ô neo nào, trên bất kỳ lưới nào — và hình học vẫn nằm trọn
+trong `lattice.ts`, đúng lời hứa của BD-07.
+
+Tầng dưới cùng là ba hàm mới ở `lattice.ts`: `directionCount`, `step` (ô kề theo
+hướng hình học, **không** lọc biên) và `oppositeDirection`. `step` không thay được
+bằng `neighbours` vì `neighbours` **lọc** ô ngoài bàn, nên chỉ số hướng trong danh
+sách nó trả về xê dịch theo vị trí ô — xoay một quân ở giữa bàn và xoay đúng quân
+ấy ở góc sẽ ra hai kết quả khác nhau.
+
+**`rot` và `dir` loại trừ nhau, và đó là ràng buộc về toán.** Một quân mang cả hai
+là một quân không có tư thế xác định, nhưng nó **vẫn vẽ ra được** ở tư thế mặc
+định — loại lỗi chỉ lộ ra khi tác giả nhìn hình và thấy quân nằm sai chỗ. Bốn bound
+mới chặn nó lúc soạn: `rot-on-lattice-shape`, `dir-on-polyomino`,
+`shape-wrong-lattice`, `dir-out-of-range`. Lệnh `board/place-tile` chặn **cả hai
+chiều** — hình thoi trên bàn vuông vô nghĩa y như domino trên bàn ong.
+
+`board/flip-tile` từ chối hẳn quân lưới: hình thoi đối xứng tâm nên lật nó ra chính
+nó, và một nút không đổi gì là một nút nói dối.
+
+**Một giá phải trả, ghi ra để không ai tưởng là quên.** Polyomino vẽ trong toạ độ
+cục bộ rồi `translate`, nên nó **trượt** mượt sang ô mới. Quân lưới phải vẽ bằng
+toạ độ tuyệt đối, vì không có phép tịnh tiến nào để nội suy — vờ có một cái sẽ cho
+ra animation trong đó quân đi qua những vị trí không tồn tại trên lưới. Đổi lại,
+mọi khung hình đều là một thế hợp lệ.
+
+**Test là bất biến đại số, không phải giá trị tra bảng.** Với **mọi** ô của cả ba
+lưới: đi theo một hướng rồi đi ngược lại phải về đúng chỗ cũ, và tập ô mà `step`
+với tới (sau khi lọc biên) phải trùng khít tập `neighbours` trả về. Hai điều đó
+đúng thì hình thoi không thể rời khỏi lưới, đặt ở đâu cũng vậy. Một test riêng
+khẳng định **tịnh tiến không bảo toàn hình** trên lưới tam giác trong khi vẫn bảo
+toàn trên lưới vuông — để ai định "đơn giản hoá" bằng cách gộp hai họ hình sẽ thấy
+ngay vì sao không gộp được.
+
+**`triangle-lozenge-parity` lên `challenge`.** Mười hình thoi nay là `tile` thật,
+kéo thả được; sandbox mở với `full-cover` — một mục tiêu **bất khả thi có chủ
+đích**, cùng thủ pháp với `no-monotone:<k>` của Erdős–Szekeres. Người học xếp bao
+lâu cũng còn thừa đúng $n$ ô, và chính cái không-xanh ấy là điều định lý nói.
+
+**Script soạn bắt một lỗi có sẵn trong bài.** Lời văn bước 3 nói "đặt ngang, đặt
+xiên trái, đặt xiên phải" nhưng cả ba region trong hình đều **cùng một tư thế** —
+hình nói ngược lời, và đã nằm đó từ M24. Nay chọn đúng một hình mỗi tư thế, máy
+kiểm. Bản kiểm đầu tiên cũng sai: nó đo "tư thế" bằng vector toạ độ giữa hai ô, mà
+hai tam giác cạnh nhau trong một hàng luôn cho vector $(0,1)$ dù ghép thành hai
+hình thoi nghiêng **ngược nhau**, tuỳ ô neo ngửa hay úp. Phải đo bằng hướng của
+**cạnh chung**, và khi ấy ba tư thế ra đúng $0°$, $60°$, $120°$ — ba hướng cạnh của
+lưới tam giác.
+
+1093 test, 67 bài 0 lỗi 0 cảnh báo, e2e 42 xanh, **2 golden đổi** (đúng hai step
+của bài vừa nâng).
 
 ### M29 — Lan truyền trên bàn cờ (BD-08) · [E] — **xong**
 

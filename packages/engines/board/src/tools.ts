@@ -2,6 +2,7 @@ import { SELECT_TOOL, type SandboxTool } from '@combviz/editor';
 import type { Scene } from '@combviz/schema';
 import { MAX_COLOR_CLASS } from '@combviz/theme';
 import { latticeOf, TILE_SHAPES } from './geometry.js';
+import { LATTICE_SHAPES } from './lattice.js';
 import { spreadRuleLabel, SPREAD_RULE_IDS } from './commands.js';
 import type { BoardConfig } from './schema.js';
 
@@ -18,7 +19,8 @@ const OFFERED = ['domino', 'tromino-l', 'tetromino-o', 'tetromino-t'] as const;
  */
 export function boardTools(scene?: Scene): readonly SandboxTool[] {
   const tools: SandboxTool[] = [SELECT_TOOL];
-  const square = latticeOf(scene?.config as BoardConfig | undefined) === 'square';
+  const lattice = latticeOf(scene?.config as BoardConfig | undefined);
+  const square = lattice === 'square';
 
   for (let index = 1; index <= MAX_COLOR_CLASS; index += 1) {
     tools.push({
@@ -58,6 +60,26 @@ export function boardTools(scene?: Scene): readonly SandboxTool[] {
         command: 'board/toggle-cross',
         idParam: 'cell',
         params: { rule },
+        prefix: 'cell-',
+      },
+    });
+  }
+
+  // BD-09 — quân của **chính lưới đang dùng**, đọc từ `LATTICE_SHAPES`. Trước hạng
+  // mục này, lưới phi vuông không có quân nào kéo thả được, nên bài lát hình thoi
+  // phải khai từng hình thoi bằng một `region` và vì thế chỉ là `illustration`.
+  for (const [shape, spec] of Object.entries(LATTICE_SHAPES)) {
+    if (spec.lattice !== lattice) continue;
+    tools.push({
+      id: `tile-${shape}`,
+      label: spec.label,
+      action: {
+        type: 'stamp',
+        command: 'board/place-tile',
+        idParam: 'id',
+        idPrefix: 't',
+        posParam: 'pos',
+        params: { shape },
         prefix: 'cell-',
       },
     });

@@ -26,9 +26,11 @@ import {
   cellPolygon,
   cellsInRow,
   centreOf,
+  isLatticeShape,
   latticeExtent,
   outlineOfCells,
 } from './lattice.js';
+import { tileCells } from './dsl.js';
 import { cellId } from './ids.js';
 import { attackedCells, cellCentre, type AttackBoard } from './attacks.js';
 import type { BoardConfig } from './schema.js';
@@ -340,7 +342,11 @@ function renderElement(
 ): SvgNode[] {
   switch (element.type) {
     case 'tile':
-      return [renderTile(element, ctx)];
+      return [
+        isLatticeShape(String(element['shape']))
+          ? renderLatticeTile(element, config, ctx)
+          : renderTile(element, ctx),
+      ];
     case 'piece':
       return [renderPiece(element, config, ctx)];
     case 'region':
@@ -403,6 +409,60 @@ function renderTile(element: SceneElement, ctx: RenderContext): SvgNode {
     },
     [...cells, outline],
   );
+}
+
+/**
+ * Quân trên lưới phi vuông vẽ bằng toạ độ **tuyệt đối**, không tịnh tiến (BD-09).
+ *
+ * Đây không phải đường tắt — nó là hệ quả của hình học. Polyomino giữ nguyên hình
+ * khi dời chỗ, nên vẽ một lần trong toạ độ cục bộ rồi `translate` là đúng, và nhờ
+ * vậy quân **trượt** mượt sang ô mới. Hình thoi thì không: dời nó từ một tam giác
+ * hướng lên sang một tam giác hướng xuống là **lật** nó, chứ không phải dời. Không
+ * có phép tịnh tiến nào để nội suy, nên vờ có một cái sẽ cho ra animation trong đó
+ * quân đi qua những vị trí không tồn tại trên lưới.
+ *
+ * Giá phải trả, ghi ra để không ai tưởng là quên: quân lưới **nhảy** giữa hai
+ * step thay vì trượt. Đổi lại, mọi khung hình đều là một thế hợp lệ.
+ */
+function renderLatticeTile(
+  element: SceneElement,
+  config: BoardConfig,
+  ctx: RenderContext,
+): SvgNode {
+  const lattice = latticeOf(config);
+  const cells = tileCells(element, lattice);
+
+  const fill =
+    element.color_class === undefined
+      ? ctx.theme.object.tile
+      : fillForClass(ctx, element.color_class);
+
+  const faces = cells.map(([r, c]) =>
+    el('polygon', {
+      points: cellPolygon(lattice, config.rows, config.cols, r, c)
+        .map((p) => `${round(p.x)},${round(p.y)}`)
+        .join(' '),
+      fill,
+      // Cùng lý do với polyomino: quân che ô nhưng không xoá ô, vì cả lập luận của
+      // dạng tiling nằm ở chỗ "quân này phủ một ô mỗi màu".
+      'fill-opacity': ctx.theme.object.tileOpacity,
+    }),
+  );
+
+  return keyed(element.id, 'g', groupAttrs(ctx, element), [
+    ...faces,
+    el('path', {
+      d: outlineOfCells(lattice, config.rows, config.cols, cells),
+      fill: 'none',
+      stroke: ctx.theme.object.tileStroke,
+      'stroke-width': ctx.theme.stroke.base,
+      // Đầu nét tròn: góc nhọn của tam giác làm nét vuông thò ra thành gai — cùng
+      // chuyện đã gặp ở region.
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+      ...elementDecoration(ctx, element),
+    }),
+  ]);
 }
 
 function renderPiece(
