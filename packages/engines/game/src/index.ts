@@ -219,6 +219,21 @@ export const gameSchemaFragment: EngineSchemaFragment = {
    * Nhờ vậy anchor trỏ thẳng vào một thế cụ thể được — "[[a1|thế $n = 8$]] cũng
    * thua" — mà ANC-02 không báo rot. Cùng cơ chế với ô bàn cờ (D-16).
    */
+  /**
+   * Hai view phổ vẽ **thế cờ**, không vẽ đống: trục là số viên còn lại, và mỗi ô
+   * nói "đứng ở thế này thì thắng hay thua". Đống sỏi không có chỗ nào trên đó.
+   *
+   * Cố ý, và nhất quán: `gameHitTest` cũng trả `[]` ở hai view ấy. Cái duy nhất
+   * còn thiếu là **nói ra**, để anchor trỏ vào một đống ở view phổ bị bắt thay vì
+   * im lặng — `subtraction-set-134` s3 đang mắc đúng thế.
+   */
+  undrawnElementIds(scene: Scene): Set<string> {
+    const model = readGame(scene);
+    const view = model.config.view ?? 'piles';
+    if (view !== 'spectrum' && view !== 'spectrum-2d') return new Set();
+    return new Set(model.piles.map((p) => p.id));
+  },
+
   implicitElementIds(scene: Scene): Set<string> {
     const model = readGame(scene);
     const ids = new Set<string>();

@@ -595,6 +595,10 @@ function checkAnchors(
   const usedKeys = new Set(spans.map((s) => s.key));
 
   const known = knownIds(scene, engines);
+  // Element mà view hiện tại **cố ý** không vẽ. Id có thật nên `known` chứa nó và
+  // ANC-02 cho qua — nhưng rê chuột vào thì không sáng gì, và người đọc kết luận
+  // rằng thứ ấy không tồn tại. Đây là biến thể của anchor rot mà lớp kiểm cũ mù.
+  const undrawn = engines.get(scene.engine)?.undrawnElementIds?.(scene) ?? new Set<string>();
 
   for (const span of spans) {
     if (!(span.key in anchors)) {
@@ -625,6 +629,18 @@ function checkAnchors(
           message: `Anchor "${key}" trỏ tới element "${id}" không có trong scene của step này`,
           path: `${path}/anchors/${key}/ids/${i}`,
           hint: 'Anchor rot: element bị xoá hoặc đổi id sau khi anchor được tạo (ANC-02)',
+        });
+        return;
+      }
+      if (undrawn.has(id)) {
+        issues.push({
+          code: 'anchor/undrawn-element',
+          severity: 'error',
+          message: `Anchor "${key}" trỏ tới "${id}", element mà view này không vẽ`,
+          path: `${path}/anchors/${key}/ids/${i}`,
+          hint:
+            'Id có thật nên ANC-02 cho qua, nhưng rê chuột vào sẽ **không sáng gì**. ' +
+            'Đổi view, hoặc neo vào thứ mà view này thật sự vẽ.',
         });
       }
     });

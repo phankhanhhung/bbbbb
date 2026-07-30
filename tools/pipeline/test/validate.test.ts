@@ -90,6 +90,24 @@ describe('ANC-02 — anchor rot', () => {
     expect(result).toContain('anchor/unused');
   });
 
+  it('bắt anchor trỏ vào element mà **view này không vẽ**', () => {
+    // Lớp lỗi mà ANC-02 cũ mù hoàn toàn: id **có thật**, validate xanh, và rê
+    // chuột vào thì không sáng gì. Ba bài đã xuất bản từng mắc, mỗi bài một
+    // engine khác nhau. Ở đây: phổ thắng–thua vẽ **thế cờ**, không vẽ đống sỏi.
+    const problem = JSON.parse(
+      readFileSync(
+        fileURLToPath(
+          new URL('../../../packages/content/problems/subtraction-set-134.json', import.meta.url),
+        ),
+        'utf8',
+      ),
+    ) as Problem;
+    const step = problem.solutions[0]!.steps[3]!;
+    step.anchors!['a4']!.ids = ['p0'];
+
+    expect(codes(problem)).toContain('anchor/undrawn-element');
+  });
+
   it('cảnh báo anchor khai mà narrative không dùng', () => {
     const problem = loadExample();
     problem.solutions[0]!.steps[0]!.anchors!['a7'] = { ids: ['cell-1-1'] };

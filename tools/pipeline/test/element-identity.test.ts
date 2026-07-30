@@ -50,12 +50,21 @@ const scenes = problems.flatMap((problem) =>
   ),
 ).filter(({ scene }) => renderer.has(scene.engine));
 
-/** Element khai tường minh **cộng** element ngầm định sinh từ config. */
+/**
+ * Element mà scene này **thật sự vẽ**: khai tường minh + ngầm định − không vẽ.
+ *
+ * Trừ đi `undrawnElementIds` không phải nới lỏng: đó là những element mà view
+ * hiện tại cố ý bỏ qua (phổ thắng–thua không vẽ đống, view chấm không vẽ phần tử
+ * không thuộc tập nào), và engine đã **khai ra** điều đó. Đòi chúng sáng lên là
+ * đòi renderer vẽ thứ mà cả bài không nói tới. Đổi lại, tầng structure biến
+ * chính tập ấy thành một lỗi ANC-02 khi có anchor trỏ vào.
+ */
 function elementIds(scene: Scene): string[] {
   const fragment = ENGINE_FRAGMENTS.find((f) => f.id === scene.engine);
   const explicit = scene.elements.map((e) => (e as { id: string }).id);
   const implicit = fragment ? [...fragment.implicitElementIds(scene)] : [];
-  return [...new Set([...explicit, ...implicit])];
+  const undrawn = fragment?.undrawnElementIds?.(scene) ?? new Set<string>();
+  return [...new Set([...explicit, ...implicit])].filter((id) => !undrawn.has(id));
 }
 
 const render = (scene: Scene, highlight: ReadonlySet<string>): SvgNode[] =>
@@ -84,9 +93,27 @@ function identitiesOf(node: SvgNode, ancestors: readonly SvgNode[]): string[] {
   return out;
 }
 
-/** Duyệt song song hai cây cùng dáng, trả về danh tính của những node đã đổi. */
-function changedOwners(before: readonly SvgNode[], after: readonly SvgNode[]): Set<string> {
-  const owners = new Set<string>();
+/**
+ * Duyệt song song hai cây cùng dáng, chia danh tính của node đã đổi làm hai loại.
+ *
+ * `sure` — node ấy chỉ trả lời **một** tên, nên đổi là do chính tên đó.
+ * `blurred` — node trả lời nhiều tên (ô ma trận: key là id ô, `data-el` là id
+ * cạnh), nên không biết tên nào gây ra thay đổi. Ghi công cho cả hai là **sai**,
+ * và nó từng làm đường nhanh cho qua một lỗi thật: ô có cạnh chỉ phản ứng với id
+ * cạnh, còn id ô thì không — mà đường nhanh vẫn chấm đậu vì hai tên đi chung một
+ * node. Tên mờ phải rơi xuống đường chậm.
+ */
+function changedOwners(
+  before: readonly SvgNode[],
+  after: readonly SvgNode[],
+): { sure: Set<string>; blurred: Set<string> } {
+  const sure = new Set<string>();
+  const blurred = new Set<string>();
+  const credit = (ids: readonly string[]): void => {
+    const unique = [...new Set(ids)];
+    for (const id of unique) (unique.length === 1 ? sure : blurred).add(id);
+  };
+
   const walk = (a: readonly SvgNode[], b: readonly SvgNode[], ancestors: SvgNode[]): void => {
     const count = Math.max(a.length, b.length);
     for (let i = 0; i < count; i += 1) {
@@ -96,11 +123,11 @@ function changedOwners(before: readonly SvgNode[], after: readonly SvgNode[]): S
         // Highlight chỉ thêm thuộc tính, không thêm bớt node. Lệch số con nghĩa
         // là engine vẽ **khác hẳn** khi có highlight — hiếm, nhưng nếu xảy ra thì
         // quy cả nhánh về tổ tiên còn hơn bỏ qua im lặng.
-        for (const id of identitiesOf(x ?? y!, ancestors)) owners.add(id);
+        credit(identitiesOf(x ?? y!, ancestors));
         continue;
       }
       if (canonicalStringify(x.attrs) !== canonicalStringify(y.attrs)) {
-        for (const id of identitiesOf(y, ancestors)) owners.add(id);
+        credit(identitiesOf(y, ancestors));
       }
       if (x.children || y.children) {
         walk(x.children ?? [], y.children ?? [], [...ancestors, y]);
@@ -108,7 +135,7 @@ function changedOwners(before: readonly SvgNode[], after: readonly SvgNode[]): S
     }
   };
   walk(before, after, []);
-  return owners;
+  return { sure, blurred };
 }
 
 /** Có **bất kỳ** khác biệt nào giữa hai cây không. */
@@ -144,17 +171,6 @@ const DEBT: readonly DebtRule[] = [
     engine: 'derivation',
     type: 'row',
   },
-  {
-    why: 'game: view phổ không vẽ `pile` — `renderPiles` không được gọi',
-    engine: 'game',
-    view: /^spectrum/,
-    type: 'pile',
-  },
-  {
-    why: 'set/dots: set không gọi `decorationAttrs`; token bị truyền id ô giao',
-    engine: 'set',
-    view: /^dots$/,
-  },
 ];
 
 function debtFor(scene: Scene, id: string): DebtRule | undefined {
@@ -188,11 +204,11 @@ describe('ANC-01 — mọi element phải sáng được', () => {
       const base = render(scene, new Set());
       const lit = changedOwners(base, render(scene, new Set(ids)));
 
-      // Đường chậm chỉ chạy cho id khả nghi, và nó hỏi thẳng câu cần hỏi: highlight
-      // **một mình** id này thì hình có đổi không. Không cần quy kết cho ai —
-      // trong tập highlight chỉ có nó, nên đổi gì cũng là do nó.
+      // Đường chậm chạy cho id chưa chắc — chưa đổi gì, **hoặc** đổi mà không rõ
+      // do ai. Nó hỏi thẳng câu cần hỏi: highlight **một mình** id này thì hình
+      // có đổi không. Trong tập highlight chỉ có nó, nên đổi gì cũng là do nó.
       const dead = ids
-        .filter((id) => !lit.has(id))
+        .filter((id) => !lit.sure.has(id))
         .filter((id) => !differs(base, render(scene, new Set([id]))));
 
       const unexpected = dead.filter((id) => {

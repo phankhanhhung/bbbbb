@@ -191,6 +191,21 @@ export const setSchemaFragment: EngineSchemaFragment = {
     return ids;
   },
 
+  /**
+   * View chấm vẽ **một chấm cho mỗi quan hệ thuộc**, nên phần tử không thuộc tập
+   * nào không có chấm nào — nó không hiện ra ở đâu cả. Venn thì ngược lại: mỗi
+   * phần tử luôn có đúng một chấm, kể cả chấm nằm ngoài mọi vòng tròn.
+   */
+  undrawnElementIds(scene: Scene): Set<string> {
+    const derived = deriveSet(scene);
+    const ids = new Set<string>();
+    if (derived.view !== 'dots') return ids;
+    for (const token of derived.tokens) {
+      if (token.sets.length === 0) ids.add(token.id);
+    }
+    return ids;
+  },
+
   checkBounds(scene: Scene, path: string): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
     const derived = deriveSet(scene);
