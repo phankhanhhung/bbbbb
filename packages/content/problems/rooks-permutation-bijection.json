@@ -1,0 +1,393 @@
+{
+  "schema_version": "0.2.0",
+  "id": "rooks-permutation-bijection",
+  "statement": {
+    "vi": "Có bao nhiêu cách đặt $4$ quân xe lên bàn cờ $4 \\times 4$ sao cho không quân nào ăn quân nào?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Song ánh giữa cách đặt xe và hoán vị. Đây là cách đọc \"ma trận hoán vị\" mà không cần nói tới ma trận."
+    }
+  },
+  "topics": [
+    "counting",
+    "pieces"
+  ],
+  "techniques": [
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board",
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Song ánh"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đặt $4$ quân xe lên bàn $4 \\times 4$ sao cho không quân nào ăn quân nào — tức mỗi hàng một quân, mỗi cột một quân. [[a1|Quân ở cột $i$]] nằm ở hàng $\\sigma(i)$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "r0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "r0",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [1, 0]
+              },
+              {
+                "id": "r1",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [3, 1]
+              },
+              {
+                "id": "r2",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [0, 2]
+              },
+              {
+                "id": "r3",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [2, 3]
+              }
+            ]
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Xe trên bàn cờ"
+            },
+            "label_right": {
+              "vi": "Hoán vị"
+            },
+            "pairs": [
+              [
+                "r0",
+                "s0"
+              ],
+              [
+                "r1",
+                "s1"
+              ],
+              [
+                "r2",
+                "s2"
+              ],
+              [
+                "r3",
+                "s3"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "caption": "Hoán vị $\\sigma$",
+                "mode": "sequence",
+                "show_index": true
+              },
+              "elements": [
+                {
+                  "id": "s0",
+                  "pos": 0,
+                  "type": "item",
+                  "value": 2
+                },
+                {
+                  "id": "s1",
+                  "pos": 1,
+                  "type": "item",
+                  "value": 4
+                },
+                {
+                  "id": "s2",
+                  "pos": 2,
+                  "type": "item",
+                  "value": 1
+                },
+                {
+                  "id": "s3",
+                  "pos": 3,
+                  "type": "item",
+                  "value": 3
+                }
+              ],
+              "engine": "sequence"
+            }
+          },
+          "alt_text": {
+            "vi": "Bốn quân xe không ăn nhau, và hoán vị 2 4 1 3 tương ứng."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Điều kiện \"mỗi hàng đúng một quân\" nói đúng rằng $\\sigma$ là **song ánh** từ cột sang hàng. Đổi cách đặt thì [[a2|hoán vị]] đổi theo, và ngược lại."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "r0",
+                "r1",
+                "r2",
+                "r3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "r0",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [2, 0]
+              },
+              {
+                "id": "r1",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [0, 1]
+              },
+              {
+                "id": "r2",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [3, 2]
+              },
+              {
+                "id": "r3",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [1, 3]
+              }
+            ]
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Xe trên bàn cờ"
+            },
+            "label_right": {
+              "vi": "Hoán vị"
+            },
+            "pairs": [
+              [
+                "r0",
+                "s0"
+              ],
+              [
+                "r1",
+                "s1"
+              ],
+              [
+                "r2",
+                "s2"
+              ],
+              [
+                "r3",
+                "s3"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "caption": "Hoán vị $\\sigma$",
+                "mode": "sequence",
+                "show_index": true
+              },
+              "elements": [
+                {
+                  "id": "s0",
+                  "pos": 0,
+                  "type": "item",
+                  "value": 3
+                },
+                {
+                  "id": "s1",
+                  "pos": 1,
+                  "type": "item",
+                  "value": 1
+                },
+                {
+                  "id": "s2",
+                  "pos": 2,
+                  "type": "item",
+                  "value": 4
+                },
+                {
+                  "id": "s3",
+                  "pos": 3,
+                  "type": "item",
+                  "value": 2
+                }
+              ],
+              "engine": "sequence"
+            }
+          },
+          "alt_text": {
+            "vi": "Cách đặt khác và hoán vị 3 1 4 2."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nên đếm cách đặt xe bằng đếm hoán vị: $4! = 24$ [[a3|cách]]."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "r0",
+                "r1",
+                "r2",
+                "r3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": [
+              {
+                "id": "r0",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [1, 0]
+              },
+              {
+                "id": "r1",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [3, 1]
+              },
+              {
+                "id": "r2",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [0, 2]
+              },
+              {
+                "id": "r3",
+                "type": "piece",
+                "kind": "rook",
+                "pos": [2, 3]
+              }
+            ]
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Xe trên bàn cờ"
+            },
+            "label_right": {
+              "vi": "Hoán vị"
+            },
+            "pairs": [
+              [
+                "r0",
+                "s0"
+              ],
+              [
+                "r1",
+                "s1"
+              ],
+              [
+                "r2",
+                "s2"
+              ],
+              [
+                "r3",
+                "s3"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "caption": "Hoán vị $\\sigma$",
+                "mode": "sequence",
+                "show_index": true
+              },
+              "elements": [
+                {
+                  "id": "s0",
+                  "pos": 0,
+                  "type": "item",
+                  "value": 2
+                },
+                {
+                  "id": "s1",
+                  "pos": 1,
+                  "type": "item",
+                  "value": 4
+                },
+                {
+                  "id": "s2",
+                  "pos": 2,
+                  "type": "item",
+                  "value": 1
+                },
+                {
+                  "id": "s3",
+                  "pos": 3,
+                  "type": "item",
+                  "value": 3
+                }
+              ],
+              "engine": "sequence"
+            }
+          },
+          "alt_text": {
+            "vi": "Nhắc lại cách đặt xe, kèm kết luận 24 cách."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

@@ -1,0 +1,420 @@
+{
+  "schema_version": "0.2.0",
+  "id": "geometric-sum-doubling",
+  "statement": {
+    "vi": "Tính $1 + 2 + 4 + 8$ bằng mẹo nhân đôi rồi trừ, và tổng quát cho $1 + 2 + \\dots + 2^{n-1}$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Nhân đôi rồi trừ theo vế — cách chuẩn cho tổng cấp số nhân, và là bản rút gọn của phép \"telescoping\"."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "derivation"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tính $1 + 2 + 4 + 8$ mà **không** cộng từng số. Mẹo: gọi tổng là $S$ rồi [[b1|viết nó ra]]."
+          },
+          "anchors": {
+            "b1": {
+              "ids": [
+                "r1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "relation"
+            },
+            "elements": [
+              {
+                "id": "r1",
+                "type": "row",
+                "note": "gọi tổng là S"
+              },
+              {
+                "id": "t1a",
+                "type": "term",
+                "row": "r1",
+                "tex": "S"
+              },
+              {
+                "id": "t1e",
+                "type": "term",
+                "role": "relation",
+                "row": "r1",
+                "tex": "="
+              },
+              {
+                "id": "t1b",
+                "type": "term",
+                "row": "r1",
+                "tex": "1 + 2 + 4 + 8"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Dòng thứ nhất: S bằng 1 cộng 2 cộng 4 cộng 8."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bốn nhịp: [[b1|viết $S$]], [[b2|nhân đôi]] — mỗi hạng tử dịch sang một chỗ, [[b3|trừ theo vế]] — tất cả hạng tử giữa triệt tiêu, rồi [[b4|đọc kết quả]]."
+          },
+          "anchors": {
+            "b1": {
+              "ids": [
+                "r1"
+              ]
+            },
+            "b2": {
+              "ids": [
+                "r2"
+              ]
+            },
+            "b3": {
+              "ids": [
+                "r3"
+              ]
+            },
+            "b4": {
+              "ids": [
+                "r4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "relation"
+            },
+            "elements": [
+              {
+                "id": "r1",
+                "type": "row",
+                "note": "gọi tổng là S"
+              },
+              {
+                "id": "t1a",
+                "type": "term",
+                "row": "r1",
+                "tex": "S"
+              },
+              {
+                "id": "t1e",
+                "type": "term",
+                "role": "relation",
+                "row": "r1",
+                "tex": "="
+              },
+              {
+                "id": "t1b",
+                "type": "term",
+                "row": "r1",
+                "tex": "1 + 2 + 4 + 8"
+              },
+              {
+                "id": "r2",
+                "type": "row",
+                "note": "nhân đôi hai vế"
+              },
+              {
+                "id": "t2a",
+                "type": "term",
+                "row": "r2",
+                "tex": "2S"
+              },
+              {
+                "id": "t2e",
+                "type": "term",
+                "role": "relation",
+                "row": "r2",
+                "tex": "="
+              },
+              {
+                "id": "t2b",
+                "type": "term",
+                "row": "r2",
+                "tex": "2 + 4 + 8 + 16"
+              },
+              {
+                "id": "r3",
+                "type": "row",
+                "note": "trừ theo vế"
+              },
+              {
+                "id": "t3a",
+                "type": "term",
+                "row": "r3",
+                "tex": "2S - S"
+              },
+              {
+                "id": "t3e",
+                "type": "term",
+                "role": "relation",
+                "row": "r3",
+                "tex": "="
+              },
+              {
+                "id": "t3b",
+                "type": "term",
+                "row": "r3",
+                "tex": "16 - 1"
+              },
+              {
+                "id": "r4",
+                "type": "row"
+              },
+              {
+                "id": "t4a",
+                "type": "term",
+                "row": "r4",
+                "tex": "S"
+              },
+              {
+                "id": "t4e",
+                "type": "term",
+                "role": "relation",
+                "row": "r4",
+                "tex": "="
+              },
+              {
+                "id": "t4b",
+                "type": "term",
+                "color_class": 1,
+                "row": "r4",
+                "tex": "15"
+              }
+            ]
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "b1",
+                "at": 0,
+                "duration": 700,
+                "id": "d0",
+                "kind": "focus",
+                "label": {
+                  "vi": "viết tổng"
+                },
+                "targets": [
+                  "r1"
+                ]
+              },
+              {
+                "anchor": "b2",
+                "at": 800,
+                "duration": 700,
+                "id": "d1",
+                "kind": "focus",
+                "label": {
+                  "vi": "nhân đôi"
+                },
+                "targets": [
+                  "r2"
+                ]
+              },
+              {
+                "anchor": "b3",
+                "at": 1600,
+                "duration": 700,
+                "id": "d2",
+                "kind": "focus",
+                "label": {
+                  "vi": "trừ theo vế"
+                },
+                "targets": [
+                  "r3"
+                ]
+              },
+              {
+                "anchor": "b4",
+                "at": 2400,
+                "duration": 700,
+                "id": "d3",
+                "kind": "focus",
+                "label": {
+                  "vi": "kết luận"
+                },
+                "targets": [
+                  "r4"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn dòng biến đổi, sáng lên lần lượt từ trên xuống."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[b5|$S = 15$]]. Phép nhân đôi rồi trừ không dùng gì riêng của bốn số hạng, nên nó cho luôn $1 + 2 + \\dots + 2^{n-1} = 2^n - 1$."
+          },
+          "anchors": {
+            "b5": {
+              "ids": [
+                "r4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "derivation",
+            "config": {
+              "align": "relation"
+            },
+            "elements": [
+              {
+                "id": "r1",
+                "type": "row",
+                "note": "gọi tổng là S"
+              },
+              {
+                "id": "t1a",
+                "type": "term",
+                "row": "r1",
+                "tex": "S"
+              },
+              {
+                "id": "t1e",
+                "type": "term",
+                "role": "relation",
+                "row": "r1",
+                "tex": "="
+              },
+              {
+                "id": "t1b",
+                "type": "term",
+                "row": "r1",
+                "tex": "1 + 2 + 4 + 8"
+              },
+              {
+                "id": "r2",
+                "type": "row",
+                "note": "nhân đôi hai vế"
+              },
+              {
+                "id": "t2a",
+                "type": "term",
+                "row": "r2",
+                "tex": "2S"
+              },
+              {
+                "id": "t2e",
+                "type": "term",
+                "role": "relation",
+                "row": "r2",
+                "tex": "="
+              },
+              {
+                "id": "t2b",
+                "type": "term",
+                "row": "r2",
+                "tex": "2 + 4 + 8 + 16"
+              },
+              {
+                "id": "r3",
+                "type": "row",
+                "note": "trừ theo vế"
+              },
+              {
+                "id": "t3a",
+                "type": "term",
+                "row": "r3",
+                "tex": "2S - S"
+              },
+              {
+                "id": "t3e",
+                "type": "term",
+                "role": "relation",
+                "row": "r3",
+                "tex": "="
+              },
+              {
+                "id": "t3b",
+                "type": "term",
+                "row": "r3",
+                "tex": "16 - 1"
+              },
+              {
+                "id": "r4",
+                "type": "row"
+              },
+              {
+                "id": "t4a",
+                "type": "term",
+                "row": "r4",
+                "tex": "S"
+              },
+              {
+                "id": "t4e",
+                "type": "term",
+                "role": "relation",
+                "row": "r4",
+                "tex": "="
+              },
+              {
+                "id": "t4b",
+                "type": "term",
+                "color_class": 1,
+                "row": "r4",
+                "tex": "15"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cả bốn dòng, nhấn dòng kết luận S bằng 15."
+          },
+          "claims": [
+            "n_rows == 4"
+          ],
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

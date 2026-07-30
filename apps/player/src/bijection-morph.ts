@@ -65,6 +65,9 @@ export interface GeneratedMorph {
   readonly skipped: readonly (readonly [string, string])[];
 }
 
+/** Dưới ngưỡng này thì coi như hai hình trùng chỗ — không có gì để bay. */
+const STILL = 0.5;
+
 /**
  * Bỏ cuộc khi quá **một phần ba** số cặp không đo được.
  *
@@ -127,6 +130,26 @@ export function morphChoreography(
 
   if (groups.length === 0) return null;
   if (unmeasured > bijection.pairs.length * GIVE_UP_RATIO) return null;
+
+  // **Không cặp nào thật sự dịch chỗ thì không có phép biến hình.**
+  //
+  // Xảy ra thật, và không hiếm: hai pane cùng engine cùng view thì `x1` bên trái
+  // và ảnh của nó bên phải nằm đúng một chỗ. Bài "tập con ↔ phần bù" là như thế,
+  // và ba trong bốn step của bài ma trận kề cũng vậy. Chạy đủ thời lượng mà màn
+  // hình đứng im là đúng cái triệu chứng mà cả M37 lẫn M38 mất nhiều vòng mới
+  // tìm ra — nên đừng bày ra nữa. View hai pane vẫn còn, và nó vẫn nói được
+  // "cái này ứng với cái kia" bằng cách rê chuột.
+  const moves = groups.some((group) =>
+    group.targets.some((a) => {
+      const from = leftBoxes(a)[0];
+      const to = rightBoxes(group.to)[0];
+      if (!from || !to) return false;
+      const dx = to.x + to.width / 2 - (from.x + from.width / 2);
+      const dy = to.y + to.height / 2 - (from.y + from.height / 2);
+      return Math.hypot(dx, dy) > STILL;
+    }),
+  );
+  if (!moves) return null;
 
   const step = Math.max(1, perPairMs - overlapMs);
   const phases: Phase[] = groups.map((group, i) => ({

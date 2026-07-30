@@ -1,0 +1,899 @@
+{
+  "schema_version": "0.2.0",
+  "id": "divisible-2-3-5-inclusion-exclusion",
+  "statement": {
+    "vi": "Trong các số từ $1$ đến $30$, có bao nhiêu số không chia hết cho $2$, cho $3$, cũng không cho $5$?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bao hàm–loại trừ ba tập. Con số $\\lfloor 30/6 \\rfloor$ kiểu này là chỗ dễ sai nhất, nên bảng dựng từ dữ liệu chứ không gõ tay."
+    }
+  },
+  "topics": [
+    "counting",
+    "set-systems"
+  ],
+  "techniques": [
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "set"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Trong $1$ đến $30$, đếm số **không** chia hết cho $2$, $3$ hay $5$. Ba tập [[a1|bội của $2$, $3$, $5$]] chồng lấn nhau, nên cộng ba cỡ là đếm thừa."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "A",
+                "B",
+                "C"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "30 số, ba điều kiện chia hết",
+              "view": "venn"
+            },
+            "elements": [
+              {
+                "id": "A",
+                "type": "set",
+                "label": "chia hết 2",
+                "order": 0
+              },
+              {
+                "id": "B",
+                "type": "set",
+                "label": "chia hết 3",
+                "order": 1
+              },
+              {
+                "id": "C",
+                "type": "set",
+                "label": "chia hết 5",
+                "order": 2
+              },
+              {
+                "id": "n1",
+                "type": "token",
+                "label": "1",
+                "sets": []
+              },
+              {
+                "id": "n2",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n3",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n4",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n5",
+                "type": "token",
+                "label": "5",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "n6",
+                "type": "token",
+                "label": "6",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n7",
+                "type": "token",
+                "label": "7",
+                "sets": []
+              },
+              {
+                "id": "n8",
+                "type": "token",
+                "label": "8",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n9",
+                "type": "token",
+                "label": "9",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n10",
+                "type": "token",
+                "label": "10",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "n11",
+                "type": "token",
+                "label": "11",
+                "sets": []
+              },
+              {
+                "id": "n12",
+                "type": "token",
+                "label": "12",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n13",
+                "type": "token",
+                "label": "13",
+                "sets": []
+              },
+              {
+                "id": "n14",
+                "type": "token",
+                "label": "14",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n15",
+                "type": "token",
+                "label": "15",
+                "sets": [
+                  "B",
+                  "C"
+                ]
+              },
+              {
+                "id": "n16",
+                "type": "token",
+                "label": "16",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n17",
+                "type": "token",
+                "label": "17",
+                "sets": []
+              },
+              {
+                "id": "n18",
+                "type": "token",
+                "label": "18",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n19",
+                "type": "token",
+                "label": "19",
+                "sets": []
+              },
+              {
+                "id": "n20",
+                "type": "token",
+                "label": "20",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "n21",
+                "type": "token",
+                "label": "21",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n22",
+                "type": "token",
+                "label": "22",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n23",
+                "type": "token",
+                "label": "23",
+                "sets": []
+              },
+              {
+                "id": "n24",
+                "type": "token",
+                "label": "24",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n25",
+                "type": "token",
+                "label": "25",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "n26",
+                "type": "token",
+                "label": "26",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n27",
+                "type": "token",
+                "label": "27",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n28",
+                "type": "token",
+                "label": "28",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n29",
+                "type": "token",
+                "label": "29",
+                "sets": []
+              },
+              {
+                "id": "n30",
+                "type": "token",
+                "label": "30",
+                "sets": [
+                  "A",
+                  "B",
+                  "C"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba vòng tròn Venn cho bội của 2, 3 và 5 trong khoảng 1 đến 30."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bù trừ: cộng ba cỡ, trừ ba phần giao đôi, cộng lại phần giao ba. Máy dựng [[a2|bảng ấy]] từ chính dữ liệu và ra $22$ — đúng bằng $22$ số thật sự nằm trong hợp."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "A",
+                "B",
+                "C"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "Cộng ba cỡ rồi bù trừ",
+              "show_inclusion_exclusion": true,
+              "view": "dots"
+            },
+            "elements": [
+              {
+                "id": "A",
+                "type": "set",
+                "label": "chia hết 2",
+                "order": 0
+              },
+              {
+                "id": "B",
+                "type": "set",
+                "label": "chia hết 3",
+                "order": 1
+              },
+              {
+                "id": "C",
+                "type": "set",
+                "label": "chia hết 5",
+                "order": 2
+              },
+              {
+                "id": "n1",
+                "type": "token",
+                "label": "1",
+                "sets": []
+              },
+              {
+                "id": "n2",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n3",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n4",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n5",
+                "type": "token",
+                "label": "5",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "n6",
+                "type": "token",
+                "label": "6",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n7",
+                "type": "token",
+                "label": "7",
+                "sets": []
+              },
+              {
+                "id": "n8",
+                "type": "token",
+                "label": "8",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n9",
+                "type": "token",
+                "label": "9",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n10",
+                "type": "token",
+                "label": "10",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "n11",
+                "type": "token",
+                "label": "11",
+                "sets": []
+              },
+              {
+                "id": "n12",
+                "type": "token",
+                "label": "12",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n13",
+                "type": "token",
+                "label": "13",
+                "sets": []
+              },
+              {
+                "id": "n14",
+                "type": "token",
+                "label": "14",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n15",
+                "type": "token",
+                "label": "15",
+                "sets": [
+                  "B",
+                  "C"
+                ]
+              },
+              {
+                "id": "n16",
+                "type": "token",
+                "label": "16",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n17",
+                "type": "token",
+                "label": "17",
+                "sets": []
+              },
+              {
+                "id": "n18",
+                "type": "token",
+                "label": "18",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n19",
+                "type": "token",
+                "label": "19",
+                "sets": []
+              },
+              {
+                "id": "n20",
+                "type": "token",
+                "label": "20",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "n21",
+                "type": "token",
+                "label": "21",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n22",
+                "type": "token",
+                "label": "22",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n23",
+                "type": "token",
+                "label": "23",
+                "sets": []
+              },
+              {
+                "id": "n24",
+                "type": "token",
+                "label": "24",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n25",
+                "type": "token",
+                "label": "25",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "n26",
+                "type": "token",
+                "label": "26",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n27",
+                "type": "token",
+                "label": "27",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n28",
+                "type": "token",
+                "label": "28",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n29",
+                "type": "token",
+                "label": "29",
+                "sets": []
+              },
+              {
+                "id": "n30",
+                "type": "token",
+                "label": "30",
+                "sets": [
+                  "A",
+                  "B",
+                  "C"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba cột chấm kèm bảng bao hàm–loại trừ."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy còn $30 - 22 = 8$ số [[a3|không chia hết]] cho số nào trong $2$, $3$, $5$. (Chúng là $1$ và các số nguyên tố từ $7$ trở lên, cùng $49$-kiểu — ở đây chỉ tới $30$ nên là $1, 7, 11, 13, 17, 19, 23, 29$.)"
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "n1",
+                "n7",
+                "n11",
+                "n13",
+                "n17",
+                "n19",
+                "n23",
+                "n29"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "8 số nằm ngoài cả ba vòng",
+              "view": "venn"
+            },
+            "elements": [
+              {
+                "id": "A",
+                "type": "set",
+                "label": "chia hết 2",
+                "order": 0
+              },
+              {
+                "id": "B",
+                "type": "set",
+                "label": "chia hết 3",
+                "order": 1
+              },
+              {
+                "id": "C",
+                "type": "set",
+                "label": "chia hết 5",
+                "order": 2
+              },
+              {
+                "id": "n1",
+                "type": "token",
+                "label": "1",
+                "sets": []
+              },
+              {
+                "id": "n2",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n3",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n4",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n5",
+                "type": "token",
+                "label": "5",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "n6",
+                "type": "token",
+                "label": "6",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n7",
+                "type": "token",
+                "label": "7",
+                "sets": []
+              },
+              {
+                "id": "n8",
+                "type": "token",
+                "label": "8",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n9",
+                "type": "token",
+                "label": "9",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n10",
+                "type": "token",
+                "label": "10",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "n11",
+                "type": "token",
+                "label": "11",
+                "sets": []
+              },
+              {
+                "id": "n12",
+                "type": "token",
+                "label": "12",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n13",
+                "type": "token",
+                "label": "13",
+                "sets": []
+              },
+              {
+                "id": "n14",
+                "type": "token",
+                "label": "14",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n15",
+                "type": "token",
+                "label": "15",
+                "sets": [
+                  "B",
+                  "C"
+                ]
+              },
+              {
+                "id": "n16",
+                "type": "token",
+                "label": "16",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n17",
+                "type": "token",
+                "label": "17",
+                "sets": []
+              },
+              {
+                "id": "n18",
+                "type": "token",
+                "label": "18",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n19",
+                "type": "token",
+                "label": "19",
+                "sets": []
+              },
+              {
+                "id": "n20",
+                "type": "token",
+                "label": "20",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "n21",
+                "type": "token",
+                "label": "21",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n22",
+                "type": "token",
+                "label": "22",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n23",
+                "type": "token",
+                "label": "23",
+                "sets": []
+              },
+              {
+                "id": "n24",
+                "type": "token",
+                "label": "24",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "n25",
+                "type": "token",
+                "label": "25",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "n26",
+                "type": "token",
+                "label": "26",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n27",
+                "type": "token",
+                "label": "27",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "n28",
+                "type": "token",
+                "label": "28",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "n29",
+                "type": "token",
+                "label": "29",
+                "sets": []
+              },
+              {
+                "id": "n30",
+                "type": "token",
+                "label": "30",
+                "sets": [
+                  "A",
+                  "B",
+                  "C"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng sơ đồ Venn, nhấn tám số nằm ngoài cả ba vòng tròn."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

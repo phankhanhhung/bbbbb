@@ -150,6 +150,16 @@ describe('PRN-04 — timeline biến hình theo từng cặp', () => {
     expect(in1.at).toBe(200);
   });
 
+  it('không cặp nào dịch chỗ thì **không có** phép biến hình', () => {
+    // Hai pane cùng engine cùng view thì ảnh nằm đúng chỗ vật. Chạy đủ thời
+    // lượng mà màn hình đứng im là đúng triệu chứng mà M37 và M38 mất nhiều vòng
+    // mới tìm ra — nên Player không bày nút ra. View hai pane vẫn nói được "cái
+    // này ứng với cái kia" bằng cách rê chuột.
+    const same = (id: string): readonly SceneBox[] => (id.startsWith('x') || id.startsWith('b') ? box(0) : []);
+
+    expect(morphChoreography(bijection([['x1', 'b1'], ['x2', 'b2']]), same, same, opts)).toBeNull();
+  });
+
   it('`boxOf` gộp hai pane, pane phải tra qua tiền tố', () => {
     const out = morphChoreography(bijection([['x1', 'b1']]), left, right, opts)!;
 

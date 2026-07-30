@@ -1,0 +1,528 @@
+{
+  "schema_version": "0.2.0",
+  "id": "tree-leaf-stripping",
+  "statement": {
+    "vi": "Chứng minh rằng một cây có $n$ đỉnh thì có đúng $n-1$ cạnh."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Quy nạp bằng cách bóc lá. Mấu chốt: **mọi** cây có ít nhất một lá — nếu mọi đỉnh đều bậc $\\ge 2$ thì đi mãi sẽ gặp lại một đỉnh, tức là có chu trình."
+    }
+  },
+  "topics": [
+    "graph-basics",
+    "counting"
+  ],
+  "techniques": [
+    "induction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "n - m",
+      "id": "inv-vc",
+      "label": {
+        "vi": "Đỉnh trừ cạnh"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Bóc lá"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một **cây** là đồ thị liên thông không có chu trình. Cây này có [[a1|$8$ đỉnh]]. Đếm cạnh: có đúng $7$. Trùng hợp?"
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v1",
+                "v2",
+                "v3",
+                "v4",
+                "v5",
+                "v6",
+                "v7",
+                "v8"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -20]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [-16, -8]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [16, -8]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-24, 6]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8, 6]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [8, 6]
+              },
+              {
+                "id": "v7",
+                "type": "vertex",
+                "label": "7",
+                "pos": [24, 6]
+              },
+              {
+                "id": "v8",
+                "type": "vertex",
+                "label": "8",
+                "pos": [8, 20]
+              },
+              {
+                "id": "ev1v2",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "ev1v3",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "ev2v4",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "ev2v5",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "ev3v6",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "ev3v7",
+                "type": "edge",
+                "u": "v3",
+                "v": "v7"
+              },
+              {
+                "id": "ev6v8",
+                "type": "edge",
+                "u": "v6",
+                "v": "v8"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một cây tám đỉnh, bảy cạnh."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "claims": [
+            "n == 8",
+            "m == 7",
+            "is_tree"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Không trùng hợp. Cây nào cũng có **lá** — đỉnh bậc $1$ — và [[a2|bóc một lá]] cùng cạnh dính vào nó thì phần còn lại **vẫn là cây**: vẫn liên thông, vẫn không chu trình. Mỗi nhịp bớt đúng một đỉnh **và** đúng một cạnh."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "v4",
+                "ev2v4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -20]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [-16, -8]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [16, -8]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-24, 6]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8, 6]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [8, 6]
+              },
+              {
+                "id": "v7",
+                "type": "vertex",
+                "label": "7",
+                "pos": [24, 6]
+              },
+              {
+                "id": "v8",
+                "type": "vertex",
+                "label": "8",
+                "pos": [8, 20]
+              },
+              {
+                "id": "ev1v2",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "ev1v3",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "ev2v4",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "ev2v5",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "ev3v6",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "ev3v7",
+                "type": "edge",
+                "u": "v3",
+                "v": "v7"
+              },
+              {
+                "id": "ev6v8",
+                "type": "edge",
+                "u": "v6",
+                "v": "v8"
+              }
+            ]
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a2",
+                "at": 0,
+                "duration": 600,
+                "id": "cut00",
+                "kind": "hide",
+                "label": {
+                  "vi": "bóc đỉnh 4"
+                },
+                "targets": [
+                  "v4",
+                  "ev2v4"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 700,
+                "duration": 600,
+                "id": "cut01",
+                "kind": "hide",
+                "label": {
+                  "vi": "bóc đỉnh 5"
+                },
+                "targets": [
+                  "v5",
+                  "ev2v5"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 1400,
+                "duration": 600,
+                "id": "cut02",
+                "kind": "hide",
+                "label": {
+                  "vi": "bóc đỉnh 2"
+                },
+                "targets": [
+                  "v2",
+                  "ev1v2"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 2100,
+                "duration": 600,
+                "id": "cut03",
+                "kind": "hide",
+                "label": {
+                  "vi": "bóc đỉnh 1"
+                },
+                "targets": [
+                  "v1",
+                  "ev1v3"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 2800,
+                "duration": 600,
+                "id": "cut04",
+                "kind": "hide",
+                "label": {
+                  "vi": "bóc đỉnh 7"
+                },
+                "targets": [
+                  "v7",
+                  "ev3v7"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 3500,
+                "duration": 600,
+                "id": "cut05",
+                "kind": "hide",
+                "label": {
+                  "vi": "bóc đỉnh 3"
+                },
+                "targets": [
+                  "v3",
+                  "ev3v6"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 4200,
+                "duration": 600,
+                "id": "cut06",
+                "kind": "hide",
+                "label": {
+                  "vi": "bóc đỉnh 6"
+                },
+                "targets": [
+                  "v6",
+                  "ev6v8"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng cây ấy; từng lá và cạnh của nó biến mất theo bảy nhịp, cuối cùng còn một đỉnh."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bóc mãi thì còn đúng [[a3|một đỉnh]] và không cạnh nào. Đã bóc $7$ lần, mỗi lần một cạnh, nên cây ban đầu có $8 - 1 = 7$ cạnh. Lập luận không dùng gì riêng của hình này, nên nó đúng cho **mọi** cây."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "v8"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_labels": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -20]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [-16, -8]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [16, -8]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-24, 6]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8, 6]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "6",
+                "pos": [8, 6]
+              },
+              {
+                "id": "v7",
+                "type": "vertex",
+                "label": "7",
+                "pos": [24, 6]
+              },
+              {
+                "id": "v8",
+                "type": "vertex",
+                "label": "8",
+                "pos": [8, 20]
+              },
+              {
+                "id": "ev1v2",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "ev1v3",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "ev2v4",
+                "type": "edge",
+                "u": "v2",
+                "v": "v4"
+              },
+              {
+                "id": "ev2v5",
+                "type": "edge",
+                "u": "v2",
+                "v": "v5"
+              },
+              {
+                "id": "ev3v6",
+                "type": "edge",
+                "u": "v3",
+                "v": "v6"
+              },
+              {
+                "id": "ev3v7",
+                "type": "edge",
+                "u": "v3",
+                "v": "v7"
+              },
+              {
+                "id": "ev6v8",
+                "type": "edge",
+                "u": "v6",
+                "v": "v8"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng cây, nhắc lại kết luận n − 1 cạnh."
+          },
+          "claims": [
+            "m == n - 1"
+          ],
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

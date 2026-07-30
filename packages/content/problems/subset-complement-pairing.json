@@ -1,0 +1,443 @@
+{
+  "schema_version": "0.2.0",
+  "id": "subset-complement-pairing",
+  "statement": {
+    "vi": "Phép lấy phần bù ghép các tập con của $\\{1,\\dots,4\\}$ thành từng cặp. Dùng nó để chứng minh số tập con là số chẵn."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Đối hợp không có điểm bất động. Kỹ thuật này là bộ khung của rất nhiều bài \"chứng minh số ... là chẵn\"."
+    }
+  },
+  "topics": [
+    "counting",
+    "set-systems"
+  ],
+  "techniques": [
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "set"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Song ánh"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Với mỗi tập con $S \\subseteq \\{1,\\dots,4\\}$, lấy **phần bù** $\\bar S$: [[a1|phần tử nào]] thuộc $S$ thì không thuộc $\\bar S$, và ngược lại."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "s1",
+                "s2",
+                "s3",
+                "s4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "S",
+                "type": "set",
+                "label": "S",
+                "order": 0
+              },
+              {
+                "id": "s1",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "s2",
+                "type": "token",
+                "label": "2",
+                "sets": []
+              },
+              {
+                "id": "s3",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "s4",
+                "type": "token",
+                "label": "4",
+                "sets": []
+              }
+            ]
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Tập $S$"
+            },
+            "label_right": {
+              "vi": "Phần bù $\\bar S$"
+            },
+            "pairs": [
+              [
+                "s1",
+                "t1"
+              ],
+              [
+                "s2",
+                "t2"
+              ],
+              [
+                "s3",
+                "t3"
+              ],
+              [
+                "s4",
+                "t4"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "view": "matrix"
+              },
+              "elements": [
+                {
+                  "id": "T",
+                  "label": "T",
+                  "order": 0,
+                  "type": "set"
+                },
+                {
+                  "id": "t1",
+                  "label": "1",
+                  "sets": [],
+                  "type": "token"
+                },
+                {
+                  "id": "t2",
+                  "label": "2",
+                  "sets": [
+                    "T"
+                  ],
+                  "type": "token"
+                },
+                {
+                  "id": "t3",
+                  "label": "3",
+                  "sets": [],
+                  "type": "token"
+                },
+                {
+                  "id": "t4",
+                  "label": "4",
+                  "sets": [
+                    "T"
+                  ],
+                  "type": "token"
+                }
+              ],
+              "engine": "set"
+            }
+          },
+          "alt_text": {
+            "vi": "Bảng thuộc của tập {1,3} và phần bù {2,4} của nó."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Lấy phần bù hai lần thì về chỗ cũ, nên phép này **ghép đôi** các tập con — và không tập nào tự ghép với chính nó, vì [[a2|một phần tử]] không thể vừa thuộc vừa không thuộc."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "s1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "S",
+                "type": "set",
+                "label": "S",
+                "order": 0
+              },
+              {
+                "id": "s1",
+                "type": "token",
+                "label": "1",
+                "sets": []
+              },
+              {
+                "id": "s2",
+                "type": "token",
+                "label": "2",
+                "sets": []
+              },
+              {
+                "id": "s3",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "s4",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "S"
+                ]
+              }
+            ]
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Tập $S$"
+            },
+            "label_right": {
+              "vi": "Phần bù $\\bar S$"
+            },
+            "pairs": [
+              [
+                "s1",
+                "t1"
+              ],
+              [
+                "s2",
+                "t2"
+              ],
+              [
+                "s3",
+                "t3"
+              ],
+              [
+                "s4",
+                "t4"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "view": "matrix"
+              },
+              "elements": [
+                {
+                  "id": "T",
+                  "label": "T",
+                  "order": 0,
+                  "type": "set"
+                },
+                {
+                  "id": "t1",
+                  "label": "1",
+                  "sets": [
+                    "T"
+                  ],
+                  "type": "token"
+                },
+                {
+                  "id": "t2",
+                  "label": "2",
+                  "sets": [
+                    "T"
+                  ],
+                  "type": "token"
+                },
+                {
+                  "id": "t3",
+                  "label": "3",
+                  "sets": [],
+                  "type": "token"
+                },
+                {
+                  "id": "t4",
+                  "label": "4",
+                  "sets": [],
+                  "type": "token"
+                }
+              ],
+              "engine": "set"
+            }
+          },
+          "alt_text": {
+            "vi": "Tập {3,4} và phần bù {1,2}."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy $16$ tập con chia hết thành $8$ cặp. Nói riêng, số tập con có **số phần tử chẵn** bằng số tập con có số phần tử lẻ khi $4$ lẻ — nhưng ở đây [[a3|phép ghép đôi]] đã đủ nói rằng tổng số tập con là số chẵn."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "s1",
+                "s2",
+                "s3",
+                "s4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "S",
+                "type": "set",
+                "label": "S",
+                "order": 0
+              },
+              {
+                "id": "s1",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "s2",
+                "type": "token",
+                "label": "2",
+                "sets": []
+              },
+              {
+                "id": "s3",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "S"
+                ]
+              },
+              {
+                "id": "s4",
+                "type": "token",
+                "label": "4",
+                "sets": []
+              }
+            ]
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Tập $S$"
+            },
+            "label_right": {
+              "vi": "Phần bù $\\bar S$"
+            },
+            "pairs": [
+              [
+                "s1",
+                "t1"
+              ],
+              [
+                "s2",
+                "t2"
+              ],
+              [
+                "s3",
+                "t3"
+              ],
+              [
+                "s4",
+                "t4"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "view": "matrix"
+              },
+              "elements": [
+                {
+                  "id": "T",
+                  "label": "T",
+                  "order": 0,
+                  "type": "set"
+                },
+                {
+                  "id": "t1",
+                  "label": "1",
+                  "sets": [],
+                  "type": "token"
+                },
+                {
+                  "id": "t2",
+                  "label": "2",
+                  "sets": [
+                    "T"
+                  ],
+                  "type": "token"
+                },
+                {
+                  "id": "t3",
+                  "label": "3",
+                  "sets": [],
+                  "type": "token"
+                },
+                {
+                  "id": "t4",
+                  "label": "4",
+                  "sets": [
+                    "T"
+                  ],
+                  "type": "token"
+                }
+              ],
+              "engine": "set"
+            }
+          },
+          "alt_text": {
+            "vi": "Nhắc lại cặp tập – phần bù."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}
