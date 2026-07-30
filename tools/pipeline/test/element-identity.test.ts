@@ -151,21 +151,6 @@ const DEBT: readonly DebtRule[] = [
     type: 'pile',
   },
   {
-    why: 'graph/matrix: nhãn đỉnh là `text()` trần, không key/data-el/decoration',
-    engine: 'graph',
-    view: /^matrix$/,
-    type: 'vertex',
-  },
-  {
-    // Ô **trống** (không cạnh nào nối hai đỉnh ấy, kể cả đường chéo). Ô có cạnh
-    // thì sáng được, vì nó mang `data-el` là id cạnh — nên luật này không che
-    // mất trường hợp nào đang chạy đúng.
-    why: 'graph/matrix: ô trống không nhận highlight theo id của chính nó',
-    engine: 'graph',
-    view: /^matrix$/,
-    id: /^mx-/,
-  },
-  {
     why: 'set/dots: set không gọi `decorationAttrs`; token bị truyền id ô giao',
     engine: 'set',
     view: /^dots$/,
