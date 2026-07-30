@@ -26,7 +26,7 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~+ ghép cặp, tính phẳng, ma trận kề (M12)~~ | ~~76%~~ | ~~84%~~ |
 | ~~Hôm nay (6 engine + poset/Hasse)~~ | ~~83%~~ | ~~90%~~ |
 | ~~Hôm nay (7 engine — thêm derivation + label atlas)~~ | ~~≈85%~~ | ~~≈97%~~ |
-| **Hôm nay** (7 engine, sau M22–M31: board engine **hết hàng đợi**) | **~88%** | **~97%** |
+| **Hôm nay** (7 engine, sau M22–M34: board và graph **hết hàng đợi**) | **~89%** | **~97%** |
 | Hàng đợi §7 — **đã hết** | — | — |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
@@ -51,7 +51,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
 | Lưới / phủ hình / tô màu | 15% | 100% | 15.0 | — (hàng đợi board **đã cạn**) |
-| Đồ thị | 22% | 95% | 20.9 | tô mặt (phần còn lại của GR-05), analyzer cây (`GR-10`), kiểm tính phẳng tổng quát |
+| Đồ thị | 22% | 99% | 21.8 | kiểm tính phẳng tổng quát (cố ý không làm — §4) |
 | Đếm / song ánh / đếm hai chiều | 14% | 87% | 12.2 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 96% | 15.4 | — (`SQ-02` và `BD-08` đều xong) |
 | Trò chơi | 7% | 66% | 4.62 | thế phải là **đa tập số** cộng nhiều nhất một con số nhớ; mọi game không-phải-đống vẫn chưa — cần GM-01 rule script thật |
@@ -60,7 +60,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 | Hoán vị / thứ tự | 6% | 97% | 5.8 | — (chu trình hoán vị + poset/Hasse + Dilworth + dãy con đơn điệu) |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 25% | 0.75 | derivation gánh được phần *đại số*; xác suất và entropy thì **không** — xem §6 |
-| **Tổng** | **100%** | | **~88%** | |
+| **Tổng** | **100%** | | **~89%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 

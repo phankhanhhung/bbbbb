@@ -181,6 +181,11 @@ export function Sandbox({
         sandbox.run(
           command(action.command, {
             ...(action.params ?? {}),
+            // Id cấp ở đây, không để lệnh tự sinh (ENG-01) — kể cả khi cú bấm này
+            // hoá ra là một cú **xoá** và id không được dùng tới.
+            ...(action.allocParam && action.allocPrefix
+              ? { [action.allocParam]: allocateId(sandbox.state.scene, action.allocPrefix) }
+              : {}),
             [action.idParam]: action.asList ? [target] : target,
           }),
         );

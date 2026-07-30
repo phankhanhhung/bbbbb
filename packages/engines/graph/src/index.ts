@@ -21,6 +21,16 @@ import {
   planarity,
 } from './analyzers.js';
 import { analyzePoset } from './poset.js';
+import { matrixCellAt, matrixCellId } from './matrix.js';
+
+/**
+ * Trần số đỉnh mà ô ma trận còn neo được (GR-07).
+ *
+ * $n$ đỉnh sinh $n^2$ ô. Một ma trận lớn hơn thế không đọc nổi trên màn hình nên
+ * cũng không ai neo vào; trần này giữ cho tập id ngầm khỏi phình lên hàng vạn phần
+ * tử vì một tính năng không dùng tới.
+ */
+const MAX_ANCHORABLE_MATRIX = 40;
 import { EdgeElement, GRAPH_LIMITS, GraphConfig, VertexElement } from './schema.js';
 
 export * from './schema.js';
@@ -163,6 +173,56 @@ const paintFaces = defineCommand<{ faces: readonly string[]; color_class: number
   },
 });
 
+/**
+ * GR-07 — bật/tắt một ô ma trận, tức là **thêm hoặc bỏ một cạnh**.
+ *
+ * Đây là chiều còn thiếu của "đồng bộ hai chiều": chiều cạnh → ma trận đã có từ
+ * M12 (ô mang `data-el` của cạnh, nên nhấn cạnh sáng cả hai ô), còn chiều ma trận
+ * → cạnh thì chưa — người học nhìn được bảng nhưng không sửa được nó.
+ *
+ * Giá trị sư phạm nằm ở chỗ **cùng một** đồ thị sửa được từ hai phía: dựng một đồ
+ * thị bằng cách điền vào bảng rồi xem hình hiện ra, hoặc ngược lại. Bảng đối xứng
+ * vì cạnh không có chiều, và người học tự thấy điều đó khi bấm một ô thì ô đối
+ * xứng cũng đổi theo — chứ không phải đọc một câu khẳng định.
+ *
+ * Id cạnh mới do phía gọi cấp (ENG-01). Ô trên đường chéo bị **từ chối**: nó ứng
+ * với một khuyên, mà khuyên là một quyết định về mô hình chứ không phải một cú
+ * bấm nhỡ tay — bài nào cần khuyên thì khai trong file.
+ */
+const toggleAdjacency = defineCommand<{ cell: string; id: string }>({
+  type: 'graph/toggle-adjacency',
+  label: () => 'Bật/tắt một ô ma trận',
+
+  apply(scene, params) {
+    const graph = buildGraph(scene);
+    const ids = graph.vertices.map((v) => v.id);
+
+    // Tách `mx-<u>-<v>` bằng cách **thử từng đỉnh**, không bằng cách cắt dấu gạch:
+    // id đỉnh được phép chứa dấu gạch, nên cắt theo ký tự sẽ sai lặng lẽ ở đúng
+    // những bài đặt tên đỉnh dài.
+    const rest = params.cell.startsWith('mx-') ? params.cell.slice(3) : null;
+    if (rest === null) return null;
+    const u = ids.find((id) => rest.startsWith(`${id}-`) && ids.includes(rest.slice(id.length + 1)));
+    if (u === undefined) return null;
+    const v = rest.slice(u.length + 1);
+    if (u === v) return null;
+
+    const existing = graph.edges.find(
+      (e) => (e.u === u && e.v === v) || (!e.directed && e.u === v && e.v === u),
+    );
+
+    if (existing) {
+      return { ...scene, elements: scene.elements.filter((e) => e.id !== existing.id) };
+    }
+    if (scene.elements.some((e) => e.id === params.id)) return null;
+
+    return {
+      ...scene,
+      elements: [...scene.elements, { id: params.id, type: 'edge', u, v }],
+    };
+  },
+});
+
 const moveVertex = defineCommand<{ id: string; pos: [number, number] }>({
   type: 'graph/move-vertex',
   label: () => 'Di chuyển đỉnh',
@@ -233,6 +293,7 @@ export const graphCommands: CommandRegistry = {
   [addEdge.type]: addEdge,
   [setColorClass.type]: setColorClass,
   [paintFaces.type]: paintFaces,
+  [toggleAdjacency.type]: toggleAdjacency,
   [moveVertex.type]: moveVertex,
   [applyLayout.type]: applyLayout,
   [removeElements.type]: removeElements,
@@ -245,6 +306,25 @@ export const graphCommands: CommandRegistry = {
 export const graphHitTest: HitTest = (scene, point) => {
   const graph = buildGraph(scene);
   const hits: string[] = [];
+
+  // GR-07 — ở view ma trận, toạ độ trên màn hình **không** liên quan gì tới toạ độ
+  // đỉnh. Trước hạng mục này, chạm trong view ấy vẫn đo khoảng cách tới các đỉnh
+  // của view kia: bấm vào ô $(2,3)$ có thể chọn trúng một đỉnh nằm đâu đó, hoặc
+  // không chọn gì. Không lỗi, không cảnh báo, chỉ là sandbox vô nghĩa ở một view.
+  if ((scene.config as GraphConfig | undefined)?.view === 'matrix') {
+    const cell = matrixCellAt(graph, point);
+    if (!cell) return [];
+    // Cạnh trước, ô sau — cùng quy ước với bàn cờ: chạm vào một ô có cạnh thì
+    // người dùng muốn cạnh, nhưng chỗ gọi vẫn biết mình đang ở ô nào.
+    const edge = graph.edges.find(
+      (e) =>
+        (e.u === cell.u && e.v === cell.v) ||
+        (!e.directed && e.u === cell.v && e.v === cell.u),
+    );
+    if (edge) hits.push(edge.id);
+    hits.push(matrixCellId(cell.u, cell.v));
+    return hits;
+  }
 
   // Đỉnh trước cạnh: đỉnh nằm trên, và chạm gần một đỉnh gần như luôn có nghĩa là
   // muốn chọn đỉnh đó chứ không phải cạnh đi qua nó.
@@ -827,6 +907,17 @@ export const graphSchemaFragment: EngineSchemaFragment = {
     // dãy id không tồn tại sẽ khiến ANC-02 im lặng cho qua một anchor rot thật.
     if (config?.show_faces) {
       for (const face of planarFaces(buildGraph(scene)).value ?? []) ids.add(face.id);
+    }
+
+    // GR-07 — ô ma trận cũng neo được. Chặn ở bàn nhỏ: $n$ đỉnh sinh $n^2$ ô, và
+    // một ma trận quá cỡ này không đọc nổi trên màn hình nên cũng không ai neo vào.
+    // Trần là để tập id không phình lên hàng vạn phần tử cho một tính năng không
+    // dùng tới, không phải để chặn nội dung.
+    if (config?.view === 'matrix') {
+      const vertices = scene.elements.filter((e) => e.type === 'vertex').map((e) => e.id);
+      if (vertices.length <= MAX_ANCHORABLE_MATRIX) {
+        for (const u of vertices) for (const v of vertices) ids.add(matrixCellId(u, v));
+      }
     }
 
     return ids;

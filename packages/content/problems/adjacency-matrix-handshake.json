@@ -29,9 +29,9 @@
     "draft-may"
   ],
   "status": "published",
-  "kind": "illustration",
+  "kind": "both",
   "created": "2026-07-29",
-  "updated": "2026-07-29",
+  "updated": "2026-07-30",
   "invariants": [
     {
       "expr": "m",
@@ -60,7 +60,7 @@
           "parent": null,
           "edge_type": "seq",
           "narrative": {
-            "vi": "Cùng một đồ thị, hai cách viết. Ô $(i,j)$ tô đậm khi có [[a1|cạnh]] nối $i$ với $j$ — nên bảng **đối xứng** qua đường chéo: cạnh không có chiều."
+            "vi": "Cùng một đồ thị, **hai cách viết**. Đây là cách quen: bốn đỉnh và [[a1|các cạnh]] nối chúng. Bước sau viết đúng đồ thị ấy thành một cái bảng."
           },
           "anchors": {
             "a1": {
@@ -137,7 +137,7 @@
             ]
           },
           "alt_text": {
-            "vi": "Đồ thị bốn đỉnh năm cạnh, và ma trận kề của nó."
+            "vi": "Đồ thị bốn đỉnh hình thoi: đỉnh 1 và 3 nối với cả 2 lẫn 4, và nối với nhau."
           },
           "verified": true,
           "bijection": {
@@ -240,7 +240,7 @@
           "parent": "s0",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Rê vào [[a2|một cạnh]] thì hai ô đối xứng cùng sáng: mỗi cạnh được bảng đếm **hai lần**, một lần ở hàng $i$ và một lần ở hàng $j$."
+            "vi": "Cùng đồ thị ấy, viết thành **ma trận kề**: ô $(i,j)$ tô đậm khi có [[a2|cạnh]] nối $i$ với $j$. Bảng **đối xứng** qua đường chéo, vì cạnh không có chiều — mỗi cạnh hiện ra ở **hai** ô."
           },
           "anchors": {
             "a2": {
@@ -253,7 +253,8 @@
             "engine": "graph",
             "config": {
               "padding": 9,
-              "show_labels": true
+              "show_labels": true,
+              "view": "matrix"
             },
             "elements": [
               {
@@ -315,7 +316,7 @@
             ]
           },
           "alt_text": {
-            "vi": "Cạnh 1–3 được làm nổi ở cả hai cách vẽ."
+            "vi": "Ma trận kề 4×4, các ô có cạnh tô đậm và đối xứng qua đường chéo chính."
           },
           "verified": true,
           "bijection": {
@@ -433,7 +434,9 @@
             "engine": "graph",
             "config": {
               "padding": 9,
-              "show_labels": true
+              "show_labels": true,
+              "show_sums": true,
+              "view": "matrix"
             },
             "elements": [
               {
@@ -495,7 +498,7 @@
             ]
           },
           "alt_text": {
-            "vi": "Đỉnh 1 được làm nổi; hàng của nó có tổng bằng 3."
+            "vi": "Cùng ma trận ấy, thêm cột tổng bên phải: mỗi hàng cộng lại ra bậc của đỉnh."
           },
           "verified": true,
           "bijection": {
@@ -617,7 +620,9 @@
             "engine": "graph",
             "config": {
               "padding": 9,
-              "show_labels": true
+              "show_labels": true,
+              "show_sums": true,
+              "view": "matrix"
             },
             "elements": [
               {
@@ -677,7 +682,7 @@
             ]
           },
           "alt_text": {
-            "vi": "Ma trận với các tổng hàng 3, 2, 3, 2 và tổng chung 10."
+            "vi": "Ma trận với cột tổng và tổng chung: 3+2+3+2 = 10 = 2 × 5."
           },
           "verified": true,
           "bijection": {
@@ -781,6 +786,12 @@
       ]
     }
   ],
+  "sandbox": {
+    "goal_expr": "sum(vertices, v => deg(v)) == 2 * m",
+    "validators": [
+      "simple-graph"
+    ]
+  },
   "og_step_ref": {
     "sol_id": "sol",
     "step_id": "s3"

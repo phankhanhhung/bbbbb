@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M31 xong (7 engine, phủ ~88%, hàng đợi board đã cạn); kho 68 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M34 xong (7 engine, phủ ~89%, hàng đợi board và graph đã cạn); kho 70 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,89 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M32–M34 — Nhóm `graph` (GR-10, GR-05, GR-07) · [E] — **xong**
+
+Ba hạng mục còn lại của engine đồ thị. Hàng đợi của nó **cạn**, và board cũng vậy
+từ M31 — hai engine chủ lực đều hết việc tầng A.
+
+#### M32 — analyzer cây (GR-10)
+
+`treeShape` trả đường kính (đếm bằng **cạnh**), đường đi đạt nó, độ lệch tâm từng
+đỉnh, tâm, trọng tâm, lá, dãy bậc. Không phải cây thì cả cụm binding **vắng mặt** —
+cùng luật với `prufer_code`.
+
+Điểm sư phạm là **tâm $\ne$ trọng tâm**: hai câu hỏi nghe giống nhau ("đâu là giữa
+cây") nhưng một bên cực tiểu hoá *khoảng cách xa nhất*, bên kia cực tiểu hoá *mảnh
+lớn nhất còn lại khi bỏ đỉnh*. Bài `tree-centre-vs-centroid`; cây minh hoạ do script
+**tìm** chứ không gõ tay.
+
+Test dựng **mọi** cây có nhãn tới $n = 7$ bằng cách giải mã Prüfer — dùng chính song
+ánh của M27 làm bộ sinh — rồi kiểm từng cây: một hoặc hai tâm, một hoặc hai trọng
+tâm, hai thì kề nhau, mảnh lớn nhất khi bỏ trọng tâm $\le n/2$, tổng dãy bậc
+$2(n-1)$, và $d \in \{2r-1, 2r\}$.
+
+View vẽ đường kính thành một **dải** chứ không tô từng cạnh: đường kính là một
+*đường đi*, và tô rời từng cạnh thì người đọc phải tự nối lại bằng mắt. Trọng tâm cố
+ý **không** vẽ lên dải — không phải vì nó nằm ngoài (nhiều khi nó nằm trên), mà vì
+nó không được định nghĩa bằng đường kính chút nào.
+
+#### M33 — mặt của hình phẳng (GR-05)
+
+`planarFaces` lần biên từng mặt bằng **hệ quay** dựng từ chính toạ độ đỉnh. Toạ độ
+ở dự án này vốn là nội dung (GR-02), nên hình không giao điểm nào thì bản thân nó
+**đã là** một cách nhúng phẳng — không cần LR hay PQ-tree, và cũng không mất gì.
+
+Công thức Euler là **bài kiểm sẵn có**: `planarity` đếm mặt theo $e - v + 1 + c$,
+một đường hoàn toàn khác. Hai đường phải gặp nhau, và hàm từ chối nếu không.
+
+Hai chi tiết quyết định "đúng" chứ không chỉ "trông đúng": kề nhau đọc theo **cạnh
+chung** (chung một *điểm* thì tô cùng màu được, và định lý bốn màu phát biểu trên
+chung biên), và **cầu không sinh quan hệ kề** vì nó có cùng một mặt ở hai bên.
+
+Kèm `show_faces` + `face_colors`, lệnh `graph/paint-faces`, hit-test điểm-trong-đa-
+giác, binding `face_list`, validator `face-colouring[:k]`, bài `euler-formula-faces`.
+
+**Một lỗi ở hình, và nó là lỗi doc-comment mô tả thứ chưa cài.** Chú thích viết "mặt
+ngoài được viền" nhưng renderer chỉ bỏ qua nó, nên một hình tô $4$ màu hiện ra chỉ
+có $3$ và người đọc đếm được con số khác lời giải. Bản sửa đầu vẽ một dải men theo
+biên, nhưng nét dày nằm **giữa** biên nên nửa trong loang vào ba mặt trong và làm
+đục màu. Bản đúng: một `<path>` hai đường con với `fill-rule="evenodd"` — cả khung
+trừ đi phần trong biên, chính xác chứ không xấp xỉ, và không cần `clipPath` nên
+không sinh id toàn cục nào để đụng độ với scene khác trên cùng trang.
+
+#### M34 — ma trận đồng bộ hai chiều (GR-07)
+
+Chiều cạnh → ma trận đã có từ M12: ô mang `data-el` của cạnh nên nhấn một cạnh sáng
+cả hai ô. Chiều còn lại thì chưa, và nó bắt đầu bằng một lỗi **im lặng**: chạm trong
+view ma trận vẫn đo khoảng cách tới toạ độ đỉnh của view kia. Bấm vào ô $(2,3)$ có
+thể chọn trúng một đỉnh nằm đâu đó, hoặc không chọn gì — không lỗi, không cảnh báo,
+chỉ là sandbox vô nghĩa ở một view.
+
+Nay ô mang id riêng `mx-<u>-<v>`, **kể cả ô trống**. M12 để ô trống vô danh với lý
+do "nó không phải element nào cả" — đúng về element, nhưng nó **là** chỗ vẽ của một
+cặp đỉnh, và cặp ấy tồn tại dù chưa có cạnh. Vô danh thì sandbox không bấm vào được
+và narrative không neo vào được, mà "ô này trống" là đúng thứ một lập luận đếm hai
+chiều cần chỉ ra. Test cũ khẳng định điều ngược lại, nên nó được viết lại kèm lý do
+— test là chỗ ghi quyết định, nên đổi quyết định thì phải đổi cả chỗ ghi.
+
+Lệnh `graph/toggle-adjacency` cho **sửa đồ thị từ phía bảng**: bấm ô trống thì thêm
+cạnh, bấm lại thì bỏ, và ô đối xứng là cùng một cạnh — người học tự thấy bảng đối
+xứng vì cạnh không có chiều, thay vì đọc một câu khẳng định. Ô trên đường chéo bị từ
+chối: khuyên là một quyết định về mô hình, không phải một cú bấm nhỡ tay.
+
+Tách `mx-<u>-<v>` bằng cách **thử từng đỉnh**, không cắt theo dấu gạch: id đỉnh được
+phép chứa dấu gạch, nên cắt theo ký tự sẽ sai lặng lẽ ở đúng những bài đặt tên đỉnh
+dài — và "sai lặng lẽ" ở đây nghĩa là cú bấm không làm gì mà không ai hiểu vì sao.
+
+**Một lỗi nội dung có sẵn từ M12.** `adjacency-matrix-handshake` nói suốt về "bảng",
+"ô $(i,j)$", "tổng theo hàng" — mà **mọi** bước đều vẽ hình đỉnh–cạnh. View ma trận
+ra đời ở M12 nhưng chưa bài nào dùng, nên lời và hình nói hai chuyện khác nhau suốt
+hai mươi hai milestone. Nay ba bước cuối vẽ đúng cái bảng chúng nói tới, và bài mở
+sandbox: sửa bảng thì hình đổi theo, còn tổng bậc vẫn luôn chẵn dù bấm kiểu gì.
+
+1143 test, 70 bài 0 lỗi 0 cảnh báo, e2e 42 xanh, **3 golden đổi** (đúng ba bước vừa
+chuyển sang view ma trận).
 
 ### M31 — Vẽ vùng khuyết và bàn dán mép (BD-05) · [E] — **xong**
 
@@ -1485,7 +1568,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 68 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 70 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):

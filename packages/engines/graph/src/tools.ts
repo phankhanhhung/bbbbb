@@ -62,6 +62,25 @@ export function graphTools(scene: Scene): readonly SandboxTool[] {
     }
   }
 
+  // GR-07 — ở view ma trận, bộ công cụ **khác hẳn**: nối cạnh bằng cách bấm hai
+  // đỉnh và sắp lại hình đều vô nghĩa khi không có đỉnh nào vẽ ra. Bấm một ô là
+  // thao tác duy nhất mà view ấy có, và nó làm được cả thêm lẫn bớt cạnh.
+  if ((scene.config as { view?: string } | undefined)?.view === 'matrix') {
+    tools.push({
+      id: 'toggle-cell',
+      label: '⊞ Bật/tắt ô',
+      action: {
+        type: 'one',
+        command: 'graph/toggle-adjacency',
+        idParam: 'cell',
+        prefix: 'mx-',
+        allocParam: 'id',
+        allocPrefix: 'e',
+      },
+    });
+    return tools;
+  }
+
   tools.push({
     id: 'add-edge',
     label: '+ Nối cạnh',

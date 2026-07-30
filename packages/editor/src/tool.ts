@@ -69,6 +69,16 @@ export type ToolAction =
       readonly asList?: boolean;
       readonly params?: Readonly<Record<string, unknown>>;
       readonly prefix?: string;
+      /**
+       * Cú bấm **có thể tạo ra một element mới** (GR-07: bật một ô ma trận thành
+       * một cạnh).
+       *
+       * Id cấp sẵn ở phía gọi và truyền vào dù lệnh có dùng tới hay không — lệnh
+       * là hàm thuần, nên nó không được tự quyết định lúc nào cần một id mới rồi
+       * tự sinh ra (ENG-01).
+       */
+      readonly allocParam?: string;
+      readonly allocPrefix?: string;
     }
   /**
    * Bấm **hai** element liên tiếp → chạy lệnh với cả hai.

@@ -79,7 +79,7 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | ~~6b~~ | ~~`BD-08` lan truyền trên bàn cờ~~ ✅ M29 | board | lights-out | vừa | ~~❌ dòng lights-out ở VIZ-COVERAGE §2~~ |
 | ~~7~~ | ~~`BD-07` lưới tam giác / lục giác~~ ✅ M24 | board | phủ hình phi vuông | vừa | ~~§2 — engine **không vẽ được**~~ |
 | ~~8~~ | ~~`GR-05` tô mặt sau embedding~~ ✅ M33 | graph | công thức Euler, tô mặt | vừa | ~~SRS `GR-05` [P2]~~ |
-| 9 | `GR-07` ma trận đồng bộ hai chiều | graph | đếm hai chiều | vừa | SRS `GR-07` [P2] |
+| ~~9~~ | ~~`GR-07` ma trận đồng bộ hai chiều~~ ✅ M34 | graph | đếm hai chiều | vừa | ~~SRS `GR-07` [P2]~~ |
 | 10 | `PRN-04` animation biến hình | cross | **cả họ song ánh (14%)** | đắt | §2 "còn thiếu: animation biến hình của PRN-04" |
 | ~~11~~ | ~~`BD-05` vùng khuyết vẽ tay + torus~~ ✅ M31 | board | bài trên hình xuyến | vừa | ~~SRS `BD-05` [P2]~~ |
 | 12 | `ST-03` dot/bar cho đa tập | set | đếm theo lớp | rẻ | SRS `ST-03` [P2] |
@@ -175,9 +175,16 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
   Kèm `config.show_faces` + `face_colors`, lệnh `graph/paint-faces`, hit-test theo
   điểm-trong-đa-giác, binding `face_list`, và validator `face-colouring[:k]` — bài
   tô bản đồ, kể cả định lý bốn màu, thành thứ nghịch được. Bài `euler-formula-faces`.
-- **GR-07 [P2] MAY** — ma trận kề **đồng bộ hai chiều** với canvas (chọn ô ↔ sáng
-  cạnh). View ma trận đã có từ M12, phần đồng bộ thì chưa. SRS gọi nó là cầu nối
-  sang đếm hai chiều.
+- **GR-07 ✅ (M34)** — ma trận kề **đồng bộ hai chiều**. Chiều cạnh → ma trận đã có
+  từ M12; chiều còn lại bắt đầu bằng một lỗi im lặng: chạm trong view ma trận vẫn
+  đo khoảng cách tới toạ độ đỉnh của view kia, nên sandbox ở view ấy vô nghĩa. Nay
+  ô mang id riêng `mx-<u>-<v>` (kể cả ô **trống** — nó là chỗ vẽ của một cặp đỉnh,
+  và cặp ấy tồn tại dù chưa có cạnh), chạm đúng ô, neo được, và lệnh
+  `graph/toggle-adjacency` cho phép **sửa đồ thị từ phía bảng**.
+
+  Kèm một lỗi nội dung có sẵn từ M12: `adjacency-matrix-handshake` nói suốt về
+  "bảng", "ô $(i,j)$", "tổng theo hàng" mà **mọi** bước đều vẽ hình đỉnh–cạnh. View
+  ma trận ra đời ở M12 nhưng chưa bài nào dùng.
 
 **Tầng B — cố ý không làm**
 
