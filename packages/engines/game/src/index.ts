@@ -10,6 +10,7 @@ import { GameConfig, GAME_LIMITS, PileElement } from './schema.js';
 import {
   allMoves,
   isLocalRule,
+  spectrum2dReadable,
   spectrumReadable,
   stateSpaceEstimate,
   type Move,
@@ -172,13 +173,13 @@ export const gameCommands: CommandRegistry = {
  * ấy vô hình cho tới khi có một công cụ cần **hai** đống — bấm hai cột rồi nhận
  * lại một cặp id không phải cặp mình bấm.
  *
- * View `spectrum` không trả gì: ở đó không vẽ đống nào, và không lệnh nào tác động
+ * Hai view phổ không trả gì: ở đó không vẽ đống nào, và không lệnh nào tác động
  * lên một ô phổ. Trả về một id đống trong lúc đống không hiện trên hình là mời
  * người học bấm vào chỗ không có gì.
  */
 export const gameHitTest: HitTest = (scene, point) => {
   const model = readGame(scene);
-  if (model.config.view === 'spectrum') return [];
+  if (model.config.view !== 'piles' && model.config.view !== undefined) return [];
   const band = pileBands(model).find((b) => point.x >= b.from && point.x < b.to);
   return band ? [band.id] : [];
 };
@@ -192,21 +193,30 @@ export const gameSchemaFragment: EngineSchemaFragment = {
   validatorIds: GAME_VALIDATOR_IDS,
 
   /**
-   * View `spectrum` sinh ô ngầm định `pos-<n>`.
+   * Hai view phổ sinh ô ngầm định: `pos-<n>` cho một chiều, `pos-<a>-<b>` cho hai.
    *
    * Nhờ vậy anchor trỏ thẳng vào một thế cụ thể được — "[[a1|thế $n = 8$]] cũng
    * thua" — mà ANC-02 không báo rot. Cùng cơ chế với ô bàn cờ (D-16).
    */
   implicitElementIds(scene: Scene): Set<string> {
     const model = readGame(scene);
-    if (model.config.view !== 'spectrum') return new Set();
-
-    const upTo = Math.min(
-      GAME_LIMITS.maxSpectrum,
-      model.config.spectrum_to ?? Math.max(...model.piles.map((p) => p.count), 12),
-    );
     const ids = new Set<string>();
-    for (let n = 0; n <= upTo; n += 1) ids.add(`pos-${n}`);
+    const want = model.config.spectrum_to ?? Math.max(...model.piles.map((p) => p.count), 12);
+
+    if (model.config.view === 'spectrum') {
+      const upTo = Math.min(GAME_LIMITS.maxSpectrum, want);
+      for (let n = 0; n <= upTo; n += 1) ids.add(`pos-${n}`);
+      return ids;
+    }
+
+    // `spectrum-2d`: mỗi ô lưới là một thế, nên nó neo được — "[[a1|$(8,13)$]]
+    // cũng thua" trỏ thẳng vào ô ấy chứ không vào cả hình.
+    if (model.config.view === 'spectrum-2d') {
+      const upTo = Math.min(GAME_LIMITS.maxSpectrum2d, want);
+      for (let a = 0; a <= upTo; a += 1) {
+        for (let b = 0; b <= upTo; b += 1) ids.add(`pos-${a}-${b}`);
+      }
+    }
     return ids;
   },
 
@@ -258,6 +268,38 @@ export const gameSchemaFragment: EngineSchemaFragment = {
         path: `${path}/config/view`,
         hint: 'Chia đống sinh ra hai trò con, còn luật đọc đống khác cần ít nhất hai đống; phổ một chiều không mô tả được cả hai',
       });
+    }
+
+    // `spectrum-2d` là lưới các thế **hai** đống, nên nó đòi đúng hai đống và
+    // đòi luật không sinh ra đống thứ ba.
+    if (config?.view === 'spectrum-2d') {
+      if (config.rule && !spectrum2dReadable(config.rule)) {
+        issues.push({
+          code: 'bounds/spectrum-2d-needs-two-pile-rule',
+          severity: 'error',
+          message: 'View `spectrum-2d` không dùng được với luật chia đống',
+          path: `${path}/config/view`,
+          hint: 'Chia đống đưa thế sang **ba** đống, mà lưới hai chiều không có ô cho đống thứ ba',
+        });
+      }
+      if (model.piles.length !== 2) {
+        issues.push({
+          code: 'bounds/spectrum-2d-needs-two-piles',
+          severity: 'error',
+          message: `View \`spectrum-2d\` cần đúng hai đống, scene có ${model.piles.length}`,
+          path: `${path}/elements`,
+          hint: 'Hai đống ấy là thế hiện tại, được khoanh trên lưới',
+        });
+      }
+      if ((config.spectrum_to ?? 0) > GAME_LIMITS.maxSpectrum2d) {
+        issues.push({
+          code: 'bounds/spectrum-2d-too-large',
+          severity: 'error',
+          message: `\`spectrum_to\` = ${config.spectrum_to}, trần của lưới hai chiều là ${GAME_LIMITS.maxSpectrum2d}`,
+          path: `${path}/config/spectrum_to`,
+          hint: 'Theo G-10 một ô là 44px, nên quá trần này thì cả lưới không còn đọc được từng ô',
+        });
+      }
     }
 
     // Grundy: chặn **trước** khi hình vẽ ra một con số tự tin và sai. Với luật

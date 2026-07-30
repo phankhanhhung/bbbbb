@@ -43,6 +43,20 @@ export function spectrumReadable(rule: GameRule): boolean {
 }
 
 /**
+ * View `spectrum-2d` đọc được luật này không? (GM-08)
+ *
+ * Lưới $(a,b)$ chỉ đóng khi mọi nước giữ số đống ở mức **hai**. Luật chia phá
+ * điều đó: từ hai đống nó đi tới ba, và ô thứ ba không có chỗ trên một lưới hai
+ * chiều. Ngoài ra không đòi gì thêm — khác `spectrumReadable`, ở đây luật **toàn
+ * cục** lại chính là loại luật cần view này nhất.
+ */
+export function spectrum2dReadable(rule: GameRule): boolean {
+  return ruleAtoms(rule).every(
+    (atom) => atom.type !== 'split-unequal' && atom.type !== 'split-any',
+  );
+}
+
+/**
  * Các nước đi hợp lệ từ **một** đống cỡ `n`, xét riêng các thành viên **cục bộ**.
  *
  * Trả về danh sách đống-sau-khi-đi: một phần tử cho luật bốc, hai phần tử cho
@@ -405,6 +419,60 @@ function retrograde(
   };
 
   return solve(start) === null ? null : { win };
+}
+
+/**
+ * Bảng thắng/thua của **mọi** thế hai đống $(a,b)$ với $0 \le a, b \le$ `upTo` (GM-08).
+ *
+ * Đây là thứ mà `losingSpectrum` làm cho thế một đống, nâng lên một chiều. Và nó
+ * không phải tiện ích: với Wythoff, phát biểu "thế thua là $(\lfloor n\varphi
+ * \rfloor, \lfloor n\varphi^2 \rfloor)$" là một công thức phải tin; còn lưới này
+ * là **hai tia** hiện ra trên màn hình. Với trò Euclid, "tỉ số dưới $\varphi$ thì
+ * thua" hiện ra thành một **nêm** kẹp quanh đường chéo.
+ *
+ * Tính bằng quy hoạch động chứ không gọi `analyzeGame` từng ô: mọi nước ở đây đều
+ * làm **giảm** ít nhất một đống và không tăng đống nào, nên khi xét $(a,b)$ thì
+ * mọi ô đi tới được đã có kết quả. Một vòng lặp $O(N^2)$ thay cho $N^2$ lần duyệt
+ * lùi.
+ *
+ * `lose[a][b] === true` nghĩa là người **sắp đi** ở thế $(a,b)$ thua.
+ */
+export function losingGrid(
+  upTo: number,
+  rule: GameRule,
+  misere = false,
+): boolean[][] {
+  const lose: boolean[][] = [];
+
+  for (let a = 0; a <= upTo; a += 1) {
+    // Đẩy hàng vào **trước** khi điền: nước chỉ bốc ở đống thứ hai sẽ tra
+    // `lose[a][b']` với $b' < b$ — tức chính hàng đang điền dở.
+    const row: boolean[] = [];
+    lose.push(row);
+
+    for (let b = 0; b <= upTo; b += 1) {
+      const moves = allMoves([a, b], rule);
+      // Hết nước: luật thường thì người sắp đi **thua**, misère thì **thắng**.
+      let winning = moves.length === 0 ? misere : false;
+
+      for (const move of moves) {
+        const next: [number, number] = [a, b];
+        move.piles.forEach((index, k) => {
+          next[index] = (move.becomes[k] as readonly number[])[0] as number;
+        });
+        // Không có nhánh chia (xem `spectrum2dReadable`) nên `next` luôn nằm
+        // trong lưới, và luôn ở ô đã tính xong.
+        if ((lose[next[0]] as boolean[])[next[1]] === true) {
+          winning = true;
+          break;
+        }
+      }
+
+      row.push(!winning);
+    }
+  }
+
+  return lose;
 }
 
 /**

@@ -5,8 +5,10 @@ import {
   apply,
   grundyTable,
   isLocalRule,
+  losingGrid,
   losingSpectrum,
   movesFromPile,
+  spectrum2dReadable,
   spectrumReadable,
   stateSpaceEstimate,
   type Move,
@@ -438,5 +440,110 @@ describe('trần không gian thế', () => {
   it('luật toàn cục trên thế quá lớn thì **từ chối**, không treo', () => {
     const huge = [200, 200, 200, 200, 200, 200];
     expect(analyzeGame(huge, WYTHOFF).refused).toMatch(/vượt trần/);
+  });
+});
+
+/**
+ * GM-08 — bảng thắng/thua của **mọi** thế hai đống.
+ *
+ * Đây là phần tính của view `spectrum-2d`, và nó đáng có test riêng vì nó đi
+ * đường **khác** `analyzeGame`: quy hoạch động xuôi trên lưới, thay vì duyệt lùi
+ * có nhớ. Hai đường cho ra cùng một bảng là một đối chứng thật, không phải một
+ * phép so chính mình.
+ */
+describe('GM-08 — phổ hai chiều', () => {
+  const coldCells = (grid: readonly (readonly boolean[])[]): string[] => {
+    const out: string[] = [];
+    grid.forEach((row, a) => row.forEach((cold, b) => cold && out.push(`${a},${b}`)));
+    return out;
+  };
+
+  it('luật chia đống **không** vẽ được: từ hai đống nó đi tới ba', () => {
+    expect(spectrum2dReadable(WYTHOFF)).toBe(true);
+    expect(spectrum2dReadable(EUCLID)).toBe(true);
+    expect(spectrum2dReadable(NIM)).toBe(true);
+    expect(spectrum2dReadable(LASKER)).toBe(false);
+    expect(spectrum2dReadable(SPLIT)).toBe(false);
+  });
+
+  it('Nim hai đống: thế thua đúng là **đường chéo**', () => {
+    const grid = losingGrid(9, NIM);
+    expect(coldCells(grid)).toEqual(
+      Array.from({ length: 10 }, (_, n) => `${n},${n}`),
+    );
+  });
+
+  it('Wythoff: thế thua là **hai tia** — đúng các cặp Beatty, cả hai chiều', () => {
+    const grid = losingGrid(20, WYTHOFF);
+    const want = new Set(['0,0']);
+    for (let n = 1; n <= 12; n += 1) {
+      const a = Math.floor(n * PHI);
+      const b = Math.floor(n * PHI * PHI);
+      if (a <= 20 && b <= 20) {
+        want.add(`${a},${b}`);
+        want.add(`${b},${a}`);
+      }
+    }
+    expect(new Set(coldCells(grid))).toEqual(want);
+  });
+
+  it('trò Euclid: nêm quanh đường chéo, cộng hai trục', () => {
+    const grid = losingGrid(16, EUCLID);
+    const want: string[] = [];
+    for (let a = 0; a <= 16; a += 1) {
+      for (let b = 0; b <= 16; b += 1) {
+        // Đống rỗng ⇒ hết nước ⇒ người sắp đi thua. Đó là lý do hai trục tô đậm,
+        // và cũng là lý do "ai làm một đống về 0 thì thắng".
+        const cold =
+          a === 0 || b === 0
+            ? true
+            : a !== b && Math.max(a, b) / Math.min(a, b) < PHI;
+        if (cold) want.push(`${a},${b}`);
+      }
+    }
+    expect(coldCells(grid)).toEqual(want);
+  });
+
+  it('khớp `analyzeGame` từng ô — hai thuật toán, một bảng', () => {
+    for (const [name, rule] of [
+      ['nim', NIM],
+      ['take 1..3', TAKE_1_3],
+      ['wythoff', WYTHOFF],
+      ['euclid', EUCLID],
+    ] as const) {
+      const grid = losingGrid(10, rule);
+      for (let a = 0; a <= 10; a += 1) {
+        for (let b = 0; b <= 10; b += 1) {
+          const piles = [a, b].filter((n) => n > 0);
+          const win = piles.length === 0 ? false : analyzeGame(piles, rule).winning;
+          expect({ name, a, b, cold: (grid[a] as boolean[])[b] }).toEqual({
+            name,
+            a,
+            b,
+            cold: !win,
+          });
+        }
+      }
+    }
+  });
+
+  it('misère Nim: khớp tiêu chuẩn Bouton, và nó **không** phải "lật đường chéo"', () => {
+    // Tiêu chuẩn misère: thế thua khi *hoặc* có đống $\ge 2$ và XOR $= 0$, *hoặc*
+    // mọi đống $\le 1$ và số đống cỡ $1$ là **lẻ**. Chỗ dễ đoán sai là nghĩ misère
+    // chỉ đảo mọi ô — không: $(3,3)$ thua ở cả hai quy ước, chỉ vùng "toàn đống
+    // một viên" mới đổi.
+    const grid = losingGrid(8, NIM, true);
+    for (let a = 0; a <= 8; a += 1) {
+      for (let b = 0; b <= 8; b += 1) {
+        const ones = [a, b].filter((n) => n === 1).length;
+        const cold =
+          Math.max(a, b) >= 2 ? (a ^ b) === 0 : ones % 2 === 1;
+        expect({ a, b, cold: (grid[a] as boolean[])[b] }).toEqual({ a, b, cold });
+      }
+    }
+    // Và luật thường thì $(0,0)$ thua, misère thì thắng — thế cuối là chỗ **duy
+    // nhất** hai quy ước khác nhau về định nghĩa.
+    expect((losingGrid(6, NIM)[0] as boolean[])[0]).toBe(true);
+    expect((losingGrid(6, NIM, true)[0] as boolean[])[0]).toBe(false);
   });
 });

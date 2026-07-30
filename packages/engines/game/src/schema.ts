@@ -15,6 +15,15 @@ export const GAME_LIMITS = {
   maxStates: 200_000,
   /** View `spectrum` vẽ tối đa ngần này ô. */
   maxSpectrum: 60,
+  /**
+   * View `spectrum-2d` vẽ lưới $(N+1) \times (N+1)$ — trần cho $N$.
+   *
+   * Thấp hơn `maxSpectrum` nhiều, và không phải vì tốn tính: $24$ cho $625$ ô,
+   * DP chạy trong chớp mắt. Trần này là **trần đọc được**. Theo quy ước G-10 một
+   * ô là $44$px, nên $N = 24$ đã là $1100$px bề ngang; quá đó thì Player buộc
+   * phải co cả hình lại và người học mất chính thứ cần thấy — từng ô.
+   */
+  maxSpectrum2d: 24,
 } as const;
 
 /**
@@ -179,10 +188,26 @@ export const GameConfig = Type.Object(
      * (XOR) **không** áp dụng cho misère, nên solver phải đi đường khác.
      */
     misere: Type.Optional(Type.Boolean({ default: false })),
+    /**
+     * Ba view, và chúng trả lời ba câu hỏi khác nhau.
+     *
+     *   - `piles` — "thế hiện tại thế nào".
+     *   - `spectrum` — "quy luật là gì", cho thế **một** đống: một dải ô.
+     *   - `spectrum-2d` — "quy luật là gì", cho thế **hai** đống: một lưới ô
+     *     (GM-08). Wythoff và trò Euclid không có view thứ hai vì quy luật của
+     *     chúng là quy luật của một **cặp**; ép vào một dải thì không còn gì để
+     *     nhìn, mà "nhìn ra quy luật" đúng là toàn bộ giá trị sư phạm ở đây.
+     */
     view: Type.Optional(
-      Type.Union([Type.Literal('piles'), Type.Literal('spectrum')], { default: 'piles' }),
+      Type.Union(
+        [Type.Literal('piles'), Type.Literal('spectrum'), Type.Literal('spectrum-2d')],
+        { default: 'piles' },
+      ),
     ),
-    /** Với `spectrum`: vẽ các thế một đống từ $0$ tới số này. */
+    /**
+     * Với `spectrum`: vẽ các thế một đống từ $0$ tới số này.
+     * Với `spectrum-2d`: vẽ lưới $(a,b)$ với $0 \le a, b \le$ số này.
+     */
     spectrum_to: Type.Optional(
       Type.Integer({ minimum: 1, maximum: GAME_LIMITS.maxSpectrum }),
     ),

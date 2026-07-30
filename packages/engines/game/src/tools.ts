@@ -20,10 +20,10 @@ export function gameTools(scene: Scene): readonly SandboxTool[] {
   const model = readGame(scene);
   const tools: SandboxTool[] = [SELECT_TOOL];
 
-  // View `spectrum` không vẽ đống nào, và không lệnh nào tác động lên một ô phổ.
+  // Hai view phổ không vẽ đống nào, và không lệnh nào tác động lên một ô phổ.
   // Bày nút "Bốc 3" ở đó là bày một nút không có đích — đúng cái bệnh mà lớp
   // `SandboxTool` sinh ra để dẹp.
-  if (model.config.view === 'spectrum') return tools;
+  if (model.config.view !== undefined && model.config.view !== 'piles') return tools;
 
   const counts = model.piles.map((p) => p.count);
   const moves = allMoves(counts, model.config.rule);

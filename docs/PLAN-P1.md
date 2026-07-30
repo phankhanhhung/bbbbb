@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M22 xong (7 engine, phủ ~85%); kho 59 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M23 xong (7 engine, phủ ~85%); kho 59 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,51 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M23 — Phổ hai chiều cho game hai đống (GM-08) · [E] — **xong**
+
+Món nợ mà M22 tự ghi ra. Sau khi mở Wythoff và trò Euclid, hai bài ấy phải kể quy
+luật bằng **từng scene rời** — "(1,2) thua, (3,5) thua, (4,7) thua…" — tức bắt
+người đọc dựng lại cái hình trong đầu. Mà `spectrum` một chiều tồn tại đúng để
+khỏi phải làm thế: với họ bốc sỏi, "thua khi $n$ chia hết cho $k+1$" không phải
+câu để tin, nó là **một vệt sọc**. Thế hai đống thì cần một chiều nữa.
+
+`view: 'spectrum-2d'` vẽ lưới $(a,b)$, ô thua tô đậm. Kết quả đọc được trong một
+giây, và đó là toàn bộ lý do làm:
+
+- **Wythoff** — **hai tia** toả ra từ gốc, đối xứng qua đường chéo, giữa hai tia
+  không có ô thua nào. Công thức $(\lfloor n\varphi \rfloor, \lfloor n\varphi^2
+  \rfloor)$ đi từ "phải tin" thành "nhìn thấy".
+- **Trò Euclid** — một **nêm** kẹp quanh đường chéo, cộng hai trục tô kín (đống
+  rỗng là hết nước). Chính đường chéo thì **trắng**: $a = b$ thắng.
+
+Bốn quyết định đáng ghi:
+
+1. **Không gọi `analyzeGame` từng ô.** Mọi luật vẽ được ở đây đều làm giảm ít nhất
+   một đống và không tăng đống nào, nên một vòng quy hoạch động $O(N^2)$ xuôi từ
+   $(0,0)$ là đủ — thay cho $N^2$ lần duyệt lùi. Và vì nó là **đường khác** với
+   `analyzeGame`, test đối chiếu hai bảng là một đối chứng thật.
+2. **Luật chia đống bị chặn.** Từ hai đống, một nước chia đi tới **ba**, và lưới
+   hai chiều không có ô cho đống thứ ba. `checkBounds` báo lỗi lúc soạn, renderer
+   nói ra bằng chữ nếu scene vẫn tới được nó.
+3. **Trục $b$ đi lên.** Trong SVG thì $y$ tăng xuống dưới. Quên lật thì hình ra
+   ảnh gương của mọi hình vẽ tay trong sách — và nó vẫn trông hoàn toàn hợp lý,
+   nên có test khoá đúng toạ độ ô được khoanh.
+4. **Trần $24$, và nó không phải trần tính.** DP cho $625$ ô chạy trong chớp mắt.
+   Trần này là **trần đọc được**: theo G-10 một ô là $44$px, nên $N = 24$ đã là
+   $1100$px bề ngang; quá đó thì Player buộc phải co cả hình và người học mất
+   chính thứ cần thấy.
+
+Mỗi ô là element ngầm định `pos-<a>-<b>`, nên narrative neo được vào **một thế**
+chứ không vào cả hình; và thế hiện tại của scene được khoanh trên lưới, để lưới
+không thành một biểu đồ rời khỏi bài.
+
+**Một lỗi cùng họ với M22, ở chỗ test của M22 không với tới.** Test caption chỉ ép
+trường `caption` của bài. Dòng **chú giải** thì do renderer tự sinh, và với lưới
+nhỏ nó dài hơn hình — lại cụt chữ. Nay hai chuỗi chú giải là hằng số, và khung đọc
+bề rộng từ chính chuỗi ấy.
+
+949 test, 59 bài 0 lỗi 0 cảnh báo, e2e 42 xanh.
 
 ### M22 — Ba họ luật mới của game engine (GM-05/06/07) · [E] — **xong**
 

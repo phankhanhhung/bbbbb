@@ -97,8 +97,8 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Trò Grundy (chia đống không đều) | trò chơi | ✅ đối chiếu vét cạn, khớp dãy Grundy đã biết |
 | Bốc theo tập $\{1,3,4\}$ | trò chơi | ✅ thua ở $0,2,7,9,14,\dots$ — khớp |
 | Bốc **tối đa nửa đống** | trò chơi | ✅ có trong kho (luật `subtract-fraction`, thua ở $2^m-1$) |
-| Wythoff (hai đống, nước chéo) | trò chơi | ✅ có trong kho (`subtract-equal-pair`, thế thua khớp cặp Beatty) |
-| Trò Euclid | trò chơi | ✅ có trong kho (`subtract-multiple-of-other`, khớp mốc $\varphi$) |
+| Wythoff (hai đống, nước chéo) | trò chơi | ✅ có trong kho (`subtract-equal-pair`; phổ hai chiều cho ra **hai tia**) |
+| Trò Euclid | trò chơi | ✅ có trong kho (`subtract-multiple-of-other`; phổ hai chiều cho ra một **nêm**) |
 | Nim Lasker (bốc **hoặc** chia) | trò chơi | ✅ có trong kho (luật `union`, Grundy khớp dạng đóng) |
 | Nim Fibonacci | trò chơi | ❌ luật nhớ **nước trước**, đa tập đống không đủ mô tả ván |
 | Chomp, Hackenbush, lật đồng xu | trò chơi | ❌ thế không phải đa tập đống |

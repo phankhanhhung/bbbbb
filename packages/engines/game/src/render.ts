@@ -13,7 +13,13 @@ import {
   UNITS_PER_CELL,
 } from '@combviz/render';
 import { GAME_LIMITS } from './schema.js';
-import { analyzeGame, losingSpectrum, spectrumReadable } from './solver.js';
+import {
+  analyzeGame,
+  losingGrid,
+  losingSpectrum,
+  spectrum2dReadable,
+  spectrumReadable,
+} from './solver.js';
 import { readGame, type GameModel } from './model.js';
 
 /**
@@ -62,20 +68,29 @@ export const gameRenderer: EngineRenderer = {
   defaultViewport(scene: Scene): Viewport {
     const model = readGame(scene);
 
+    if (model.config.view === 'spectrum-2d') {
+      if (!spectrum2dReadable(model.config.rule)) return REFUSED_BOX;
+      const n = gridLength(model);
+      return {
+        x: -PADDING - AXIS,
+        y: -PADDING - SLOT * 0.6,
+        width: Math.max(n * SLOT, textFloor(model, GRID_LEGEND)) + AXIS + PADDING * 2,
+        height: n * SLOT + AXIS + SLOT * 0.6 + PADDING * 2 + SLOT * 0.8,
+      };
+    }
+
     if (model.config.view === 'spectrum') {
       // Luật mà phổ một chiều không mô tả được: khung vừa đủ một dòng chữ. Vẽ ra
       // một lưới 60 ô rồi bỏ trống là tệ hơn không vẽ gì — nó trông như hình bị
       // hỏng chứ không như một câu trả lời.
-      if (!spectrumReadable(model.config.rule)) {
-        return { x: -PADDING, y: -PADDING, width: SLOT * 6, height: SLOT + PADDING * 2 };
-      }
+      if (!spectrumReadable(model.config.rule)) return REFUSED_BOX;
       const n = spectrumLength(model);
       const cols = Math.min(n, 12);
       const rows = Math.ceil(n / cols);
       return {
         x: -PADDING,
         y: -PADDING - SLOT * 0.6,
-        width: cols * SLOT + PADDING * 2,
+        width: Math.max(cols * SLOT, textFloor(model, SPECTRUM_LEGEND)) + PADDING * 2,
         height: rows * SLOT + SLOT * 0.6 + PADDING * 2 + SLOT * 0.8,
       };
     }
@@ -94,9 +109,11 @@ export const gameRenderer: EngineRenderer = {
     const viewport = gameRenderer.defaultViewport(scene);
 
     const body =
-      model.config.view === 'spectrum'
-        ? renderSpectrum(model, ctx)
-        : renderPiles(model, ctx);
+      model.config.view === 'spectrum-2d'
+        ? renderSpectrum2d(model, ctx)
+        : model.config.view === 'spectrum'
+          ? renderSpectrum(model, ctx)
+          : renderPiles(model, ctx);
 
     return [
       el('g', { class: 'cv-game' }, body),
@@ -150,6 +167,42 @@ function tallestStack(model: GameModel): number {
 const DOT_TOP = SLOT * 0.4;
 
 const CAPTION_SIZE = SLOT * 0.34;
+
+/** Chỗ chừa cho trục số của `spectrum-2d`. */
+const AXIS = SLOT * 0.9;
+
+const LEGEND_SIZE = SLOT * 0.32;
+
+/**
+ * Chú giải của hai view phổ — hằng số, không phải chuỗi gõ tại chỗ vẽ.
+ *
+ * Khung phải rộng đủ chứa dòng này, mà "đủ" thì đo từ **chính** chuỗi ấy. Để chuỗi
+ * ở hai nơi thì sửa một chỗ, chỗ kia cụt chữ, và cụt chữ là loại lỗi không có gì
+ * báo — đúng thứ vừa phải vá ở cả năm engine có caption.
+ */
+const SPECTRUM_LEGEND = 'Ô tô đậm: thế thua của người sắp đi';
+const GRID_LEGEND = 'Ô tô đậm: thế thua của người sắp đi. Trục ngang: đống thứ nhất.';
+
+/** Bề rộng tối thiểu để mọi dòng chữ của một view phổ nằm trong khung. */
+function textFloor(model: GameModel, legend: string): number {
+  const caption = model.config.caption
+    ? estimateTextWidth(model.config.caption, CAPTION_SIZE)
+    : 0;
+  return Math.max(estimateTextWidth(legend, LEGEND_SIZE), caption);
+}
+
+/**
+ * Khung khi luật không vẽ được view đã chọn: vừa đủ một dòng chữ.
+ *
+ * Vẽ ra một lưới rồi bỏ trống là **tệ hơn** không vẽ gì — nó trông như hình bị
+ * hỏng chứ không như một câu trả lời.
+ */
+const REFUSED_BOX = {
+  x: -PADDING,
+  y: -PADDING,
+  width: SLOT * 6,
+  height: SLOT + PADDING * 2,
+} as const;
 
 /**
  * Dải hoành độ của từng cột đống — **một** phép tính cho cả vẽ và chạm.
@@ -245,19 +298,7 @@ function renderSpectrum(model: GameModel, ctx: RenderContext): SvgNode[] {
     // chuyện đó: scene vẫn tới đây được. Nói ra mình không vẽ được, thay vì vẽ
     // một bảng tính từ `movesFromPile` — với luật toàn cục hàm ấy trả rỗng, nên
     // bảng sẽ tô sạch một màu và trông hoàn toàn thuyết phục.
-    return [
-      text(
-        'text',
-        {
-          x: 0,
-          y: SLOT * 0.5,
-          'font-family': ctx.theme.type.uiFamily,
-          'font-size': SLOT * 0.32,
-          fill: ctx.theme.surface.guide,
-        },
-        'Phổ một chiều không mô tả được luật này',
-      ),
-    ];
+    return refusal('Phổ một chiều không mô tả được luật này', ctx);
   }
 
   const length = spectrumLength(model);
@@ -308,10 +349,154 @@ function renderSpectrum(model: GameModel, ctx: RenderContext): SvgNode[] {
         x: 0,
         y: rows * SLOT + SLOT * 0.55,
         'font-family': ctx.theme.type.uiFamily,
+        'font-size': LEGEND_SIZE,
+        fill: ctx.theme.surface.guide,
+      },
+      SPECTRUM_LEGEND,
+    ),
+  );
+
+  return nodes;
+}
+
+/** Số ô trên **một** cạnh của lưới `spectrum-2d`. */
+function gridLength(model: GameModel): number {
+  return (
+    Math.min(
+      GAME_LIMITS.maxSpectrum2d,
+      model.config.spectrum_to ?? Math.max(...model.piles.map((p) => p.count), 12),
+    ) + 1
+  );
+}
+
+/** Dòng chữ thay cho hình khi luật không vẽ được view đã chọn. */
+function refusal(message: string, ctx: RenderContext): SvgNode[] {
+  return [
+    text(
+      'text',
+      {
+        x: 0,
+        y: SLOT * 0.5,
+        'font-family': ctx.theme.type.uiFamily,
         'font-size': SLOT * 0.32,
         fill: ctx.theme.surface.guide,
       },
-      'Ô tô đậm: thế thua của người sắp đi',
+      message,
+    ),
+  ];
+}
+
+/**
+ * Phổ **hai chiều**: mọi thế hai đống $(a,b)$, tô theo thắng/thua (GM-08).
+ *
+ * View này tồn tại vì một lý do rất hẹp và rất đáng: với Wythoff, phát biểu "thế
+ * thua là $(\lfloor n\varphi \rfloor, \lfloor n\varphi^2 \rfloor)$" là một
+ * công thức **phải tin**. Trên lưới thì nó là **hai tia** kẹp lấy đường chéo, và
+ * hai tia ấy đọc được bằng mắt trong một giây. Với trò Euclid, "tỉ số dưới
+ * $\varphi$ thì thua" hiện ra thành một **nêm** quanh đường chéo. Đó đúng là việc
+ * mà `spectrum` một chiều làm cho họ bốc sỏi, và là việc mà một bảng số không làm
+ * được.
+ *
+ * Trục $b$ đi **lên**, không đi xuống. Trong SVG thì $y$ tăng xuống dưới, nên phải
+ * lật; không lật thì hình ra ảnh gương của mọi hình vẽ tay trong sách, và người
+ * đọc mất vài giây chỉ để nhận ra mình đang nhìn cái gì.
+ */
+function renderSpectrum2d(model: GameModel, ctx: RenderContext): SvgNode[] {
+  if (!spectrum2dReadable(model.config.rule)) {
+    return refusal('Luật chia đống không vẽ được trên lưới hai chiều', ctx);
+  }
+
+  const length = gridLength(model);
+  const max = length - 1;
+  const lose = losingGrid(max, model.config.rule, model.config.misere === true);
+  const nodes: SvgNode[] = [];
+
+  const cellY = (b: number): number => (max - b) * SLOT;
+
+  for (let a = 0; a <= max; a += 1) {
+    for (let b = 0; b <= max; b += 1) {
+      const cold = (lose[a] as boolean[])[b] === true;
+      nodes.push(
+        keyed(`pos-${a}-${b}`, 'rect', {
+          x: a * SLOT,
+          y: cellY(b),
+          width: SLOT,
+          height: SLOT,
+          fill: cold ? fillForClass(ctx, 3) : ctx.theme.surface.neutral,
+          stroke: ctx.theme.surface.guide,
+          'stroke-width': ctx.theme.stroke.hairline,
+          ...decorationAttrs(ctx, `pos-${a}-${b}`, undefined),
+        }),
+      );
+    }
+  }
+
+  // Thế hiện tại của scene, khoanh lại. Không có nó thì lưới là một biểu đồ rời
+  // khỏi bài; có nó thì người đọc thấy ngay "mình đang ở đâu trên bản đồ này".
+  if (model.piles.length === 2) {
+    const [a, b] = model.piles.map((p) => p.count) as [number, number];
+    if (a <= max && b <= max) {
+      nodes.push(
+        el('rect', {
+          x: a * SLOT,
+          y: cellY(b),
+          width: SLOT,
+          height: SLOT,
+          fill: 'none',
+          stroke: ctx.theme.emphasis.focusHalo,
+          'stroke-width': ctx.theme.stroke.emphasis,
+        }),
+      );
+    }
+  }
+
+  // Trục. Chỉ đánh số ô chẵn khi lưới lớn: hai mươi lăm con số sát nhau thì mỗi
+  // con số đọc được mà cả hàng thì không.
+  const stride = max > 14 ? 2 : 1;
+  for (let n = 0; n <= max; n += 1) {
+    if (n % stride !== 0) continue;
+    nodes.push(
+      text(
+        'text',
+        {
+          x: n * SLOT + SLOT / 2,
+          y: (max + 1) * SLOT + AXIS * 0.55,
+          'text-anchor': 'middle',
+          'font-family': ctx.theme.type.mathFamily,
+          'font-size': SLOT * 0.32,
+          fill: ctx.theme.surface.guide,
+        },
+        String(n),
+      ),
+    );
+    nodes.push(
+      text(
+        'text',
+        {
+          x: -AXIS * 0.35,
+          y: cellY(n) + SLOT / 2,
+          'text-anchor': 'middle',
+          'dominant-baseline': 'central',
+          'font-family': ctx.theme.type.mathFamily,
+          'font-size': SLOT * 0.32,
+          fill: ctx.theme.surface.guide,
+        },
+        String(n),
+      ),
+    );
+  }
+
+  nodes.push(
+    text(
+      'text',
+      {
+        x: 0,
+        y: (max + 1) * SLOT + AXIS + SLOT * 0.5,
+        'font-family': ctx.theme.type.uiFamily,
+        'font-size': LEGEND_SIZE,
+        fill: ctx.theme.surface.guide,
+      },
+      GRID_LEGEND,
     ),
   );
 

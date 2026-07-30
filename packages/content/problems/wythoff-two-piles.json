@@ -226,20 +226,19 @@
           "parent": "s2",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Quy luật: thế thua thứ $n$ là $(\\lfloor n\\varphi \\rfloor, \\lfloor n\\varphi^2 \\rfloor)$ với $\\varphi = \\frac{1+\\sqrt5}{2}$; hiệu đúng bằng $n$ vì $\\varphi^2 - \\varphi = 1$. Mỗi số nguyên dương xuất hiện **đúng một lần** trong toàn bộ danh sách, nên qua mỗi thế thua có duy nhất một cách đi tới. [[a4|$(8,13)$]] là thế thua thứ $5$."
+            "vi": "Vẽ **mọi** thế hai đống tới $20$ thì quy luật thôi phải tin: nó là **hai tia** toả ra từ gốc, đối xứng qua đường chéo, và giữa hai tia không có ô thua nào. Thế thua thứ $n$ là $(\\lfloor n\\varphi \\rfloor, \\lfloor n\\varphi^2 \\rfloor)$ với $\\varphi = \\frac{1+\\sqrt5}{2}$; hiệu đúng bằng $n$ vì $\\varphi^2 - \\varphi = 1$. Ô khoanh là [[a4|$(8,13)$]] — thế thua thứ $5$."
           },
           "anchors": {
             "a4": {
               "ids": [
-                "p0",
-                "p1"
+                "pos-8-13"
               ]
             }
           },
           "scene": {
             "engine": "game",
             "config": {
-              "caption": "Thế thua thứ năm",
+              "caption": "Thế thua của Wythoff, mọi thế tới 20",
               "rule": {
                 "of": [
                   {
@@ -251,7 +250,9 @@
                   }
                 ],
                 "type": "union"
-              }
+              },
+              "spectrum_to": 20,
+              "view": "spectrum-2d"
             },
             "elements": [
               {
@@ -267,7 +268,7 @@
             ]
           },
           "alt_text": {
-            "vi": "Hai đống: tám viên và mười ba viên."
+            "vi": "Lưới hai mươi mốt nhân hai mươi mốt; các ô thua tô đậm thành hai tia toả ra từ gốc, kẹp lấy đường chéo. Ô (8,13) được khoanh."
           },
           "verified": true,
           "claims": [

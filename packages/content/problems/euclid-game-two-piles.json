@@ -202,10 +202,55 @@
           "parent": "s2",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Lý do gọn. Nếu $1 < b/a < \\varphi$ thì $(a,b)$ có **đúng một** nước, và nước ấy về $(b-a, a)$ với tỉ số $a/(b-a) > \\varphi$; còn nếu $b/a > \\varphi$ thì có một nước hạ tỉ số xuống dưới $\\varphi$. Đề cho [[a4|$25/7 > \\varphi$]] nên **người đi trước thắng**. Ván này còn một cách đọc: dãy thế $(25,7) \\to (11,7) \\to (4,7) \\to (4,3) \\to (1,3) \\to (1,0)$ đúng là các bước thuật toán Euclid tìm $\\gcd(25,7) = 1$."
+            "vi": "Vẽ **mọi** thế hai đống tới $16$ thì mốc ấy hiện ra thành một **nêm** kẹp quanh đường chéo: trong nêm là thế thua, ngoài nêm là thế thắng, còn chính đường chéo $a = b$ thì **thắng** — bốc hết một đống là xong. Hai trục tô đậm vì đống rỗng là hết nước. Ô khoanh là [[a4|$(11,7)$]], nằm trong nêm."
           },
           "anchors": {
             "a4": {
+              "ids": [
+                "pos-11-7"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Nêm quanh đường chéo: tỉ số dưới 1,618",
+              "rule": {
+                "type": "subtract-multiple-of-other"
+              },
+              "spectrum_to": 16,
+              "view": "spectrum-2d"
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 11
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 7
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Lưới mười bảy nhân mười bảy; các ô thua tô đậm thành một nêm quanh đường chéo, cộng hai trục. Ô (11,7) được khoanh."
+          },
+          "verified": true,
+          "claims": [
+            "winning == false"
+          ]
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Lý do gọn. Nếu $1 < b/a < \\varphi$ thì $(a,b)$ có **đúng một** nước, và nước ấy về $(b-a, a)$ với tỉ số $a/(b-a) > \\varphi$; còn nếu $b/a > \\varphi$ thì có một nước hạ tỉ số xuống dưới $\\varphi$. Đề cho [[a5|$25/7 > \\varphi$]] nên **người đi trước thắng**. Ván này còn một cách đọc: dãy thế $(25,7) \\to (11,7) \\to (4,7) \\to (4,3) \\to (1,3) \\to (1,0)$ đúng là các bước thuật toán Euclid tìm $\\gcd(25,7) = 1$."
+          },
+          "anchors": {
+            "a5": {
               "ids": [
                 "p0",
                 "p1"

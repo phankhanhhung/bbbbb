@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { command, createEditorState, execute } from '@combviz/editor';
 import { tryEvaluate, DETERMINISTIC_BUDGET } from '@combviz/dsl';
-import { createContext, createRenderer, walk } from '@combviz/render';
+import { createContext, createRenderer, estimateTextWidth, walk } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
 import type { Scene } from '@combviz/schema';
 import {
@@ -11,6 +11,7 @@ import {
   gameRenderer,
   gameSchemaFragment,
   gameTools,
+  losingGrid,
   resolveGameValidator,
   type GameRule,
 } from '../src/index.js';
@@ -487,5 +488,132 @@ describe('DSL và luật toàn cục', () => {
     expect(evalOn(scene([1, 2, 3], { rule: LASKER }), 'winning')).toBe(true);
     // Cùng thế ấy ở Nim thường thì thua — nhánh chia đổi hẳn đáp số.
     expect(evalOn(scene([1, 2, 3]), 'winning')).toBe(false);
+  });
+});
+
+describe('view `spectrum-2d` (GM-08)', () => {
+  const renderer = createRenderer([gameRenderer]);
+  const ctx = createContext(defaultTheme);
+  const codes = (s: Scene): string[] =>
+    gameSchemaFragment.checkBounds(s, '').map((i) => i.code);
+
+  const grid = (config: Record<string, unknown> = {}): Scene =>
+    scene([8, 13], { view: 'spectrum-2d', rule: WYTHOFF, spectrum_to: 20, ...config });
+
+  it('vẽ đủ lưới, mỗi ô một key duy nhất', () => {
+    const keys: string[] = [];
+    walk(renderer.render(grid(), ctx), (node) => {
+      if (node.key !== undefined) keys.push(node.key);
+    });
+    expect(keys).toHaveLength(21 * 21);
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(keys).toContain('pos-8-13');
+  });
+
+  it('ô tô đậm đúng bằng số thế thua trong lưới', () => {
+    const cold = losingGrid(20, WYTHOFF).flat().filter(Boolean).length;
+    const svg = renderer.toSvg(grid(), ctx);
+    const fills = [...svg.matchAll(/<rect[^>]*fill="([^"]+)"[^>]*>/g)].map((m) => m[1]);
+    // Trừ nền canvas; ô còn lại chỉ có hai màu.
+    expect(fills.filter((f) => f === defaultTheme.surface.neutral)).toHaveLength(
+      21 * 21 - cold,
+    );
+  });
+
+  it('thế hiện tại được khoanh **đúng ô** — và đó là chỗ trục $b$ lật', () => {
+    // Không có khoanh thì lưới là một biểu đồ rời khỏi bài. Và khoanh sai ô thì
+    // tệ hơn không khoanh: trục $b$ đi **lên** trong khi $y$ của SVG đi xuống,
+    // nên quên lật là hình ra ảnh gương mà vẫn trông hoàn toàn hợp lý.
+    const svg = renderer.toSvg(grid(), ctx);
+    const rects = svg.match(/<rect[^>]*\/>/g) ?? [];
+    const marker = rects.find((r) => r.includes('fill="none"')) as string;
+    const at = (r: string, k: string): string =>
+      new RegExp(`\\b${k}="(-?[\\d.]+)"`).exec(r)?.[1] ?? '';
+
+    // $(8,13)$ với lưới $0..20$: $x = 8 \cdot 10$, $y = (20-13) \cdot 10$.
+    expect([at(marker, 'x'), at(marker, 'y')]).toEqual(['80', '70']);
+
+    // Và ô nằm dưới khoanh phải là ô thua — $(8,13)$ là cặp Beatty thứ năm.
+    const cell = rects.find(
+      (r) => r !== marker && at(r, 'x') === '80' && at(r, 'y') === '70',
+    ) as string;
+    expect(cell).not.toContain(defaultTheme.surface.neutral);
+    expect((losingGrid(20, WYTHOFF)[8] as boolean[])[13]).toBe(true);
+  });
+
+  it('anchor trỏ được vào **một ô**, không phải cả hình', () => {
+    const ids = gameSchemaFragment.implicitElementIds(grid());
+    expect(ids.size).toBe(21 * 21);
+    expect(ids.has('pos-8-13')).toBe(true);
+    expect(ids.has('pos-21-0')).toBe(false);
+    // View `piles` thì không sinh ô nào — hai view không giẫm lên nhau.
+    expect(gameSchemaFragment.implicitElementIds(scene([3, 4])).size).toBe(0);
+  });
+
+  it('luật chia đống bị chặn, và hình **nói ra** thay vì vẽ lưới sai', () => {
+    const bad = scene([4, 4], { view: 'spectrum-2d', rule: LASKER });
+    expect(codes(bad)).toContain('bounds/spectrum-2d-needs-two-pile-rule');
+    const svg = renderer.toSvg(bad, ctx);
+    expect(svg).toContain('Luật chia đống không vẽ được trên lưới hai chiều');
+    expect((svg.match(/<rect/g) ?? []).length).toBe(1);
+  });
+
+  it('đòi đúng hai đống, và trần lưới nhỏ hơn trần phổ một chiều', () => {
+    expect(codes(scene([3, 4, 5], { view: 'spectrum-2d', rule: WYTHOFF }))).toContain(
+      'bounds/spectrum-2d-needs-two-piles',
+    );
+    expect(codes(grid({ spectrum_to: 40 }))).toContain('bounds/spectrum-2d-too-large');
+    // Cùng con số ấy thì phổ một chiều nhận được.
+    expect(codes(scene([12], { view: 'spectrum', spectrum_to: 40 }))).toEqual([]);
+    expect(codes(grid())).toEqual([]);
+  });
+
+  it('không bày công cụ nào, và chạm không trả id đống nào', () => {
+    expect(gameTools(grid()).map((t) => t.id)).toEqual(['select']);
+    expect(gameHitTest(grid(), { x: 5, y: 5 })).toEqual([]);
+  });
+});
+
+describe('chú giải của hai view phổ nằm trong khung', () => {
+  const renderer = createRenderer([gameRenderer]);
+  const ctx = createContext(defaultTheme);
+
+  /**
+   * Cùng lỗi với caption, ở chỗ mà test caption **không** với tới: dòng chú giải
+   * là chữ do renderer tự sinh, không phải trường của bài. Lưới nhỏ thì chữ dài
+   * hơn hình, và nó cụt ở mép phải mà không có gì báo.
+   */
+  const fits = (s: Scene): boolean => {
+    const viewport = renderer.viewportOf(s, ctx);
+    const svg = renderer.toSvg(s, ctx);
+    return [...svg.matchAll(/<text([^>]*)>([^<]*)<\/text>/g)].every(([, attrs, body]) => {
+      const size = Number(/font-size="([\d.]+)"/.exec(attrs ?? '')?.[1] ?? '0');
+      const x = Number(/\bx="(-?[\d.]+)"/.exec(attrs ?? '')?.[1] ?? '0');
+      const anchor = /text-anchor="middle"/.test(attrs ?? '');
+      const width = estimateTextWidth(body ?? '', size);
+      const right = anchor ? x + width / 2 : x + width;
+      return right <= viewport.x + viewport.width + 1e-6;
+    });
+  };
+
+  it('phổ một chiều: lưới nhỏ vẫn chứa hết dòng chú giải', () => {
+    for (const to of [1, 3, 5, 12, 40]) {
+      expect({ to, fits: fits(scene([to], { view: 'spectrum', spectrum_to: to })) }).toEqual({
+        to,
+        fits: true,
+      });
+    }
+  });
+
+  it('lưới hai chiều: kể cả lưới nhỏ nhất và kèm caption dài nhất', () => {
+    for (const to of [1, 4, 8, 20, 24]) {
+      const s = scene([1, 1], {
+        view: 'spectrum-2d',
+        rule: WYTHOFF,
+        spectrum_to: to,
+        caption: 'Bốc một đống, hoặc bốc bằng nhau ở cả hai đống',
+      });
+      expect({ to, fits: fits(s) }).toEqual({ to, fits: true });
+    }
   });
 });

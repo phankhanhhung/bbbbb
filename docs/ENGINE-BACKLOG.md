@@ -1,6 +1,6 @@
 # CombViz — Checklist làm mạnh từng engine
 
-**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · Ba hạng mục đầu (`GM-05/06/07`) **đã làm ở M22**
+**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · Bốn hạng mục của `game` (`GM-05/06/07/08`) **đã làm ở M22–M23**
 
 ## 0. Đọc checklist này đúng cách
 
@@ -36,7 +36,7 @@ nhất để lặp lại chuyện đó.
 | `board` | 20 | Chủ lực. Khoảng trống ở đây là khoảng trống **thật sự cảm thấy được**. |
 | `graph` | 18 | Chủ lực. Cùng loại. |
 | `sequence` | 10 | Đủ để tin. |
-| `game` | 6 | Ba hạng mục ở §2.6 **đã làm** (M22), mỗi cái kèm một bài kinh điển: Wythoff, trò Euclid, Nim Lasker. |
+| `game` | 6 | Tầng A ở §2.6 **đã làm hết** (M22–M23): ba luật mới kèm ba bài kinh điển, cộng phổ hai chiều. |
 | `point` | 3 | Nội dung trước. Engine chưa bị dùng đủ để biết nó thiếu gì. |
 | `set` | 3 | Nội dung trước. |
 | `derivation` | 2 | Nội dung trước — và dòng 🟡 duy nhất của nó nói **thiếu bài**, không thiếu năng lực. |
@@ -74,7 +74,7 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | 10 | `PRN-04` animation biến hình | cross | **cả họ song ánh (14%)** | đắt | §2 "còn thiếu: animation biến hình của PRN-04" |
 | 11 | `BD-05` vùng khuyết vẽ tay + torus | board | bài trên hình xuyến | vừa | SRS `BD-05` [P2] |
 | 12 | `ST-03` dot/bar cho đa tập | set | đếm theo lớp | rẻ | SRS `ST-03` [P2] |
-| 13 | `GM-08` phổ **hai chiều** | game | quy luật Wythoff nhìn thành một vệt | vừa | §2.6 — `spectrum` là bảng một chiều |
+| ~~13~~ | ~~`GM-08` phổ **hai chiều**~~ ✅ M23 | game | quy luật Wythoff nhìn thành hai tia | vừa | ~~§2.6 — `spectrum` là bảng một chiều~~ |
 
 `PRN-04` là hạng mục **trọng số cao nhất** trong bảng — nó là khoảng trống duy nhất
 còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưng nó phụ thuộc
@@ -154,7 +154,7 @@ thiếu gì. Việc đúng là soạn thêm bài extremal set theory rồi đọ
 - **PT-03 [P3] MAY** — tô vùng do các đoạn chia. **SRS tự nói hoãn**: "đắt và hiếm
   bài cần; chỉ làm khi seed content P3 đòi hỏi." Giữ nguyên chữ ấy.
 
-### 2.6 `game` — 6 bài · **Tầng A đã làm xong ở M22**
+### 2.6 `game` — 6 bài · **Tầng A đã làm xong ở M22–M23**
 
 Ba hạng mục dưới đây đều là **mở rộng họ luật đóng**, và tiền lệ đã có: M17b thêm
 `subtract-fraction` trong một buổi và nó biến "bốc tối đa nửa đống" từ ❌ thành ✅.
@@ -180,10 +180,12 @@ tính ra một con số không ai kiểm.
 
 **Còn nợ, và đã có tên**
 
-- **GM-08 [P3] MAY** — phổ **hai chiều** cho game hai đống. Hôm nay `spectrum` là
-  bảng một chiều nên Wythoff không có view "quy luật là gì" — bài
-  `wythoff-two-piles` phải kể dãy thế thua bằng từng scene rời. Một lưới $(a,b)$ tô
-  ô lạnh sẽ cho đúng thứ mà `spectrum` cho họ bốc sỏi: **một vệt** hiện ra.
+- **GM-08 ✅ (M23)** — phổ **hai chiều**, `view: 'spectrum-2d'`. Wythoff ra **hai
+  tia** toả từ gốc, trò Euclid ra một **nêm** kẹp đường chéo; cả hai bài đã thay
+  step "công thức" bằng step "nhìn". Mỗi ô là một element ngầm định `pos-<a>-<b>`
+  nên anchor trỏ được vào **một thế**, và thế hiện tại của scene được khoanh trên
+  lưới. Trần $24$ không phải trần tính (DP $O(N^2)$ chạy trong chớp mắt) mà là
+  **trần đọc được**: theo G-10 một ô là $44$px.
 - **GM-01 / DOM-04** — rule script tổng quát cho Chomp, cờ trên đồ thị, game bàn
   cờ, game partizan. Đây là DSL-03 thật sự và nó đi thẳng vào **R-2**. Đã hoãn có
   lý do viết ra; đừng mở bằng cửa sau.
