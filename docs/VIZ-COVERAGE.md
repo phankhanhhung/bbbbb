@@ -444,10 +444,15 @@ tĩnh viết sẵn trong file. Ba hệ quả, nói ra để không ai trông đ�
 - **Không có sandbox.** Người học sửa cấu hình bên trái thì bên phải không đổi
   theo — nó không được tính từ đâu cả. Nên bài dùng view này khai
   `kind: "illustration"`; ép `both` sẽ cho ra một hình nói dối.
-- ~~**Không có animation biến hình**~~ — có từ **M37**. Nút "Biến hình" đưa hai
-  pane về **một** khung toạ độ chung rồi cho mỗi phần tử trượt tới ảnh của nó.
-  Giới hạn còn lại, đã biết: phần tử vẽ bằng `<path>` lệnh tương đối hoặc cung
-  `A` thì không đo được hộp bao, và nó **đứng yên** thay vì bay sai chỗ.
+- ~~**Không có animation biến hình**~~ — có từ **M37**, làm cho đúng ở **M38**:
+  chạy **theo từng cặp** (SRS §257) trên lớp choreography, không phải một `t`
+  duy nhất. Hình học do engine khai (`EngineRenderer.elementBoxes`) chứ không
+  suy ngược từ thuộc tính SVG nữa. Giảm chuyển động cho ra bộ đếm pha — bấm qua
+  từng cặp.
+  Giới hạn còn lại, đã biết: `board`, `point`, `game`, `derivation` chưa cài
+  `elementBoxes` (chưa bài song ánh nào dùng tới); cặp nào không đo được thì bỏ,
+  và bỏ quá một phần ba thì Player **không hiện nút** thay vì chạy một animation
+  có phần ba số cặp đứng im.
 - **Ánh xạ không được kiểm là song ánh thật.** Validate kiểm id có tồn tại đúng
   bên, và **cảnh báo** khi không đơn ánh — nhưng nó không biết cặp có đúng về mặt
   toán học hay không. Đó vẫn là việc của người duyệt.

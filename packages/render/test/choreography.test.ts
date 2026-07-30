@@ -84,6 +84,72 @@ describe('xác định (CHO-08)', () => {
   });
 });
 
+describe('morph xuyên engine — đường hộp bao', () => {
+  /**
+   * Đúng hình dạng thật của `subsets-binary-strings`: bên trái là `<rect>` nằm
+   * ngay dưới nhóm gốc, bên phải là `<g>` **rỗng thuộc tính** chứa rect và nhãn,
+   * sâu hơn một tầng.
+   */
+  const left = [el('g', {}, [keyed('x1', 'rect', { x: 0, y: 0, width: 4, height: 4 })])];
+  const boxes = (id: string) =>
+    id === 'x1'
+      ? [{ x: 0, y: 0, width: 4, height: 4 }]
+      : id === 'b1'
+        ? [{ x: 20, y: 10, width: 4, height: 4 }]
+        : undefined;
+  const spec: Choreography = {
+    phases: [
+      phase({ id: 'p', kind: 'morph', targets: ['x1'], to: 'b1', at: 0, duration: 100, easing: 'linear' }),
+    ],
+  };
+
+  it('không có `boxOf` thì **không gì chuyển động** — và đó là lý do nó tồn tại', () => {
+    // Đường sao chép thuộc tính chỉ chạy khi hai element cùng bộ thuộc tính, tức
+    // là cùng engine. Đích là `<g>` rỗng nên vòng lặp bỏ qua sạch: chạy đủ thời
+    // lượng, màn hình đứng im, không lỗi không cảnh báo. Test này khoá lại **sự
+    // thật** ấy để không ai tưởng đường cũ đủ dùng.
+    const frame = applyChoreography(left, spec, 50);
+    expect(frame[0]!.children![0]!.attrs['transform']).toBeUndefined();
+  });
+
+  it('có `boxOf` thì trượt theo hiệu hai tâm', () => {
+    // Tâm trái $(2,2)$ → tâm phải $(22,12)$: lệch $(20,10)$; nửa đường là nửa.
+    const frame = applyChoreography(left, spec, 50, { boxOf: boxes });
+    expect(frame[0]!.children![0]!.attrs['transform']).toBe('translate(10 5)');
+  });
+
+  it('$t = 0$ trả về cây y nguyên, không kèm `translate(0 0)`', () => {
+    expect(applyChoreography(left, spec, 0, { boxOf: boxes })).toEqual(left);
+  });
+
+  it('tra chủ sở hữu theo `data-el` trước `key`', () => {
+    // Node mang mực đeo key riêng của renderer (`x1__S`) còn `data-el` mới nói
+    // nó thuộc về `x1`. Chỉ nhìn `key` thì pha `morph` không tìm thấy nó.
+    const ink = [
+      el('g', {}, [keyed('x1__S', 'rect', { x: 0, y: 0, 'data-el': 'x1' })]),
+    ];
+    const frame = applyChoreography(ink, spec, 50, { boxOf: boxes });
+    expect(frame[0]!.children![0]!.attrs['transform']).toBe('translate(10 5)');
+  });
+
+  it('bay tới bản sao **gần nhất** khi đích được vẽ ở nhiều chỗ', () => {
+    // Ma trận kề: cạnh hiện ở hai ô đối xứng. Lấy tâm cả cụm sẽ ném nó vào ô nằm
+    // trên đường chéo — một ô mang nghĩa ngược hẳn.
+    const twoCells = (id: string) =>
+      id === 'x1'
+        ? [{ x: 0, y: 0, width: 4, height: 4 }]
+        : [
+            { x: 100, y: 0, width: 4, height: 4 },
+            { x: 0, y: 100, width: 4, height: 4 },
+          ];
+    const frame = applyChoreography(left, spec, 100, { boxOf: twoCells });
+    // Ô gần nhất theo khoảng cách là ô nào cũng được — điều phải đúng là nó đáp
+    // xuống **một** trong hai, không phải điểm giữa $(50,50)$.
+    const t = String(frame[0]!.children![0]!.attrs['transform']);
+    expect(['translate(100 0)', 'translate(0 100)']).toContain(t);
+  });
+});
+
 describe('các loại pha', () => {
   const cell = (attrs: Record<string, string | number>): SvgNode[] => [
     keyed('a', 'rect', attrs),

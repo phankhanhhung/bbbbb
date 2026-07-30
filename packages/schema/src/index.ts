@@ -22,7 +22,7 @@ export {
 } from './element.js';
 
 export { Scene, Viewport, type SceneElement } from './scene.js';
-export { Step, EdgeType, Anchor, Choreography, ChoreographyPhase } from './step.js';
+export { Step, EdgeType, Anchor, Bijection, Choreography, ChoreographyPhase } from './step.js';
 export {
   Problem,
   Solution,

@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M37 xong (7 engine, phủ ~91%; bảng backlog engine đã cạn, kể cả `PRN-04`); schema `0.2.0`; kho 73 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M38 xong (7 engine, phủ ~92%; backlog engine đã cạn; mọi element trong kho neo được); schema `0.2.0`; kho 73 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,61 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M38 — Hợp đồng danh tính element, và `PRN-04` làm cho đúng · [E] — **xong**
+
+Câu hỏi mở đầu là "nếu cứ muốn làm `PRN-04` thì phải làm sao". Đào xuống nền móng
+thì lộ ra thứ lớn hơn hẳn phép biến hình: **hợp đồng "element X được vẽ bằng
+những gì, ở đâu" chưa bao giờ tồn tại**.
+
+**Chốt canh trước, sửa sau.** Hai khẳng định quét 311 scene: highlight một
+element phải làm đổi hình (ANC-01 phát biểu thành máy), và ít nhất một node phải
+mang `key === id` hoặc `data-el === id`. Lần chạy đầu: **314 cặp (scene, id)
+chết** trên 13 bài, 4 engine — tao tìm được ba bằng mắt, máy tìm ra gấp trăm lần.
+Sáu anchor thật đang chết, `validate` xanh cả sáu.
+
+Lý do không test nào bắt được: **golden snapshot mù hoàn toàn với `key`** —
+`serializeNode` chỉ ghi `attrs`, nên `data-k` không bao giờ vào chuỗi SVG. 0/305
+file golden chứa nó.
+
+Nợ ghi thành **bảy luật** đọc được, và test khẳng định **cả hai chiều**: id chết
+phải khớp một luật, và mỗi luật phải còn khớp một id chết. Sáu commit sau, bảng
+rỗng.
+
+**`undrawnElementIds` — nửa còn lại của `implicitElementIds`.** Có element mà một
+view cố ý không vẽ, và không vẽ là đúng: phổ thắng–thua vẽ *thế cờ* chứ không vẽ
+đống. Cái thiếu chỉ là nói ra. Khai rồi thì tầng structure biến nó thành lỗi
+`anchor/undrawn-element` — bắt ngay một chỗ trong kho.
+
+**`EngineRenderer.elementBoxes`.** Đặt cạnh `defaultViewport`, **không** cạnh
+`hitTest` như tao định ban đầu: `hitTest` trả lời câu khác và cố ý phồng to (đỉnh
+nới 1,3 lần, `token.id` phủ cả hàng, `set.id` phủ cả cột). Gọi nó là "song sinh"
+sẽ mời người ta copy đúng cái phồng ấy. Trả **mảng** vì ma trận kề vẽ một cạnh ở
+hai ô đối xứng.
+
+Oracle là `nodeBox` đo từ cây đã render — nên `box.ts` **giữ nguyên** chứ không
+xoá như kế hoạch ban đầu: nó là nguồn đối chứng độc lập duy nhất.
+
+**`PRN-04` theo từng cặp.** `BijectionPanes` bỏ ~200 dòng timeline tự chế; ba
+phần ấy về đúng tầng. Nhờ đó giảm chuyển động có ngay bộ đếm pha, bấm qua từng
+cặp, mà không viết thêm dòng nào.
+
+Năm việc rút ra:
+
+1. **Bất biến phát biểu sai còn tệ hơn không có.** Round-trip `hitTest ↔
+   elementBoxes` sai từ tiền đề. Bất biến hộp bao mất **ba** lần mới đúng:
+   "trùng khít" → "nằm trong" → "tâm rơi trúng mực". Hai lần đầu ép engine khai
+   cả trang trí lẫn bề ngang từng viên sỏi, tức chép layout sang chỗ thứ hai.
+2. **Oracle độc lập bắt được thứ tự kiểm không bắt được.** Nó soi ra năm chỗ tao
+   *đoán* layout thay vì đọc code vẽ, trong đúng hai engine.
+3. **Ký tự vô hình.** Bảng tra ô ma trận ghép khoá bằng một NUL viết thẳng trong
+   template. Chạy đúng từ M12, nhưng `grep` coi cả file là nhị phân và ai gõ lại
+   bằng dấu cách thì tra trượt **im lặng**. Giờ là một hàm có tên.
+4. **Chốt canh cũng sai được.** Đường nhanh của nó ghi công cho mọi tên trên node
+   đã đổi, nên ô ma trận được chấm đậu nhờ id cạnh trong khi id ô vẫn chết. Siết
+   xong là lộ lỗi thật ngay.
+5. **Vẫn phải chụp ảnh ra nhìn.** Ba lỗi cuối của phép biến hình chỉ lộ khi nhìn
+   khung cuối, không lỗi nào làm test đỏ.
 
 ### M37 — Lớp choreography (CHO-01..09) và biến hình song ánh (PRN-04) · [E] — **xong**
 

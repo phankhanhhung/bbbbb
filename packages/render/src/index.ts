@@ -65,6 +65,7 @@ export {
   type Phase,
   type Choreography,
   type PositionLookup,
+  type BoxLookup,
 } from './choreography.js';
 export { toSvgString, serializeNode, type SerializeOptions } from './serialize.js';
 export { watermarkNodes } from './watermark.js';
@@ -72,4 +73,5 @@ export {
   createRenderer,
   type EngineRenderer,
   type SceneRenderer,
+  type SceneBox,
 } from './renderer.js';
