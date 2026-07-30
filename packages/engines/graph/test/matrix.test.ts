@@ -46,9 +46,18 @@ const nodes = (s: Scene): SvgNode[] => {
 };
 
 describe('GR-07 — ma trận kề', () => {
+  /**
+   * Ô của bảng, tách khỏi **tay cầm** hàng/cột.
+   *
+   * Tay cầm cũng mang `data-el` (nó là mực của một đỉnh), nên "có `data-el`" thôi
+   * không còn đủ để nhận ra một ô kể từ khi đỉnh neo được ở view này. Phân biệt
+   * bằng `fill`: ô có nền, tay cầm thì `none`.
+   */
+  const cellsOf = (s: Scene): SvgNode[] =>
+    nodes(s).filter((n) => n.attrs['data-el'] !== undefined && n.attrs['fill'] !== 'none');
+
   it('mỗi cạnh vẽ thành **hai** ô đối xứng', () => {
-    const cells = nodes(MATRIX).filter((n) => n.attrs['data-el'] !== undefined);
-    expect(cells).toHaveLength(EDGES.length * 2);
+    expect(cellsOf(MATRIX)).toHaveLength(EDGES.length * 2);
   });
 
   it('key duy nhất toàn cây, kể cả khi hai ô cùng một cạnh', () => {
@@ -64,7 +73,7 @@ describe('GR-07 — ma trận kề', () => {
 
   it('hai ô của một cạnh cùng chỉ về **một** element', () => {
     const byElement = new Map<string, number>();
-    for (const node of nodes(MATRIX)) {
+    for (const node of cellsOf(MATRIX)) {
       const el = node.attrs['data-el'];
       if (typeof el === 'string') byElement.set(el, (byElement.get(el) ?? 0) + 1);
     }
@@ -73,20 +82,48 @@ describe('GR-07 — ma trận kề', () => {
     expect([...byElement.values()]).toEqual(EDGES.map(() => 2));
   });
 
+  it('nhấn một **đỉnh** làm sáng cả hàng lẫn cột của nó', () => {
+    // Ở view này đỉnh không có hình riêng — nó chỉ là hai chữ ngoài lề, và chữ
+    // ấy là `text()` trần. Trước tay cầm, anchor trỏ vào `v1` không làm sáng gì,
+    // trong khi `adjacency-matrix-handshake` s2 neo đúng vào đó và câu văn nói
+    // về **cả hàng** ("tổng theo hàng $i$ đếm số cạnh chạm đỉnh $i$").
+    const highlighted = createContext(defaultTheme, { highlight: new Set(['v1']) });
+    const out: SvgNode[] = [];
+    walk(renderer.render(MATRIX, highlighted), (n) => out.push(n));
+
+    const lit = out.filter(
+      (n) => n.attrs['fill'] === 'none' && n.attrs['stroke-width'] !== undefined,
+    );
+    // Hai dải: hàng và cột. Ma trận đối xứng, nên sáng cả hai nói ra đúng điều
+    // mà bài này chứng minh — mỗi cạnh hiện ra ở hai ô.
+    expect(lit).toHaveLength(2);
+  });
+
+  it('tay cầm không nhận con trỏ — `fill: none`, không phải `transparent`', () => {
+    // `set` cố ý chọn ngược lại vì tay cầm ở đó **cần** con trỏ. Ở đây một hình
+    // trong suốt nằm đè lên bảng sẽ nuốt mọi cú rê chuột vào ô, và phép tra ngược
+    // của view song ánh (`data-el` trước `data-k`) sẽ trả về đỉnh thay vì cạnh.
+    const handles = nodes(MATRIX).filter((n) => n.attrs['width'] === 40 || n.attrs['height'] === 40);
+    expect(handles.length).toBeGreaterThan(0);
+    expect(handles.every((n) => n.attrs['fill'] === 'none')).toBe(true);
+  });
+
   it('nhấn một cạnh làm sáng **cả hai** ô', () => {
     const highlighted = createContext(defaultTheme, { highlight: new Set(['ev1v3']) });
     const out: SvgNode[] = [];
     walk(renderer.render(MATRIX, highlighted), (n) => out.push(n));
 
     const lit = out.filter(
-      (n) => n.attrs['data-el'] === 'ev1v3' && n.attrs['stroke-width'] !== undefined,
+      (n) => n.attrs['data-el'] === 'ev1v3' && n.attrs['fill'] !== 'none',
     );
     expect(lit).toHaveLength(2);
+    expect(lit.every((n) => n.attrs['stroke-width'] !== undefined)).toBe(true);
   });
 
   it('ô trống **có** id ô nhưng **không** có `data-el` (GR-07)', () => {
     const blanks = nodes(MATRIX).filter(
-      (n) => n.tag === 'rect' && n.attrs['data-el'] === undefined,
+      (n) =>
+        n.tag === 'rect' && n.attrs['data-el'] === undefined && n.attrs['fill'] !== 'none',
     );
 
     // 4×4 = 16 ô, 10 ô có cạnh ⇒ 6 ô trống (kể cả 4 ô chéo).

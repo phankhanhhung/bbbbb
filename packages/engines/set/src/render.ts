@@ -1,6 +1,7 @@
 import type { Scene, Viewport } from '@combviz/schema';
 import {
   decorationAttrs,
+  decorationForAny,
   el,
   estimateTextWidth,
   fillForClass,
@@ -251,7 +252,10 @@ function renderDots(derived: SetDerived, ctx: RenderContext): SvgNode[] {
           r: round(DOT_R),
           fill: fillForClass(ctx, set.colorClass ?? token.colorClass ?? 1),
           'data-el': token.id,
-          ...decorationAttrs(ctx, incidenceId(token.id, set.id), token.emphasis),
+          // Chấm mang hai danh tính, nên nó phải phản ứng với cả hai. Trước đây
+          // chỉ id ô giao có tác dụng: neo vào `x1` — một element khai tường
+          // minh, validate xanh — không làm sáng chấm nào.
+          ...decorationForAny(ctx, [incidenceId(token.id, set.id), token.id], token.emphasis),
         }),
       );
     });
@@ -261,6 +265,27 @@ function renderDots(derived: SetDerived, ctx: RenderContext): SvgNode[] {
       // Con số dưới nhãn: chiều cao đọc nhanh nhưng đọc **xấp xỉ**, và một lập
       // luận cực trị cần con số chính xác.
       label(`set-size-${set.id}`, x, CELL * 0.95, String(set.size), 'middle', ctx),
+    );
+
+    // Tay cầm cho **tập**: cả cột chấm.
+    //
+    // View này không gọi `decorationAttrs` cho tập một lần nào, nên neo vào `A`
+    // không làm sáng gì — `venn-three-clubs` s3 neo đúng vào ba tập, và validate
+    // xanh cả ba. Cột chấm **là** tập, nên viền cả cột mới đúng câu "tập $A$ có
+    // bao nhiêu phần tử".
+    //
+    // `fill: 'none'`: nó chỉ cần mang halo, không cần nhận con trỏ — `setHitTest`
+    // trả lời chuyện đó bằng hình học.
+    const stack = Math.max(members.length, 1) * DOT_PITCH + DOT_PITCH * 0.2;
+    nodes.push(
+      keyed(set.id, 'rect', {
+        x: round(x - DOT_R * 1.6),
+        y: round(-stack),
+        width: round(DOT_R * 3.2),
+        height: round(stack),
+        fill: 'none',
+        ...decorationAttrs(ctx, set.id, set.emphasis),
+      }),
     );
   });
 

@@ -16,6 +16,7 @@ export {
   patternId,
   patternDefs,
   decorationAttrs,
+  decorationForAny,
   elementDecoration,
   groupAttrs,
   type RenderContext,

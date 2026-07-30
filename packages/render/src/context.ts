@@ -118,6 +118,34 @@ export function decorationAttrs(
   return {};
 }
 
+/**
+ * Trang trí cho một node **mang nhiều danh tính**.
+ *
+ * Có những node trả lời hơn một tên, và đó không phải tuỳ tiện: ô ma trận kề đeo
+ * key là id **ô** (để diff không gộp ô $(u,v)$ với ô $(v,u)$) và `data-el` là id
+ * **cạnh** (để nhấn một cạnh sáng cả hai ô) — hai vai thật sự khác nhau, cả hai
+ * đều đúng. Chấm của view dots cũng vậy: key là ô giao, `data-el` là phần tử.
+ *
+ * `decorationAttrs` chỉ nhận **một** id, nên engine buộc phải chọn — và chọn cái
+ * nào thì cái kia neo vào im lặng. Hàm này bỏ hẳn lựa chọn ấy: thử lần lượt, ai
+ * đang được nhấn thì thắng. Thứ tự trong `ids` là thứ tự ưu tiên khi **cả hai**
+ * cùng được nhấn.
+ */
+export function decorationForAny(
+  ctx: RenderContext,
+  ids: readonly string[],
+  emphasis?: string,
+  weightScale = 1,
+): Record<string, string | number> {
+  for (const id of ids) {
+    const found = decorationAttrs(ctx, id, undefined, weightScale);
+    if (Object.keys(found).length > 0) return found;
+  }
+  // Không id nào được nhấn: `emphasis` do tác giả đặt vẫn phải có tác dụng, và
+  // nó không phụ thuộc id nào cả.
+  return decorationAttrs(ctx, ids[0] ?? '', emphasis, weightScale);
+}
+
 /** Dạng nhận thẳng element, cho engine không phải tự bóc `emphasis`. */
 export function elementDecoration(
   ctx: RenderContext,

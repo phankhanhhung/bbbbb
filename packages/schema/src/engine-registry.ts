@@ -44,6 +44,23 @@ export interface EngineSchemaFragment {
    */
   implicitElementIds(scene: Scene): Set<string>;
   /**
+   * Nửa còn lại của `implicitElementIds`: id **có khai trong `elements[]`** mà
+   * view hiện tại **không vẽ**.
+   *
+   * Có những element mà một view cố ý bỏ qua, và bỏ qua là đúng: phổ thắng–thua
+   * của engine game vẽ **thế cờ**, không vẽ từng đống; view chấm của engine set
+   * vẽ một chấm cho mỗi quan hệ thuộc, nên phần tử không thuộc tập nào không có
+   * chấm nào. Không phải lỗi renderer — đó là ý nghĩa của view.
+   *
+   * Nhưng nó **là** lỗi khi một anchor trỏ vào đó, và đó chính là lớp lỗi mà
+   * ANC-02 không nhìn thấy: id tồn tại, `validate` xanh, rê chuột không sáng gì.
+   * Khai ra ở đây thì tầng structure bắt được, và chốt canh danh tính biết đây là
+   * sự thật đã khai chứ không phải nợ.
+   *
+   * Tuỳ chọn: engine không khai thì mặc định "view nào cũng vẽ mọi element".
+   */
+  undrawnElementIds?(scene: Scene): Set<string>;
+  /**
    * Tra validator built-in theo id (BD-04), kể cả dạng có tham số
    * (`pieces-per-row:2`). Trả `null` khi engine không biết id đó — validate biến
    * điều đó thành lỗi, thay vì để một ràng buộc gõ sai im lặng không chạy.
