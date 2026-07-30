@@ -23,6 +23,54 @@ export interface IndexOptions {
   out: string;
 }
 
+/**
+ * Sổ thứ tự bài — **chỉ ghi thêm, không bao giờ xếp lại**.
+ *
+ * Vì sao là một file chứ không tính từ git lúc dựng: `git log --diff-filter=A`
+ * cần lịch sử đầy đủ, mà CI clone nông thì nó trả rỗng và cả bảng số **im lặng**
+ * sai. Tệ hơn, `--follow` đoán rename bằng độ giống nội dung: với file bài — cùng
+ * khung JSON, cùng lối viết — nó đoán sai, và lần dựng sổ đầu tiên đã quy một bài
+ * của M40 về tận M11.
+ *
+ * Sổ giải luôn cả một chuyện khác: **số bài phải ổn định**. Suy từ git thì viết
+ * lại lịch sử là đổi hết số; suy từ ngày `created` thì vô nghĩa (cả kho chỉ có
+ * hai giá trị). Ghi ra file thì số đọc được trong diff, và người duyệt thấy ngay
+ * khi có gì xen vào giữa.
+ *
+ * `newest` là mẻ bài **được thêm gần nhất**. Nó tự thay ở lần thêm bài sau, nên
+ * nhãn "MỚI" hết hạn mà không ai phải nhớ đi gỡ — một dấu "mới" gài cứng sẽ nằm
+ * lại mãi và thành lời nói dối.
+ */
+interface OrderLedger {
+  readonly order: readonly string[];
+  readonly newest: readonly string[];
+}
+
+const ORDER_FILE = 'order.json';
+
+async function readLedger(root: string): Promise<OrderLedger> {
+  try {
+    return JSON.parse(await readFile(join(root, ORDER_FILE), 'utf8')) as OrderLedger;
+  } catch {
+    // Chưa có sổ: mở sổ rỗng. **Không** đoán thứ tự, và `newest` để rỗng — không
+    // biết bài nào mới thì nói là không biết, chứ không gắn nhãn "MỚI" cho cả kho.
+    return { order: [], newest: [] };
+  }
+}
+
+/**
+ * Ghi thêm id chưa có vào cuối sổ, theo thứ tự **id tăng dần** cho xác định.
+ *
+ * Bài bị xoá vẫn nằm lại trong sổ: gỡ nó ra sẽ kéo tụt số của mọi bài sau, tức là
+ * đổi nghĩa những con số mà người ta có thể đã nhắc tới.
+ */
+function extend(ledger: OrderLedger, ids: readonly string[]): OrderLedger {
+  const known = new Set(ledger.order);
+  const fresh = [...ids].filter((id) => !known.has(id)).sort();
+  if (fresh.length === 0) return ledger;
+  return { order: [...ledger.order, ...fresh], newest: fresh };
+}
+
 export interface IndexEntry {
   readonly id: string;
   readonly title: string;
@@ -39,6 +87,10 @@ export interface IndexEntry {
   readonly hasBranching: boolean;
   readonly hasInvariants: boolean;
   readonly hasSandbox: boolean;
+  /** Số thứ tự trong sổ, đếm từ $1$. Chỉ để hiển thị — không phải danh tính. */
+  readonly ordinal: number;
+  /** Thuộc mẻ bài thêm gần nhất. */
+  readonly isNew: boolean;
 }
 
 export async function runIndex(options: IndexOptions): Promise<number> {
@@ -49,14 +101,27 @@ export async function runIndex(options: IndexOptions): Promise<number> {
     .map((e) => join(e.parentPath ?? dir, e.name))
     .sort();
 
-  const index: IndexEntry[] = [];
-
+  const problems: Problem[] = [];
   for (const file of files) {
     const problem = JSON.parse(await readFile(file, 'utf8')) as Problem;
     // Chỉ mục là mặt tiền công khai: bài draft chưa thuộc về nó.
     if (problem.status !== 'published') continue;
-    index.push(toEntry(problem));
+    problems.push(problem);
   }
+
+  // Sổ giữ **mọi** bài từng thấy, kể cả draft đã rút: số thứ tự không được tụt.
+  const ledger = extend(await readLedger(options.root), problems.map((p) => p.id));
+  await writeFile(
+    join(options.root, ORDER_FILE),
+    `${JSON.stringify(ledger, null, 2)}\n`,
+    'utf8',
+  );
+
+  const rank = new Map(ledger.order.map((id, i) => [id, i + 1]));
+  const newest = new Set(ledger.newest);
+  const index: IndexEntry[] = problems
+    .map((problem) => toEntry(problem, rank.get(problem.id) ?? 0, newest.has(problem.id)))
+    .sort((a, b) => a.ordinal - b.ordinal);
 
   await mkdir(dirname(options.out), { recursive: true });
   await writeFile(options.out, `${JSON.stringify(index, null, 2)}\n`, 'utf8');
@@ -82,7 +147,7 @@ export async function runIndex(options: IndexOptions): Promise<number> {
   return index.length;
 }
 
-function toEntry(problem: Problem): IndexEntry {
+function toEntry(problem: Problem, ordinal: number, isNew: boolean): IndexEntry {
   const steps = problem.solutions.flatMap((s) => s.steps);
   const narratives = steps
     .map((step) => (step.narrative ? stripValueMarkup(stripAnchorMarkup(step.narrative.vi)) : ''))
@@ -106,5 +171,7 @@ function toEntry(problem: Problem): IndexEntry {
     hasBranching: steps.some((s) => s.edge_type === 'case'),
     hasInvariants: (problem.invariants?.length ?? 0) > 0,
     hasSandbox: problem.sandbox !== undefined,
+    ordinal,
+    isNew,
   };
 }
