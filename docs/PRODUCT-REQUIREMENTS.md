@@ -35,6 +35,10 @@ nói *hệ thống phải làm gì*. Ba luật giải quyết chồng chéo, và
 
 Ngoài ba họ ấy, tài liệu này chỉ trích ID sẵn có.
 
+Hai họ nữa sống ở `docs/ENGINE-BACKLOG.md` — `SQ-*` (engine dãy) và `DV-*` (engine
+derivation) — vì hai engine ấy dựng ngoài roadmap SRS nên chưa có họ nào. Backlog
+ấy cũng mở tiếp số cho các họ sẵn có (`BD-07+`, `GR-09+`, `GM-05+`, `PT-04+`).
+
 ---
 
 ## 1. Tóm tắt sản phẩm

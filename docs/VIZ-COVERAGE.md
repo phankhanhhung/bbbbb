@@ -291,6 +291,10 @@ là hiểu được, và ở bài đó thì niềm tin ấy sai.
 
 ## 7. Hàng đợi — đã cạn
 
+> Hàng đợi **engine** cạn không có nghĩa là hết việc. Danh sách làm mạnh **từng
+> engine** — mỗi hạng mục trỏ về một dòng 🟡/❌ cụ thể của §2 — nằm ở
+> `docs/ENGINE-BACKLOG.md`.
+
 Chi phí tính bằng **M4** — một engine graph, tức khoảng hai tuần ở nhịp 35h/tuần.
 "Lãi" là số điểm phủ thu được. Sắp theo **lãi trên chi phí**, không theo thứ tự
 trong SRS.

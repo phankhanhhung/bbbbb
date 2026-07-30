@@ -19,6 +19,9 @@ proof assistant, LMS hay nền tảng multi-author. Đặc tả đầy đủ n�
   thể gánh phần lập luận. Đây là ước lượng chuyên gia, không phải benchmark
   trên một tập đề hoàn chỉnh; xem [`docs/VIZ-COVERAGE.md`](docs/VIZ-COVERAGE.md).
 - Roadmap và các gate còn lại: [`docs/PLAN-P1.md`](docs/PLAN-P1.md).
+- Checklist làm mạnh từng engine, có bằng chứng cho từng hạng mục:
+  [`docs/ENGINE-BACKLOG.md`](docs/ENGINE-BACKLOG.md). Là **danh sách chờ**, không
+  phải kế hoạch chạy ngay — `R-13` chặn nó lại sau G-C.
 - Định hướng sản phẩm và các khoảng trống ưu tiên:
   [`docs/PRODUCT-REQUIREMENTS.md`](docs/PRODUCT-REQUIREMENTS.md). Nó nằm **trên**
   SRS một tầng; SRS vẫn giữ quyền với mọi requirement ID đã có (PRD-01).
