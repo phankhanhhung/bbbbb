@@ -3,6 +3,7 @@ import {
   decorationAttrs,
   el,
   elementDecoration,
+  estimateTextWidth,
   fillForClass,
   groupAttrs,
   inkForClass,
@@ -50,7 +51,15 @@ export const boardRenderer: EngineRenderer = {
     // Bảng (PRN-03) mọc thêm nhãn ở lề trái/trên và dòng tổng ở lề phải/dưới;
     // quên chừa chỗ thì nhãn bị cắt đúng như nhãn đỉnh đồ thị từng bị.
     const table = config?.table;
-    const left = table?.row_labels ? CELL * 1.4 : 0;
+    // Lề trái đọc từ **nhãn dài nhất**, không từ một hằng số: nhãn được phép tới
+    // 10 ký tự, mà `CELL * 1.4` chỉ đủ cho khoảng năm. Công thức khớp đúng chỗ đặt
+    // chữ — nhãn căn phải kết thúc ở `-CELL * 0.3` rồi kéo sang trái theo bề rộng
+    // của nó — nên nhãn ngắn vẫn ra đúng con số cũ và golden không đổi.
+    const longestRowLabel = Math.max(
+      0,
+      ...(table?.row_labels ?? []).map((label) => estimateTextWidth(label, ROW_LABEL_SIZE)),
+    );
+    const left = table?.row_labels ? Math.max(CELL * 1.4, longestRowLabel + CELL * 0.3) : 0;
     const top = table?.col_labels ? CELL * 0.9 : 0;
     const right = table?.show_sums ? CELL * 1.1 : 0;
     const bottom = table?.show_sums ? CELL * 0.9 : 0;
@@ -87,6 +96,16 @@ export const boardRenderer: EngineRenderer = {
     ];
   },
 };
+
+/** Cỡ chữ nhãn hàng — một hằng số, để khung và chữ không đọc hai con số khác nhau. */
+const ROW_LABEL_SIZE = CELL * 0.38;
+
+/** Cỡ chữ nhãn cột: cỡ chuẩn, co lại nếu chữ rộng hơn một ô. */
+function colLabelSize(label: string): number {
+  const wanted = estimateTextWidth(label, ROW_LABEL_SIZE);
+  const room = CELL * 0.92;
+  return wanted <= room ? ROW_LABEL_SIZE : (ROW_LABEL_SIZE * room) / wanted;
+}
 
 function byLayer(a: SceneElement, b: SceneElement): number {
   return (a.layer ?? 0) - (b.layer ?? 0);
@@ -191,6 +210,7 @@ function renderTable(config: BoardConfig, ctx: RenderContext): SvgNode[] {
     value: string,
     anchor: string,
     strong = false,
+    size?: number,
   ): void => {
     // `text` là **nội dung**, không phải thuộc tính — đặt nhầm chỗ thì SVG hợp
     // lệ, hiện ra `text="5"` và không một con số nào xuất hiện.
@@ -203,7 +223,7 @@ function renderTable(config: BoardConfig, ctx: RenderContext): SvgNode[] {
           'text-anchor': anchor,
           'dominant-baseline': 'central',
           'font-family': ctx.theme.type.uiFamily,
-          'font-size': CELL * (strong ? 0.42 : 0.38),
+          'font-size': size ?? CELL * (strong ? 0.42 : 0.38),
           'font-weight': strong ? 600 : 400,
           fill: strong ? ctx.theme.object.pieceGlyph : ctx.theme.surface.guide,
         },
@@ -217,8 +237,19 @@ function renderTable(config: BoardConfig, ctx: RenderContext): SvgNode[] {
     label(`row-label-${r}`, -CELL * 0.3, r * CELL + CELL / 2, value, 'end');
   });
 
+  // Nhãn cột **co lại cho vừa một ô**. Nhãn dài hơn ô thì hai nhãn cạnh nhau dính
+  // vào nhau và đọc ra một chuỗi vô nghĩa — "dec=1dec=2dec=3". Không có gì báo:
+  // chữ vẫn vẽ đủ, khung vẫn đúng. Chỉ nhìn mới thấy.
   (table.col_labels ?? []).slice(0, config.cols).forEach((value, c) => {
-    label(`col-label-${c}`, c * CELL + CELL / 2, -CELL * 0.35, value, 'middle');
+    label(
+      `col-label-${c}`,
+      c * CELL + CELL / 2,
+      -CELL * 0.35,
+      value,
+      'middle',
+      false,
+      colLabelSize(value),
+    );
   });
 
   if (table.show_sums) {

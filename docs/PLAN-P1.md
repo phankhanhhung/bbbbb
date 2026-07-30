@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M25 xong (7 engine, phủ ~85%); kho 62 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M26 xong (7 engine, phủ ~85%); kho 63 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,51 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M26 — Analyzer dãy con đơn điệu (SQ-01) · [E] — **xong**
+
+Hạng mục #4 của backlog, và là loại hạng mục dễ đánh giá thấp: "thêm một analyzer".
+Nhưng analyzer này **là** lời giải của cả một họ bài, không phải số liệu phụ.
+
+Với mỗi phần tử, tính $(inc_i, dec_i)$ — độ dài dãy con tăng và giảm ngặt dài nhất
+**kết thúc** tại nó. Hai phần tử khác nhau không bao giờ mang cùng một cặp: với
+$i < j$ thì hoặc $a_i < a_j$ (nên $inc$ tăng) hoặc $a_i > a_j$ (nên $dec$ tăng).
+Ánh xạ đơn ánh ấy biến Erdős–Szekeres thành một phép **đếm ô**: $n$ phần tử cần
+$n$ cặp khác nhau, mà nếu mọi cặp nằm trong $[1..k]^2$ thì $n \le k^2$.
+
+Ba mặt, và mặt thứ ba là mặt đáng giá nhất:
+
+1. **Nhìn** — `show_monotone` in cặp dưới từng ô. Chín số $3,2,1,6,5,4,9,8,7$ cho
+   ra đúng chín cặp của lưới $3 \times 3$, đọc thẳng trên hình.
+2. **Hỏi** — hai binding DSL `longest_increasing` / `longest_decreasing`, cộng
+   `inc`/`dec` trên từng phần tử. Quy hoạch động không viết được bằng grammar
+   không có biến (DSL-01), nên nếu không có sẵn thì tác giả **không có cách nào**
+   khẳng định con số ấy.
+3. **Chấm** — validator `no-monotone:<k>`, và nó có tính chất hiếm: với $k^2$ phần
+   tử thì **đạt được** (xếp thành $k$ khối giảm dần), với $k^2+1$ thì **không thể**.
+   Một mục tiêu sandbox bất khả thi **có chủ đích** — người học xếp bao lâu cũng
+   không xanh, và đó chính là điều định lý nói. Cùng khuôn với `proper-colouring:2`
+   trên bàn ong ở M24b.
+
+Đối chứng là **vét cạn**: duyệt mọi tập con của mọi hoán vị của $1..6$ — $720$ dãy
+— và so với quy hoạch động. Cộng một test khẳng định các cặp đôi một khác nhau,
+tức chính bổ đề của lời giải.
+
+Bài mới **`erdos-szekeres-monotone`**, và nó là bài đầu tiên trong kho **đổi engine
+giữa chừng**: ba step đầu ở `sequence`, step thứ tư là một bảng `board` $3\times3$
+mà mỗi ô mang một số của dãy — ba khối của dãy hiện ra thành ba **hàng**. Đúng lúc
+ấy validate bắt một chuyện đáng ghi: **invariant phải chạy được trên mọi step**,
+mà `longest_increasing` không tồn tại ở engine board. Luật ấy đúng, và hệ quả là
+bài này không có invariant strip — một bài đổi engine giữa chừng thì không có đại
+lượng nào là bất biến của *cả* lời giải.
+
+**Một lỗi hình nữa tìm ra bằng cách nhìn**: nhãn cột của bảng PRN-03 dài hơn một ô
+thì hai nhãn cạnh nhau **dính vào nhau** — "dec=1dec=2dec=3". Không có gì báo: chữ
+vẫn vẽ đủ, khung vẫn đúng. Nay nhãn cột co lại cho vừa một ô, và lề trái đọc từ
+nhãn hàng dài nhất thay vì một hằng số. Nhãn ngắn ra đúng con số cũ nên **không
+golden nào đổi**.
+
+1025 test, 63 bài 0 lỗi 0 cảnh báo, e2e 42 xanh.
 
 ### M25 — Luật đọc nước vừa đi: Nim Fibonacci (GM-09) · [E] — **xong**
 
@@ -1157,7 +1202,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 62 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 63 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):

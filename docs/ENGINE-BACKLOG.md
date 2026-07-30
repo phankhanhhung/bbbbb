@@ -1,6 +1,6 @@
 # CombViz — Checklist làm mạnh từng engine
 
-**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · `GM-05/06/07/08/09` và `BD-07` **đã làm ở M22–M25**
+**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · `GM-05/06/07/08/09`, `BD-07` và `SQ-01` **đã làm ở M22–M26**
 
 ## 0. Đọc checklist này đúng cách
 
@@ -11,8 +11,8 @@ trong khi chưa có bài nào do chính chủ soạn là **R-1** (content bottle
 mới. `PRD-07` cấm thêm engine chỉ để tăng coverage. Tài liệu này là **danh sách
 chờ**, dựng sẵn để khi mở ra thì không phải nghĩ lại — không phải lệnh xuất phát.
 
-> **Ngoại lệ đã dùng, ngày 2026-07-30 (M22–M25).** Sáu hạng mục đã làm:
-> `GM-05/06/07` (#1–#3), `GM-08` (#13), `BD-07` (#7) và `GM-09` (mới). Điều kiện chung để chúng
+> **Ngoại lệ đã dùng, ngày 2026-07-30 (M22–M26).** Bảy hạng mục đã làm:
+> `GM-05/06/07` (#1–#3), `GM-08` (#13), `BD-07` (#7), `GM-09` (mới) và `SQ-01` (#4). Điều kiện chung để chúng
 > **không** vi phạm `R-13` là điều kiện §2.6 vốn đã viết ra: không thêm engine nào
 > (`PRD-07` không đụng tới), chỉ mở rộng thứ đã có, và **mỗi hạng mục đi kèm nội
 > dung** — bốn bài mới, kho 56 → 60 — nên năng lực và nội dung tăng cùng nhịp.
@@ -36,13 +36,13 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 62 bài đã xuất bản (56 lúc dựng tài liệu này, cộng sáu bài của M22–M25):
+Đo trên 63 bài đã xuất bản (56 lúc dựng tài liệu này, cộng bảy bài của M22–M26):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
 | `board` | 22 | Chủ lực. Khoảng trống ở đây là khoảng trống **thật sự cảm thấy được**. |
 | `graph` | 18 | Chủ lực. Cùng loại. |
-| `sequence` | 10 | Đủ để tin. |
+| `sequence` | 11 | Đủ để tin. |
 | `game` | 6 | Tầng A ở §2.6 **đã làm hết** (M22–M23): ba luật mới kèm ba bài kinh điển, cộng phổ hai chiều. |
 | `point` | 3 | Nội dung trước. Engine chưa bị dùng đủ để biết nó thiếu gì. |
 | `set` | 3 | Nội dung trước. |
@@ -72,7 +72,7 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | ~~1~~ | ~~`GM-05` nước đi đụng **nhiều** đống~~ ✅ M22 | game | Wythoff | rất rẻ | ~~❌ "một nước chỉ đụng **một** đống"~~ |
 | ~~2~~ | ~~`GM-06` luật đọc đống khác~~ ✅ M22 | game | trò Euclid | rất rẻ | ~~❌ "nước ăn theo đống kia"~~ |
 | ~~3~~ | ~~`GM-07` hợp hai luật~~ ✅ M22 | game | Nim Lasker | rất rẻ | ~~§4 "`rule` là **một** thành viên"~~ |
-| 4 | `SQ-01` analyzer dãy con đơn điệu | sequence | Erdős–Szekeres | rẻ | 🟡 "thiếu analyzer dãy con đơn điệu" |
+| ~~4~~ | ~~`SQ-01` analyzer dãy con đơn điệu~~ ✅ M26 | sequence | Erdős–Szekeres | rẻ | ~~🟡 "thiếu analyzer dãy con đơn điệu"~~ |
 | 5 | `GR-09` analyzer mã Prüfer | graph | Cayley $n^{n-2}$ | rẻ | 🟡 "thiếu analyzer sinh mã Prüfer" |
 | 6 | `BD-08`+`SQ-02` luật lan truyền | board+seq | chip-firing, lights-out | vừa | 🟡 "thiếu luật lan truyền" |
 | ~~7~~ | ~~`BD-07` lưới tam giác / lục giác~~ ✅ M24 | board | phủ hình phi vuông | vừa | ~~§2 — engine **không vẽ được**~~ |
@@ -139,13 +139,14 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
   dùng thật. Giữ nguyên quyết định.
 - luồng cực đại / cắt nhỏ nhất — hiếm trong tổ hợp thi đấu.
 
-### 2.3 `sequence` — 10 bài
+### 2.3 `sequence` — 11 bài
 
 **Tầng A**
 
-- **SQ-01 [P2] SHOULD** — **analyzer dãy con đơn điệu dài nhất** (tăng và giảm).
-  Dòng 🟡 của Erdős–Szekeres nói đúng chỗ này, và Erdős–Szekeres là một trong những
-  kết quả hay được ra đề nhất. Một analyzer, một 🟡 thành ✅.
+- **SQ-01 ✅ (M26)** — **analyzer dãy con đơn điệu dài nhất**. Cặp $(inc, dec)$ trên
+  từng phần tử (`show_monotone`), hai binding DSL, và validator `no-monotone:<k>`
+  — một mục tiêu sandbox **bất khả thi có chủ đích** khi $n > k^2$. Kèm bài
+  `erdos-szekeres-monotone`.
 - **SQ-02 [P2] SHOULD** — **luật lan truyền cho quá trình lặp**, song song `BD-08`.
   Cùng một họ bài nhìn từ phía dãy: "mỗi bước, thay $a_i$ bằng …".
 

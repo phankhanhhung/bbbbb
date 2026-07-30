@@ -43,6 +43,15 @@ export const SequenceConfig = Type.Object(
     show_index: Type.Optional(Type.Boolean({ default: false })),
     /** Hiện tổng ở cuối hàng — đại lượng bất biến hay gặp nhất của họ bài này. */
     show_total: Type.Optional(Type.Boolean({ default: false })),
+    /**
+     * SQ-01 — hiện cặp $(inc, dec)$ dưới từng phần tử.
+     *
+     * Không phải số liệu trang trí: cặp ấy **là** lời giải Erdős–Szekeres. Hai
+     * phần tử khác nhau không bao giờ mang cùng một cặp, nên một dãy $n$ phần tử
+     * cần $n$ cặp khác nhau — và nếu mọi cặp đều nằm trong $[1..k] \times [1..k]$
+     * thì $n \le k^2$. Bật cờ này là biến định lý thành một phép đếm ô.
+     */
+    show_monotone: Type.Optional(Type.Boolean({ default: false })),
     /** Nhãn đặt trước hàng, ví dụ "Bảng:" hay "Đống sỏi:". */
     caption: Type.Optional(Type.String({ maxLength: 48 })),
   },

@@ -35,6 +35,9 @@ export function sequenceEnvironment(scene: Scene): DslEnvironment {
       color_class: item.colorClass ?? 0,
       label: item.label ?? '',
       even: item.value % 2 === 0,
+      /** SQ-01: dãy con tăng / giảm ngặt dài nhất **kết thúc** tại phần tử này. */
+      inc: item.inc,
+      dec: item.dec,
     }),
   );
 
@@ -51,6 +54,15 @@ export function sequenceEnvironment(scene: Scene): DslEnvironment {
        * tính chẵn lẻ của hoán vị (15-puzzle, sắp xếp bằng đổi chỗ).
        */
       inversions: inversions(state),
+      /**
+       * SQ-01 — dãy con đơn điệu dài nhất của cả dãy.
+       *
+       * Có sẵn vì cả họ Erdős–Szekeres hỏi đúng hai con số này, và viết chúng bằng
+       * `count` lồng nhau thì không viết nổi: quy hoạch động không diễn đạt được
+       * trong một grammar không có biến (DSL-01).
+       */
+      longest_increasing: state.longestIncreasing,
+      longest_decreasing: state.longestDecreasing,
       cuts: state.cuts.map((cut) => element(cut.id, { before: cut.before })),
     },
 

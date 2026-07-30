@@ -55,7 +55,9 @@ export const sequenceRenderer: EngineRenderer = {
     const body =
       derived.mode === 'piles'
         ? derived.items.map((item) => renderPile(item, derived, ctx))
-        : derived.items.map((item) => renderSlot(item, config.show_index === true, ctx));
+        : derived.items.map((item) =>
+            renderSlot(item, config.show_index === true, config.show_monotone === true, ctx),
+          );
 
     return [
       el('g', { class: 'cv-cuts' }, derived.cuts.map((cut) => renderCut(cut, derived, ctx))),
@@ -111,13 +113,21 @@ export function viewportOf(scene: Scene): Viewport {
   }
 
   const indexRoom = config.show_index ? SLOT * 0.75 : 0;
+  // Cặp $(inc, dec)$ nằm dưới cùng, nên khung phải chừa thêm — quên là chữ nằm
+  // ngoài mép dưới, đúng lỗi caption của M22 chỉ khác trục.
+  const monotoneRoom = config.show_monotone ? SLOT * 0.75 : 0;
   const top = -PADDING - captionRoom;
-  const bottom = SLOT + indexRoom + PADDING;
+  const bottom = SLOT + indexRoom + monotoneRoom + PADDING;
   return { x: -PADDING, y: top, width, height: bottom - top };
 }
 
 /** Chế độ `sequence`: một ô vuông có số bên trong. */
-function renderSlot(item: DerivedItem, showIndex: boolean, ctx: RenderContext): SvgNode {
+function renderSlot(
+  item: DerivedItem,
+  showIndex: boolean,
+  showMonotone: boolean,
+  ctx: RenderContext,
+): SvgNode {
   const x = slotX(item.pos);
   const children: SvgNode[] = [
     el('rect', {
@@ -160,6 +170,27 @@ function renderSlot(item: DerivedItem, showIndex: boolean, ctx: RenderContext): 
           fill: ctx.theme.surface.guide,
         },
         String(item.pos + 1),
+      ),
+    );
+  }
+
+  if (showMonotone) {
+    // Cặp $(inc, dec)$ dưới ô, dưới cả chỉ số nếu có. Đây **là** lời giải
+    // Erdős–Szekeres chứ không phải chú thích: hai phần tử không bao giờ mang
+    // cùng một cặp, nên đếm cặp là đếm phần tử.
+    children.push(
+      text(
+        'text',
+        {
+          x: x + SLOT / 2,
+          y: SLOT + (showIndex ? SLOT * 1.2 : SLOT * 0.5),
+          'text-anchor': 'middle',
+          'dominant-baseline': 'central',
+          'font-family': ctx.theme.type.mathFamily,
+          'font-size': SLOT * 0.3,
+          fill: ctx.theme.emphasis.focusHalo,
+        },
+        `${item.inc},${item.dec}`,
       ),
     );
   }

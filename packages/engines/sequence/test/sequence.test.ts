@@ -6,6 +6,7 @@ import { defaultTheme } from '@combviz/theme';
 import type { Scene } from '@combviz/schema';
 import {
   deriveSequence,
+  longestMonotone,
   resolveSequenceValidator,
   sequenceCommands,
   sequenceEnvironment,
@@ -349,5 +350,156 @@ describe('hit test', () => {
 describe('tóm tắt', () => {
   it('đếm phần tử, tổng, và số phần tử lẻ', () => {
     expect(sequenceSummary(scene([1, 2, 3, 4]))).toEqual({ count: 4, total: 10, odd: 2 });
+  });
+});
+
+/**
+ * SQ-01 — analyzer dãy con đơn điệu.
+ *
+ * Đối chứng là **vét cạn**: với dãy ngắn, duyệt mọi tập con và lấy tập đơn điệu
+ * dài nhất. Quy hoạch động là một tầng gián tiếp, và một lỗi ở đó vẫn cho ra
+ * những con số trông hoàn toàn hợp lý — cùng lý do mà `bruteWin` tồn tại bên
+ * engine game.
+ */
+describe('SQ-01 — dãy con đơn điệu', () => {
+  const seq = (values: readonly number[], config: Record<string, unknown> = {}): Scene => ({
+    engine: 'sequence',
+    config: { mode: 'sequence', ...config },
+    elements: values.map((value, pos) => ({ id: `i${pos}`, type: 'item', value, pos })),
+  });
+
+  /** Dãy con đơn điệu dài nhất, tính bằng cách duyệt **mọi** tập con. */
+  const brute = (values: readonly number[], up: boolean): number => {
+    let best = 0;
+    for (let mask = 1; mask < 1 << values.length; mask += 1) {
+      const picked = values.filter((_, i) => (mask >> i) & 1);
+      const ok = picked.every(
+        (v, i) => i === 0 || (up ? (picked[i - 1] as number) < v : (picked[i - 1] as number) > v),
+      );
+      if (ok) best = Math.max(best, picked.length);
+    }
+    return best;
+  };
+
+  it('khớp vét cạn trên mọi hoán vị của $1..6$', () => {
+    const permute = (xs: number[]): number[][] =>
+      xs.length <= 1
+        ? [xs]
+        : xs.flatMap((x, i) =>
+            permute([...xs.slice(0, i), ...xs.slice(i + 1)]).map((rest) => [x, ...rest]),
+          );
+
+    let checked = 0;
+    for (const values of permute([1, 2, 3, 4, 5, 6])) {
+      const derived = deriveSequence(seq(values));
+      expect({ values, inc: derived.longestIncreasing, dec: derived.longestDecreasing }).toEqual({
+        values,
+        inc: brute(values, true),
+        dec: brute(values, false),
+      });
+      checked += 1;
+    }
+    expect(checked).toBe(720);
+  });
+
+  it('**ngặt**: phần tử bằng nhau không nối dài dãy nào', () => {
+    const derived = deriveSequence(seq([2, 2, 2, 2]));
+    expect(derived.longestIncreasing).toBe(1);
+    expect(derived.longestDecreasing).toBe(1);
+  });
+
+  it('cặp $(inc, dec)$ **đôi một khác nhau** — đó là toàn bộ Erdős–Szekeres', () => {
+    for (const values of [
+      [3, 2, 1, 6, 5, 4, 9, 8, 7],
+      [1, 2, 3, 4, 5],
+      [5, 1, 4, 2, 3],
+      [10, 30, 20, 40, 15, 5],
+    ]) {
+      const items = deriveSequence(seq(values)).items;
+      const pairs = items.map((item) => `${item.inc},${item.dec}`);
+      expect({ values, distinct: new Set(pairs).size }).toEqual({
+        values,
+        distinct: values.length,
+      });
+    }
+  });
+
+  it('$k$ khối giảm dần đạt đúng cận $k^2$, và thêm một phần tử là vỡ', () => {
+    // $3, 2, 1, 6, 5, 4, 9, 8, 7$: chín số, không có dãy đơn điệu dài 4.
+    const tight = deriveSequence(seq([3, 2, 1, 6, 5, 4, 9, 8, 7]));
+    expect([tight.longestIncreasing, tight.longestDecreasing]).toEqual([3, 3]);
+
+    // Thêm số thứ mười, đặt ở **bất kỳ** đâu, luôn xuất hiện dãy dài 4.
+    for (let at = 0; at <= 9; at += 1) {
+      const values = [3, 2, 1, 6, 5, 4, 9, 8, 7];
+      values.splice(at, 0, 4.5);
+      const d = deriveSequence(seq(values));
+      expect({ at, longest: Math.max(d.longestIncreasing, d.longestDecreasing) }).toEqual({
+        at,
+        longest: expect.any(Number) as unknown as number,
+      });
+      expect(Math.max(d.longestIncreasing, d.longestDecreasing)).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it('`longestMonotone` trả về một chuỗi **thật sự** đơn điệu và đủ dài', () => {
+    for (const values of [[3, 2, 1, 6, 5, 4, 9, 8, 7], [5, 1, 4, 2, 3], [9, 7, 5, 3, 1]]) {
+      const derived = deriveSequence(seq(values));
+      for (const dir of ['increasing', 'decreasing'] as const) {
+        const chain = longestMonotone(derived, dir);
+        const picked = chain.map(
+          (id) => (derived.items.find((x) => x.id === id) as { value: number; pos: number }),
+        );
+        expect(picked).toHaveLength(
+          dir === 'increasing' ? derived.longestIncreasing : derived.longestDecreasing,
+        );
+        for (let i = 1; i < picked.length; i += 1) {
+          const a = picked[i - 1]!;
+          const b = picked[i]!;
+          expect({ values, dir, ordered: a.pos < b.pos }).toEqual({ values, dir, ordered: true });
+          expect({ values, dir, mono: dir === 'increasing' ? a.value < b.value : a.value > b.value })
+            .toEqual({ values, dir, mono: true });
+        }
+      }
+    }
+  });
+
+  it('validator `no-monotone:<k>` chỉ ra đúng chuỗi hỏng', () => {
+    const check = (k: number, values: readonly number[]) =>
+      resolveSequenceValidator(`no-monotone:${k}`)!.check(seq(values));
+
+    expect(check(3, [3, 2, 1, 6, 5, 4, 9, 8, 7]).ok).toBe(true);
+    const failed = check(3, [1, 2, 3, 4]);
+    expect(failed.ok).toBe(false);
+    expect(failed.violations).toHaveLength(4);
+    expect(failed.message).toMatch(/tăng dài 4/);
+
+    const down = check(2, [9, 5, 1]);
+    expect(down.message).toMatch(/giảm dài 3/);
+  });
+
+  it('DSL bày hai con số ấy, và bày cả cặp trên từng phần tử', () => {
+    const s = seq([3, 2, 1, 6, 5, 4, 9, 8, 7]);
+    const run = (expr: string): unknown =>
+      tryEvaluate(expr, sequenceEnvironment(s), DETERMINISTIC_BUDGET).value;
+    expect(run('longest_increasing')).toBe(3);
+    expect(run('longest_decreasing')).toBe(3);
+    // Cặp đôi một khác nhau ⇒ đếm phần tử có cùng cặp với một phần tử cho trước
+    // luôn ra 1.
+    expect(run('count(items, a => count(items, b => a.inc == b.inc && a.dec == b.dec) == 1)')).toBe(9);
+  });
+
+  it('hình vẽ cặp ra, và khung chừa đủ chỗ cho nó', () => {
+    const renderer = createRenderer([sequenceRenderer]);
+    const ctx = createContext(defaultTheme);
+    const s = seq([3, 1, 2], { show_monotone: true, show_index: true });
+    const svg = renderer.toSvg(s, ctx);
+    expect(svg).toContain('>1,1<');
+    expect(svg).toContain('>1,2<');
+    expect(svg).toContain('>2,2<');
+
+    const viewport = renderer.viewportOf(s, ctx);
+    const ys = [...svg.matchAll(/<text[^>]*\by="(-?[\d.]+)"/g)].map((m) => Number(m[1]));
+    expect(Math.max(...ys)).toBeLessThan(viewport.y + viewport.height);
   });
 });

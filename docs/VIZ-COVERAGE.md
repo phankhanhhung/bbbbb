@@ -52,11 +52,11 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 | Lưới / phủ hình / tô màu | 15% | 94% | 14.1 | quân ghép trên lưới tam giác/lục giác (`BD-09`); luật lan truyền (`BD-08`) |
 | Đồ thị | 22% | 94% | 20.7 | tô mặt (phần còn lại của GR-05), kiểm tính phẳng tổng quát |
 | Đếm / song ánh / đếm hai chiều | 14% | 85% | 11.9 | animation biến hình của PRN-04 |
-| Dãy số / thao tác lặp / quá trình | 16% | 90% | 14.4 | — (`engine-sequence`) |
+| Dãy số / thao tác lặp / quá trình | 16% | 92% | 14.7 | luật lan truyền (`SQ-02`/`BD-08`) |
 | Trò chơi | 7% | 66% | 4.62 | thế phải là **đa tập số** cộng nhiều nhất một con số nhớ; mọi game không-phải-đống vẫn chưa — cần GM-01 rule script thật |
 | Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
 | Hình học tổ hợp | 5% | 75% | 3.75 | tô vùng do các đoạn chia (PT-03), đường tròn |
-| Hoán vị / thứ tự | 6% | 95% | 5.7 | — (chu trình hoán vị + poset/Hasse + Dilworth) |
+| Hoán vị / thứ tự | 6% | 97% | 5.8 | — (chu trình hoán vị + poset/Hasse + Dilworth + dãy con đơn điệu) |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 25% | 0.75 | derivation gánh được phần *đại số*; xác suất và entropy thì **không** — xem §6 |
 | **Tổng** | **100%** | | **~85%** | |
@@ -88,7 +88,7 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Tập con ↔ xâu nhị phân ($2^n$) | song ánh | ✅ có trong kho (view song ánh) |
 | Quy tắc nhân, hoán vị, tổ hợp, Pascal, đường đi lưới | đếm cơ bản | ✅ mười bài trong kho |
 | Đường đi lưới / số Catalan | đếm | ✅ bảng quy hoạch động trên board |
-| Erdős–Szekeres (dãy đơn điệu) | hoán vị | 🟡 vẽ được dãy, thiếu analyzer dãy con đơn điệu |
+| Erdős–Szekeres (dãy đơn điệu) | hoán vị | ✅ có trong kho (SQ-01: cặp $(inc,dec)$ hiện dưới từng ô) |
 | Hoán vị 15-puzzle (chẵn lẻ) | hoán vị | ✅ `inversions` + `cycles`/`sign` + layout chu trình |
 | Định lý Sperner (phản xích) | hệ tập hợp | ✅ có trong kho (`engine-set`, validator `antichain`) |
 | Định lý Dilworth | poset | ✅ có trong kho (sơ đồ Hasse + nhân chứng phản xích) |
@@ -464,7 +464,7 @@ không, và không phải vì thiếu công sức.
 ## 8. Cảnh báo về thứ tự
 
 **AUT-KPI là gate có răng:** *trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **62 bài** — nhưng **không bài nào do chính
+engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **63 bài** — nhưng **không bài nào do chính
 chủ soạn**, và người duyệt cũng là người soạn. Theo đúng luật của chính dự án,
 việc còn nợ không phải engine nào trong bảng §7, mà là **soạn tay 3–5 bài**
 (G-C), rồi mới đóng băng schema 1.0.0.

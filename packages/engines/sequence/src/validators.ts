@@ -4,7 +4,7 @@ import {
   type SceneValidator,
   type ValidatorOutcome,
 } from '@combviz/schema';
-import { deriveSequence } from './geometry.js';
+import { deriveSequence, longestMonotone } from './geometry.js';
 
 /**
  * Validator built-in của Sequence engine.
@@ -142,6 +142,35 @@ export function resolveSequenceValidator(id: string): SceneValidator | null {
     };
   }
 
+  /**
+   * `no-monotone:<k>` — không có dãy con đơn điệu nào dài quá $k$ (SQ-01).
+   *
+   * Mục tiêu sandbox đúng của họ Erdős–Szekeres, và nó có một tính chất hiếm: với
+   * $k^2$ phần tử thì **đạt được** (xếp thành $k$ khối giảm dần), còn với
+   * $k^2 + 1$ thì **không thể** — người học xếp bao lâu cũng không xanh, và đó
+   * chính là điều định lý nói. Một mục tiêu bất khả thi có chủ đích.
+   */
+  if (name === 'no-monotone' && arg !== undefined) {
+    return {
+      id,
+      label: `Không có dãy con đơn điệu dài quá ${arg}`,
+      check(scene) {
+        const derived = deriveSequence(scene);
+        const worst =
+          derived.longestIncreasing >= derived.longestDecreasing ? 'increasing' : 'decreasing';
+        const length = Math.max(derived.longestIncreasing, derived.longestDecreasing);
+        if (length <= arg) return OK;
+        return {
+          ok: false,
+          // Chỉ ra **chuỗi** quá dài, không tô đỏ cả dãy: người học đang xếp lại
+          // thì thứ họ cần thấy là chuỗi nào đang hỏng.
+          violations: [...longestMonotone(derived, worst)],
+          message: `Có dãy con ${worst === 'increasing' ? 'tăng' : 'giảm'} dài ${length}, quá ${arg}`,
+        };
+      },
+    };
+  }
+
   if (name === 'max-value' && arg !== undefined) {
     return {
       id,
@@ -165,4 +194,5 @@ export const SEQUENCE_VALIDATOR_IDS: readonly string[] = [
   'total:<k>',
   'count:<k>',
   'max-value:<k>',
+  'no-monotone:<k>',
 ];
