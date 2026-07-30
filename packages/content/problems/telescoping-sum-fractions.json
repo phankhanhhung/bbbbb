@@ -505,6 +505,72 @@
               }
             ]
           },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a5",
+                "at": 0,
+                "duration": 500,
+                "id": "p1",
+                "kind": "hide",
+                "label": {
+                  "vi": "cặp thứ nhất"
+                },
+                "targets": [
+                  "e1m",
+                  "e2",
+                  "e2p",
+                  "e3"
+                ]
+              },
+              {
+                "anchor": "a5",
+                "at": 600,
+                "duration": 500,
+                "id": "p2",
+                "kind": "hide",
+                "label": {
+                  "vi": "cặp thứ hai"
+                },
+                "targets": [
+                  "e3m",
+                  "e4",
+                  "e4p",
+                  "e5"
+                ]
+              },
+              {
+                "anchor": "a5",
+                "at": 1200,
+                "duration": 500,
+                "id": "p3",
+                "kind": "hide",
+                "label": {
+                  "vi": "cặp thứ ba"
+                },
+                "targets": [
+                  "e5m",
+                  "e6",
+                  "e6p",
+                  "e7"
+                ]
+              },
+              {
+                "anchor": "a6",
+                "at": 1800,
+                "duration": 400,
+                "id": "p4",
+                "kind": "focus",
+                "label": {
+                  "vi": "hai đầu mút sống sót"
+                },
+                "targets": [
+                  "e1",
+                  "e8"
+                ]
+              }
+            ]
+          },
           "alt_text": {
             "vi": "Cùng khai triển, sáu phân số ở giữa bị gạch chéo từng cặp."
           },

@@ -49,6 +49,7 @@ export {
 } from './scale.js';
 
 export { estimateTextWidth } from './text.js';
+export { nodeBox, nodeCentre, type Box } from './box.js';
 
 export { lerpNumber, lerpColor, lerpStructuredString, lerpAttr } from './lerp.js';
 export { easeInOutCubic, easingOf, clamp01, type EasingFn } from './easing.js';

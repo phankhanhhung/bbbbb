@@ -216,6 +216,102 @@ test.describe('Tiếp cận (NFR-A3, NFR-C3)', () => {
   });
 });
 
+/**
+ * CHO-02/09 — timeline nhiều pha, và bản đọc được khi tắt chuyển động.
+ *
+ * `telescoping-sum-fractions` s3 là bài đầu tiên có `choreography`: ba cặp hạng
+ * tử triệt tiêu lần lượt rồi hai đầu mút sáng lên. Chọn nó vì thứ tự **là** lập
+ * luận ở đây, không phải trang trí — nếu ai đó rút choreography xuống thành hiệu
+ * ứng đẹp mắt thì đúng bài này sẽ mất nghĩa trước.
+ */
+test.describe('Choreography (CHO-02, CHO-09)', () => {
+  const TELESCOPE = '/?p=telescoping-sum-fractions&sol=sol&step=s3';
+
+  test('có thanh timeline, tua được, và mỗi pha ẩn thêm một cặp', async ({ page }) => {
+    await page.goto(TELESCOPE);
+    await reveal(page);
+
+    const scrub = page.getByLabel('Tua trong bước');
+    await expect(scrub).toBeVisible();
+
+    // Tua về 0 rồi đọc số phần tử **thật sự** bị ẩn ở hai mốc. Đếm opacity thay
+    // vì chụp ảnh: nó nói đúng thứ choreography làm, và không đỏ vì đổi phông.
+    const hidden = async (): Promise<number> =>
+      page.locator('.canvas svg [opacity="0"]').count();
+
+    await scrub.fill('0');
+    const atStart = await hidden();
+    await scrub.fill('1700');
+    const atEnd = await hidden();
+
+    expect(atEnd).toBeGreaterThan(atStart);
+  });
+
+  test('reduced-motion: bộ đếm pha thay thanh tua, và đi được từng pha', async ({ browser }) => {
+    const context = await browser.newContext({ reducedMotion: 'reduce' });
+    const page = await context.newPage();
+
+    await page.goto(TELESCOPE);
+    await reveal(page);
+
+    // Không có thanh tua — có bộ đếm. Đây là toàn bộ nội dung CHO-09: bỏ chuyển
+    // động **không được** làm mất thông tin, nên pha phải đi được từng cái một
+    // thay vì nhảy thẳng tới khung cuối (khung mất mát nhiều nhất).
+    await expect(page.getByLabel('Tua trong bước')).toHaveCount(0);
+    await expect(page.getByText(/Pha \d+\/\d+/)).toBeVisible();
+
+    const hidden = (): Promise<number> => page.locator('.canvas svg [opacity="0"]').count();
+    await page.getByRole('button', { name: 'Pha sau' }).click();
+    const afterOne = await hidden();
+    await page.getByRole('button', { name: 'Pha sau' }).click();
+    const afterTwo = await hidden();
+
+    expect(afterTwo).toBeGreaterThan(afterOne);
+    await context.close();
+  });
+});
+
+/**
+ * PRN-04 — biến hình song ánh, kiểm bằng **chuyển động thật sự xảy ra**.
+ *
+ * Không phải test thừa. Bản đầu tiên của tính năng này chạy đủ thời lượng mà màn
+ * hình đứng im, vì `move` lập chỉ mục theo id element còn node mang mực lại đeo
+ * key riêng của renderer — một lỗi mà mọi unit test đều xanh và chỉ lộ ra khi
+ * nhìn tận mắt. Đây là chốt canh cho đúng lớp lỗi ấy.
+ */
+test.describe('Biến hình song ánh (PRN-04)', () => {
+  for (const [name, url, probe] of [
+    ['tập con ↔ xâu nhị phân', '/?p=subsets-binary-strings', '[data-el="x1"]'],
+    ['đồ thị ↔ ma trận kề', '/?p=adjacency-matrix-handshake', '[data-k="ev1v2"]'],
+  ] as const) {
+    test(`${name}: phần tử thật sự dịch chỗ`, async ({ page }) => {
+      await page.goto(url);
+      await reveal(page);
+      await page.getByRole('button', { name: 'Biến hình' }).click();
+
+      // Hỏi **đúng một phần tử đã ghép cặp**, không đếm số node có `transform`:
+      // nhãn KaTeX cũng mang `transform`, và bảng nhãn nạp bất đồng bộ nên phép
+      // đếm ấy đổi theo lúc nạp xong chứ không theo chuyện đang đo.
+      const el = page.locator(`.bijection svg ${probe}`).first();
+      const scrub = page.getByLabel('Tiến độ biến hình');
+
+      // Khẳng định **có chờ** chứ không đọc một phát: patch chạy trong effect
+      // sau render, nên đọc ngay sau khi kéo thanh là đọc trúng khung cũ — và
+      // nó chỉ đỏ khi máy bận, tức là chỉ đỏ trên CI.
+      //
+      // $t = 0$ phải bằng đúng cây nguồn — không kèm `translate(0 0)` nào.
+      await scrub.fill('0');
+      await expect(el).not.toHaveAttribute('transform');
+
+      await scrub.fill('400');
+      await expect(el).toHaveAttribute('transform', /^translate\(/);
+
+      await scrub.fill('1000');
+      await expect(page.getByRole('button', { name: 'Về hai hình' })).toBeVisible();
+    });
+  }
+});
+
 test.describe('Sandbox (SBX-01)', () => {
   test('"Thử từ đây" mở sandbox và không đụng vào lời giải', async ({ page }) => {
     await page.goto(CHESS);

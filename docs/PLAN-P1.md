@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M36 xong (7 engine, phủ ~90%; tầng A của cả bảy engine đã cạn); kho 73 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M37 xong (7 engine, phủ ~91%; bảng backlog engine đã cạn, kể cả `PRN-04`); schema `0.2.0`; kho 73 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,60 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M37 — Lớp choreography (CHO-01..09) và biến hình song ánh (PRN-04) · [E] — **xong**
+
+Hai hạng mục cuối cùng của bảng backlog, và chúng phải đi cùng nhau: `PRN-04` phụ
+thuộc `CHO-05`, còn `CHO-05` không đứng một mình được — thứ tự P1 của PRD là
+`CHO-01..03` (lớp timeline) trước, rồi mới tới các loại pha, và `CHO-07/08/09` là
+**MUST** đi kèm.
+
+**Lớp thuần, đứng sau renderer.** `applyChoreography(nodes, spec, ms)`. Không nằm
+*trong* renderer vì renderer phải ở nguyên dạng `Scene → SvgNode[]` thuần — đó là
+điều kiện để cùng phép tính chạy cả browser lẫn Node (REN-01/02/04, D-03). Không
+đọc giờ, không random, không trạng thái: CHO-08 đòi cùng `t` cho cùng khung ở mọi
+nơi.
+
+**`anchor` bắt buộc trên mỗi pha.** CHO-07 nói mỗi pha phải đồng bộ với một anchor;
+NG-07 gọi thứ không có ràng buộc ấy bằng đúng tên: animation trang trí. Tầng
+structure kiểm anchor có thật, target có thật, `to` đúng theo kiểu, id pha không
+trùng — và cảnh báo khi **hai pha chung một anchor mà không có nhãn phân biệt**,
+vì bộ đếm pha lúc tắt chuyển động sẽ in một câu hai lần.
+
+**CHO-09 không phải là tua tới cuối.** Cám dỗ là trả `ms = timelineLength` rồi
+thôi. Nhưng pha muộn ghi đè pha sớm, nên khung cuối là khung **mất nhiều thông tin
+nhất**. Chế độ giảm chuyển động thay thanh tua bằng **bộ đếm pha**: cùng một hàm
+thuần, chỉ khác ở chỗ `ms` nhảy theo mốc thay vì chạy liên tục.
+
+**Schema lên `0.2.0`** — trường optional, đúng nghĩa minor bump. Đây cũng là lần
+đầu bộ máy migrate (DAT-02) thật sự chạy, và nó lộ ngay một lỗi: `migrate --write`
+ghi bằng `JSON.stringify` thay vì `formatProblem`, tức là nâng phiên bản sẽ xáo
+lại thứ tự khoá toàn kho và dìm mất cái diff duy nhất người ta cần đọc. Nhánh ấy
+chưa từng chạy vì `MIGRATIONS` rỗng — **một cơ chế chưa bao giờ chạy thì chưa phải
+một cơ chế**.
+
+**PRN-04: đường ngắn nhất là đường sai.** Bản đầu đổi key pane phải thành key ảnh
+ngược rồi gọi `interpolateNodes`. Nó chạy ở bài hai pane cùng engine và **hỏng
+lặng lẽ** ở bài hai pane khác engine — dạng phổ biến nhất của chứng minh song ánh
+— vì phép nội suy ấy khớp theo *dáng cây*. Thứ duy nhất bảy engine dùng chung là
+**toạ độ scene** (G-10), nên phép biến hình phải nói bằng toạ độ.
+
+Bản thứ hai vẫn đứng im, và lý do đáng ghi: `move` lập chỉ mục theo id element
+(`x1`) còn node mang **mực** lại đeo key riêng của renderer (`x1__S`) — thứ duy
+nhất khớp là cái tay cầm trong suốt mà M-trước thêm vào để anchor sáng được. Mọi
+unit test đều xanh. Chỉ có render ra ảnh rồi nhìn mới thấy.
+
+Ba việc rút ra:
+
+1. **Nhìn tận mắt, không tin test xanh.** Hai lần liên tiếp trong milestone này
+   tính năng "chạy" mà màn hình đứng im. E2E giờ hỏi *đúng một phần tử đã ghép
+   cặp* có `transform` hay không, chứ không đếm số node.
+2. **Khẳng định e2e phải có chờ.** `getAttribute` một phát đọc trúng khung cũ vì
+   patch chạy trong effect sau render — và nó chỉ đỏ khi máy bận, tức là chỉ đỏ
+   trên CI.
+3. **`setState(false)` không dừng được vòng rAF.** Khung đã lên lịch vẫn kịp chạy
+   thêm một nhịp và cộng dồn đè lên chỗ người dùng vừa kéo tới. Cần một cờ **đồng
+   bộ** bên cạnh state; cả hai timeline (step và biến hình) đều dính.
 
 ### M36 — Rà bằng máy: tính năng chết, và hai lệnh chưa từng có đường tới · [E] — **xong**
 

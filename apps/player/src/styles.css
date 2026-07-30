@@ -95,6 +95,20 @@ body {
   align-items: center;
 }
 
+/* PRN-04 — chế độ biến hình: **một** khung, không phải hai. Hai hình chồng lên
+   nhau trong cùng hệ toạ độ là toàn bộ ý của chế độ này, nên lưới ba cột của
+   view song ánh phải nhường chỗ cho một cột. */
+.bijection--morph {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+}
+
+/* Nút mở biến hình nằm dưới hai pane, trải hết bề ngang lưới. */
+.bijection__morph-toggle {
+  grid-column: 1 / -1;
+  justify-content: center;
+}
+
 .bijection__pane {
   margin: 0;
   border: 1px solid var(--line);
@@ -226,6 +240,95 @@ body {
 .controls button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/*
+ * CHO-04 — pha `focus` trông thế nào.
+ *
+ * Lớp choreography cố ý **không** chọn màu: nó gắn `data-phase` rồi thôi, vì nó
+ * không biết theme và nó phải chạy y hệt trong Node lẫn browser. Quyết định thị
+ * giác nằm ở đây. Dùng đúng `--halo` mà anchor đang dùng: hai cơ chế cùng nói
+ * "chỗ này đang được nói tới", nên chúng phải trông giống nhau, không thì người
+ * đọc học hai bảng ký hiệu cho một ý.
+ *
+ * `transition` gánh phần easing: giá trị `data-phase` chạy 0→1 nhưng CSS không
+ * nội suy theo giá trị thuộc tính, nên nếu không có dòng này thì `focus` bật
+ * đánh cạch một cái thay vì sáng dần. Nó bị khoá sau `--choreo` chứ không rải
+ * lên mọi canvas: một bàn cờ $8 \times 8$ là 64 ô, và gắn transition cho từng ô
+ * ở step chẳng có pha nào là trả giá NFR-P2 để đổi lấy không gì.
+ */
+.canvas [data-phase] {
+  filter: drop-shadow(0 0 3px var(--halo)) drop-shadow(0 0 6px var(--halo));
+}
+
+.canvas--choreo svg * {
+  transition: filter 200ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas--choreo svg * {
+    transition: none;
+  }
+}
+
+/* CHO-02 — thanh timeline của step có choreography. Nằm ngay dưới hình, không ở
+   cột lời giải: nó điều khiển *hình*, và đặt xa thứ nó điều khiển thì mỗi lần
+   tua mắt phải nhảy qua lại giữa hai cột. */
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.timeline button {
+  /* NFR-C2: hit target ≥ 44×44pt — cùng luật với `.controls`, không nới. */
+  min-height: 44px;
+  min-width: 44px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.timeline button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.timeline button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.timeline__scrub {
+  flex: 1;
+  min-width: 0;
+  /* Thanh kéo là điều khiển duy nhất ở đây cần kéo được bằng ngón tay, nên nó
+     giữ vùng chạm dọc đầy đủ dù bản thân rãnh mỏng. */
+  height: 44px;
+  accent-color: var(--accent);
+}
+
+.timeline__phase {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.timeline__count {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.timeline__label {
+  display: block;
+  color: var(--ink);
 }
 
 .counter {

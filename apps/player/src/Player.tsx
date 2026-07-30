@@ -11,6 +11,7 @@ import { renderValueMarkup } from '@combviz/schema';
 import type { Problem, Scene, Solution, Step } from '@combviz/schema';
 import { tryEvaluate, DETERMINISTIC_BUDGET } from '@combviz/dsl';
 import {
+  applyChoreography,
   createContext,
   createRenderer,
   diffNodes,
@@ -21,7 +22,7 @@ import {
   type SceneRenderer,
   type SvgNode,
 } from '@combviz/render';
-import { animate } from '@combviz/render/dom';
+import { animate, patch } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
 import type { GraphAnalysis } from '@combviz/engine-graph';
 import { loadEngines, loadLabelAtlas, type LoadedEngine } from './engines.js';
@@ -33,6 +34,8 @@ import { Sandbox } from './Sandbox.jsx';
 import { BijectionPanes } from './BijectionPanes.jsx';
 import { renderMath } from './math.js';
 import { useAnalyzer } from './useAnalyzer.js';
+import { Timeline } from './Timeline.jsx';
+import { useChoreography } from './useChoreography.js';
 
 const SPEEDS = [0.5, 1, 2] as const;
 
@@ -158,13 +161,40 @@ export function Player({
     return () => clearTimeout(timer);
   }, [playing, speed, goNext]);
 
+  const timeline = useChoreography(step.choreography, speed);
+
+  /**
+   * CHO-07 — pha đang chạy sáng đúng câu nó giải thích.
+   *
+   * Rê chuột thắng timeline: người đọc chủ động chỉ vào một chỗ thì họ đang hỏi
+   * về chỗ ấy, và để timeline giật câu sáng đi chỗ khác giữa lúc đó là cướp con
+   * trỏ khỏi tay họ.
+   */
+  const shownAnchor = activeAnchor ?? timeline.anchor;
+
   const ctx = useMemo(
     () =>
       createContext(defaultTheme, {
-        highlight: new Set(activeAnchor ? (step.anchors?.[activeAnchor]?.ids ?? []) : []),
+        highlight: new Set(
+          shownAnchor && step.anchors && Object.hasOwn(step.anchors, shownAnchor)
+            ? step.anchors[shownAnchor]!.ids
+            : [],
+        ),
         ...(atlas ? { labels: atlas } : {}),
       }),
-    [activeAnchor, step, atlas],
+    [shownAnchor, step, atlas],
+  );
+
+  /**
+   * Cây SVG gốc của step — **trước** choreography.
+   *
+   * Memo hoá vì effect dưới chạy lại mỗi khung rAF khi timeline đang chạy, và
+   * render lại cả scene 60 lần một giây chỉ để rồi áp một lớp thuộc tính lên nó
+   * là đúng thứ NFR-P2 sẽ bắt được trên iPad chứ không phải trên máy này.
+   */
+  const baseNodes = useMemo(
+    () => (renderer && step.scene ? renderer.render(step.scene, ctx) : null),
+    [renderer, step, ctx],
   );
 
   useEffect(() => {
@@ -181,12 +211,27 @@ export function Player({
       return;
     }
 
-    if (!renderer || !container || !step.scene) return;
+    if (!renderer || !container || !baseNodes) return;
 
-    const next = renderer.render(step.scene, ctx);
-    setDiff(diffNodes(previous.current, next));
+    const next = step.choreography
+      ? applyChoreography(baseNodes, step.choreography, timeline.ms)
+      : baseNodes;
 
     const isStepChange = previous.current.length > 0 && lastStepId.current !== step.id;
+
+    // Timeline đang chạy thì **không** `animate` và **không** `setDiff`.
+    // Choreography *chính là* animation, nên chồng thêm một phép nội suy 260ms
+    // lên mỗi khung rAF sẽ làm mọi thứ trễ đúng một nhịp; còn `setDiff` mỗi
+    // khung thì so một khung với khung liền trước — luôn khác nhau chút ít, và
+    // dải "vừa đổi" ở lời giải sẽ nhấp nháy suốt timeline.
+    if (!isStepChange && step.choreography) {
+      patch(container, next);
+      previous.current = next;
+      return;
+    }
+
+    setDiff(diffNodes(previous.current, next));
+
     const handle = animate(container, previous.current, next, {
       durationMs: isStepChange ? defaultTheme.motion.stepDurationMs / speed : 0,
     });
@@ -194,7 +239,7 @@ export function Player({
     previous.current = next;
     lastStepId.current = step.id;
     return () => handle.cancel();
-  }, [renderer, step, ctx, speed]);
+  }, [renderer, baseNodes, step, ctx, speed, timeline.ms]);
 
   // NFR-A2: mọi điều khiển tới được bằng bàn phím.
   useEffect(() => {
@@ -311,7 +356,7 @@ export function Player({
           <BijectionPanes step={step} renderer={renderer} labels={atlas} />
         ) : (
           <div
-            class="canvas"
+            class={step.choreography ? 'canvas canvas--choreo' : 'canvas'}
             onPointerDown={(event: PointerEvent) => {
               swipeStart.current = event.clientX;
             }}
@@ -328,6 +373,9 @@ export function Player({
               role="img"
               aria-label={interpolate(step.alt_text?.vi ?? altFallback(step))}
             />
+            {revealed && step.choreography ? (
+              <Timeline spec={step.choreography} state={timeline} />
+            ) : null}
           </div>
         )}
 
@@ -339,7 +387,7 @@ export function Player({
           {revealed && step.narrative ? (
             <Narrative
               text={interpolated}
-              activeAnchor={activeAnchor}
+              activeAnchor={shownAnchor}
               onAnchor={setActiveAnchor}
             />
           ) : null}

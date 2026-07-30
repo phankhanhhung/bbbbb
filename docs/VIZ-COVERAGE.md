@@ -52,7 +52,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 |---|---:|---:|---:|---|
 | Lưới / phủ hình / tô màu | 15% | 100% | 15.0 | — (hàng đợi board **đã cạn**) |
 | Đồ thị | 22% | 99% | 21.8 | kiểm tính phẳng tổng quát (cố ý không làm — §4) |
-| Đếm / song ánh / đếm hai chiều | 14% | 87% | 12.2 | animation biến hình của PRN-04 |
+| Đếm / song ánh / đếm hai chiều | 14% | 100% | 14.0 | — (`PRN-04` xong ở M37) |
 | Dãy số / thao tác lặp / quá trình | 16% | 96% | 15.4 | — (`SQ-02` và `BD-08` đều xong) |
 | Trò chơi | 7% | 72% | 5.04 | thế phải là **đa tập số** cộng nhiều nhất một con số nhớ; mọi game không-phải-đống vẫn chưa — cần GM-01 rule script thật |
 | Hệ tập hợp / siêu đồ thị | 8% | 96% | 7.68 | phần bù như khái niệm hiển ngôn; họ bài "mọi tập con của $[n]$" |
@@ -444,8 +444,10 @@ tĩnh viết sẵn trong file. Ba hệ quả, nói ra để không ai trông đ�
 - **Không có sandbox.** Người học sửa cấu hình bên trái thì bên phải không đổi
   theo — nó không được tính từ đâu cả. Nên bài dùng view này khai
   `kind: "illustration"`; ép `both` sẽ cho ra một hình nói dối.
-- **Không có animation biến hình** (phần còn lại của PRN-04). Hai pane nhấn liên
-  động, chưa có chuyển động nối một hình sang hình kia.
+- ~~**Không có animation biến hình**~~ — có từ **M37**. Nút "Biến hình" đưa hai
+  pane về **một** khung toạ độ chung rồi cho mỗi phần tử trượt tới ảnh của nó.
+  Giới hạn còn lại, đã biết: phần tử vẽ bằng `<path>` lệnh tương đối hoặc cung
+  `A` thì không đo được hộp bao, và nó **đứng yên** thay vì bay sai chỗ.
 - **Ánh xạ không được kiểm là song ánh thật.** Validate kiểm id có tồn tại đúng
   bên, và **cảnh báo** khi không đơn ánh — nhưng nó không biết cặp có đúng về mặt
   toán học hay không. Đó vẫn là việc của người duyệt.

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { createValidator, type Problem } from '@combviz/schema';
+import { createValidator, type Problem, type Step } from '@combviz/schema';
 import { createChecker } from '@combviz/check';
 import { ENGINE_DSL, ENGINE_FRAGMENTS } from '../src/engines.js';
 
@@ -396,7 +396,7 @@ describe('PRN-04 — view song ánh', () => {
       ...phases: Record<string, unknown>[]
     ): Problem => {
       const problem = loadBijection();
-      (stepOf(problem) as Record<string, unknown>)['choreography'] = { phases };
+      stepOf(problem).choreography = { phases } as Step['choreography'];
       return problem;
     };
 
