@@ -11,6 +11,7 @@ import {
 } from '@combviz/render';
 import type { Problem } from '@combviz/schema';
 import { boardRenderer } from '../src/render.js';
+import { boardSchemaFragment } from '../src/index.js';
 import { cellColorClass, tileOffsets } from '../src/geometry.js';
 
 const renderer = createRenderer([boardRenderer]);
@@ -143,6 +144,73 @@ describe('animation suy ra từ snapshot', () => {
     const after = renderer.render(steps[2]!.scene!, ctx);
 
     expect(interpolateNodes(before, after, 1)).toEqual(after);
+  });
+});
+
+/**
+ * BD-10 — nét gạch.
+ *
+ * Bốn khẳng định, và cả bốn nói về **một** điều: gạch phải khác tô ở đúng chỗ làm
+ * nên một cái sàng — ô bị gạch vẫn đọc được, và nét gạch là một thứ **riêng** mà
+ * timeline chạm được mà không chạm vào ô.
+ */
+describe('BD-10 — gạch ô', () => {
+  const struck = (overrides: Record<string, unknown>) => ({
+    engine: 'board',
+    config: { rows: 2, cols: 2, cell_overrides: overrides },
+    elements: [],
+  }) as never;
+
+  it('nét gạch mang màu của lớp khai, không phải mực chung', () => {
+    const cells = renderer.render(
+      struck({ 'cell-0-0': { glyph: '4', strike: 3 } }),
+      ctx,
+    )[0]!.children!;
+    const line = cells.find((n) => n.key === 'strike-0-0')!;
+
+    expect(line.tag).toBe('line');
+    expect(line.attrs['stroke']).toBe(defaultTheme.colorClasses[2]!.stroke);
+  });
+
+  it('ô **vẫn đọc được**: glyph còn nguyên và nét nằm trên nó', () => {
+    // Cả điểm của việc gạch thay vì tô: tô đè lên $12$ thì mất luôn con số, mà
+    // "số nào bị loại" là một nửa nội dung của cái sàng.
+    const cells = renderer.render(
+      struck({ 'cell-0-0': { glyph: '12', strike: 1 } }),
+      ctx,
+    )[0]!.children!;
+
+    const glyphAt = cells.findIndex((n) => n.text === '12');
+    const strikeAt = cells.findIndex((n) => n.key === 'strike-0-0');
+    expect(glyphAt).toBeGreaterThanOrEqual(0);
+    expect(strikeAt).toBeGreaterThan(glyphAt);
+  });
+
+  it('nét gạch có **danh tính riêng**, không dùng chung với ô', () => {
+    // Chung id thì `applyChoreography` tra `data-el ?? key` và chạm cả hai, nên
+    // một pha "hiện dần nét gạch" sẽ làm cả ô nhoà vào rồi hiện ra. Đây là ràng
+    // buộc khiến tính năng này chạy được, không phải một chi tiết đặt tên.
+    const scene = struck({ 'cell-0-0': { glyph: '4', strike: 1 } });
+    const ids = boardSchemaFragment.implicitElementIds(scene);
+
+    expect(ids.has('strike-0-0')).toBe(true);
+    // Ô không khai `strike` thì **không** sinh id: khai cả 1600 nét không tồn tại
+    // sẽ bắt chốt canh ANC-01 đòi mực cho từng cái.
+    expect(ids.has('strike-0-1')).toBe(false);
+    expect(boardRenderer.elementBoxes!(scene, 'strike-0-0')).toEqual(
+      boardRenderer.elementBoxes!(scene, 'cell-0-0'),
+    );
+  });
+
+  it('ô khuyết không gạch được — nó không phải một ô', () => {
+    const scene = {
+      engine: 'board',
+      config: { rows: 2, cols: 2, holes: [[0, 0]], cell_overrides: { 'cell-0-0': { strike: 1 } } },
+      elements: [],
+    } as never;
+
+    expect(collectKeys(renderer.render(scene, ctx)).has('strike-0-0')).toBe(false);
+    expect(boardSchemaFragment.implicitElementIds(scene).has('strike-0-0')).toBe(false);
   });
 });
 

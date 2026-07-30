@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "id": "pentomino-l-cover-4x5",
   "statement": {
     "vi": "Chỉ ra cách phủ kín bàn $4\\times5$ bằng $4$ quân pentomino chữ L (mỗi quân gồm $5$ ô: bốn ô thẳng hàng cộng một ô ở đầu)."

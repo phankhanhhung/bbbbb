@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "id": "counting-product-rule",
   "statement": {
     "vi": "Có $3$ chiếc áo và $4$ chiếc quần. Hỏi có bao nhiêu cách chọn một bộ gồm một áo và một quần?"

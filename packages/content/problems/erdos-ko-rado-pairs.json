@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "id": "erdos-ko-rado-pairs",
   "statement": {
     "vi": "Xét các tập con **hai phần tử** của $\\{1,2,3,4\\}$. Chọn ra một số tập sao cho hai tập bất kỳ đã chọn có chung ít nhất một phần tử. Hỏi chọn được nhiều nhất bao nhiêu tập, và những cách chọn đạt số ấy trông thế nào?"

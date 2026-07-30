@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "id": "triangle-lozenge-parity",
   "statement": {
     "vi": "Tam giác đều cạnh $n$ được chia thành $n^2$ tam giác đơn vị bởi các đường song song với ba cạnh. Một **hình thoi** là hình ghép từ hai tam giác đơn vị chung cạnh. Chứng minh rằng với mọi $n \\ge 1$, không thể lát kín tam giác ấy bằng các hình thoi."

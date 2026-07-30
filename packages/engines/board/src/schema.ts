@@ -132,6 +132,25 @@ export const BoardConfig = Type.Object(
               Type.Integer({ minimum: 1, maximum: MAX_COLOR_CLASS }),
             ),
             glyph: Type.Optional(Type.String({ maxLength: 4 })),
+            /**
+             * BD-10 — **gạch** ô, bằng nét màu của lớp `k`.
+             *
+             * Gạch khác tô, và khác ở đúng chỗ làm nên một cái sàng: ô bị gạch
+             * **vẫn đọc được**. Tô đè lên số $12$ thì người xem mất luôn con số;
+             * gạch nó thì họ thấy cả "số này" lẫn "số này đã bị loại" — mà cả hai
+             * đều là nội dung của lập luận.
+             *
+             * Màu là một `color_class` chứ không phải mã màu (DAT-20), và nó gánh
+             * một nghĩa: **ai đã loại ô này**. Trong sàng Eratosthenes, nét gạch
+             * mang màu của ước nguyên tố nhỏ nhất, nên bảng cuối cùng không chỉ
+             * nói "$74$ hợp số" mà nói được *vì sao từng số một* bị loại.
+             *
+             * Vẽ **chéo** chứ không gạch ngang, cùng lý do đã ghi ở engine chuỗi
+             * biến đổi: một gạch ngang giữa ô đọc thành dấu trừ hoặc dấu phân số.
+             */
+            strike: Type.Optional(
+              Type.Integer({ minimum: 1, maximum: MAX_COLOR_CLASS }),
+            ),
           },
           { additionalProperties: false },
         ),

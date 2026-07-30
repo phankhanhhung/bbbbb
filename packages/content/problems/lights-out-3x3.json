@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "id": "lights-out-3x3",
   "statement": {
     "vi": "Bàn $3\\times3$ có chín bóng đèn, tất cả đang sáng. Mỗi lượt được bấm một ô; khi đó ô ấy và mọi ô kề nó đổi trạng thái sáng ↔ tắt. Hỏi có tắt được hết đèn không?"
