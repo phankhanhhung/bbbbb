@@ -55,7 +55,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 | Đếm / song ánh / đếm hai chiều | 14% | 87% | 12.2 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 96% | 15.4 | — (`SQ-02` và `BD-08` đều xong) |
 | Trò chơi | 7% | 66% | 4.62 | thế phải là **đa tập số** cộng nhiều nhất một con số nhớ; mọi game không-phải-đống vẫn chưa — cần GM-01 rule script thật |
-| Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
+| Hệ tập hợp / siêu đồ thị | 8% | 96% | 7.68 | phần bù như khái niệm hiển ngôn; họ bài "mọi tập con của $[n]$" |
 | Hình học tổ hợp | 5% | 75% | 3.75 | tô vùng do các đoạn chia (PT-03), đường tròn |
 | Hoán vị / thứ tự | 6% | 97% | 5.8 | — (chu trình hoán vị + poset/Hasse + Dilworth + dãy con đơn điệu) |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |

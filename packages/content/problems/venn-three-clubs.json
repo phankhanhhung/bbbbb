@@ -31,7 +31,7 @@
   "status": "published",
   "kind": "both",
   "created": "2026-07-29",
-  "updated": "2026-07-29",
+  "updated": "2026-07-30",
   "invariants": [
     {
       "expr": "n",
@@ -649,6 +649,210 @@
           },
           "alt_text": {
             "vi": "Hai chấm nằm ngoài cả ba vòng được làm nổi."
+          },
+          "expects_violation": [
+            "covers-universe"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Con đường ngược lại cho cùng con số. Cộng [[a4|ba cỡ câu lạc bộ]] được $24$ — nhưng ai tham gia hai câu lạc bộ đã bị đếm hai lần, nên trừ đi tổng ba vùng giao đôi, $9$. Trừ xong thì bạn tham gia **cả ba** lại bị trừ mất hẳn, nên cộng lại $1$. Ra $16$, đúng bằng số đếm từ trong ra."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "A",
+                "B",
+                "C"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "caption": "Cộng ba cỡ rồi bù trừ",
+              "show_inclusion_exclusion": true,
+              "view": "dots"
+            },
+            "elements": [
+              {
+                "id": "A",
+                "type": "set",
+                "label": "bóng đá",
+                "order": 0
+              },
+              {
+                "id": "B",
+                "type": "set",
+                "label": "bóng rổ",
+                "order": 1
+              },
+              {
+                "id": "C",
+                "type": "set",
+                "label": "cờ vua",
+                "order": 2
+              },
+              {
+                "id": "p0",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p1",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p2",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p3",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "A"
+                ]
+              },
+              {
+                "id": "p4",
+                "type": "token",
+                "label": "5",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p5",
+                "type": "token",
+                "label": "6",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p6",
+                "type": "token",
+                "label": "7",
+                "sets": [
+                  "B"
+                ]
+              },
+              {
+                "id": "p7",
+                "type": "token",
+                "label": "8",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "p8",
+                "type": "token",
+                "label": "9",
+                "sets": [
+                  "C"
+                ]
+              },
+              {
+                "id": "p9",
+                "type": "token",
+                "label": "10",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p10",
+                "type": "token",
+                "label": "11",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p11",
+                "type": "token",
+                "label": "12",
+                "sets": [
+                  "A",
+                  "B"
+                ]
+              },
+              {
+                "id": "p12",
+                "type": "token",
+                "label": "13",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "p13",
+                "type": "token",
+                "label": "14",
+                "sets": [
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "id": "p14",
+                "type": "token",
+                "label": "15",
+                "sets": [
+                  "B",
+                  "C"
+                ]
+              },
+              {
+                "id": "p15",
+                "type": "token",
+                "label": "16",
+                "sets": [
+                  "A",
+                  "B",
+                  "C"
+                ]
+              },
+              {
+                "id": "p16",
+                "type": "token",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "17",
+                "sets": []
+              },
+              {
+                "id": "p17",
+                "type": "token",
+                "color_class": 3,
+                "emphasis": "focus",
+                "label": "18",
+                "sets": []
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba cột chấm cho ba câu lạc bộ, kèm bảng bao hàm–loại trừ: 24 − 9 + 1 = 16."
           },
           "expects_violation": [
             "covers-universe"

@@ -37,7 +37,7 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 70 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười bốn bài của M22–M33):
+Đo trên 71 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười lăm bài của M22–M35):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
@@ -82,7 +82,7 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | ~~9~~ | ~~`GR-07` ma trận đồng bộ hai chiều~~ ✅ M34 | graph | đếm hai chiều | vừa | ~~SRS `GR-07` [P2]~~ |
 | 10 | `PRN-04` animation biến hình | cross | **cả họ song ánh (14%)** | đắt | §2 "còn thiếu: animation biến hình của PRN-04" |
 | ~~11~~ | ~~`BD-05` vùng khuyết vẽ tay + torus~~ ✅ M31 | board | bài trên hình xuyến | vừa | ~~SRS `BD-05` [P2]~~ |
-| 12 | `ST-03` dot/bar cho đa tập | set | đếm theo lớp | rẻ | SRS `ST-03` [P2] |
+| ~~12~~ | ~~`ST-03` dot/bar cho đa tập~~ ✅ M35 | set | đếm theo lớp | rẻ | ~~SRS `ST-03` [P2]~~ |
 | ~~13~~ | ~~`GM-08` phổ **hai chiều**~~ ✅ M23 | game | quy luật Wythoff nhìn thành hai tia | vừa | ~~§2.6 — `spectrum` là bảng một chiều~~ |
 
 `PRN-04` là hạng mục **trọng số cao nhất** trong bảng — nó là khoảng trống duy nhất
@@ -211,13 +211,34 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
 
 - dãy hai chiều; dãy vô hạn có chu kỳ; đa tập có phần tử trùng lặp lớn.
 
-### 2.4 `set` — 3 bài · **nội dung trước**
+### 2.4 `set` — 5 bài
 
-- **ST-03 [P2] SHOULD** — dot/bar view cho đa tập (đếm theo lớp), dùng chung với
-  `PRN-02`. Rẻ, và đã có ID trong SRS.
+- **ST-03 ✅ (M35)** — **view `dots`**: mỗi tập một cột chấm, mỗi chấm một phần
+  tử. Một phần tử thuộc $d$ tập cho $d$ chấm, nên tổng chấm **là** `incidences`
+  $= \sum_S |S|$ — nhìn thấy một phần tử được đếm nhiều lần chính là toàn bộ nội
+  dung của phép đếm hai chiều. Chấm mang `data-el` của phần tử nên rê vào một
+  phần tử thì mọi bản sao cùng sáng.
+- **ST-02 ✅ (M35)** — **bảng bao hàm–loại trừ** (`show_inclusion_exclusion`).
+  Trước đó ST-02 mới xong một nửa: DSL có `common(A,B)` nhưng panel thì không.
+  Bảng in từng hạng tử kèm dấu, rồi tổng, rồi $|hợp|$ **đếm trực tiếp** — hai con
+  số cuối đi qua hai đường tính khác nhau, nên bảng là một phép **đối chiếu** chứ
+  không phải một lời khẳng định.
+- **Cực trị hệ tập hợp ✅ (M35)** — validator `intersecting`, `sunflower`,
+  `min-common:<k>`; binding `union_size`, `min_common`, `max_size`, `min_size`.
+  Bài `erdos-ko-rado-pairs` ($n=4$, $k=2$), cộng một bước bao hàm–loại trừ cho
+  `venn-three-clubs`.
 
-Ngoài ST-03 thì **không đề xuất gì**: engine mới gánh 3 bài, chưa đủ để biết nó
-thiếu gì. Việc đúng là soạn thêm bài extremal set theory rồi đọc lại mục này.
+**Tầng B — đọc lại sau khi có thêm bài**
+
+Backlog cũ nói "không đề xuất gì, soạn bài trước rồi đọc lại". Đã soạn, và đây là
+thứ hai bài mới **thật sự** đòi mà engine chưa có:
+
+- **phần bù** như một khái niệm hiển ngôn. Lập luận "gia đình giao nhau trên $[n]$
+  có nhiều nhất $2^{n-1}$ tập" ghép mỗi tập với phần bù của nó và lấy nhiều nhất
+  một trong hai — engine hôm nay không nói được "tập này là phần bù của tập kia".
+- **tập nền ngầm định**. Trần `maxSets = 8` là đủ cho mọi bài đang có, nhưng họ
+  bài "mọi tập con của $[n]$" cần $2^n$ tập; $n = 4$ đã vượt trần. Đó là giới hạn
+  thật, không phải bỏ sót — và nó cần một cách biểu diễn khác, không phải nới số.
 
 ### 2.5 `point` — 3 bài · **nội dung trước**
 

@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M34 xong (7 engine, phủ ~89%, hàng đợi board và graph đã cạn); kho 70 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M35 xong (7 engine, phủ ~89%; board, graph và set đã cạn hàng đợi tầng A); kho 71 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,70 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M35 — Set engine: ST-02, ST-03, và cực trị hệ tập hợp · [E] — **xong**
+
+Backlog viết về engine này: *"Ngoài ST-03 thì **không đề xuất gì**: engine mới gánh
+3 bài, chưa đủ để biết nó thiếu gì. Việc đúng là soạn thêm bài extremal set theory
+rồi đọc lại mục này."* Milestone này làm đúng thứ tự ấy — hai view còn nợ, rồi
+bài, rồi đọc lại — và bài đã trả lời được câu hỏi mà backlog đặt ra.
+
+**ST-02 hoá ra mới xong một nửa.** SRS đòi *"Đếm $|A|, |A\cap B|, |A\cup B|$ tự
+động; panel inclusion–exclusion cho $\le 3$ tập"*. DSL có `common(A,B)` từ đầu,
+nhưng **panel thì không tồn tại** — không ai để ý vì không bài nào dùng. Nay bảng
+in từng hạng tử kèm dấu, rồi tổng, rồi $|hợp|$ **đếm trực tiếp**. Hai con số cuối
+đi qua hai đường tính hoàn toàn khác nhau, nên bảng là một phép **đối chiếu** người
+học tự làm được, không phải một lời khẳng định.
+
+**ST-03 — view `dots`.** Mỗi tập một cột chấm, mỗi chấm một phần tử. Điểm đáng nói
+không phải "biểu đồ cột cho đẹp": một phần tử thuộc $d$ tập hiện ra thành $d$ chấm
+ở $d$ cột, nên **tổng chấm là `incidences`** $= \sum_S |S|$, không phải số phần tử.
+Nhìn thấy một phần tử bị đếm nhiều lần chính là toàn bộ nội dung của phép đếm hai
+chiều. Chấm mang `data-el` của phần tử, nên rê vào một phần tử thì mọi bản sao cùng
+sáng — cùng cơ chế mà ma trận kề của engine đồ thị dùng.
+
+**Cực trị hệ tập hợp.** Validator `intersecting` (điều kiện Erdős–Ko–Rado),
+`sunflower` (giao **bằng nhau**, không chỉ khác rỗng — và khác biệt ấy là toàn bộ
+bổ đề hoa hướng dương), `min-common:<k>`; binding `union_size`, `min_common`,
+`max_size`, `min_size`. Bài `erdos-ko-rado-pairs` với $n = 4$, $k = 2$: cỡ lớn nhất
+**và** mọi gia đình đạt cỡ ấy đều do script vét cạn $2^6$ gia đình con tìm ra —
+chuyện "có đúng hai dạng cực đại, bốn ngôi sao và bốn tam giác" là máy phát hiện
+chứ không phải tao nhớ.
+
+**Ba lỗi ở hình, cả ba chỉ thấy khi render.**
+
+1. *Cột chấm bị cắt.* Cột mọc **lên trên** từ $y = 0$ nhưng khung nhìn tính chiều
+   cao như thể gốc nằm ở đỉnh cột, nên hai chấm trên cùng của mỗi cột nằm ngoài
+   `viewBox` — vẫn vẽ ra, chỉ là không ai nhìn thấy. Cùng lỗi ấy làm bảng bao
+   hàm–loại trừ bắt đầu quá thấp; và ở view Venn nó **đè lên** vùng "ngoài mọi
+   tập", vì mép dưới được ước bằng một hằng số áng chừng thay vì đọc từ hình.
+2. *Nhãn tập dính nhau.* Cột rộng cố định theo cỡ chấm, mà nhãn là chữ tự do — ba
+   câu lạc bộ ra đúng "bóng đáng rổ vua". Nới cột theo nhãn dài nhất; co chữ cho
+   vừa $9$ đơn vị thì nhãn thành li ti.
+3. *Con số đâm vào chữ trong bảng.* Cột số đặt sau một khoảng cố định $2{,}6$ ô, và
+   dòng `|hợp| đếm thẳng` dài hơn thế. Cùng lỗi mà nhãn cột bảng board đã mắc, và
+   cùng cách chữa: đọc `estimateTextWidth` của nhãn **dài nhất**.
+
+**Và một lỗi ở việc chọn view — của chính tao.** Bản đầu của `erdos-ko-rado-pairs`
+vẽ ngôi sao và tam giác bằng view `dots` để khoe tính năng mới. Nhưng cả bài xoay
+quanh **danh tính** ("mọi cặp chứa số $1$" đối lập với "không phần tử nào ở cả
+ba"), mà view chấm chỉ nói **cỡ** — nên hai gia đình mà lời văn đối lập ra hai bức
+hình y hệt nhau: ba cột, mỗi cột hai chấm. Bài chuyển hết sang `matrix`, và view
+`dots` về đúng chỗ của nó: một bước mới của `venn-three-clubs`, nơi câu hỏi là so
+ba cỡ rồi bù trừ.
+
+**Backlog đọc lại được.** Hai bài mới chỉ ra đúng hai thứ engine còn thiếu, và cả
+hai đều là *khái niệm* chứ không phải nút bấm: **phần bù** (lập luận "gia đình giao
+nhau trên $[n]$ có nhiều nhất $2^{n-1}$ tập" ghép mỗi tập với phần bù rồi lấy nhiều
+nhất một trong hai — engine không nói được quan hệ ấy), và **tập nền ngầm định**
+(họ bài "mọi tập con của $[n]$" cần $2^n$ cột; $n = 4$ đã vượt trần `maxSets = 8`).
+Cái thứ hai là giới hạn thật, cần một cách biểu diễn khác chứ không phải nới số.
+
+Kèm một commit riêng thêm topic `set-systems` vào controlled vocabulary — đúng quy
+tắc ghi ở đầu `topics.yaml` — và gắn nó cho ba bài `set` cũ, vốn phải mượn tạm
+`counting`.
+
+1157 test, 71 bài 0 lỗi 0 cảnh báo, **0 golden cũ đổi**.
 
 ### M32–M34 — Nhóm `graph` (GR-10, GR-05, GR-07) · [E] — **xong**
 
@@ -1568,7 +1632,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 70 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 71 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):

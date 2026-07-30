@@ -38,10 +38,27 @@ import { SET_LIMITS, type SetConfig } from './schema.js';
 /** Cỡ chữ caption, và chiều cao nó cần được chừa. */
 const CAPTION_SIZE = CELL * 0.36;
 
-/** ST-03 — bề rộng một cột chấm, và khoảng cách hai chấm chồng nhau. */
-const DOT_COL = CELL * 0.9;
+/** ST-03 — bề rộng tối thiểu một cột chấm, và khoảng cách hai chấm chồng nhau. */
+const DOT_COL_MIN = CELL * 0.9;
 const DOT_PITCH = CELL * 0.42;
 const DOT_R = CELL * 0.15;
+const DOT_LABEL_SIZE = CELL * 0.34;
+
+/**
+ * Bề rộng cột chấm, **nới theo nhãn dài nhất**.
+ *
+ * Chấm thì nhỏ, còn nhãn tập là chữ tự do ("bóng đá", "cờ vua"). Cột rộng cố định
+ * theo chấm khiến ba nhãn liền nhau dính thành một vệt — bản đầu cho ra đúng
+ * "bóng đáng rổ vua", vẽ đủ chữ và không đọc được chữ nào. Nới cột thì rẻ hơn co
+ * chữ: co xuống vừa $9$ đơn vị thì nhãn thành li ti.
+ */
+function dotColumn(derived: SetDerived): number {
+  const longest = Math.max(
+    0,
+    ...derived.sets.map((s) => estimateTextWidth(s.label, DOT_LABEL_SIZE)),
+  );
+  return Math.max(DOT_COL_MIN, longest + CELL * 0.3);
+}
 /** ST-02 — chiều cao một dòng của bảng bao hàm–loại trừ. */
 const IE_LINE = CELL * 0.5;
 
@@ -84,7 +101,7 @@ function layoutOf(scene: Scene): { viewport: Viewport; caption: { x: number; y: 
           return {
             x: -PADDING - CELL * 0.4,
             y: top - PADDING,
-            width: cols * DOT_COL + CELL * 0.8 + PADDING * 2,
+            width: cols * dotColumn(derived) + CELL * 0.8 + PADDING * 2,
             height: DOTS_BOTTOM - top + PADDING * 2,
           };
         })()
@@ -218,8 +235,10 @@ function bodyBottom(scene: Scene): number {
 function renderDots(derived: SetDerived, ctx: RenderContext): SvgNode[] {
   const nodes: SvgNode[] = [];
 
+  const column = dotColumn(derived);
+
   derived.sets.forEach((set, c) => {
-    const x = c * DOT_COL + DOT_COL / 2;
+    const x = c * column + column / 2;
     const members = derived.tokens.filter((t) => t.sets.includes(set.id));
 
     members.forEach((token, i) => {
@@ -238,7 +257,7 @@ function renderDots(derived: SetDerived, ctx: RenderContext): SvgNode[] {
     });
 
     nodes.push(
-      label(`set-label-${set.id}`, x, CELL * 0.35, set.label, 'middle', ctx),
+      label(`set-label-${set.id}`, x, CELL * 0.35, set.label, 'middle', ctx, false, DOT_LABEL_SIZE),
       // Con số dưới nhãn: chiều cao đọc nhanh nhưng đọc **xấp xỉ**, và một lập
       // luận cực trị cần con số chính xác.
       label(`set-size-${set.id}`, x, CELL * 0.95, String(set.size), 'middle', ctx),
@@ -264,25 +283,32 @@ function renderInclusionExclusion(
   const { terms, total, union } = inclusionExclusion(derived);
   const nodes: SvgNode[] = [];
   const left = 0;
+  const size = CELL * 0.32;
 
-  const line = (i: number, head: string, value: string, key: string): void => {
+  const rows: { head: string; value: string; key: string }[] = terms.map((term, i) => ({
+    head: `${i % 2 === 0 ? '+' : '−'} ${
+      i === 0 ? 'Σ|Aᵢ|' : i === 1 ? 'Σ|Aᵢ∩Aⱼ|' : 'Σ|Aᵢ∩Aⱼ∩Aₖ|'
+    }`,
+    value: String(term),
+    key: `t${i}`,
+  }));
+  rows.push({ head: '= tổng', value: String(total), key: 'sum' });
+  // Đếm trực tiếp: mỗi phần tử **một** lần, bất kể nó thuộc mấy tập.
+  rows.push({ head: '|hợp| đếm thẳng', value: String(union), key: 'union' });
+
+  // Cột số đặt sau nhãn **dài nhất**, không sau một khoảng cố định. Bản đầu dùng
+  // $2{,}6$ ô và dòng "|hợp| đếm thẳng" đủ dài để chữ đâm vào con số — cùng lỗi
+  // mà nhãn cột của bảng board đã mắc, và cùng cách chữa.
+  const valueX =
+    left + Math.max(...rows.map((r) => estimateTextWidth(r.head, size))) + CELL * 0.9;
+
+  rows.forEach((row, i) => {
     const y = top + CELL * 0.5 + i * IE_LINE;
     nodes.push(
-      label(`ie-${key}`, left, y, head, 'start', ctx, false, CELL * 0.32),
-      label(`ie-${key}-v`, left + CELL * 2.6, y, value, 'end', ctx, false, CELL * 0.32),
+      label(`ie-${row.key}`, left, y, row.head, 'start', ctx, false, size),
+      label(`ie-${row.key}-v`, valueX, y, row.value, 'end', ctx, false, size),
     );
-  };
-
-  terms.forEach((term, i) => {
-    const sign = i % 2 === 0 ? '+' : '−';
-    const head =
-      i === 0 ? 'Σ|Aᵢ|' : i === 1 ? 'Σ|Aᵢ∩Aⱼ|' : 'Σ|Aᵢ∩Aⱼ∩Aₖ|';
-    line(i, `${sign} ${head}`, String(term), `t${i}`);
   });
-
-  line(terms.length, '= tổng', String(total), 'sum');
-  // Đếm trực tiếp: mỗi phần tử **một** lần, bất kể nó thuộc mấy tập.
-  line(terms.length + 1, '|hợp| đếm thẳng', String(union), 'union');
 
   return nodes;
 }

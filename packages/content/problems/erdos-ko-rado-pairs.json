@@ -1,0 +1,525 @@
+{
+  "schema_version": "0.1.0",
+  "id": "erdos-ko-rado-pairs",
+  "statement": {
+    "vi": "Xét các tập con **hai phần tử** của $\\{1,2,3,4\\}$. Chọn ra một số tập sao cho hai tập bất kỳ đã chọn có chung ít nhất một phần tử. Hỏi chọn được nhiều nhất bao nhiêu tập, và những cách chọn đạt số ấy trông thế nào?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Trường hợp $n = 4$, $k = 2$ của định lý Erdős–Ko–Rado (1961): gia đình giao nhau gồm các $k$-tập của $[n]$ với $n \\ge 2k$ có nhiều nhất $\\binom{n-1}{k-1}$ tập. $n = 2k$ là biên, và là trường hợp duy nhất có gia đình cực đại không phải ngôi sao."
+    }
+  },
+  "topics": [
+    "set-systems",
+    "counting"
+  ],
+  "techniques": [
+    "extremal",
+    "pigeonhole"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "set"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "k",
+      "id": "inv-k",
+      "label": {
+        "vi": "Số tập đã chọn"
+      }
+    },
+    {
+      "expr": "min_common",
+      "id": "inv-c",
+      "label": {
+        "vi": "Cỡ giao nhỏ nhất trên mọi cặp"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Ngôi sao, tam giác, và chặn trên"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tập nền $\\{1,2,3,4\\}$ có đúng ${{k}}$ cặp. Bảng dưới liệt kê cả sáu: cột là một cặp, hàng là một phần tử, ô tô nghĩa là [[a1|phần tử ấy thuộc cặp ấy]]. Ta cần chọn ra càng nhiều cặp càng tốt sao cho **hai cặp bất kỳ có chung một phần tử**."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "t1__s12"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "s12",
+                "type": "set",
+                "label": "{1,2}",
+                "order": 0
+              },
+              {
+                "id": "s13",
+                "type": "set",
+                "label": "{1,3}",
+                "order": 1
+              },
+              {
+                "id": "s14",
+                "type": "set",
+                "label": "{1,4}",
+                "order": 2
+              },
+              {
+                "id": "s23",
+                "type": "set",
+                "label": "{2,3}",
+                "order": 3
+              },
+              {
+                "id": "s24",
+                "type": "set",
+                "label": "{2,4}",
+                "order": 4
+              },
+              {
+                "id": "s34",
+                "type": "set",
+                "label": "{3,4}",
+                "order": 5
+              },
+              {
+                "id": "t1",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "s12",
+                  "s13",
+                  "s14"
+                ]
+              },
+              {
+                "id": "t2",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "s12",
+                  "s23",
+                  "s24"
+                ]
+              },
+              {
+                "id": "t3",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "s13",
+                  "s23",
+                  "s34"
+                ]
+              },
+              {
+                "id": "t4",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "s14",
+                  "s24",
+                  "s34"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng 4×6: bốn phần tử theo hàng, sáu cặp theo cột."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "expects_violation": [
+            "intersecting"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cách hiển nhiên: lấy mọi cặp **chứa một phần tử cố định**, chẳng hạn số $1$. Hai cặp như thế luôn gặp nhau ở $1$, nên gia đình này giao nhau. Được ${{k}}$ cặp — [[a2|một \"ngôi sao\"]] tâm $1$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "s12",
+                "s13",
+                "s14"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "s12",
+                "type": "set",
+                "color_class": 4,
+                "label": "{1,2}",
+                "order": 0
+              },
+              {
+                "id": "s13",
+                "type": "set",
+                "color_class": 4,
+                "label": "{1,3}",
+                "order": 1
+              },
+              {
+                "id": "s14",
+                "type": "set",
+                "color_class": 4,
+                "label": "{1,4}",
+                "order": 2
+              },
+              {
+                "id": "t1",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "s12",
+                  "s13",
+                  "s14"
+                ]
+              },
+              {
+                "id": "t2",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "s12"
+                ]
+              },
+              {
+                "id": "t3",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "s13"
+                ]
+              },
+              {
+                "id": "t4",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "s14"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng 4×3: hàng của phần tử 1 tô kín cả ba cột — mọi cặp đều chứa 1."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nhưng ngôi sao **không** phải cách duy nhất. Ba cặp $\\{1,2\\}, \\{1,3\\}, \\{2,3\\}$ cũng đôi một giao nhau, mà [[a3|không phần tử nào]] nằm trong cả ba — chúng tạo thành một *tam giác*. Cùng cỡ ${{k}}$, khác hẳn hình dạng."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "s12",
+                "s13",
+                "s23"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "s12",
+                "type": "set",
+                "color_class": 3,
+                "label": "{1,2}",
+                "order": 0
+              },
+              {
+                "id": "s13",
+                "type": "set",
+                "color_class": 3,
+                "label": "{1,3}",
+                "order": 1
+              },
+              {
+                "id": "s23",
+                "type": "set",
+                "color_class": 3,
+                "label": "{2,3}",
+                "order": 2
+              },
+              {
+                "id": "t1",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "s12",
+                  "s13"
+                ]
+              },
+              {
+                "id": "t2",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "s12",
+                  "s23"
+                ]
+              },
+              {
+                "id": "t3",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "s13",
+                  "s23"
+                ]
+              },
+              {
+                "id": "t4",
+                "type": "token",
+                "label": "4",
+                "sets": []
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng 4×3 của tam giác 1–2–3: mỗi hàng chỉ tô hai ô, không hàng nào tô cả ba."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bốn cặp thì **không** bao giờ được. Sáu cặp chia thành ba đôi rời nhau — $\\{1,2\\}$ với $\\{3,4\\}$, $\\{1,3\\}$ với $\\{2,4\\}$, $\\{1,4\\}$ với $\\{2,3\\}$ — và mỗi đôi chỉ được lấy một. Chọn bốn thì buộc phải lấy trọn một đôi, tức là [[a4|hai cặp rời nhau]]."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "s14",
+                "s23"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "s12",
+                "type": "set",
+                "label": "{1,2}",
+                "order": 0
+              },
+              {
+                "id": "s13",
+                "type": "set",
+                "label": "{1,3}",
+                "order": 1
+              },
+              {
+                "id": "s14",
+                "type": "set",
+                "color_class": 5,
+                "label": "{1,4}",
+                "order": 2
+              },
+              {
+                "id": "s23",
+                "type": "set",
+                "color_class": 5,
+                "label": "{2,3}",
+                "order": 3
+              },
+              {
+                "id": "t1",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "s12",
+                  "s13",
+                  "s14"
+                ]
+              },
+              {
+                "id": "t2",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "s12",
+                  "s23"
+                ]
+              },
+              {
+                "id": "t3",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "s13",
+                  "s23"
+                ]
+              },
+              {
+                "id": "t4",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "s14"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng với bốn cột; hai cột được tô nổi là hai cặp rời nhau, không có hàng nào tô ở cả hai."
+          },
+          "expects_violation": [
+            "intersecting"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy cỡ lớn nhất là $3$, và [[a5|cả hai dạng ở trên]] đều đạt. Erdős–Ko–Rado nói con số ấy tổng quát là $\\binom{n-1}{k-1}$ — ở đây $\\binom{3}{1} = 3$. Lập luận chia đôi vừa dùng chính là bản $n = 2k$ của định lý, và nó là trường hợp **duy nhất** có gia đình cực đại không phải ngôi sao."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "s12",
+                "s13",
+                "s14"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "set",
+            "config": {
+              "view": "matrix"
+            },
+            "elements": [
+              {
+                "id": "s12",
+                "type": "set",
+                "color_class": 4,
+                "label": "{1,2}",
+                "order": 0
+              },
+              {
+                "id": "s13",
+                "type": "set",
+                "color_class": 4,
+                "label": "{1,3}",
+                "order": 1
+              },
+              {
+                "id": "s14",
+                "type": "set",
+                "color_class": 4,
+                "label": "{1,4}",
+                "order": 2
+              },
+              {
+                "id": "t1",
+                "type": "token",
+                "label": "1",
+                "sets": [
+                  "s12",
+                  "s13",
+                  "s14"
+                ]
+              },
+              {
+                "id": "t2",
+                "type": "token",
+                "label": "2",
+                "sets": [
+                  "s12"
+                ]
+              },
+              {
+                "id": "t3",
+                "type": "token",
+                "label": "3",
+                "sets": [
+                  "s13"
+                ]
+              },
+              {
+                "id": "t4",
+                "type": "token",
+                "label": "4",
+                "sets": [
+                  "s14"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Quay lại bảng của ngôi sao tâm 1 — một trong các gia đình lớn nhất."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "k == 3 && min_common >= 1",
+    "validators": [
+      "intersecting",
+      "set-size:2",
+      "sets-distinct"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}
