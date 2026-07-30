@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M42 xong (7 engine đều tự khai hình học; mọi element trong kho neo được; kho có sổ thứ tự bài; board gạch được ô); schema `0.3.0`; kho 83 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M43 xong (7 engine đều tự khai hình học; mọi element trong kho neo được; kho có sổ thứ tự bài; board gạch được ô); schema `0.3.0`; kho 84 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,42 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M43 — Bài `IMO Shortlist C5` đầu tiên: trò xoá lớp thặng dư · [E] — **xong**
+
+Chính chủ đưa ảnh chụp một đề và bảo soạn thành bài. Kho có bài thứ **84**, và là
+bài khó nhất: `author_rating` $7$, trước đó cao nhất là $4$.
+
+**Giải trước, soạn sau, và giải bằng máy trước khi giải bằng đầu.** Vét cạn trên
+tập con thật cho $N \le 22$, rồi rút về cây nhị phân để đẩy tới $N \le 48$ — **hai
+cài đặt độc lập**, khớp nhau từng giá trị. Đáp số: viết $N = 2^a m$ với $m$ lẻ thì
+Geoff thắng $\iff$ ($m \ge 3$ và $a$ chẵn) hoặc ($m = 1$ và $a$ lẻ).
+
+Chỗ then chốt là **bổ đề gương**: thế $(A,A)$ thua cho người đi $\iff$ $A$ thắng cho
+người đi. Nó được kiểm trên **mọi** hình cây nhị phân tới $9$ lá ($94$ hình), không
+chỉ những hình sinh ra từ $\{1,\ldots,N\}$ — và mọi nước đi được kể trong lời giải
+đều chạy qua solver để xác nhận thế cờ sau nó đúng là thắng hay thua như bài nói.
+
+**Bậc thang thay cho cây.** Bản đầu định vẽ cây bằng engine đồ thị; đọc renderer thì
+thấy nhãn đỉnh đặt **ngoài** đỉnh và hướng ra xa tâm — hợp cho đồ thị vòng, hỏng cho
+cây. Thay bằng một hình *bậc thang* trên chính engine board: mỗi hàng là một mức
+`mod 2^k`, cột xếp lại theo thứ tự tách của cây nên **mỗi lớp thành một khối liền**,
+và `region` vẽ đường bao. Hình ấy nói được cả ba điều cùng lúc — lớp lồng nhau, nước
+đi là chặt một khối, và khối $3$ nào cũng tách $2+1$.
+
+Ba việc rút ra:
+
+1. **Lint ép cấu trúc, và nó ép đúng.** Bản đầu là $11$ step thẳng hàng: `validate`
+   kêu narrative quá dài, quá nhiều câu, và cây sâu $10$ mức (ngưỡng mềm $4$). Kho
+   không có solution nào thẳng quá $5$ bước — bài dài thì **rẽ nhánh**. Viết lại
+   thành $3$ bước chung rồi ba `case` đúng với ba trường hợp thật của lời giải
+   ($N=1$ / $N$ lẻ / $N$ chẵn), sâu $4$, và lời giải đọc **rõ hơn** bản thẳng.
+2. **Nhãn pha là chữ trơn.** Bốn nhãn của bài này là chỗ duy nhất trong $28$ nhãn cả
+   kho có `$...$`, và nhãn pha đi thẳng vào `aria-valuetext` — người dùng screen
+   reader nghe đúng chuỗi `$\equiv 3 \pmod 4$`.
+3. **Kiểm trước khi gỡ.** Tao định gỡ `emphasis: "focus"` trên `region` vì "nó không
+   vẽ ra gì"; script so chuỗi SVG trước/sau trả lời **có, đổi 84 ký tự**, và giữ lại.
+   Đoán về renderer thì rẻ, so chuỗi cũng rẻ.
 
 ### M42 — `BD-10` gạch ô, và sàng Eratosthenes kể lại bằng màu · [E] — **xong**
 

@@ -1,0 +1,1024 @@
+{
+  "schema_version": "0.3.0",
+  "id": "erase-residue-classes-game",
+  "statement": {
+    "vi": "Cho $N$ nguyên dương. Geoff và Ceri chơi một trò: đầu tiên họ viết các số $1, 2, \\ldots, N$ lên bảng, rồi lần lượt đi, Geoff đi trước. Mỗi lượt, người đi chọn một cặp số nguyên $(k, n)$ với $k \\ge 0$ và $n$ là **một số đang có trên bảng**, rồi xoá mọi số $s$ trên bảng thoả $2^k \\mid n - s$. Trò chơi tiếp tục cho tới khi bảng trống, và **ai xoá số cuối cùng thì thua**. Tìm tất cả $N$ mà Geoff chắc chắn thắng, dù Ceri chơi thế nào."
+  },
+  "source": {
+    "contest": "IMO Shortlist",
+    "note": {
+      "vi": "Đề của Indonesia. Chìa khoá: các lớp thặng dư modulo luỹ thừa của $2$ **lồng nhau**, nên thế cờ là một cây nhị phân và mỗi nước đi là chặt một cây con."
+    },
+    "slot": "C5"
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "induction",
+    "parity",
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 7,
+    "slot_proxy": "C5"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Rút về cây nhị phân, rồi soi gương"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Điều kiện $2^k \\mid n - s$ chính là $s \\equiv n \\pmod{2^k}$, nên mỗi nước **xoá trọn một lớp thặng dư modulo một luỹ thừa của $2$** — chẳng hạn $(k, n) = (2, 3)$ xoá [[a1|$3$, $7$ và $11$]]. Hai đầu mút đáng nhớ riêng: $k = 0$ chia hết mọi hiệu nên quét sạch bảng, đi là thua ngay; còn $k$ với $2^k > N$ cho phép [[a2|xoá đúng một số]]. Lời giải sẽ cần cả hai."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-2",
+                "cell-0-6",
+                "cell-0-10"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-0-11"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "glyph": "1"
+                },
+                "cell-0-1": {
+                  "glyph": "2"
+                },
+                "cell-0-10": {
+                  "glyph": "11",
+                  "strike": 1
+                },
+                "cell-0-11": {
+                  "glyph": "12"
+                },
+                "cell-0-2": {
+                  "glyph": "3",
+                  "strike": 1
+                },
+                "cell-0-3": {
+                  "glyph": "4"
+                },
+                "cell-0-4": {
+                  "glyph": "5"
+                },
+                "cell-0-5": {
+                  "glyph": "6"
+                },
+                "cell-0-6": {
+                  "glyph": "7",
+                  "strike": 1
+                },
+                "cell-0-7": {
+                  "glyph": "8"
+                },
+                "cell-0-8": {
+                  "glyph": "9"
+                },
+                "cell-0-9": {
+                  "glyph": "10"
+                }
+              },
+              "cols": 12,
+              "rows": 1
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a1",
+                "at": 0,
+                "duration": 700,
+                "id": "p0",
+                "kind": "show",
+                "label": {
+                  "vi": "xoá lớp thặng dư 3 mod 4"
+                },
+                "targets": [
+                  "strike-0-2",
+                  "strike-0-6",
+                  "strike-0-10"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một hàng mười hai ô mang các số 1 đến 12; ba ô mang 3, 7 và 11 bị gạch chéo bằng nét xanh."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Các lớp ấy **lồng nhau**: lớp modulo $2^k$ tách đúng thành hai lớp modulo $2^{k+1}$. Xếp lại theo thứ tự tách ấy thì mỗi lớp thành [[a1|một khối liền]] và cả bảng thành một **cây nhị phân**; một nước đi là chặt cả cây con dưới một nút. [[a2|Khối $m$ phần tử]] là cấp số cộng công sai luỹ thừa của $2$ nên tách thành $\\lceil m/2 \\rceil$ và $\\lfloor m/2 \\rfloor$ — vậy **hình cây chỉ phụ thuộc $m$**, gọi nó là $T_m$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "rg-2-0",
+                "rg-2-1",
+                "rg-2-2",
+                "rg-2-3"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "rg-1-0",
+                "rg-1-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 2
+                },
+                "cell-0-1": {
+                  "color_class": 2
+                },
+                "cell-0-10": {
+                  "color_class": 2
+                },
+                "cell-0-11": {
+                  "color_class": 2
+                },
+                "cell-0-2": {
+                  "color_class": 2
+                },
+                "cell-0-3": {
+                  "color_class": 2
+                },
+                "cell-0-4": {
+                  "color_class": 2
+                },
+                "cell-0-5": {
+                  "color_class": 2
+                },
+                "cell-0-6": {
+                  "color_class": 2
+                },
+                "cell-0-7": {
+                  "color_class": 2
+                },
+                "cell-0-8": {
+                  "color_class": 2
+                },
+                "cell-0-9": {
+                  "color_class": 2
+                },
+                "cell-1-0": {
+                  "color_class": 2
+                },
+                "cell-1-1": {
+                  "color_class": 2
+                },
+                "cell-1-2": {
+                  "color_class": 2
+                },
+                "cell-1-3": {
+                  "color_class": 2
+                },
+                "cell-1-4": {
+                  "color_class": 2
+                },
+                "cell-1-5": {
+                  "color_class": 2
+                },
+                "cell-2-0": {
+                  "color_class": 2
+                },
+                "cell-2-1": {
+                  "color_class": 2
+                },
+                "cell-2-2": {
+                  "color_class": 2
+                },
+                "cell-2-6": {
+                  "color_class": 2
+                },
+                "cell-2-7": {
+                  "color_class": 2
+                },
+                "cell-2-8": {
+                  "color_class": 2
+                },
+                "cell-3-0": {
+                  "color_class": 2
+                },
+                "cell-3-1": {
+                  "color_class": 2
+                },
+                "cell-3-10": {
+                  "color_class": 2
+                },
+                "cell-3-3": {
+                  "color_class": 2
+                },
+                "cell-3-4": {
+                  "color_class": 2
+                },
+                "cell-3-6": {
+                  "color_class": 2
+                },
+                "cell-3-7": {
+                  "color_class": 2
+                },
+                "cell-3-9": {
+                  "color_class": 2
+                },
+                "cell-4-0": {
+                  "color_class": 2
+                },
+                "cell-4-10": {
+                  "color_class": 2
+                },
+                "cell-4-2": {
+                  "color_class": 2
+                },
+                "cell-4-4": {
+                  "color_class": 2
+                },
+                "cell-4-6": {
+                  "color_class": 2
+                },
+                "cell-4-8": {
+                  "color_class": 2
+                }
+              },
+              "cols": 12,
+              "rows": 5,
+              "table": {
+                "col_labels": [
+                  "1",
+                  "9",
+                  "5",
+                  "3",
+                  "11",
+                  "7",
+                  "2",
+                  "10",
+                  "6",
+                  "4",
+                  "12",
+                  "8"
+                ],
+                "row_labels": [
+                  "mod 1",
+                  "mod 2",
+                  "mod 4",
+                  "mod 8",
+                  "mod 16"
+                ]
+              }
+            },
+            "elements": [
+              {
+                "id": "rg-0-0",
+                "type": "region",
+                "cells": [
+                  [0, 0],
+                  [0, 1],
+                  [0, 2],
+                  [0, 3],
+                  [0, 4],
+                  [0, 5],
+                  [0, 6],
+                  [0, 7],
+                  [0, 8],
+                  [0, 9],
+                  [0, 10],
+                  [0, 11]
+                ]
+              },
+              {
+                "id": "rg-1-0",
+                "type": "region",
+                "cells": [
+                  [1, 0],
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [1, 5]
+                ]
+              },
+              {
+                "id": "rg-1-1",
+                "type": "region",
+                "cells": [
+                  [1, 6],
+                  [1, 7],
+                  [1, 8],
+                  [1, 9],
+                  [1, 10],
+                  [1, 11]
+                ]
+              },
+              {
+                "id": "rg-2-0",
+                "type": "region",
+                "emphasis": "focus",
+                "cells": [[2, 0], [2, 1], [2, 2]]
+              },
+              {
+                "id": "rg-2-1",
+                "type": "region",
+                "emphasis": "focus",
+                "cells": [[2, 3], [2, 4], [2, 5]]
+              },
+              {
+                "id": "rg-2-2",
+                "type": "region",
+                "emphasis": "focus",
+                "cells": [[2, 6], [2, 7], [2, 8]]
+              },
+              {
+                "id": "rg-2-3",
+                "type": "region",
+                "emphasis": "focus",
+                "cells": [[2, 9], [2, 10], [2, 11]]
+              },
+              {
+                "id": "rg-3-0",
+                "type": "region",
+                "cells": [[3, 0], [3, 1]]
+              },
+              {
+                "id": "rg-3-1",
+                "type": "region",
+                "cells": [[3, 2]]
+              },
+              {
+                "id": "rg-3-2",
+                "type": "region",
+                "cells": [[3, 3], [3, 4]]
+              },
+              {
+                "id": "rg-3-3",
+                "type": "region",
+                "cells": [[3, 5]]
+              },
+              {
+                "id": "rg-3-4",
+                "type": "region",
+                "cells": [[3, 6], [3, 7]]
+              },
+              {
+                "id": "rg-3-5",
+                "type": "region",
+                "cells": [[3, 8]]
+              },
+              {
+                "id": "rg-3-6",
+                "type": "region",
+                "cells": [[3, 9], [3, 10]]
+              },
+              {
+                "id": "rg-3-7",
+                "type": "region",
+                "cells": [[3, 11]]
+              },
+              {
+                "id": "rg-4-0",
+                "type": "region",
+                "cells": [[4, 0]]
+              },
+              {
+                "id": "rg-4-1",
+                "type": "region",
+                "cells": [[4, 1]]
+              },
+              {
+                "id": "rg-4-2",
+                "type": "region",
+                "cells": [[4, 2]]
+              },
+              {
+                "id": "rg-4-3",
+                "type": "region",
+                "cells": [[4, 3]]
+              },
+              {
+                "id": "rg-4-4",
+                "type": "region",
+                "cells": [[4, 4]]
+              },
+              {
+                "id": "rg-4-5",
+                "type": "region",
+                "cells": [[4, 5]]
+              },
+              {
+                "id": "rg-4-6",
+                "type": "region",
+                "cells": [[4, 6]]
+              },
+              {
+                "id": "rg-4-7",
+                "type": "region",
+                "cells": [[4, 7]]
+              },
+              {
+                "id": "rg-4-8",
+                "type": "region",
+                "cells": [[4, 8]]
+              },
+              {
+                "id": "rg-4-9",
+                "type": "region",
+                "cells": [[4, 9]]
+              },
+              {
+                "id": "rg-4-10",
+                "type": "region",
+                "cells": [[4, 10]]
+              },
+              {
+                "id": "rg-4-11",
+                "type": "region",
+                "cells": [[4, 11]]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm hàng ô xếp chồng, mỗi hàng chia thành các khối viền đậm; hàng dưới chia đôi từng khối của hàng trên, từ một khối mười hai xuống mười hai ô lẻ."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Gọi $(A, A)$ là thế mà [[a1|hai nửa bảng]] cùng mang hình $A$. **Bổ đề gương:** thế $(A, A)$ **thua** cho người đi khi và chỉ khi $A$ **thắng** cho người đi. Vì sao: quét sạch thì thua ngay, xoá trọn một nửa để lại đúng $A$, còn [[a2|chặt bên trong]] để lại $(A', A)$ mà đối thủ luôn gỡ được — $A'$ thắng thì chép sang nửa kia, $A'$ thua ([[a3|còn một lá]]) thì xoá trọn nửa còn lại."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-1"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "cell-0-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "glyph": "1",
+                  "strike": 1
+                },
+                "cell-0-1": {
+                  "glyph": "5",
+                  "strike": 1
+                },
+                "cell-0-2": {
+                  "glyph": "3",
+                  "strike": 1
+                },
+                "cell-1-0": {
+                  "glyph": "2",
+                  "strike": 3
+                },
+                "cell-1-1": {
+                  "glyph": "6",
+                  "strike": 3
+                },
+                "cell-1-2": {
+                  "glyph": "4",
+                  "strike": 3
+                }
+              },
+              "cols": 3,
+              "rows": 2,
+              "table": {
+                "row_labels": [
+                  "lẻ",
+                  "chẵn"
+                ]
+              }
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a2",
+                "at": 0,
+                "duration": 700,
+                "id": "p0",
+                "kind": "show",
+                "label": {
+                  "vi": "Geoff chặt bên trong nửa lẻ"
+                },
+                "targets": [
+                  "strike-0-0",
+                  "strike-0-1"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 900,
+                "duration": 700,
+                "id": "p1",
+                "kind": "show",
+                "label": {
+                  "vi": "còn lại một lá — Ceri xoá trọn nửa kia"
+                },
+                "targets": [
+                  "strike-1-0",
+                  "strike-1-1",
+                  "strike-1-2"
+                ]
+              },
+              {
+                "anchor": "a3",
+                "at": 1800,
+                "duration": 700,
+                "id": "p2",
+                "kind": "show",
+                "label": {
+                  "vi": "Geoff buộc phải xoá số 3 — và thua"
+                },
+                "targets": [
+                  "strike-0-2"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai hàng ba ô: hàng trên 1, 5, 3 và hàng dưới 2, 6, 4. Hai ô đầu hàng trên bị gạch xanh, rồi cả hàng dưới bị gạch cam, rồi ô cuối hàng trên bị gạch xanh."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: $N = 1$"
+          },
+          "narrative": {
+            "vi": "Bảng chỉ có [[a1|số $1$]]. Nước nào cũng xoá nó, nên Geoff quét sạch bảng ngay lượt đầu và **thua**."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "glyph": "1",
+                  "strike": 1
+                }
+              },
+              "cols": 1,
+              "rows": 1
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a1",
+                "at": 0,
+                "duration": 600,
+                "id": "p0",
+                "kind": "show",
+                "label": {
+                  "vi": "Geoff buộc phải xoá số 1"
+                },
+                "targets": [
+                  "strike-0-0"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một ô duy nhất mang số 1, bị gạch chéo bằng nét xanh."
+          },
+          "verified": true
+        },
+        {
+          "id": "m1",
+          "parent": "s3",
+          "edge_type": "merge_ref",
+          "merge_target": "s6",
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s2",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: $N$ lẻ, $N \\ge 3$"
+          },
+          "narrative": {
+            "vi": "[[a1|Hàng lẻ]] có $\\frac{N+1}{2}$ số còn hàng chẵn có $\\frac{N-1}{2}$, lệch đúng một ô; đặt $A = T_{(N-1)/2}$. Nếu $A$ **thua** thì Geoff xoá trọn hàng lẻ và để lại đúng thế thua ấy. Nếu $A$ **thắng** thì Geoff [[a2|xoá đúng số $N$]], còn lại $1, \\ldots, N-1$ với hai nửa cùng hình $A$ — thế thua theo bổ đề. Hai khả năng, hai nước đi, nên **mọi $N$ lẻ $\\ge 3$ đều là Geoff thắng**."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-1",
+                "cell-0-2",
+                "cell-0-3"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-0-3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "glyph": "1"
+                },
+                "cell-0-1": {
+                  "glyph": "5"
+                },
+                "cell-0-2": {
+                  "glyph": "3"
+                },
+                "cell-0-3": {
+                  "glyph": "7",
+                  "strike": 1
+                },
+                "cell-1-0": {
+                  "glyph": "2"
+                },
+                "cell-1-1": {
+                  "glyph": "6"
+                },
+                "cell-1-2": {
+                  "glyph": "4"
+                }
+              },
+              "cols": 4,
+              "holes": [[1, 3]],
+              "rows": 2,
+              "table": {
+                "row_labels": [
+                  "lẻ",
+                  "chẵn"
+                ]
+              }
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a2",
+                "at": 0,
+                "duration": 700,
+                "id": "p0",
+                "kind": "show",
+                "label": {
+                  "vi": "N = 7: Geoff xoá đúng số 7"
+                },
+                "targets": [
+                  "strike-0-3"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai hàng: trên là 1, 5, 3, 7; dưới là 2, 6, 4 và một ô khuyết. Ô mang số 7 nằm ngay trên ô khuyết và bị gạch xanh."
+          },
+          "verified": true
+        },
+        {
+          "id": "m2",
+          "parent": "s4",
+          "edge_type": "merge_ref",
+          "merge_target": "s6",
+          "verified": true
+        },
+        {
+          "id": "s5",
+          "parent": "s2",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 3: $N$ chẵn"
+          },
+          "narrative": {
+            "vi": "Hai nửa đều có $N/2$ số nên bảng đúng là thế $(A, A)$ với $A = T_{N/2}$, và bổ đề trả lời ngay: **Geoff thắng ở $N$ khi và chỉ khi Geoff thua ở $N/2$**. Hàng trên là kết quả ở [[a1|$N/2$]] và hàng dưới ở [[a2|$N$]], lục là Geoff thắng còn cam là Ceri thắng — [[a3|hai hàng ngược nhau ở mọi cột]]."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-1",
+                "cell-0-2",
+                "cell-0-3",
+                "cell-0-4",
+                "cell-0-5",
+                "cell-0-6",
+                "cell-0-7"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2",
+                "cell-1-3",
+                "cell-1-4",
+                "cell-1-5",
+                "cell-1-6",
+                "cell-1-7"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "cell-0-0",
+                "cell-1-0",
+                "cell-0-7",
+                "cell-1-7"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 3,
+                  "glyph": "1"
+                },
+                "cell-0-1": {
+                  "color_class": 4,
+                  "glyph": "2"
+                },
+                "cell-0-2": {
+                  "color_class": 4,
+                  "glyph": "3"
+                },
+                "cell-0-3": {
+                  "color_class": 3,
+                  "glyph": "4"
+                },
+                "cell-0-4": {
+                  "color_class": 4,
+                  "glyph": "5"
+                },
+                "cell-0-5": {
+                  "color_class": 3,
+                  "glyph": "6"
+                },
+                "cell-0-6": {
+                  "color_class": 4,
+                  "glyph": "7"
+                },
+                "cell-0-7": {
+                  "color_class": 4,
+                  "glyph": "8"
+                },
+                "cell-1-0": {
+                  "color_class": 4,
+                  "glyph": "2"
+                },
+                "cell-1-1": {
+                  "color_class": 3,
+                  "glyph": "4"
+                },
+                "cell-1-2": {
+                  "color_class": 3,
+                  "glyph": "6"
+                },
+                "cell-1-3": {
+                  "color_class": 4,
+                  "glyph": "8"
+                },
+                "cell-1-4": {
+                  "color_class": 3,
+                  "glyph": "10"
+                },
+                "cell-1-5": {
+                  "color_class": 4,
+                  "glyph": "12"
+                },
+                "cell-1-6": {
+                  "color_class": 3,
+                  "glyph": "14"
+                },
+                "cell-1-7": {
+                  "color_class": 3,
+                  "glyph": "16"
+                }
+              },
+              "cols": 8,
+              "rows": 2,
+              "table": {
+                "row_labels": [
+                  "N/2",
+                  "N"
+                ]
+              }
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai hàng tám ô: hàng trên mang 1 đến 8, hàng dưới mang 2, 4, …, 16, và mỗi cột có đúng một ô lục cùng một ô cam."
+          },
+          "verified": true
+        },
+        {
+          "id": "s6",
+          "parent": "s5",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ba trường hợp cho một quy tắc: $N = 1$ thua, $N$ lẻ $\\ge 3$ thắng, $N$ chẵn thì lật $N/2$. Viết $N = 2^a m$ với $m$ lẻ rồi lật $a$ lần: $m \\ge 3$ xuất phát từ \"thắng\" nên **thắng $\\iff a$ chẵn**, còn [[a1|$m = 1$]] xuất phát từ \"thua\" nên **thắng $\\iff a$ lẻ**. Gọn lại: **Geoff thắng đúng khi $N = 4^j m$ ($m$ lẻ $\\ge 3$) hoặc $N = 2 \\cdot 4^j$**. [[a2|Lục]] là Geoff thắng, [[a3|cam]] là Ceri thắng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-0-1",
+                "cell-0-2",
+                "cell-0-4",
+                "cell-0-6",
+                "cell-0-7",
+                "cell-0-8",
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2",
+                "cell-1-4",
+                "cell-1-6",
+                "cell-1-8",
+                "cell-1-9"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-3",
+                "cell-0-5",
+                "cell-0-9",
+                "cell-1-3",
+                "cell-1-5",
+                "cell-1-7"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 3,
+                  "glyph": "1"
+                },
+                "cell-0-1": {
+                  "color_class": 4,
+                  "glyph": "2"
+                },
+                "cell-0-2": {
+                  "color_class": 4,
+                  "glyph": "3"
+                },
+                "cell-0-3": {
+                  "color_class": 3,
+                  "glyph": "4"
+                },
+                "cell-0-4": {
+                  "color_class": 4,
+                  "glyph": "5"
+                },
+                "cell-0-5": {
+                  "color_class": 3,
+                  "glyph": "6"
+                },
+                "cell-0-6": {
+                  "color_class": 4,
+                  "glyph": "7"
+                },
+                "cell-0-7": {
+                  "color_class": 4,
+                  "glyph": "8"
+                },
+                "cell-0-8": {
+                  "color_class": 4,
+                  "glyph": "9"
+                },
+                "cell-0-9": {
+                  "color_class": 3,
+                  "glyph": "10"
+                },
+                "cell-1-0": {
+                  "color_class": 4,
+                  "glyph": "11"
+                },
+                "cell-1-1": {
+                  "color_class": 4,
+                  "glyph": "12"
+                },
+                "cell-1-2": {
+                  "color_class": 4,
+                  "glyph": "13"
+                },
+                "cell-1-3": {
+                  "color_class": 3,
+                  "glyph": "14"
+                },
+                "cell-1-4": {
+                  "color_class": 4,
+                  "glyph": "15"
+                },
+                "cell-1-5": {
+                  "color_class": 3,
+                  "glyph": "16"
+                },
+                "cell-1-6": {
+                  "color_class": 4,
+                  "glyph": "17"
+                },
+                "cell-1-7": {
+                  "color_class": 3,
+                  "glyph": "18"
+                },
+                "cell-1-8": {
+                  "color_class": 4,
+                  "glyph": "19"
+                },
+                "cell-1-9": {
+                  "color_class": 4,
+                  "glyph": "20"
+                }
+              },
+              "cols": 10,
+              "rows": 2
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai hàng mười ô mang các số 1 đến 20; các ô 1, 4, 6, 10, 14, 16, 18 màu cam, còn lại màu lục."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s6"
+  }
+}

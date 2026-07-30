@@ -82,18 +82,10 @@
     "subset-complement-pairing",
     "sum-odd-numbers-gnomon",
     "tree-leaf-stripping",
-    "wheel-faces-two-colours"
+    "wheel-faces-two-colours",
+    "erase-residue-classes-game"
   ],
   "newest": [
-    "catalan-parentheses-path",
-    "divisible-2-3-5-inclusion-exclusion",
-    "geometric-sum-doubling",
-    "lattice-path-binary-word",
-    "rooks-permutation-bijection",
-    "sieve-primes-100",
-    "subset-complement-pairing",
-    "sum-odd-numbers-gnomon",
-    "tree-leaf-stripping",
-    "wheel-faces-two-colours"
+    "erase-residue-classes-game"
   ]
 }
