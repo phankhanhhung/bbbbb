@@ -13,7 +13,7 @@ proof assistant, LMS hay nền tảng multi-author. Đặc tả đầy đủ n�
 
 - Phase 1 đang chạy; đã có **7 engine**: board, graph, sequence, set, point,
   game và derivation.
-- Kho có **61 bài đã xuất bản**. Nội dung do tác giả soạn và tự duyệt; chất
+- Kho có **62 bài đã xuất bản**. Nội dung do tác giả soạn và tự duyệt; chất
   lượng editorial vẫn là gate của sản phẩm, không được tự động bỏ qua.
 - Coverage ước lượng khoảng **85%** các họ bài tổ hợp mà engine hiện tại có
   thể gánh phần lập luận. Đây là ước lượng chuyên gia, không phải benchmark
@@ -43,7 +43,7 @@ Hai gate còn mở, và cả hai là việc của chính chủ chứ không ph�
 | `sequence` | dãy số, đa tập, đống sỏi, thao tác lặp | luật gộp là **enum đóng**, không cho nhập biểu thức |
 | `set` | bảng incidence, Venn ≤ 3 tập | Venn quá 3 tập — sự thật hình học, không phải giới hạn cài đặt |
 | `point` | bao lồi, thẳng hàng, giao điểm, đường thẳng, lưới điểm | PT-03 tô vùng, đường tròn |
-| `game` | game trên **đa tập đống**: Grundy, misère, phổ thắng-thua một và **hai** chiều, Wythoff, trò Euclid, hợp luật | Fibonacci nim, Chomp, cờ trên đồ thị, game partizan |
+| `game` | game bốc đống: Grundy, misère, phổ một và **hai** chiều, Wythoff, trò Euclid, hợp luật, **luật nhớ nước trước** | Chomp, cờ trên đồ thị, game bàn cờ, game partizan |
 | `derivation` | chuỗi biến đổi đại số; mỗi hạng tử có `id` nên nó **chuyển động** giữa hai bước | không hiểu công thức — nó xếp chỗ cho LaTeX, không phân tích cú pháp toán |
 
 Cột phải được viết ra vì kho này đã trả giá vài lần cho **trường ma**: một trường

@@ -1,6 +1,6 @@
 # CombViz — Checklist làm mạnh từng engine
 
-**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · `GM-05/06/07/08` và `BD-07` **đã làm ở M22–M24**
+**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · `GM-05/06/07/08/09` và `BD-07` **đã làm ở M22–M25**
 
 ## 0. Đọc checklist này đúng cách
 
@@ -11,8 +11,8 @@ trong khi chưa có bài nào do chính chủ soạn là **R-1** (content bottle
 mới. `PRD-07` cấm thêm engine chỉ để tăng coverage. Tài liệu này là **danh sách
 chờ**, dựng sẵn để khi mở ra thì không phải nghĩ lại — không phải lệnh xuất phát.
 
-> **Ngoại lệ đã dùng, ngày 2026-07-30 (M22–M24).** Năm hạng mục đã làm:
-> `GM-05/06/07` (#1–#3), `GM-08` (#13) và `BD-07` (#7). Điều kiện chung để chúng
+> **Ngoại lệ đã dùng, ngày 2026-07-30 (M22–M25).** Sáu hạng mục đã làm:
+> `GM-05/06/07` (#1–#3), `GM-08` (#13), `BD-07` (#7) và `GM-09` (mới). Điều kiện chung để chúng
 > **không** vi phạm `R-13` là điều kiện §2.6 vốn đã viết ra: không thêm engine nào
 > (`PRD-07` không đụng tới), chỉ mở rộng thứ đã có, và **mỗi hạng mục đi kèm nội
 > dung** — bốn bài mới, kho 56 → 60 — nên năng lực và nội dung tăng cùng nhịp.
@@ -36,7 +36,7 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 61 bài đã xuất bản (56 lúc dựng tài liệu này, cộng năm bài của M22–M24):
+Đo trên 62 bài đã xuất bản (56 lúc dựng tài liệu này, cộng sáu bài của M22–M25):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
@@ -168,7 +168,7 @@ thiếu gì. Việc đúng là soạn thêm bài extremal set theory rồi đọ
 - **PT-03 [P3] MAY** — tô vùng do các đoạn chia. **SRS tự nói hoãn**: "đắt và hiếm
   bài cần; chỉ làm khi seed content P3 đòi hỏi." Giữ nguyên chữ ấy.
 
-### 2.6 `game` — 6 bài · **Tầng A đã làm xong ở M22–M23**
+### 2.6 `game` — 7 bài · **Tầng A đã làm xong ở M22–M25**
 
 Ba hạng mục dưới đây đều là **mở rộng họ luật đóng**, và tiền lệ đã có: M17b thêm
 `subtract-fraction` trong một buổi và nó biến "bốc tối đa nửa đống" từ ❌ thành ✅.
@@ -200,6 +200,10 @@ tính ra một con số không ai kiểm.
   nên anchor trỏ được vào **một thế**, và thế hiện tại của scene được khoanh trên
   lưới. Trần $24$ không phải trần tính (DP $O(N^2)$ chạy trong chớp mắt) mà là
   **trần đọc được**: theo G-10 một ô là $44$px.
+- **GM-09 ✅ (M25)** — luật đọc **nước vừa đi**, `subtract-at-most-multiple` ⇒
+  **Nim Fibonacci**. Thành viên đầu tiên mà đa tập đống không đủ mô tả ván: trạng
+  thái mang thêm `last_take`, lệnh `game/take` tự ghi lại nó, và phổ vẽ ra đúng dãy
+  Fibonacci. Kèm bài `fibonacci-nim`.
 - **GM-01 / DOM-04** — rule script tổng quát cho Chomp, cờ trên đồ thị, game bàn
   cờ, game partizan. Đây là DSL-03 thật sự và nó đi thẳng vào **R-2**. Đã hoãn có
   lý do viết ra; đừng mở bằng cửa sau.

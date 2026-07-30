@@ -589,10 +589,16 @@ describe('chú giải của hai view phổ nằm trong khung', () => {
     return [...svg.matchAll(/<text([^>]*)>([^<]*)<\/text>/g)].every(([, attrs, body]) => {
       const size = Number(/font-size="([\d.]+)"/.exec(attrs ?? '')?.[1] ?? '0');
       const x = Number(/\bx="(-?[\d.]+)"/.exec(attrs ?? '')?.[1] ?? '0');
+      const y = Number(/\by="(-?[\d.]+)"/.exec(attrs ?? '')?.[1] ?? '0');
       const anchor = /text-anchor="middle"/.test(attrs ?? '');
       const width = estimateTextWidth(body ?? '', size);
-      const right = anchor ? x + width / 2 : x + width;
-      return right <= viewport.x + viewport.width + 1e-6;
+      const left = anchor ? x - width / 2 : x;
+      return (
+        left >= viewport.x - 1e-6 &&
+        left + width <= viewport.x + viewport.width + 1e-6 &&
+        y - size * 0.75 >= viewport.y - 1e-6 &&
+        y + size * 0.25 <= viewport.y + viewport.height + 1e-6
+      );
     });
   };
 
@@ -602,6 +608,20 @@ describe('chú giải của hai view phổ nằm trong khung', () => {
         to,
         fits: true,
       });
+    }
+  });
+
+  it('dòng cận của luật đọc lịch sử nằm trong khung, mọi cỡ đống', () => {
+    const FIB: GameRule = { type: 'subtract-at-most-multiple', multiplier: 2 };
+    for (const n of [1, 3, 12, 40]) {
+      for (const last of [undefined, 1, 7]) {
+        const s = scene([n], {
+          rule: FIB,
+          ...(last === undefined ? {} : { last_take: last }),
+          caption: 'Bốc tối đa gấp đôi nước trước',
+        });
+        expect({ n, last, fits: fits(s) }).toEqual({ n, last, fits: true });
+      }
     }
   });
 
@@ -615,5 +635,95 @@ describe('chú giải của hai view phổ nằm trong khung', () => {
       });
       expect({ to, fits: fits(s) }).toEqual({ to, fits: true });
     }
+  });
+});
+
+describe('GM-09 ở mức engine — luật đọc nước trước', () => {
+  const FIB: GameRule = { type: 'subtract-at-most-multiple', multiplier: 2 };
+  const renderer = createRenderer([gameRenderer]);
+  const ctx = createContext(defaultTheme);
+  const codes = (s: Scene): string[] =>
+    gameSchemaFragment.checkBounds(s, '').map((i) => i.code);
+  const run = (s: Scene, type: string, params: unknown): Scene | null => {
+    const r = execute(createEditorState(s), gameCommands, command(type, params));
+    return r.applied ? r.state.scene : null;
+  };
+
+  it('lệnh **ghi lại** số viên vừa bốc, nếu không sandbox cho đi nước phạm luật', () => {
+    const start = scene([20], { rule: FIB });
+    const after = run(start, 'game/take', { pile: 'p0', count: 2 })!;
+    expect((after.config as { last_take?: number }).last_take).toBe(2);
+
+    // Cận nay là 4. Bốc 4 được, bốc 5 thì không — và trước khi có `last_take`
+    // thì **cả hai** đều lọt, vì mọi nước đều được coi là nước mở màn.
+    expect(run(after, 'game/take', { pile: 'p0', count: 4 })).not.toBeNull();
+    expect(run(after, 'game/take', { pile: 'p0', count: 5 })).toBeNull();
+    expect(run(start, 'game/take', { pile: 'p0', count: 5 })).not.toBeNull();
+  });
+
+  it('nước mở màn không được bốc cả đống', () => {
+    expect(run(scene([7], { rule: FIB }), 'game/take', { pile: 'p0', count: 7 })).toBeNull();
+    expect(run(scene([7], { rule: FIB }), 'game/take', { pile: 'p0', count: 6 })).not.toBeNull();
+    // Nhưng khi đã có cận đủ lớn thì bốc hết là hợp lệ — và đó là nước thắng.
+    const s = scene([7], { rule: FIB, last_take: 4 });
+    expect(run(s, 'game/take', { pile: 'p0', count: 7 })).not.toBeNull();
+  });
+
+  it('luật khác **không** nhận `last_take`, và luật này cần đúng một đống', () => {
+    expect(codes(scene([20], { rule: FIB }))).toEqual([]);
+    expect(codes(scene([10, 10], { rule: FIB }))).toContain(
+      'bounds/history-rule-needs-one-pile',
+    );
+    expect(codes(scene([20], { last_take: 3 }))).toContain(
+      'bounds/last-take-without-history-rule',
+    );
+    // Grundy và phổ hai chiều cũng bị chặn — cùng lý do, khác đường.
+    expect(codes(scene([20], { rule: FIB, show_grundy: true }))).toContain(
+      'bounds/grundy-not-applicable',
+    );
+    expect(codes(scene([20], { rule: FIB, view: 'spectrum-2d' }))).toContain(
+      'bounds/spectrum-2d-needs-two-pile-rule',
+    );
+  });
+
+  it('thanh công cụ đổi theo **nước trước**, không theo đống', () => {
+    const ids = (s: Scene): string[] => gameTools(s).map((t) => t.id);
+    // Cùng đống 20 viên: mở màn có 19 nút, sau khi đối thủ bốc 1 thì còn 2.
+    expect(ids(scene([20], { rule: FIB }))).toHaveLength(1 + 19);
+    expect(ids(scene([20], { rule: FIB, last_take: 1 }))).toEqual([
+      'select',
+      'take-1',
+      'take-2',
+    ]);
+  });
+
+  it('hình **nói ra** cận, vì cận không nằm trong đống sỏi nào', () => {
+    expect(renderer.toSvg(scene([20], { rule: FIB }), ctx)).toContain(
+      'Nước mở màn: được bốc 1…19',
+    );
+    expect(renderer.toSvg(scene([20], { rule: FIB, last_take: 3 }), ctx)).toContain(
+      'Đối thủ vừa bốc 3 ⇒ được bốc 1…6',
+    );
+    // Luật không nhớ gì thì không có dòng ấy.
+    expect(renderer.toSvg(scene([20]), ctx)).not.toContain('được bốc');
+  });
+
+  it('phổ vẽ được, và nó là **dãy Fibonacci**', () => {
+    const svg = renderer.toSvg(
+      scene([20], { rule: FIB, view: 'spectrum', spectrum_to: 21 }),
+      ctx,
+    );
+    const neutral = defaultTheme.surface.neutral;
+    const cells = [...svg.matchAll(/<rect[^>]*fill="([^"]+)"[^>]*>/g)].map((m) => m[1]);
+    // 22 ô (0..21); thua ở 0, 1, 2, 3, 5, 8, 13, 21 ⇒ 8 ô tô đậm, 14 ô trung tính.
+    expect(cells.filter((c) => c === neutral)).toHaveLength(14);
+  });
+
+  it('DSL bày `last_take` ra, và `winning` đọc nó', () => {
+    // Cùng một đống, khác nước trước, khác đáp số — nên binding này phải có.
+    expect(evalOn(scene([3], { rule: FIB, last_take: 1 }), 'winning')).toBe(false);
+    expect(evalOn(scene([3], { rule: FIB, last_take: 2 }), 'winning')).toBe(true);
+    expect(evalOn(scene([3], { rule: FIB, last_take: 2 }), 'last_take')).toBe(2);
+    expect(evalOn(scene([3], { rule: FIB }), 'last_take')).toBe(0);
   });
 });

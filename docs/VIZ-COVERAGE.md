@@ -53,7 +53,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 | Đồ thị | 22% | 94% | 20.7 | tô mặt (phần còn lại của GR-05), kiểm tính phẳng tổng quát |
 | Đếm / song ánh / đếm hai chiều | 14% | 85% | 11.9 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 90% | 14.4 | — (`engine-sequence`) |
-| Trò chơi | 7% | 63% | 4.41 | chỉ chơi được game có thế là **đa tập số**; luật nhớ lịch sử (Nim Fibonacci) và mọi game không-phải-đống đều chưa — cần GM-01 rule script thật |
+| Trò chơi | 7% | 66% | 4.62 | thế phải là **đa tập số** cộng nhiều nhất một con số nhớ; mọi game không-phải-đống vẫn chưa — cần GM-01 rule script thật |
 | Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
 | Hình học tổ hợp | 5% | 75% | 3.75 | tô vùng do các đoạn chia (PT-03), đường tròn |
 | Hoán vị / thứ tự | 6% | 95% | 5.7 | — (chu trình hoán vị + poset/Hasse + Dilworth) |
@@ -103,7 +103,7 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Wythoff (hai đống, nước chéo) | trò chơi | ✅ có trong kho (`subtract-equal-pair`; phổ hai chiều cho ra **hai tia**) |
 | Trò Euclid | trò chơi | ✅ có trong kho (`subtract-multiple-of-other`; phổ hai chiều cho ra một **nêm**) |
 | Nim Lasker (bốc **hoặc** chia) | trò chơi | ✅ có trong kho (luật `union`, Grundy khớp dạng đóng) |
-| Nim Fibonacci | trò chơi | ❌ luật nhớ **nước trước**, đa tập đống không đủ mô tả ván |
+| Nim Fibonacci | trò chơi | ✅ có trong kho (`subtract-at-most-multiple`; phổ vẽ ra đúng dãy Fibonacci) |
 | Chomp, Hackenbush, lật đồng xu | trò chơi | ❌ thế không phải đa tập đống |
 | Trò chơi tô đồ thị | trò chơi | 🟡 vẽ được thế, không chơi được — cần GM-01 |
 | Game bàn cờ có chiến lược đối xứng | trò chơi | 🟡 board vẽ được thế và cặp ghép; không chơi được |
@@ -354,6 +354,11 @@ nên game có luật riêng — cờ trên đồ thị, Chomp, trò tô màu —
 > nên sáu điểm ở đây là $0{,}42$ điểm tổng. Ghi ra để không ai đọc nhầm ba luật
 > mới thành một bước nhảy của cả kho.
 
+> **Sửa số lần ba, ngày 2026-07-30.** `GM-09` (luật đọc nước vừa đi) lấy nốt dòng
+> ❌ cuối cùng của họ bốc đống: Nim Fibonacci. Nâng **63% → 66%**, và lại dừng ở
+> đó — ranh giới mới là "thế là đa tập số **cộng nhiều nhất một con số nhớ**", vẫn
+> để cả họ game bàn cờ / đồ thị / tô màu ở ngoài. Tổng vẫn ~85%.
+
 Còn lại **một** hạng mục: derivation engine (+1.35, ~1.0 M4, cần label atlas D-07).
 
 #### Vì sao game engine không mở DSL-03
@@ -383,8 +388,8 @@ làm thế:
 
 | Khai được | Không khai được | Vướng ở đâu |
 |---|---|---|
-| Nim nhiều đống, **Wythoff** | "bốc tối đa gấp đôi nước trước" | cận đọc được cỡ mọi đống, không đọc được *nước trước* |
-| Bốc $1..k$, **bốc tối đa $1/d$ đống** | Nim Fibonacci | luật nhớ **nước trước**, thế không đủ mô tả ván |
+| Nim nhiều đống, **Wythoff** | Nim Fibonacci **nhiều đống** | "đối thủ vừa bốc bao nhiêu" không nói bốc ở đâu |
+| Bốc $1..k$, **bốc tối đa $1/d$ đống**, **Nim Fibonacci** | "bốc tối đa gấp đôi **tổng** hai nước trước" | thế nhớ **một** con số, không nhớ cả lịch sử |
 | Bốc theo tập $\{1,3,4\}$, tập số nguyên tố… | Chomp, Hackenbush, lật đồng xu | thế không phải đa tập số |
 | Chia đống (đều và không đều), **trò Euclid** | Cờ trên đồ thị, game tô màu, game bàn cờ | thế không phải đống, chấm hết |
 | **Hợp tới ba thành viên** (Nim Lasker) | Game partizan (hai bên luật khác nhau) | solver giả định luật đối xứng |
@@ -459,7 +464,7 @@ không, và không phải vì thiếu công sức.
 ## 8. Cảnh báo về thứ tự
 
 **AUT-KPI là gate có răng:** *trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **61 bài** — nhưng **không bài nào do chính
+engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **62 bài** — nhưng **không bài nào do chính
 chủ soạn**, và người duyệt cũng là người soạn. Theo đúng luật của chính dự án,
 việc còn nợ không phải engine nào trong bảng §7, mà là **soạn tay 3–5 bài**
 (G-C), rồi mới đóng băng schema 1.0.0.

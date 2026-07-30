@@ -1,0 +1,291 @@
+{
+  "schema_version": "0.1.0",
+  "id": "fibonacci-nim",
+  "statement": {
+    "vi": "Trên bàn có $20$ viên sỏi. Người đi đầu bốc ít nhất $1$ viên nhưng **không được bốc hết**. Từ đó trở đi, mỗi lượt được bốc ít nhất $1$ viên và **nhiều nhất gấp đôi** số viên đối thủ vừa bốc. Ai bốc viên cuối cùng thì thắng. Hỏi ai có chiến lược thắng?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Nim Fibonacci. Luật đọc **nước vừa đi**, nên thế cờ không chỉ là đống sỏi; đáp số là định lý Zeckendorf."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "invariant",
+    "induction"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "game"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "total",
+      "id": "inv-t",
+      "label": {
+        "vi": "Số viên còn lại"
+      }
+    },
+    {
+      "expr": "last_take",
+      "id": "inv-l",
+      "label": {
+        "vi": "Đối thủ vừa bốc"
+      }
+    },
+    {
+      "expr": "moves",
+      "id": "inv-m",
+      "label": {
+        "vi": "Số nước đi được"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a1|Đống $20$ viên]]: người đi đầu được bốc bao nhiêu cũng được, trừ cả đống — ${{moves}}$ lựa chọn — rồi từ lượt sau mỗi người bốc **tối đa gấp đôi** số viên đối thủ vừa bốc. Chỗ lạ của bài này là nhìn đống sỏi **không đủ** biết ván đang thế nào, vì cận còn phụ thuộc nước vừa rồi; hình vì thế phải ghi thêm một dòng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Bốc tối đa gấp đôi nước trước",
+              "rule": {
+                "multiplier": 2,
+                "type": "subtract-at-most-multiple"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 20
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một đống hai mươi viên sỏi; dưới hình ghi nước mở màn được bốc từ một tới mười chín."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "moves == 19",
+            "winning == true",
+            "last_take == 0"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vẽ mọi thế **mở màn** từ $0$ tới $34$ rồi nhìn vệt: [[a2|$1$, $2$, $3$, $5$, $8$, $13$, $21$, $34$]]. Đó là dãy Fibonacci, không phải cấp số cộng cũng không phải luỹ thừa — nên ai đi tìm một bội số hay một số dạng $2^m-1$ sẽ tìm mãi không ra."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "pos-1",
+                "pos-2",
+                "pos-3",
+                "pos-5",
+                "pos-8",
+                "pos-13",
+                "pos-21",
+                "pos-34"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "multiplier": 2,
+                "type": "subtract-at-most-multiple"
+              },
+              "spectrum_to": 34,
+              "view": "spectrum"
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 20
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Phổ tới ba mươi tư: các ô 1, 2, 3, 5, 8, 13, 21, 34 tô đậm — đúng dãy Fibonacci."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "$20$ không phải số Fibonacci, nên **người đi trước thắng**. Cách đi: viết $20 = 13 + 5 + 2$ theo Zeckendorf — tổng các số Fibonacci **không kề nhau**, và cách viết ấy là duy nhất — rồi bốc đúng số hạng nhỏ nhất, tức $2$. Còn [[a3|$18$ viên]], đối thủ bị chặn ở ${{moves}}$ nước."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Sau nước bốc 2: cận là 4",
+              "last_take": 2,
+              "rule": {
+                "multiplier": 2,
+                "type": "subtract-at-most-multiple"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 18
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đống mười tám viên; dưới hình ghi đối thủ vừa bốc hai nên được bốc từ một tới bốn."
+          },
+          "verified": true,
+          "claims": [
+            "winning == false",
+            "moves == 4",
+            "last_take == 2"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vì sao đối thủ kẹt: $18 = 13 + 5$, mà số hạng nhỏ nhất là $5$ — lớn hơn cận $4$. Họ **không thể** bốc trọn một số hạng, nên bốc bao nhiêu ta cũng vá lại được. Ví dụ họ bốc $4$, ta bốc $1$ về [[a4|$13$ viên]] với cận $2$: $13$ là số Fibonacci và cận thì bé, thế của họ thua."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "13 viên, cận 2 — thế thua",
+              "last_take": 1,
+              "rule": {
+                "multiplier": 2,
+                "type": "subtract-at-most-multiple"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 13
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đống mười ba viên; dưới hình ghi đối thủ vừa bốc một nên được bốc từ một tới hai."
+          },
+          "verified": true,
+          "claims": [
+            "winning == false",
+            "moves == 2"
+          ]
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đổi đề thành [[a5|$21$ viên]] thì ngược hẳn: $21$ **là** số Fibonacci, Zeckendorf chỉ có một số hạng, nên nước mở màn nào cũng để lại một thế mà đối thủ vá được — **người đi sau thắng**. Đó là toàn bộ định lý: thế mở màn $n$ thua đúng khi $n$ là số Fibonacci."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "21 là số Fibonacci — người đi sau thắng",
+              "rule": {
+                "multiplier": 2,
+                "type": "subtract-at-most-multiple"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 21
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đống hai mươi mốt viên sỏi ở thế mở màn."
+          },
+          "verified": true,
+          "claims": [
+            "winning == false",
+            "moves == 20"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "hand-opponent-a-loss"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

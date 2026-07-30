@@ -40,14 +40,14 @@ export const GAME_LIMITS = {
  *     rủi ro đó.
  *   - Engine dãy đã có tiền lệ: `COMBINE_RULES` là enum đóng, kèm ghi chú rằng
  *     cho nhập biểu thức là "mở cửa hậu cho DSL-03".
- *   - Bảy thành viên dưới đây, cộng phép **hợp** ở `GameRule`, phủ trọn họ game
- *     **trên đa tập đống** kinh điển: Nim, bốc $1..k$, bốc theo tập, "bốc tối đa
- *     nửa đống", trò Grundy, Wythoff, trò Euclid, Nim Lasker.
+ *   - Tám thành viên dưới đây, cộng phép **hợp** ở `GameRule`, phủ trọn họ game
+ *     bốc đống kinh điển: Nim, bốc $1..k$, bốc theo tập, "bốc tối đa nửa đống",
+ *     trò Grundy, Wythoff, trò Euclid, Nim Lasker, Nim Fibonacci.
  *
- * Cái giá phải trả, nói thẳng, và **không** được nói giảm: thế phải là một **đa
- * tập số nguyên**, và hai bên phải cùng luật. Ngoài đó thì nằm ngoài:
+ * Cái giá phải trả, nói thẳng, và **không** được nói giảm: thế phải là **đa tập số
+ * nguyên**, cộng nhiều nhất một con số nhớ về nước vừa đi, và hai bên phải cùng
+ * luật. Ngoài đó thì nằm ngoài:
  *
- *   - **Nim Fibonacci** — luật nhớ **nước trước**, nên đa tập đống không đủ mô tả ván.
  *   - **Chomp, Hackenbush, lật đồng xu, cờ trên đồ thị, game bàn cờ, game tô màu**
  *     — thế không phải đa tập số, chấm hết.
  *   - **Game partizan** — solver giả định hai bên cùng luật.
@@ -129,6 +129,28 @@ const SUBTRACT_EQUAL_PAIR = Type.Object(
   { additionalProperties: false },
 );
 
+const SUBTRACT_AT_MOST_MULTIPLE = Type.Object(
+  {
+    /**
+     * Bốc tối đa `multiplier` lần số viên **đối thủ vừa bốc** (GM-09) ⇒ **Nim Fibonacci**.
+     *
+     * Đây là thành viên đầu tiên mà thế cờ **không đủ** để mô tả ván: hai bàn cùng
+     * $20$ viên có thể khác nhau hoàn toàn, tuỳ đối thủ vừa bốc $1$ hay $7$. Nên
+     * luật này kéo theo một trường mới ở `config`, `last_take`, và một khoá trạng
+     * thái mới trong solver — chứ không chỉ thêm một nhánh sinh nước.
+     *
+     * Nước **mở màn** được bốc bao nhiêu cũng được, trừ cả đống: không có "nước
+     * trước" để lấy cận, mà cho bốc hết thì ván kết thúc trước khi bắt đầu.
+     *
+     * Với `multiplier = 2` đây đúng là Nim Fibonacci, và thế thua là các số
+     * Fibonacci — một phát biểu mà view `spectrum` biến thành một vệt để nhìn.
+     */
+    type: Type.Literal('subtract-at-most-multiple'),
+    multiplier: Type.Integer({ minimum: 2, maximum: 5 }),
+  },
+  { additionalProperties: false },
+);
+
 const SUBTRACT_MULTIPLE_OF_OTHER = Type.Object(
   {
     /**
@@ -151,6 +173,7 @@ const ATOMS = [
   SPLIT_ANY,
   SUBTRACT_EQUAL_PAIR,
   SUBTRACT_MULTIPLE_OF_OTHER,
+  SUBTRACT_AT_MOST_MULTIPLE,
 ] as const;
 
 /** Một thành viên đơn của họ luật. `union` **không** nằm ở đây — xem `GameRule`. */
@@ -211,6 +234,15 @@ export const GameConfig = Type.Object(
     spectrum_to: Type.Optional(
       Type.Integer({ minimum: 1, maximum: GAME_LIMITS.maxSpectrum }),
     ),
+    /**
+     * Số viên **đối thủ vừa bốc** — chỉ có nghĩa với luật đọc lịch sử (GM-09).
+     *
+     * Vắng nghĩa là **nước mở màn**: chưa ai đi, nên chưa có cận nào. Trường này
+     * là một phần của *thế cờ*, không phải một tuỳ chọn hiển thị; lệnh `game/take`
+     * tự ghi lại nó sau mỗi nước, nếu không thì sandbox sẽ cho đi những nước mà
+     * luật cấm.
+     */
+    last_take: Type.Optional(Type.Integer({ minimum: 1 })),
     /** Hiện giá trị Grundy dưới mỗi đống. Vô nghĩa ở chế độ misère. */
     show_grundy: Type.Optional(Type.Boolean({ default: false })),
     caption: Type.Optional(Type.String({ maxLength: 48 })),

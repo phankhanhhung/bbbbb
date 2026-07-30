@@ -9,6 +9,7 @@ import { readGame, type GameModel } from './model.js';
 import { GameConfig, GAME_LIMITS, PileElement } from './schema.js';
 import {
   allMoves,
+  isHistoryRule,
   isLocalRule,
   spectrum2dReadable,
   spectrumReadable,
@@ -38,7 +39,27 @@ function findMove(
   match: (move: Move, counts: readonly number[]) => boolean,
 ): Move | null {
   const counts = model.piles.map((p) => p.count);
-  return allMoves(counts, model.config.rule).find((move) => match(move, counts)) ?? null;
+  return (
+    allMoves(counts, model.config.rule, model.config.last_take).find((move) =>
+      match(move, counts),
+    ) ?? null
+  );
+}
+
+/**
+ * Ghi lại số viên vừa bốc, nếu luật cần nhớ (GM-09).
+ *
+ * Không phải chuyện hiển thị. Với Nim Fibonacci, cận của nước kế tiếp **là** con
+ * số này; quên ghi thì mọi nước sau đều được đi như nước mở màn, và sandbox cho
+ * người học "thắng" bằng những nước luật cấm — đúng thứ mà lớp lệnh tự kiểm luật
+ * sinh ra để chặn.
+ */
+function rememberTake(scene: Scene, model: GameModel, took: number): Scene {
+  if (!isHistoryRule(model.config.rule)) return scene;
+  return {
+    ...scene,
+    config: { ...(scene.config as Record<string, unknown>), last_take: took },
+  };
 }
 
 /** Chỉ số của một đống trong **danh sách đống** (không phải trong `elements`). */
@@ -77,7 +98,7 @@ const take = defineCommand<{ pile: string; count: number }>({
       ...(elements[at] as SceneElement),
       count: pile.count - params.count,
     };
-    return { ...scene, elements };
+    return rememberTake({ ...scene, elements }, model, params.count);
   },
 });
 
@@ -300,6 +321,31 @@ export const gameSchemaFragment: EngineSchemaFragment = {
           hint: 'Theo G-10 một ô là 44px, nên quá trần này thì cả lưới không còn đọc được từng ô',
         });
       }
+    }
+
+    // Luật đọc lịch sử chỉ có nghĩa trên **một** đống. Nhiều đống thì "đối thủ
+    // vừa bốc bao nhiêu" không nói được nó bốc ở đâu, mà cận lại áp cho đống nào
+    // cũng được — một luật khác hẳn, chưa ai định nghĩa.
+    if (config?.rule && isHistoryRule(config.rule) && model.piles.length !== 1) {
+      issues.push({
+        code: 'bounds/history-rule-needs-one-pile',
+        severity: 'error',
+        message: `Luật đọc nước trước cần đúng một đống, scene có ${model.piles.length}`,
+        path: `${path}/elements`,
+        hint: 'Nim Fibonacci là trò một đống; bản nhiều đống chưa có định nghĩa chuẩn',
+      });
+    }
+
+    // `last_take` chỉ có nghĩa với luật đọc lịch sử. Khai thừa thì nó nằm im
+    // trong file và người đọc tưởng nó đang có tác dụng.
+    if (config?.last_take !== undefined && config.rule && !isHistoryRule(config.rule)) {
+      issues.push({
+        code: 'bounds/last-take-without-history-rule',
+        severity: 'error',
+        message: '`last_take` chỉ dùng được với luật đọc nước trước',
+        path: `${path}/config/last_take`,
+        hint: 'Các luật khác không nhớ gì về nước vừa đi, nên trường này không tác dụng',
+      });
     }
 
     // Grundy: chặn **trước** khi hình vẽ ra một con số tự tin và sai. Với luật

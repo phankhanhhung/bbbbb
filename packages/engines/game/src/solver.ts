@@ -19,7 +19,30 @@ export function ruleAtoms(rule: GameRule): readonly GameRuleAtom[] {
  *     bày `xor` ra nữa (xem `dsl.ts`).
  */
 export function isLocalAtom(atom: GameRuleAtom): boolean {
-  return atom.type !== 'subtract-equal-pair' && atom.type !== 'subtract-multiple-of-other';
+  return (
+    atom.type !== 'subtract-equal-pair' &&
+    atom.type !== 'subtract-multiple-of-other' &&
+    atom.type !== 'subtract-at-most-multiple'
+  );
+}
+
+/**
+ * Thành viên này có đọc **nước vừa đi** không? (GM-09)
+ *
+ * Ranh giới thứ hai của engine, và nó cắt sâu hơn `isLocalAtom`. Luật toàn cục
+ * vẫn để thế cờ là một đa tập đống; luật đọc lịch sử thì **đa tập đống không còn
+ * đủ mô tả ván** — hai bàn cùng $20$ viên khác nhau hoàn toàn tuỳ đối thủ vừa bốc
+ * $1$ hay $7$. Nên trạng thái của solver phải mang thêm một con số, và mọi thứ
+ * đọc trạng thái ấy — khoá duyệt lùi, phổ, thanh công cụ, lệnh đi — phải mang theo.
+ */
+export function isHistoryAtom(
+  atom: GameRuleAtom,
+): atom is Extract<GameRuleAtom, { type: 'subtract-at-most-multiple' }> {
+  return atom.type === 'subtract-at-most-multiple';
+}
+
+export function isHistoryRule(rule: GameRule): boolean {
+  return ruleAtoms(rule).some(isHistoryAtom);
 }
 
 export function isLocalRule(rule: GameRule): boolean {
@@ -38,7 +61,11 @@ export function spectrumReadable(rule: GameRule): boolean {
     (atom) =>
       atom.type === 'subtract' ||
       atom.type === 'subtract-set' ||
-      atom.type === 'subtract-fraction',
+      atom.type === 'subtract-fraction' ||
+      // Luật đọc lịch sử vẫn là luật bốc từ **một** đống, nên phổ vẫn đọc được —
+      // chỉ là mỗi ô của phổ nay trả lời câu "thế **mở màn** $n$ viên thì sao",
+      // và câu ấy chính là câu bài toán hỏi.
+      atom.type === 'subtract-at-most-multiple',
   );
 }
 
@@ -52,7 +79,12 @@ export function spectrumReadable(rule: GameRule): boolean {
  */
 export function spectrum2dReadable(rule: GameRule): boolean {
   return ruleAtoms(rule).every(
-    (atom) => atom.type !== 'split-unequal' && atom.type !== 'split-any',
+    (atom) =>
+      atom.type !== 'split-unequal' &&
+      atom.type !== 'split-any' &&
+      // Lưới $(a,b)$ chỉ có hai trục; luật đọc lịch sử cần một trục thứ ba cho
+      // con số nhớ, nên nó không nằm gọn trên một tờ giấy.
+      !isHistoryAtom(atom),
   );
 }
 
@@ -178,6 +210,7 @@ export function analyzeGame(
   piles: readonly number[],
   rule: GameRule,
   misere = false,
+  lastTake?: number,
 ): GameAnalysis {
   if (piles.length === 0) return EMPTY;
   if (piles.length > GAME_LIMITS.maxPiles) {
@@ -189,20 +222,25 @@ export function analyzeGame(
   }
 
   const local = isLocalRule(rule);
+  const history = isHistoryRule(rule);
 
   // Từ chối **theo ước lượng**, trước khi sinh nước nào.
   //
   // Trần `maxStates` bên trong `retrograde` cũng chặn được, nhưng nó chỉ chặn sau
   // khi đã duyệt hai trăm nghìn thế — với sáu đống hai trăm viên, mỗi thế có hàng
   // nghìn nước, nên "chặn" ấy mất vài phút. Ước lượng thì tính trong sáu phép nhân.
-  if (!local && stateSpaceEstimate(piles) > GAME_LIMITS.maxStates) {
+  // Luật đọc lịch sử nhân thêm một trục: mỗi thế đi kèm mọi giá trị `lastTake`
+  // có thể, mà `lastTake` không vượt tổng số viên.
+  const total = piles.reduce((a, b) => a + b, 0);
+  const estimate = stateSpaceEstimate(piles) * (history ? total + 1 : 1);
+  if (!local && estimate > GAME_LIMITS.maxStates) {
     return {
       ...EMPTY,
       refused: `Không gian thế vượt trần ${GAME_LIMITS.maxStates} nên không giải được`,
     };
   }
 
-  const all = allMoves(piles, rule);
+  const all = allMoves(piles, rule, lastTake);
 
   if (local && !misere) {
     const g = grundyTable(largest, rule);
@@ -221,7 +259,7 @@ export function analyzeGame(
 
   // Misère, hoặc luật toàn cục: XOR không áp dụng được, phải duyệt lùi toàn bộ
   // không gian thế.
-  const solved = retrograde(piles, rule, misere);
+  const solved = retrograde(piles, rule, misere, lastTake);
   if (solved === null) {
     return {
       ...EMPTY,
@@ -233,8 +271,13 @@ export function analyzeGame(
   return {
     grundy: [],
     xor: 0,
-    winning: solved.win.get(key(piles)) === true,
-    winningMoves: all.filter((move) => solved.win.get(key(apply(piles, move))) === false),
+    winning: solved.win.get(stateKey(piles, lastTake, history)) === true,
+    winningMoves: all.filter(
+      (move) =>
+        solved.win.get(
+          stateKey(apply(piles, move), tookBy(piles, move), history),
+        ) === false,
+    ),
     totalMoves: all.length,
   };
 }
@@ -245,11 +288,29 @@ export function analyzeGame(
  * Solver, lệnh sandbox, thanh công cụ và validator đều gọi vào đây, nên không có
  * đường nào để thanh công cụ bày ra một nước mà solver coi là phạm luật.
  */
-export function allMoves(piles: readonly number[], rule: GameRule): Move[] {
+export function allMoves(
+  piles: readonly number[],
+  rule: GameRule,
+  lastTake?: number,
+): Move[] {
   const atoms = ruleAtoms(rule);
   const out: Move[] = [];
 
   for (const atom of atoms) {
+    if (isHistoryAtom(atom)) {
+      // Cận đọc từ **nước vừa đi**, không từ thế cờ. Nước mở màn (`lastTake`
+      // vắng) được bốc bao nhiêu cũng được trừ cả đống — không có nước trước để
+      // lấy cận, mà cho bốc hết thì ván xong trước khi bắt đầu.
+      piles.forEach((n, index) => {
+        const max =
+          lastTake === undefined ? n - 1 : Math.min(n, atom.multiplier * lastTake);
+        for (let take = 1; take <= max; take += 1) {
+          out.push({ piles: [index], becomes: [[n - take]] });
+        }
+      });
+      continue;
+    }
+
     if (isLocalAtom(atom)) {
       piles.forEach((n, index) => {
         const parts: number[][] = [];
@@ -293,6 +354,12 @@ export function allMoves(piles: readonly number[], rule: GameRule): Move[] {
   // Cùng lý do với `movesFromPile`: luật đơn không sinh nước trùng, và hàm này
   // chạy ở mọi nút của phép duyệt lùi.
   return atoms.length === 1 ? out : dedupeMoves(out);
+}
+
+/** Số viên mà một nước lấy đi — cận cho nước kế tiếp ở luật đọc lịch sử. */
+export function tookBy(piles: readonly number[], move: Move): number {
+  const before = piles.reduce((a, b) => a + b, 0);
+  return before - apply(piles, move).reduce((a, b) => a + b, 0);
 }
 
 export function apply(piles: readonly number[], move: Move): number[] {
@@ -384,12 +451,14 @@ function retrograde(
   start: readonly number[],
   rule: GameRule,
   terminalWins: boolean,
+  startLastTake?: number,
 ): { win: Map<string, boolean> } | null {
   const win = new Map<string, boolean>();
   const visiting = new Set<string>();
+  const history = isHistoryRule(rule);
 
-  const solve = (piles: readonly number[]): boolean | null => {
-    const k = key(piles);
+  const solve = (piles: readonly number[], lastTake?: number): boolean | null => {
+    const k = stateKey(piles, lastTake, history);
     const known = win.get(k);
     if (known !== undefined) return known;
     if (win.size >= GAME_LIMITS.maxStates) return null;
@@ -398,11 +467,11 @@ function retrograde(
     if (visiting.has(k)) return null;
     visiting.add(k);
 
-    const moves = allMoves(piles, rule);
+    const moves = allMoves(piles, rule, lastTake);
     // Hết nước: luật thường thì người sắp đi **thua**, misère thì **thắng**.
     let result = moves.length === 0 && terminalWins;
     for (const move of moves) {
-      const after = solve(apply(piles, move));
+      const after = solve(apply(piles, move), tookBy(piles, move));
       if (after === null) {
         visiting.delete(k);
         return null;
@@ -418,7 +487,21 @@ function retrograde(
     return result;
   };
 
-  return solve(start) === null ? null : { win };
+  return solve(start, startLastTake) === null ? null : { win };
+}
+
+/**
+ * Khoá trạng thái: đa tập đống, **cộng** con số nhớ nếu luật cần nó.
+ *
+ * Không gộp `lastTake` vào khoá cho mọi luật: với luật không đọc lịch sử, làm thế
+ * sẽ nhân không gian trạng thái lên vài trăm lần để lưu cùng một câu trả lời.
+ */
+function stateKey(
+  piles: readonly number[],
+  lastTake: number | undefined,
+  history: boolean,
+): string {
+  return history ? `${key(piles)}|${lastTake ?? 0}` : key(piles);
 }
 
 /**
@@ -488,6 +571,18 @@ export function losingSpectrum(
   rule: GameRule,
   misere = false,
 ): boolean[] {
+  // Luật đọc lịch sử: mỗi ô của phổ là thế **mở màn** $n$ viên, chưa có nước
+  // trước. Không có bảng Grundy nào để tra — phải giải từng thế — nhưng đó đúng
+  // là câu bài toán hỏi, và với Nim Fibonacci vệt hiện ra là dãy Fibonacci.
+  if (isHistoryRule(rule)) {
+    const lose: boolean[] = [];
+    for (let n = 0; n <= upTo; n += 1) {
+      const analysis = analyzeGame([n], rule, misere);
+      lose[n] = analysis.refused === undefined && !analysis.winning;
+    }
+    return lose;
+  }
+
   if (!misere) {
     const g = grundyTable(upTo, rule);
     return g.map((value) => value === 0);

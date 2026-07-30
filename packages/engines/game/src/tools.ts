@@ -26,7 +26,9 @@ export function gameTools(scene: Scene): readonly SandboxTool[] {
   if (model.config.view !== undefined && model.config.view !== 'piles') return tools;
 
   const counts = model.piles.map((p) => p.count);
-  const moves = allMoves(counts, model.config.rule);
+  // Cận của luật đọc lịch sử nằm ở `last_take`, nên thanh công cụ phải mang nó
+  // theo: số nút **đổi sau mỗi nước**, đúng như luật.
+  const moves = allMoves(counts, model.config.rule, model.config.last_take);
 
   const takes = new Set<number>();
   const pairs = new Set<number>();

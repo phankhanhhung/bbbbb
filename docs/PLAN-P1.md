@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M24 xong (7 engine, phủ ~85%); kho 61 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M25 xong (7 engine, phủ ~85%); kho 62 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,51 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M25 — Luật đọc nước vừa đi: Nim Fibonacci (GM-09) · [E] — **xong**
+
+Dòng ❌ **cuối cùng** của họ game bốc đống, và là dòng bị trích ba lần trong tài
+liệu: "luật nhớ **nước trước**, nên đa tập đống không đủ mô tả ván".
+
+Câu ấy đúng, và đó chính là chỗ tốn công. Bốn milestone trước chỉ thêm nhánh sinh
+nước; hạng mục này đổi **trạng thái**. Hai bàn cùng $20$ viên là hai ván khác nhau
+nếu đối thủ vừa bốc $1$ hay $7$, nên:
+
+- `config.last_take` là một phần của **thế cờ**, không phải tuỳ chọn hiển thị;
+- khoá duyệt lùi thành `đa tập đống | con số nhớ` — nhưng **chỉ** khi luật cần nó,
+  vì gộp vào mọi luật sẽ nhân không gian trạng thái lên vài trăm lần để lưu đúng
+  cùng một câu trả lời;
+- `allMoves`, thanh công cụ, lệnh đi và validator đều phải mang con số ấy theo;
+- và lệnh `game/take` phải **ghi lại** nó. Quên chỗ này thì mọi nước sau đều được
+  đi như nước mở màn, và sandbox cho người học "thắng" bằng những nước luật cấm —
+  đúng thứ mà lớp lệnh tự kiểm luật sinh ra để chặn. Có test bắt đúng cái đó.
+
+**Hình phải nói ra cận.** Cận không nằm trong đống sỏi nào, nên nhìn hình không
+biết mình được bốc bao nhiêu và mấy cái nút trên thanh công cụ trông như tuỳ tiện.
+Nay có một dòng dưới đáy: "Đối thủ vừa bốc 2 ⇒ được bốc 1…4". Chuỗi ấy là **một**
+hằng số dùng chung cho cả khung lẫn lúc vẽ — bài học caption của M22, tái phát ở
+M23, nên lần này viết đúng từ đầu.
+
+**Phổ vẫn đọc được, và đó là phần thưởng.** Mỗi ô của phổ nay trả lời câu "thế
+**mở màn** $n$ viên thì sao", và câu ấy đúng là câu bài toán hỏi. Vệt hiện ra là
+$1, 2, 3, 5, 8, 13, 21, 34$ — dãy Fibonacci. Không có bảng Grundy nào để tra, phải
+giải từng thế, nhưng $60$ thế nhỏ thì rẻ.
+
+Đối chứng: định lý Zeckendorf (thế mở màn thua đúng khi $n$ là số Fibonacci), kiểm
+đủ $n \le 45$; cộng một `bruteWin` **có mang `lastTake`** đối chiếu vét cạn mọi
+cặp $(n, \text{cận})$ tới $n = 18$.
+
+Bài mới **`fibonacci-nim`**, và nó dùng invariant strip đúng chỗ đắt nhất: ba
+invariant `total`, `last_take`, `moves` chạy dọc lời giải, cho thấy cận co lại
+$19 \to 4 \to 2$ trong khi đống sỏi vẫn chỉ là một đống.
+
+**Ranh giới mới, nói thẳng:** thế phải là **đa tập số nguyên cộng nhiều nhất một
+con số nhớ**. "Bốc tối đa gấp đôi *tổng hai* nước trước" đã nằm ngoài, và Nim
+Fibonacci **nhiều đống** cũng vậy — "đối thủ vừa bốc bao nhiêu" không nói nó bốc ở
+đâu, nên luật ấy chưa có định nghĩa chuẩn; `checkBounds` từ chối thẳng thay vì
+đoán. Phủ họ trò chơi $63\% \to 66\%$.
+
+1012 test, 62 bài 0 lỗi 0 cảnh báo, e2e 42 xanh.
 
 ### M24 — Lưới tam giác và lục giác cho board engine (BD-07) · [E] — **xong**
 
@@ -1112,7 +1157,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 61 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 62 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):

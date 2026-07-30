@@ -19,6 +19,7 @@ const handOpponentALoss: SceneValidator = {
       model.piles.map((p) => p.count),
       model.config.rule,
       model.config.misere === true,
+      model.config.last_take,
     );
     if (analysis.refused !== undefined) {
       return { ok: true, violations: [], message: `Bỏ qua: ${analysis.refused}` };

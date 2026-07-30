@@ -27,7 +27,12 @@ function model(scene: Scene): GameModel {
 export function gameEnvironment(scene: Scene): DslEnvironment {
   const state = model(scene);
   const counts = state.piles.map((p) => p.count);
-  const analysis = analyzeGame(counts, state.config.rule, state.config.misere === true);
+  const analysis = analyzeGame(
+    counts,
+    state.config.rule,
+    state.config.misere === true,
+    state.config.last_take,
+  );
 
   /**
    * Grundy chỉ tồn tại khi lý thuyết ấy áp dụng được.
@@ -61,6 +66,8 @@ export function gameEnvironment(scene: Scene): DslEnvironment {
       moves: analysis.totalMoves,
       /** Số nước đưa đối thủ vào thế thua. */
       winning_moves: analysis.winningMoves.length,
+      /** Số viên đối thủ vừa bốc; $0$ ở nước mở màn (luật đọc lịch sử). */
+      last_take: state.config.last_take ?? 0,
     },
     builtins: {},
   };

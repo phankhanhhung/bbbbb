@@ -14,13 +14,16 @@ import {
 } from '@combviz/render';
 import { GAME_LIMITS } from './schema.js';
 import {
+  allMoves,
   analyzeGame,
+  isHistoryRule,
   losingGrid,
   losingSpectrum,
   spectrum2dReadable,
   spectrumReadable,
 } from './solver.js';
 import { readGame, type GameModel } from './model.js';
+import type { Move } from './solver.js';
 
 /**
  * Đơn vị gốc, lấy từ **một** chỗ (G-10).
@@ -183,6 +186,27 @@ const LEGEND_SIZE = SLOT * 0.32;
 const SPECTRUM_LEGEND = 'Ô tô đậm: thế thua của người sắp đi';
 const GRID_LEGEND = 'Ô tô đậm: thế thua của người sắp đi. Trục ngang: đống thứ nhất.';
 
+/**
+ * Dòng cận của luật đọc lịch sử (GM-09), hoặc `null`.
+ *
+ * Một chuỗi, một chỗ: khung đọc bề rộng từ đây và renderer vẽ cũng từ đây. Để hai
+ * nơi thì sửa một chỗ, chỗ kia cụt chữ — lỗi đã vá ở M22 và tái phát ở M23.
+ */
+function historyLine(model: GameModel): string | null {
+  if (!isHistoryRule(model.config.rule) || model.piles.length === 0) return null;
+  const cap = Math.max(
+    0,
+    ...allMoves(
+      model.piles.map((p) => p.count),
+      model.config.rule,
+      model.config.last_take,
+    ).map((move) => tookOf(model, move)),
+  );
+  return model.config.last_take === undefined
+    ? `Nước mở màn: được bốc 1…${cap}`
+    : `Đối thủ vừa bốc ${model.config.last_take} ⇒ được bốc 1…${cap}`;
+}
+
 /** Bề rộng tối thiểu để mọi dòng chữ của một view phổ nằm trong khung. */
 function textFloor(model: GameModel, legend: string): number {
   const caption = model.config.caption
@@ -247,7 +271,9 @@ function contentWidth(model: GameModel): number {
   const caption = model.config.caption
     ? estimateTextWidth(model.config.caption, CAPTION_SIZE) + PADDING
     : 0;
-  return Math.max(SLOT, stacks, caption);
+  const history = historyLine(model);
+  const cap = history === null ? 0 : estimateTextWidth(history, LEGEND_SIZE) + PADDING;
+  return Math.max(SLOT, stacks, caption, cap);
 }
 
 /**
@@ -274,7 +300,13 @@ function pilesBox(model: GameModel): {
     width,
     top: DOT_TOP - STONE_R - caption,
     baseline,
-    bottom: baseline + (model.config.show_grundy ? SLOT * 0.5 : 0) + SLOT * 0.2,
+    bottom:
+      baseline +
+      (model.config.show_grundy ? SLOT * 0.5 : 0) +
+      // Chỗ cho dòng cận của luật đọc lịch sử; thiếu nó thì chữ nằm ngoài khung,
+      // đúng lỗi caption đã vá ở M22.
+      (isHistoryRule(model.config.rule) ? SLOT * 0.45 : 0) +
+      SLOT * 0.2,
   };
 }
 
@@ -617,7 +649,42 @@ function renderPiles(model: GameModel, ctx: RenderContext): SvgNode[] {
     }
   });
 
+  // Luật đọc lịch sử: **cận** là một phần của thế cờ, mà nó không nằm trong đống
+  // sỏi nào. Không viết ra thì người học nhìn hình cũng không biết mình được bốc
+  // bao nhiêu, và mấy cái nút trên thanh công cụ trông như tuỳ tiện.
+  const line = historyLine(model);
+  if (line !== null) {
+    const box = pilesBox(model);
+    nodes.push(
+      text(
+        'text',
+        {
+          x: round(box.width / 2),
+          y: round(box.bottom + SLOT * 0.1),
+          'text-anchor': 'middle',
+          'font-family': ctx.theme.type.uiFamily,
+          'font-size': LEGEND_SIZE,
+          fill: ctx.theme.surface.guide,
+        },
+        line,
+      ),
+    );
+  }
+
   return nodes;
+}
+
+/** Số viên một nước lấy đi, đọc trên model hiện tại. */
+function tookOf(model: GameModel, move: Move): number {
+  const before = model.piles.reduce((n, p) => n + p.count, 0);
+  const after = move.piles.reduce(
+    (n, index, k) =>
+      n -
+      (model.piles[index] as GameModel['piles'][number]).count +
+      (move.becomes[k] as readonly number[]).reduce((a, b) => a + b, 0),
+    before,
+  );
+  return before - after;
 }
 
 function round(value: number): number {

@@ -4,6 +4,7 @@ import {
   analyzeGame,
   apply,
   grundyTable,
+  isHistoryRule,
   isLocalRule,
   losingGrid,
   losingSpectrum,
@@ -11,6 +12,7 @@ import {
   spectrum2dReadable,
   spectrumReadable,
   stateSpaceEstimate,
+  tookBy,
   type Move,
 } from '../src/solver.js';
 import type { GameRule } from '../src/schema.js';
@@ -545,5 +547,87 @@ describe('GM-08 — phổ hai chiều', () => {
     // nhất** hai quy ước khác nhau về định nghĩa.
     expect((losingGrid(6, NIM)[0] as boolean[])[0]).toBe(true);
     expect((losingGrid(6, NIM, true)[0] as boolean[])[0]).toBe(false);
+  });
+});
+
+/**
+ * GM-09 — luật đọc **nước vừa đi**: Nim Fibonacci.
+ *
+ * Thành viên đầu tiên mà đa tập đống **không đủ** mô tả ván. Đối chứng vẫn là dạng
+ * đóng của toán học: định lý Zeckendorf nói thế mở màn $n$ viên thua đúng khi $n$
+ * là số Fibonacci — một phát biểu hoàn toàn độc lập với mọi dòng code ở đây.
+ */
+const FIB: GameRule = { type: 'subtract-at-most-multiple', multiplier: 2 };
+
+describe('GM-09 — Nim Fibonacci', () => {
+  it('luật đọc lịch sử, nên **không** cục bộ và cũng không phải chỉ toàn cục', () => {
+    expect(isHistoryRule(FIB)).toBe(true);
+    expect(isHistoryRule(NIM)).toBe(false);
+    expect(isLocalRule(FIB)).toBe(false);
+    expect(analyzeGame([20], FIB).grundy).toEqual([]);
+  });
+
+  it('cận đọc từ nước trước, không từ đống', () => {
+    // Mở màn: bốc $1..n-1$ — bao nhiêu cũng được, trừ cả đống.
+    expect(allMoves([5], FIB).map((m) => apply([5], m))).toEqual([[4], [3], [2], [1]]);
+    // Đối thủ vừa bốc 1 ⇒ tối đa 2. Vừa bốc 3 ⇒ tối đa 6, mà đống chỉ có 5.
+    expect(allMoves([5], FIB, 1).map((m) => apply([5], m))).toEqual([[4], [3]]);
+    expect(allMoves([5], FIB, 3).map((m) => apply([5], m))).toEqual([
+      [4], [3], [2], [1], [],
+    ]);
+  });
+
+  it('thế mở màn thua **đúng khi** $n$ là số Fibonacci (Zeckendorf)', () => {
+    const fib = new Set<number>();
+    for (let a = 1, b = 2; a <= 60; [a, b] = [b, a + b]) fib.add(a);
+    expect([...fib].slice(0, 8)).toEqual([1, 2, 3, 5, 8, 13, 21, 34]);
+
+    for (let n = 1; n <= 45; n += 1) {
+      expect({ n, win: analyzeGame([n], FIB).winning }).toEqual({ n, win: !fib.has(n) });
+    }
+  });
+
+  it('phổ vẽ ra đúng dãy Fibonacci', () => {
+    const lose = losingSpectrum(40, FIB);
+    expect(lose.map((v, n) => (v ? n : -1)).filter((n) => n > 0)).toEqual([
+      1, 2, 3, 5, 8, 13, 21, 34,
+    ]);
+  });
+
+  it('cùng một đống, khác nước trước, khác đáp số', () => {
+    // Đây là toàn bộ lý do phải thêm một trục vào trạng thái: thế cờ giống hệt
+    // nhau mà kết cục ngược nhau.
+    // Đống $3$ viên: đối thủ vừa bốc $1$ ⇒ ta chỉ được bốc $1$ hoặc $2$, và cả hai
+    // đều dâng nước cuối cho họ. Đối thủ vừa bốc $2$ ⇒ ta bốc luôn cả $3$ và thắng.
+    expect(analyzeGame([3], FIB, false, 1).winning).toBe(false);
+    expect(analyzeGame([3], FIB, false, 2).winning).toBe(true);
+  });
+
+  it('đối chiếu vét cạn với định nghĩa gốc, mọi cận nước trước', () => {
+    // `bruteWin` không nhớ gì và không biết Zeckendorf; nó chỉ biết luật.
+    const brute = (n: number, lastTake?: number): boolean => {
+      const moves = allMoves([n], FIB, lastTake);
+      if (moves.length === 0) return false;
+      return moves.some((m) => !brute(n - tookBy([n], m), tookBy([n], m)));
+    };
+    for (let n = 0; n <= 18; n += 1) {
+      for (const lastTake of [undefined, 1, 2, 3, 5]) {
+        expect({ n, lastTake, win: analyzeGame([n], FIB, false, lastTake).winning }).toEqual({
+          n,
+          lastTake,
+          win: brute(n, lastTake),
+        });
+      }
+    }
+  });
+
+  it('phổ hai chiều **không** vẽ được: lưới chỉ có hai trục', () => {
+    expect(spectrumReadable(FIB)).toBe(true);
+    expect(spectrum2dReadable(FIB)).toBe(false);
+  });
+
+  it('từ chối khi trạng thái quá lớn, tính cả trục nhớ', () => {
+    expect(analyzeGame([200], FIB).refused).toBeUndefined();
+    expect(analyzeGame([150, 150], FIB).refused).toMatch(/vượt trần/);
   });
 });
