@@ -9,6 +9,7 @@ import {
   text,
   type EngineRenderer,
   type RenderContext,
+  type SceneBox,
   type SvgNode,
 } from '@combviz/render';
 import type { PointConfig } from './schema.js';
@@ -36,8 +37,57 @@ const pointConfig = (scene: Scene): PointConfig => (scene.config as PointConfig)
 /** Cỡ chữ caption — một hằng số, để khung và chữ không đọc hai con số khác nhau. */
 const CAPTION_SIZE = UNIT * 0.36;
 
+/**
+ * Chỗ mực của một element hình học nằm.
+ *
+ * Đường thẳng (`line`) khai theo **hai điểm định nghĩa nó**, không theo nét vẽ.
+ * Nét ấy được kéo dài quá đường chéo khung rồi để `viewBox` cắt, nên hộp bao của
+ * nó là cả khung hình — một con số đúng mà vô dụng: bay tới tâm khung là bay tới
+ * chỗ chẳng nói lên điều gì. Hai điểm định nghĩa mới là chỗ đường thẳng ấy *có
+ * nghĩa*, và tâm của chúng nằm trên chính nét vẽ.
+ */
+function boxesOf(scene: Scene, id: string): readonly SceneBox[] {
+  const model = buildPoints(scene);
+
+  const point = model.byId.get(id);
+  if (point) {
+    return [
+      {
+        x: point.x - POINT_RADIUS,
+        y: point.y - POINT_RADIUS,
+        width: POINT_RADIUS * 2,
+        height: POINT_RADIUS * 2,
+      },
+    ];
+  }
+
+  const hull = (ids: readonly string[]): readonly SceneBox[] => {
+    const pts = ids.map((at) => model.byId.get(at)).filter((p): p is Pt => p !== undefined);
+    if (pts.length === 0) return [];
+    const x = Math.min(...pts.map((p) => p.x));
+    const y = Math.min(...pts.map((p) => p.y));
+    return [
+      {
+        x,
+        y,
+        width: Math.max(...pts.map((p) => p.x)) - x,
+        height: Math.max(...pts.map((p) => p.y)) - y,
+      },
+    ];
+  };
+
+  const polygon = model.polygons.find((p) => p.id === id);
+  if (polygon) return polygon.points.length < 3 ? [] : hull(polygon.points);
+
+  const span = [...model.segments, ...model.lines].find((sg) => sg.id === id);
+  if (span) return hull([span.a, span.b]);
+
+  return [];
+}
+
 export const pointRenderer: EngineRenderer = {
   id: 'point',
+  elementBoxes: boxesOf,
 
   defaultViewport(scene: Scene): Viewport {
     const model = buildPoints(scene);

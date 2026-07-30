@@ -234,17 +234,17 @@ test.describe('Choreography (CHO-02, CHO-09)', () => {
     const scrub = page.getByLabel('Tua trong bước');
     await expect(scrub).toBeVisible();
 
-    // Tua về 0 rồi đọc số phần tử **thật sự** bị ẩn ở hai mốc. Đếm opacity thay
-    // vì chụp ảnh: nó nói đúng thứ choreography làm, và không đỏ vì đổi phông.
-    const hidden = async (): Promise<number> =>
-      page.locator('.canvas svg [opacity="0"]').count();
+    // Đếm opacity thay vì chụp ảnh: nó nói đúng thứ choreography làm, và không đỏ
+    // vì đổi phông. Khẳng định **có chờ** — patch chạy trong effect sau render,
+    // nên `count()` một phát đọc trúng khung cũ và chỉ đỏ khi máy bận.
+    const hidden = page.locator('.canvas svg [opacity="0"]');
 
     await scrub.fill('0');
-    const atStart = await hidden();
-    await scrub.fill('1700');
-    const atEnd = await hidden();
+    await expect(hidden).toHaveCount(0);
 
-    expect(atEnd).toBeGreaterThan(atStart);
+    await scrub.fill('1700');
+    // Sáu hạng tử triệt tiêu cộng ba dấu phép giữa chúng và ba dấu đứng trước.
+    await expect(hidden).toHaveCount(12);
   });
 
   test('reduced-motion: bộ đếm pha thay thanh tua, và đi được từng pha', async ({ browser }) => {

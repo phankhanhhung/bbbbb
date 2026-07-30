@@ -9,6 +9,7 @@ import {
   text,
   type EngineRenderer,
   type RenderContext,
+  type SceneBox,
   type SvgNode,
 } from '@combviz/render';
 import { colorClass } from '@combviz/theme';
@@ -30,8 +31,47 @@ const CAPTION_ROOM = ROW * 0.32 + CAPTION_SIZE * 0.3;
  * trang trí thì nói dối. Ở đây từng hạng tử là một element có id — nên nó neo
  * được, tô được, và **giữ nguyên danh tính** khi chuyển dòng ở bước sau.
  */
+/**
+ * Chỗ mực của một hạng tử hoặc một dòng nằm — đọc thẳng từ `layout`.
+ *
+ * `layout` đã tính chỗ cho mọi thứ (mép trái, bề rộng, phần trên và phần dưới
+ * đường chân), nên ở đây không có phép tính hình học nào của riêng mình. Cần
+ * `ctx` vì bề rộng một công thức chỉ biết được qua label atlas — cùng lý do
+ * `defaultViewport` của engine này cũng nhận `ctx`.
+ */
+function boxesOf(scene: Scene, id: string, ctx?: RenderContext): readonly SceneBox[] {
+  const box = layout(readDerivation(scene), ctx?.labels ?? EMPTY_ATLAS);
+
+  for (const placed of box.rows) {
+    if (placed.row.id === id) {
+      return [
+        {
+          x: placed.shift,
+          y: placed.y - placed.ascent,
+          width: Math.max(placed.width - placed.shift, 1),
+          height: placed.ascent + placed.descent,
+        },
+      ];
+    }
+    for (const item of placed.terms) {
+      if (item.term.id !== id) continue;
+      return [
+        {
+          x: placed.shift + item.x,
+          y: placed.y - item.ascent,
+          width: item.width,
+          height: item.ascent + item.descent,
+        },
+      ];
+    }
+  }
+
+  return [];
+}
+
 export const derivationRenderer: EngineRenderer = {
   id: 'derivation',
+  elementBoxes: boxesOf,
 
   defaultViewport(scene: Scene, ctx?: RenderContext): Viewport {
     const model = readDerivation(scene);

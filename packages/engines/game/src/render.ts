@@ -9,6 +9,7 @@ import {
   text,
   type EngineRenderer,
   type RenderContext,
+  type SceneBox,
   type SvgNode,
   UNITS_PER_CELL,
 } from '@combviz/render';
@@ -67,6 +68,7 @@ const DOT_GAP = STONE_R * 2.4;
  */
 export const gameRenderer: EngineRenderer = {
   id: 'game',
+  elementBoxes: boxesOf,
 
   defaultViewport(scene: Scene): Viewport {
     const model = readGame(scene);
@@ -535,6 +537,103 @@ function renderSpectrum2d(model: GameModel, ctx: RenderContext): SvgNode[] {
   return nodes;
 }
 
+/**
+ * Chỗ đặt từng viên sỏi của một đống — **một** nguồn sự thật cho cả hai phía.
+ *
+ * `renderPiles` vẽ theo nó, `elementBoxes` đo theo nó. Trước khi tách ra, phép
+ * xếp nằm rải trong hai nhánh của vòng vẽ (đống thường và đống quá ngưỡng) cùng
+ * năm hằng số; chép lại sang chỗ thứ hai là chờ ngày hai chỗ lệch nhau mà không
+ * gì báo — đúng bài học của `cellPolygon` bên bàn cờ: một hình, khai một chỗ.
+ */
+export function stonePlaces(
+  model: GameModel,
+  index: number,
+): readonly { cx: number; cy: number; r: number }[] {
+  const pile = model.piles[index];
+  if (!pile) return [];
+
+  const band = pileBands(model)[index];
+  if (!band) return [];
+  const centre = (band.from + band.to) / 2;
+
+  if (pile.count > MAX_DOTS) {
+    // Ký hiệu lược: ba viên trên, dấu ⋮, một viên đáy. Dấu ⋮ nhỏ hơn hẳn nhưng
+    // vẫn là mực của đống, nên nó vào hộp.
+    const rows = [0, 1, 2, 3.15, 3.6, 4.05, 5];
+    return rows.map((row) => ({
+      cx: centre,
+      cy: DOT_TOP + row * DOT_GAP,
+      r: row > 3 && row < 5 ? STONE_R * 0.22 : STONE_R,
+    }));
+  }
+
+  const ground = tallestStack(model);
+  const { columns } = stackShape(pile.count);
+  const places: { cx: number; cy: number; r: number }[] = [];
+  for (let i = 0; i < pile.count; i += 1) {
+    const column = Math.floor(i / STACK);
+    const height = Math.min(STACK, pile.count - column * STACK);
+    const row = ground - height + (i % STACK);
+    places.push({
+      cx: centre + (column - (columns - 1) / 2) * (STONE_R * 2.6),
+      cy: DOT_TOP + row * DOT_GAP,
+      r: STONE_R,
+    });
+  }
+  return places;
+}
+
+/**
+ * Chỗ mực của một element game nằm.
+ *
+ * Chỉ view `piles` có mực cho `pile`; hai view phổ vẽ **thế cờ** chứ không vẽ
+ * đống, và điều đó đã khai ở `undrawnElementIds`. Ô phổ thì là element ngầm định
+ * và có hình riêng.
+ */
+function boxesOf(scene: Scene, id: string): readonly SceneBox[] {
+  const model = readGame(scene);
+  const view = model.config.view ?? 'piles';
+
+  if (view === 'piles') {
+    const index = model.piles.findIndex((p) => p.id === id);
+    if (index < 0) return [];
+    const places = stonePlaces(model, index);
+    if (places.length === 0) return [];
+    const x = Math.min(...places.map((s) => s.cx - s.r));
+    const y = Math.min(...places.map((s) => s.cy - s.r));
+    return [
+      {
+        x,
+        y,
+        width: Math.max(...places.map((s) => s.cx + s.r)) - x,
+        height: Math.max(...places.map((s) => s.cy + s.r)) - y,
+      },
+    ];
+  }
+
+  // Ô phổ — element ngầm định, và cả hai view phổ xếp ô theo cùng một hằng số
+  // `SLOT` mà vòng vẽ dùng.
+  const one = /^pos-(\d+)$/.exec(id);
+  if (one && view === 'spectrum') {
+    const n = Number(one[1]);
+    if (n >= spectrumLength(model)) return [];
+    const cols = Math.min(spectrumLength(model), 12);
+    return [{ x: (n % cols) * SLOT, y: Math.floor(n / cols) * SLOT, width: SLOT, height: SLOT }];
+  }
+
+  const two = /^pos-(\d+)-(\d+)$/.exec(id);
+  if (two && view === 'spectrum-2d') {
+    const max = gridLength(model) - 1;
+    const a = Number(two[1]);
+    const b = Number(two[2]);
+    if (a > max || b > max) return [];
+    // Trục $b$ **lật ngược**: gốc toạ độ nằm dưới trái, đúng như vòng vẽ đặt.
+    return [{ x: a * SLOT, y: (max - b) * SLOT, width: SLOT, height: SLOT }];
+  }
+
+  return [];
+}
+
 function renderPiles(model: GameModel, ctx: RenderContext): SvgNode[] {
   const nodes: SvgNode[] = [];
   const analysis = analyzeGame(
@@ -556,60 +655,28 @@ function renderPiles(model: GameModel, ctx: RenderContext): SvgNode[] {
   // ở **dưới** (đống $10$ viên trông như khối $2 \times 6$ bị mẻ góc), và đống
   // thấp thì **treo lơ lửng** ở mép trên trong khi nhãn của nó nằm ở đáy. Sỏi thật
   // thì đổ xuống bàn.
-  const ground = tallestStack(model);
-
   model.piles.forEach((pile, index) => {
     const band = bands[index] as { from: number; to: number };
-    const { columns } = stackShape(pile.count);
     const centre = (band.from + band.to) / 2;
-    const group: SvgNode[] = [];
 
-    if (pile.count > MAX_DOTS) {
-      // Quá ngưỡng thì **không vẽ đủ viên, và nói ra là mình không vẽ đủ**.
-      //
-      // Bản trước vẽ đúng 24 chấm rồi dán nhãn "40" xuống dưới: ai đếm sẽ ra 24,
-      // mà đếm đúng là việc bài bốc sỏi bắt người đọc làm. Bản sau đó vẽ một khối
-      // đặc — hết nói dối, nhưng khối trơn ấy không còn đọc ra "sỏi". Cách còn
-      // lại là ký hiệu lược: mấy viên trên, dấu ⋮, một viên đáy.
-      const dot = (row: number, r = STONE_R): SvgNode =>
-        el('circle', {
-          cx: round(centre),
-          cy: round(DOT_TOP + row * DOT_GAP),
-          r,
-          fill: fillForClass(ctx, pile.colorClass || undefined),
-          stroke: strokeForClass(ctx, pile.colorClass || undefined),
-          'stroke-width': ctx.theme.stroke.hairline,
-        });
-
-      group.push(dot(0), dot(1), dot(2));
-      for (const row of [3.15, 3.6, 4.05]) {
-        group.push(
-          el('circle', {
-            cx: round(centre),
-            cy: round(DOT_TOP + row * DOT_GAP),
-            r: STONE_R * 0.22,
-            fill: ctx.theme.surface.guide,
-          }),
-        );
-      }
-      group.push(dot(5));
-    } else {
-      for (let i = 0; i < pile.count; i += 1) {
-        const column = Math.floor(i / STACK);
-        const height = Math.min(STACK, pile.count - column * STACK);
-        const row = ground - height + (i % STACK);
-        group.push(
-          el('circle', {
-            cx: round(centre + (column - (columns - 1) / 2) * (STONE_R * 2.6)),
-            cy: round(DOT_TOP + row * DOT_GAP),
-            r: STONE_R,
-            fill: fillForClass(ctx, pile.colorClass || undefined),
-            stroke: strokeForClass(ctx, pile.colorClass || undefined),
-            'stroke-width': ctx.theme.stroke.hairline,
-          }),
-        );
-      }
-    }
+    // Vẽ **theo** `stonePlaces`, không tự xếp lại: đó là điều kiện để
+    // `elementBoxes` đo đúng chỗ mực thật nằm. Đống quá ngưỡng dùng ký hiệu lược
+    // (ba viên trên, dấu ⋮, một viên đáy) — nói ra là mình không vẽ đủ, thay vì
+    // vẽ 24 chấm rồi dán nhãn "40" như bản đầu tiên.
+    const group: SvgNode[] = stonePlaces(model, index).map((place) =>
+      el('circle', {
+        cx: round(place.cx),
+        cy: round(place.cy),
+        r: place.r,
+        ...(place.r < STONE_R
+          ? { fill: ctx.theme.surface.guide }
+          : {
+              fill: fillForClass(ctx, pile.colorClass || undefined),
+              stroke: strokeForClass(ctx, pile.colorClass || undefined),
+              'stroke-width': ctx.theme.stroke.hairline,
+            }),
+      }),
+    );
 
     nodes.push(
       keyed(pile.id, 'g', decorationAttrs(ctx, pile.id, pile.emphasis), group),
