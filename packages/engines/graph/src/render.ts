@@ -20,7 +20,7 @@ import {
 } from './graph.js';
 import type { GraphConfig } from './schema.js';
 import { matrixViewport, renderMatrix } from './matrix.js';
-import { pruferCode, treeShape } from './analyzers.js';
+import { planarFaces, pruferCode, treeShape } from './analyzers.js';
 
 /**
  * Bề rộng ước lượng của một ký tự nhãn, tính bằng đơn vị scene.
@@ -232,8 +232,11 @@ export const graphRenderer: EngineRenderer = {
 
     // GR-10 — sống lưng đường kính, vẽ **dưới** các cạnh để không chôn chúng.
     const spine = config.show_diameter ? renderDiameter(graph, ctx) : [];
+    // GR-05 — nền mặt, vẽ dưới cùng: nó là **nền**, không phải một vật nữa.
+    const faces = config.show_faces ? renderFaces(graph, config, ctx) : [];
 
     return [
+      ...(faces.length > 0 ? [el('g', { class: 'cv-faces' }, faces)] : []),
       ...(config.show_prufer ? [el('g', { class: 'cv-prufer' }, renderPrufer(scene, ctx))] : []),
       ...(spine.length > 0 ? [el('g', { class: 'cv-diameter' }, spine)] : []),
       el(
@@ -317,6 +320,107 @@ export const graphRenderer: EngineRenderer = {
     ];
   },
 };
+
+/**
+ * GR-05 — nền của từng **mặt** trong hình phẳng.
+ *
+ * Vẽ đa giác biên chứ không vẽ một vùng tô lan: biên của một mặt là một chu trình
+ * cụ thể mà `planarFaces` trả về, nên hình tô ra **là** thứ analyzer nói, không
+ * phải một xấp xỉ trông giống.
+ *
+ * Mặt ngoài vô hạn nên không tô hết được, nhưng **phần thấy được** của nó thì tô
+ * chính xác: cả khung trừ đi phần trong biên, viết bằng một `<path>` hai đường con
+ * với `fill-rule="evenodd"`. Bỏ nó ra thì tệ hơn nhiều — bài tô bản đồ đếm mặt
+ * ngoài là một vùng, nên một hình tô $4$ màu sẽ hiện ra chỉ có $3$, và người đọc
+ * đếm được một con số khác với lời giải.
+ *
+ * Mặt có biên diện tích $0$ — mặt duy nhất của một cái cây — cũng không tô: không
+ * có gì để tô.
+ */
+function renderFaces(
+  graph: GraphModel,
+  config: GraphConfig,
+  ctx: RenderContext,
+): SvgNode[] {
+  const faces = planarFaces(graph).value;
+  if (!faces) return [];
+
+  const colours = config.face_colors ?? {};
+  const nodes: SvgNode[] = [];
+
+  for (const face of faces) {
+    if (!Object.hasOwn(colours, face.id)) continue;
+    const colour = colours[face.id] as number;
+    if (Math.abs(face.area) < 1e-9) continue;
+
+    // Mặt ngoài vô hạn: tô **phần thấy được** của nó, tức cả khung trừ đi phần
+    // trong biên. Một `<path>` hai đường con với `fill-rule="evenodd"` cho ra đúng
+    // vùng ấy, chính xác chứ không xấp xỉ — và không cần `clipPath` nên không sinh
+    // id toàn cục nào để đụng độ với scene khác trên cùng trang.
+    if (face.outer) {
+      const ring = face.vertices
+        .map((id) => graph.byId.get(id))
+        .filter((v): v is Vertex => v !== undefined)
+        .map((v, i) => `${i === 0 ? 'M' : 'L'}${round(v.x)} ${round(v.y)}`)
+        .join('');
+      const box = frameOf(graph);
+      if (ring.length > 0) {
+        nodes.push(
+          keyed(face.id, 'path', {
+            d:
+              `M${round(box.x)} ${round(box.y)}h${round(box.width)}v${round(box.height)}` +
+              `h${round(-box.width)}Z${ring}Z`,
+            fill: fillForClass(ctx, colour),
+            'fill-rule': 'evenodd',
+            'fill-opacity': 0.5,
+            stroke: 'none',
+          }),
+        );
+      }
+      continue;
+    }
+
+    const points = face.vertices
+      .map((id) => graph.byId.get(id))
+      .filter((v): v is Vertex => v !== undefined)
+      .map((v) => `${round(v.x)},${round(v.y)}`)
+      .join(' ');
+    if (points.length === 0) continue;
+
+    nodes.push(
+      keyed(face.id, 'polygon', {
+        points,
+        fill: fillForClass(ctx, colour),
+        // Mờ hơn hẳn quân cờ: nền mặt nằm **dưới** cạnh và đỉnh, và cả lập luận
+        // của bài tô bản đồ nằm ở chỗ đọc được cạnh nào ngăn hai mặt nào.
+        'fill-opacity': 0.5,
+        stroke: 'none',
+      }),
+    );
+  }
+
+  return nodes;
+}
+
+/**
+ * Khung rộng rãi bao cả hình — chỗ mặt ngoài "dừng lại" trên giấy.
+ *
+ * Nới rộng tay so với hộp bao các đỉnh: mặt ngoài phải chạm mép khung nhìn, không
+ * thì nó hiện ra thành một cái viền và người đọc tưởng đó là một vùng hữu hạn nữa.
+ */
+function frameOf(graph: GraphModel): { x: number; y: number; width: number; height: number } {
+  const xs = graph.vertices.map((v) => v.x);
+  const ys = graph.vertices.map((v) => v.y);
+  const pad = SPACING * 4;
+  const x = Math.min(...xs) - pad;
+  const y = Math.min(...ys) - pad;
+  return {
+    x,
+    y,
+    width: Math.max(...xs) + pad - x,
+    height: Math.max(...ys) + pad - y,
+  };
+}
 
 /**
  * GR-10 — **sống lưng** của cây: đường kính vẽ thành một dải mờ chạy dưới các cạnh.

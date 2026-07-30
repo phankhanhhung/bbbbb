@@ -1,5 +1,5 @@
 import type { Scene } from '@combviz/schema';
-import { buildGraph, type GraphModel } from './graph.js';
+import { buildGraph, type GraphModel, type Vertex } from './graph.js';
 import { GRAPH_LIMITS } from './schema.js';
 
 /**
@@ -1206,4 +1206,215 @@ function onSegment(a: Point, b: Point, c: Point): boolean {
     Math.min(a.y, b.y) - EPS <= c.y &&
     c.y <= Math.max(a.y, b.y) + EPS
   );
+}
+
+// ---------------------------------------------------------------------------
+// Mặt của một cách nhúng phẳng (GR-05)
+// ---------------------------------------------------------------------------
+
+export interface Face {
+  /** `face-0`, `face-1`, … theo thứ tự chuẩn tắc; mặt ngoài là `face-outer`. */
+  readonly id: string;
+  /** Đỉnh trên biên, theo thứ tự đi vòng quanh. Đỉnh lặp lại nếu biên đi qua nó hai lần. */
+  readonly vertices: readonly string[];
+  /** Cạnh trên biên, cùng thứ tự. Cầu xuất hiện **hai lần** — nó có cùng một mặt ở hai bên. */
+  readonly edges: readonly string[];
+  /** Mặt vô hạn bao ngoài cả hình. Luôn có đúng một. */
+  readonly outer: boolean;
+  /** Diện tích có dấu của đa giác biên; dấu chính là thứ nhận ra mặt ngoài. */
+  readonly area: number;
+}
+
+/**
+ * Các **mặt** của hình đã vẽ (GR-05).
+ *
+ * **Vì sao tính được mà không cần thuật toán nhúng phẳng.** Ở dự án này toạ độ
+ * đỉnh vốn là nội dung chứ không phải trang trí (GR-02), nên khi hình không có
+ * giao điểm nào thì bản thân nó **đã là** một cách nhúng phẳng. Việc còn lại
+ * thuần hình học: sắp các nửa cạnh quanh mỗi đỉnh theo góc — đó là *hệ quay* —
+ * rồi lần theo biên. Không cần LR, không cần PQ-tree, và cũng không mất gì: cái
+ * mà LR cho thêm là trả lời được cho hình **vẽ xấu**, mà hình vẽ xấu thì không
+ * chứng minh được gì (xem chú thích ở `planarity`).
+ *
+ * **Số mặt là bài kiểm tra sẵn có.** Công thức Euler nói $f = e - v + 1 + c$, và
+ * `planarity` đã tính con số ấy theo đường hoàn toàn khác. Hai đường phải gặp
+ * nhau; hàm này **từ chối** nếu không, thay vì trả về một danh sách mặt sai mà
+ * trông vẫn hợp lý. Đó là loại lỗi mà không mắt nào bắt được trên một hình 12 mặt.
+ *
+ * Từ chối khi hình còn giao điểm (mặt chưa có nghĩa) và khi đồ thị không liên
+ * thông: hai thành phần rời nhau thì mỗi cái tự có "mặt ngoài" của nó, và hình
+ * học phẳng không nói được thành phần nào nằm lọt trong mặt nào của thành phần
+ * kia.
+ */
+export function planarFaces(graph: GraphModel): AnalyzerResult<readonly Face[]> {
+  const plane = planarity(graph);
+  if (!plane.value) return refuse(plane.refused ?? 'Không phân tích được tính phẳng');
+  if (plane.value.verdict !== 'planar') {
+    return refuse('Hình còn cạnh cắt nhau, nên chưa có mặt nào để nói tới');
+  }
+  if (graph.vertices.length === 0) return refuse('Đồ thị rỗng');
+  if (connectedComponents(graph).count > 1) {
+    return refuse('Đồ thị không liên thông: mỗi thành phần tự có mặt ngoài của nó');
+  }
+
+  /** Nửa cạnh `u→v`, khoá theo cặp. */
+  const key = (u: string, v: string): string => `${u}>${v}`;
+  const edgeOf = new Map<string, string>();
+  const darts: { u: string; v: string }[] = [];
+
+  for (const edge of graph.edges) {
+    darts.push({ u: edge.u, v: edge.v }, { u: edge.v, v: edge.u });
+    edgeOf.set(key(edge.u, edge.v), edge.id);
+    edgeOf.set(key(edge.v, edge.u), edge.id);
+  }
+
+  // Hệ quay: quanh mỗi đỉnh, các nửa cạnh **đi ra** sắp theo góc.
+  const around = new Map<string, string[]>();
+  for (const vertex of graph.vertices) {
+    const here = darts.filter((d) => d.u === vertex.id);
+    const origin = graph.byId.get(vertex.id) as Vertex;
+    here.sort((a, b) => angleOf(origin, graph.byId.get(a.v)) - angleOf(origin, graph.byId.get(b.v)));
+    around.set(vertex.id, here.map((d) => key(d.u, d.v)));
+  }
+
+  const seen = new Set<string>();
+  const traced: { vertices: string[]; edges: string[]; area: number }[] = [];
+
+  for (const dart of darts) {
+    const start = key(dart.u, dart.v);
+    if (seen.has(start)) continue;
+
+    const vertices: string[] = [];
+    const edges: string[] = [];
+    let current = start;
+
+    // Vòng lặp có trần cứng: một mặt không thể dài quá số nửa cạnh. Trần này
+    // không phải phòng xa mơ hồ — nếu hệ quay hỏng thì đây là chỗ nó treo máy.
+    for (let guard = 0; guard <= darts.length; guard += 1) {
+      if (seen.has(current)) break;
+      seen.add(current);
+
+      const [from, to] = current.split('>') as [string, string];
+      vertices.push(from);
+      edges.push(edgeOf.get(current) as string);
+
+      // Bước kế tiếp trên biên: quay lại theo nửa cạnh ngược, rồi **lùi một nấc**
+      // trong thứ tự góc quanh đỉnh đến. Đây là luật lần mặt chuẩn; nó đúng chiều
+      // nào là chuyện quy ước, và số mặt đối chiếu với Euler là thứ chứng minh
+      // quy ước ấy nhất quán.
+      const back = key(to, from);
+      const ring = around.get(to) as string[];
+      const at = ring.indexOf(back);
+      current = ring[(at - 1 + ring.length) % ring.length] as string;
+      if (current === start) break;
+    }
+
+    traced.push({ vertices, edges, area: signedArea(vertices, graph) });
+  }
+
+  const expected = plane.value.faces;
+  if (traced.length !== expected) {
+    return refuse(
+      `Lần được ${traced.length} mặt nhưng Euler nói ${expected} — hệ quay và hình không khớp`,
+    );
+  }
+
+  // Mặt ngoài là mặt **duy nhất** quay ngược chiều các mặt kia. Nhận nó bằng dấu
+  // diện tích chứ không bằng "diện tích lớn nhất": với hình lõm, một mặt trong có
+  // thể to hơn phần thấy được của mặt ngoài, còn dấu thì không nhầm được.
+  let outerIndex = 0;
+  for (let i = 1; i < traced.length; i += 1) {
+    if ((traced[i] as { area: number }).area < (traced[outerIndex] as { area: number }).area) {
+      outerIndex = i;
+    }
+  }
+
+  const inner = traced
+    .map((face, i) => ({ face, i }))
+    .filter(({ i }) => i !== outerIndex)
+    // Thứ tự chuẩn tắc theo **cạnh nhỏ nhất trên biên**, không theo thứ tự lần ra:
+    // thứ tự lần ra phụ thuộc đỉnh nào đứng đầu mảng, nên thêm một đỉnh ở cuối file
+    // cũng đủ đánh số lại toàn bộ mặt và mọi anchor `face-<i>` trỏ sai (DAT-12).
+    .sort((a, b) => smallestEdge(a.face.edges).localeCompare(smallestEdge(b.face.edges)));
+
+  const faces: Face[] = inner.map(({ face }, index) => ({
+    id: `face-${index}`,
+    vertices: face.vertices,
+    edges: face.edges,
+    outer: false,
+    area: face.area,
+  }));
+
+  const outer = traced[outerIndex] as { vertices: string[]; edges: string[]; area: number };
+  faces.push({
+    id: 'face-outer',
+    vertices: outer.vertices,
+    edges: outer.edges,
+    outer: true,
+    area: outer.area,
+  });
+
+  return ok(faces);
+}
+
+function smallestEdge(ids: readonly string[]): string {
+  return [...ids].sort()[0] ?? '';
+}
+
+function angleOf(origin: Vertex, target: Vertex | undefined): number {
+  if (!target) return 0;
+  return Math.atan2(target.y - origin.y, target.x - origin.x);
+}
+
+/**
+ * Diện tích có dấu của đa giác biên (công thức dây giày).
+ *
+ * Cầu đi qua hai lần theo hai chiều ngược nhau nên đóng góp **triệt tiêu** — đúng
+ * như phải thế: một cái cây không bao lấy diện tích nào, và diện tích $0$ của nó
+ * không làm hỏng phép so dấu vì cây chỉ có đúng một mặt.
+ */
+function signedArea(vertices: readonly string[], graph: GraphModel): number {
+  let sum = 0;
+  for (let i = 0; i < vertices.length; i += 1) {
+    const a = graph.byId.get(vertices[i] as string);
+    const b = graph.byId.get(vertices[(i + 1) % vertices.length] as string);
+    if (!a || !b) continue;
+    sum += a.x * b.y - b.x * a.y;
+  }
+  return sum / 2;
+}
+
+/**
+ * Hai mặt kề nhau — dùng chung ít nhất một cạnh (GR-05).
+ *
+ * Đây là quan hệ mà **bài tô bản đồ** nói tới, và nó không phải "chung một đỉnh":
+ * hai nước chạm nhau ở đúng một điểm vẫn tô cùng màu được, và định lý bốn màu
+ * phát biểu trên quan hệ chung **biên** chứ không phải chung điểm. Viết ra ở đây
+ * vì đó chính là chỗ một bản cài đặt vội sẽ sai mà hình vẫn trông có lý.
+ */
+export function faceAdjacency(
+  faces: readonly Face[],
+): ReadonlyMap<string, readonly string[]> {
+  const byEdge = new Map<string, string[]>();
+  for (const face of faces) {
+    for (const edge of new Set(face.edges)) {
+      const list = byEdge.get(edge) ?? [];
+      list.push(face.id);
+      byEdge.set(edge, list);
+    }
+  }
+
+  const near = new Map<string, Set<string>>(faces.map((f) => [f.id, new Set<string>()]));
+  for (const [, sharing] of byEdge) {
+    // Một cạnh **cầu** chỉ thuộc một mặt (mặt ấy nằm cả hai bên nó), nên nó không
+    // sinh ra quan hệ kề nào. Bỏ qua chứ không ghép mặt ấy với chính nó.
+    if (sharing.length < 2) continue;
+    for (const a of sharing) {
+      for (const b of sharing) {
+        if (a !== b) (near.get(a) as Set<string>).add(b);
+      }
+    }
+  }
+
+  return new Map([...near].map(([id, set]) => [id, [...set].sort()]));
 }

@@ -14,6 +14,7 @@ import {
   isTree,
   matching,
   permutationCycles,
+  planarFaces,
   planarity,
   pruferCode,
   treeShape,
@@ -206,6 +207,29 @@ export function graphEnvironment(scene: Scene): DslEnvironment {
       crossings: plane ? plane.crossings.length : -1,
       faces: plane ? plane.faces : -1,
       max_planar_edges: plane ? plane.maxEdges : -1,
+
+      /**
+       * GR-05 — các **mặt** như một tập hợp duyệt được, không chỉ một con số.
+       *
+       * Nhờ nó, "mỗi mặt có ít nhất ba cạnh" viết được thành một biểu thức thay
+       * vì một câu phải tin — và đó là bổ đề dẫn tới chặn Euler $e \le 3v - 6$.
+       * Mặt ngoài nằm trong tập này và mang `outer: true`: trong bài tô bản đồ nó
+       * cũng là một vùng, còn trong lập luận đếm thì bỏ nó ra là sai.
+       *
+       * Hình còn cắt nhau thì tập này **rỗng**, cùng lý do mà `faces` bằng $-1$:
+       * mặt chưa có nghĩa.
+       */
+      face_list: (planarFaces(graph).value ?? []).map((face) =>
+        element(face.id, {
+          size: new Set(face.edges).size,
+          /** Số lần biên đi qua một cạnh; cầu đếm hai lần, nên `walk >= size`. */
+          walk: face.edges.length,
+          outer: face.outer,
+          color_class:
+            ((scene.config as { face_colors?: Record<string, number> } | undefined)
+              ?.face_colors ?? {})[face.id] ?? 0,
+        }),
+      ),
 
       /**
        * Thứ tự bộ phận: chiều cao (xích dài nhất) và chiều rộng (phản xích lớn

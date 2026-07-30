@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Scene } from '@combviz/schema';
 import { buildGraph } from '../src/graph.js';
-import { planarity } from '../src/analyzers.js';
+import { faceAdjacency, planarFaces, planarity } from '../src/analyzers.js';
 import { layoutPositions } from '../src/layout.js';
 
 const scene = (
@@ -130,5 +130,172 @@ describe('GR-05 — tính phẳng', () => {
     (curved.elements[2] as Record<string, unknown>)['multi_index'] = 1;
 
     expect(planarity(buildGraph(curved)).refused).toMatch(/cong/);
+  });
+});
+
+/**
+ * GR-05 — **mặt** của một cách nhúng phẳng.
+ *
+ * Bài kiểm chính là công thức Euler: `planarity` đếm mặt bằng $e - v + 1 + c$,
+ * còn `planarFaces` lần ra từng mặt bằng hệ quay. Hai đường hoàn toàn khác nhau
+ * phải gặp nhau, và chúng chỉ gặp nhau nếu hệ quay đúng — không mắt nào bắt được
+ * một hệ quay lệch trên hình mười mặt.
+ *
+ * Toạ độ ở đây viết tay chứ không xếp vòng tròn: một hình vẽ vòng tròn của hai
+ * tam giác dán cạnh **có** giao điểm, và khi ấy mặt chưa có nghĩa gì.
+ */
+describe('GR-05 — mặt của hình phẳng', () => {
+  /** Tam giác đơn. */
+  const triangle = (): Scene =>
+    scene({ a: [0, 0], b: [10, 0], c: [5, 9] }, [
+      ['a', 'b'],
+      ['b', 'c'],
+      ['c', 'a'],
+    ]);
+
+  /** Hai tam giác dán theo cạnh a–b: một hình kim cương, hai mặt trong. */
+  const diamond = (): Scene =>
+    scene({ a: [0, 0], b: [10, 0], c: [5, 9], d: [5, -9] }, [
+      ['a', 'b'],
+      ['b', 'c'],
+      ['c', 'a'],
+      ['a', 'd'],
+      ['b', 'd'],
+    ]);
+
+  const faces = (s: Scene) => planarFaces(buildGraph(s));
+
+  it('tam giác: một mặt trong, một mặt ngoài', () => {
+    const result = faces(triangle()).value!;
+    expect(result.map((f) => f.id)).toEqual(['face-0', 'face-outer']);
+    expect(result.filter((f) => f.outer)).toHaveLength(1);
+    expect(result[0]!.edges).toHaveLength(3);
+    expect(result[1]!.edges).toHaveLength(3);
+  });
+
+  it('cây: đúng **một** mặt, và biên đi qua mỗi cạnh hai lần', () => {
+    const tree = scene({ a: [0, 0], b: [10, 0], c: [20, 6], d: [20, -6] }, [
+      ['a', 'b'],
+      ['b', 'c'],
+      ['b', 'd'],
+    ]);
+    const result = faces(tree).value!;
+    expect(result).toHaveLength(1);
+    expect(result[0]!.outer).toBe(true);
+    // Mỗi cạnh là một cầu nên biên đi qua nó hai lần theo hai chiều ngược nhau;
+    // diện tích có dấu vì thế triệt tiêu, đúng như một cái cây phải thế.
+    expect(result[0]!.edges).toHaveLength(6);
+    expect(result[0]!.area).toBeCloseTo(0, 6);
+  });
+
+  it('số mặt lần ra **luôn** khớp công thức Euler', () => {
+    const cases: Record<string, Scene> = {
+      'tam giác': triangle(),
+      'kim cương': diamond(),
+      cây: scene({ a: [0, 0], b: [10, 0], c: [20, 6], d: [20, -6] }, [
+        ['a', 'b'],
+        ['b', 'c'],
+        ['b', 'd'],
+      ]),
+      'một cạnh': scene({ a: [0, 0], b: [10, 0] }, [['a', 'b']]),
+      'ngũ giác': scene(
+        { a: [0, 0], b: [10, 0], c: [13, 9], d: [5, 15], e: [-3, 9] },
+        [
+          ['a', 'b'],
+          ['b', 'c'],
+          ['c', 'd'],
+          ['d', 'e'],
+          ['e', 'a'],
+        ],
+      ),
+      'ngũ giác có dây cung': scene(
+        { a: [0, 0], b: [10, 0], c: [13, 9], d: [5, 15], e: [-3, 9] },
+        [
+          ['a', 'b'],
+          ['b', 'c'],
+          ['c', 'd'],
+          ['d', 'e'],
+          ['e', 'a'],
+          ['a', 'c'],
+        ],
+      ),
+    };
+
+    for (const [name, s] of Object.entries(cases)) {
+      const traced = faces(s).value;
+      const euler = run(s);
+      expect({ name, traced: traced?.length }).toEqual({ name, traced: euler.faces });
+    }
+  });
+
+  it('tổng chu vi các mặt bằng $2e$ — bổ đề nền của đếm hai chiều trên hình phẳng', () => {
+    for (const s of [triangle(), diamond()]) {
+      const graph = buildGraph(s);
+      const total = faces(s).value!.reduce((sum, f) => sum + f.edges.length, 0);
+      expect(total).toBe(2 * graph.edges.length);
+    }
+  });
+
+  it('từ chối khi hình còn cắt nhau, và khi đồ thị không liên thông', () => {
+    const k5 = faces(scene(onCircle(['a', 'b', 'c', 'd', 'e']), complete(['a', 'b', 'c', 'd', 'e'])));
+    expect(k5.value).toBeNull();
+    expect(k5.refused).toMatch(/cắt nhau/);
+
+    const split = faces(
+      scene({ a: [0, 0], b: [10, 0], c: [0, 20], d: [10, 20] }, [
+        ['a', 'b'],
+        ['c', 'd'],
+      ]),
+    );
+    expect(split.value).toBeNull();
+    expect(split.refused).toMatch(/liên thông/);
+  });
+
+  it('mặt kề nhau đọc theo **cạnh chung**, không theo đỉnh chung', () => {
+    const result = faces(diamond()).value!;
+    const near = faceAdjacency(result);
+    const inner = result.filter((f) => !f.outer).map((f) => f.id);
+    expect(inner).toHaveLength(2);
+    expect(near.get(inner[0]!)).toContain(inner[1]!);
+    expect(near.get(inner[0]!)).toContain('face-outer');
+  });
+
+  it('cầu **không** sinh quan hệ kề — nó có cùng một mặt ở hai bên', () => {
+    const tailed = scene({ a: [0, 0], b: [10, 0], c: [5, 9], d: [5, 20] }, [
+      ['a', 'b'],
+      ['b', 'c'],
+      ['c', 'a'],
+      ['c', 'd'],
+    ]);
+    const near = faceAdjacency(faces(tailed).value!);
+    expect(near.get('face-outer')).toEqual(['face-0']);
+    expect(near.get('face-0')).toEqual(['face-outer']);
+  });
+
+  it('mặt ngoài nhận bằng **dấu** diện tích, không bằng "diện tích lớn nhất"', () => {
+    // Hình lõm: mặt trong ôm gần hết khung bao, nên phần thấy được của mặt ngoài
+    // nhỏ hơn nó. So bằng độ lớn sẽ chọn nhầm; so bằng dấu thì không.
+    const concave = scene(
+      { a: [0, 0], b: [30, 0], c: [30, 30], d: [0, 30], e: [15, 5] },
+      [
+        ['a', 'b'],
+        ['b', 'c'],
+        ['c', 'd'],
+        ['d', 'a'],
+        ['a', 'e'],
+        ['e', 'b'],
+      ],
+    );
+    const result = faces(concave).value!;
+    expect(result.filter((f) => f.outer)).toHaveLength(1);
+    const outer = result.find((f) => f.outer)!;
+    const inner = result.filter((f) => !f.outer);
+    // Mặt ngoài quay ngược chiều mọi mặt trong.
+    for (const face of inner) {
+      expect({ id: face.id, opposite: Math.sign(face.area) !== Math.sign(outer.area) }).toEqual({
+        id: face.id,
+        opposite: true,
+      });
+    }
   });
 });

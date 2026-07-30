@@ -1,0 +1,462 @@
+{
+  "schema_version": "0.1.0",
+  "id": "euler-formula-faces",
+  "statement": {
+    "vi": "Vẽ một đồ thị liên thông trên mặt phẳng sao cho không cạnh nào cắt cạnh nào. Gọi $v$ là số đỉnh, $e$ số cạnh, $f$ số **mặt** (kể cả mặt vô hạn bên ngoài). Chứng tỏ trên một hình cụ thể rằng $v - e + f = 2$, và chỉ ra vì sao mặt ngoài phải được đếm."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Công thức Euler cho đa diện (1758), phát biểu cho đồ thị phẳng. Hình ở đây cần đúng bốn màu — ví dụ nhỏ nhất cho thấy ba màu không đủ khi tính cả vùng ngoài."
+    }
+  },
+  "topics": [
+    "graph-basics",
+    "coloring"
+  ],
+  "techniques": [
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "n - m + faces",
+      "id": "inv-euler",
+      "label": {
+        "vi": "$v - e + f$"
+      }
+    },
+    {
+      "expr": "faces",
+      "id": "inv-f",
+      "label": {
+        "vi": "Số mặt"
+      }
+    },
+    {
+      "expr": "count(face_list, f => f.outer)",
+      "id": "inv-out",
+      "label": {
+        "vi": "… trong đó mặt ngoài"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Đếm mặt rồi cộng"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một hình vẽ phẳng: [[a1|bốn đỉnh]], sáu cạnh, và không cạnh nào cắt cạnh nào. Chính chỗ *không cắt nhau* ấy là chứng chỉ: hình này **là** một cách nhúng phẳng, kiểm được bằng mắt. Đếm được ${{n}}$ đỉnh và ${{m}}$ cạnh."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a",
+                "b",
+                "c",
+                "m"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "a",
+                "pos": [0, 16]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "b",
+                "pos": [-14, -8]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "c",
+                "pos": [14, -8]
+              },
+              {
+                "id": "m",
+                "type": "vertex",
+                "label": "m",
+                "pos": [0, 0]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "a",
+                "v": "b"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "b",
+                "v": "c"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "c",
+                "v": "a"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "a",
+                "v": "m"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "b",
+                "v": "m"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "c",
+                "v": "m"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tam giác a–b–c với đỉnh m ở giữa nối tới cả ba đỉnh; không cạnh nào cắt nhau."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "expects_violation": [
+            "face-colouring:4"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Các cạnh chia mặt phẳng thành những **vùng**, và mỗi vùng là một mặt. Ba [[a2|mặt trong]] tô nền ở đây; đừng quên mặt thứ tư — phần mặt phẳng vô hạn nằm **ngoài** tam giác. Tổng cộng ${{faces}}$ mặt."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "face-0",
+                "face-1",
+                "face-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "face_colors": {
+                "face-0": 2,
+                "face-1": 2,
+                "face-2": 2
+              },
+              "show_faces": true
+            },
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "a",
+                "pos": [0, 16]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "b",
+                "pos": [-14, -8]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "c",
+                "pos": [14, -8]
+              },
+              {
+                "id": "m",
+                "type": "vertex",
+                "label": "m",
+                "pos": [0, 0]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "a",
+                "v": "b"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "b",
+                "v": "c"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "c",
+                "v": "a"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "a",
+                "v": "m"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "b",
+                "v": "m"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "c",
+                "v": "m"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng hình ấy, ba tam giác trong được tô nền nhạt."
+          },
+          "expects_violation": [
+            "face-colouring:4"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cộng lại: $v - e + f = {{n}} - {{m}} + {{faces}} = 2$, với [[a3|ba mặt trong]] cộng mặt ngoài. Con số $2$ ấy **không phụ thuộc hình**: vẽ lại cách khác, thêm đỉnh, thêm cạnh — miễn hình còn phẳng và liên thông — thì nó vẫn là $2$. Đó là công thức Euler, và ở đây nó là một phép đếm chứ không phải một câu phải nhớ."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "face-0",
+                "face-1",
+                "face-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "face_colors": {
+                "face-0": 2,
+                "face-1": 2,
+                "face-2": 2
+              },
+              "show_faces": true
+            },
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "a",
+                "pos": [0, 16]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "b",
+                "pos": [-14, -8]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "c",
+                "pos": [14, -8]
+              },
+              {
+                "id": "m",
+                "type": "vertex",
+                "label": "m",
+                "pos": [0, 0]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "a",
+                "v": "b"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "b",
+                "v": "c"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "c",
+                "v": "a"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "a",
+                "v": "m"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "b",
+                "v": "m"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "c",
+                "v": "m"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng hình với ba mặt trong tô nền, dùng để cộng v − e + f."
+          },
+          "expects_violation": [
+            "face-colouring:4"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mặt dùng để làm gì? Tô bản đồ. Hai vùng **chung một cạnh** phải khác màu — chung một *điểm* thì không sao. Ở [[a4|hình này]] cả bốn vùng đôi một chung cạnh, kể cả vùng ngoài, nên $3$ màu không đủ: cần đúng $4$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "face-0",
+                "face-1",
+                "face-2",
+                "face-outer"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "face_colors": {
+                "face-0": 4,
+                "face-1": 3,
+                "face-2": 2,
+                "face-outer": 1
+              },
+              "show_faces": true
+            },
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "a",
+                "pos": [0, 16]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "b",
+                "pos": [-14, -8]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "c",
+                "pos": [14, -8]
+              },
+              {
+                "id": "m",
+                "type": "vertex",
+                "label": "m",
+                "pos": [0, 0]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "a",
+                "v": "b"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "b",
+                "v": "c"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "c",
+                "v": "a"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "a",
+                "v": "m"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "b",
+                "v": "m"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "c",
+                "v": "m"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng hình với ba mặt trong tô ba màu khác nhau; vùng ngoài mang màu thứ tư."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "n - m + faces == 2",
+    "validators": [
+      "face-colouring:4"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

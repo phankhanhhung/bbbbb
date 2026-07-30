@@ -12,8 +12,10 @@ import { layoutPositions, type LayoutId } from './layout.js';
 import {
   bipartite,
   connectedComponents,
+  faceAdjacency,
   findCycle,
   isTree,
+  planarFaces,
   treeShape,
   matching,
   planarity,
@@ -112,6 +114,55 @@ const setColorClass = defineCommand<{ ids: readonly string[]; color_class: numbe
   },
 });
 
+/**
+ * GR-05 — tô **mặt** của hình phẳng.
+ *
+ * Mặt không phải element trong file nên nó không mang `color_class` như đỉnh và
+ * cạnh; màu của nó nằm trong `config.face_colors`, cùng khuôn với `cell_overrides`
+ * của board. Lệnh này là cái tay để tô, và nhờ nó bài tô bản đồ — kể cả định lý
+ * bốn màu — thành một thứ nghịch được thay vì một câu phải tin.
+ *
+ * Nhận **danh sách** mặt vì cùng lý do với `board/paint-cells`: một nét quét là
+ * một thao tác trong đầu người dùng, nên undo phải hoàn tác cả vệt.
+ *
+ * Không kiểm mặt ấy có tồn tại không: hình đang vẽ dở thì tập mặt đổi liên tục, và
+ * một màu ghi cho mặt tạm thời chưa có phải sống sót khi người học nối xong cạnh
+ * còn thiếu. Màu trỏ vào mặt không có thì đơn giản là không vẽ ra.
+ */
+const paintFaces = defineCommand<{ faces: readonly string[]; color_class: number | null }>({
+  type: 'graph/paint-faces',
+  label: (p) =>
+    p.color_class === null
+      ? `Xoá màu ${p.faces.length} mặt`
+      : `Tô ${p.faces.length} mặt màu ${p.color_class}`,
+
+  apply(scene, params) {
+    const config = (scene.config ?? {}) as GraphConfig;
+    const colours: Record<string, number> = { ...(config.face_colors ?? {}) };
+    let changed = false;
+
+    for (const id of params.faces) {
+      if (!/^face-(\d+|outer)$/.test(id)) continue;
+      if (params.color_class === null) {
+        if (Object.hasOwn(colours, id)) {
+          delete colours[id];
+          changed = true;
+        }
+      } else if (colours[id] !== params.color_class) {
+        colours[id] = params.color_class;
+        changed = true;
+      }
+    }
+
+    if (!changed) return null;
+    if (Object.keys(colours).length === 0) {
+      const { face_colors: _dropped, ...rest } = config;
+      return { ...scene, config: rest };
+    }
+    return { ...scene, config: { ...config, face_colors: colours } };
+  },
+});
+
 const moveVertex = defineCommand<{ id: string; pos: [number, number] }>({
   type: 'graph/move-vertex',
   label: () => 'Di chuyển đỉnh',
@@ -181,6 +232,7 @@ export const graphCommands: CommandRegistry = {
   [addVertex.type]: addVertex,
   [addEdge.type]: addEdge,
   [setColorClass.type]: setColorClass,
+  [paintFaces.type]: paintFaces,
   [moveVertex.type]: moveVertex,
   [applyLayout.type]: applyLayout,
   [removeElements.type]: removeElements,
@@ -210,8 +262,52 @@ export const graphHitTest: HitTest = (scene, point) => {
     if (distanceToSegment(point, u, v) <= tolerance) hits.push(edge.id);
   }
 
+  // GR-05 — mặt nằm **dưới cùng**: chạm vào một đỉnh hay một cạnh thì người dùng
+  // muốn cái đó, không muốn cái nền dưới nó. Chỉ khi chạm vào chỗ trống trong hình
+  // mới trả về mặt, và khi ấy nó là mục duy nhất — đó là điều kiện để nút tô mặt
+  // dùng chung cơ chế `paint` với nút tô đỉnh mà không giẫm chân nhau.
+  if (hits.length === 0 && (scene.config as GraphConfig | undefined)?.show_faces) {
+    for (const face of planarFaces(graph).value ?? []) {
+      if (face.outer) continue;
+      const polygon = face.vertices
+        .map((id) => graph.byId.get(id))
+        .filter((v) => v !== undefined)
+        .map((v) => ({ x: v.x, y: v.y }));
+      if (pointInPolygon(point, polygon)) {
+        hits.push(face.id);
+        break;
+      }
+    }
+  }
+
   return hits;
 };
+
+/**
+ * Điểm nằm trong đa giác, theo luật **chẵn–lẻ**.
+ *
+ * Chọn chẵn–lẻ chứ không phải số vòng quấn vì biên một mặt có thể tự chạm: một
+ * nhánh cây thò vào trong mặt khiến biên đi qua chính chỗ ấy hai lần. Với luật số
+ * vòng quấn thì vùng bị đi hai lần đếm thành "trong", còn chẵn–lẻ trả nó về "ngoài"
+ * — và ngoài là câu trả lời đúng, vì cái nhánh ấy không cắt mặt thành hai.
+ */
+function pointInPolygon(
+  p: { x: number; y: number },
+  polygon: readonly { x: number; y: number }[],
+): boolean {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+    const a = polygon[i] as { x: number; y: number };
+    const b = polygon[j] as { x: number; y: number };
+    if (
+      a.y > p.y !== b.y > p.y &&
+      p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x
+    ) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
 
 function distanceToSegment(
   p: { x: number; y: number },
@@ -556,6 +652,86 @@ export function resolveGraphValidator(id: string): SceneValidator | null {
   const { name, arg } = parseValidatorId(id);
 
   /**
+   * `face-colouring[:k]` — hai mặt **chung cạnh** thì khác màu, và bàn tô kín (GR-05).
+   *
+   * Đây là bài tô bản đồ, viết thành một mục tiêu chấm được. Hai chi tiết quyết
+   * định nó đúng hay chỉ trông đúng:
+   *
+   *   - Kề nhau đọc theo **cạnh chung**, không theo đỉnh chung. Hai nước chạm nhau
+   *     ở đúng một điểm vẫn tô cùng màu được, và định lý bốn màu phát biểu trên
+   *     quan hệ chung biên. Bản cài vội sẽ lấy đỉnh chung và cho ra một bài toán
+   *     **khác**, khó hơn, mà hình vẫn trông có lý.
+   *   - **Mặt ngoài cũng phải tô.** Trong bài tô bản đồ, biển cũng là một vùng.
+   *     Bỏ nó ra thì $k = 3$ đủ cho nhiều hình mà đáng lẽ cần $4$.
+   *
+   * Dạng có tham số chặn thêm số màu. `face-colouring:4` trên hình phẳng bất kỳ là
+   * mục tiêu **luôn đạt được** — đó là định lý bốn màu — còn `face-colouring:3`
+   * thì không phải lúc nào cũng, và người học tự đâm vào bức tường ấy.
+   */
+  if (name === 'face-colouring') {
+    // Không có tham số nghĩa là "không chặn số màu", không phải "chặn bằng 0".
+    const maxColours = arg ?? null;
+    return {
+      id,
+      label:
+        maxColours === null
+          ? 'Hai mặt chung cạnh thì khác màu'
+          : `Tô mặt hợp lệ với tối đa ${maxColours} màu`,
+      check(scene) {
+        const graph = buildGraph(scene);
+        const result = planarFaces(graph);
+        if (!result.value) {
+          return {
+            ok: false,
+            violations: graph.edges.map((e) => e.id),
+            message: result.refused ?? 'Chưa có mặt nào để tô',
+          };
+        }
+
+        const colours = ((scene.config as GraphConfig | undefined)?.face_colors ?? {}) as Record<
+          string,
+          number
+        >;
+        const near = faceAdjacency(result.value);
+        const blank = result.value.filter((f) => !Object.hasOwn(colours, f.id)).map((f) => f.id);
+        const clash = new Set<string>();
+
+        for (const face of result.value) {
+          const mine = colours[face.id];
+          if (mine === undefined) continue;
+          for (const other of near.get(face.id) ?? []) {
+            if (colours[other] === mine) {
+              clash.add(face.id);
+              clash.add(other);
+            }
+          }
+        }
+
+        if (clash.size > 0) {
+          return {
+            ok: false,
+            violations: [...clash],
+            message: `${clash.size} mặt có hàng xóm cùng màu`,
+          };
+        }
+        if (blank.length > 0) {
+          return { ok: false, violations: blank, message: `${blank.length} mặt chưa tô` };
+        }
+
+        const used = new Set(Object.values(colours));
+        if (maxColours !== null && used.size > maxColours) {
+          return {
+            ok: false,
+            violations: [],
+            message: `Dùng ${used.size} màu, quá ${maxColours}`,
+          };
+        }
+        return { ok: true, violations: [] };
+      },
+    };
+  }
+
+  /**
    * `diameter:<k>` — cây có đường kính đúng $k$ (GR-10).
    *
    * Mục tiêu sandbox của họ bài "dựng một cây thoả …": người học kéo cạnh cho tới
@@ -613,6 +789,8 @@ export const GRAPH_VALIDATOR_IDS: readonly string[] = [
   ...FIXED.map((v) => v.id),
   'max-degree:<k>',
   'diameter:<k>',
+  'face-colouring',
+  'face-colouring:<k>',
 ];
 
 // ---------------------------------------------------------------------------
@@ -636,10 +814,21 @@ export const graphSchemaFragment: EngineSchemaFragment = {
    */
   implicitElementIds(scene: Scene): Set<string> {
     const config = scene.config as GraphConfig | undefined;
-    if (!config?.show_prufer) return new Set<string>();
-    const n = scene.elements.filter((e) => e.type === 'vertex').length;
     const ids = new Set<string>();
-    for (let i = 0; i < Math.max(0, n - 2); i += 1) ids.add(`prufer-${i}`);
+
+    if (config?.show_prufer) {
+      const n = scene.elements.filter((e) => e.type === 'vertex').length;
+      for (let i = 0; i < Math.max(0, n - 2); i += 1) ids.add(`prufer-${i}`);
+    }
+
+    // GR-05 — mặt cũng không nằm trong file, và cũng phải neo được: "[[a1|mặt
+    // giữa]] có bốn cạnh" là câu mà cả họ bài tô bản đồ nói. Đọc từ analyzer chứ
+    // không đoán theo Euler: hình còn cắt nhau thì chưa có mặt nào, và khai ra một
+    // dãy id không tồn tại sẽ khiến ANC-02 im lặng cho qua một anchor rot thật.
+    if (config?.show_faces) {
+      for (const face of planarFaces(buildGraph(scene)).value ?? []) ids.add(face.id);
+    }
+
     return ids;
   },
 

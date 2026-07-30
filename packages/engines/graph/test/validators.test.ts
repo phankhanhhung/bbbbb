@@ -113,3 +113,71 @@ describe('validator `tree` (GR-09)', () => {
     expect(GRAPH_VALIDATOR_IDS).toContain('tree');
   });
 });
+
+/**
+ * GR-05 — tô mặt, và hai chi tiết quyết định nó đúng hay chỉ trông đúng.
+ */
+describe('validator `face-colouring`', () => {
+  /** Hai tam giác dán theo cạnh a–b, cộng bảng màu mặt. */
+  const diamond = (faceColors: Record<string, number>): Scene => ({
+    engine: 'graph',
+    config: { show_faces: true, face_colors: faceColors },
+    elements: [
+      { id: 'a', type: 'vertex', pos: [0, 0] },
+      { id: 'b', type: 'vertex', pos: [10, 0] },
+      { id: 'c', type: 'vertex', pos: [5, 9] },
+      { id: 'd', type: 'vertex', pos: [5, -9] },
+      { id: 'e1', type: 'edge', u: 'a', v: 'b' },
+      { id: 'e2', type: 'edge', u: 'b', v: 'c' },
+      { id: 'e3', type: 'edge', u: 'c', v: 'a' },
+      { id: 'e4', type: 'edge', u: 'a', v: 'd' },
+      { id: 'e5', type: 'edge', u: 'b', v: 'd' },
+    ],
+  });
+
+  const check = (scene: Scene, id = 'face-colouring') =>
+    resolveGraphValidator(id)!.check(scene);
+
+  it('hai mặt chung cạnh cùng màu là vi phạm; khác màu thì đạt', () => {
+    // Ba mặt: hai tam giác trong, cộng mặt ngoài. Mặt ngoài **cũng phải tô**.
+    expect(check(diamond({ 'face-0': 1, 'face-1': 1, 'face-outer': 2 })).ok).toBe(false);
+    expect(check(diamond({ 'face-0': 1, 'face-1': 2, 'face-outer': 3 })).ok).toBe(true);
+  });
+
+  it('mặt chưa tô thì báo **mặt nào**, không báo chung chung', () => {
+    const outcome = check(diamond({ 'face-0': 1 }));
+    expect(outcome.ok).toBe(false);
+    expect(outcome.violations).toContain('face-outer');
+    expect(outcome.message).toMatch(/chưa tô/);
+  });
+
+  it('mặt ngoài **không** được miễn — bỏ nó ra thì bài dễ đi một màu', () => {
+    // Hai tam giác trong khác màu nhau nhưng mặt ngoài chưa tô ⇒ chưa đạt.
+    expect(check(diamond({ 'face-0': 1, 'face-1': 2 })).ok).toBe(false);
+  });
+
+  it('dạng có tham số chặn thêm số màu', () => {
+    const good = diamond({ 'face-0': 1, 'face-1': 2, 'face-outer': 3 });
+    expect(check(good, 'face-colouring:3').ok).toBe(true);
+    expect(check(good, 'face-colouring:2').ok).toBe(false);
+    expect(check(good, 'face-colouring:2').message).toMatch(/quá 2/);
+  });
+
+  it('hình còn cắt nhau thì nói **điều đó**, không nói "chưa tô"', () => {
+    const crossing: Scene = {
+      engine: 'graph',
+      config: { show_faces: true },
+      elements: [
+        { id: 'a', type: 'vertex', pos: [0, 0] },
+        { id: 'b', type: 'vertex', pos: [10, 10] },
+        { id: 'c', type: 'vertex', pos: [10, 0] },
+        { id: 'd', type: 'vertex', pos: [0, 10] },
+        { id: 'e1', type: 'edge', u: 'a', v: 'b' },
+        { id: 'e2', type: 'edge', u: 'c', v: 'd' },
+      ],
+    };
+    const outcome = check(crossing);
+    expect(outcome.ok).toBe(false);
+    expect(outcome.message).toMatch(/cắt nhau|liên thông/);
+  });
+});

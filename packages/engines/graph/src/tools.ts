@@ -43,6 +43,25 @@ export function graphTools(scene: Scene): readonly SandboxTool[] {
     },
   });
 
+  // GR-05 — tô mặt. Chỉ bày khi hình đang hiện mặt: nút tô một thứ không vẽ ra là
+  // đúng cái bệnh mà lớp `SandboxTool` sinh ra để dẹp.
+  if ((scene.config as { show_faces?: boolean } | undefined)?.show_faces) {
+    for (let index = 1; index <= MAX_COLOR_CLASS; index += 1) {
+      tools.push({
+        id: `face-${index}`,
+        label: `Tô mặt màu ${index}`,
+        swatch: index,
+        action: {
+          type: 'paint',
+          command: 'graph/paint-faces',
+          idsParam: 'faces',
+          params: { color_class: index },
+          prefix: 'face-',
+        },
+      });
+    }
+  }
+
   tools.push({
     id: 'add-edge',
     label: '+ Nối cạnh',

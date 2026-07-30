@@ -37,7 +37,7 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 68 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười hai bài của M22–M31):
+Đo trên 70 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười bốn bài của M22–M33):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
@@ -78,7 +78,7 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | 6a | ~~`SQ-02` lan truyền trên dãy~~ ✅ M28 | sequence | chip-firing, Ducci | vừa | ~~🟡 "thiếu luật lan truyền"~~ |
 | ~~6b~~ | ~~`BD-08` lan truyền trên bàn cờ~~ ✅ M29 | board | lights-out | vừa | ~~❌ dòng lights-out ở VIZ-COVERAGE §2~~ |
 | ~~7~~ | ~~`BD-07` lưới tam giác / lục giác~~ ✅ M24 | board | phủ hình phi vuông | vừa | ~~§2 — engine **không vẽ được**~~ |
-| 8 | `GR-05` tô mặt sau embedding | graph | công thức Euler, tô mặt | vừa | SRS `GR-05` [P2] |
+| ~~8~~ | ~~`GR-05` tô mặt sau embedding~~ ✅ M33 | graph | công thức Euler, tô mặt | vừa | ~~SRS `GR-05` [P2]~~ |
 | 9 | `GR-07` ma trận đồng bộ hai chiều | graph | đếm hai chiều | vừa | SRS `GR-07` [P2] |
 | 10 | `PRN-04` animation biến hình | cross | **cả họ song ánh (14%)** | đắt | §2 "còn thiếu: animation biến hình của PRN-04" |
 | ~~11~~ | ~~`BD-05` vùng khuyết vẽ tay + torus~~ ✅ M31 | board | bài trên hình xuyến | vừa | ~~SRS `BD-05` [P2]~~ |
@@ -143,7 +143,7 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
 
 - bàn 3D / nhiều lớp; bảng số có công thức trong ô; lưới vô hạn có cửa sổ trượt.
 
-### 2.2 `graph` — 19 bài, engine chủ lực
+### 2.2 `graph` — 21 bài, engine chủ lực
 
 **Tầng A**
 
@@ -166,8 +166,15 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
   Test dựng **mọi** cây có nhãn tới $n = 7$ bằng cách giải mã Prüfer — dùng chính
   song ánh của M27 làm bộ sinh — rồi kiểm ba định lý trên từng cây: một hoặc hai
   tâm, một hoặc hai trọng tâm, và hai thì kề nhau.
-- **GR-05 [P2] SHOULD** — phần còn lại: **planar embedding rồi tô mặt.** Đã có
-  chứng minh phẳng qua hình vẽ và chặn Euler; thiếu embedding nên chưa tô mặt được.
+- **GR-05 ✅ (M33)** — phần còn lại: **mặt, và tô mặt.** `planarFaces` lần biên
+  từng mặt bằng **hệ quay** dựng từ chính toạ độ đỉnh — hình không giao điểm nào
+  thì bản thân nó **đã là** một cách nhúng phẳng, nên không cần LR hay PQ-tree.
+  Công thức Euler làm bài kiểm sẵn có: `planarity` đếm mặt bằng $e - v + 1 + c$,
+  hai đường phải gặp nhau và hàm **từ chối** nếu không.
+
+  Kèm `config.show_faces` + `face_colors`, lệnh `graph/paint-faces`, hit-test theo
+  điểm-trong-đa-giác, binding `face_list`, và validator `face-colouring[:k]` — bài
+  tô bản đồ, kể cả định lý bốn màu, thành thứ nghịch được. Bài `euler-formula-faces`.
 - **GR-07 [P2] MAY** — ma trận kề **đồng bộ hai chiều** với canvas (chọn ô ↔ sáng
   cạnh). View ma trận đã có từ M12, phần đồng bộ thì chưa. SRS gọi nó là cầu nối
   sang đếm hai chiều.

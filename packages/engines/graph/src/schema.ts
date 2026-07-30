@@ -99,6 +99,33 @@ export const GraphConfig = Type.Object(
      * có. Đồ thị không phải cây thì không vẽ gì.
      */
     show_diameter: Type.Optional(Type.Boolean({ default: false })),
+    /**
+     * GR-05 — tô **mặt** của hình phẳng.
+     *
+     * Nửa còn lại của GR-05: đã có chứng chỉ phẳng (hình không giao điểm) và chặn
+     * Euler; thiếu là bản thân các mặt. Bật cờ này thì mỗi mặt trong được tô nền,
+     * và bài tô bản đồ — bao gồm định lý bốn màu — thành một thứ nghịch được thay
+     * vì một câu phải tin.
+     *
+     * Hình còn cạnh cắt nhau thì **không** tô gì: khi ấy "mặt" chưa có nghĩa.
+     */
+    show_faces: Type.Optional(Type.Boolean({ default: false })),
+    /**
+     * Màu của từng mặt, tra theo id `face-0`, `face-1`, … (GR-05).
+     *
+     * Mặt **không** nằm trong file như đỉnh và cạnh — nó là thứ suy ra từ hình,
+     * nên nó không mang được `color_class` của riêng mình. Bảng thưa này là chỗ
+     * gắn màu vào, cùng khuôn với `cell_overrides` của board.
+     *
+     * Mặt ngoài mang id `face-outer` và tô được như mọi mặt khác: trong bài tô bản
+     * đồ thì "biển" cũng là một vùng phải tô.
+     */
+    face_colors: Type.Optional(
+      Type.Record(Type.String({ pattern: '^face-(\\d+|outer)$' }), Type.Integer({
+        minimum: 1,
+        maximum: MAX_COLOR_CLASS,
+      })),
+    ),
   },
   { additionalProperties: false },
 );
