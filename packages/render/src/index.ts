@@ -72,4 +72,5 @@ export {
   createRenderer,
   type EngineRenderer,
   type SceneRenderer,
+  type SceneBox,
 } from './renderer.js';

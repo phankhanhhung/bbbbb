@@ -10,6 +10,7 @@ import {
   text,
   type EngineRenderer,
   type RenderContext,
+  type SceneBox,
   type SvgNode,
 } from '@combviz/render';
 import {
@@ -41,8 +42,47 @@ import {
  *
  * Hàm thuần như hai engine kia: không DOM, không giờ, không random.
  */
+/**
+ * Chỗ mực của một phần tử dãy nằm — **tính từ layout**, không đoán từ SVG.
+ *
+ * Dùng đúng những hằng số mà renderer dùng để đặt hình (`slotX`, `SLOT`,
+ * `STONE_PITCH`), nên hai bên không thể lệch nhau: đổi cách xếp là đổi cả hai
+ * cùng lúc, vì chúng đọc chung một nguồn.
+ */
+function boxesOf(scene: Scene, id: string): readonly SceneBox[] {
+  const derived = deriveSequence(scene);
+
+  const item = derived.items.find((i) => i.id === id);
+  if (item) {
+    if (derived.mode !== 'piles') {
+      return [{ x: slotX(item.pos), y: 0, width: SLOT, height: SLOT }];
+    }
+    // Đống mọc **lên** theo chiều âm của y, quanh tâm ô. Viên thứ $i$ có tâm ở
+    // $-R - i \cdot P$, nên $n$ viên trải từ $-R-(n-1)P$ tới $R$ — đọc thẳng từ
+    // `renderPile`, không ước theo `value`: đống quá cao thì chỉ vẽ tới ngưỡng
+    // rồi hiện số, và ước theo `value` sẽ trỏ ra tận trên trời.
+    const centre = slotX(item.pos) + SLOT / 2;
+    const n = Math.max(drawnStones(item.value), 1);
+    const top = -STONE_R - (n - 1) * STONE_PITCH;
+    return [{ x: centre - STONE_R, y: top, width: STONE_R * 2, height: -top + STONE_R }];
+  }
+
+  const cut = derived.cuts.find((c) => c.id === id);
+  if (cut) {
+    // Nét cắt nằm **giữa hai ô**, không phải ở mép ô: `slotX(before) - GAP/2`.
+    // Hộp rộng $0$ — đó là sự thật của một đoạn thẳng đứng, không phải thiếu sót.
+    const x = slotX(cut.before) - GAP / 2;
+    const top = derived.mode === 'piles' ? -STONE_PITCH * 7 : -GAP * 0.6;
+    const bottom = derived.mode === 'piles' ? SLOT * 0.2 : SLOT + GAP * 0.6;
+    return [{ x, y: top, width: 0, height: bottom - top }];
+  }
+
+  return [];
+}
+
 export const sequenceRenderer: EngineRenderer = {
   id: 'sequence',
+  elementBoxes: boxesOf,
 
   defaultViewport(scene: Scene): Viewport {
     return viewportOf(scene);
