@@ -1,6 +1,7 @@
 import type { HitTest, ScenePoint } from '@combviz/editor';
 import type { Scene } from '@combviz/schema';
-import { CELL, tileOffsets, type Offset } from './geometry.js';
+import { CELL, latticeOf, tileOffsets, type Offset } from './geometry.js';
+import { cellAt } from './lattice.js';
 import { cellId } from './ids.js';
 import { tileCells } from './dsl.js';
 import type { BoardConfig } from './schema.js';
@@ -29,7 +30,14 @@ export function cellToPoint([row, col]: Offset): ScenePoint {
  */
 export const boardHitTest: HitTest = (scene: Scene, point: ScenePoint): string[] => {
   const config = scene.config as BoardConfig;
-  const [row, col] = pointToCell(point);
+
+  // Ô nằm dưới con trỏ đọc từ `lattice.ts` — cùng module mà renderer dùng để đặt
+  // ô. Chia lấy nguyên theo `CELL` chỉ đúng cho lưới vuông; trên bàn ong nó lệch
+  // dần theo hàng, và người dùng chỉ mô tả được thành "canvas chạm lệch".
+  const cell = config
+    ? cellAt(latticeOf(config), config.rows, config.cols, point)
+    : pointToCell(point);
+  const [row, col] = cell ?? [-1, -1];
 
   const hits: string[] = [];
 
@@ -39,15 +47,7 @@ export const boardHitTest: HitTest = (scene: Scene, point: ScenePoint): string[]
     if (occupies(element, row, col)) hits.push(element.id);
   }
 
-  if (
-    config &&
-    row >= 0 &&
-    col >= 0 &&
-    row < config.rows &&
-    col < config.cols
-  ) {
-    hits.push(cellId(row, col));
-  }
+  if (cell !== null && row >= 0 && col >= 0) hits.push(cellId(row, col));
 
   return hits;
 };

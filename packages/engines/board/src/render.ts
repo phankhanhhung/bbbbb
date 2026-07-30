@@ -16,10 +16,18 @@ import {
   BOARD_PADDING,
   CELL,
   cellColorClass,
+  latticeOf,
   outlinePath,
   tileOffsets,
   type Offset,
 } from './geometry.js';
+import {
+  cellPolygon,
+  cellsInRow,
+  centreOf,
+  latticeExtent,
+  outlineOfCells,
+} from './lattice.js';
 import { cellId } from './ids.js';
 import { attackedCells, cellCentre, type AttackBoard } from './attacks.js';
 import type { BoardConfig } from './schema.js';
@@ -47,11 +55,16 @@ export const boardRenderer: EngineRenderer = {
     const right = table?.show_sums ? CELL * 1.1 : 0;
     const bottom = table?.show_sums ? CELL * 0.9 : 0;
 
+    // Khung đọc từ `latticeExtent`, **cùng** phép tính mà `cellPolygon` dùng để
+    // đặt từng ô. Ước riêng bằng `rows * CELL` thì đúng cho lưới vuông và hụt cho
+    // hai lưới kia — lục giác cao hơn ô vuông $15\%$, tam giác thì thấp hơn $13\%$.
+    const extent = latticeExtent(latticeOf(config), rows, cols);
+
     return {
       x: -BOARD_PADDING - left,
       y: -BOARD_PADDING - top,
-      width: cols * CELL + BOARD_PADDING * 2 + left + right,
-      height: rows * CELL + BOARD_PADDING * 2 + top + bottom,
+      width: extent.width + BOARD_PADDING * 2 + left + right,
+      height: extent.height + BOARD_PADDING * 2 + top + bottom,
     };
   },
 
@@ -70,7 +83,7 @@ export const boardRenderer: EngineRenderer = {
       el('g', { class: 'cv-cells' }, renderCells(config, ctx)),
       ...(config.table ? [el('g', { class: 'cv-table' }, renderTable(config, ctx))] : []),
       ...(attacks.length > 0 ? [el('g', { class: 'cv-attacks' }, attacks)] : []),
-      el('g', { class: 'cv-elements' }, elements.flatMap((e) => renderElement(e, ctx))),
+      el('g', { class: 'cv-elements' }, elements.flatMap((e) => renderElement(e, config, ctx))),
     ];
   },
 };
@@ -91,38 +104,56 @@ function byLayer(a: SceneElement, b: SceneElement): number {
  */
 function renderCells(config: BoardConfig, ctx: RenderContext): SvgNode[] {
   const holes = new Set((config.holes ?? []).map(([r, c]) => `${r},${c}`));
+  const lattice = latticeOf(config);
   const nodes: SvgNode[] = [];
 
   for (let r = 0; r < config.rows; r += 1) {
-    for (let c = 0; c < config.cols; c += 1) {
+    for (let c = 0; c < cellsInRow(lattice, config.cols, r); c += 1) {
       const isHole = holes.has(`${r},${c}`);
       const colorClassIndex = isHole ? undefined : cellColorClass(config, r, c);
       const glyph = config.cell_overrides?.[cellId(r, c)]?.glyph;
+      const centre = centreOf(lattice, config.rows, config.cols, r, c);
 
-      const rect = keyed(cellId(r, c), 'rect', {
-        x: c * CELL,
-        y: r * CELL,
-        width: CELL,
-        height: CELL,
-        fill: isHole ? ctx.theme.surface.void : fillForClass(ctx, colorClassIndex),
-        stroke: ctx.theme.surface.guide,
-        'stroke-width': ctx.theme.stroke.hairline,
-        ...decorationAttrs(ctx, cellId(r, c)),
-      });
+      // Lưới vuông vẫn vẽ `<rect>`, không phải `<polygon>` bốn đỉnh: hai thứ ra
+      // cùng một hình, nhưng đổi thẻ sẽ làm lệch golden của **hai mươi** bài đang
+      // publish mà không đổi một pixel nào. Diff golden phải nói lên điều gì đó.
+      const shape =
+        lattice === 'square'
+          ? keyed(cellId(r, c), 'rect', {
+              x: c * CELL,
+              y: r * CELL,
+              width: CELL,
+              height: CELL,
+              fill: isHole ? ctx.theme.surface.void : fillForClass(ctx, colorClassIndex),
+              stroke: ctx.theme.surface.guide,
+              'stroke-width': ctx.theme.stroke.hairline,
+              ...decorationAttrs(ctx, cellId(r, c)),
+            })
+          : keyed(cellId(r, c), 'polygon', {
+              points: cellPolygon(lattice, config.rows, config.cols, r, c)
+                .map((p) => `${round(p.x)},${round(p.y)}`)
+                .join(' '),
+              fill: isHole ? ctx.theme.surface.void : fillForClass(ctx, colorClassIndex),
+              stroke: ctx.theme.surface.guide,
+              'stroke-width': ctx.theme.stroke.hairline,
+              ...decorationAttrs(ctx, cellId(r, c)),
+            });
 
-      nodes.push(rect);
+      nodes.push(shape);
 
       if (glyph) {
         nodes.push(
           text(
             'text',
             {
-              x: c * CELL + CELL / 2,
-              y: r * CELL + CELL / 2,
+              x: round(centre.x),
+              y: round(centre.y),
               'text-anchor': 'middle',
               'dominant-baseline': 'central',
               'font-family': ctx.theme.type.uiFamily,
-              'font-size': CELL * 0.55,
+              // Tam giác đơn vị hẹp hơn ô vuông nhiều, nên chữ phải nhỏ lại —
+              // không thì glyph tràn ra ngoài ô và đè lên ô bên cạnh.
+              'font-size': CELL * (lattice === 'triangle' ? 0.34 : 0.55),
               // Mực theo lớp màu của **chính ô này**: một dấu "−" trên ô lớp 8
               // vẽ bằng mực đen chung thì gần như biến mất.
               fill: inkForClass(ctx, colorClassIndex),
@@ -271,14 +302,18 @@ function renderAttackOverlay(
   return marks;
 }
 
-function renderElement(element: SceneElement, ctx: RenderContext): SvgNode[] {
+function renderElement(
+  element: SceneElement,
+  config: BoardConfig,
+  ctx: RenderContext,
+): SvgNode[] {
   switch (element.type) {
     case 'tile':
       return [renderTile(element, ctx)];
     case 'piece':
-      return [renderPiece(element, ctx)];
+      return [renderPiece(element, config, ctx)];
     case 'region':
-      return [renderRegion(element, ctx)];
+      return [renderRegion(element, config, ctx)];
     default:
       return [];
   }
@@ -339,7 +374,11 @@ function renderTile(element: SceneElement, ctx: RenderContext): SvgNode {
   );
 }
 
-function renderPiece(element: SceneElement, ctx: RenderContext): SvgNode {
+function renderPiece(
+  element: SceneElement,
+  config: BoardConfig,
+  ctx: RenderContext,
+): SvgNode {
   const pos = element['pos'] as Offset;
   const glyph =
     element['kind'] === 'custom'
@@ -351,11 +390,21 @@ function renderPiece(element: SceneElement, ctx: RenderContext): SvgNode {
       ? ctx.theme.object.piece
       : fillForClass(ctx, element.color_class);
 
+  // Quân đặt ở **tâm ô**, và tâm ô là thứ `lattice.ts` biết. Trên lưới vuông,
+  // `translate` tới góc trên trái rồi vẽ ở `CELL/2` cho ra đúng chuỗi transform
+  // như trước — golden của hai mươi bài không đổi.
+  const lattice = latticeOf(config);
+  const centre = centreOf(lattice, config.rows, config.cols, pos?.[0] ?? 0, pos?.[1] ?? 0);
+  const origin =
+    lattice === 'square'
+      ? { x: (pos?.[1] ?? 0) * CELL, y: (pos?.[0] ?? 0) * CELL }
+      : { x: round(centre.x - CELL / 2), y: round(centre.y - CELL / 2) };
+
   return keyed(
     element.id,
     'g',
     {
-      transform: translate((pos?.[1] ?? 0) * CELL, (pos?.[0] ?? 0) * CELL),
+      transform: translate(origin.x, origin.y),
       ...groupAttrs(ctx, element),
     },
     [
@@ -385,19 +434,29 @@ function renderPiece(element: SceneElement, ctx: RenderContext): SvgNode {
   );
 }
 
-function renderRegion(element: SceneElement, ctx: RenderContext): SvgNode {
+function renderRegion(
+  element: SceneElement,
+  config: BoardConfig,
+  ctx: RenderContext,
+): SvgNode {
   const cells = (element['cells'] as Offset[] | undefined) ?? [];
+  const lattice = latticeOf(config);
   return keyed(
     element.id,
     'g',
     groupAttrs(ctx, element),
     [
       el('path', {
-        d: outlinePathAbsolute(cells),
+        d:
+          lattice === 'square'
+            ? outlinePathAbsolute(cells)
+            : outlineOfCells(lattice, config.rows, config.cols, cells),
         fill: 'none',
         stroke: ctx.theme.object.regionStroke,
         'stroke-width': ctx.theme.stroke.region,
-        'stroke-linecap': 'square',
+        // Đầu nét vuông trên lưới vuông thì lấp đúng góc; trên lưới tam giác góc
+        // nhọn nên nó thò ra thành mấy cái gai ở mỗi đỉnh. Chỉ thấy khi nhìn hình.
+        'stroke-linecap': lattice === 'square' ? 'square' : 'round',
         ...elementDecoration(ctx, element),
       }),
     ],
@@ -424,6 +483,10 @@ function shiftPath(path: string, dx: number, dy: number): string {
 
 function translate(x: number, y: number): string {
   return `translate(${x} ${y})`;
+}
+
+function round(value: number): number {
+  return Math.round(value * 1000) / 1000 + 0;
 }
 
 /**

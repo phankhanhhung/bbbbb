@@ -13,7 +13,7 @@ proof assistant, LMS hay nền tảng multi-author. Đặc tả đầy đủ n�
 
 - Phase 1 đang chạy; đã có **7 engine**: board, graph, sequence, set, point,
   game và derivation.
-- Kho có **59 bài đã xuất bản**. Nội dung do tác giả soạn và tự duyệt; chất
+- Kho có **60 bài đã xuất bản**. Nội dung do tác giả soạn và tự duyệt; chất
   lượng editorial vẫn là gate của sản phẩm, không được tự động bỏ qua.
 - Coverage ước lượng khoảng **85%** các họ bài tổ hợp mà engine hiện tại có
   thể gánh phần lập luận. Đây là ước lượng chuyên gia, không phải benchmark
@@ -38,7 +38,7 @@ Hai gate còn mở, và cả hai là việc của chính chủ chứ không ph�
 
 | Engine | Vẽ được | Cố ý **không** làm |
 |---|---|---|
-| `board` | lưới, quân, tile, vùng, bảng số | — |
+| `board` | lưới **vuông / tam giác / lục giác**, quân, tile, vùng, bảng số | quân ghép trên lưới phi vuông |
 | `graph` | đa đồ thị, ghép cặp + König + Hall, ma trận kề, poset/Hasse + Dilworth | tô mặt, kiểm tính phẳng tổng quát |
 | `sequence` | dãy số, đa tập, đống sỏi, thao tác lặp | luật gộp là **enum đóng**, không cho nhập biểu thức |
 | `set` | bảng incidence, Venn ≤ 3 tập | Venn quá 3 tập — sự thật hình học, không phải giới hạn cài đặt |

@@ -58,6 +58,26 @@ const Coord = Type.Tuple([
  */
 export const BoardConfig = Type.Object(
   {
+    /**
+     * BD-07 — hình dạng ô.
+     *
+     * Ô vẫn định danh bằng `(hàng, cột)` ở cả ba lưới, nên `holes`,
+     * `cell_overrides`, anchor, region và DSL không phải biết gì; chỗ duy nhất
+     * biết là `lattice.ts`. Vắng trường này thì bàn là lưới vuông — mọi bài đã
+     * có trong kho không phải sửa một chữ.
+     *
+     *   - `hex` — bàn ong, lục giác đỉnh nhọn hướng lên, hàng lẻ lệch phải nửa ô.
+     *   - `triangle` — **tam giác cạnh `rows`**, hàng $r$ có $2r+1$ ô đơn vị
+     *     (hướng lên xen hướng xuống). Ở lưới này `cols` phải bằng `rows`: tích
+     *     `rows × cols = n²` khi ấy đúng bằng số ô, nên trần `maxCells` vẫn đọc
+     *     đúng mà không cần luật riêng.
+     */
+    lattice: Type.Optional(
+      Type.Union(
+        [Type.Literal('square'), Type.Literal('hex'), Type.Literal('triangle')],
+        { default: 'square' },
+      ),
+    ),
     rows: Type.Integer({ minimum: 1, maximum: BOARD_LIMITS.maxRows }),
     cols: Type.Integer({ minimum: 1, maximum: BOARD_LIMITS.maxCols }),
     /** Ô khuyết: bàn cờ bỏ góc, bàn hình chữ L... */

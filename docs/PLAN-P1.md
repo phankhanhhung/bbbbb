@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M23 xong (7 engine, phủ ~85%); kho 59 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M24 xong (7 engine, phủ ~85%); kho 60 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,63 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M24 — Lưới tam giác và lục giác cho board engine (BD-07) · [E] — **xong**
+
+Hạng mục #7 của backlog, và là khoảng trống lớn nhất còn lại của engine **được
+dùng nhiều nhất** (21/60 bài). Trước nó, board chỉ vẽ được lưới vuông, nên cả họ
+phủ hình phi vuông — tam giác đều chia thành tam giác đơn vị, bàn ong lục giác —
+không có cách nào vẽ.
+
+**Nguyên tắc: đổi hình ô, không đổi toạ độ.** Ô vẫn định danh bằng `(hàng, cột)`
+và vẫn mang id `cell-<r>-<c>` ở cả ba lưới, nên `holes`, `cell_overrides`, anchor,
+region, validator và DSL không phải biết gì. Chỗ **duy nhất** biết là `lattice.ts`:
+nó trả về đa giác của một ô, tâm ô, ô nằm dưới một điểm, và quan hệ kề. Bằng chứng
+rằng nguyên tắc ấy được giữ: **không một golden nào của 20 bài cũ đổi một byte** —
+lưới vuông vẫn vẽ `<rect>` và vẫn ra đúng chuỗi transform như trước.
+
+Ba con số là quy ước, không phải lựa chọn thẩm mỹ:
+
+- **G-10 giữ nguyên ở cả ba lưới**: hai ô kề ngang cách nhau đúng `CELL`. Nhờ vậy
+  bàn vuông 8×8 và bàn ong 8×8 ra cùng cỡ trên màn hình, và `scale.ts` không phải
+  biết engine đang vẽ lưới gì.
+- **Tam giác cạnh $n$ có $n^2$ ô** (hàng $r$ có $2r+1$), nên `rows × cols` với
+  `cols = rows` vẫn đếm đúng số ô và trần `maxCells` không cần luật riêng. Validator
+  ép `cols = rows` thay vì đoán.
+- **Lục giác đỉnh nhọn hướng lên, "odd-r"**, bề ngang bằng `CELL`.
+
+**Chỗ suýt sai, và nó sai một cách rất thuyết phục.** Preset `stripes` với $k=3$
+trên bàn ong: lấy chỉ số cột thô thì $r + c$ cho **hai ô kề nhau cùng màu** — hình
+vẽ ra trông hệt phép tô ba màu kinh điển của bàn ong và **không phải** phép tô ba
+màu. Chỉ nhìn kỹ mới thấy. Chữa bằng toạ độ trục $q = c - \lfloor r/2 \rfloor$;
+khi ấy `diag-left` với $k = 3$ đúng là phép tô ba màu thật, và có test duyệt mọi
+cặp kề để ép điều đó. Ngược lại, `checkerboard` trên lưới lục giác bị **chặn**:
+bàn ong có ba ô kề nhau đôi một, nên đồ thị kề của nó có chu trình lẻ và hai màu
+là không thể — một luật của toán, không phải của engine.
+
+**Ba tính năng chỉ có nghĩa trên lưới vuông**, và cả ba hỏng lặng lẽ chứ không nổ:
+polyomino là hình ghép từ ô vuông; bảng PRN-03 giả định hàng cột thẳng; luật đi
+quân cờ nói về hàng, cột, đường chéo. Chặn ở **hai** lớp — `checkBounds` lúc soạn
+và chính lệnh lúc chạy — vì sandbox không có ai đọc danh sách lỗi. Thanh công cụ
+cũng bỏ đúng những nút ấy.
+
+**`adjacent()` của DSL là chỗ dễ bỏ sót nhất.** Nó là một dòng `|Δr| + |Δc| == 1`
+viết thẳng trong `dsl.ts` — đúng cho lưới vuông và sai lặng lẽ cho hai lưới kia:
+trên bàn ong hai ô kề nhau lệch cả hàng lẫn cột, trên lưới tam giác một ô chỉ có
+**ba** láng giềng. Nay nó hỏi `lattice.ts`, và test so tổng bậc của cả bàn giữa DSL
+và module hình học, cộng một dòng chứng minh công thức cũ cho ra số khác.
+
+Bài mới: **`triangle-lozenge-parity`** — tam giác đều cạnh $n$ không lát kín được
+bằng hình thoi. Lời giải là một phép đếm hai màu: $\frac{n(n+1)}{2}$ ô hướng lên,
+$\frac{n(n-1)}{2}$ ô hướng xuống, hiệu đúng bằng $n$; mà mỗi hình thoi phủ một ô
+mỗi kiểu. Step cuối xếp thật $10$ hình thoi trên $T(5)$ và để lại đúng $5$ ô — con
+số không phải trang trí.
+
+Còn nợ, đã đặt tên: **`BD-09`** — hình thoi và tribone như **quân kéo thả**, không
+phải `region` vẽ viền. Hôm nay bài trên phải khai từng hình thoi bằng một region,
+nên sandbox không kéo thả được chúng.
+
+981 test, 60 bài 0 lỗi 0 cảnh báo, e2e 42 xanh, **0 golden cũ đổi**.
 
 ### M23 — Phổ hai chiều cho game hai đống (GM-08) · [E] — **xong**
 
@@ -1029,7 +1086,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 59 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 60 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):

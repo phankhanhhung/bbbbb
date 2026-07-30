@@ -12,11 +12,14 @@ import {
   type BoardConfig as BoardConfigType,
 } from './schema.js';
 import { cellId } from './ids.js';
+import { latticeOf } from './geometry.js';
+import { cellCount, cellsInRow, inBoard } from './lattice.js';
 import { BOARD_VALIDATOR_IDS, resolveBoardValidator } from './validators.js';
 
 export * from './schema.js';
 export { boardTools } from './tools.js';
 export * from './geometry.js';
+export * from './lattice.js';
 export * from './ids.js';
 export { boardRenderer } from './render.js';
 export * from './dsl.js';
@@ -67,8 +70,9 @@ export const boardSchemaFragment: EngineSchemaFragment = {
     const ids = new Set<string>();
     if (!config || typeof config.rows !== 'number') return ids;
 
+    const lattice = latticeOf(config);
     for (let r = 0; r < config.rows; r += 1) {
-      for (let c = 0; c < config.cols; c += 1) {
+      for (let c = 0; c < cellsInRow(lattice, config.cols, r); c += 1) {
         ids.add(cellId(r, c));
       }
     }
@@ -80,7 +84,8 @@ export const boardSchemaFragment: EngineSchemaFragment = {
     const config = scene.config as BoardConfigType;
     if (!config || typeof config.rows !== 'number') return issues;
 
-    const cells = config.rows * config.cols;
+    const lattice = latticeOf(config);
+    const cells = cellCount(lattice, config.rows, config.cols);
     if (cells > BOARD_LIMITS.maxCells) {
       issues.push({
         code: 'bounds/board-too-many-cells',
@@ -91,10 +96,12 @@ export const boardSchemaFragment: EngineSchemaFragment = {
       });
     }
 
+    issues.push(...checkLattice(scene, config, path));
+
     // Ô khuyết nằm ngoài bàn gần như luôn là lỗi gõ toạ độ, và nó im lặng:
     // bàn vẫn vẽ ra bình thường, chỉ có ô định khoét thì không mất.
     (config.holes ?? []).forEach(([r, c], i) => {
-      if (r >= config.rows || c >= config.cols) {
+      if (!inBoard(lattice, config.rows, config.cols, r, c)) {
         issues.push({
           code: 'bounds/hole-out-of-board',
           severity: 'error',
@@ -109,7 +116,7 @@ export const boardSchemaFragment: EngineSchemaFragment = {
       if (!match) return;
       const r = Number(match[1]);
       const c = Number(match[2]);
-      if (r >= config.rows || c >= config.cols) {
+      if (!inBoard(lattice, config.rows, config.cols, r, c)) {
         issues.push({
           code: 'bounds/cell-override-out-of-board',
           severity: 'error',
@@ -163,6 +170,76 @@ export const boardSchemaFragment: EngineSchemaFragment = {
 };
 
 /**
+ * Luật riêng của lưới phi vuông (BD-07).
+ *
+ * Ba tính năng của board **chỉ có nghĩa trên lưới vuông**, và cả ba đều là thứ
+ * hỏng lặng lẽ chứ không nổ: polyomino là hình ghép từ ô **vuông**; bảng PRN-03
+ * là hàng và cột thẳng; luật đi quân cờ nói về hàng, cột, đường chéo của bàn cờ
+ * vuông. Không chặn thì hình vẫn vẽ ra, chỉ là quân domino nằm chéo trên bàn ong
+ * và không ai nhận ra đó là lỗi của engine chứ không phải của bài.
+ */
+function checkLattice(
+  scene: Scene,
+  config: BoardConfigType,
+  path: string,
+): ValidationIssue[] {
+  const lattice = latticeOf(config);
+  if (lattice === 'square') return [];
+
+  const issues: ValidationIssue[] = [];
+  const refuse = (code: string, message: string, where: string, hint: string): void => {
+    issues.push({ code, severity: 'error', message, path: `${path}/${where}`, hint });
+  };
+
+  if (lattice === 'triangle' && config.cols !== config.rows) {
+    refuse(
+      'bounds/triangle-cols-mismatch',
+      `Lưới tam giác cạnh ${config.rows} phải khai \`cols\` = ${config.rows}, đang là ${config.cols}`,
+      'config/cols',
+      'Tam giác cạnh n có n² ô, nên rows × cols đếm đúng số ô khi cols = rows',
+    );
+  }
+
+  if (lattice === 'hex' && config.coloring_preset?.type === 'checkerboard') {
+    refuse(
+      'bounds/checkerboard-on-hex',
+      'Lưới lục giác không tô được **hai** màu',
+      'config/coloring_preset',
+      'Ba ô kề nhau đôi một trên bàn ong tạo thành tam giác, nên đồ thị kề của nó có chu trình lẻ',
+    );
+  }
+
+  if (config.table) {
+    refuse(
+      'bounds/table-needs-square',
+      'Bảng (`table`) chỉ dùng được với lưới vuông',
+      'config/table',
+      'Nhãn hàng/cột và dòng tổng giả định hàng và cột thẳng',
+    );
+  }
+
+  if (scene.elements.some((e) => e.type === 'tile')) {
+    refuse(
+      'bounds/tile-needs-square',
+      'Quân polyomino chỉ đặt được trên lưới vuông',
+      'elements',
+      'Polyomino là hình ghép từ ô vuông; lưới tam giác và lục giác cần một họ hình khác (chưa có)',
+    );
+  }
+
+  if (scene.elements.some((e) => e.type === 'piece' && e['show_attacks'] === true)) {
+    refuse(
+      'bounds/attacks-need-square',
+      '`show_attacks` chỉ dùng được với lưới vuông',
+      'elements',
+      'Luật đi quân cờ phát biểu trên hàng, cột và đường chéo của bàn cờ vuông',
+    );
+  }
+
+  return issues;
+}
+
+/**
  * Tile `custom` phải khai `offsets`, và tile có sẵn thì không được khai.
  *
  * Không phải bound, nhưng cùng họ: đây là loại sai mà JSON Schema không bắt được
@@ -200,7 +277,7 @@ function checkTilePlacement(
 
     const pos = element['pos'];
     if (Array.isArray(pos) && typeof pos[0] === 'number' && typeof pos[1] === 'number') {
-      if (pos[0] >= config.rows || pos[1] >= config.cols) {
+      if (!inBoard(latticeOf(config), config.rows, config.cols, pos[0], pos[1])) {
         issues.push({
           code: 'board/tile-out-of-board',
           severity: 'error',

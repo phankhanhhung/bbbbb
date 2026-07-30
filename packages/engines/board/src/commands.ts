@@ -3,7 +3,7 @@ import type { Scene, SceneElement } from '@combviz/schema';
 import { cellId, parseCellId } from './ids.js';
 import { tileCells } from './dsl.js';
 import type { BoardConfig, ColoringPreset } from './schema.js';
-import { cellColorClass, type Offset } from './geometry.js';
+import { cellColorClass, latticeOf, type Offset } from './geometry.js';
 
 /**
  * Command của Grid/Board (BD-01..03).
@@ -104,6 +104,11 @@ const placeTile = defineCommand<{
   type: 'board/place-tile',
   label: (params) => `Đặt ${params.shape}`,
   apply(scene, params) {
+    // Polyomino là hình ghép từ ô **vuông**. Trên lưới tam giác hay lục giác nó
+    // vẫn "đặt" được nếu để yên, và vẽ ra một hình chữ nhật nằm chồng lên mấy ô
+    // méo — không lỗi, không cảnh báo, chỉ là sai. Từ chối ở đây, cùng chỗ mà
+    // `checkBounds` từ chối lúc soạn.
+    if (latticeOf(boardConfig(scene)) !== 'square') return null;
     if (scene.elements.some((e) => e.id === params.id)) return null;
 
     const element: SceneElement = {
@@ -265,6 +270,7 @@ const flipLine = defineCommand<{
 
   apply(scene, params) {
     const config = boardConfig(scene);
+    if (latticeOf(config) !== 'square') return null;
     const [a, b] = params.classes ?? [1, 2];
 
     const span = params.axis === 'row' ? config.cols : config.rows;

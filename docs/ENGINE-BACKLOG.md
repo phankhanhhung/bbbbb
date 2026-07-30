@@ -1,6 +1,6 @@
 # CombViz — Checklist làm mạnh từng engine
 
-**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · Bốn hạng mục của `game` (`GM-05/06/07/08`) **đã làm ở M22–M23**
+**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · `GM-05/06/07/08` và `BD-07` **đã làm ở M22–M24**
 
 ## 0. Đọc checklist này đúng cách
 
@@ -11,13 +11,20 @@ trong khi chưa có bài nào do chính chủ soạn là **R-1** (content bottle
 mới. `PRD-07` cấm thêm engine chỉ để tăng coverage. Tài liệu này là **danh sách
 chờ**, dựng sẵn để khi mở ra thì không phải nghĩ lại — không phải lệnh xuất phát.
 
-> **Ngoại lệ đã dùng, ngày 2026-07-30 (M22).** Ba hạng mục đầu — `GM-05/06/07` —
-> đã làm, và điều kiện để chúng **không** vi phạm `R-13` là điều kiện §2.6 vốn đã
-> viết ra: chúng không thêm engine (`PRD-07` không đụng tới), chúng là mở rộng một
-> họ luật **đóng** đã có, và mỗi hạng mục **đi kèm một bài** nên năng lực và nội
-> dung tăng cùng nhịp — kho 56 → 59 bài. Ngoại lệ này **không** mở rộng ra các
-> hạng mục còn lại: mọi hạng mục từ #4 trở xuống hoặc đụng engine chưa đủ bài để
-> biết nó thiếu gì, hoặc là năng lực không có bài đi kèm. Chúng vẫn chờ G-C.
+> **Ngoại lệ đã dùng, ngày 2026-07-30 (M22–M24).** Năm hạng mục đã làm:
+> `GM-05/06/07` (#1–#3), `GM-08` (#13) và `BD-07` (#7). Điều kiện chung để chúng
+> **không** vi phạm `R-13` là điều kiện §2.6 vốn đã viết ra: không thêm engine nào
+> (`PRD-07` không đụng tới), chỉ mở rộng thứ đã có, và **mỗi hạng mục đi kèm nội
+> dung** — bốn bài mới, kho 56 → 60 — nên năng lực và nội dung tăng cùng nhịp.
+>
+> Ba hạng mục đầu do chính §2.6 xếp là "rẻ, có bài kinh điển chờ sẵn". `GM-08` và
+> `BD-07` thì **chính chủ chỉ định**, và ghi ra ở đây để không ai đọc nhầm thành
+> tài liệu tự cho phép mình: thứ tự trong bảng §1 là **đề xuất**, còn quyết định
+> làm cái nào là của người sở hữu dự án.
+>
+> Ngoại lệ này **không** tự mở rộng ra các hạng mục còn lại: chúng hoặc đụng engine
+> chưa đủ bài để biết nó thiếu gì, hoặc là năng lực không có bài đi kèm. Chúng vẫn
+> chờ G-C, hoặc chờ một chỉ định tương tự.
 
 ### 0.2 Mỗi hạng mục phải có bằng chứng, không có ý tưởng suông
 
@@ -29,11 +36,11 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 59 bài đã xuất bản (56 lúc dựng tài liệu này, cộng ba bài của M22):
+Đo trên 60 bài đã xuất bản (56 lúc dựng tài liệu này, cộng bốn bài của M22–M24):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
-| `board` | 20 | Chủ lực. Khoảng trống ở đây là khoảng trống **thật sự cảm thấy được**. |
+| `board` | 21 | Chủ lực. Khoảng trống ở đây là khoảng trống **thật sự cảm thấy được**. |
 | `graph` | 18 | Chủ lực. Cùng loại. |
 | `sequence` | 10 | Đủ để tin. |
 | `game` | 6 | Tầng A ở §2.6 **đã làm hết** (M22–M23): ba luật mới kèm ba bài kinh điển, cộng phổ hai chiều. |
@@ -68,7 +75,7 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | 4 | `SQ-01` analyzer dãy con đơn điệu | sequence | Erdős–Szekeres | rẻ | 🟡 "thiếu analyzer dãy con đơn điệu" |
 | 5 | `GR-09` analyzer mã Prüfer | graph | Cayley $n^{n-2}$ | rẻ | 🟡 "thiếu analyzer sinh mã Prüfer" |
 | 6 | `BD-08`+`SQ-02` luật lan truyền | board+seq | chip-firing, lights-out | vừa | 🟡 "thiếu luật lan truyền" |
-| 7 | `BD-07` lưới tam giác / lục giác | board | phủ hình phi vuông | vừa | §2 — engine **không vẽ được** |
+| ~~7~~ | ~~`BD-07` lưới tam giác / lục giác~~ ✅ M24 | board | phủ hình phi vuông | vừa | ~~§2 — engine **không vẽ được**~~ |
 | 8 | `GR-05` tô mặt sau embedding | graph | công thức Euler, tô mặt | vừa | SRS `GR-05` [P2] |
 | 9 | `GR-07` ma trận đồng bộ hai chiều | graph | đếm hai chiều | vừa | SRS `GR-07` [P2] |
 | 10 | `PRN-04` animation biến hình | cross | **cả họ song ánh (14%)** | đắt | §2 "còn thiếu: animation biến hình của PRN-04" |
@@ -84,14 +91,19 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
 
 ## 2. Chi tiết theo engine
 
-### 2.1 `board` — 20 bài, engine chủ lực
+### 2.1 `board` — 21 bài, engine chủ lực
 
 **Tầng A**
 
-- **BD-07 [P2] SHOULD** — **lưới tam giác và lục giác.** Hôm nay board chỉ có lưới
-  vuông, nên cả họ phủ hình phi vuông (lục giác, tam giác, kim cương) **không vẽ
-  được cách nào**. Đây là khoảng trống lớn nhất còn lại của engine được dùng nhiều
-  nhất. Hình học: toạ độ trục cho lục giác, giữ nguyên quy ước `UNITS_PER_CELL`.
+- **BD-07 ✅ (M24)** — **lưới tam giác và lục giác**, `config.lattice`. Ô vẫn định
+  danh bằng `(hàng, cột)` ở cả ba lưới nên `holes`, `cell_overrides`, anchor,
+  region, validator và DSL không phải biết gì; chỗ duy nhất biết là `lattice.ts`.
+  Kèm bài `triangle-lozenge-parity`. Ba tính năng **chỉ có nghĩa trên lưới vuông**
+  — polyomino, bảng PRN-03, luật đi quân cờ — bị chặn ở cả `checkBounds` lẫn lệnh.
+- **BD-09 [P2] MAY** — **quân ghép trên lưới phi vuông**: hình thoi, tribone như
+  *element* kéo thả được, không phải `region` vẽ viền. Hôm nay bài lát tam giác
+  phải khai từng hình thoi bằng một region, nên sandbox không kéo thả được chúng.
+  Đây là họ hình mới song song với `TILE_SHAPES`, không phải sửa lưới.
 - **BD-08 [P2] SHOULD** — **luật lan truyền**: một thao tác kéo theo thay đổi ở ô
   lân cận theo luật đóng (chip-firing đổ hạt sang láng giềng, lights-out lật chữ
   thập). Dòng 🟡 của chip-firing nói đúng chỗ này. Phải là **tập luật đóng**, cùng

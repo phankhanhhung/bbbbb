@@ -1,6 +1,8 @@
 import { SELECT_TOOL, type SandboxTool } from '@combviz/editor';
+import type { Scene } from '@combviz/schema';
 import { MAX_COLOR_CLASS } from '@combviz/theme';
-import { TILE_SHAPES } from './geometry.js';
+import { latticeOf, TILE_SHAPES } from './geometry.js';
+import type { BoardConfig } from './schema.js';
 
 /** Hình tile bày ra thanh công cụ — tập con dễ dùng của `TILE_SHAPES`. */
 const OFFERED = ['domino', 'tromino-l', 'tetromino-o', 'tetromino-t'] as const;
@@ -13,8 +15,9 @@ const OFFERED = ['domino', 'tromino-l', 'tetromino-o', 'tetromino-t'] as const;
  * engine nào khác, nên ở đồ thị hay game thì mọi nút đều im lặng không làm gì.
  * Giờ chúng ở đúng chỗ của chúng.
  */
-export function boardTools(): readonly SandboxTool[] {
+export function boardTools(scene?: Scene): readonly SandboxTool[] {
   const tools: SandboxTool[] = [SELECT_TOOL];
+  const square = latticeOf(scene?.config as BoardConfig | undefined) === 'square';
 
   for (let index = 1; index <= MAX_COLOR_CLASS; index += 1) {
     tools.push({
@@ -42,6 +45,19 @@ export function boardTools(): readonly SandboxTool[] {
       prefix: 'cell-',
     },
   });
+
+  // Quân polyomino và phép lật hàng/cột chỉ có nghĩa trên lưới vuông — lệnh cũng
+  // từ chối chúng ở đó. Bày nút mà lệnh từ chối là đúng cái bệnh mà lớp
+  // `SandboxTool` sinh ra để dẹp, chỉ là ở dạng tinh vi hơn: nút **có** engine
+  // đúng, chỉ sai lưới.
+  if (!square) {
+    tools.push({
+      id: 'erase',
+      label: 'Xoá quân',
+      action: { type: 'one', command: 'board/remove', idParam: 'ids', asList: true },
+    });
+    return tools;
+  }
 
   for (const shape of OFFERED) {
     // Đọc từ `TILE_SHAPES` chứ không gõ lại tên: danh sách gõ tay ở `apps/player`

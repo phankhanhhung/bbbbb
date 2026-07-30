@@ -8,7 +8,8 @@ import {
   type ElementValue,
   type Value,
 } from '@combviz/dsl';
-import { cellColorClass, tileOffsets, type Offset } from './geometry.js';
+import { cellColorClass, latticeOf, tileOffsets, type Offset } from './geometry.js';
+import { cellsInRow, neighbours, type Lattice } from './lattice.js';
 import { attacksCell, type AttackBoard } from './attacks.js';
 import { cellId } from './ids.js';
 import type { BoardConfig } from './schema.js';
@@ -29,6 +30,7 @@ export interface BoardDerived {
   readonly regions: readonly ElementValue[];
   readonly rows: number;
   readonly cols: number;
+  readonly lattice: Lattice;
   /** Toạ độ các ô mà mỗi quân chiếm, tra theo id. */
   readonly occupancy: ReadonlyMap<string, readonly Offset[]>;
 }
@@ -69,9 +71,10 @@ function computeDerived(scene: Scene): BoardDerived {
     for (const [r, c] of cells) coveredCells.add(`${r},${c}`);
   }
 
+  const lattice = latticeOf(config);
   const cells: ElementValue[] = [];
   for (let r = 0; r < rows; r += 1) {
-    for (let c = 0; c < cols; c += 1) {
+    for (let c = 0; c < cellsInRow(lattice, cols, r); c += 1) {
       const hole = holes.has(`${r},${c}`);
       cells.push(
         element(cellId(r, c), {
@@ -121,7 +124,7 @@ function computeDerived(scene: Scene): BoardDerived {
       }),
     );
 
-  return { cells, tiles, pieces, regions, rows, cols, occupancy };
+  return { cells, tiles, pieces, regions, rows, cols, lattice, occupancy };
 }
 
 export function tileCells(item: SceneElement): readonly Offset[] {
@@ -152,12 +155,20 @@ export function boardEnvironment(scene: Scene): DslEnvironment {
       covered: (args, pos) => readBoolean(args, pos, 'covered', 'covered'),
       hole: (args, pos) => readBoolean(args, pos, 'hole', 'hole'),
 
+      /**
+       * Hai ô có kề **cạnh** nhau không.
+       *
+       * Hỏi thẳng `lattice.ts` chứ không tự tính `|Δr| + |Δc| == 1`: công thức ấy
+       * đúng cho lưới vuông và sai lặng lẽ cho hai lưới kia — trên bàn ong hai ô
+       * kề nhau lệch cả hàng lẫn cột, trên lưới tam giác một ô chỉ có **ba** láng
+       * giềng. Một biểu thức đếm cạnh sẽ ra con số hợp lý và sai.
+       */
       adjacent: (args, pos) => {
         const [a, b] = expectTwoElements(args, pos, 'adjacent');
-        return (
-          Math.abs(Number(a.props['row']) - Number(b.props['row'])) +
-            Math.abs(Number(a.props['col']) - Number(b.props['col'])) ===
-          1
+        const row = Number(a.props['row']);
+        const col = Number(a.props['col']);
+        return neighbours(derived.lattice, derived.rows, derived.cols, row, col).some(
+          ([r, c]) => r === Number(b.props['row']) && c === Number(b.props['col']),
         );
       },
 

@@ -1,0 +1,285 @@
+{
+  "schema_version": "0.1.0",
+  "id": "triangle-lozenge-parity",
+  "statement": {
+    "vi": "Tam giác đều cạnh $n$ được chia thành $n^2$ tam giác đơn vị bởi các đường song song với ba cạnh. Một **hình thoi** là hình ghép từ hai tam giác đơn vị chung cạnh. Chứng minh rằng với mọi $n \\ge 1$, không thể lát kín tam giác ấy bằng các hình thoi."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài lát hình kinh điển trên lưới tam giác; lời giải là một phép đếm hai màu."
+    }
+  },
+  "topics": [
+    "tiling"
+  ],
+  "techniques": [
+    "invariant",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "count(cells, c => c.color_class == 1) - count(cells, c => c.color_class == 2)",
+      "id": "inv-d",
+      "label": {
+        "vi": "Số ô lên trừ số ô xuống"
+      }
+    },
+    {
+      "expr": "sum(regions, r => r.size)",
+      "id": "inv-c",
+      "label": {
+        "vi": "Số ô đã phủ"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tam giác đều cạnh $n = 5$ chia thành ${{count(cells)}}$ tam giác đơn vị: hàng $r$ có $2r+1$ ô, mà $1+3+5+7+9 = 25 = n^2$. Nhìn kỹ thì [[a1|các ô]] có **hai kiểu**: ô hướng lên và ô hướng xuống, và một hình thoi luôn gồm **một ô mỗi kiểu** — vì hai tam giác chung cạnh thì bắt buộc ngược chiều nhau."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-4-0",
+                "cell-4-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 5,
+              "lattice": "triangle",
+              "rows": 5
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Tam giác đều chia thành hai mươi lăm tam giác đơn vị, chưa tô màu."
+          },
+          "verified": true,
+          "claims": [
+            "count(cells) == 25",
+            "rows == 5"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tô theo chiều: [[a2|ô hướng lên]] một màu, ô hướng xuống màu kia. Đếm ra ${{count(cells, c => c.color_class == 1)}}$ ô hướng lên và ${{count(cells, c => c.color_class == 2)}}$ ô hướng xuống — hàng $r$ có $r+1$ ô lên và $r$ ô xuống, nên tổng là $\\frac{n(n+1)}{2}$ và $\\frac{n(n-1)}{2}$. **Hiệu đúng bằng $n$**, và đó là toàn bộ lời giải."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "cell-0-0",
+                "cell-1-0",
+                "cell-1-2",
+                "cell-2-0",
+                "cell-2-2",
+                "cell-2-4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 5,
+              "lattice": "triangle",
+              "rows": 5
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Cùng tam giác ấy, ô hướng lên tô đậm và ô hướng xuống tô nhạt."
+          },
+          "verified": true,
+          "claims": [
+            "count(cells, c => c.color_class == 1) == 15",
+            "count(cells, c => c.color_class == 2) == 10"
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một hình thoi là hai ô chung cạnh, nên nó phủ **đúng một ô mỗi màu** — xem [[a3|ba hình thoi]] này, đặt ngang, đặt xiên trái, đặt xiên phải đều vậy. Vậy một cách lát kín bằng hình thoi sẽ phủ số ô hai màu **bằng nhau**."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "lz0",
+                "lz1",
+                "lz2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 5,
+              "lattice": "triangle",
+              "rows": 5
+            },
+            "elements": [
+              {
+                "id": "lz0",
+                "type": "region",
+                "cells": [[1, 0], [1, 1]]
+              },
+              {
+                "id": "lz1",
+                "type": "region",
+                "cells": [[3, 2], [3, 3]]
+              },
+              {
+                "id": "lz2",
+                "type": "region",
+                "cells": [[4, 6], [4, 7]]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba hình thoi khoanh viền đậm, mỗi hình gồm một ô đậm và một ô nhạt."
+          },
+          "verified": true,
+          "claims": [
+            "count(regions) == 3",
+            "sum(regions, r => r.size) == 6"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nhưng $15 \\ne 10$, nên **không lát kín được**. Xếp thử tối đa: ${{count(regions)}}$ hình thoi phủ ${{sum(regions, r => r.size)}}$ ô, và [[a4|năm ô]] hướng lên còn trơ lại — đúng bằng hiệu $n = 5$, không phải ngẫu nhiên. Với $n$ bất kỳ, hiệu là $n \\ge 1$ nên kết luận giữ nguyên."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "cell-0-0",
+                "cell-1-2",
+                "cell-2-4",
+                "cell-3-6",
+                "cell-4-8"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "type": "checkerboard"
+              },
+              "cols": 5,
+              "lattice": "triangle",
+              "rows": 5
+            },
+            "elements": [
+              {
+                "id": "lz0",
+                "type": "region",
+                "cells": [[1, 0], [1, 1]]
+              },
+              {
+                "id": "lz1",
+                "type": "region",
+                "cells": [[2, 0], [2, 1]]
+              },
+              {
+                "id": "lz2",
+                "type": "region",
+                "cells": [[2, 2], [2, 3]]
+              },
+              {
+                "id": "lz3",
+                "type": "region",
+                "cells": [[3, 0], [3, 1]]
+              },
+              {
+                "id": "lz4",
+                "type": "region",
+                "cells": [[3, 2], [3, 3]]
+              },
+              {
+                "id": "lz5",
+                "type": "region",
+                "cells": [[3, 4], [3, 5]]
+              },
+              {
+                "id": "lz6",
+                "type": "region",
+                "cells": [[4, 0], [4, 1]]
+              },
+              {
+                "id": "lz7",
+                "type": "region",
+                "cells": [[4, 2], [4, 3]]
+              },
+              {
+                "id": "lz8",
+                "type": "region",
+                "cells": [[4, 4], [4, 5]]
+              },
+              {
+                "id": "lz9",
+                "type": "region",
+                "cells": [[4, 6], [4, 7]]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Mười hình thoi phủ hai mươi ô; năm ô hướng lên dọc theo cạnh phải không được phủ."
+          },
+          "verified": true,
+          "claims": [
+            "count(regions) == 10",
+            "sum(regions, r => r.size) == 20"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": []
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

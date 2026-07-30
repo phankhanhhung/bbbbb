@@ -1,6 +1,7 @@
 import type { BoardConfig, ColoringPreset } from './schema.js';
 import { cellId } from './ids.js';
 import { UNITS_PER_CELL } from '@combviz/render';
+import type { Lattice } from './lattice.js';
 
 /** Cạnh một ô, tính bằng đơn vị toạ độ scene. */
 /**
@@ -109,25 +110,54 @@ export function cellColorClass(
   const override = config.cell_overrides?.[cellId(row, col)];
   if (override?.color_class !== undefined) return override.color_class;
   if (!config.coloring_preset) return undefined;
-  return presetColorClass(config.coloring_preset, row, col);
+  return presetColorClass(config.coloring_preset, row, col, latticeOf(config));
 }
 
-function presetColorClass(preset: ColoringPreset, row: number, col: number): number {
+/** Lưới của một scene; vắng thì là lưới vuông. */
+export function latticeOf(config: BoardConfig | undefined): Lattice {
+  return config?.lattice ?? 'square';
+}
+
+function presetColorClass(
+  preset: ColoringPreset,
+  row: number,
+  col: number,
+  lattice: Lattice,
+): number {
   if (preset.type === 'checkerboard') {
     const phase = preset.phase ?? 0;
+    // Trên lưới tam giác, "hai màu" tự nhiên là **hướng lên / hướng xuống** — ô
+    // chẵn ngửa, ô lẻ úp. Đó chính là phép tô mà cả họ bài lát hình thoi dựa vào,
+    // và nó khác hẳn `(row + col)` của lưới vuông.
+    if (lattice === 'triangle') return (col + phase) % 2 === 0 ? 1 : 2;
     return (row + col + phase) % 2 === 0 ? 1 : 2;
   }
 
   const { k, orientation } = preset;
   const phase = preset.phase ?? 0;
+
+  /**
+   * Trên lưới lục giác, "cột" phải đọc theo **toạ độ trục**, không theo chỉ số
+   * cột của hàng.
+   *
+   * Lý do không phải thẩm mỹ. Hàng lẻ lệch phải nửa ô, nên cột $c$ của hàng $r$
+   * và cột $c$ của hàng $r+1$ **không** thẳng hàng; lấy $c$ làm chỉ số cho ra một
+   * hoa văn răng cưa trông như sọc mà không phải sọc. Nặng hơn: với $k = 3$,
+   * $r + c$ cho hai ô **kề nhau** cùng màu — một phép tô trông hệt phép tô ba
+   * màu kinh điển của bàn ong và **sai**. Toạ độ trục $q = c - \lfloor r/2
+   * \rfloor$ chữa cả hai, và khi ấy `diag-left` với $k = 3$ đúng là phép tô ba
+   * màu thật: hai ô kề nhau luôn lệch $1$ hoặc $2$ theo mod $3$.
+   */
+  const axis = lattice === 'hex' ? col - Math.floor(row / 2) : col;
+
   const index =
     orientation === 'row'
       ? row
       : orientation === 'col'
-        ? col
+        ? axis
         : orientation === 'diag-right'
-          ? row + col
-          : row - col;
+          ? row + axis
+          : row - axis;
 
   return (((index + phase) % k) + k) % k + 1;
 }

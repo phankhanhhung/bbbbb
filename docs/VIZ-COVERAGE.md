@@ -49,7 +49,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
-| Lưới / phủ hình / tô màu | 15% | 92% | 13.8 | — (board: preset, quân, tile custom, bảng) |
+| Lưới / phủ hình / tô màu | 15% | 94% | 14.1 | quân ghép trên lưới tam giác/lục giác (`BD-09`); luật lan truyền (`BD-08`) |
 | Đồ thị | 22% | 94% | 20.7 | tô mặt (phần còn lại của GR-05), kiểm tính phẳng tổng quát |
 | Đếm / song ánh / đếm hai chiều | 14% | 85% | 11.9 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 90% | 14.4 | — (`engine-sequence`) |
@@ -73,6 +73,9 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Mã đi tuần $5\times5$ | lưới | ✅ có trong kho |
 | $8$ quân hậu | lưới | ✅ |
 | Lật dấu bảng $4\times4$ | lưới + thao tác | ✅ (sau `board/flip-line`) |
+| Lát tam giác đều bằng hình thoi | lưới **tam giác** | ✅ có trong kho (BD-07, đếm hai màu lên/xuống) |
+| Tô màu bàn ong lục giác | lưới **lục giác** | 🟡 vẽ và tô ba màu được; **thiếu bài** trong kho |
+| Lát bằng hình thoi / tribone như **quân kéo thả** | lưới phi vuông | ❌ quân ghép mới chỉ có họ polyomino (ô vuông) — xem `BD-09` |
 | $R(3,3)=6$ | đồ thị | ✅ có trong kho |
 | Bảy cầu Königsberg | đồ thị | ✅ có trong kho |
 | Bổ đề bắt tay | đồ thị | ✅ có trong kho (thêm bản ma trận kề) |
@@ -456,7 +459,7 @@ không, và không phải vì thiếu công sức.
 ## 8. Cảnh báo về thứ tự
 
 **AUT-KPI là gate có răng:** *trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **59 bài** — nhưng **không bài nào do chính
+engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **60 bài** — nhưng **không bài nào do chính
 chủ soạn**, và người duyệt cũng là người soạn. Theo đúng luật của chính dự án,
 việc còn nợ không phải engine nào trong bảng §7, mà là **soạn tay 3–5 bài**
 (G-C), rồi mới đóng băng schema 1.0.0.
