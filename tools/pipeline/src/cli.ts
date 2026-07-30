@@ -9,6 +9,7 @@ import { runRender } from './commands/render.js';
 import { runMigrate } from './commands/migrate.js';
 import { runFmt } from './commands/fmt.js';
 import { runLabels } from './commands/labels.js';
+import { runNewProblem, STARTER_ENGINES } from './commands/new-problem.js';
 import { runImportDraft } from './commands/import-draft.js';
 import { runOg } from './commands/og.js';
 import { runStats } from './commands/stats.js';
@@ -38,6 +39,11 @@ const USAGE = `combviz — công cụ soạn/duyệt kho bài
                               [--patterns] [--width <px>]
       Render một scene ra SVG, chạy trong Node, không cần browser (REN-01).
       Không chỉ --step thì lấy step cuối của nhánh chính.
+
+  combviz new <id> [--engine <e>] [--kind challenge|illustration|both] [--write]
+      Dựng khung một bài soạn tay: đủ trường bắt buộc, một step có scene mẫu
+      hợp lệ của engine ấy, status=draft và verified=false. Khung qua được
+      validate ngay; các chỗ cần viết đánh dấu TODO.
 
   combviz labels [--root <content>] [--write]
       Dựng label atlas cho nhãn LaTeX **trong canvas** bằng MathJax (D-07).
@@ -150,6 +156,48 @@ async function main(argv: string[]): Promise<number> {
 
       const report = await runFmt({ root: resolve(values.root), write: values.write });
       return !values.write && report.changed > 0 ? 1 : 0;
+    }
+
+    case 'new': {
+      const { values, positionals } = parseArgs({
+        args: rest,
+        options: {
+          root: { type: 'string', default: 'packages/content' },
+          engine: { type: 'string', default: 'board' },
+          kind: { type: 'string', default: 'challenge' },
+          write: { type: 'boolean', default: false },
+        },
+        allowPositionals: true,
+      });
+
+      const id = positionals[0];
+      if (!id) {
+        console.error('Thiếu id bài. Ví dụ: combviz new bai-moi --engine graph --write');
+        return 1;
+      }
+      if (!STARTER_ENGINES.includes(values.engine)) {
+        console.error(`Engine "${values.engine}" không có khung mẫu. Có: ${STARTER_ENGINES.join(', ')}`);
+        return 1;
+      }
+
+      const kind = values.kind as 'illustration' | 'challenge' | 'both';
+      const result = await runNewProblem({
+        root: resolve(values.root),
+        id,
+        engine: values.engine,
+        kind,
+        today: new Date().toISOString().slice(0, 10),
+        write: values.write,
+      });
+
+      console.log(
+        result.wrote
+          ? `Đã tạo ${result.path}\n` +
+              `  status=draft, verified=false — không publish nổi tới khi duyệt tay (AUT-09).\n` +
+              `  Chạy \`pnpm validate\` để thấy nó đã hợp lệ, rồi thay các chỗ TODO.`
+          : `${result.path} (chạy khô — thêm --write để ghi)\n${JSON.stringify(result.problem, null, 2)}`,
+      );
+      return 0;
     }
 
     case 'labels': {

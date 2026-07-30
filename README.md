@@ -112,6 +112,7 @@ thay đổi công thức hiện rõ trong diff. Vì vậy `pnpm install`, `pnpm 
 CLI đầy đủ có thể xem bằng `npx tsx tools/pipeline/src/cli.ts --help`:
 
 ```bash
+npx tsx tools/pipeline/src/cli.ts new <id> --engine graph --write
 npx tsx tools/pipeline/src/cli.ts validate packages/content [--strict]
 npx tsx tools/pipeline/src/cli.ts render mutilated-chessboard --step s2 --out s2.svg
 npx tsx tools/pipeline/src/cli.ts fmt --write
@@ -121,6 +122,12 @@ npx tsx tools/pipeline/src/cli.ts labels --write
 npx tsx tools/pipeline/src/cli.ts og --png
 npx tsx tools/pipeline/src/cli.ts eval knight-closed-tour-5x5 "count(cells, c => c.color_class == 1)"
 ```
+
+`new` dựng khung một bài soạn tay: đủ trường bắt buộc, một step có scene mẫu **hợp lệ**
+của engine ấy, anchor trỏ vào một id có thật, `status: draft` và `verified: false` nên nó
+không publish nổi (AUT-09). Khung qua được `validate` ngay — có test ép điều đó cho cả bảy
+engine, vì một khung chạy lên là đỏ thì tệ hơn không có khung: nó bắt người soạn debug thứ
+mình chưa viết.
 
 Luồng nội dung là **draft → validate/lint → tác giả duyệt từng step → publish**.
 `validate` kiểm tra schema, cấu trúc cây, anchor, bound, taxonomy, invariant và
