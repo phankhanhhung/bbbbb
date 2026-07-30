@@ -9,6 +9,7 @@ import {
   type AttrValue,
   type EngineRenderer,
   type RenderContext,
+  type SceneBox,
   type SvgNode,
 } from '@combviz/render';
 import {
@@ -20,7 +21,14 @@ import {
   type Vertex,
 } from './graph.js';
 import type { GraphConfig } from './schema.js';
-import { matrixViewport, renderMatrix } from './matrix.js';
+import {
+  MATRIX_CELL,
+  matrixCellId,
+  matrixCellKey,
+  matrixCells,
+  matrixViewport,
+  renderMatrix,
+} from './matrix.js';
 import { planarFaces, pruferCode, treeShape } from './analyzers.js';
 
 /**
@@ -173,8 +181,124 @@ function renderPrufer(scene: Scene, ctx: RenderContext): SvgNode[] {
  * Cạnh vẽ **trước** đỉnh: đỉnh phải nằm trên và che đầu mút cạnh, nếu không mỗi
  * đỉnh sẽ trông như có một chùm gạch đâm xuyên qua.
  */
+/**
+ * Chỗ mực của một element đồ thị nằm.
+ *
+ * View ma trận và view thường là **hai hình học không liên quan gì nhau**: cùng
+ * một cạnh `ev1v2` là một đoạn nối hai đỉnh ở bên này, và là hai ô đối xứng ở
+ * bên kia. Đây chính là chỗ trả về **mảng** trả công: hợp hai ô đối xứng cho một
+ * hình bắc qua đường chéo, tâm rơi vào ô $(v_i,v_i)$ — ô "đỉnh nối chính nó",
+ * mang nghĩa ngược hẳn.
+ */
+function boxesOf(scene: Scene, id: string): readonly SceneBox[] {
+  const graph = buildGraph(scene);
+  const config = (scene.config as GraphConfig) ?? {};
+
+  if (config.view === 'matrix') {
+    const { ids, at } = matrixCells(graph);
+    const index = ids.indexOf(id);
+    if (index >= 0) {
+      // Đỉnh ở view này là **hàng và cột** của nó — đúng hai dải mà tay cầm phủ.
+      const span = ids.length * MATRIX_CELL;
+      return [
+        { x: 0, y: index * MATRIX_CELL, width: span, height: MATRIX_CELL },
+        { x: index * MATRIX_CELL, y: 0, width: MATRIX_CELL, height: span },
+      ];
+    }
+
+    const boxes: SceneBox[] = [];
+    ids.forEach((u, r) => {
+      ids.forEach((v, c) => {
+        const cell = at.get(matrixCellKey(u, v));
+        const isCell = matrixCellId(u, v) === id;
+        if (!isCell && cell?.edge !== id) return;
+        boxes.push({
+          x: c * MATRIX_CELL,
+          y: r * MATRIX_CELL,
+          width: MATRIX_CELL,
+          height: MATRIX_CELL,
+        });
+      });
+    });
+    return boxes;
+  }
+
+  const vertex = graph.byId.get(id);
+  if (vertex) {
+    return [
+      {
+        x: vertex.x - VERTEX_RADIUS,
+        y: vertex.y - VERTEX_RADIUS,
+        width: VERTEX_RADIUS * 2,
+        height: VERTEX_RADIUS * 2,
+      },
+    ];
+  }
+
+  // Ô mã Prüfer — element ngầm định, và `pruferBox` đã biết chỗ hàng ô bắt đầu.
+  const prufer = /^prufer-(\d+)$/.exec(id);
+  if (prufer) {
+    const box = pruferBox(scene);
+    const code = pruferCode(graph).value;
+    const i = Number(prufer[1]);
+    if (box && code && i < code.code.length) {
+      return [
+        {
+          x: box.left + PRUFER_GUTTER + i * PRUFER_CELL * 1.15,
+          y: box.top,
+          width: PRUFER_CELL,
+          height: PRUFER_CELL,
+        },
+      ];
+    }
+    return [];
+  }
+
+  // Mặt phẳng — hộp bao các đỉnh trên biên. Mặt ngoài thì lấy cả khung, vì đó
+  // đúng là phần thấy được của nó.
+  if (config.show_faces) {
+    const face = (planarFaces(graph).value ?? []).find((f) => f.id === id);
+    if (face) {
+      if (face.outer) {
+        const frame = frameOf(graph);
+        return [frame];
+      }
+      const points = face.vertices
+        .map((v) => graph.byId.get(v))
+        .filter((v): v is Vertex => v !== undefined);
+      if (points.length === 0) return [];
+      const x = Math.min(...points.map((v) => v.x));
+      const y = Math.min(...points.map((v) => v.y));
+      return [
+        {
+          x,
+          y,
+          width: Math.max(...points.map((v) => v.x)) - x,
+          height: Math.max(...points.map((v) => v.y)) - y,
+        },
+      ];
+    }
+  }
+
+  const edge = graph.edges.find((e) => e.id === id);
+  if (edge) {
+    const u = graph.byId.get(edge.u);
+    const v = graph.byId.get(edge.v);
+    if (!u || !v) return [];
+    // Hộp bao của đoạn nối hai đỉnh. Cạnh bội vẽ cong và cạnh khuyên vẽ vòng —
+    // hộp này hẹp hơn hình thật ở hai trường hợp ấy, nhưng tâm vẫn nằm **trên**
+    // cạnh, và tâm mới là thứ phía gọi cần.
+    const x = Math.min(u.x, v.x);
+    const y = Math.min(u.y, v.y);
+    return [{ x, y, width: Math.abs(v.x - u.x), height: Math.abs(v.y - u.y) }];
+  }
+
+  return [];
+}
+
 export const graphRenderer: EngineRenderer = {
   id: 'graph',
+  elementBoxes: boxesOf,
 
   defaultViewport(scene: Scene): Viewport {
     const graph = buildGraph(scene);

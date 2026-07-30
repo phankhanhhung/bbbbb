@@ -11,6 +11,7 @@ import {
   text,
   type EngineRenderer,
   type RenderContext,
+  type SceneBox,
   type SvgNode,
 } from '@combviz/render';
 import {
@@ -19,6 +20,7 @@ import {
   VENN_R,
   deriveSet,
   incidenceId,
+  INCIDENCE_SEP,
   inclusionExclusion,
   setConfig,
   vennCentres,
@@ -43,6 +45,15 @@ const CAPTION_SIZE = CELL * 0.36;
 const DOT_COL_MIN = CELL * 0.9;
 const DOT_PITCH = CELL * 0.42;
 const DOT_R = CELL * 0.15;
+
+/**
+ * Bán kính chấm phần tử trong sơ đồ Venn.
+ *
+ * Đặt tên vì `elementBoxes` cũng phải biết nó. Một hằng số nằm thẳng trong lời
+ * gọi `keyed(...)` thì chỗ thứ hai chỉ có cách chép lại — và chép lại là cách
+ * hai chỗ lệch nhau mà không ai thấy.
+ */
+const VENN_DOT_R = 1.9;
 const DOT_LABEL_SIZE = CELL * 0.34;
 
 /**
@@ -145,8 +156,140 @@ function layoutOf(scene: Scene): { viewport: Viewport; caption: { x: number; y: 
   };
 }
 
+/**
+ * Chỗ mực của một element tập hợp nằm — tính từ chính các hằng số mà renderer
+ * dùng để đặt hình, nên hai bên không thể lệch nhau.
+ *
+ * Ba view, ba câu trả lời khác hẳn, và đó là bản chất của engine này: cùng một
+ * phần tử `x1` là một ô trong bảng, một chấm trong cột, hay một chấm trong vùng
+ * giao Venn. Chính vì thế mà `elementBoxes` phải do engine khai chứ không suy
+ * ngược được từ một quy tắc chung.
+ */
+function boxesOf(scene: Scene, id: string): readonly SceneBox[] {
+  const derived = deriveSet(scene);
+  const setIndex = derived.sets.findIndex((s) => s.id === id);
+  const tokenIndex = derived.tokens.findIndex((t) => t.id === id);
+
+  if (derived.view === 'venn') {
+    if (!vennTooManySets(derived)) {
+      const centres = vennCentres(derived.sets.length);
+      if (setIndex >= 0) {
+        const c = centres[setIndex] as { x: number; y: number };
+        return [{ x: c.x - VENN_R, y: c.y - VENN_R, width: VENN_R * 2, height: VENN_R * 2 }];
+      }
+      if (tokenIndex >= 0) {
+        // Không phải tâm vùng: hai phần tử cùng vùng được **rải** quanh tâm cho
+        // khỏi chồng khít, nên tâm vùng là chỗ chẳng có chấm nào khi vùng ấy có
+        // từ hai phần tử. Lặp lại đúng phép rải của `renderVenn` — cùng công
+        // thức, cùng thứ tự nhóm.
+        const c = vennDotCentre(derived, id);
+        return c ? [{ x: c.x - VENN_DOT_R, y: c.y - VENN_DOT_R,
+                      width: VENN_DOT_R * 2, height: VENN_DOT_R * 2 }] : [];
+      }
+    }
+    return [];
+  }
+
+  if (derived.view === 'dots') {
+    const column = dotColumn(derived);
+    if (setIndex >= 0) {
+      // Cột chấm **là** tập: từ chấm cao nhất xuống chân cột.
+      const members = derived.tokens.filter((t) => t.sets.includes(id)).length;
+      const x = setIndex * column + column / 2;
+      const top = -(Math.max(members, 1) - 1) * DOT_PITCH - DOT_PITCH * 0.6 - DOT_R;
+      return [{ x: x - DOT_R, y: top, width: DOT_R * 2, height: -top }];
+    }
+    if (tokenIndex >= 0) {
+      // Một phần tử có **một chấm trong mỗi tập nó thuộc** — nhiều hộp, và đó là
+      // sự thật: nó xuất hiện ở nhiều chỗ. Gộp lại thành một hộp trải ngang cả
+      // biểu đồ sẽ cho một tâm nằm giữa hai cột, tức là chỗ không có gì.
+      const token = derived.tokens[tokenIndex]!;
+      const boxes: SceneBox[] = [];
+      derived.sets.forEach((set, c) => {
+        if (!token.sets.includes(set.id)) return;
+        const members = derived.tokens.filter((t) => t.sets.includes(set.id));
+        const i = members.findIndex((t) => t.id === id);
+        const x = c * column + column / 2;
+        const cy = -i * DOT_PITCH - DOT_PITCH * 0.6;
+        boxes.push({ x: x - DOT_R, y: cy - DOT_R, width: DOT_R * 2, height: DOT_R * 2 });
+      });
+      return boxes;
+    }
+    const dot = incidenceAt(derived, id);
+    if (dot) {
+      const members = derived.tokens.filter((t) => t.sets.includes(derived.sets[dot.c]!.id));
+      const i = members.findIndex((t) => t.id === derived.tokens[dot.r]!.id);
+      if (i < 0) return [];
+      const x = dot.c * column + column / 2;
+      const cy = -i * DOT_PITCH - DOT_PITCH * 0.6;
+      return [{ x: x - DOT_R, y: cy - DOT_R, width: DOT_R * 2, height: DOT_R * 2 }];
+    }
+    return [];
+  }
+
+  // Bảng incidence. Tập là một cột, phần tử là một hàng ô — nhưng mực của phần
+  // tử là **từng ô**, không phải cả dải: khai một hộp trải hết hàng thì tâm rơi
+  // vào giữa bảng, một chỗ chẳng ứng với ô nào.
+  if (setIndex >= 0) {
+    return [
+      { x: setIndex * CELL, y: 0, width: CELL, height: derived.tokens.length * CELL },
+    ];
+  }
+  if (tokenIndex >= 0) {
+    return derived.sets.map((_, c) => ({
+      x: c * CELL,
+      y: tokenIndex * CELL,
+      width: CELL,
+      height: CELL,
+    }));
+  }
+
+  const cell = incidenceAt(derived, id);
+  if (cell) return [{ x: cell.c * CELL, y: cell.r * CELL, width: CELL, height: CELL }];
+
+  return [];
+}
+
+/**
+ * Tâm chấm của một phần tử trong sơ đồ Venn.
+ *
+ * Gom theo vùng rồi rải trên một vòng tròn nhỏ — **đúng** phép mà `renderVenn`
+ * dùng. Hai chỗ đọc chung một công thức chứ không phải hai công thức giống nhau:
+ * đổi cách rải là phải đổi cả hai, và oracle hộp bao sẽ bắt ngay nếu quên.
+ */
+function vennDotCentre(derived: SetDerived, id: string): { x: number; y: number } | null {
+  const byRegion = new Map<string, typeof derived.tokens>();
+  for (const token of derived.tokens) {
+    const key = [...token.sets].sort().join('|');
+    byRegion.set(key, [...(byRegion.get(key) ?? []), token]);
+  }
+
+  for (const group of byRegion.values()) {
+    const i = group.findIndex((t) => t.id === id);
+    if (i < 0) continue;
+    const centre = vennRegionCentre(group[0]!.sets, derived.sets);
+    const angle = (2 * Math.PI * i) / Math.max(1, group.length);
+    const spread = group.length === 1 ? 0 : Math.min(VENN_R * 0.3, 1.2 * group.length);
+    return { x: centre.x + Math.cos(angle) * spread, y: centre.y + Math.sin(angle) * spread };
+  }
+  return null;
+}
+
+/** Tách id ô giao `token~set` thành chỉ số hàng/cột, hoặc `null`. */
+function incidenceAt(
+  derived: SetDerived,
+  id: string,
+): { r: number; c: number } | null {
+  const at = id.indexOf(INCIDENCE_SEP);
+  if (at <= 0) return null;
+  const r = derived.tokens.findIndex((t) => t.id === id.slice(0, at));
+  const c = derived.sets.findIndex((set) => set.id === id.slice(at + INCIDENCE_SEP.length));
+  return r >= 0 && c >= 0 ? { r, c } : null;
+}
+
 export const setRenderer: EngineRenderer = {
   id: 'set',
+  elementBoxes: boxesOf,
 
   defaultViewport(scene: Scene): Viewport {
     return layoutOf(scene).viewport;
@@ -556,7 +699,7 @@ function renderVenn(derived: SetDerived, ctx: RenderContext): SvgNode[] {
         keyed(token.id, 'circle', {
           cx: round(x),
           cy: round(y),
-          r: 1.9,
+          r: VENN_DOT_R,
           fill: fillForClass(ctx, token.colorClass ?? undefined),
           stroke: ctx.theme.object.pieceStroke,
           'stroke-width': ctx.theme.stroke.hairline,
