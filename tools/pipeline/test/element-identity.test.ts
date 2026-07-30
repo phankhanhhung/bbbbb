@@ -175,12 +175,6 @@ const DEBT: readonly DebtRule[] = [
     engine: 'set',
     view: /^dots$/,
   },
-  {
-    why: 'set/venn: `implicitElementIds` khai id ô giao cho mọi view, view Venn không vẽ ô nào',
-    engine: 'set',
-    view: /^venn$/,
-    id: /__/,
-  },
 ];
 
 function debtFor(scene: Scene, id: string): DebtRule | undefined {

@@ -165,12 +165,28 @@ export const setSchemaFragment: EngineSchemaFragment = {
    *
    * Nhờ vậy anchor trỏ thẳng vào một ô ("[[a1|bạn 3 có chọn CLB B]]") mà ANC-02
    * không báo rot — cùng cơ chế với ô bàn cờ (D-16).
+   *
+   * **Gate theo `view`**, y như graph đã làm với `show_faces`/`view === 'matrix'`.
+   * Trước hạng mục này hàm khai id ô cho **mọi** view, kể cả hai view không vẽ ô
+   * nào: Venn vẽ chấm trong vùng giao, dots vẽ một chấm cho mỗi **quan hệ có
+   * thật**. Hệ quả là ANC-02 nhận một anchor trỏ vào ô không tồn tại và im lặng
+   * cho qua — đúng cái mà nó sinh ra để chặn. Riêng chỗ này chiếm một nửa số id
+   * chết mà chốt canh M38a đếm được.
    */
   implicitElementIds(scene: Scene): Set<string> {
     const derived = deriveSet(scene);
     const ids = new Set<string>();
+
+    // Venn không có ô giao nào: mỗi phần tử là **một** chấm đặt trong vùng ứng
+    // với tập hợp các tập nó thuộc, không phải một ô cho mỗi tập.
+    if (derived.view === 'venn') return ids;
+
     for (const token of derived.tokens) {
-      for (const set of derived.sets) ids.add(incidenceId(token.id, set.id));
+      for (const set of derived.sets) {
+        // dots chỉ vẽ chấm cho quan hệ thuộc; ô "không thuộc" không có mực nào.
+        if (derived.view === 'dots' && !token.sets.includes(set.id)) continue;
+        ids.add(incidenceId(token.id, set.id));
+      }
     }
     return ids;
   },
