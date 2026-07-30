@@ -5,6 +5,7 @@ import {
   fillForClass,
   keyed,
   strokeForClass,
+  estimateTextWidth,
   text,
   type EngineRenderer,
   type RenderContext,
@@ -12,10 +13,9 @@ import {
   UNITS_PER_CELL,
 } from '@combviz/render';
 import { GAME_LIMITS } from './schema.js';
-import { analyzeGame, losingSpectrum } from './solver.js';
+import { analyzeGame, losingSpectrum, spectrumReadable } from './solver.js';
 import { readGame, type GameModel } from './model.js';
 
-/** Bề rộng một cột đống, theo quy ước đơn vị G-10. */
 /**
  * Đơn vị gốc, lấy từ **một** chỗ (G-10).
  *
@@ -27,8 +27,15 @@ import { readGame, type GameModel } from './model.js';
 const SLOT = UNITS_PER_CELL;
 const STONE_R = 1.6;
 const PADDING = 4;
-/** Trên ngưỡng này thì hiện số thay vì vẽ từng viên. */
-const MAX_DOTS = 24;
+/**
+ * Trên ngưỡng này thì dùng ký hiệu lược thay vì vẽ từng viên.
+ *
+ * Đúng năm dãy đầy ($5 \times 6$), không phải một con số tròn. Bốn dãy — trần cũ —
+ * cắt đúng chỗ đau: trò Euclid mở đầu ở $(25,7)$, và $25$ viên là thứ người đọc
+ * cần **đếm được** để thấy $25 = 3 \cdot 7 + 4$. Năm dãy vẫn đọc ra "một khối",
+ * còn ký hiệu lược thì để cho những đống thật sự lớn.
+ */
+const MAX_DOTS = 30;
 /**
  * Số viên tối đa trên **một** cột con; quá thì gấp sang cột kế.
  *
@@ -56,6 +63,12 @@ export const gameRenderer: EngineRenderer = {
     const model = readGame(scene);
 
     if (model.config.view === 'spectrum') {
+      // Luật mà phổ một chiều không mô tả được: khung vừa đủ một dòng chữ. Vẽ ra
+      // một lưới 60 ô rồi bỏ trống là tệ hơn không vẽ gì — nó trông như hình bị
+      // hỏng chứ không như một câu trả lời.
+      if (!spectrumReadable(model.config.rule)) {
+        return { x: -PADDING, y: -PADDING, width: SLOT * 6, height: SLOT + PADDING * 2 };
+      }
       const n = spectrumLength(model);
       const cols = Math.min(n, 12);
       const rows = Math.ceil(n / cols);
@@ -95,7 +108,7 @@ export const gameRenderer: EngineRenderer = {
                 x: viewport.x + PADDING * 0.5,
                 y: viewport.y + SLOT * 0.4,
                 'font-family': ctx.theme.type.uiFamily,
-                'font-size': SLOT * 0.34,
+                'font-size': CAPTION_SIZE,
                 fill: ctx.theme.surface.guide,
               },
               model.config.caption,
@@ -113,13 +126,76 @@ function stackShape(count: number): { columns: number; rows: number } {
   return { columns: Math.max(1, Math.ceil(dots / STACK)), rows: Math.max(1, rows) };
 }
 
+/**
+ * Khe giữa hai đống kề nhau.
+ *
+ * Không có nó thì đống nhiều dãy dính vào đống bên cạnh: hai đống $10$ và $15$
+ * vẽ ra năm dãy sỏi liền một khối, và người đọc không còn thấy **ranh giới** giữa
+ * hai đống — thứ mà cả bài dựa vào. Nửa đường kính viên là đủ để mắt tách ra mà
+ * chưa tới mức hai đống trông như hai hình rời.
+ */
+const PILE_GAP = STONE_R * 1.2;
+
 /** Bề ngang một đống, tính bằng đơn vị scene. Đống lược chỉ chiếm một cột. */
 function pileWidth(count: number): number {
   if (count > MAX_DOTS) return SLOT;
-  return Math.max(SLOT, stackShape(count).columns * (STONE_R * 2.6));
+  return Math.max(SLOT, stackShape(count).columns * (STONE_R * 2.6) + PILE_GAP);
+}
+
+/** Số hàng của đống cao nhất — mặt sàn dùng chung của cả hình. */
+function tallestStack(model: GameModel): number {
+  return Math.max(1, ...model.piles.map((p) => stackShape(p.count).rows));
 }
 
 const DOT_TOP = SLOT * 0.4;
+
+const CAPTION_SIZE = SLOT * 0.34;
+
+/**
+ * Dải hoành độ của từng cột đống — **một** phép tính cho cả vẽ và chạm.
+ *
+ * `gameHitTest` đọc chính hàm này. Trước đó nó chia đều theo `SLOT`, mà cột nhiều
+ * viên xếp thành nhiều dãy nên rộng hơn `SLOT`: từ cột thứ hai trở đi, chạm lệch
+ * dần. Không ai thấy vì công cụ cũ chỉ cần **một** đống và bấm nhầm đống thì lệnh
+ * lặng lẽ từ chối; công cụ Wythoff cần **hai**, và lúc ấy lệch một cột là đi nhầm
+ * nước.
+ *
+ * Khung có thể rộng hơn tổng các cột, vì caption dài hơn hình thì khung phải nới
+ * ra cho vừa chữ. Lúc ấy các cột nằm **giữa** khung, không dồn sang trái: một
+ * đống sỏi lệch về mép trông như lỗi bố cục chứ không như một hình nhỏ.
+ */
+export function pileBands(
+  model: GameModel,
+): readonly { id: string; from: number; to: number }[] {
+  const widths = model.piles.map((p) => pileWidth(p.count));
+  const stacks = widths.reduce((a, b) => a + b, 0);
+  const bands: { id: string; from: number; to: number }[] = [];
+
+  let cursor = Math.max(0, (contentWidth(model) - stacks) / 2);
+  model.piles.forEach((pile, index) => {
+    const width = widths[index] as number;
+    bands.push({ id: pile.id, from: cursor, to: cursor + width });
+    cursor += width;
+  });
+  return bands;
+}
+
+/**
+ * Bề rộng nội dung: các cột đống, hoặc **caption** nếu chữ dài hơn.
+ *
+ * Bản trước chỉ đếm các cột, nên một caption bốn mươi ký tự bị cắt cụt ở mép
+ * khung — chữ vẫn vẽ đủ, `viewBox` vẫn hợp lệ, không lỗi nào nổi lên, chỉ là
+ * người đọc thấy "Bốc một đống, hoặ". Bốn engine có caption và cả bốn đều chừa
+ * chỗ theo chiều cao rồi quên chiều ngang; `estimateTextWidth` là chỗ **duy nhất**
+ * đoán bề ngang chữ để bốn chỗ ấy không lệch nhau.
+ */
+function contentWidth(model: GameModel): number {
+  const stacks = model.piles.reduce((n, p) => n + pileWidth(p.count), 0);
+  const caption = model.config.caption
+    ? estimateTextWidth(model.config.caption, CAPTION_SIZE) + PADDING
+    : 0;
+  return Math.max(SLOT, stacks, caption);
+}
 
 /**
  * Hộp bao của view `piles`, tính **một lần** rồi cả viewport lẫn renderer đọc.
@@ -135,11 +211,8 @@ function pilesBox(model: GameModel): {
   bottom: number;
   baseline: number;
 } {
-  const width = Math.max(
-    SLOT,
-    model.piles.reduce((n, p) => n + pileWidth(p.count), 0),
-  );
-  const tallest = Math.max(1, ...model.piles.map((p) => stackShape(p.count).rows));
+  const width = contentWidth(model);
+  const tallest = tallestStack(model);
   const dotsBottom = DOT_TOP + (tallest - 1) * DOT_GAP + STONE_R;
   const baseline = dotsBottom + SLOT * 0.5;
   const caption = model.config.caption ? SLOT * 0.6 : 0;
@@ -167,6 +240,26 @@ function spectrumLength(model: GameModel): number {
  * bằng mắt chứ không bằng chú giải.
  */
 function renderSpectrum(model: GameModel, ctx: RenderContext): SvgNode[] {
+  if (!spectrumReadable(model.config.rule)) {
+    // `checkBounds` đã báo lỗi này lúc soạn, nhưng renderer không được dựa vào
+    // chuyện đó: scene vẫn tới đây được. Nói ra mình không vẽ được, thay vì vẽ
+    // một bảng tính từ `movesFromPile` — với luật toàn cục hàm ấy trả rỗng, nên
+    // bảng sẽ tô sạch một màu và trông hoàn toàn thuyết phục.
+    return [
+      text(
+        'text',
+        {
+          x: 0,
+          y: SLOT * 0.5,
+          'font-family': ctx.theme.type.uiFamily,
+          'font-size': SLOT * 0.32,
+          fill: ctx.theme.surface.guide,
+        },
+        'Phổ một chiều không mô tả được luật này',
+      ),
+    ];
+  }
+
   const length = spectrumLength(model);
   const lose = losingSpectrum(length - 1, model.config.rule, model.config.misere === true);
   const cols = Math.min(length, 12);
@@ -238,11 +331,20 @@ function renderPiles(model: GameModel, ctx: RenderContext): SvgNode[] {
   // ra như mấy con số rời rạc chứ không ra "các đống là 3, 5, 7".
   const { baseline } = pilesBox(model);
 
-  let cursor = 0;
+  const bands = pileBands(model);
+
+  // **Mọi** viên sỏi nằm trên cùng một mặt sàn, và sàn ấy là hàng đáy của đống cao
+  // nhất. Bản trước điền từng cột từ trên xuống theo `row = i % STACK`, nên hai
+  // chuyện xảy ra cùng lúc: cột cuối của một đống thiếu viên thì khoảng trống nằm
+  // ở **dưới** (đống $10$ viên trông như khối $2 \times 6$ bị mẻ góc), và đống
+  // thấp thì **treo lơ lửng** ở mép trên trong khi nhãn của nó nằm ở đáy. Sỏi thật
+  // thì đổ xuống bàn.
+  const ground = tallestStack(model);
+
   model.piles.forEach((pile, index) => {
-    const width = pileWidth(pile.count);
+    const band = bands[index] as { from: number; to: number };
     const { columns } = stackShape(pile.count);
-    const centre = cursor + width / 2;
+    const centre = (band.from + band.to) / 2;
     const group: SvgNode[] = [];
 
     if (pile.count > MAX_DOTS) {
@@ -277,7 +379,8 @@ function renderPiles(model: GameModel, ctx: RenderContext): SvgNode[] {
     } else {
       for (let i = 0; i < pile.count; i += 1) {
         const column = Math.floor(i / STACK);
-        const row = i % STACK;
+        const height = Math.min(STACK, pile.count - column * STACK);
+        const row = ground - height + (i % STACK);
         group.push(
           el('circle', {
             cx: round(centre + (column - (columns - 1) / 2) * (STONE_R * 2.6)),
@@ -327,8 +430,6 @@ function renderPiles(model: GameModel, ctx: RenderContext): SvgNode[] {
         ),
       );
     }
-
-    cursor += width;
   });
 
   return nodes;

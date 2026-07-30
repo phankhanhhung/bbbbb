@@ -2,6 +2,7 @@ import type { Scene, Viewport } from '@combviz/schema';
 import {
   decorationAttrs,
   el,
+  estimateTextWidth,
   fillForClass,
   inkForClass,
   keyed,
@@ -67,8 +68,22 @@ function layoutOf(scene: Scene): { viewport: Viewport; caption: { x: number; y: 
           };
         })();
 
+  // Caption dài hơn hình thì **nới khung**, không cắt chữ. Trước đây `room` chỉ
+  // chừa chiều cao, nên một caption dài bị cụt ở mép phải: chữ vẫn vẽ đủ, viewBox
+  // vẫn hợp lệ, không lỗi nào nổi lên. `estimateTextWidth` là chỗ duy nhất đoán
+  // bề ngang chữ, dùng chung cho cả bốn engine có caption.
+  const needed =
+    config.caption === undefined
+      ? 0
+      : estimateTextWidth(config.caption, CAPTION_SIZE) + PADDING * 2;
+
   return {
-    viewport: { ...body, y: body.y - room, height: body.height + room },
+    viewport: {
+      ...body,
+      y: body.y - room,
+      height: body.height + room,
+      width: Math.max(body.width, needed),
+    },
     caption: { x: body.x + PADDING, y: body.y - room + CAPTION_SIZE },
   };
 }

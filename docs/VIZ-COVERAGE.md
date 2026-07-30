@@ -53,7 +53,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 | Đồ thị | 22% | 94% | 20.7 | tô mặt (phần còn lại của GR-05), kiểm tính phẳng tổng quát |
 | Đếm / song ánh / đếm hai chiều | 14% | 85% | 11.9 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 90% | 14.4 | — (`engine-sequence`) |
-| Trò chơi | 7% | 57% | 3.99 | chỉ chơi được game **bốc đống**; nước ăn nhiều đống, luật nhớ lịch sử, và mọi game không-phải-đống đều chưa — cần GM-01 rule script thật |
+| Trò chơi | 7% | 63% | 4.41 | chỉ chơi được game có thế là **đa tập số**; luật nhớ lịch sử (Nim Fibonacci) và mọi game không-phải-đống đều chưa — cần GM-01 rule script thật |
 | Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
 | Hình học tổ hợp | 5% | 75% | 3.75 | tô vùng do các đoạn chia (PT-03), đường tròn |
 | Hoán vị / thứ tự | 6% | 95% | 5.7 | — (chu trình hoán vị + poset/Hasse + Dilworth) |
@@ -97,8 +97,10 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Trò Grundy (chia đống không đều) | trò chơi | ✅ đối chiếu vét cạn, khớp dãy Grundy đã biết |
 | Bốc theo tập $\{1,3,4\}$ | trò chơi | ✅ thua ở $0,2,7,9,14,\dots$ — khớp |
 | Bốc **tối đa nửa đống** | trò chơi | ✅ có trong kho (luật `subtract-fraction`, thua ở $2^m-1$) |
-| Wythoff (hai đống, nước chéo) | trò chơi | ❌ một nước chỉ đụng **một** đống |
-| Trò Euclid, Nim Fibonacci | trò chơi | ❌ nước ăn theo đống kia / theo nước trước |
+| Wythoff (hai đống, nước chéo) | trò chơi | ✅ có trong kho (`subtract-equal-pair`, thế thua khớp cặp Beatty) |
+| Trò Euclid | trò chơi | ✅ có trong kho (`subtract-multiple-of-other`, khớp mốc $\varphi$) |
+| Nim Lasker (bốc **hoặc** chia) | trò chơi | ✅ có trong kho (luật `union`, Grundy khớp dạng đóng) |
+| Nim Fibonacci | trò chơi | ❌ luật nhớ **nước trước**, đa tập đống không đủ mô tả ván |
 | Chomp, Hackenbush, lật đồng xu | trò chơi | ❌ thế không phải đa tập đống |
 | Trò chơi tô đồ thị | trò chơi | 🟡 vẽ được thế, không chơi được — cần GM-01 |
 | Game bàn cờ có chiến lược đối xứng | trò chơi | 🟡 board vẽ được thế và cặp ghép; không chơi được |
@@ -340,6 +342,15 @@ nên game có luật riêng — cờ trên đồ thị, Chomp, trò tô màu —
 > `subtract-fraction`; tổng còn **83.3%**. Không có code nào bị gỡ giữa hai con số
 > — chỉ có tôi kiểm lại điều mình đã khẳng định.
 
+> **Sửa số lần hai, ngày 2026-07-30.** GM-05/06/07 mở thêm ba họ kinh điển —
+> Wythoff, trò Euclid, Nim Lasker — mỗi họ có một bài trong kho và mỗi bài đối
+> chiếu với dạng đóng của toán học. Nâng **57% → 63%**, và cố ý dừng ở đó: ranh
+> giới mới không phải "game bốc đống" mà là "**thế là một đa tập số**", rộng hơn
+> đáng kể nhưng vẫn để cả họ game bàn cờ / đồ thị / tô màu ở ngoài — mà đó là
+> phần không nhỏ của game thi đấu. Tổng vẫn làm tròn về **~85%**: họ này nặng 7%,
+> nên sáu điểm ở đây là $0{,}42$ điểm tổng. Ghi ra để không ai đọc nhầm ba luật
+> mới thành một bước nhảy của cả kho.
+
 Còn lại **một** hạng mục: derivation engine (+1.35, ~1.0 M4, cần label atlas D-07).
 
 #### Vì sao game engine không mở DSL-03
@@ -352,10 +363,15 @@ làm thế:
   rõ là grammar đóng. Mở một ngôn ngữ có trạng thái là đi thẳng vào rủi ro đó.
 - **Tiền lệ trong chính kho**: `COMBINE_RULES` của engine dãy là enum đóng, kèm
   ghi chú rằng cho nhập biểu thức là "mở cửa hậu cho DSL-03".
-- **Ba luật đóng phủ trọn họ game bốc đống kinh điển**: bốc theo khoảng, bốc theo
-  tập cho trước, chia đống không đều. Nim nhiều đống, bài bốc sỏi $1..k$, trò
-  Grundy, cùng bản misère của cả ba, đều nằm trong đó và đều **đã đối chiếu vét
-  cạn** với định nghĩa gốc (`test/solver.test.ts`, >600 thế).
+- **Bảy thành viên luật đóng, cộng phép hợp, phủ trọn họ game trên đa tập đống**:
+  bốc theo khoảng, bốc theo tập cho trước, bốc theo phần của đống, chia đống (đều
+  và không đều), bốc bằng nhau ở hai đống, bốc bội số của đống kia. Nim nhiều
+  đống, bài bốc sỏi $1..k$, trò Grundy, Wythoff, trò Euclid, Nim Lasker, cùng bản
+  misère của các luật cục bộ, đều nằm trong đó. Luật **cục bộ** đối chiếu vét cạn
+  với định nghĩa gốc (`test/solver.test.ts`, >600 thế); luật **toàn cục** thì đối
+  chiếu với dạng đóng đã biết của toán học — cặp Beatty của Wythoff, mốc $\varphi$
+  của trò Euclid — vì với chúng `analyzeGame` đã đi đường duyệt lùi, mà so một
+  phép duyệt lùi với một phép duyệt lùi khác thì không kiểm được gì.
 
 #### Chính xác thì tập luật đóng khai được tới đâu
 
@@ -364,14 +380,12 @@ làm thế:
 
 | Khai được | Không khai được | Vướng ở đâu |
 |---|---|---|
-| Nim nhiều đống | Wythoff | một `Move` chỉ đụng **một** đống |
-| Bốc $1..k$, **bốc tối đa $1/d$ đống** | "bốc tối đa gấp đôi nước trước" | cận đọc được cỡ đống, không đọc được *nước trước* |
-| Bốc theo tập $\{1,3,4\}$, tập số nguyên tố… | Nim Fibonacci | luật nhớ **nước trước**, thế không đủ mô tả ván |
-| Chia đống không đều (trò Grundy) | Trò Euclid | nước ăn theo cỡ đống **kia** |
-| Misère của mọi luật trên | Nim Lasker (bốc **hoặc** chia) | luật là **một** thành viên, không hợp được hai |
-| | Chomp, Hackenbush, lật đồng xu | thế không phải đa tập số |
-| | Cờ trên đồ thị, game tô màu, game bàn cờ | thế không phải đống, chấm hết |
-| | Game partizan (hai bên luật khác nhau) | solver giả định luật đối xứng |
+| Nim nhiều đống, **Wythoff** | "bốc tối đa gấp đôi nước trước" | cận đọc được cỡ mọi đống, không đọc được *nước trước* |
+| Bốc $1..k$, **bốc tối đa $1/d$ đống** | Nim Fibonacci | luật nhớ **nước trước**, thế không đủ mô tả ván |
+| Bốc theo tập $\{1,3,4\}$, tập số nguyên tố… | Chomp, Hackenbush, lật đồng xu | thế không phải đa tập số |
+| Chia đống (đều và không đều), **trò Euclid** | Cờ trên đồ thị, game tô màu, game bàn cờ | thế không phải đống, chấm hết |
+| **Hợp tới ba thành viên** (Nim Lasker) | Game partizan (hai bên luật khác nhau) | solver giả định luật đối xứng |
+| Misère của mọi luật **cục bộ** | | |
 
 Dòng "tối đa nửa đống" đáng nói riêng, vì khi rà bảng này tôi phát hiện nó **đang
 thiếu** dù là cách phát biểu rất hay gặp, và nhìn qua thì tưởng `subtract` khai
@@ -379,11 +393,20 @@ thiếu** dù là cách phát biểu rất hay gặp, và nhìn qua thì tưởn
 `subtract` với `max` cố định đều cho thế thua là một cấp số cộng — có test đối
 chiếu đủ hai mươi giá trị `max`, không phải suy đoán. Chỗ này đã **vá xong** bằng
 một thành viên thứ tư của họ luật đóng, `subtract-fraction`, và không phải đụng
-tới DSL-03. Đó là điểm đáng giữ của thiết kế tập luật đóng: mở rộng thì rẻ,
-miễn là thứ cần mở vẫn nằm trong "một đống biến thành mấy đống".
+tới DSL-03. Đó là điểm đáng giữ của thiết kế tập luật đóng: mở rộng thì rẻ.
 
-Cái giá, nói thẳng: game có luật riêng không khai được, và nó sẽ **không** khai
-được cho tới khi ai đó thật sự làm GM-01 + NFR-S2.
+Ba dòng ❌ tiếp theo — Wythoff, trò Euclid, Nim Lasker — cũng đã vá, và chúng đắt
+hơn `subtract-fraction` đúng một chỗ: `Move` phải đổi từ "một đống biến thành mấy
+đống" thành "**mấy** đống biến thành mấy đống". Đổi kiểu ấy kéo theo một hệ quả
+lớn hơn cả ba luật: ván không còn chắc chắn là **tổng các trò con độc lập**, nên
+Sprague–Grundy không áp dụng cho Wythoff và trò Euclid. Solver phân biệt hai
+trường hợp bằng `isLocalRule`, và với luật toàn cục nó **không bày** `xor` hay
+`grundy` ra DSL — trả một con số ở đó thì mọi `claim` viết trên nó sẽ đạt, bài
+trông như đã kiểm, mà con số ấy không có nghĩa gì.
+
+Cái giá, nói thẳng: thế phải là một **đa tập số nguyên** và hai bên phải cùng
+luật. Ngoài đó thì **không** khai được cho tới khi ai đó thật sự làm GM-01 +
+NFR-S2.
 
 #### Hạn chế đã biết của kiểm tính phẳng
 
@@ -433,7 +456,7 @@ không, và không phải vì thiếu công sức.
 ## 8. Cảnh báo về thứ tự
 
 **AUT-KPI là gate có răng:** *trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **56 bài** — nhưng **không bài nào do chính
+engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **59 bài** — nhưng **không bài nào do chính
 chủ soạn**, và người duyệt cũng là người soạn. Theo đúng luật của chính dự án,
 việc còn nợ không phải engine nào trong bảng §7, mà là **soạn tay 3–5 bài**
 (G-C), rồi mới đóng băng schema 1.0.0.

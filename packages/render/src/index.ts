@@ -48,6 +48,8 @@ export {
   type SceneBoxStyle,
 } from './scale.js';
 
+export { estimateTextWidth } from './text.js';
+
 export { lerpNumber, lerpColor, lerpStructuredString, lerpAttr } from './lerp.js';
 export { easeInOutCubic, easingOf, clamp01, type EasingFn } from './easing.js';
 export { canonicalStringify, hashString, hashScene } from './hash.js';

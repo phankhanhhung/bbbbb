@@ -1,5 +1,6 @@
 import type { Scene, Viewport } from '@combviz/schema';
 import {
+  estimateTextWidth,
   decorationAttrs,
   el,
   fillForClass,
@@ -88,7 +89,12 @@ export function viewportOf(scene: Scene): Viewport {
   const contentWidth = count * PITCH - GAP + totalRoom;
   // Tối thiểu năm ô: đủ để một scene một phần tử không bị phóng to lố, và vẫn
   // khít cho scene năm phần tử trở lên.
-  const width = Math.max(contentWidth, 5 * PITCH) + PADDING * 2;
+  // Caption dài hơn hình thì **nới khung**, không cắt chữ: `captionRoom` dưới đây
+  // chỉ chừa chiều cao, và ba engine còn lại cũng từng quên đúng chiều ngang này.
+  const captionWidth = config.caption
+    ? estimateTextWidth(config.caption, SLOT * 0.36) + PADDING * 2
+    : 0;
+  const width = Math.max(contentWidth, 5 * PITCH, captionWidth) + PADDING * 2;
 
   const captionRoom = config.caption ? SLOT * 0.8 : 0;
 

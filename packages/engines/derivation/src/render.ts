@@ -3,6 +3,7 @@ import {
   EMPTY_ATLAS,
   decorationAttrs,
   el,
+  estimateTextWidth,
   keyed,
   placeLabel,
   text,
@@ -16,6 +17,9 @@ import { readDerivation } from './model.js';
 
 const PADDING = 3;
 const NOTE_GAP = 6;
+/** Cỡ chữ caption và chiều cao nó cần — một chỗ, để khung và chữ không lệch nhau. */
+const CAPTION_SIZE = FONT * 0.5;
+const CAPTION_ROOM = ROW * 0.32 + CAPTION_SIZE * 0.3;
 
 /**
  * Renderer của Derivation engine.
@@ -37,11 +41,22 @@ export const derivationRenderer: EngineRenderer = {
     // engine tập hợp. Hệ số 0.5 em là bề ngang trung bình của phông giao diện.
     const note = Math.max(0, ...model.rows.map((r) => r.note?.length ?? 0));
     const notes = note === 0 ? 0 : NOTE_GAP + note * FONT * 0.29;
+
+    // Caption nằm **dưới** khối biến đổi, và trước đây khung không chừa chỗ cho
+    // nó theo cả hai chiều: chữ dài thì cụt ở mép phải, và ngay cả chữ ngắn cũng
+    // nằm gần như trọn bên dưới mép đáy. Cùng lỗi với ba engine caption khác, chỉ
+    // khác trục.
+    const room = model.config.caption === undefined ? 0 : CAPTION_ROOM;
+    const captionWidth =
+      model.config.caption === undefined
+        ? 0
+        : estimateTextWidth(model.config.caption, CAPTION_SIZE) + PADDING;
+
     return {
       x: -PADDING,
       y: -PADDING,
-      width: box.width + notes + PADDING * 2,
-      height: box.height + PADDING * 2,
+      width: Math.max(box.width + notes, captionWidth) + PADDING * 2,
+      height: box.height + room + PADDING * 2,
     };
   },
 
@@ -151,7 +166,7 @@ function caption(
         x: 0,
         y: round(box.height + ROW * 0.32),
         'font-family': ctx.theme.type.uiFamily,
-        'font-size': FONT * 0.5,
+        'font-size': CAPTION_SIZE,
         fill: ctx.theme.surface.guide,
       },
       value,

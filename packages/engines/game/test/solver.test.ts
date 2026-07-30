@@ -4,8 +4,12 @@ import {
   analyzeGame,
   apply,
   grundyTable,
+  isLocalRule,
   losingSpectrum,
   movesFromPile,
+  spectrumReadable,
+  stateSpaceEstimate,
+  type Move,
 } from '../src/solver.js';
 import type { GameRule } from '../src/schema.js';
 
@@ -226,5 +230,213 @@ describe('phổ thế thua (view spectrum)', () => {
     for (let n = 1; n <= 15; n += 1) {
       expect({ n, lose: lose[n] }).toEqual({ n, lose: !analyzeGame([n], SET_14).winning });
     }
+  });
+});
+
+/**
+ * Ba họ luật mới: GM-05, GM-06, GM-07.
+ *
+ * Chỗ này **không** dùng `bruteWin` được như các luật cục bộ. Với Wythoff và trò
+ * Euclid, `analyzeGame` đã đi đường duyệt lùi, mà một `bruteWin` có nhớ cũng chính
+ * là phép duyệt lùi ấy — so hai bản cùng một thuật toán thì không kiểm được gì
+ * ngoài chính nó. Nên đối chứng ở đây là **dạng đóng đã biết của toán học**: dãy
+ * Beatty của Wythoff, tỉ số vàng của trò Euclid, công thức Grundy của Nim Lasker.
+ * Ba thứ ấy độc lập với mọi dòng code trong kho.
+ */
+const WYTHOFF: GameRule = {
+  type: 'union',
+  of: [{ type: 'subtract', min: 1 }, { type: 'subtract-equal-pair' }],
+};
+const EUCLID: GameRule = { type: 'subtract-multiple-of-other' };
+const LASKER: GameRule = {
+  type: 'union',
+  of: [{ type: 'subtract', min: 1 }, { type: 'split-any' }],
+};
+const SPLIT_ANY: GameRule = { type: 'split-any' };
+
+const PHI = (1 + Math.sqrt(5)) / 2;
+
+describe('GM-05 — Wythoff: nước đụng **hai** đống', () => {
+  it('luật là **toàn cục**, nên không có bảng Grundy', () => {
+    expect(isLocalRule(WYTHOFF)).toBe(false);
+    expect(isLocalRule(LASKER)).toBe(true);
+    // Và solver nói ra điều đó thay vì trả một mảng số trông hợp lý.
+    expect(analyzeGame([3, 5], WYTHOFF).grundy).toEqual([]);
+  });
+
+  it('thế thua đúng là các cặp Beatty $(\\lfloor n\\varphi \\rfloor, \\lfloor n\\varphi^2 \\rfloor)$', () => {
+    const cold = new Set<string>();
+    for (let n = 1; n <= 9; n += 1) {
+      const a = Math.floor(n * PHI);
+      const b = Math.floor(n * PHI * PHI);
+      cold.add(`${a},${b}`);
+      expect({ n, a, b, win: analyzeGame([a, b], WYTHOFF).winning }).toEqual({
+        n,
+        a,
+        b,
+        win: false,
+      });
+    }
+    // $(1,2), (3,5), (4,7), (6,10), \dots$ — và **chỉ** những cặp ấy.
+    expect([...cold]).toEqual(['1,2', '3,5', '4,7', '6,10', '8,13', '9,15', '11,18', '12,20', '14,23']);
+
+    for (let a = 1; a <= 14; a += 1) {
+      for (let b = a; b <= 23; b += 1) {
+        expect({ a, b, win: analyzeGame([a, b], WYTHOFF).winning }).toEqual({
+          a,
+          b,
+          win: !cold.has(`${a},${b}`),
+        });
+      }
+    }
+  });
+
+  it('nước chéo **cần thiết**: bỏ nó đi thì bài thành Nim và đáp số đổi', () => {
+    // $(3,5)$ thua trong Wythoff, nhưng trong Nim thì $3 \oplus 5 \ne 0$ nên thắng.
+    expect(analyzeGame([3, 5], WYTHOFF).winning).toBe(false);
+    expect(analyzeGame([3, 5], NIM).winning).toBe(true);
+  });
+
+  it('nước thắng gồm **cả hai** kiểu, và mỗi kiểu đụng số đống khác nhau', () => {
+    // Từ $(10,15)$ có ba nước thắng: về $(6,10)$, về $(9,15)$ — hai nước một đống
+    // — và bốc $2$ ở **cả hai** đống về $(8,13)$.
+    const result = analyzeGame([10, 15], WYTHOFF);
+    expect(result.winning).toBe(true);
+    expect(result.winningMoves.map((m) => m.piles.length).sort()).toEqual([1, 1, 2]);
+    for (const move of result.winningMoves) {
+      expect(analyzeGame(apply([10, 15], move), WYTHOFF).winning).toBe(false);
+    }
+  });
+});
+
+describe('GM-06 — trò Euclid: nước đọc **đống kia**', () => {
+  it('sinh nước theo bội của đống còn lại', () => {
+    // $(25,7)$: khỏi đống $25$ bốc được $7, 14, 21$; khỏi đống $7$ thì không có
+    // bội nào của $25$ vừa.
+    const moves = allMoves([25, 7], EUCLID).map((m) => apply([25, 7], m));
+    expect(moves.map((after) => [...after].sort((x, y) => x - y))).toEqual([
+      [7, 18],
+      [7, 11],
+      [4, 7],
+    ]);
+  });
+
+  it('thắng đúng khi hai đống bằng nhau hoặc tỉ số vượt $\\varphi$', () => {
+    // Cole–Davie 1969. Đây là dạng đóng, hoàn toàn độc lập với solver.
+    for (let a = 1; a <= 16; a += 1) {
+      for (let b = a; b <= 16; b += 1) {
+        const expected = a === b || b / a > PHI;
+        expect({ a, b, win: analyzeGame([a, b], EUCLID).winning }).toEqual({
+          a,
+          b,
+          win: expected,
+        });
+      }
+    }
+  });
+
+  it('cặp Fibonacci **cách một** là thế thua — tỉ số của chúng dưới $\\varphi$', () => {
+    // Tỉ số $F_{n+1}/F_n$ nhảy qua nhảy lại quanh $\varphi$, nên chỉ **một nửa**
+    // các cặp Fibonacci kề nhau là thế thua: $2/1 > \varphi$, $3/2 < \varphi$,
+    // $5/3 > \varphi$, $8/5 < \varphi$, … Đúng chỗ dễ nói vống thành "mọi cặp
+    // Fibonacci đều thua".
+    for (const [a, b] of [[2, 3], [5, 8], [13, 21], [34, 55]] as const) {
+      expect({ a, b, win: analyzeGame([a, b], EUCLID).winning }).toEqual({ a, b, win: false });
+    }
+  });
+
+  it('một đống thì hết nước — người sắp đi thua', () => {
+    expect(allMoves([9], EUCLID)).toEqual([]);
+    expect(analyzeGame([9], EUCLID).winning).toBe(false);
+  });
+});
+
+describe('GM-07 — hợp hai thành viên: Nim Lasker', () => {
+  it('`split-any` khác `split-unequal` đúng ở nước chia đôi bằng nhau', () => {
+    expect(movesFromPile(4, SPLIT_ANY)).toEqual([[1, 3], [2, 2]]);
+    expect(movesFromPile(4, SPLIT)).toEqual([[1, 3]]);
+  });
+
+  it('hợp gộp nước của cả hai thành viên, **không** đếm trùng', () => {
+    const parts = movesFromPile(4, LASKER);
+    expect(parts).toEqual([[3], [2], [1], [0], [1, 3], [2, 2]]);
+
+    // Hợp hai thành viên chồng nhau thì nước trùng bị gộp, nên `moves` không phồng.
+    const overlap: GameRule = {
+      type: 'union',
+      of: [{ type: 'subtract', min: 1, max: 3 }, { type: 'subtract-set', allowed: [2, 5] }],
+    };
+    expect(movesFromPile(6, overlap)).toEqual([[5], [4], [3], [1]]);
+  });
+
+  it('bảng Grundy khớp dạng đóng của Nim Lasker', () => {
+    // $g(n) = n$ khi $n \equiv 1, 2$; $n+1$ khi $n \equiv 3$; $n-1$ khi $n \equiv 0 \pmod 4$.
+    const closed = (n: number): number =>
+      n === 0 ? 0 : n % 4 === 3 ? n + 1 : n % 4 === 0 ? n - 1 : n;
+    expect(grundyTable(24, LASKER)).toEqual(
+      Array.from({ length: 25 }, (_, n) => closed(n)),
+    );
+  });
+
+  it('nhánh chia đổi hẳn đáp số: $(1,2,3)$ thua ở Nim mà **thắng** ở Nim Lasker', () => {
+    expect(analyzeGame([1, 2, 3], NIM).winning).toBe(false);
+
+    const result = analyzeGame([1, 2, 3], LASKER);
+    expect(result.xor).toBe(1 ^ 2 ^ 4);
+    expect(result.winning).toBe(true);
+    // Và nước thắng **duy nhất** là chia đống $3$ thành $1 + 2$.
+    expect(result.winningMoves).toHaveLength(1);
+    expect(apply([1, 2, 3], result.winningMoves[0] as Move).sort()).toEqual([1, 1, 2, 2]);
+  });
+});
+
+describe('đối chiếu vét cạn — luật hợp', () => {
+  it('Nim Lasker: mọi thế tới 2 đống, mỗi đống tới 5 viên', () => {
+    // Luật hợp vẫn **cục bộ**, nên `analyzeGame` đi đường Grundy → XOR. Đối chứng
+    // bằng định nghĩa gốc là thứ duy nhất nói được rằng tầng ấy đúng cho hợp.
+    //
+    // Trần $5$ chứ không phải $7$ như các luật khác, và đó là con số đo được chứ
+    // không phải chọn cho tròn: `bruteWin` không nhớ gì, còn nhánh chia **không**
+    // làm tổng số viên giảm, nên số đường đi phình rất nhanh — $7$ viên chạy quá
+    // một phút, $5$ viên xong trong chớp mắt.
+    for (let a = 1; a <= 5; a += 1) {
+      for (let b = 0; b <= a; b += 1) {
+        const piles = [a, b].filter((n) => n > 0);
+        expect({ piles, win: analyzeGame(piles, LASKER).winning }).toEqual({
+          piles,
+          win: bruteWin(piles, LASKER, false),
+        });
+      }
+    }
+  });
+});
+
+describe('phổ và luật toàn cục', () => {
+  it('phổ chỉ đọc được cho luật bốc từ **một** đống', () => {
+    expect(spectrumReadable(TAKE_1_3)).toBe(true);
+    expect(spectrumReadable(HALF)).toBe(true);
+    expect(spectrumReadable(SPLIT)).toBe(false);
+    expect(spectrumReadable(WYTHOFF)).toBe(false);
+    expect(spectrumReadable(EUCLID)).toBe(false);
+    expect(spectrumReadable(LASKER)).toBe(false);
+  });
+
+  it('`movesFromPile` **không** biết luật toàn cục, và đó là lý do phổ bị chặn', () => {
+    // Trả rỗng, không trả sai. Nếu ai đó vẽ phổ cho Wythoff thì mọi thế sẽ trông
+    // như thế cuối — hình sẽ tô sạch một màu và rất thuyết phục.
+    expect(movesFromPile(9, EUCLID)).toEqual([]);
+    expect(movesFromPile(9, WYTHOFF)).toEqual([[8], [7], [6], [5], [4], [3], [2], [1], [0]]);
+  });
+});
+
+describe('trần không gian thế', () => {
+  it('ước lượng là trần **trên**, và nó chặn trước khi solver chạy', () => {
+    expect(stateSpaceEstimate([12, 20])).toBe(13 * 21);
+    expect(stateSpaceEstimate([200, 200, 200])).toBeGreaterThan(200_000);
+  });
+
+  it('luật toàn cục trên thế quá lớn thì **từ chối**, không treo', () => {
+    const huge = [200, 200, 200, 200, 200, 200];
+    expect(analyzeGame(huge, WYTHOFF).refused).toMatch(/vượt trần/);
   });
 });

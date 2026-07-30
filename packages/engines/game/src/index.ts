@@ -5,9 +5,16 @@ import type {
   SceneElement,
   ValidationIssue,
 } from '@combviz/schema';
-import { readGame } from './model.js';
+import { readGame, type GameModel } from './model.js';
 import { GameConfig, GAME_LIMITS, PileElement } from './schema.js';
-import { movesFromPile } from './solver.js';
+import {
+  allMoves,
+  isLocalRule,
+  spectrumReadable,
+  stateSpaceEstimate,
+  type Move,
+} from './solver.js';
+import { pileBands } from './render.js';
 import { GAME_VALIDATOR_IDS, resolveGameValidator } from './validators.js';
 
 export * from './schema.js';
@@ -19,69 +26,133 @@ export { gameEnvironment } from './dsl.js';
 export { gameRenderer } from './render.js';
 
 /**
- * Đi một nước (GM-02, chơi luân phiên trên cùng máy).
+ * Nước đi hợp lệ khớp với yêu cầu, hoặc `null`.
  *
- * Lệnh **tự kiểm luật**: nó gọi `movesFromPile`, đúng hàm mà solver dùng, và từ
- * chối nước không hợp lệ. Nếu để lệnh tự do sửa số viên thì người học "thắng"
- * được bằng cách đi một nước không tồn tại, và sandbox mất hết ý nghĩa.
+ * Mọi lệnh đi đều qua đây, và đây gọi `allMoves` — đúng hàm solver dùng. Nếu để
+ * lệnh tự do sửa số viên thì người học "thắng" được bằng cách đi một nước không
+ * tồn tại, và sandbox mất hết ý nghĩa.
  */
+function findMove(
+  model: GameModel,
+  match: (move: Move, counts: readonly number[]) => boolean,
+): Move | null {
+  const counts = model.piles.map((p) => p.count);
+  return allMoves(counts, model.config.rule).find((move) => match(move, counts)) ?? null;
+}
+
+/** Chỉ số của một đống trong **danh sách đống** (không phải trong `elements`). */
+function pileIndex(model: GameModel, id: string): number {
+  return model.piles.findIndex((p) => p.id === id);
+}
+
+/** Vị trí của một đống trong `scene.elements`. */
+function elementIndex(scene: Scene, id: string): number {
+  return scene.elements.findIndex((e) => e.id === id && e.type === 'pile');
+}
+
+/** Đi một nước bốc từ **một** đống (GM-02, chơi luân phiên trên cùng máy). */
 const take = defineCommand<{ pile: string; count: number }>({
   type: 'game/take',
   label: (params) => `Bốc ${params.count}`,
   apply(scene, params) {
     const model = readGame(scene);
-    const index = scene.elements.findIndex(
-      (e) => e.id === params.pile && e.type === 'pile',
-    );
-    if (index === -1) return null;
+    const at = elementIndex(scene, params.pile);
+    const index = pileIndex(model, params.pile);
+    if (at === -1 || index === -1) return null;
 
-    const pile = model.piles.find((p) => p.id === params.pile);
-    if (!pile) return null;
-
-    const legal = movesFromPile(pile.count, model.config.rule).filter(
-      (after) => after.length === 1,
+    const pile = model.piles[index] as GameModel['piles'][number];
+    const move = findMove(
+      model,
+      (m) =>
+        m.piles.length === 1 &&
+        m.piles[0] === index &&
+        (m.becomes[0] as readonly number[]).length === 1 &&
+        (m.becomes[0] as readonly number[])[0] === pile.count - params.count,
     );
-    if (!legal.some((after) => after[0] === pile.count - params.count)) return null;
+    if (move === null) return null;
 
     const elements = scene.elements.slice();
-    elements[index] = {
-      ...(elements[index] as SceneElement),
+    elements[at] = {
+      ...(elements[at] as SceneElement),
       count: pile.count - params.count,
     };
     return { ...scene, elements };
   },
 });
 
-/** Chia một đống làm hai phần khác nhau (trò Grundy). */
+/** Chia một đống làm hai phần (trò Grundy, Nim Lasker). */
 const split = defineCommand<{ pile: string; first: number }>({
   type: 'game/split',
   label: () => 'Chia đống',
   apply(scene, params) {
     const model = readGame(scene);
-    const index = scene.elements.findIndex(
-      (e) => e.id === params.pile && e.type === 'pile',
+    const at = elementIndex(scene, params.pile);
+    const index = pileIndex(model, params.pile);
+    if (at === -1 || index === -1) return null;
+
+    const move = findMove(
+      model,
+      (m) =>
+        m.piles.length === 1 &&
+        m.piles[0] === index &&
+        (m.becomes[0] as readonly number[]).length === 2 &&
+        (m.becomes[0] as readonly number[])[0] === params.first,
     );
-    if (index === -1) return null;
+    if (move === null) return null;
 
-    const pile = model.piles.find((p) => p.id === params.pile);
-    if (!pile) return null;
-
-    const legal = movesFromPile(pile.count, model.config.rule).filter(
-      (after) => after.length === 2,
-    );
-    const chosen = legal.find((after) => after[0] === params.first);
-    if (!chosen) return null;
-
-    const newId = `${pile.id}-b`;
+    const parts = move.becomes[0] as readonly number[];
+    const newId = `${params.pile}-b`;
     if (scene.elements.some((e) => e.id === newId)) return null;
 
     const elements = scene.elements.slice();
-    elements[index] = { ...(elements[index] as SceneElement), count: chosen[0] as number };
-    elements.splice(index + 1, 0, {
+    elements[at] = { ...(elements[at] as SceneElement), count: parts[0] as number };
+    elements.splice(at + 1, 0, {
       id: newId,
       type: 'pile',
-      count: chosen[1] as number,
+      count: parts[1] as number,
     });
+    return { ...scene, elements };
+  },
+});
+
+/**
+ * Bốc **cùng một số** viên ở hai đống (GM-05, nước chéo của Wythoff).
+ *
+ * Hai id chứ không phải một: người học bấm hai đống rồi mới có nước. Đây là lý do
+ * `Move.piles` là danh sách — một lệnh "bốc ở đống này" không diễn đạt được nước
+ * mà bản chất là **một** nước trên hai đống.
+ */
+const takeBoth = defineCommand<{ pile_a: string; pile_b: string; count: number }>({
+  type: 'game/take-both',
+  label: (params) => `Bốc ${params.count} ở cả hai đống`,
+  apply(scene, params) {
+    if (params.pile_a === params.pile_b) return null;
+    const model = readGame(scene);
+    const first = pileIndex(model, params.pile_a);
+    const second = pileIndex(model, params.pile_b);
+    if (first === -1 || second === -1) return null;
+
+    const [lo, hi] = first < second ? [first, second] : [second, first];
+    const after = (index: number): number =>
+      (model.piles[index] as GameModel['piles'][number]).count - params.count;
+
+    const move = findMove(
+      model,
+      (m) =>
+        m.piles.length === 2 &&
+        m.piles[0] === lo &&
+        m.piles[1] === hi &&
+        (m.becomes[0] as readonly number[])[0] === after(lo) &&
+        (m.becomes[1] as readonly number[])[0] === after(hi),
+    );
+    if (move === null) return null;
+
+    const elements = scene.elements.slice();
+    for (const index of [lo, hi]) {
+      const at = elementIndex(scene, (model.piles[index] as GameModel['piles'][number]).id);
+      if (at === -1) return null;
+      elements[at] = { ...(elements[at] as SceneElement), count: after(index) };
+    }
     return { ...scene, elements };
   },
 });
@@ -89,14 +160,27 @@ const split = defineCommand<{ pile: string; first: number }>({
 export const gameCommands: CommandRegistry = {
   [take.type]: take,
   [split.type]: split,
+  [takeBoth.type]: takeBoth,
 };
 
-/** Chạm vào cột đống: chia theo ô rộng một `SLOT` (10 đơn vị scene). */
+/**
+ * Chạm vào cột đống.
+ *
+ * Dải hoành độ đọc từ `pileBands`, **cùng** hàm mà renderer dùng để đặt các cột.
+ * Bản trước chia đều theo `SLOT = 10`, mà cột nhiều viên xếp thành nhiều dãy nên
+ * rộng hơn thế: từ đống thứ hai trở đi, chạm vào cột này chọn trúng cột khác. Lỗi
+ * ấy vô hình cho tới khi có một công cụ cần **hai** đống — bấm hai cột rồi nhận
+ * lại một cặp id không phải cặp mình bấm.
+ *
+ * View `spectrum` không trả gì: ở đó không vẽ đống nào, và không lệnh nào tác động
+ * lên một ô phổ. Trả về một id đống trong lúc đống không hiện trên hình là mời
+ * người học bấm vào chỗ không có gì.
+ */
 export const gameHitTest: HitTest = (scene, point) => {
   const model = readGame(scene);
-  const index = Math.floor(point.x / 10);
-  const pile = model.piles[index];
-  return pile && point.x >= 0 ? [pile.id] : [];
+  if (model.config.view === 'spectrum') return [];
+  const band = pileBands(model).find((b) => point.x >= b.from && point.x < b.to);
+  return band ? [band.id] : [];
 };
 
 export const gameSchemaFragment: EngineSchemaFragment = {
@@ -164,16 +248,52 @@ export const gameSchemaFragment: EngineSchemaFragment = {
       }
     }
 
-    // `spectrum` chỉ đọc được cho luật bốc: luật chia biến một đống thành hai,
-    // và bảng một chiều không nói được gì về tổng của hai trò con.
-    if (config?.view === 'spectrum' && config.rule?.type === 'split-unequal') {
+    // `spectrum` chỉ đọc được cho luật bốc trên **một** đống: luật chia biến một
+    // đống thành hai, còn Wythoff và Euclid cần từ hai đống trở lên.
+    if (config?.view === 'spectrum' && config.rule && !spectrumReadable(config.rule)) {
       issues.push({
         code: 'bounds/spectrum-needs-subtract-rule',
         severity: 'error',
-        message: 'View `spectrum` không dùng được với luật chia đống',
+        message: 'View `spectrum` chỉ dùng được với luật bốc từ một đống',
         path: `${path}/config/view`,
-        hint: 'Chia đống sinh ra hai trò con; phổ một chiều không mô tả được điều đó',
+        hint: 'Chia đống sinh ra hai trò con, còn luật đọc đống khác cần ít nhất hai đống; phổ một chiều không mô tả được cả hai',
       });
+    }
+
+    // Grundy: chặn **trước** khi hình vẽ ra một con số tự tin và sai. Với luật
+    // toàn cục hay quy ước misère, Sprague–Grundy không áp dụng, nên "g=" dưới
+    // mỗi đống sẽ là một khẳng định không có cơ sở.
+    if (config?.show_grundy === true && config.rule) {
+      const why = !isLocalRule(config.rule)
+        ? 'luật có nước đụng nhiều đống hoặc đọc đống khác, nên ván không phải tổng các trò con độc lập'
+        : config.misere === true
+          ? 'quy ước misère'
+          : null;
+      if (why !== null) {
+        issues.push({
+          code: 'bounds/grundy-not-applicable',
+          severity: 'error',
+          message: `\`show_grundy\` không dùng được: ${why}`,
+          path: `${path}/config/show_grundy`,
+          hint: 'Sprague–Grundy chỉ áp cho tổng các trò con độc lập, luật chơi thường',
+        });
+      }
+    }
+
+    // Luật toàn cục giải bằng duyệt lùi, nên cỡ thế là chuyện của bài chứ không
+    // phải của solver. Đo lúc soạn thì tác giả sửa được; để tới lúc chạy thì
+    // người học nhận một khung trống kèm dòng "đã từ chối".
+    if (config?.rule && !isLocalRule(config.rule)) {
+      const estimate = stateSpaceEstimate(model.piles.map((p) => p.count));
+      if (estimate > GAME_LIMITS.maxStates) {
+        issues.push({
+          code: 'bounds/state-space-too-large',
+          severity: 'error',
+          message: `Không gian thế cỡ ${estimate} (trần ${GAME_LIMITS.maxStates})`,
+          path: `${path}/elements`,
+          hint: 'Luật đụng nhiều đống không có bảng Grundy; solver phải duyệt lùi cả thế (NFR-P4)',
+        });
+      }
     }
 
     return issues;

@@ -1,5 +1,6 @@
 import type { Scene, Viewport } from '@combviz/schema';
 import {
+  estimateTextWidth,
   decorationAttrs,
   el,
   fillForClass,
@@ -32,6 +33,9 @@ const pointConfig = (scene: Scene): PointConfig => (scene.config as PointConfig)
  * mà bài toán nói tới; một điểm bị đoạn thẳng đè lên là một điểm người đọc
  * tưởng không có.
  */
+/** Cỡ chữ caption — một hằng số, để khung và chữ không đọc hai con số khác nhau. */
+const CAPTION_SIZE = UNIT * 0.36;
+
 export const pointRenderer: EngineRenderer = {
   id: 'point',
 
@@ -57,10 +61,17 @@ export const pointRenderer: EngineRenderer = {
     const minX = Math.min(...xs) - room;
     const minY = Math.min(...ys) - room;
 
+    // Cùng lý do với `labelRoom`, nhưng cho caption — và chỗ này thì trước đây
+    // **quên**: caption đặt ở `viewport.x + 2` nên chữ dài hơn hình sẽ chạy ra
+    // ngoài khung và bị cắt cụt. `estimateTextWidth` dùng chung với ba engine kia.
+    const captionWidth = config.caption
+      ? estimateTextWidth(config.caption, CAPTION_SIZE) + 4
+      : 0;
+
     return {
       x: round(minX),
       y: round(minY),
-      width: round(Math.max(Math.max(...xs) + room - minX, UNIT)),
+      width: round(Math.max(Math.max(...xs) + room - minX, UNIT, captionWidth)),
       height: round(Math.max(Math.max(...ys) + room - minY, UNIT)),
     };
   },
@@ -86,7 +97,7 @@ export const pointRenderer: EngineRenderer = {
                 x: viewport.x + 2,
                 y: viewport.y + UNIT * 0.42,
                 'font-family': ctx.theme.type.uiFamily,
-                'font-size': UNIT * 0.36,
+                'font-size': CAPTION_SIZE,
                 fill: ctx.theme.surface.guide,
               },
               config.caption,

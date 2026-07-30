@@ -18,7 +18,7 @@ export const GAME_LIMITS = {
 } as const;
 
 /**
- * Luật đi — tập **đóng**, có tham số.
+ * Một **thành viên** của họ luật — tập đóng, có tham số.
  *
  * Đây là quyết định trung tâm của engine này, và nó **cố ý đi ngược GM-01**.
  *
@@ -31,62 +31,137 @@ export const GAME_LIMITS = {
  *     rủi ro đó.
  *   - Engine dãy đã có tiền lệ: `COMBINE_RULES` là enum đóng, kèm ghi chú rằng
  *     cho nhập biểu thức là "mở cửa hậu cho DSL-03".
- *   - Bốn luật dưới đây phủ trọn họ game **bốc đống** kinh điển: bốc theo khoảng,
- *     bốc theo tập cho trước, bốc theo phần của đống, và chia đống. Nim, bài bốc
- *     sỏi $1..k$, "bốc tối đa nửa đống", trò Grundy đều nằm trong đó.
+ *   - Bảy thành viên dưới đây, cộng phép **hợp** ở `GameRule`, phủ trọn họ game
+ *     **trên đa tập đống** kinh điển: Nim, bốc $1..k$, bốc theo tập, "bốc tối đa
+ *     nửa đống", trò Grundy, Wythoff, trò Euclid, Nim Lasker.
  *
- * Cái giá phải trả, nói thẳng, và **không** được nói giảm: chỉ game bốc đống chơi
- * được. Ngoài họ ấy thì mọi thứ đều nằm ngoài, và không phải vì thiếu một luật
- * nữa mà vì `Move` ở đây là "một đống biến thành mấy đống":
+ * Cái giá phải trả, nói thẳng, và **không** được nói giảm: thế phải là một **đa
+ * tập số nguyên**, và hai bên phải cùng luật. Ngoài đó thì nằm ngoài:
  *
- *   - **Wythoff** — một nước ăn *hai* đống cùng lúc.
- *   - **Trò Euclid** — nước đi từ đống này đọc cỡ đống kia.
  *   - **Nim Fibonacci** — luật nhớ **nước trước**, nên đa tập đống không đủ mô tả ván.
- *   - **Nim Lasker** (bốc *hoặc* chia) — `rule` là **một** thành viên, không hợp được hai.
  *   - **Chomp, Hackenbush, lật đồng xu, cờ trên đồ thị, game bàn cờ, game tô màu**
  *     — thế không phải đa tập số, chấm hết.
  *   - **Game partizan** — solver giả định hai bên cùng luật.
  *
  * Đó là GM-01 thật sự, và nó vẫn còn nợ.
  */
+const SUBTRACT = Type.Object(
+  {
+    type: Type.Literal('subtract'),
+    /** Bốc từ **một** đống, số lượng trong khoảng này. */
+    min: Type.Integer({ minimum: 1, default: 1 }),
+    /** Vắng nghĩa là không giới hạn — đó chính là Nim. */
+    max: Type.Optional(Type.Integer({ minimum: 1 })),
+  },
+  { additionalProperties: false },
+);
+
+const SUBTRACT_SET = Type.Object(
+  {
+    type: Type.Literal('subtract-set'),
+    /** Chỉ được bốc đúng những số này. */
+    allowed: Type.Array(Type.Integer({ minimum: 1 }), { minItems: 1, maxItems: 12 }),
+  },
+  { additionalProperties: false },
+);
+
+const SUBTRACT_FRACTION = Type.Object(
+  {
+    /**
+     * Bốc tối đa **một phần** của đống: $1 \le k \le \lfloor n/d \rfloor$.
+     *
+     * $d = 2$ là "bốc tối đa nửa đống", cách phát biểu rất hay gặp và nhìn qua
+     * tưởng khai được bằng `subtract`. Không: cận ở đây **phụ thuộc thế**, và
+     * điều đó đổi hẳn lời giải — thế thua là $n = 2^m - 1$ ($1, 3, 7, 15, 31$),
+     * trong khi mọi `subtract` có `max` cố định đều cho một cấp số cộng.
+     */
+    type: Type.Literal('subtract-fraction'),
+    denominator: Type.Integer({ minimum: 2, maximum: 12 }),
+  },
+  { additionalProperties: false },
+);
+
+const SPLIT_UNEQUAL = Type.Object(
+  {
+    /** Chia một đống thành hai phần **khác nhau**, cùng khác rỗng (trò Grundy). */
+    type: Type.Literal('split-unequal'),
+  },
+  { additionalProperties: false },
+);
+
+const SPLIT_ANY = Type.Object(
+  {
+    /**
+     * Chia một đống thành hai phần khác rỗng, **cho phép bằng nhau**.
+     *
+     * Khác `split-unequal` đúng ở nước $n \to (n/2, n/2)$, và một nước ấy đổi
+     * hẳn bảng Grundy: trò Grundy có $g(4) = 0$, còn nhánh chia của Nim Lasker
+     * cần $2+2$ để $g(4) = 3$. Nên đây là **hai** thành viên, không phải một
+     * thành viên với một cờ bật tắt.
+     */
+    type: Type.Literal('split-any'),
+  },
+  { additionalProperties: false },
+);
+
+const SUBTRACT_EQUAL_PAIR = Type.Object(
+  {
+    /**
+     * Bốc **cùng một số** viên từ hai đống khác nhau (GM-05) ⇒ **Wythoff**.
+     *
+     * Đây là thành viên đầu tiên mà một nước đụng *hai* đống, và nó phá một giả
+     * định êm ái của bốn thành viên đầu: rằng ván là **tổng** của các trò con độc
+     * lập. Wythoff không phải thế, nên Sprague–Grundy **không** áp dụng và solver
+     * phải duyệt lùi trên cả thế. Xem `isLocalRule` trong `solver.ts` — chỗ đó là
+     * nơi duy nhất biết sự khác biệt ấy.
+     */
+    type: Type.Literal('subtract-equal-pair'),
+  },
+  { additionalProperties: false },
+);
+
+const SUBTRACT_MULTIPLE_OF_OTHER = Type.Object(
+  {
+    /**
+     * Bốc một **bội số dương của đống khác** ra khỏi đống này (GM-06) ⇒ **trò Euclid**.
+     *
+     * Nước đi từ đống này đọc cỡ đống kia, nên tập nước hợp lệ của một đống
+     * **không** là hàm của riêng đống ấy. Cùng lý do với `subtract-equal-pair`:
+     * luật toàn cục, không có Grundy.
+     */
+    type: Type.Literal('subtract-multiple-of-other'),
+  },
+  { additionalProperties: false },
+);
+
+const ATOMS = [
+  SUBTRACT,
+  SUBTRACT_SET,
+  SUBTRACT_FRACTION,
+  SPLIT_UNEQUAL,
+  SPLIT_ANY,
+  SUBTRACT_EQUAL_PAIR,
+  SUBTRACT_MULTIPLE_OF_OTHER,
+] as const;
+
+/** Một thành viên đơn của họ luật. `union` **không** nằm ở đây — xem `GameRule`. */
+export const GameRuleAtom = Type.Union([...ATOMS]);
+export type GameRuleAtom = Static<typeof GameRuleAtom>;
+
+/**
+ * Luật đi: một thành viên, hoặc **hợp** của vài thành viên (GM-07).
+ *
+ * Nim Lasker là "bốc **hoặc** chia", và trước GM-07 thì `rule` là một thành viên
+ * đơn nên phát biểu ấy không viết ra được. `union` chỉ nhận **atom**, không nhận
+ * `union` lồng: hợp của hợp vẫn là hợp, nên cho lồng chỉ thêm một cách viết cùng
+ * một thứ — và một cách viết thêm là một chỗ nữa để hai bên hiểu khác nhau.
+ */
 export const GameRule = Type.Union([
+  ...ATOMS,
   Type.Object(
     {
-      type: Type.Literal('subtract'),
-      /** Bốc từ **một** đống, số lượng trong khoảng này. */
-      min: Type.Integer({ minimum: 1, default: 1 }),
-      /** Vắng nghĩa là không giới hạn — đó chính là Nim. */
-      max: Type.Optional(Type.Integer({ minimum: 1 })),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('subtract-set'),
-      /** Chỉ được bốc đúng những số này. */
-      allowed: Type.Array(Type.Integer({ minimum: 1 }), { minItems: 1, maxItems: 12 }),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      /**
-       * Bốc tối đa **một phần** của đống: $1 \le k \le \lfloor n/d \rfloor$.
-       *
-       * $d = 2$ là "bốc tối đa nửa đống", cách phát biểu rất hay gặp và nhìn qua
-       * tưởng khai được bằng `subtract`. Không: cận ở đây **phụ thuộc thế**, và
-       * điều đó đổi hẳn lời giải — thế thua là $n = 2^m - 1$ ($1, 3, 7, 15, 31$),
-       * trong khi mọi `subtract` có `max` cố định đều cho một cấp số cộng.
-       */
-      type: Type.Literal('subtract-fraction'),
-      denominator: Type.Integer({ minimum: 2, maximum: 12 }),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      /** Chia một đống thành hai phần **khác nhau**, cùng khác rỗng (trò Grundy). */
-      type: Type.Literal('split-unequal'),
+      type: Type.Literal('union'),
+      of: Type.Array(GameRuleAtom, { minItems: 2, maxItems: 3 }),
     },
     { additionalProperties: false },
   ),

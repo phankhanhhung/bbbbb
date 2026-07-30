@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M21 xong (7 engine, phủ ~85%); kho 56 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M22 xong (7 engine, phủ ~85%); kho 59 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -299,6 +299,69 @@ Ba việc rút ra, đã áp dụng:
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
 
+### M22 — Ba họ luật mới của game engine (GM-05/06/07) · [E] — **xong**
+
+Ba hạng mục đứng đầu `docs/ENGINE-BACKLOG.md`, và điều kiện để lấy chúng trước G-C
+đã viết sẵn trong chính tài liệu ấy: không thêm engine, chỉ mở rộng một họ luật
+**đóng** đã có, và **mỗi hạng mục đi kèm một bài** nên năng lực với nội dung tăng
+cùng nhịp. Kho 56 → **59 bài**.
+
+| Hạng mục | Thành viên luật mới | Bài kinh điển |
+|---|---|---|
+| `GM-05` nước đụng **nhiều** đống | `subtract-equal-pair` | Wythoff |
+| `GM-06` nước đọc **đống kia** | `subtract-multiple-of-other` | trò Euclid |
+| `GM-07` **hợp** tới ba thành viên | `union`, `split-any` | Nim Lasker |
+
+**Chỗ tốn công không nằm ở luật.** `Move` phải đổi từ "một đống biến thành mấy
+đống" thành "**mấy** đống biến thành mấy đống"; đổi xong thì solver gần như không
+phải sửa, đúng như dự đoán trong backlog. Nhưng nó kéo theo một hệ quả **không có
+trong dự toán**, và hệ quả ấy lớn hơn cả ba luật cộng lại: với Wythoff và trò
+Euclid, ván **không còn là tổng các trò con độc lập**, nên Sprague–Grundy không áp
+dụng. Giá trị Grundy từng đống ở đó là những con số tính được, trông hợp lý, và
+**vô nghĩa**.
+
+Cách xử lý là chỗ đáng ghi lại: solver phân biệt bằng `isLocalRule`, và với luật
+toàn cục nó **gỡ hẳn** `xor` và `p.grundy` khỏi môi trường DSL thay vì trả `0`. Trả
+`0` thì một `claim` viết `xor == 0` sẽ **đạt**, bài trông như đã kiểm, mà con số ấy
+không có cơ sở nào. Gỡ đi thì biểu thức lỗi ngay lúc validate. Cùng tinh thần ấy,
+`checkBounds` chặn `show_grundy` và view `spectrum` khi luật không cho phép, và
+renderer **nói ra** "phổ một chiều không mô tả được luật này" thay vì vẽ một bảng
+tô sạch một màu.
+
+**Đối chứng cho luật toàn cục phải đổi kiểu.** Với luật cục bộ, `bruteWin` (đệ quy
+thẳng từ định nghĩa, không nhớ gì) là đối chứng độc lập với tầng Grundy. Với luật
+toàn cục thì `analyzeGame` **đã** duyệt lùi, nên một `bruteWin` có nhớ chính là
+thuật toán ấy — so hai bản cùng một thuật toán thì không kiểm được gì. Đối chứng
+thật là **dạng đóng của toán học**: cặp Beatty $(\lfloor n\varphi \rfloor,
+\lfloor n\varphi^2 \rfloor)$ cho Wythoff (kiểm đủ $14 \times 23$ thế), mốc
+$\varphi$ của Cole–Davie cho trò Euclid (kiểm đủ $16 \times 16$), công thức
+$g(n)$ theo $n \bmod 4$ cho Nim Lasker.
+
+**Bốn lỗi khác tìm ra bằng cách render ra PNG rồi nhìn**, không phải bằng test:
+
+1. **Caption bị cắt cụt ở mép khung** — "Bốc một đống, hoặc bốc bằng nhau ở cả hai"
+   hiện ra thành "Bốc một đống, hoặ". Rà tiếp thì **cả năm** engine có caption đều
+   chừa chỗ theo chiều cao rồi quên chiều ngang, và `derivation` còn quên cả chiều
+   dọc. Ba bài **đang publish** bị dính. Sửa bằng một hàm dùng chung
+   `estimateTextWidth` trong `@combviz/render`, cộng một test **đi tìm** engine nào
+   có `caption` trong config schema rồi ép từng cái — nên engine thứ tám không thừa
+   hưởng lại được lỗi này.
+2. **Sỏi treo lơ lửng** — cột con điền từ trên xuống, nên cột cuối thiếu viên thì
+   khoảng trống nằm ở **dưới**, và đống thấp thì lửng lơ ở mép trên trong khi nhãn
+   của nó nằm ở đáy. Nay mọi viên đứng trên **một** mặt sàn.
+3. **Hai đống dính vào nhau** — đống nhiều dãy chạm đống bên cạnh, và ranh giới
+   giữa hai đống là thứ cả bài dựa vào.
+4. **Chạm lệch cột** — `gameHitTest` chia đều theo `SLOT = 10` trong khi cột nhiều
+   dãy rộng hơn thế. Lỗi này **vô hình** suốt vì công cụ cũ chỉ cần một đống và bấm
+   nhầm thì lệnh lặng lẽ từ chối; công cụ Wythoff cần **hai**, và lúc ấy lệch một
+   cột là đi nhầm nước. Nay chạm và vẽ đọc **cùng** một hàm `pileBands`.
+
+Điểm chung của cả bốn: không cái nào làm test đỏ, và cả bốn đều thấy ngay ở lần
+nhìn đầu tiên. Đây là lần thứ tư trong kho này "render ra ảnh rồi nhìn" tìm ra thứ
+mà 900 test không tìm ra.
+
+933 test, 59 bài 0 lỗi 0 cảnh báo.
+
 ### M21 — Rà quy ước nào còn bị bỏ qua · [E] — **xong**
 
 Sau M20, câu hỏi tự nhiên: còn quy ước nào viết ra rồi để đó nữa? Rà cả 17 quyết
@@ -512,6 +575,9 @@ nước là "một đống biến thành mấy đống". Wythoff (ăn hai đốn
 đống kia), Nim Fibonacci (nhớ nước trước), Nim Lasker (hợp hai luật), Chomp, cờ
 trên đồ thị, game bàn cờ, game partizan — tất cả nằm ngoài, và không phải vì
 thiếu một luật nữa.
+
+> *(M22 đã đổi `Move` thành "mấy đống biến thành mấy đống" và lấy được ba dòng đầu
+> — Wythoff, trò Euclid, Nim Lasker. Bốn dòng còn lại vẫn đúng nguyên văn.)*
 
 **Một dòng vá được ngay:** "bốc tối đa nửa đống" là cách phát biểu rất hay gặp mà
 `subtract` không khai được (thế thua $2^m - 1$, không phải cấp số cộng). Thêm
@@ -918,7 +984,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 56 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 59 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):

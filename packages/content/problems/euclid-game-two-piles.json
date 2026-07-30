@@ -1,0 +1,260 @@
+{
+  "schema_version": "0.1.0",
+  "id": "euclid-game-two-piles",
+  "statement": {
+    "vi": "Hai đống sỏi có $25$ và $7$ viên. Mỗi lượt, người đi chọn một đống rồi bốc khỏi đống ấy một **bội số dương của số viên ở đống kia** (không được bốc quá số viên đang có). Ai không còn nước đi thì thua. Hỏi ai có chiến lược thắng?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Trò Euclid (Cole–Davie 1969). Một ván chính là thuật toán Euclid tìm ước chung lớn nhất, chơi ngược."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "invariant",
+    "induction"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "game"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "moves",
+      "id": "inv-m",
+      "label": {
+        "vi": "Số nước đi được"
+      }
+    },
+    {
+      "expr": "total",
+      "id": "inv-t",
+      "label": {
+        "vi": "Số viên còn lại"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thế bắt đầu: [[a1|$25$ và $7$]]. Điều đầu tiên phải để ý là **tập nước đi của một đống không đọc được từ chính đống ấy**: khỏi đống $25$ bốc được $7$, $14$ hay $21$ viên — cả ba đều là bội của $7$ — còn khỏi đống $7$ thì không bốc được gì, vì $25 > 7$. Vậy có ${{moves}}$ nước, và cả ba đều nằm ở một đống."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0",
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Bốc một bội số của đống kia",
+              "rule": {
+                "type": "subtract-multiple-of-other"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 25
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 7
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai đống sỏi, một đống hai mươi lăm viên và một đống bảy viên."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "moves == 3",
+            "winning == true",
+            "winning_moves == 1"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nước thắng **duy nhất** là bốc $14$ viên, về [[a2|$(11,7)$]]. Từ đây đối thủ chỉ còn ${{moves}}$ nước — bốc $7$ về $(4,7)$ — và một thế chỉ có một nước là thế bị dẫn. Hai nước kia của thế trước, về $(18,7)$ và $(4,7)$, đều để lại tỉ số **lớn**, và ta sẽ thấy tỉ số lớn nghĩa là thế thắng."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "p0",
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Thế thua: 11/7 < 1,618",
+              "rule": {
+                "type": "subtract-multiple-of-other"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 11
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 7
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai đống: mười một viên và bảy viên."
+          },
+          "verified": true,
+          "claims": [
+            "winning == false",
+            "moves == 1"
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đối thủ buộc phải đi về [[a3|$(4,7)$]], và thế này **thắng**: bốc $4$ viên khỏi đống $7$ là về $(4,3)$. Nhìn tỉ số hai đống ở ba thế vừa qua: $11/7 \\approx 1{,}571$ thua, $7/4 = 1{,}75$ thắng, $4/3 \\approx 1{,}333$ thua. Mốc chia đôi hai bên là $\\varphi = \\frac{1+\\sqrt5}{2} \\approx 1{,}618$, và các cặp Fibonacci kề nhau nằm sát hai bên mốc ấy nên chúng đổi kết cục luân phiên."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "p0",
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Thế thắng: 7/4 > 1,618",
+              "rule": {
+                "type": "subtract-multiple-of-other"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 4
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 7
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai đống: bốn viên và bảy viên."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "winning == true",
+            "winning_moves == 1"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Lý do gọn. Nếu $1 < b/a < \\varphi$ thì $(a,b)$ có **đúng một** nước, và nước ấy về $(b-a, a)$ với tỉ số $a/(b-a) > \\varphi$; còn nếu $b/a > \\varphi$ thì có một nước hạ tỉ số xuống dưới $\\varphi$. Đề cho [[a4|$25/7 > \\varphi$]] nên **người đi trước thắng**. Ván này còn một cách đọc: dãy thế $(25,7) \\to (11,7) \\to (4,7) \\to (4,3) \\to (1,3) \\to (1,0)$ đúng là các bước thuật toán Euclid tìm $\\gcd(25,7) = 1$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "p0",
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Người đi trước thắng — bốc 14 viên",
+              "rule": {
+                "type": "subtract-multiple-of-other"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 25
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 7
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Trở lại hai đống hai mươi lăm và bảy viên — thế thắng của người sắp đi."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "winning == true",
+            "moves == 3"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "hand-opponent-a-loss"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

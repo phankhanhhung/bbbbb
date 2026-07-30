@@ -29,12 +29,22 @@ export function gameEnvironment(scene: Scene): DslEnvironment {
   const counts = state.piles.map((p) => p.count);
   const analysis = analyzeGame(counts, state.config.rule, state.config.misere === true);
 
+  /**
+   * Grundy chỉ tồn tại khi lý thuyết ấy áp dụng được.
+   *
+   * Với Wythoff, trò Euclid hay quy ước misère, `analysis.grundy` rỗng. Cách dễ
+   * là bày ra `0` — và đó đúng là cách sai: một biểu thức `xor == 0` sẽ **đạt**,
+   * bài trông như đã kiểm, mà con số ấy không có nghĩa gì. Ở đây binding **vắng
+   * mặt**, nên biểu thức nào chạm vào nó sẽ lỗi ngay lúc validate.
+   */
+  const hasGrundy = analysis.grundy.length > 0;
+
   const piles: Value[] = state.piles.map((p, i) =>
     element(p.id, {
       count: p.count,
       label: p.label ?? '',
       color_class: p.colorClass,
-      grundy: analysis.grundy[i] ?? 0,
+      ...(hasGrundy ? { grundy: analysis.grundy[i] as number } : {}),
     }),
   );
 
@@ -44,7 +54,7 @@ export function gameEnvironment(scene: Scene): DslEnvironment {
       n: state.piles.length,
       total: counts.reduce((a, b) => a + b, 0),
       /** XOR các giá trị Grundy. Bằng $0$ đúng khi người sắp đi thua (luật thường). */
-      xor: analysis.xor,
+      ...(hasGrundy ? { xor: analysis.xor } : {}),
       /** Người **sắp đi** có thắng không, nếu cả hai chơi tối ưu. */
       winning: analysis.refused === undefined && analysis.winning,
       /** Số nước hợp lệ từ thế này. */

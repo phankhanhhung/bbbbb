@@ -1,0 +1,322 @@
+{
+  "schema_version": "0.1.0",
+  "id": "lasker-nim-take-or-split",
+  "statement": {
+    "vi": "Ba đống sỏi có $1$, $2$ và $3$ viên. Mỗi lượt, người đi **hoặc** bốc bất kì số viên dương từ một đống, **hoặc** chia một đống thành hai đống khác rỗng mà không bốc viên nào. Ai bốc viên cuối cùng thì thắng. Hỏi ai có chiến lược thắng?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Nim Lasker. Luật là hợp của hai nhóm nước, và chính nhóm chia đảo ngược đáp số của Nim thường."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "invariant",
+    "induction"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "game"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "xor",
+      "id": "inv-x",
+      "label": {
+        "vi": "XOR các giá trị Grundy"
+      }
+    },
+    {
+      "expr": "total",
+      "id": "inv-t",
+      "label": {
+        "vi": "Số viên còn lại"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nếu chỉ được bốc thì đây là Nim, và [[a1|$1$, $2$, $3$]] là thế **thua** kinh điển: $1 \\oplus 2 \\oplus 3 = 0$. Con số dưới mỗi đống là giá trị Grundy, và với Nim nó đúng bằng cỡ đống. Giữ hình này trong đầu — thêm nhóm nước chia vào, đáp số sẽ đảo."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0",
+                "p1",
+                "p2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Nim thường: chỉ được bốc",
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              },
+              "show_grundy": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 1
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 2
+              },
+              {
+                "id": "p2",
+                "type": "pile",
+                "count": 3
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba đống một, hai và ba viên, dưới mỗi đống ghi g bằng một, hai, ba."
+          },
+          "verified": true,
+          "claims": [
+            "xor == 0",
+            "winning == false"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nay thêm nhóm nước chia. Nhóm chia **không** làm tổng số viên giảm, nên nó không thêm nước nào vào đống $1$, mà lại thêm cho đống $3$ nước $3 \\to (1,2)$. Bảng Grundy đổi theo, và đọc ngay được dưới [[a2|đống thứ ba]]: $g(3) = 4$ chứ không còn là $3$. XOR thành ${{xor}} \\ne 0$, nên **người đi trước thắng**."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "p2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Nim Lasker: bốc hoặc chia",
+              "rule": {
+                "of": [
+                  {
+                    "min": 1,
+                    "type": "subtract"
+                  },
+                  {
+                    "type": "split-any"
+                  }
+                ],
+                "type": "union"
+              },
+              "show_grundy": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 1
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 2
+              },
+              {
+                "id": "p2",
+                "type": "pile",
+                "count": 3
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng ba đống, nhưng dưới đống ba viên ghi g bằng bốn."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "xor == 7",
+            "winning == true",
+            "winning_moves == 1"
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Có đúng ${{winning_moves}}$ nước thắng, và nó **là** một nước chia: tách đống $3$ thành [[a3|$1$ và $2$]]. Thế sau đó gồm bốn đống $1, 2, 1, 2$ với Grundy $1, 2, 1, 2$, nên XOR về ${{xor}}$. Bốc thì không nước nào đạt được điều đó: muốn XOR về $0$ phải đổi $g$ của một đống thành $3$, mà $g$ chỉ nhận $3$ ở đống $4$ viên — lớn hơn mọi đống đang có."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "p2",
+                "p3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Sau nước chia 3 thành 1 + 2",
+              "rule": {
+                "of": [
+                  {
+                    "min": 1,
+                    "type": "subtract"
+                  },
+                  {
+                    "type": "split-any"
+                  }
+                ],
+                "type": "union"
+              },
+              "show_grundy": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 1
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 2
+              },
+              {
+                "id": "p2",
+                "type": "pile",
+                "count": 1
+              },
+              {
+                "id": "p3",
+                "type": "pile",
+                "count": 2
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn đống một, hai, một, hai viên; Grundy một, hai, một, hai."
+          },
+          "verified": true,
+          "claims": [
+            "xor == 0",
+            "winning == false",
+            "n == 4"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Quy luật của bảng Grundy hiện ra khi xếp bốn đống [[a4|$1, 2, 3, 4$]] cạnh nhau: $1, 2, 4, 3$ — hai giá trị cuối **đổi chỗ**. Nói chung $g(n) = n$ khi $n \\equiv 1, 2$, $g(n) = n+1$ khi $n \\equiv 3$, và $g(n) = n-1$ khi $n \\equiv 0 \\pmod 4$. Nên với Nim Lasker, \"cỡ đống\" và \"giá trị Grundy\" là hai chuyện khác nhau."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "p0",
+                "p1",
+                "p2",
+                "p3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Bảng Grundy: 1, 2, 4, 3",
+              "rule": {
+                "of": [
+                  {
+                    "min": 1,
+                    "type": "subtract"
+                  },
+                  {
+                    "type": "split-any"
+                  }
+                ],
+                "type": "union"
+              },
+              "show_grundy": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 1
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 2
+              },
+              {
+                "id": "p2",
+                "type": "pile",
+                "count": 3
+              },
+              {
+                "id": "p3",
+                "type": "pile",
+                "count": 4
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn đống một, hai, ba, bốn viên; dưới chúng ghi g bằng một, hai, bốn, ba."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "sum(piles, p => p.grundy) == 10",
+            "winning == true"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "hand-opponent-a-loss"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

@@ -1,6 +1,6 @@
 # CombViz — Checklist làm mạnh từng engine
 
-**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay**
+**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · Ba hạng mục đầu (`GM-05/06/07`) **đã làm ở M22**
 
 ## 0. Đọc checklist này đúng cách
 
@@ -10,6 +10,14 @@
 trong khi chưa có bài nào do chính chủ soạn là **R-1** (content bottleneck) ở dạng
 mới. `PRD-07` cấm thêm engine chỉ để tăng coverage. Tài liệu này là **danh sách
 chờ**, dựng sẵn để khi mở ra thì không phải nghĩ lại — không phải lệnh xuất phát.
+
+> **Ngoại lệ đã dùng, ngày 2026-07-30 (M22).** Ba hạng mục đầu — `GM-05/06/07` —
+> đã làm, và điều kiện để chúng **không** vi phạm `R-13` là điều kiện §2.6 vốn đã
+> viết ra: chúng không thêm engine (`PRD-07` không đụng tới), chúng là mở rộng một
+> họ luật **đóng** đã có, và mỗi hạng mục **đi kèm một bài** nên năng lực và nội
+> dung tăng cùng nhịp — kho 56 → 59 bài. Ngoại lệ này **không** mở rộng ra các
+> hạng mục còn lại: mọi hạng mục từ #4 trở xuống hoặc đụng engine chưa đủ bài để
+> biết nó thiếu gì, hoặc là năng lực không có bài đi kèm. Chúng vẫn chờ G-C.
 
 ### 0.2 Mỗi hạng mục phải có bằng chứng, không có ý tưởng suông
 
@@ -21,19 +29,19 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 56 bài đã xuất bản:
+Đo trên 59 bài đã xuất bản (56 lúc dựng tài liệu này, cộng ba bài của M22):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
 | `board` | 20 | Chủ lực. Khoảng trống ở đây là khoảng trống **thật sự cảm thấy được**. |
 | `graph` | 18 | Chủ lực. Cùng loại. |
 | `sequence` | 10 | Đủ để tin. |
-| `game` | 3 | Năng lực đi trước nội dung — nhưng xem §2.6, ba hạng mục ở đó **rẻ** và mỗi cái có một bài kinh điển đứng chờ sẵn. |
+| `game` | 6 | Ba hạng mục ở §2.6 **đã làm** (M22), mỗi cái kèm một bài kinh điển: Wythoff, trò Euclid, Nim Lasker. |
 | `point` | 3 | Nội dung trước. Engine chưa bị dùng đủ để biết nó thiếu gì. |
 | `set` | 3 | Nội dung trước. |
 | `derivation` | 2 | Nội dung trước — và dòng 🟡 duy nhất của nó nói **thiếu bài**, không thiếu năng lực. |
 
-Bốn engine cuối cộng lại có **11 bài**. Thêm năng lực cho một engine mới 2–3 bài là
+Bốn engine cuối cộng lại có **14 bài**, và $6$ trong số đó là của `game`. Thêm năng lực cho một engine mới 2–3 bài là
 đoán, không phải đáp ứng.
 
 ### 0.4 Họ ID
@@ -54,9 +62,9 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 
 | # | Hạng mục | Engine | Mở khoá | Rẻ? | Bằng chứng |
 |---:|---|---|---|---|---|
-| 1 | `GM-05` nước đi đụng **nhiều** đống | game | Wythoff | rất rẻ | ❌ "một nước chỉ đụng **một** đống" |
-| 2 | `GM-06` luật đọc đống khác | game | trò Euclid | rất rẻ | ❌ "nước ăn theo đống kia" |
-| 3 | `GM-07` hợp hai luật | game | Nim Lasker | rất rẻ | §4 "`rule` là **một** thành viên" |
+| ~~1~~ | ~~`GM-05` nước đi đụng **nhiều** đống~~ ✅ M22 | game | Wythoff | rất rẻ | ~~❌ "một nước chỉ đụng **một** đống"~~ |
+| ~~2~~ | ~~`GM-06` luật đọc đống khác~~ ✅ M22 | game | trò Euclid | rất rẻ | ~~❌ "nước ăn theo đống kia"~~ |
+| ~~3~~ | ~~`GM-07` hợp hai luật~~ ✅ M22 | game | Nim Lasker | rất rẻ | ~~§4 "`rule` là **một** thành viên"~~ |
 | 4 | `SQ-01` analyzer dãy con đơn điệu | sequence | Erdős–Szekeres | rẻ | 🟡 "thiếu analyzer dãy con đơn điệu" |
 | 5 | `GR-09` analyzer mã Prüfer | graph | Cayley $n^{n-2}$ | rẻ | 🟡 "thiếu analyzer sinh mã Prüfer" |
 | 6 | `BD-08`+`SQ-02` luật lan truyền | board+seq | chip-firing, lights-out | vừa | 🟡 "thiếu luật lan truyền" |
@@ -66,6 +74,7 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | 10 | `PRN-04` animation biến hình | cross | **cả họ song ánh (14%)** | đắt | §2 "còn thiếu: animation biến hình của PRN-04" |
 | 11 | `BD-05` vùng khuyết vẽ tay + torus | board | bài trên hình xuyến | vừa | SRS `BD-05` [P2] |
 | 12 | `ST-03` dot/bar cho đa tập | set | đếm theo lớp | rẻ | SRS `ST-03` [P2] |
+| 13 | `GM-08` phổ **hai chiều** | game | quy luật Wythoff nhìn thành một vệt | vừa | §2.6 — `spectrum` là bảng một chiều |
 
 `PRN-04` là hạng mục **trọng số cao nhất** trong bảng — nó là khoảng trống duy nhất
 còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưng nó phụ thuộc
@@ -145,21 +154,36 @@ thiếu gì. Việc đúng là soạn thêm bài extremal set theory rồi đọ
 - **PT-03 [P3] MAY** — tô vùng do các đoạn chia. **SRS tự nói hoãn**: "đắt và hiếm
   bài cần; chỉ làm khi seed content P3 đòi hỏi." Giữ nguyên chữ ấy.
 
-### 2.6 `game` — 3 bài, nhưng là chỗ **lãi nhất** cả bảng
+### 2.6 `game` — 6 bài · **Tầng A đã làm xong ở M22**
 
 Ba hạng mục dưới đây đều là **mở rộng họ luật đóng**, và tiền lệ đã có: M17b thêm
 `subtract-fraction` trong một buổi và nó biến "bốc tối đa nửa đống" từ ❌ thành ✅.
-Mỗi hạng mục có một bài kinh điển đứng chờ sẵn.
+Cả ba đã làm, mỗi cái kèm bài kinh điển của nó.
 
-- **GM-05 [P3] SHOULD** — `Move` đụng **nhiều** đống cùng lúc ⇒ **Wythoff**. Hôm
-  nay `Move` là "một đống biến thành mấy đống", nên nước chéo của Wythoff không
-  diễn đạt được. Đổi kiểu `Move` là chỗ tốn công thật, phần solver thì không.
-- **GM-06 [P3] SHOULD** — luật đọc **cỡ đống khác** khi sinh nước ⇒ **trò Euclid**.
-- **GM-07 [P3] SHOULD** — `rule` nhận **hợp** hai thành viên (bốc **hoặc** chia) ⇒
-  **Nim Lasker**. Hôm nay `rule` là một thành viên đơn.
+- **GM-05 ✅** — `Move` đụng **nhiều** đống cùng lúc ⇒ **Wythoff**
+  (`wythoff-two-piles`). Đúng như dự đoán: đổi kiểu `Move` từ "một đống biến thành
+  mấy đống" sang "mấy đống biến thành mấy đống" là chỗ tốn công thật, solver thì
+  gần như không phải sửa.
+- **GM-06 ✅** — luật đọc **cỡ đống khác** khi sinh nước ⇒ **trò Euclid**
+  (`euclid-game-two-piles`). Không cần lệnh mới: một khi `allMoves` đọc cả thế thì
+  nút "Bốc $k$" của thanh công cụ tự đúng theo đống bên kia.
+- **GM-07 ✅** — `rule` nhận **hợp** tới ba thành viên ⇒ **Nim Lasker**
+  (`lasker-nim-take-or-split`), cộng một thành viên `split-any` cho nhánh chia đều.
 
-**Tầng B — cố ý không làm, và có tên rồi**
+**Một hệ quả không có trong dự toán, và nó lớn hơn cả ba luật.** Wythoff và trò
+Euclid làm ván **không còn là tổng các trò con độc lập**, nên Sprague–Grundy không
+áp dụng: `grundy` và `xor` ở đó là những con số trông rất thuyết phục và vô nghĩa.
+Solver phân biệt bằng `isLocalRule`, và với luật toàn cục nó **gỡ hẳn** hai binding
+ấy khỏi DSL để mọi biểu thức chạm vào chúng lỗi ngay lúc validate. Bài học lặp lại
+lần thứ tư trong kho này: chỗ nguy hiểm không phải chỗ không tính được, mà là chỗ
+tính ra một con số không ai kiểm.
 
+**Còn nợ, và đã có tên**
+
+- **GM-08 [P3] MAY** — phổ **hai chiều** cho game hai đống. Hôm nay `spectrum` là
+  bảng một chiều nên Wythoff không có view "quy luật là gì" — bài
+  `wythoff-two-piles` phải kể dãy thế thua bằng từng scene rời. Một lưới $(a,b)$ tô
+  ô lạnh sẽ cho đúng thứ mà `spectrum` cho họ bốc sỏi: **một vệt** hiện ra.
 - **GM-01 / DOM-04** — rule script tổng quát cho Chomp, cờ trên đồ thị, game bàn
   cờ, game partizan. Đây là DSL-03 thật sự và nó đi thẳng vào **R-2**. Đã hoãn có
   lý do viết ra; đừng mở bằng cửa sau.

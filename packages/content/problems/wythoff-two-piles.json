@@ -1,0 +1,346 @@
+{
+  "schema_version": "0.1.0",
+  "id": "wythoff-two-piles",
+  "statement": {
+    "vi": "Hai đống sỏi có $10$ và $15$ viên. Hai người lần lượt đi; mỗi lượt được bốc bất kì số viên dương từ **một** đống, **hoặc** bốc cùng một số viên dương từ **cả hai** đống. Ai bốc viên cuối cùng thì thắng. Hỏi ai có chiến lược thắng?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Trò Wythoff. Nước chéo phá tính độc lập giữa hai đống, nên XOR của Nim không còn dùng được."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "invariant",
+    "induction"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "game"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "total",
+      "id": "inv-t",
+      "label": {
+        "vi": "Số viên còn lại"
+      }
+    },
+    {
+      "expr": "moves",
+      "id": "inv-m",
+      "label": {
+        "vi": "Số nước đi được"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thế bắt đầu: [[a1|$10$ và $15$]]. Người đi trước có ${{moves}}$ nước — $25$ nước bốc ở một đống, cộng $10$ nước bốc bằng nhau ở cả hai. Chính $10$ nước sau làm bài này **không phải** Nim: ở Nim hai đống là hai trò chơi rời nhau, còn ở đây một nước đụng cả hai, nên không có cách nào tách ván thành tổng hai phần độc lập. Vì thế cũng không có giá trị Grundy nào để XOR."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0",
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Bốc một đống, hoặc bốc bằng nhau ở cả hai",
+              "rule": {
+                "of": [
+                  {
+                    "min": 1,
+                    "type": "subtract"
+                  },
+                  {
+                    "type": "subtract-equal-pair"
+                  }
+                ],
+                "type": "union"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 10
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 15
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai đống sỏi, một đống mười viên và một đống mười lăm viên."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "total == 25",
+            "moves == 35",
+            "winning == true",
+            "winning_moves == 3"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thế thua nhỏ nhất là [[a2|$(1,2)$]]. Kiểm bằng tay được cả ba nhóm nước: bốc hết đống $1$ còn $(2)$ — đối thủ lấy nốt; bốc ở đống $2$ còn $(1,1)$ hoặc $(1)$; bốc bằng nhau chỉ được $1$ viên, còn $(1)$. Mọi nhánh đều **cho đối thủ** nước cuối, nên thế này thua."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "p0",
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Thế thua nhỏ nhất",
+              "rule": {
+                "of": [
+                  {
+                    "min": 1,
+                    "type": "subtract"
+                  },
+                  {
+                    "type": "subtract-equal-pair"
+                  }
+                ],
+                "type": "union"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 1
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 2
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai đống: một viên và hai viên."
+          },
+          "verified": true,
+          "claims": [
+            "winning == false",
+            "moves == 4"
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thế thua kế tiếp là [[a3|$(3,5)$]], và đây là chỗ đáng dừng lại: ở Nim thì $3 \\oplus 5 \\ne 0$ nên người đi trước **thắng**. Cùng một hình sỏi, thêm một nhóm nước, đáp số đổi hẳn. Tiếp tục dò lên sẽ được $(4,7)$, $(6,10)$, $(8,13)$, $(9,15)$ — hiệu hai đống là $1, 2, 3, 4, 5, 6$, tăng đúng một mỗi lần."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "p0",
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Thế thua thứ hai — ở Nim thì thế này thắng",
+              "rule": {
+                "of": [
+                  {
+                    "min": 1,
+                    "type": "subtract"
+                  },
+                  {
+                    "type": "subtract-equal-pair"
+                  }
+                ],
+                "type": "union"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 3
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 5
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai đống: ba viên và năm viên."
+          },
+          "verified": true,
+          "claims": [
+            "winning == false"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Quy luật: thế thua thứ $n$ là $(\\lfloor n\\varphi \\rfloor, \\lfloor n\\varphi^2 \\rfloor)$ với $\\varphi = \\frac{1+\\sqrt5}{2}$; hiệu đúng bằng $n$ vì $\\varphi^2 - \\varphi = 1$. Mỗi số nguyên dương xuất hiện **đúng một lần** trong toàn bộ danh sách, nên qua mỗi thế thua có duy nhất một cách đi tới. [[a4|$(8,13)$]] là thế thua thứ $5$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "p0",
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Thế thua thứ năm",
+              "rule": {
+                "of": [
+                  {
+                    "min": 1,
+                    "type": "subtract"
+                  },
+                  {
+                    "type": "subtract-equal-pair"
+                  }
+                ],
+                "type": "union"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 8
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 13
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai đống: tám viên và mười ba viên."
+          },
+          "verified": true,
+          "claims": [
+            "winning == false"
+          ]
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Trở lại [[a5|$(10,15)$]]: hiệu là $5$, mà thế thua có hiệu $5$ là $(8,13)$ — không phải thế này. Vậy **người đi trước thắng**, và có đúng ${{winning_moves}}$ nước: bốc $9$ viên ở đống $15$ về $(10,6)$, bốc $1$ viên ở đống $10$ về $(9,15)$, hoặc bốc $2$ viên ở **cả hai** đống về $(8,13)$. Nước thứ ba không diễn đạt được trong Nim, và nó cũng là nước ngắn nhất tới đích."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "p0",
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "caption": "Người đi trước thắng — có một nước chéo",
+              "rule": {
+                "of": [
+                  {
+                    "min": 1,
+                    "type": "subtract"
+                  },
+                  {
+                    "type": "subtract-equal-pair"
+                  }
+                ],
+                "type": "union"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 10
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 15
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Trở lại hai đống mười và mười lăm viên — thế thắng của người sắp đi."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "winning == true",
+            "winning_moves == 3"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "hand-opponent-a-loss"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s4"
+  }
+}
