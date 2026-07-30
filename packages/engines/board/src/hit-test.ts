@@ -5,7 +5,9 @@ import {
   cellAt,
   isLatticeShape,
   latticeTileCells,
+  wrapOf,
   type Lattice,
+  type Wrap,
 } from './lattice.js';
 import { cellId } from './ids.js';
 import { tileCells } from './dsl.js';
@@ -46,11 +48,12 @@ export const boardHitTest: HitTest = (scene: Scene, point: ScenePoint): string[]
 
   const hits: string[] = [];
   const lattice = latticeOf(config);
+  const board = { rows: config?.rows ?? 0, cols: config?.cols ?? 0, wrap: wrapOf(config) };
 
   // Duyệt ngược mảng: element vẽ sau nằm trên, nên nó được chạm trước.
   const ordered = [...scene.elements].sort((a, b) => (b.layer ?? 0) - (a.layer ?? 0));
   for (const element of ordered) {
-    if (occupies(element, lattice, row, col)) hits.push(element.id);
+    if (occupies(element, lattice, board, row, col)) hits.push(element.id);
   }
 
   if (cell !== null && row >= 0 && col >= 0) hits.push(cellId(row, col));
@@ -61,11 +64,12 @@ export const boardHitTest: HitTest = (scene: Scene, point: ScenePoint): string[]
 function occupies(
   element: Scene['elements'][number],
   lattice: Lattice,
+  board: { rows: number; cols: number; wrap: Wrap },
   row: number,
   col: number,
 ): boolean {
   if (element.type === 'tile') {
-    return tileCells(element, lattice).some(([r, c]) => r === row && c === col);
+    return tileCells(element, lattice, board).some(([r, c]) => r === row && c === col);
   }
 
   if (element.type === 'piece') {

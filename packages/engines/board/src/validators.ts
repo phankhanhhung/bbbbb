@@ -6,7 +6,7 @@ import {
 } from '@combviz/schema';
 import { deriveBoard, piecesAttack, tileCells } from './dsl.js';
 import { cellColorClass, FLIP_CLASSES, latticeOf } from './geometry.js';
-import { cellsInRow, inBoard, neighbours } from './lattice.js';
+import { cellsInRow, inBoard, neighbours, wrapOf } from './lattice.js';
 import { cellId } from './ids.js';
 import type { BoardConfig } from './schema.js';
 
@@ -26,11 +26,13 @@ const tilesNoOverlap: SceneValidator = {
   check(scene: Scene): ValidatorOutcome {
     const owner = new Map<string, string>();
     const violations = new Set<string>();
-    const lattice = latticeOf(scene.config as BoardConfig | undefined);
+    const config = scene.config as BoardConfig | undefined;
+    const lattice = latticeOf(config);
+    const board = { rows: config?.rows ?? 0, cols: config?.cols ?? 0, wrap: wrapOf(config) };
 
     for (const item of scene.elements) {
       if (item.type !== 'tile') continue;
-      for (const [r, c] of tileCells(item, lattice)) {
+      for (const [r, c] of tileCells(item, lattice, board)) {
         const key = `${r},${c}`;
         const previous = owner.get(key);
         if (previous) {
@@ -62,7 +64,11 @@ const tilesInBounds: SceneValidator = {
 
     for (const item of scene.elements) {
       if (item.type !== 'tile') continue;
-      const cells = tileCells(item, lattice);
+      const cells = tileCells(item, lattice, {
+        rows: config.rows,
+        cols: config.cols,
+        wrap: wrapOf(config),
+      });
       const bad = cells.some(
         ([r, c]) =>
           // `inBoard` chứ không phải so với `rows`/`cols`: trên lưới tam giác hàng
@@ -173,7 +179,14 @@ function properColouring(maxColours: number | null): SceneValidator {
           }
           used.add(mine);
 
-          for (const [nr, nc] of neighbours(lattice, config.rows, config.cols, r, c)) {
+          for (const [nr, nc] of neighbours(
+            lattice,
+            config.rows,
+            config.cols,
+            r,
+            c,
+            wrapOf(config),
+          )) {
             if (holes.has(`${nr},${nc}`)) continue;
             if (cellColorClass(config, nr, nc) !== mine) continue;
             clash.add(cellId(r, c));

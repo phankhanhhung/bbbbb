@@ -1,0 +1,613 @@
+{
+  "schema_version": "0.1.0",
+  "id": "lights-out-torus",
+  "statement": {
+    "vi": "Bàn $4\\times4$ có mười sáu bóng đèn đang sáng, và bàn được dán mép thành **hình xuyến**: ô ở cột cuối kề ô ở cột đầu, ô ở hàng cuối kề ô ở hàng đầu. Mỗi lượt được bấm một ô; khi đó ô ấy và bốn ô kề nó đổi trạng thái sáng ↔ tắt. Chứng minh rằng tắt được hết đèn."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bản hình xuyến của trò Lights Out. Trên bàn dán mép, phép tô \"bấm hết\" luôn thành công vì lưới xuyến là **đỉnh-truyền**: mọi ô có cùng bậc."
+    }
+  },
+  "topics": [
+    "coloring",
+    "pieces"
+  ],
+  "techniques": [
+    "parity",
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "count(cells, c => c.color_class == 1)",
+      "id": "inv-con-sang",
+      "label": {
+        "vi": "Số đèn còn sáng"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol-bam-het",
+      "label": {
+        "vi": "Bấm hết mọi ô"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bàn $4\\times4$, [[a1|cả mười sáu đèn đang sáng]]. Luật vẫn như trò bật tắt đèn quen thuộc: bấm một ô thì ô ấy và các ô kề nó đổi trạng thái. Nhưng bàn này **dán mép** — mũi tên ở hai bên cho biết cạnh trái dán vào cạnh phải, cạnh trên dán vào cạnh dưới. Bàn thành một **hình xuyến**."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-1",
+                "cell-0-2",
+                "cell-0-3",
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2",
+                "cell-1-3",
+                "cell-2-0",
+                "cell-2-1",
+                "cell-2-2",
+                "cell-2-3",
+                "cell-3-0",
+                "cell-3-1",
+                "cell-3-2",
+                "cell-3-3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-3": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-3": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-3": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-3-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-3-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-3-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-3-3": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                }
+              },
+              "cols": 4,
+              "rows": 4,
+              "wrap": "torus"
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bàn 4×4 sáng hết, hai cạnh dọc mang một mũi tên và hai cạnh ngang mang hai mũi tên — ký hiệu dán mép."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "expects_violation": [
+            "all-cells:2"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Dán mép đổi đúng một thứ, và là thứ quan trọng nhất: **quan hệ kề**. [[a2|Ô ở mép trái]] kề với ô ở mép phải cùng hàng. Hệ quả: trên hình xuyến **mọi ô đều có đúng $4$ láng giềng** — không còn ô góc, không còn ô cạnh. Trên bàn thường thì ô góc chỉ có $2$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "ke"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-3": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-3": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-3": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-3-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-3-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-3-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-3-3": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                }
+              },
+              "cols": 4,
+              "rows": 4,
+              "wrap": "torus"
+            },
+            "elements": [
+              {
+                "id": "ke",
+                "type": "region",
+                "emphasis": "focus",
+                "cells": [
+                  [1, 0],
+                  [0, 0],
+                  [1, 1],
+                  [1, 3],
+                  [2, 0]
+                ],
+                "label": "ô và bốn láng giềng"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một ô ở cột đầu được khoanh cùng bốn láng giềng của nó, trong đó một ô nằm tận cột cuối."
+          },
+          "expects_violation": [
+            "all-cells:2"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy hãy bấm **mọi** ô, cả mười sáu ô. Đếm xem [[a5|mỗi ô]] bị chạm bao nhiêu lần: một lần do chính nó được bấm, cộng bốn lần do bốn láng giềng được bấm. Tổng là $5$ với **mọi** ô — và $5$ là số lẻ."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-1",
+                "cell-0-2",
+                "cell-0-3",
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2",
+                "cell-1-3",
+                "cell-2-0",
+                "cell-2-1",
+                "cell-2-2",
+                "cell-2-3",
+                "cell-3-0",
+                "cell-3-1",
+                "cell-3-2",
+                "cell-3-3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-0-1": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-0-3": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-1-0": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-1-1": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-1-2": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-1-3": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-2-0": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-2-1": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-2-2": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-2-3": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-3-0": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-3-1": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-3-2": {
+                  "color_class": 1,
+                  "glyph": "5"
+                },
+                "cell-3-3": {
+                  "color_class": 1,
+                  "glyph": "5"
+                }
+              },
+              "cols": 4,
+              "rows": 4,
+              "wrap": "torus"
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bàn xuyến 4×4, mỗi ô ghi số 5 — số lần nó bị chạm khi bấm hết mọi ô."
+          },
+          "expects_violation": [
+            "all-cells:2"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một ô tắt đi khi và chỉ khi nó bị chạm một số **lẻ** lần. Mọi ô đều chạm $5$ lần, nên [[a3|mọi đèn]] cùng tắt. Cả lời giải chỉ có một câu: *bấm hết*."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-1",
+                "cell-0-2",
+                "cell-0-3",
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2",
+                "cell-1-3",
+                "cell-2-0",
+                "cell-2-1",
+                "cell-2-2",
+                "cell-2-3",
+                "cell-3-0",
+                "cell-3-1",
+                "cell-3-2",
+                "cell-3-3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-0-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-0-2": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-0-3": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-0": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-2": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-3": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-2-0": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-2-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-2-2": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-2-3": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-3-0": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-3-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-3-2": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-3-3": {
+                  "color_class": 2,
+                  "glyph": "·"
+                }
+              },
+              "cols": 4,
+              "rows": 4,
+              "wrap": "torus"
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bàn xuyến 4×4 tối hoàn toàn."
+          },
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đáng chú ý là lập luận ấy **hỏng** nếu bỏ mép dán. Trên bàn $4\\times4$ thường, bấm hết thì ô góc bị chạm $3$ lần, ô trong $5$ lần — vẫn lẻ — nhưng [[a4|tám ô cạnh]] chỉ chạm $4$ lần, số chẵn, nên chúng **không** tắt. Cái làm lời giải chạy được không phải luật chơi, mà là chuyện hình xuyến **không có góc**."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "cell-0-1",
+                "cell-0-2",
+                "cell-1-0",
+                "cell-1-3",
+                "cell-2-0",
+                "cell-2-3",
+                "cell-3-1",
+                "cell-3-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-0-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-0-3": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-1-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-2": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-1-3": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-0": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-2-1": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-2-2": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-2-3": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-3-0": {
+                  "color_class": 2,
+                  "glyph": "·"
+                },
+                "cell-3-1": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-3-2": {
+                  "color_class": 1,
+                  "glyph": "☀"
+                },
+                "cell-3-3": {
+                  "color_class": 2,
+                  "glyph": "·"
+                }
+              },
+              "cols": 4,
+              "rows": 4
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bàn 4×4 không dán mép sau khi bấm hết: tám ô ở cạnh vẫn sáng, bốn góc và bốn ô giữa đã tắt."
+          },
+          "expects_violation": [
+            "all-cells:2"
+          ],
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count(cells, c => c.color_class == 1) == 0",
+    "validators": [
+      "all-cells:2"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol-bam-het",
+    "step_id": "s2"
+  }
+}

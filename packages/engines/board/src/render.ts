@@ -29,6 +29,7 @@ import {
   isLatticeShape,
   latticeExtent,
   outlineOfCells,
+  wrapOf,
 } from './lattice.js';
 import { tileCells } from './dsl.js';
 import { cellId } from './ids.js';
@@ -90,14 +91,99 @@ export const boardRenderer: EngineRenderer = {
     // — mọi bàn cờ không dùng attack map phải cho ra đúng SVG như trước.
     const attacks = renderAttackOverlay(config, elements, ctx);
 
+    // BD-05 — ký hiệu mép dán. Vắng `wrap` thì **không** phát ra nhóm nào, để mọi
+    // bàn đang có cho ra đúng SVG như trước.
+    const seams = renderSeams(config, ctx);
+
     return [
       el('g', { class: 'cv-cells' }, renderCells(config, ctx)),
       ...(config.table ? [el('g', { class: 'cv-table' }, renderTable(config, ctx))] : []),
       ...(attacks.length > 0 ? [el('g', { class: 'cv-attacks' }, attacks)] : []),
+      ...(seams.length > 0 ? [el('g', { class: 'cv-seams' }, seams)] : []),
       el('g', { class: 'cv-elements' }, elements.flatMap((e) => renderElement(e, config, ctx))),
     ];
   },
 };
+
+/**
+ * Mép dán, vẽ theo **quy ước tôpô** (BD-05).
+ *
+ * Không phải trang trí, mà là sửa một lỗi "hình không nói điều lời nói": một bàn
+ * dán mép vẽ ra **giống hệt** một bàn thường, nên người đọc không có cách nào biết
+ * ô cột cuối kề ô cột đầu — trong khi cả lời giải dựa vào đúng chuyện đó.
+ *
+ * Ký hiệu là ký hiệu chuẩn của không gian thương: hai cạnh **được dán với nhau**
+ * mang cùng một loại mũi tên, cùng chiều. Một mũi tên cho cặp trái–phải, hai mũi
+ * tên cho cặp trên–dưới. Ai từng đọc một trang sách tôpô nhận ra ngay; ai chưa
+ * từng thì lời giải nói cho biết, và hình không nói dối họ.
+ */
+function renderSeams(config: BoardConfig, ctx: RenderContext): SvgNode[] {
+  const wrap = wrapOf(config);
+  if (wrap === 'none') return [];
+
+  const width = config.cols * CELL;
+  const height = config.rows * CELL;
+  const stroke = ctx.theme.object.regionStroke;
+  const weight = ctx.theme.stroke.region;
+
+  const seam = (x1: number, y1: number, x2: number, y2: number, marks: number): SvgNode[] => {
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+    // Vector đơn vị dọc cạnh, và pháp tuyến của nó — mũi tên là hai gạch chéo
+    // dựng từ chính hai vector ấy, nên nó tự xoay đúng cho cạnh dọc lẫn cạnh ngang.
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    const ux = (x2 - x1) / len;
+    const uy = (y2 - y1) / len;
+    const size = CELL * 0.3;
+
+    const heads: SvgNode[] = [];
+    for (let i = 0; i < marks; i += 1) {
+      // Nhiều mũi tên thì xếp dọc cạnh, cách nhau một quãng. Hệ số phải **lớn hơn**
+      // bề ngang một mũi tên, không thì hai cái lồng vào nhau và trông như một cái
+      // dày — chính là thứ ký hiệu này phải phân biệt.
+      const offset = (i - (marks - 1) / 2) * size * 1.8;
+      const cx = midX + ux * offset;
+      const cy = midY + uy * offset;
+      heads.push(
+        el('path', {
+          d:
+            `M${round(cx - ux * size + uy * size * 0.6)} ${round(cy - uy * size - ux * size * 0.6)}` +
+            `L${round(cx)} ${round(cy)}` +
+            `L${round(cx - ux * size - uy * size * 0.6)} ${round(cy - uy * size + ux * size * 0.6)}`,
+          fill: 'none',
+          stroke,
+          'stroke-width': weight,
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+        }),
+      );
+    }
+
+    return [
+      el('path', {
+        d: `M${round(x1)} ${round(y1)}L${round(x2)} ${round(y2)}`,
+        fill: 'none',
+        stroke,
+        'stroke-width': weight,
+        'stroke-linecap': 'round',
+      }),
+      ...heads,
+    ];
+  };
+
+  const out: SvgNode[] = [
+    // Trái và phải: cùng chiều (đi xuống), nghĩa là dán thẳng chứ không xoắn — bàn
+    // này là hình ống / hình xuyến, không phải dải Möbius hay mặt Klein.
+    ...seam(0, 0, 0, height, 1),
+    ...seam(width, 0, width, height, 1),
+  ];
+
+  if (wrap === 'torus') {
+    out.push(...seam(0, 0, width, 0, 2), ...seam(0, height, width, height, 2));
+  }
+
+  return out;
+}
 
 /** Cỡ chữ nhãn hàng — một hằng số, để khung và chữ không đọc hai con số khác nhau. */
 const ROW_LABEL_SIZE = CELL * 0.38;
@@ -430,7 +516,11 @@ function renderLatticeTile(
   ctx: RenderContext,
 ): SvgNode {
   const lattice = latticeOf(config);
-  const cells = tileCells(element, lattice);
+  const cells = tileCells(element, lattice, {
+    rows: config.rows,
+    cols: config.cols,
+    wrap: wrapOf(config),
+  });
 
   const fill =
     element.color_class === undefined

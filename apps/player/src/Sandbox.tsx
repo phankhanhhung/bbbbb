@@ -274,6 +274,10 @@ export function Sandbox({
     sandbox.run(
       command(action.command, {
         ...(action.params ?? {}),
+        // Nét quét tạo element mới thì id cấp ở đây, không để lệnh tự sinh (ENG-01).
+        ...(action.idParam && action.idPrefix
+          ? { [action.idParam]: allocateId(sandbox.state.scene, action.idPrefix) }
+          : {}),
         [action.idsParam]: [...picked],
       }),
     );

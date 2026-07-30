@@ -14,7 +14,10 @@ import {
   isLatticeShape,
   latticeTileCells,
   neighbours,
+  wrapCell,
+  wrapOf,
   type Lattice,
+  type Wrap,
 } from './lattice.js';
 import { attacksCell, type AttackBoard } from './attacks.js';
 import { cellId } from './ids.js';
@@ -37,6 +40,8 @@ export interface BoardDerived {
   readonly rows: number;
   readonly cols: number;
   readonly lattice: Lattice;
+  /** BD-05 — mép bàn có dán không. Quyết định `adjacent()` trả lời thế nào. */
+  readonly wrap: Wrap;
   /** Toạ độ các ô mà mỗi quân chiếm, tra theo id. */
   readonly occupancy: ReadonlyMap<string, readonly Offset[]>;
 }
@@ -70,10 +75,11 @@ function computeDerived(scene: Scene): BoardDerived {
   const occupancy = new Map<string, readonly Offset[]>();
   const coveredCells = new Set<string>();
   const lattice = latticeOf(config);
+  const wrap = wrapOf(config);
 
   for (const item of scene.elements) {
     if (item.type !== 'tile') continue;
-    const cells = tileCells(item, lattice);
+    const cells = tileCells(item, lattice, { rows, cols, wrap });
     occupancy.set(item.id, cells);
     for (const [r, c] of cells) coveredCells.add(`${r},${c}`);
   }
@@ -136,7 +142,7 @@ function computeDerived(scene: Scene): BoardDerived {
       }),
     );
 
-  return { cells, tiles, pieces, regions, rows, cols, lattice, occupancy };
+  return { cells, tiles, pieces, regions, rows, cols, lattice, wrap, occupancy };
 }
 
 /**
@@ -150,23 +156,34 @@ function computeDerived(scene: Scene): BoardDerived {
  * phải biết có hai họ.
  *
  * Cần `lattice` vì thế: một quân không còn tự mô tả được nếu không biết nó nằm trên
- * lưới nào.
+ * lưới nào. Và cần `board` để biết mép bàn có dán không (BD-05): trên bàn xuyến,
+ * một quân thò qua mép **phải** vòng về mép trái, không phải nằm ngoài bàn.
  */
-export function tileCells(item: SceneElement, lattice: Lattice = 'square'): readonly Offset[] {
+export function tileCells(
+  item: SceneElement,
+  lattice: Lattice = 'square',
+  board?: { rows: number; cols: number; wrap: Wrap },
+): readonly Offset[] {
   const pos = (item['pos'] as Offset) ?? [0, 0];
   const shape = String(item['shape']);
 
-  if (isLatticeShape(shape)) {
-    return latticeTileCells(lattice, shape, Number(item['dir'] ?? 0), pos[0], pos[1]);
-  }
+  const raw = isLatticeShape(shape)
+    ? latticeTileCells(lattice, shape, Number(item['dir'] ?? 0), pos[0], pos[1])
+    : tileOffsets(
+        shape,
+        Number(item['rot'] ?? 0),
+        Boolean(item['flip']),
+        item['offsets'] as Offset[] | undefined,
+      ).map(([dr, dc]) => [pos[0] + dr, pos[1] + dc] as Offset);
 
-  const offsets = tileOffsets(
-    shape,
-    Number(item['rot'] ?? 0),
-    Boolean(item['flip']),
-    item['offsets'] as Offset[] | undefined,
+  if (!board || board.wrap === 'none') return raw;
+
+  // Ô vòng về vẫn là ô thật, nên `tiles-in-bounds` cho qua — đúng ý nghĩa của một
+  // bàn dán mép. Ô rơi ra khỏi chiều **không** dán thì vẫn là tràn biên và giữ
+  // nguyên toạ độ ngoài bàn, để validator còn chỉ ra được.
+  return raw.map(
+    ([r, c]) => wrapCell(lattice, board.rows, board.cols, board.wrap, r, c) ?? ([r, c] as Offset),
   );
-  return offsets.map(([dr, dc]) => [pos[0] + dr, pos[1] + dc] as Offset);
 }
 
 /** Môi trường DSL của board: tên tập hợp, hằng số, và builtin riêng của engine. */
@@ -198,7 +215,14 @@ export function boardEnvironment(scene: Scene): DslEnvironment {
         const [a, b] = expectTwoElements(args, pos, 'adjacent');
         const row = Number(a.props['row']);
         const col = Number(a.props['col']);
-        return neighbours(derived.lattice, derived.rows, derived.cols, row, col).some(
+        return neighbours(
+          derived.lattice,
+          derived.rows,
+          derived.cols,
+          row,
+          col,
+          derived.wrap,
+        ).some(
           ([r, c]) => r === Number(b.props['row']) && c === Number(b.props['col']),
         );
       },

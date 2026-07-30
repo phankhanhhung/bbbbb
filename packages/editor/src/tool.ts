@@ -50,6 +50,15 @@ export type ToolAction =
       readonly params?: Readonly<Record<string, unknown>>;
       /** Chỉ nhận element có id bắt đầu bằng tiền tố này (ô bàn cờ: `cell-`). */
       readonly prefix?: string;
+      /**
+       * Nét quét **tạo ra một element mới** (BD-05: khoanh vùng tuỳ ý).
+       *
+       * Khai cả hai thì phía gọi cấp id trước khi chạy lệnh, y như `stamp`. Lệnh
+       * không tự sinh id — đó là điều kiện replay được của ENG-01, và nó không có
+       * ngoại lệ cho thao tác kéo.
+       */
+      readonly idParam?: string;
+      readonly idPrefix?: string;
     }
   /** Bấm **một** element → chạy lệnh với id của nó. */
   | {

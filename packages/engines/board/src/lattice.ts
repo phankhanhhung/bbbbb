@@ -254,31 +254,79 @@ export function neighbours(
   cols: number,
   row: number,
   col: number,
+  wrap: Wrap = 'none',
 ): readonly Offset[] {
-  const candidates: Offset[] = [];
+  const out: Offset[] = [];
+  const seen = new Set<string>();
 
-  if (lattice === 'square') {
-    candidates.push([row - 1, col], [row + 1, col], [row, col - 1], [row, col + 1]);
-  } else if (lattice === 'hex') {
-    // "odd-r": hàng lẻ lệch phải, nên chỉ số cột của hai ô trên/dưới đổi theo
-    // tính chẵn lẻ của hàng.
-    const d = row % 2 === 0 ? -1 : 0;
-    candidates.push(
-      [row, col - 1],
-      [row, col + 1],
-      [row - 1, col + d],
-      [row - 1, col + d + 1],
-      [row + 1, col + d],
-      [row + 1, col + d + 1],
-    );
-  } else if (col % 2 === 0) {
-    // Tam giác hướng lên: hai ô cạnh bên, và ô hướng xuống ngay **dưới** nó.
-    candidates.push([row, col - 1], [row, col + 1], [row + 1, col + 1]);
-  } else {
-    candidates.push([row, col - 1], [row, col + 1], [row - 1, col - 1]);
+  for (let d = 0; d < directionCount(lattice); d += 1) {
+    // Đi qua `step` chứ không liệt kê lại offset. Trước BD-05, hai hàm này chép
+    // **cùng một** bảng hình học — và hai bản sao của một bảng là hai chỗ để lệch
+    // nhau, ở đúng thứ mà không test nào của tầng trên nhìn thấy.
+    const [r0, c0] = step(lattice, row, col, d);
+    const cell = wrapCell(lattice, rows, cols, wrap, r0, c0);
+    if (cell === null) continue;
+
+    // Trên bàn hẹp, hai hướng ngược nhau **vòng về cùng một ô**: bàn xuyến 2 cột
+    // thì đông và tây của $(r,0)$ đều là $(r,1)$. Kề nhau là một *quan hệ*, không
+    // phải một phép đếm cạnh, nên ô ấy chỉ được kể một lần — và ô vòng về chính
+    // nó thì không kề chính nó.
+    if (cell[0] === row && cell[1] === col) continue;
+    const key = `${cell[0]},${cell[1]}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(cell);
   }
 
-  return candidates.filter(([r, c]) => inBoard(lattice, rows, cols, r, c));
+  return out;
+}
+
+/**
+ * Bàn có dán mép không (BD-05).
+ *
+ * **Vì sao là tính năng chứ không phải trò lạ.** Rất nhiều bài tổ hợp phát biểu
+ * trên bàn "dán mép": ô cột cuối kề ô cột đầu. Cái dán ấy đổi **quan hệ kề**, và
+ * quan hệ kề là thứ mà tô màu, thống trị, lan truyền và đếm chu trình đều đọc —
+ * nên đổi một dòng config là đổi cả họ bài, chứ không phải đổi cách vẽ.
+ *
+ *   - `cylinder` — dán **trái với phải**. Bàn thành ống.
+ *   - `torus` — dán cả hai chiều. Bàn thành hình xuyến, và khi ấy **mọi ô đều
+ *     giống nhau**: không còn ô góc, không còn ô mép. Chính điều đó làm hỏng phần
+ *     lớn lập luận "xét ô ở góc" — và đó là lý do bài trên hình xuyến khó hơn.
+ *
+ * Chỉ có nghĩa trên **lưới vuông**. Trên bàn ong, hàng lẻ lệch nửa ô nên dán trái
+ * với phải chỉ khớp khi số hàng chẵn — một điều kiện ngầm mà tác giả không có cách
+ * nào biết mình đã vi phạm. Trên lưới tam giác thì bàn không phải hình chữ nhật,
+ * nên "mép trái" và "mép phải" không có nghĩa. Cả hai bị chặn ở `checkBounds`.
+ */
+export type Wrap = 'none' | 'cylinder' | 'torus';
+
+/**
+ * Đưa một toạ độ về ô thật của bàn, hoặc `null` nếu nó rơi hẳn ra ngoài.
+ *
+ * Đây là **chỗ duy nhất** biết mép bàn được dán hay không. Mọi thứ khác hỏi hàm
+ * này, nên thêm một kiểu dán về sau là thêm một nhánh ở đây.
+ */
+export function wrapCell(
+  lattice: Lattice,
+  rows: number,
+  cols: number,
+  wrap: Wrap,
+  row: number,
+  col: number,
+): Offset | null {
+  if (wrap === 'none' || lattice !== 'square') {
+    return inBoard(lattice, rows, cols, row, col) ? [row, col] : null;
+  }
+
+  const c = ((col % cols) + cols) % cols;
+  const r = wrap === 'torus' ? ((row % rows) + rows) % rows : row;
+  return r >= 0 && r < rows ? [r, c] : null;
+}
+
+/** Kiểu dán mép của một bàn; vắng thì không dán. */
+export function wrapOf(config: { wrap?: Wrap } | undefined): Wrap {
+  return config?.wrap ?? 'none';
 }
 
 /**

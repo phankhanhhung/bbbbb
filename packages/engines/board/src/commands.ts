@@ -11,6 +11,7 @@ import {
   isLatticeShape,
   latticeTileCells,
   neighbours,
+  wrapOf,
 } from './lattice.js';
 
 /**
@@ -152,6 +153,103 @@ const placeTile = defineCommand<{
     };
 
     return withElements(scene, [...scene.elements, element]);
+  },
+});
+
+/**
+ * BD-05 — khoét ô, hoặc trả ô lại cho bàn.
+ *
+ * **Vì sao là lệnh chứ không chỉ là config.** `holes` có từ P1, nhưng chỉ tác giả
+ * gõ tay được; người học không khoét được bàn. Mà cả một họ bài sống ở đúng chỗ
+ * đó: bàn cờ khuyết hai ô — khuyết **ô nào** thì lát được, ô nào thì không? Câu
+ * hỏi ấy chỉ trả lời được bằng cách tự khoét rồi tự thử, và trước lệnh này thì
+ * không có cách nào thử.
+ *
+ * Chạy trên **cả ba lưới**: "ô này không thuộc bàn" là câu nói được ở mọi lưới,
+ * không giả định hình ô nào.
+ *
+ * Khoét một ô đang bị quân đè thì **vẫn cho** — validator `tiles-in-bounds` báo đỏ
+ * ngay, và đó đúng là thứ người học cần thấy. Chặn ở đây sẽ biến sandbox thành cái
+ * hộp không nghịch được (SBX-02).
+ */
+const toggleHoles = defineCommand<{ cells: readonly string[] }>({
+  type: 'board/toggle-holes',
+  label: (params) => (params.cells.length === 1 ? 'Khoét ô' : `Khoét ${params.cells.length} ô`),
+
+  apply(scene, params) {
+    const config = boardConfig(scene);
+    const lattice = latticeOf(config);
+    const holes = new Set((config.holes ?? []).map(([r, c]) => `${r},${c}`));
+    let changed = false;
+
+    for (const id of params.cells) {
+      const cell = parseCellId(id);
+      if (!cell || !inBoard(lattice, config.rows, config.cols, cell.row, cell.col)) continue;
+      const key = `${cell.row},${cell.col}`;
+      if (holes.has(key)) holes.delete(key);
+      else holes.add(key);
+      changed = true;
+    }
+
+    if (!changed) return null;
+
+    const next: [number, number][] = [...holes]
+      .map((key) => key.split(',').map(Number) as [number, number])
+      // Sắp thứ tự: `holes` là một **tập**, nhưng file là một mảng, và một tập ghi
+      // ra hai thứ tự khác nhau là hai diff git khác nhau cho cùng một trạng thái
+      // (DAT-03).
+      .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+    if (next.length === 0) {
+      const { holes: _dropped, ...rest } = config;
+      return withConfig(scene, rest as BoardConfig);
+    }
+    return withConfig(scene, { ...config, holes: next });
+  },
+});
+
+/**
+ * BD-05 — khoanh một vùng hình **tuỳ ý** bằng cách quét qua các ô.
+ *
+ * Region đã nhận danh sách ô bất kỳ từ P1; thiếu là cái **tay** để vẽ nó. "Vùng
+ * đang xét" là bước mở đầu của rất nhiều lời giải — chia để trị, phân hoạch,
+ * Dirichlet trên từng miền — và trước lệnh này người học chỉ đọc được vùng mà tác
+ * giả đã khoanh sẵn, không tự khoanh được vùng mình đang nghĩ tới.
+ *
+ * Id do phía gọi cấp, không do lệnh tự sinh (ENG-01).
+ */
+const drawRegion = defineCommand<{ id: string; cells: readonly string[]; label?: string }>({
+  type: 'board/draw-region',
+  label: (params) => `Khoanh vùng ${params.cells.length} ô`,
+
+  apply(scene, params) {
+    const config = boardConfig(scene);
+    const lattice = latticeOf(config);
+    if (scene.elements.some((e) => e.id === params.id)) return null;
+
+    const cells: Offset[] = [];
+    const seen = new Set<string>();
+    for (const id of params.cells) {
+      const cell = parseCellId(id);
+      if (!cell || !inBoard(lattice, config.rows, config.cols, cell.row, cell.col)) continue;
+      const key = `${cell.row},${cell.col}`;
+      // Quét qua lại trên cùng một ô là chuyện thường của thao tác kéo; ghi ô ấy
+      // hai lần thì `r.size` đếm sai và mọi biểu thức đọc nó cũng sai theo.
+      if (seen.has(key)) continue;
+      seen.add(key);
+      cells.push([cell.row, cell.col]);
+    }
+    if (cells.length === 0) return null;
+
+    return withElements(scene, [
+      ...scene.elements,
+      {
+        id: params.id,
+        type: 'region',
+        cells,
+        ...(params.label === undefined ? {} : { label: params.label }),
+      },
+    ]);
   },
 });
 
@@ -388,7 +486,7 @@ const toggleCross = defineCommand<{
     const [a, b] = params.classes ?? FLIP_CLASSES;
     const targets = [
       ...(includeSelf ? ([[row, col]] as const) : []),
-      ...neighbours(lattice, config.rows, config.cols, row, col),
+      ...neighbours(lattice, config.rows, config.cols, row, col, wrapOf(config)),
     ];
 
     const overrides = { ...(config.cell_overrides ?? {}) };
@@ -457,6 +555,8 @@ const flipLine = defineCommand<{
 export const boardCommands: CommandRegistry = {
   [flipLine.type]: flipLine,
   [toggleCross.type]: toggleCross,
+  [toggleHoles.type]: toggleHoles,
+  [drawRegion.type]: drawRegion,
   [paintCells.type]: paintCells,
   [setPreset.type]: setPreset,
   [placeTile.type]: placeTile,
@@ -483,7 +583,11 @@ export function coverage(scene: Scene): { covered: number; total: number } {
 
   for (const element of scene.elements) {
     if (element.type !== 'tile') continue;
-    for (const [r, c] of tileCells(element, lattice)) {
+    for (const [r, c] of tileCells(element, lattice, {
+      rows: config.rows,
+      cols: config.cols,
+      wrap: wrapOf(config),
+    })) {
       if (inBoard(lattice, config.rows, config.cols, r, c) && !holes.has(`${r},${c}`)) {
         covered.add(`${r},${c}`);
       }

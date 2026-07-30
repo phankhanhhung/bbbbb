@@ -65,6 +65,32 @@ export function boardTools(scene?: Scene): readonly SandboxTool[] {
     });
   }
 
+  // BD-05 — khoét ô và khoanh vùng, cả hai đều là **nét quét** chứ không phải bấm
+  // từng ô: khoét bốn góc bàn là một ý nghĩ, nên nó phải là một mục undo.
+  tools.push({
+    id: 'carve',
+    label: '✂ Khoét ô',
+    action: {
+      type: 'paint',
+      command: 'board/toggle-holes',
+      idsParam: 'cells',
+      prefix: 'cell-',
+    },
+  });
+
+  tools.push({
+    id: 'region',
+    label: '⬚ Khoanh vùng',
+    action: {
+      type: 'paint',
+      command: 'board/draw-region',
+      idsParam: 'cells',
+      idParam: 'id',
+      idPrefix: 'rg',
+      prefix: 'cell-',
+    },
+  });
+
   // BD-09 — quân của **chính lưới đang dùng**, đọc từ `LATTICE_SHAPES`. Trước hạng
   // mục này, lưới phi vuông không có quân nào kéo thả được, nên bài lát hình thoi
   // phải khai từng hình thoi bằng một `region` và vì thế chỉ là `illustration`.

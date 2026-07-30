@@ -20,6 +20,7 @@ import {
   inBoard,
   isLatticeShape,
   LATTICE_SHAPES,
+  wrapOf,
   type LatticeShape,
 } from './lattice.js';
 import { BOARD_VALIDATOR_IDS, resolveBoardValidator } from './validators.js';
@@ -173,10 +174,58 @@ export const boardSchemaFragment: EngineSchemaFragment = {
 
     issues.push(...checkTilePlacement(scene, config, path));
     issues.push(...checkTilePose(scene, config, path));
+    issues.push(...checkWrap(scene, config, path));
 
     return issues;
   },
 };
+
+/**
+ * Bàn dán mép chỉ có nghĩa ở đâu, và đụng vào cái gì (BD-05).
+ *
+ * Hai luật, và cả hai đều là "chặn thứ hỏng lặng lẽ" chứ không phải "chặn cho
+ * chặt":
+ *
+ *   - **Chỉ lưới vuông.** Trên bàn ong, hàng lẻ lệch nửa ô nên dán trái với phải
+ *     chỉ khớp khi số hàng chẵn — một điều kiện ngầm mà tác giả không có cách nào
+ *     biết mình đã vi phạm, và vi phạm thì bàn vẫn vẽ ra bình thường. Trên lưới
+ *     tam giác, bàn không phải hình chữ nhật nên "mép trái" không có nghĩa.
+ *   - **Không đi cùng `show_attacks`.** Luật đi quân cờ trong `attacks.ts` trượt
+ *     theo hàng, cột, đường chéo cho tới khi chạm mép. Trên bàn xuyến thì **không
+ *     có mép**: một quân xe trượt vòng quanh hàng và ăn chính nó. Quân cờ trên
+ *     hình xuyến là một **bộ luật khác**, không phải bộ luật cũ với toạ độ vòng —
+ *     nên chỗ này từ chối thay vì vẽ ra một vùng khống chế sai.
+ */
+function checkWrap(
+  scene: Scene,
+  config: BoardConfigType,
+  path: string,
+): ValidationIssue[] {
+  if (wrapOf(config) === 'none') return [];
+  const issues: ValidationIssue[] = [];
+
+  if (latticeOf(config) !== 'square') {
+    issues.push({
+      code: 'bounds/wrap-needs-square',
+      severity: 'error',
+      message: `Dán mép (\`wrap\`) chỉ dùng được với lưới vuông, bàn đang là \`${latticeOf(config)}\``,
+      path: `${path}/config/wrap`,
+      hint: 'Bàn ong lệch nửa ô mỗi hàng lẻ; lưới tam giác không có mép trái/phải',
+    });
+  }
+
+  if (scene.elements.some((e) => e.type === 'piece' && e['show_attacks'] === true)) {
+    issues.push({
+      code: 'bounds/attacks-with-wrap',
+      severity: 'error',
+      message: '`show_attacks` chưa hiểu bàn dán mép',
+      path: `${path}/elements`,
+      hint: 'Quân xe trên bàn xuyến trượt vòng quanh hàng và ăn chính nó — đó là bộ luật khác',
+    });
+  }
+
+  return issues;
+}
 
 /**
  * Tư thế của quân phải khớp **họ hình** của nó (BD-09).

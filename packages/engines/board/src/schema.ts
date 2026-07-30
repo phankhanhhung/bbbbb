@@ -80,6 +80,21 @@ export const BoardConfig = Type.Object(
     ),
     rows: Type.Integer({ minimum: 1, maximum: BOARD_LIMITS.maxRows }),
     cols: Type.Integer({ minimum: 1, maximum: BOARD_LIMITS.maxCols }),
+    /**
+     * BD-05 — dán mép bàn.
+     *
+     * `cylinder` dán trái với phải, `torus` dán cả hai chiều. Nó đổi **quan hệ
+     * kề**, không đổi cách vẽ: bàn vẫn là hình chữ nhật trên màn hình, nhưng ô cột
+     * cuối kề ô cột đầu. Trên hình xuyến thì mọi ô giống nhau — không còn ô góc để
+     * "xét ô ở góc", và đó là lý do họ bài này khó hơn.
+     *
+     * Chỉ dùng được với lưới vuông; `checkBounds` chặn hai lưới kia.
+     */
+    wrap: Type.Optional(
+      Type.Union([Type.Literal('none'), Type.Literal('cylinder'), Type.Literal('torus')], {
+        default: 'none',
+      }),
+    ),
     /** Ô khuyết: bàn cờ bỏ góc, bàn hình chữ L... */
     holes: Type.Optional(Type.Array(Coord)),
     coloring_preset: Type.Optional(ColoringPreset),

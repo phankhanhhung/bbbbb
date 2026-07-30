@@ -37,7 +37,7 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 67 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười một bài của M22–M29):
+Đo trên 68 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười hai bài của M22–M31):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
@@ -81,7 +81,7 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | 8 | `GR-05` tô mặt sau embedding | graph | công thức Euler, tô mặt | vừa | SRS `GR-05` [P2] |
 | 9 | `GR-07` ma trận đồng bộ hai chiều | graph | đếm hai chiều | vừa | SRS `GR-07` [P2] |
 | 10 | `PRN-04` animation biến hình | cross | **cả họ song ánh (14%)** | đắt | §2 "còn thiếu: animation biến hình của PRN-04" |
-| 11 | `BD-05` vùng khuyết vẽ tay + torus | board | bài trên hình xuyến | vừa | SRS `BD-05` [P2] |
+| ~~11~~ | ~~`BD-05` vùng khuyết vẽ tay + torus~~ ✅ M31 | board | bài trên hình xuyến | vừa | ~~SRS `BD-05` [P2]~~ |
 | 12 | `ST-03` dot/bar cho đa tập | set | đếm theo lớp | rẻ | SRS `ST-03` [P2] |
 | ~~13~~ | ~~`GM-08` phổ **hai chiều**~~ ✅ M23 | game | quy luật Wythoff nhìn thành hai tia | vừa | ~~§2.6 — `spectrum` là bảng một chiều~~ |
 
@@ -93,7 +93,7 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
 
 ## 2. Chi tiết theo engine
 
-### 2.1 `board` — 22 bài, engine chủ lực
+### 2.1 `board` — 25 bài, engine chủ lực
 
 **Tầng A**
 
@@ -122,8 +122,22 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
   `lights-out-3x3`. Cặp lớp mặc định về **một** chỗ (`FLIP_CLASSES`) vì lệnh lật
   hàng, lệnh lật chùm và validator phải đồng ý với nhau — lệch một chỗ thì người
   học bấm đúng lời giải mà bảng vẫn báo sai.
-- **BD-05 [P2] SHOULD** — công cụ **vẽ** vùng khuyết và region tuỳ ý (config đã có
-  từ P1); **[P2] MAY** torus wrap. Torus mở một họ nhỏ nhưng thật.
+- **BD-05 ✅ (M31)** — hai lệnh `board/toggle-holes` và `board/draw-region` (config
+  đã có từ P1; thiếu là cái **tay** để vẽ), cộng `config.wrap` với hai kiểu dán
+  `cylinder` và `torus`.
+
+  Dán mép đổi đúng một thứ — **quan hệ kề** — và vì thế nó đổi cả họ bài mà không
+  đổi cách vẽ ô: `wrapCell` là chỗ duy nhất biết mép có dán, còn `adjacent()`,
+  `proper-colouring`, `toggle-cross` và `tiles-in-bounds` đọc lại từ đó. Chỉ có
+  nghĩa trên lưới vuông, và không đi cùng `show_attacks` — quân cờ trên hình xuyến
+  là **bộ luật khác**, không phải bộ luật cũ với toạ độ vòng.
+
+  Kèm ký hiệu **đồng nhất cạnh** ở renderer: không có nó, bàn dán mép vẽ ra giống
+  hệt bàn thường và người đọc không có cách nào biết cột cuối kề cột đầu.
+
+  Bài `lights-out-torus`, và nó là chỗ BD-05 gặp BD-08: trên hình xuyến mọi ô có
+  cùng bậc, nên "bấm hết" chạm mỗi ô đúng $5$ lần và tắt sạch đèn — một lời giải
+  **một câu**, đúng *chỉ vì* hình xuyến không có góc.
 
 **Tầng B — chưa có bài nào đòi**
 

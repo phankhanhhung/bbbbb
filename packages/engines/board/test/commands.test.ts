@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { command, createEditorState, execute, undo } from '@combviz/editor';
 import type { Scene } from '@combviz/schema';
+import { tryEvaluate, DETERMINISTIC_BUDGET } from '@combviz/dsl';
 import { boardCommands, colorSummary, coverage } from '../src/commands.js';
+import { boardEnvironment } from '../src/dsl.js';
 import { boardHitTest, pointToCell } from '../src/hit-test.js';
-import { CELL, cellColorClass } from '../src/geometry.js';
+import { boardSchemaFragment } from '../src/index.js';
+import { CELL, cellColorClass, latticeOf } from '../src/geometry.js';
+import { neighbours, wrapOf } from '../src/lattice.js';
+import type { BoardConfig } from '../src/schema.js';
 import { resolveBoardValidator } from '../src/validators.js';
 
 const board = (overrides: Partial<Scene> = {}): Scene => ({
@@ -276,6 +281,175 @@ describe('G-11 — lật một hàng/cột', () => {
     expect(minusCount(undo(state).scene)).toBe(1);
   });
 });
+
+describe('BD-05 — khoét ô và khoanh vùng', () => {
+  it('khoét rồi khoét lại thì ô trở về bàn', () => {
+    const once = run(board({ config: { rows: 4, cols: 4 } }), 'board/toggle-holes', {
+      cells: ['cell-1-1'],
+    })!;
+    expect((once.config as { holes?: unknown }).holes).toEqual([[1, 1]]);
+
+    const twice = run(once, 'board/toggle-holes', { cells: ['cell-1-1'] })!;
+    // Bàn không còn ô khuyết nào ⇒ **bỏ hẳn** trường, không để lại mảng rỗng: hai
+    // cách viết một trạng thái là hai diff git khác nhau (DAT-03).
+    expect((twice.config as { holes?: unknown }).holes).toBeUndefined();
+  });
+
+  it('một nét quét là **một** lệnh, và danh sách ô khuyết luôn sắp thứ tự', () => {
+    const state = execute(
+      createEditorState(board({ config: { rows: 5, cols: 5 } })),
+      boardCommands,
+      command('board/toggle-holes', { cells: ['cell-3-1', 'cell-0-4', 'cell-3-0'] }),
+    ).state;
+
+    expect((state.scene.config as { holes: unknown }).holes).toEqual([
+      [0, 4],
+      [3, 0],
+      [3, 1],
+    ]);
+    // Undo một lần là hết cả nét, không phải ba lần.
+    expect((undo(state).scene.config as { holes?: unknown }).holes).toBeUndefined();
+  });
+
+  it('khoét được trên cả ba lưới, và không khoét được ô không tồn tại', () => {
+    for (const [config, cell] of [
+      [{ rows: 4, cols: 4 }, 'cell-1-1'],
+      [{ lattice: 'hex', rows: 4, cols: 4 }, 'cell-1-1'],
+      [{ lattice: 'triangle', rows: 4, cols: 4 }, 'cell-3-6'],
+    ] as const) {
+      expect({ config, ok: run(board({ config }), 'board/toggle-holes', { cells: [cell] }) !== null })
+        .toEqual({ config, ok: true });
+    }
+    // Hàng 0 của lưới tam giác chỉ có một ô.
+    expect(
+      run(board({ config: { lattice: 'triangle', rows: 4, cols: 4 } }), 'board/toggle-holes', {
+        cells: ['cell-0-2'],
+      }),
+    ).toBeNull();
+  });
+
+  it('khoanh vùng gộp ô trùng — quét qua lại một ô không đếm hai lần', () => {
+    const scene = run(board({ config: { rows: 4, cols: 4 } }), 'board/draw-region', {
+      id: 'rg1',
+      cells: ['cell-0-0', 'cell-0-1', 'cell-0-0', 'cell-9-9'],
+    })!;
+    const region = scene.elements[0] as Record<string, unknown>;
+    expect(region['cells']).toEqual([
+      [0, 0],
+      [0, 1],
+    ]);
+  });
+
+  it('khoanh vùng không nuốt id đang có, và vùng rỗng thì không tạo gì', () => {
+    const one = run(board({ config: { rows: 3, cols: 3 } }), 'board/draw-region', {
+      id: 'rg1',
+      cells: ['cell-0-0'],
+    })!;
+    expect(run(one, 'board/draw-region', { id: 'rg1', cells: ['cell-1-1'] })).toBeNull();
+    expect(
+      run(board({ config: { rows: 3, cols: 3 } }), 'board/draw-region', {
+        id: 'rg1',
+        cells: ['cell-8-8'],
+      }),
+    ).toBeNull();
+  });
+});
+
+describe('BD-05 — bàn dán mép', () => {
+  const wrapped = (wrap: string, rows = 4, cols = 4): Scene =>
+    board({ config: { rows, cols, wrap } });
+
+  it('trên hình xuyến **mọi ô đều có 4 láng giềng** — không còn ô góc', () => {
+    // Đây là toàn bộ nội dung toán của `torus`, và là lý do lập luận "xét ô ở góc"
+    // hỏng trên bàn ấy.
+    const config = wrapped('torus', 5, 5).config as BoardConfig;
+    for (let r = 0; r < 5; r += 1) {
+      for (let c = 0; c < 5; c += 1) {
+        expect({ r, c, deg: neighboursOf(config, r, c).length }).toEqual({ r, c, deg: 4 });
+      }
+    }
+    // Còn bàn thường thì ô góc chỉ có 2.
+    expect(neighboursOf(board({ config: { rows: 5, cols: 5 } }).config as BoardConfig, 0, 0))
+      .toHaveLength(2);
+  });
+
+  it('ống dán trái–phải nhưng **không** dán trên–dưới', () => {
+    const config = wrapped('cylinder', 5, 5).config as BoardConfig;
+    expect(neighboursOf(config, 2, 0)).toHaveLength(4);
+    // Hàng đầu vẫn là mép: chỉ 3 láng giềng.
+    expect(neighboursOf(config, 0, 0)).toHaveLength(3);
+  });
+
+  it('bàn hẹp: hai hướng ngược nhau vòng về **cùng một ô**, và ô ấy chỉ kể một lần', () => {
+    const two = wrapped('cylinder', 3, 2).config as BoardConfig;
+    // Cột 0 và cột 1: đông và tây của (1,0) đều là (1,1).
+    const near = neighboursOf(two, 1, 0);
+    expect(near.filter(([, c]) => c === 1)).toHaveLength(1);
+
+    // Một cột: đông và tây đều vòng về chính nó ⇒ không kề chính nó.
+    const one = wrapped('cylinder', 3, 1).config as BoardConfig;
+    expect(neighboursOf(one, 1, 0).some(([r, c]) => r === 1 && c === 0)).toBe(false);
+  });
+
+  it('`adjacent()` của DSL và validator `proper-colouring` cùng đọc mép dán', () => {
+    const degreeSum = (scene: Scene): unknown =>
+      tryEvaluate(
+        'sum(cells, a => count(cells, b => adjacent(a, b)))',
+        boardEnvironment(scene),
+        DETERMINISTIC_BUDGET,
+      ).value;
+
+    // Bàn 4×4 thường: $2 \times (2 \cdot 4 \cdot 3) = 48$. Trên hình xuyến mọi ô
+    // có bậc 4, nên tổng là $16 \times 4 = 64$ — `adjacent()` đọc đúng mép dán.
+    expect(degreeSum(board({ config: { rows: 4, cols: 4 } }))).toBe(48);
+    expect(degreeSum(wrapped('torus', 4, 4))).toBe(64);
+    // Ống thì chỉ dán một chiều: $48 + 2 \times 4 = 56$.
+    expect(degreeSum(wrapped('cylinder', 4, 4))).toBe(56);
+
+    // Bàn cờ xen kẽ 5×5 **hợp lệ** trên bàn thường nhưng **hỏng** trên hình xuyến:
+    // cột 0 và cột 4 cùng màu mà lại kề nhau. Số lẻ là chỗ nó hỏng, và đó chính là
+    // "hình xuyến có chu trình lẻ".
+    const preset = { type: 'checkerboard' } as const;
+    const plain = board({ config: { rows: 5, cols: 5, coloring_preset: preset } });
+    const torus = board({ config: { rows: 5, cols: 5, coloring_preset: preset, wrap: 'torus' } });
+    expect(resolveBoardValidator('proper-colouring')!.check(plain).ok).toBe(true);
+    expect(resolveBoardValidator('proper-colouring')!.check(torus).ok).toBe(false);
+    // Còn 4×4 thì chẵn, nên vẫn tô được hai màu ngay cả trên hình xuyến.
+    const even = board({ config: { rows: 4, cols: 4, coloring_preset: preset, wrap: 'torus' } });
+    expect(resolveBoardValidator('proper-colouring')!.check(even).ok).toBe(true);
+  });
+
+  it('quân thò qua mép **vòng về**, nên không còn là tràn biên', () => {
+    const tile = { id: 't', type: 'tile', shape: 'domino', pos: [1, 3], rot: 0 };
+    const plain = board({ config: { rows: 4, cols: 4 }, elements: [tile] as never });
+    const torus = board({ config: { rows: 4, cols: 4, wrap: 'torus' }, elements: [tile] as never });
+
+    expect(resolveBoardValidator('tiles-in-bounds')!.check(plain).ok).toBe(false);
+    expect(resolveBoardValidator('tiles-in-bounds')!.check(torus).ok).toBe(true);
+  });
+
+  it('bound chặn dán mép ở chỗ nó không có nghĩa', () => {
+    const codes = (s: Scene): string[] => boardSchemaFragment.checkBounds(s, '').map((i) => i.code);
+    expect(codes(board({ config: { lattice: 'hex', rows: 4, cols: 4, wrap: 'torus' } }))).toContain(
+      'bounds/wrap-needs-square',
+    );
+    expect(
+      codes(
+        board({
+          config: { rows: 4, cols: 4, wrap: 'torus' },
+          elements: [{ id: 'k', type: 'piece', kind: 'rook', pos: [1, 1], show_attacks: true }] as never,
+        }),
+      ),
+    ).toContain('bounds/attacks-with-wrap');
+    // Bàn xuyến vuông không quân khống chế thì sạch.
+    expect(codes(board({ config: { rows: 4, cols: 4, wrap: 'torus' } }))).toEqual([]);
+  });
+});
+
+/** Láng giềng của một ô, đọc đúng đường mà engine đọc. */
+function neighboursOf(config: BoardConfig, row: number, col: number): readonly (readonly [number, number])[] {
+  return neighbours(latticeOf(config), config.rows, config.cols, row, col, wrapOf(config));
+}
 
 describe('BD-08 — lật chùm ô (lights-out)', () => {
   /** Bàn $n \times n$ **sáng hết**: mọi ô lớp 2. */

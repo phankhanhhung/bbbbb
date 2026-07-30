@@ -26,7 +26,7 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~+ ghép cặp, tính phẳng, ma trận kề (M12)~~ | ~~76%~~ | ~~84%~~ |
 | ~~Hôm nay (6 engine + poset/Hasse)~~ | ~~83%~~ | ~~90%~~ |
 | ~~Hôm nay (7 engine — thêm derivation + label atlas)~~ | ~~≈85%~~ | ~~≈97%~~ |
-| **Hôm nay** (7 engine, sau M22–M30: lưới phi vuông, lan truyền, quân ghép, analyzer mới) | **~88%** | **~97%** |
+| **Hôm nay** (7 engine, sau M22–M31: board engine **hết hàng đợi**) | **~88%** | **~97%** |
 | Hàng đợi §7 — **đã hết** | — | — |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
@@ -50,7 +50,7 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
-| Lưới / phủ hình / tô màu | 15% | 98% | 14.7 | vùng khuyết vẽ tay và torus (`BD-05`) |
+| Lưới / phủ hình / tô màu | 15% | 100% | 15.0 | — (hàng đợi board **đã cạn**) |
 | Đồ thị | 22% | 95% | 20.9 | tô mặt (phần còn lại của GR-05), analyzer cây (`GR-10`), kiểm tính phẳng tổng quát |
 | Đếm / song ánh / đếm hai chiều | 14% | 87% | 12.2 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 96% | 15.4 | — (`SQ-02` và `BD-08` đều xong) |

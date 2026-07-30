@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M30 xong (7 engine, phủ ~88%); kho 67 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M31 xong (7 engine, phủ ~88%, hàng đợi board đã cạn); kho 68 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,67 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M31 — Vẽ vùng khuyết và bàn dán mép (BD-05) · [E] — **xong**
+
+Hạng mục board cuối cùng. Hàng đợi của engine chủ lực **cạn**.
+
+**Nửa `SHOULD`: hai lệnh, và cái thiếu không phải dữ liệu mà là cái tay.** `holes`
+và `region` nhận danh sách ô bất kỳ từ P1, nhưng chỉ tác giả gõ tay được. Cả một
+họ bài sống ở đúng chỗ đó: bàn cờ khuyết hai ô — khuyết **ô nào** thì lát được, ô
+nào thì không? Câu ấy chỉ trả lời được bằng cách tự khoét rồi tự thử.
+`board/toggle-holes` và `board/draw-region` đều là **nét quét**, không phải bấm
+từng ô: khoét bốn góc bàn là một ý nghĩ, nên nó phải là một mục undo. Khoét một ô
+đang bị quân đè thì **vẫn cho** — validator báo đỏ ngay, và đó đúng là thứ người
+học cần thấy (SBX-02).
+
+Kèm một mở rộng nhỏ ở `@combviz/editor`: nét quét nay cấp được id, để lệnh khoanh
+vùng nhận id từ phía gọi thay vì tự sinh. Lệnh **không** tự sinh id, và thao tác
+kéo không phải ngoại lệ (ENG-01).
+
+**Nửa `MAY`: `config.wrap`, và nó đổi đúng một thứ.** Dán mép không đổi cách vẽ ô;
+nó đổi **quan hệ kề**. Mà quan hệ kề là thứ mà tô màu, thống trị, lan truyền và
+`adjacent()` đều đọc — nên một dòng config đổi cả họ bài. `wrapCell` là chỗ duy
+nhất biết mép có dán hay không; bốn nơi kia đọc lại từ đó.
+
+Hai luật chặn, cả hai là "chặn thứ hỏng lặng lẽ":
+
+- **Chỉ lưới vuông.** Trên bàn ong, hàng lẻ lệch nửa ô nên dán trái với phải chỉ
+  khớp khi số hàng chẵn — điều kiện ngầm mà tác giả không có cách nào biết mình đã
+  vi phạm, và vi phạm thì bàn vẫn vẽ ra bình thường.
+- **Không đi cùng `show_attacks`.** Quân xe trượt tới khi chạm mép; trên hình
+  xuyến **không có mép**, nên nó trượt vòng quanh hàng và ăn chính nó. Quân cờ
+  trên hình xuyến là một **bộ luật khác**, không phải bộ luật cũ với toạ độ vòng.
+
+**Một chỗ dọn được nhân tiện.** `neighbours()` và `step()` trước đó chép **cùng
+một** bảng hình học — hai bản sao của một bảng là hai chỗ để lệch nhau, ở đúng thứ
+mà không test nào của tầng trên nhìn thấy. Nay `neighbours` đi qua `step` rồi
+`wrapCell`. Toàn bộ test kề của BD-07 xanh nguyên, không sửa một dòng — đó là bằng
+chứng phép dọn không đổi hành vi.
+
+Bàn hẹp sinh ra hai trường hợp biên thật, và cả hai có test: trên bàn ống $2$ cột,
+đông và tây của một ô **vòng về cùng một ô** — kề nhau là một *quan hệ*, không phải
+một phép đếm cạnh, nên ô ấy chỉ kể một lần; trên bàn $1$ cột thì cả hai vòng về
+chính nó, và một ô không kề chính nó.
+
+**Một lỗi ở hình, thấy ngay khi render.** Bàn dán mép vẽ ra **giống hệt** bàn
+thường — người đọc không có cách nào biết cột cuối kề cột đầu, trong khi cả lời
+giải dựa vào đúng chuyện đó. Thêm ký hiệu **đồng nhất cạnh** theo quy ước tôpô
+chuẩn: hai cạnh được dán mang cùng loại mũi tên, cùng chiều — một mũi cho cặp
+trái–phải, hai mũi cho cặp trên–dưới. Bản đầu xếp hai mũi cách nhau $1{,}1$ lần bề
+ngang một mũi, nên chúng lồng vào nhau và trông như **một** mũi dày — đúng thứ ký
+hiệu này sinh ra để phân biệt.
+
+**Bài `lights-out-torus`**, và nó là chỗ BD-05 gặp BD-08. Không phải bản sao của
+`lights-out-3x3`: ở đó lời giải là một tập ô tìm bằng vét cạn, ở đây lời giải là
+**một câu** — bấm hết. Trên hình xuyến mọi ô có đúng $4$ láng giềng, nên bấm hết
+thì mỗi ô bị chạm $1 + 4 = 5$ lần, số lẻ, nên tắt sạch. Bước cuối đưa vế đối
+chứng: trên bàn **không** dán, cách ấy hỏng — ô góc chạm $3$ lần và ô trong $5$
+lần, vẫn lẻ, nhưng tám ô cạnh chạm $4$ lần nên **không** tắt. Cái làm lời giải
+chạy được không phải luật chơi, mà là chuyện hình xuyến không có góc — và hai hình
+cạnh nhau, một có mũi tên một không, nói điều đó không cần lời.
+
+1109 test, 68 bài 0 lỗi 0 cảnh báo, e2e 42 xanh, **0 golden cũ đổi**.
 
 ### M30 — Quân ghép trên lưới phi vuông (BD-09) · [E] — **xong**
 
@@ -1424,7 +1485,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 67 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 68 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):
