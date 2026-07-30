@@ -38,6 +38,16 @@ export {
   type PlaceOptions,
 } from './labels.js';
 
+export {
+  CELL_PX,
+  UNITS_PER_CELL,
+  PREFERRED_SCALE,
+  MAX_CANVAS_VH,
+  sceneBoxStyle,
+  widestWidth,
+  type SceneBoxStyle,
+} from './scale.js';
+
 export { lerpNumber, lerpColor, lerpStructuredString, lerpAttr } from './lerp.js';
 export { easeInOutCubic, easingOf, clamp01, type EasingFn } from './easing.js';
 export { canonicalStringify, hashString, hashScene } from './hash.js';

@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { createChecker } from '@combviz/check';
-import { createContext, createRenderer, type LabelAtlas } from '@combviz/render';
+import {
+  createContext,
+  createRenderer,
+  sceneBoxStyle,
+  widestWidth,
+  type LabelAtlas,
+} from '@combviz/render';
 import ATLAS_JSON from '../../../packages/content/labels.json';
 import { patch } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
@@ -123,6 +129,21 @@ export function App() {
   }
 
   const viewport = step.scene ? renderer.viewportOf(step.scene, ctx) : null;
+
+  /** Scene rộng nhất của bài đang soạn — mẫu số của tỉ lệ dùng chung (G-10). */
+  const widest = useMemo(
+    () =>
+      widestWidth(
+        (problem?.solutions ?? []).flatMap((solution) =>
+          solution.steps
+            .map((s) => s.scene)
+            .filter((scene): scene is NonNullable<typeof scene> => scene !== undefined)
+            .filter((scene) => renderer.has(scene.engine))
+            .map((scene) => renderer.viewportOf(scene, ctx)),
+        ),
+      ),
+    [problem, renderer, ctx],
+  );
   const elementIds = step.scene?.elements.map((e) => e.id) ?? [];
 
   const editStep = (fn: (current: Step) => Step): void => {
@@ -162,6 +183,7 @@ export function App() {
                   ? `${viewport.x} ${viewport.y} ${viewport.width} ${viewport.height}`
                   : '0 0 100 100'
               }
+              style={viewport ? sceneBoxStyle(viewport, widest) : undefined}
             />
           </div>
           <label class="toggle">

@@ -273,6 +273,86 @@ test.describe('Sandbox (SBX-01)', () => {
   });
 });
 
+/**
+ * Tỉ lệ scene → màn hình (G-10).
+ *
+ * Đây là lưới lẽ ra phải có từ đầu. Quy ước "một ô = 10 đơn vị scene" nằm trong
+ * tài liệu từ M1 mà **không ai thi hành**: Player kéo mỗi `viewBox` cho đầy pane,
+ * nên tỉ lệ thật là `pane / viewport.width` và nó đổi theo từng scene. Đo trên kho
+ * 56 bài trước khi sửa: cùng một đối tượng chênh **7,1×** giữa các step của một
+ * bài, và **10,2×** giữa các bài.
+ *
+ * Đại lượng đo ở đây là `px trên một đơn vị scene`, tính từ `viewBox` và kích cỡ
+ * thật của thẻ `<svg>`. Đó là đại lượng duy nhất so sánh được giữa bảy engine —
+ * đo "phần tử đầu tiên có key" thì mỗi scene một loại hình, không so được.
+ */
+test.describe('Tỉ lệ đồng nhất (G-10)', () => {
+  const CELL_PX = 44;
+
+  /** px cho **một ô** (10 đơn vị scene) của step đang hiện. */
+  const cellPx = (page: Page): Promise<number | null> =>
+    page
+      .locator('.canvas svg')
+      .first()
+      .evaluate((el) => {
+        const vb = (el.getAttribute('viewBox') ?? '').trim().split(/\s+/).map(Number);
+        const rect = el.getBoundingClientRect();
+        return vb[2] && vb[2] > 0 ? (rect.width / vb[2]) * 10 : null;
+      });
+
+  test('trong **một** bài, cỡ đối tượng không đổi giữa các step', async ({ page }) => {
+    // Bài này là ca tệ nhất đo được: step đầu một đống sỏi, step sau cả phổ 40 ô.
+    // Trước khi khoá tỉ lệ, hai step chênh nhau 7,1×.
+    await page.goto('/?p=take-at-most-half');
+    await reveal(page);
+
+    const seen: number[] = [];
+    for (let i = 0; i < 5; i += 1) {
+      const px = await cellPx(page);
+      if (px !== null) seen.push(px);
+      const next = page.getByRole('button', { name: /Sau/ });
+      if (await next.isDisabled()) break;
+      await next.click();
+      await page.waitForTimeout(120);
+    }
+
+    expect(seen.length).toBeGreaterThan(2);
+    for (const px of seen) expect(px).toBeCloseTo(CELL_PX, 0);
+  });
+
+  test('giữa các bài và các engine, một ô là **cùng một** số pixel', async ({ page }) => {
+    // Bảy engine, bảy bài. Đây là chỗ chênh 10,2× trước khi sửa.
+    for (const id of [
+      'mutilated-chessboard',
+      'tromino-l-4x4',
+      'ramsey-3-3-six',
+      'venn-three-clubs',
+      'happy-ending-five-points',
+      'nim-three-piles-xor',
+      'telescoping-sum-fractions',
+    ]) {
+      await page.goto(`/?p=${id}`);
+      await reveal(page);
+      const px = await cellPx(page);
+      expect({ id, px: px === null ? null : Math.round(px) }).toEqual({ id, px: CELL_PX });
+    }
+  });
+
+  test('scene nhỏ **không** bị thổi phồng cho đầy pane', async ({ page }) => {
+    // Bàn 4×4 phải nhỏ hơn bàn 8×8 trên màn hình. Trước khi sửa thì ngược lại:
+    // cả hai căng hết pane nên ô của bàn 4×4 to gần gấp đôi.
+    await page.goto('/?p=tromino-l-4x4');
+    await reveal(page);
+    const small = (await page.locator('.canvas svg').first().boundingBox())!;
+
+    await page.goto('/?p=mutilated-chessboard');
+    await reveal(page);
+    const big = (await page.locator('.canvas svg').first().boundingBox())!;
+
+    expect(small.width).toBeLessThan(big.width);
+  });
+});
+
 test.describe('Giá trị nội suy trong narrative', () => {
   test('{{expr}} hiện ra thành số, không hiện markup thô', async ({ page }) => {
     // Bài này từng ghi "có 4 cặp" trong khi bảng bất biến ngay cạnh hiện 3. Nay

@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M19 xong (7 engine, phủ ~85%); kho 56 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M20 xong (7 engine, phủ ~85%); kho 56 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,52 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M20 — Khoá tỉ lệ scene → màn hình (G-10) · [E] — **xong**
+
+Chính chủ báo: "giữa các bài, trong một bài giữa các step, các đối tượng lúc to
+lúc nhỏ một cách rất tuỳ tiện". Đo trước khi sửa, trên cả kho 56 bài:
+
+- trong **một** bài, cùng một đối tượng chênh tới **7,1×** giữa các step
+  (`take-at-most-half`); **14/56** bài có chênh lệch trong bài;
+- toàn kho, cùng "một ô" vẽ ra từ **39px tới 400px** — chênh **10,2×**.
+
+**Nguyên nhân.** Quy ước G-10 ("một ô = 10 đơn vị scene") có trong kế hoạch từ M1
+và **chưa bao giờ được thi hành**. Mỗi engine trả về `viewBox` vừa khít nội dung,
+rồi CSS `.canvas svg { width: 100% }` kéo nó cho đầy pane — nên tỉ lệ thật là
+`bề rộng pane / viewport.width`, tức **đổi theo từng scene**. Bàn 4×4 có ô to gần
+gấp đôi bàn 8×8, và đó là hệ quả trực tiếp của một dòng CSS.
+
+Đây đúng lớp lỗi mà kho này gặp lặp lại: một luật viết ra rồi để đó, không có gì
+canh. Cùng hình dạng với "trường ma" và với thanh công cụ Sandbox ở M19.
+
+**Luật thay thế, hai dòng CSS, không đo pane bằng JavaScript:**
+
+- `width: (box / rộng-nhất-của-bài) * 100%` — mọi step chia nhau **một** hệ số,
+  nên đối tượng không đổi cỡ giữa các bước. Step hẹp hơn thì *thẻ svg* hẹp hơn,
+  chứ không phải nội dung to hơn.
+- `max-width: box * 4.4px` — trần tuyệt đối. **44px một ô**, và con số ấy không
+  phải chọn cho đẹp: đó đúng là ngưỡng chạm NFR-A3 mà CSS đã dùng cho mọi nút. Ô
+  nhỏ hơn ngón tay là ô không bấm được, nên hai con số vốn phải là một.
+
+Nhánh nào thắng cũng cho **một** tỉ lệ dùng chung. Đo trên kho: ở 44px thì **99%**
+scene vừa khít pane desktop, chỉ 3 scene rộng nhất phải co.
+
+**Hai chỗ hỏng dọc đường, cả hai tự gây:**
+
+- Bỏ `width: 100%` khỏi `.canvas svg` làm **Sandbox và hai pane song ánh** mất bề
+  rộng (chúng dùng chung rule ấy mà không có style inline). Đã khoá tỉ lệ ở cả ba
+  chỗ, cộng Studio — tác giả phải thấy đúng cỡ người học thấy.
+- Thử `width: fit-content` trên `.canvas` để khung bám hình: phần trăm bên trong
+  một khung `fit-content` **không có mẫu số**, và tỉ lệ vỡ lại đúng 7,1×. Đo lại
+  mới thấy. Cách đúng là chuyển viền xuống chính thẻ `svg`.
+
+**Sau khi sửa, đo lại bằng browser thật:** 9 bài × 3–5 step, **44px** ở mọi ô,
+chênh **1,00×**.
+
+**Lưới canh:** `packages/render/test/scale.test.ts` (9 test, gồm "chỉ co không
+giãn" và "bài nhỏ không bị thổi phồng") cộng ba e2e "Tỉ lệ đồng nhất" chạy trên cả
+profile desktop và iPad. 875 test, 42 e2e, perf trong ngân sách.
 
 ### M19 — Công cụ sandbox theo engine · [E] — **xong**
 

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { createContext, type LabelAtlas, type SceneRenderer } from '@combviz/render';
+import {
+  createContext,
+  sceneBoxStyle,
+  type LabelAtlas,
+  type SceneRenderer,
+} from '@combviz/render';
 import { patch, KEY_ATTR, ELEMENT_ATTR } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
 import type { Step } from '@combviz/schema';
@@ -141,6 +146,10 @@ export function BijectionPanes({ step, renderer, labels }: Props): preact.JSX.El
       <svg
         ref={ref}
         viewBox={`${box.x} ${box.y} ${box.width} ${box.height}`}
+        // `matchScale` đã cho hai pane cùng một khung, nên `share` = 100% và trần
+        // 44px/ô là thứ quyết định: hai pane luôn cùng tỉ lệ, và không pane nào
+        // vượt tỉ lệ chung của cả kho.
+        style={sceneBoxStyle(box, box.width)}
         role="img"
         aria-label={altText}
         onPointerMove={onPoint}

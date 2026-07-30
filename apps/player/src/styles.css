@@ -63,15 +63,25 @@ body {
 }
 
 .canvas {
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  /* Khung **phải có bề rộng xác định**: `sceneBoxStyle` đặt bề rộng svg theo phần
+     trăm, và phần trăm bên trong một khung `fit-content` thì không có mẫu số —
+     thử cách ấy một lần và tỉ lệ vỡ lại đúng 7,1×. Nên khung giữ nguyên cả cột,
+     còn viền thì chuyển xuống chính thẻ `svg` để hộp nhìn thấy bám nội dung. */
   overflow: hidden;
-  background: var(--paper);
 }
 
 .canvas svg {
   display: block;
-  width: 100%;
+  /* Viền nằm ở đây, không ở `.canvas`: hộp nhìn thấy bám đúng hình. Từ khi tỉ lệ
+     bị khoá (G-10) một bài 4×4 chỉ chiếm chừng 200px, và một cái viền căng hết
+     cột quanh nó trông như lỗi bố cục chứ không như một bài nhỏ. */
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  /* Bề rộng và trần do `sceneBoxStyle` đặt inline (G-10): một ô luôn 44px, chỉ co
+     khi scene rộng quá pane, và hệ số co dùng chung cho mọi step của bài. Không
+     đặt `width: 100%` ở đây nữa — chính dòng đó là thứ kéo mỗi scene cho đầy pane
+     và làm cùng một đối tượng to nhỏ chênh 10× giữa các bài. */
   height: auto;
   /* NFR-C2: pinch/pan trong canvas không được xung đột với cuộn trang. */
   touch-action: none;
@@ -95,7 +105,7 @@ body {
 
 .bijection__pane svg {
   display: block;
-  width: 100%;
+  /* Bề rộng do `sceneBoxStyle` đặt inline, cùng luật với canvas chính. */
   height: auto;
   touch-action: none;
 }

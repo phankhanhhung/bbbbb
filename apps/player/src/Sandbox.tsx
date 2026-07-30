@@ -9,6 +9,7 @@ import {
 } from '@combviz/editor';
 import {
   createContext,
+  sceneBoxStyle,
   type LabelAtlas,
   createRenderer,
   toSvgString,
@@ -389,6 +390,9 @@ export function Sandbox({
           <svg
             ref={svgRef}
             viewBox={`${viewport.x} ${viewport.y} ${viewport.width} ${viewport.height}`}
+            // Sandbox chỉ có **một** scene, nên nó là scene rộng nhất của chính
+            // nó — tỉ lệ vẫn là 44px một ô, khớp đúng cỡ mà step gốc đang hiện.
+            style={sceneBoxStyle(viewport, viewport.width)}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}

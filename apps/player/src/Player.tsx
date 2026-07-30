@@ -14,6 +14,8 @@ import {
   createContext,
   createRenderer,
   diffNodes,
+  sceneBoxStyle,
+  widestWidth,
   type LabelAtlas,
   type NodeDiff,
   type SceneRenderer,
@@ -228,6 +230,24 @@ export function Player({
   };
 
   const viewport = renderer && step.scene ? renderer.viewportOf(step.scene, ctx) : null;
+
+  /**
+   * Bề rộng scene lớn nhất **của cả bài** — mẫu số của tỉ lệ dùng chung (G-10).
+   *
+   * Tính trên mọi step có hình, không chỉ đường đang đi: nhảy nhánh không được
+   * làm đối tượng đổi cỡ. Đo trên kho trước khi có lớp này, cùng một đối tượng
+   * chênh tới 7,1× giữa các step của **một** bài.
+   */
+  const widest = useMemo(() => {
+    if (!renderer) return 0;
+    const boxes = problem.solutions.flatMap((solution) =>
+      solution.steps
+        .filter((s): s is Step & { scene: Scene } => s.scene !== undefined)
+        .filter((s) => renderer.has(s.scene.engine))
+        .map((s) => renderer.viewportOf(s.scene, ctx)),
+    );
+    return widestWidth(boxes);
+  }, [renderer, problem, ctx]);
   const engine = step.scene ? engines?.get(step.scene.engine) : undefined;
 
   const sandboxValidators = useMemo(
@@ -304,6 +324,7 @@ export function Player({
                   ? `${viewport.x} ${viewport.y} ${viewport.width} ${viewport.height}`
                   : '0 0 100 100'
               }
+              style={viewport ? sceneBoxStyle(viewport, widest) : undefined}
               role="img"
               aria-label={interpolate(step.alt_text?.vi ?? altFallback(step))}
             />

@@ -80,7 +80,10 @@ button.danger { border-color: var(--bad); color: var(--bad); }
 .frame { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 /* AUT-05: đúng tỉ lệ iPad ngang, để thấy narrative bị đẩy đi đâu. */
 .frame--ipad { max-width: 1024px; aspect-ratio: 1024 / 768; }
-.frame svg { display: block; width: 100%; height: auto; }
+/* Bề rộng do `sceneBoxStyle` đặt inline (G-10), cùng luật với Player: tác giả
+   phải thấy đúng cỡ mà người học sẽ thấy. `width: 100%` ở đây là chính thứ làm
+   mỗi scene giãn cho đầy khung và cùng một đối tượng to nhỏ tuỳ tiện. */
+.frame svg { display: block; height: auto; margin-inline: auto; }
 
 .toggle { display: flex; align-items: center; gap: 0.4rem; margin: 0.5rem 0; color: var(--ink-soft); }
 

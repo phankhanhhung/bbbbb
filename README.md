@@ -72,6 +72,14 @@ pnpm --filter @combviz/app-studio dev
 Mặc định Vite sẽ in URL local trong terminal. Player là nơi xem kho bài;
 Studio làm việc trực tiếp với JSON và dùng cùng bộ kiểm với CLI/CI.
 
+**Tỉ lệ scene → màn hình bị khoá** (`packages/render/src/scale.ts`): một ô bàn cờ, một
+khoảng cách giữa hai đỉnh — quy ước G-10 gọi là 10 đơn vị scene — luôn là **44px**, đúng
+ngưỡng chạm tối thiểu NFR-A3. Scene rộng quá pane thì co lại, **chỉ co không bao giờ giãn**,
+và hệ số co tính từ step rộng nhất của cả bài nên không đối tượng nào đổi cỡ khi bấm sang
+bước sau. Trước lớp này, quy ước G-10 chỉ có trong tài liệu: Player kéo mỗi `viewBox` cho
+đầy pane, nên cùng một đối tượng chênh 7,1× giữa các step của một bài và 10,2× giữa các
+bài. `packages/render/test/scale.test.ts` và ba e2e "Tỉ lệ đồng nhất" khoá bất biến ấy.
+
 Thanh công cụ Sandbox **do engine khai**, không phải danh sách gõ cứng trong
 Player (`packages/editor/src/tool.ts`). Nút nào hiện ra thì lệnh sau nó chắc chắn
 nằm trong tập lệnh của engine đang mở, và `packages/editor/test/tool.test.ts` ép
