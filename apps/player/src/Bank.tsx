@@ -64,12 +64,22 @@ export function Bank({ entries, onOpen }: BankProps) {
           {results.map((entry) => (
             <li key={entry.id}>
               <button class="bank__card" onClick={() => onOpen(entry.id)}>
-                {/* Tiêu đề là đề bài, và đề bài combinatorics gần như luôn có
-                    ký hiệu toán. Hiện thô thì thẻ bài đọc ra "8 times8". */}
-                <span
-                  class="bank__title"
-                  dangerouslySetInnerHTML={{ __html: renderMath(entry.title) }}
-                />
+                <span class="bank__title">
+                  {/* Số thứ tự đứng **trước** đề bài chứ không nằm trong nó: đề
+                      bài đi qua KaTeX, và nhét "#12" vào chuỗi trước khi render
+                      là mời `#` gặp một macro nào đó. */}
+                  {entry.ordinal > 0 ? <span class="bank__no">#{entry.ordinal}</span> : null}
+                  {/* Tiêu đề là đề bài, và đề bài combinatorics gần như luôn có
+                      ký hiệu toán. Hiện thô thì thẻ bài đọc ra "8 times8". */}
+                  <span dangerouslySetInnerHTML={{ __html: renderMath(entry.title) }} />
+                  {/* `title` chứ không chỉ chữ "MỚI": nhãn hai chữ không nói được
+                      mới so với cái gì. */}
+                  {entry.isNew ? (
+                    <span class="bank__new" title="thuộc mẻ bài thêm gần nhất">
+                      MỚI
+                    </span>
+                  ) : null}
+                </span>
                 <span class="bank__meta">
                   {entry.contest}
                   {entry.year ? ` ${entry.year}` : ''} · {entry.slot} · {entry.steps} bước

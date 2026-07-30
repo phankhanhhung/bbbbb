@@ -704,6 +704,33 @@ body {
 
 .bank__card:hover, .bank__card:focus-visible { border-color: var(--accent); }
 .bank__title { display: block; font-size: 1rem; line-height: 1.5; margin-bottom: 0.3rem; }
+
+/*
+ * Số thứ tự: chữ số đều bề ngang (`tabular-nums`) để cột số không nhảy giữa
+ * `#9` và `#83`, và nhạt hơn đề bài vì nó là chỗ đứng trong kho chứ không phải
+ * nội dung bài.
+ */
+.bank__no {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  margin-right: 0.4rem;
+}
+
+/*
+ * Nhãn "MỚI" mượn màu halo — cùng màu mà canvas dùng để nói "nhìn chỗ này", nên
+ * người đọc không phải học thêm một quy ước màu nào.
+ */
+.bank__new {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  vertical-align: 0.1em;
+  background: var(--halo);
+  color: var(--ink);
+}
 .bank__meta { display: block; font-size: 0.8rem; color: var(--ink-soft); margin-bottom: 0.4rem; }
 .bank__tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 

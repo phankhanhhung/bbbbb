@@ -71,6 +71,32 @@ test.describe('Kho bài (CMS-02)', () => {
     await expect(title.locator('strong')).toHaveCount(1);
     await expect(title).not.toContainText('**');
   });
+
+  test('số thứ tự chạy từ #1, và nhãn "MỚI" nằm đúng ở đuôi kho', async ({ page }) => {
+    await page.goto('/');
+    // Chốt web-first trước khi đọc DOM hàng loạt: `evaluateAll` không thử lại,
+    // nên chạy nó lúc danh sách chưa render xong sẽ ra mảng rỗng và mọi khẳng
+    // định "mọi phần tử đều…" xanh vô nghĩa.
+    await expect(page.locator('.bank__no').first()).toHaveText('#1');
+
+    const cards = await page.locator('.bank__card').evaluateAll((list) =>
+      list.map((card) => ({
+        n: Number(card.querySelector('.bank__no')?.textContent?.replace('#', '')),
+        fresh: card.querySelector('.bank__new') !== null,
+      })),
+    );
+
+    // Không khoá cứng số bài lẫn cỡ mẻ mới — cả hai đổi mỗi lần thêm bài.
+    expect(cards.map((c) => c.n)).toEqual(cards.map((_, i) => i + 1));
+
+    const fresh = cards.filter((c) => c.fresh);
+    expect(fresh.length).toBeGreaterThan(0);
+    expect(fresh.length).toBeLessThan(cards.length);
+    // Mẻ thêm gần nhất là một **đuôi liền** của sổ. Nếu nhãn rơi vào giữa thì
+    // hoặc sổ bị xếp lại, hoặc `newest` không còn là mẻ cuối — cả hai đều làm
+    // con số in trên thẻ mất nghĩa.
+    expect(fresh.map((c) => c.n)).toEqual(cards.slice(-fresh.length).map((c) => c.n));
+  });
 });
 
 test.describe('Trình chiếu (PLY-01, CMS-03)', () => {

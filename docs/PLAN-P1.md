@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M40 xong (7 engine đều tự khai hình học; mọi element trong kho neo được); schema `0.2.0`; kho 83 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M41 xong (7 engine đều tự khai hình học; mọi element trong kho neo được; kho có sổ thứ tự bài); schema `0.2.0`; kho 83 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,32 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M41 — Sổ thứ tự bài, và nhãn "MỚI" tự hết hạn · [E] — **xong**
+
+Kho 83 bài không có chỗ nào nói bài nào có trước, và mười bài của M40 nằm lẫn
+giữa danh sách xếp theo id. Thẻ bài giờ mang số thứ tự và mẻ mới nhất đeo nhãn.
+
+**Số là thứ hiển thị, không phải danh tính.** `id` vẫn là slug trên URL và tên của
+334 file golden; đánh số vào dữ liệu thì thêm một bài cũ vào giữa sẽ dời tên của
+mọi bài sau nó.
+
+**Suy từ git thì sai, và sai im lặng.** Bản đầu tính thứ tự bằng
+`git log --diff-filter=A`. Ba lý do phải bỏ: CI clone nông trả về rỗng nên cả
+bảng số hỏng mà không kêu; `--follow` đoán rename bằng độ giống nội dung, và với
+file bài — cùng khung JSON, cùng lối viết — nó quy một bài **vừa tạo** của M40 về
+tận M11 (khẳng định của tao bắt được, không phải mắt); và viết lại lịch sử là đổi
+hết số. Trường `created` cũng vô dụng: cả kho chỉ có hai giá trị.
+
+Nên thứ tự là một **file được commit**, `packages/content/order.json`, chỉ ghi
+thêm — bài bị rút vẫn nằm lại giữ chỗ, vì gỡ nó ra sẽ kéo tụt số của mọi bài sau
+và đổi nghĩa những con số người ta đã nhắc tới. Số đọc được trong diff, nên người
+duyệt thấy ngay khi có gì xen vào giữa.
+
+**Nhãn "MỚI" hết hạn theo mẻ bài, không theo lần dựng.** `newest` là mẻ được thêm
+gần nhất, và nó tự bị thay ở lần thêm sau. Một dấu "mới" gài cứng trong file bài
+sẽ nằm lại mãi và thành lời nói dối; còn hết hạn theo *lần dựng* thì nhãn sống
+được đúng một commit vì CI dựng lại mỗi lần push.
 
 ### M39–M40 — `elementBoxes` đủ bảy engine, và mười bài cho tính năng mới · [E] — **xong**
 
