@@ -280,36 +280,58 @@ test.describe('Choreography (CHO-02, CHO-09)', () => {
  * nhìn tận mắt. Đây là chốt canh cho đúng lớp lỗi ấy.
  */
 test.describe('Biến hình song ánh (PRN-04)', () => {
-  for (const [name, url, probe] of [
-    ['tập con ↔ xâu nhị phân', '/?p=subsets-binary-strings', '[data-el="x1"]'],
-    ['đồ thị ↔ ma trận kề', '/?p=adjacency-matrix-handshake', '[data-k="ev1v2"]'],
+  /**
+   * Ràng buộc phân biệt "**theo từng cặp**" (SRS §257) với "đồng loạt": ở một
+   * mốc giữa timeline, cặp đầu đã dịch chỗ mà cặp cuối thì chưa.
+   *
+   * Bản M37 dời tất cả cùng một `t`, và mọi test đều xanh — vì không test nào
+   * hỏi câu này. Cộng thêm hai lần tính năng "chạy" mà màn hình đứng im, đây là
+   * chốt canh cho đúng lớp lỗi ấy.
+   */
+  for (const [name, url, first, last] of [
+    ['tập con ↔ xâu nhị phân', '/?p=subsets-binary-strings', '[data-el="x1"]', '[data-el="x4"]'],
+    ['đồ thị ↔ ma trận kề', '/?p=adjacency-matrix-handshake', '[data-k="ev1v2"]', '[data-k="ev1v3"]'],
   ] as const) {
-    test(`${name}: phần tử thật sự dịch chỗ`, async ({ page }) => {
+    test(`${name}: bay theo từng cặp, không đồng loạt`, async ({ page }) => {
       await page.goto(url);
       await reveal(page);
       await page.getByRole('button', { name: 'Biến hình' }).click();
 
-      // Hỏi **đúng một phần tử đã ghép cặp**, không đếm số node có `transform`:
-      // nhãn KaTeX cũng mang `transform`, và bảng nhãn nạp bất đồng bộ nên phép
-      // đếm ấy đổi theo lúc nạp xong chứ không theo chuyện đang đo.
-      const el = page.locator(`.bijection svg ${probe}`).first();
-      const scrub = page.getByLabel('Tiến độ biến hình');
+      const scrub = page.getByLabel('Tua trong bước');
+      const head = page.locator(`.bijection svg ${first}`).first();
+      const tail = page.locator(`.bijection svg ${last}`).first();
 
-      // Khẳng định **có chờ** chứ không đọc một phát: patch chạy trong effect
-      // sau render, nên đọc ngay sau khi kéo thanh là đọc trúng khung cũ — và
-      // nó chỉ đỏ khi máy bận, tức là chỉ đỏ trên CI.
-      //
-      // $t = 0$ phải bằng đúng cây nguồn — không kèm `translate(0 0)` nào.
+      // $t = 0$ phải bằng đúng cây nguồn — không `translate(0 0)` nào.
       await scrub.fill('0');
-      await expect(el).not.toHaveAttribute('transform');
+      await expect(head).not.toHaveAttribute('transform');
 
-      await scrub.fill('400');
-      await expect(el).toHaveAttribute('transform', /^translate\(/);
+      // Giữa chừng: cặp đầu **đã** dịch, cặp cuối **chưa**. Chính chỗ này là
+      // khác biệt giữa "từng cặp" và "đồng loạt".
+      const total = Number(await scrub.getAttribute('max'));
+      await scrub.fill(String(Math.round(total * 0.45)));
+      await expect(head).toHaveAttribute('transform', /^translate\(/);
+      await expect(tail).not.toHaveAttribute('transform');
 
-      await scrub.fill('1000');
+      await scrub.fill(String(total));
       await expect(page.getByRole('button', { name: 'Về hai hình' })).toBeVisible();
     });
   }
+
+  test('mỗi pha có nhãn riêng — bộ đếm pha đọc được (CHO-09)', async ({ page }) => {
+    await page.goto('/?p=subsets-binary-strings');
+    await reveal(page);
+    await page.getByRole('button', { name: 'Biến hình' }).click();
+
+    const scrub = page.getByLabel('Tua trong bước');
+    await scrub.fill('0');
+    const first = await scrub.getAttribute('aria-valuetext');
+    await scrub.fill(String(Math.round(Number(await scrub.getAttribute('max')) * 0.5)));
+    const later = await scrub.getAttribute('aria-valuetext');
+
+    // Mọi pha chung một anchor (bài này có đúng một), nên nhãn là thứ duy nhất
+    // phân biệt chúng. Trùng nhau thì "bấm qua từng cặp" mất hết nghĩa.
+    expect(first).not.toBe(later);
+  });
 });
 
 test.describe('Sandbox (SBX-01)', () => {

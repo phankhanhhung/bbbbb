@@ -1,6 +1,7 @@
 import type { Choreography, ChoreographyPhase } from '@combviz/schema';
 import { clamp01, easeInOutCubic } from './easing.js';
 import { lerpAttr } from './lerp.js';
+import type { SceneBox } from './renderer.js';
 import type { AttrValue, SvgNode } from './svg-node.js';
 
 /**
@@ -78,7 +79,7 @@ export function applyChoreography(
   nodes: readonly SvgNode[],
   spec: Choreography,
   ms: number,
-  options: { readonly positionOf?: PositionLookup } = {},
+  options: { readonly positionOf?: PositionLookup; readonly boxOf?: BoxLookup } = {},
 ): SvgNode[] {
   const ordered = [...spec.phases].sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
   const effects = new Map<string, Effect>();
@@ -121,11 +122,26 @@ export function applyChoreography(
   }
 
   if (effects.size === 0) return [...nodes];
-  return rewrite(nodes, effects, options.positionOf ?? collectPositions(nodes));
+  return rewrite(nodes, effects, options.positionOf ?? collectPositions(nodes), options.boxOf);
 }
 
 /** Vị trí và hình dạng của một element, tra theo key — nguồn cho `move`/`morph`. */
 export type PositionLookup = (id: string) => Readonly<Record<string, AttrValue>> | undefined;
+
+/**
+ * Chỗ mực của một element nằm — đường **thứ hai** cho `move`/`morph`.
+ *
+ * Đường thứ nhất (`positionOf`) sao chép giá trị thuộc tính của đích, và nó chỉ
+ * chạy khi hai element có **cùng bộ thuộc tính** — tức là cùng engine. Morph
+ * xuyên engine thì không: nguồn là `<rect x y width height>`, đích là một `<g>`
+ * **rỗng thuộc tính**, nên vòng lặp sao chép bỏ qua sạch và không gì chuyển
+ * động. Không lỗi, không cảnh báo, chạy đủ thời lượng, màn hình đứng im.
+ *
+ * Đường này nói bằng thứ duy nhất mọi engine dùng chung — **toạ độ scene**
+ * (G-10): lấy hiệu hai tâm rồi chèn `translate`. Có `boxOf` và tra được cả hai
+ * đầu thì đi đường này; không thì giữ nguyên hành vi cũ.
+ */
+export type BoxLookup = (id: string) => readonly SceneBox[] | undefined;
 
 interface Effect {
   opacity?: number;
@@ -166,10 +182,19 @@ function rewrite(
   nodes: readonly SvgNode[],
   effects: ReadonlyMap<string, Effect>,
   positionOf: PositionLookup,
+  boxOf?: BoxLookup,
 ): SvgNode[] {
   return nodes.map((node) => {
-    const effect = node.key === undefined ? undefined : effects.get(node.key);
-    const children = node.children ? rewrite(node.children, effects, positionOf) : undefined;
+    // `data-el` **trước** `key`: một element được vẽ thành nhiều node, và node
+    // đeo `key = x1` có thể là một hình trong suốt làm chỗ bám cho con trỏ trong
+    // khi mực thật nằm ở `x1__S`. Chỉ nhìn `key` thì một pha `move` dời cái tay
+    // cầm vô hình ấy — chạy đủ thời lượng mà màn hình đứng im.
+    const owner = node.attrs['data-el'];
+    const id = typeof owner === 'string' ? owner : node.key;
+    const effect = id === undefined ? undefined : effects.get(id);
+    const children = node.children
+      ? rewrite(node.children, effects, positionOf, boxOf)
+      : undefined;
     if (!effect) return children ? { ...node, children } : node;
 
     const attrs: Record<string, AttrValue> = { ...node.attrs };
@@ -186,6 +211,24 @@ function rewrite(
       // hoặc CSS quyết định "được nhấn" trông thế nào — cùng cách `data-el` đang
       // dùng để nối anchor với hình.
       attrs['data-phase'] = round(effect.emphasis);
+    }
+
+    if (effect.towards !== undefined && effect.amount !== undefined && boxOf && id !== undefined) {
+      // Hiệu hai tâm rồi chèn `translate` **vào trước** transform sẵn có, giữ
+      // nguyên phép biến đổi cũ của node.
+      const from = nearestPair(boxOf(id), boxOf(effect.towards));
+      if (from) {
+        const dx = round(from.to.x - from.at.x);
+        const dy = round(from.to.y - from.at.y);
+        // `t = 0` phải trả về cây **y nguyên**, không kèm `translate(0 0)`:
+        // cùng bất biến D-05 mà `interpolateNodes` giữ.
+        if (effect.amount > 0) {
+          const shift = `translate(${round(dx * effect.amount)} ${round(dy * effect.amount)})`;
+          const existing = attrs['transform'];
+          attrs['transform'] = existing === undefined ? shift : `${shift} ${String(existing)}`;
+        }
+        return children ? { ...node, attrs, children } : { ...node, attrs };
+      }
     }
 
     if (effect.towards !== undefined && effect.amount !== undefined) {
@@ -210,4 +253,38 @@ function rewrite(
 
 function round(value: number): number {
   return Math.round(value * 1000) / 1000;
+}
+
+/**
+ * Cặp (tâm nguồn, tâm đích) **gần nhau nhất**.
+ *
+ * Một element có thể được vẽ ở nhiều chỗ, và ma trận kề là ví dụ sắc nhất: cạnh
+ * $v_1v_2$ hiện ở hai ô đối xứng. Lấy tâm của cả cụm sẽ ném nó vào ô nằm *trên*
+ * đường chéo — một ô mang nghĩa hoàn toàn khác. Bay tới bản gần nhất thì nó đáp
+ * xuống đúng một trong hai ô của chính nó.
+ */
+function nearestPair(
+  from: readonly SceneBox[] | undefined,
+  to: readonly SceneBox[] | undefined,
+): { at: { x: number; y: number }; to: { x: number; y: number } } | null {
+  if (!from?.length || !to?.length) return null;
+  const centre = (b: SceneBox): { x: number; y: number } => ({
+    x: b.x + b.width / 2,
+    y: b.y + b.height / 2,
+  });
+
+  let best: { at: { x: number; y: number }; to: { x: number; y: number } } | null = null;
+  let bestDistance = Infinity;
+  for (const a of from) {
+    for (const b of to) {
+      const at = centre(a);
+      const target = centre(b);
+      const d = (at.x - target.x) ** 2 + (at.y - target.y) ** 2;
+      if (d < bestDistance) {
+        bestDistance = d;
+        best = { at, to: target };
+      }
+    }
+  }
+  return best;
 }

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchScale, morphFrame, unionBox } from '../src/BijectionPanes.jsx';
-import { el, keyed, nodeBox } from '@combviz/render';
+import { matchScale, unionBox } from '../src/BijectionPanes.jsx';
 import { renderMath } from '../src/math.js';
 
 describe('PRN-04 — cân tỉ lệ hai pane', () => {
@@ -41,80 +40,23 @@ describe('PRN-04 — cân tỉ lệ hai pane', () => {
   });
 });
 
-describe('PRN-04 — animation biến hình', () => {
-  it('khung hợp chứa trọn cả hai', () => {
+/**
+ * Phép biến hình **không** còn ở file này.
+ *
+ * M37 dựng nó tại chỗ: đo tâm bằng cách suy ngược từ cây đã render, tự nuôi vòng
+ * rAF, tự có thanh kéo. Cả ba phần đã chuyển về đúng tầng của chúng —
+ * `EngineRenderer.elementBoxes` (engine tự khai hình học),
+ * `applyChoreography` (nội suy thuần, có test riêng ở `packages/render`), và
+ * `useChoreography` + `Timeline` (đồng hồ dùng chung với step có choreography).
+ *
+ * Còn lại ở đây đúng thứ chỉ file này biết: cân tỉ lệ hai pane, và khung hợp cho
+ * chế độ biến hình.
+ */
+describe('PRN-04 — khung hợp', () => {
+  it('chứa trọn cả hai', () => {
     const box = unionBox({ x: 0, y: 0, width: 10, height: 4 }, { x: -6, y: 2, width: 5, height: 9 });
 
     expect(box).toEqual({ x: -6, y: 0, width: 16, height: 11 });
-  });
-
-  /**
-   * Hai pane dựng **hai dáng cây khác nhau** — đó là lý do phép biến hình phải
-   * nói bằng toạ độ chứ không bằng key. Bên trái là `<rect>` nằm ngay dưới nhóm
-   * gốc; bên phải là `<g>` chứa một rect và một nhãn, sâu hơn một tầng. Đúng
-   * hình dạng mà `subsets-binary-strings` render ra thật.
-   */
-  const left = [el('g', {}, [keyed('x1', 'rect', { x: 0, y: 0, width: 4, height: 4 })])];
-  const right = [
-    el('g', {}, [
-      el('g', {}, [
-        keyed('b1', 'g', {}, [
-          el('rect', { x: 20, y: 10, width: 4, height: 4 }),
-          el('text', { x: 22, y: 12 }),
-        ]),
-      ]),
-    ]),
-  ];
-  const pairs = [['x1', 'b1']] as const;
-
-  it('phần tử bên trái trượt tới tâm ảnh của nó', () => {
-    // Tâm trái (2,2) → tâm phải (22,12): lệch (20,10). Ở nửa đường thì đúng nửa.
-    const frame = morphFrame(left, right, pairs, 0.5);
-    const moved = frame[0]!.children![0]!;
-
-    expect(moved.attrs['transform']).toBe('translate(10 5)');
-  });
-
-  it('$t = 0$ là đúng hình bên trái, $t = 1$ là đúng hình bên phải', () => {
-    expect(morphFrame(left, right, pairs, 0)).toEqual(left);
-
-    const end = morphFrame(left, right, pairs, 1);
-    // Chỉ còn pane phải, và key của nó đeo tiền tố để không đụng key bên trái.
-    expect(end).toHaveLength(1);
-    expect(end[0]!.children![0]!.children![0]!.key).toBe('r:b1');
-  });
-
-  it('bay xong mới đổi vai — giữa đường chưa có gì của pane phải', () => {
-    // Hai thứ nửa trong suốt chồng lên nhau suốt quãng đường đọc thành một đống
-    // nhoè, nên đoạn đổi vai bị đẩy về cuối.
-    expect(morphFrame(left, right, pairs, 0.4)).toHaveLength(1);
-    expect(morphFrame(left, right, pairs, 0.9).length).toBeGreaterThan(1);
-  });
-
-  it('đo được hộp bao qua nhiều tầng và cộng dồn translate', () => {
-    const node = el('g', { transform: 'translate(5 5)' }, [
-      el('rect', { x: 0, y: 0, width: 2, height: 2 }),
-      el('circle', { cx: 10, cy: 0, r: 1 }),
-    ]);
-
-    expect(nodeBox(node)).toEqual({ x: 5, y: 4, width: 11, height: 3 });
-  });
-
-  it('đọc được path lệnh tuyệt đối — cạnh đồ thị vẽ bằng nó', () => {
-    expect(nodeBox(el('path', { d: 'M0 -12L12 0' }))).toEqual({
-      x: 0,
-      y: -12,
-      width: 12,
-      height: 12,
-    });
-  });
-
-  it('từ chối path mà nó không đọc đúng được, thay vì đoán', () => {
-    // Lệnh tương đối mang **độ lệch** chứ không phải toạ độ, và cung `A` có bảy
-    // tham số mà chỉ hai là toạ độ. Đọc bừa sẽ cho một hộp trông hợp lý mà sai —
-    // và một hộp sai ném element ra chỗ vô lý, tệ hơn hẳn không có hộp nào.
-    expect(nodeBox(el('path', { d: 'M0 0l10 10' }))).toBeNull();
-    expect(nodeBox(el('path', { d: 'M0 0A5 5 0 0 1 10 10' }))).toBeNull();
   });
 });
 

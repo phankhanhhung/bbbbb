@@ -1,14 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import {
+  applyChoreography,
   createContext,
-  nodeBox,
+  keyed,
   sceneBoxStyle,
-  type AttrValue,
-  type Box,
   type LabelAtlas,
   type SceneRenderer,
   type SvgNode,
 } from '@combviz/render';
+import {
+  MORPH_LEFT_GROUP,
+  MORPH_RIGHT_GROUP,
+  MORPH_RIGHT_PREFIX,
+  morphChoreography,
+} from './bijection-morph.js';
+import { useChoreography } from './useChoreography.js';
+import { Timeline } from './Timeline.jsx';
 import { patch, KEY_ATTR, ELEMENT_ATTR } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
 import type { Step } from '@combviz/schema';
@@ -20,11 +27,34 @@ interface Props {
   readonly labels?: LabelAtlas | null;
 }
 
-/** Thời lượng một lượt biến hình, ms. Chậm hơn chuyển step vì đây *là* nội dung. */
-const MORPH_MS = 1200;
+/**
+ * Đổi key của cả một cây, để hai pane gộp được vào **một** cây mà không đụng nhau.
+ *
+ * Cần thiết vì key hai bên hoàn toàn có thể trùng: ở GR-07 đồ thị và ma trận kề
+ * của nó là **cùng** một tập element vẽ hai kiểu, nên `pairs` là `[e, e]`. Hai
+ * node cùng key trong một cây thì `patch` mất dấu cả hai.
+ */
+function prefixKeys(nodes: readonly SvgNode[], prefix: string): SvgNode[] {
+  return nodes.map((node) => {
+    const children = node.children ? prefixKeys(node.children, prefix) : undefined;
+    const next = node.key === undefined ? node : { ...node, key: `${prefix}${node.key}` };
+    return children ? { ...next, children } : next;
+  });
+}
 
-// `Box` dùng chung với `nodeBox` ở tầng render thay vì khai lại: hai bản sao
-// giống hệt nhau chỉ chờ ngày một bên thêm trường.
+function prefersReducedMotion(): boolean {
+  return (
+    typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+/** Khung hình chữ nhật — `matchScale`/`unionBox` làm việc trên nó. */
+interface Box {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
 
 /**
  * Nới hai khung hình về **cùng kích thước**, mỗi khung nới quanh tâm của nó.
@@ -62,170 +92,6 @@ export function unionBox(a: Box, b: Box): Box {
   };
 }
 
-/**
- * Tâm hình học của từng element trong một cây đã render.
- *
- * Gộp theo **`data-el` trước, key sau** — cùng thứ tự ưu tiên mà phép tra ngược
- * từ con trỏ ở dưới đã dùng, và vì cùng một lý do: khi một element được vẽ thành
- * nhiều node, chỉ `data-el` nói được node này thuộc về ai. Riêng ở đây bỏ qua
- * thứ tự ấy thì hỏng lặng lẽ: bảng incidence đeo key `x1` lên một hình chữ nhật
- * **trong suốt** làm tay cầm cho con trỏ, còn mực thật nằm ở các ô `x1__S`. Dời
- * tay cầm thì không ai thấy gì, và phép biến hình trông như bị hỏng.
- */
-export function centresByElement(
-  nodes: readonly SvgNode[],
-): Map<string, readonly { x: number; y: number }[]> {
-  // Hai bảng riêng, không một bảng gộp: mực (`data-el`) **thay thế** tay cầm
-  // (key) chứ không cộng vào nó. Cộng vào sẽ kéo tâm của `x1` ra giữa nguyên một
-  // hàng rộng — tức là ra chỗ chẳng có gì.
-  const ink = new Map<string, { x: number; y: number }[]>();
-  const handle = new Map<string, { x: number; y: number }[]>();
-
-  const add = (into: Map<string, { x: number; y: number }[]>, id: string, box: Box | null): void => {
-    if (!box) return;
-    const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-    const seen = into.get(id);
-    if (seen) seen.push(centre);
-    else into.set(id, [centre]);
-  };
-
-  const walk = (list: readonly SvgNode[]): void => {
-    for (const node of list) {
-      const owner = node.attrs[ELEMENT_ATTR];
-      if (typeof owner === 'string') add(ink, owner, nodeBox(node));
-      else if (node.key !== undefined) add(handle, node.key, nodeBox(node));
-      if (node.children) walk(node.children);
-    }
-  };
-  walk(nodes);
-
-  return new Map([...handle, ...ink]);
-}
-
-/**
- * PRN-04 / CHO-05 — khung hình tại tiến độ `t` của phép biến hình.
- *
- * **Không** nội suy hai cây theo key, dù thoạt nhìn đó là đường ngắn nhất: gán
- * cho phần tử bên phải cái key của ảnh ngược rồi ném vào `interpolateNodes` thì
- * chạy được ở bài mà hai pane cùng engine, và hỏng lặng lẽ ở bài mà hai pane
- * khác engine — mà đó lại là dạng phổ biến nhất của chứng minh song ánh. Lý do
- * hỏng: `interpolateNodes` khớp theo **dáng cây**, và mỗi engine dựng một dáng
- * khác nhau, nên nó lật ở $t = 0.5$ thay vì chuyển động.
- *
- * Đường đúng là nói bằng thứ duy nhất hai engine dùng chung: **toạ độ scene**
- * (G-10). Mỗi phần tử bên trái trượt tới tâm ảnh của nó, rồi ở đoạn cuối mới
- * đổi vai cho phần tử bên phải. Tách hai chuyện — bay xong mới đổi mặt — vì hai
- * thứ nửa trong suốt chồng lên nhau suốt quãng đường đọc thành một đống nhoè.
- */
-export function morphFrame(
-  left: readonly SvgNode[],
-  right: readonly SvgNode[],
-  pairs: readonly (readonly [string, string])[],
-  t: number,
-): SvgNode[] {
-  const targets = centresByElement(right);
-  const sources = centresByElement(left);
-
-  const move = new Map<string, { dx: number; dy: number }>();
-  for (const [a, b] of pairs) {
-    const from = sources.get(a)?.[0];
-    const to = nearest(targets.get(b), from);
-    // Đo không được thì không đẩy: `nodeBox` trả `null` cho hình mà nó không đọc
-    // nổi (đường đi lệnh tương đối, cung), và đoán một hộp bao sai sẽ ném element
-    // ra chỗ vô lý — tệ hơn hẳn so với việc nó đứng yên.
-    if (!from || !to || move.has(a)) continue;
-    move.set(a, { dx: to.x - from.x, dy: to.y - from.y });
-  }
-
-  const fadeOut = 1 - ramp(t, SWAP_AT);
-  const fadeIn = ramp(t, SWAP_AT);
-
-  const shift = (list: readonly SvgNode[]): SvgNode[] =>
-    list.map((node) => {
-      const children = node.children ? shift(node.children) : undefined;
-      // `t = 0` phải trả về cây trái **y nguyên**, không kèm `translate(0 0)`.
-      // Cùng bất biến mà `interpolateNodes` giữ (D-05): một thuộc tính vô hại về
-      // mặt thị giác vẫn phá khẳng định "khung đầu bằng đúng cây nguồn", và
-      // chính khẳng định ấy là thứ bảo đảm clip render ra khớp player.
-      // Tra chủ sở hữu theo `data-el` **trước** key, y như lúc đo hộp bao. Bỏ
-      // qua chuyện này là cách hỏng tinh vi nhất của cả tính năng: `move` lập
-      // chỉ mục theo id element (`x1`), còn node mang mực lại đeo key riêng của
-      // renderer (`x1__S`) — nên thứ duy nhất khớp là cái tay cầm trong suốt, và
-      // phép biến hình chạy đủ thời lượng mà màn hình đứng im.
-      const owner = node.attrs[ELEMENT_ATTR];
-      const id = typeof owner === 'string' ? owner : node.key;
-      const delta = id === undefined || t <= 0 ? undefined : move.get(id);
-      if (!delta && fadeOut >= 1) return children ? { ...node, children } : node;
-
-      const attrs: Record<string, AttrValue> = { ...node.attrs };
-      if (delta) {
-        const prefix = `translate(${round(delta.dx * t)} ${round(delta.dy * t)})`;
-        const existing = attrs['transform'];
-        attrs['transform'] = existing === undefined ? prefix : `${prefix} ${String(existing)}`;
-      }
-      if (fadeOut < 1) attrs['opacity'] = round(Number(attrs['opacity'] ?? 1) * fadeOut);
-      return children ? { ...node, attrs, children } : { ...node, attrs };
-    });
-
-  const enter = (list: readonly SvgNode[]): SvgNode[] =>
-    list.map((node) => {
-      const children = node.children ? enter(node.children) : undefined;
-      const attrs = { ...node.attrs, opacity: round(Number(node.attrs['opacity'] ?? 1) * fadeIn) };
-      return children ? { ...node, attrs, children } : { ...node, attrs };
-    });
-
-  // Key hai bên có thể trùng nhau (GR-07: đồ thị và ma trận kề của nó là **cùng**
-  // một tập element vẽ hai kiểu), nên pane phải phải đeo tiền tố — hai node cùng
-  // key trong một cây thì `patch` mất dấu cả hai.
-  const tagged = (list: readonly SvgNode[]): SvgNode[] =>
-    list.map((node) => {
-      const children = node.children ? tagged(node.children) : undefined;
-      const next = node.key === undefined ? node : { ...node, key: `${RIGHT_PREFIX}${node.key}` };
-      return children ? { ...next, children } : next;
-    });
-
-  const out: SvgNode[] = [];
-  if (fadeOut > 0) out.push(...shift(left));
-  if (fadeIn > 0) out.push(...tagged(enter(right)));
-  return out;
-}
-
-/**
- * Bản sao **gần nhất** của ảnh, không phải tâm của cả cụm.
- *
- * Một element có thể được vẽ ở nhiều chỗ, và ma trận kề là ví dụ sắc nhất: cạnh
- * $v_1v_2$ hiện ở **hai** ô đối xứng qua đường chéo — chính là chuyện mà bổ đề
- * bắt tay nói. Lấy tâm của cả cụm sẽ ném cạnh ấy vào ô nằm *trên* đường chéo,
- * tức là một ô mang nghĩa hoàn toàn khác. Bay tới bản gần nhất thì cạnh đáp
- * xuống đúng một trong hai ô của nó.
- */
-function nearest(
-  options: readonly { x: number; y: number }[] | undefined,
-  from: { x: number; y: number } | undefined,
-): { x: number; y: number } | undefined {
-  if (!options || options.length === 0) return undefined;
-  if (!from || options.length === 1) return options[0];
-  return options.reduce((best, candidate) =>
-    hypot(candidate, from) < hypot(best, from) ? candidate : best,
-  );
-}
-
-function hypot(a: { x: number; y: number }, b: { x: number; y: number }): number {
-  return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
-}
-
-/** Đoạn cuối timeline dành cho việc đổi vai; trước mốc này chỉ có chuyển động. */
-const SWAP_AT = 0.65;
-const RIGHT_PREFIX = 'r:';
-
-function ramp(t: number, from: number): number {
-  if (t <= from) return 0;
-  return Math.min(1, (t - from) / (1 - from));
-}
-
-function round(value: number): number {
-  return Math.round(value * 1000) / 1000;
-}
 
 /**
  * PRN-04 — hai cấu hình cạnh nhau, rê vào một bên thì bên kia sáng lên.
@@ -242,8 +108,9 @@ function round(value: number): number {
  */
 export function BijectionPanes({ step, renderer, labels }: Props): preact.JSX.Element | null {
   const [active, setActive] = useState<string | null>(null);
-  // PRN-04 — `null` là chế độ hai pane; số là tiến độ biến hình trong $[0,1]$.
-  const [morph, setMorph] = useState<number | null>(null);
+  // PRN-04 — có đang ở chế độ biến hình không. Tiến độ thì `useChoreography` giữ.
+  const [morphing, setMorphing] = useState(false);
+  const stepwise = prefersReducedMotion();
   const leftRef = useRef<SVGSVGElement>(null);
   const rightRef = useRef<SVGSVGElement>(null);
   const morphRef = useRef<SVGSVGElement>(null);
@@ -285,68 +152,75 @@ export function BijectionPanes({ step, renderer, labels }: Props): preact.JSX.El
    * trong khung hợp là đủ, và phần tử nào thật sự phải *di chuyển* thì nó di
    * chuyển vì toạ độ của nó khác — không phải vì ta đẩy cả pane đi.
    */
-  const morphPair = useMemo(() => {
+  /**
+   * Timeline biến hình, dựng từ `pairs` và hình học do **engine khai**.
+   *
+   * Không đo ngược từ cây đã render nữa: `elementBoxes` biết chính xác chỗ mực
+   * nằm, kể cả ở những hình mà phép đoán từ thuộc tính SVG chịu thua.
+   *
+   * `null` nghĩa là quá nhiều cặp không đo được — Player **không hiện nút**. Một
+   * animation mà một phần ba số cặp đứng im còn tệ hơn hai hình đặt cạnh nhau.
+   */
+  const generated = useMemo(() => {
     if (!step.scene || !bijection) return null;
-    return {
-      left: renderer.render(step.scene, ctx),
-      right: renderer.render(bijection.scene, ctx),
-      pairs: bijection.pairs,
-    };
+    const anchor = Object.keys(step.anchors ?? {})[0];
+    if (anchor === undefined) return null;
+    return morphChoreography(
+      bijection,
+      (id) => renderer.boxesOf(step.scene!, id, ctx),
+      (id) => renderer.boxesOf(bijection.scene, id, ctx),
+      {
+        anchor,
+        // Chồng lấn **bằng 0** khi bấm từng pha: `goPhase` nhảy tới
+        // `at + duration`, nên pha chồng nhau sẽ dừng ở chỗ cặp kế tiếp mới bay
+        // được nửa đường — trông như hỏng.
+        overlapMs: stepwise ? 0 : 380,
+      },
+    );
+  }, [renderer, step, bijection, ctx, stepwise]);
+
+  const timeline = useChoreography(generated?.spec, 1);
+
+  /**
+   * Hai cây gộp làm một, mỗi cây bọc trong **một nhóm có key**.
+   *
+   * Nhóm là chỗ pha đổi vai bám vào: đặt `opacity` lên `<g>` thì cả cây mờ đi
+   * như một khối, kể cả nhãn và chú thích — thứ không thuộc cặp nào và vì thế
+   * từng nằm lại chồng lên hình bên kia.
+   *
+   * Pane phải còn đeo tiền tố cho key: hai bên hoàn toàn có thể trùng key — ở
+   * GR-07 đồ thị và ma trận kề của nó là **cùng** một tập element vẽ hai kiểu.
+   */
+  const morphNodes = useMemo(() => {
+    if (!step.scene || !bijection) return [];
+    return [
+      keyed(MORPH_LEFT_GROUP, 'g', {}, renderer.render(step.scene, ctx)),
+      keyed(
+        MORPH_RIGHT_GROUP,
+        'g',
+        {},
+        prefixKeys(renderer.render(bijection.scene, ctx), MORPH_RIGHT_PREFIX),
+      ),
+    ];
   }, [renderer, step, bijection, ctx]);
 
   useEffect(() => {
     const left = leftRef.current;
     const right = rightRef.current;
-    if (!left || !right || !step.scene || !bijection || morph !== null) return;
+    if (!left || !right || !step.scene || !bijection || morphing) return;
 
     patch(left, renderer.render(step.scene, ctx));
     patch(right, renderer.render(bijection.scene, ctx));
-  }, [renderer, step, bijection, ctx, morph]);
+  }, [renderer, step, bijection, ctx, morphing]);
 
   useEffect(() => {
     const container = morphRef.current;
-    if (!container || morph === null || !morphPair) return;
-    patch(container, morphFrame(morphPair.left, morphPair.right, morphPair.pairs, morph));
-  }, [morph, morphPair]);
-
-  const [playing, setPlaying] = useState(false);
-  /**
-   * Cờ **đồng bộ** cho vòng rAF, bên cạnh state.
-   *
-   * `setPlaying(false)` chỉ có hiệu lực ở lần render sau, nên khung rAF đã lên
-   * lịch vẫn kịp chạy thêm một nhịp — và vì nhịp ấy *cộng dồn* vào giá trị hiện
-   * tại, nó ghi đè đúng cái vị trí người dùng vừa kéo tới. Triệu chứng là kéo về
-   * $0$ mà hình nhích một tí: `translate(0 0.035)` thay vì đứng yên.
-   */
-  const running = useRef(false);
-  const stop = (): void => {
-    running.current = false;
-    setPlaying(false);
-  };
-
-  useEffect(() => {
-    if (!playing) return;
-    running.current = true;
-    let last: number | null = null;
-    let frame = requestAnimationFrame(function tick(now: number) {
-      if (!running.current) return;
-      const delta = last === null ? 0 : now - last;
-      last = now;
-      setMorph((value) => {
-        const next = (value ?? 0) + delta / MORPH_MS;
-        if (next >= 1) {
-          stop();
-          return 1;
-        }
-        return next;
-      });
-      frame = requestAnimationFrame(tick);
-    });
-    return () => {
-      running.current = false;
-      cancelAnimationFrame(frame);
-    };
-  }, [playing]);
+    if (!container || !morphing || !generated) return;
+    patch(
+      container,
+      applyChoreography(morphNodes, generated.spec, timeline.ms, { boxOf: generated.boxOf }),
+    );
+  }, [morphing, generated, morphNodes, timeline.ms]);
 
   if (!bijection || !step.scene) return null;
 
@@ -404,7 +278,7 @@ export function BijectionPanes({ step, renderer, labels }: Props): preact.JSX.El
     </figure>
   );
 
-  if (morph !== null) {
+  if (morphing && generated) {
     return (
       <div class="bijection bijection--morph">
         <figure class="bijection__pane">
@@ -422,37 +296,15 @@ export function BijectionPanes({ step, renderer, labels }: Props): preact.JSX.El
           </figcaption>
         </figure>
 
-        <nav class="timeline" aria-label="Biến hình">
-          <button onClick={() => setPlaying(!playing)} aria-label={playing ? 'Tạm dừng' : 'Chạy'}>
-            {playing ? '❙❙' : '▶'}
-          </button>
-          {/*
-            Thanh kéo **không** phải phần thêm cho đẹp: nó là kênh duy nhất dùng
-            được bằng bàn phím (NFR-A2) và là cách người tắt chuyển động vẫn xem
-            được từng chặng của phép biến hình thay vì chỉ thấy hai đầu (NFR-A4).
-          */}
-          <input
-            class="timeline__scrub"
-            type="range"
-            min={0}
-            max={1000}
-            step={1}
-            value={Math.round(morph * 1000)}
-            onInput={(event) => {
-              stop();
-              setMorph(Number((event.currentTarget as HTMLInputElement).value) / 1000);
-            }}
-            aria-label="Tiến độ biến hình"
-            aria-valuetext={`${Math.round(morph * 100)}%`}
-          />
-          <button
-            onClick={() => {
-              stop();
-              setMorph(null);
-            }}
-          >
-            Về hai hình
-          </button>
+        {/*
+          Thanh timeline **dùng chung** với step có choreography (CHO-02), không
+          phải một bản sao riêng. Nhờ đó chế độ giảm chuyển động — bộ đếm pha,
+          bấm qua **từng cặp** — có ngay mà không viết thêm dòng nào, và nó đúng
+          là thứ SRS đòi ở PRN-04: "biến hình theo từng cặp".
+        */}
+        <Timeline spec={generated.spec} state={timeline} />
+        <nav class="timeline">
+          <button onClick={() => setMorphing(false)}>Về hai hình</button>
         </nav>
       </div>
     );
@@ -478,16 +330,12 @@ export function BijectionPanes({ step, renderer, labels }: Props): preact.JSX.El
         'Cấu hình bên phải, ứng một-một với bên trái',
       )}
 
-      <nav class="timeline bijection__morph-toggle">
-        <button
-          onClick={() => {
-            setMorph(0);
-            setPlaying(true);
-          }}
-        >
-          ▶ Biến hình
-        </button>
-      </nav>
+      {/* Không có timeline đo được thì không hiện nút — xem `morphChoreography`. */}
+      {generated ? (
+        <nav class="timeline bijection__morph-toggle">
+          <button onClick={() => setMorphing(true)}>▶ Biến hình</button>
+        </nav>
+      ) : null}
 
       {/*
         NFR-A2: rê chuột không phải là kênh duy nhất. Danh sách cặp đọc được bằng
