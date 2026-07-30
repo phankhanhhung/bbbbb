@@ -480,6 +480,132 @@ export function permutationCycles(graph: GraphModel): PermutationCycles {
 }
 
 // ---------------------------------------------------------------------------
+// Mã Prüfer (GR-09)
+// ---------------------------------------------------------------------------
+
+export interface PruferResult {
+  /** Mã Prüfer, dài $n-2$, mỗi phần tử là **id đỉnh**. */
+  readonly code: readonly string[];
+  /**
+   * Số lần mỗi đỉnh xuất hiện trong mã.
+   *
+   * Bậc đỉnh $=$ số lần $+\;1$. Đây là bổ đề làm cả song ánh chạy, và nó là thứ
+   * duy nhất người học cần tin — phần còn lại là đếm.
+   */
+  readonly occurrences: ReadonlyMap<string, number>;
+  /** Thứ tự đỉnh dùng để chọn "lá nhỏ nhất". */
+  readonly order: readonly string[];
+}
+
+/**
+ * Thứ tự đỉnh cho thuật toán Prüfer.
+ *
+ * Mã Prüfer là song ánh **giữa cây có nhãn và dãy**, nên nó cần một thứ tự toàn
+ * phần trên nhãn — không có thứ tự thì "lá nhỏ nhất" vô nghĩa. Lấy `label` nếu có,
+ * không thì `id`, và so **kiểu số khi cả hai đều là số**: bài toán nói về nhãn
+ * $1..n$, mà so chuỗi thì $10 < 9$.
+ */
+export function pruferOrder(graph: GraphModel): readonly string[] {
+  const keyOf = new Map(graph.vertices.map((v) => [v.id, v.label ?? v.id]));
+  return graph.vertices
+    .map((v) => v.id)
+    .sort((a, b) => {
+      const ka = keyOf.get(a) as string;
+      const kb = keyOf.get(b) as string;
+      const na = Number(ka);
+      const nb = Number(kb);
+      if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
+      return ka.localeCompare(kb);
+    });
+}
+
+/** Đồ thị này có phải một **cây** không: liên thông, đơn, và $m = n - 1$. */
+export function isTree(graph: GraphModel): boolean {
+  const n = graph.vertices.length;
+  if (n === 0) return false;
+  if (graph.edges.length !== n - 1) return false;
+  if (graph.edges.some((e) => e.u === e.v)) return false;
+  const seen = new Set<string>();
+  for (const e of graph.edges) {
+    const key = e.u < e.v ? `${e.u}|${e.v}` : `${e.v}|${e.u}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+  }
+  return connectedComponents(graph).count === 1;
+}
+
+/**
+ * Mã Prüfer của một cây có nhãn (GR-09).
+ *
+ * Thuật toán gốc, không rút gọn: lặp $n-2$ lần, mỗi lần bỏ **lá có nhãn nhỏ nhất**
+ * và ghi lại láng giềng của nó. $O(n^2)$ với $n \le 300$ là vài chục nghìn phép —
+ * rẻ hơn nhiều so với chi phí đọc hiểu một bản khéo hơn.
+ *
+ * Không phải cây thì **từ chối kèm lý do**, không trả một dãy trông hợp lý: mã
+ * Prüfer của một thứ không phải cây là một câu trả lời sai được trình bày tự tin.
+ */
+export function pruferCode(graph: GraphModel): AnalyzerResult<PruferResult> {
+  if (!isTree(graph)) {
+    return refuse(
+      `Không phải cây: ${graph.vertices.length} đỉnh, ${graph.edges.length} cạnh` +
+        `${connectedComponents(graph).count > 1 ? ', và không liên thông' : ''}`,
+    );
+  }
+
+  const order = pruferOrder(graph);
+  const degree = new Map(order.map((id) => [id, (graph.adjacency.get(id) ?? []).length]));
+  const alive = new Set(order);
+  const code: string[] = [];
+
+  for (let step = 0; step < order.length - 2; step += 1) {
+    const leaf = order.find((id) => alive.has(id) && degree.get(id) === 1) as string;
+    const parent = (graph.adjacency.get(leaf) ?? []).find((e) => alive.has(e.to))
+      ?.to as string;
+    code.push(parent);
+    alive.delete(leaf);
+    degree.set(parent, (degree.get(parent) as number) - 1);
+  }
+
+  const occurrences = new Map(order.map((id) => [id, 0]));
+  for (const id of code) occurrences.set(id, (occurrences.get(id) as number) + 1);
+
+  return ok({ code, occurrences, order });
+}
+
+/**
+ * Chiều ngược của song ánh: dãy → cây.
+ *
+ * Không có lệnh nào trong Player dựng cây từ mã, nên hàm này **chỉ dùng trong
+ * test** — và đó là chỗ nó đáng giá nhất: giải mã rồi mã hoá lại phải ra đúng dãy
+ * ban đầu, với **mọi** dãy. Đó là cách duy nhất kiểm "song ánh" bằng máy thay vì
+ * bằng niềm tin, và nó chính là công thức Cayley được dựng ra chứ không được tra.
+ */
+export function pruferDecode(
+  code: readonly string[],
+  order: readonly string[],
+): readonly (readonly [string, string])[] {
+  const degree = new Map(order.map((id) => [id, 1]));
+  for (const id of code) degree.set(id, (degree.get(id) as number) + 1);
+
+  const edges: (readonly [string, string])[] = [];
+  const used = new Set<string>();
+
+  for (const parent of code) {
+    // Không cần loại `parent` ra: lúc chọn, `degree[parent]` còn đếm cả lần xuất
+    // hiện đang xử lý nên nó **luôn** $\ge 2$. Test khứ hồi là thứ chứng minh
+    // điều đó, không phải một dòng canh thừa.
+    const leaf = order.find((id) => !used.has(id) && degree.get(id) === 1) as string;
+    edges.push([leaf, parent]);
+    used.add(leaf);
+    degree.set(parent, (degree.get(parent) as number) - 1);
+  }
+
+  const rest = order.filter((id) => !used.has(id) && (degree.get(id) as number) === 1);
+  if (rest.length === 2) edges.push([rest[0] as string, rest[1] as string]);
+  return edges;
+}
+
+// ---------------------------------------------------------------------------
 // Ghép cặp trên đồ thị hai phía (GR-06)
 // ---------------------------------------------------------------------------
 

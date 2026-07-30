@@ -11,9 +11,11 @@ import type { Scene } from '@combviz/schema';
 import {
   bipartite,
   connectedComponents,
+  isTree,
   matching,
   permutationCycles,
   planarity,
+  pruferCode,
 } from './analyzers.js';
 import { analyzePoset } from './poset.js';
 import { buildGraph, type GraphModel } from './graph.js';
@@ -43,6 +45,11 @@ function derive(scene: Scene): GraphDerived {
   const components = connectedComponents(graph);
   const parts = bipartite(graph);
 
+  // Mã Prüfer chỉ tồn tại khi đồ thị **là cây**. Với đồ thị khác, `in_code` và
+  // `prufer_code` **vắng mặt** thay vì mang một giá trị mặc định: một claim viết
+  // trên số 0 sẽ đạt, bài trông như đã kiểm, mà con số ấy không có nghĩa gì.
+  const prufer = pruferCode(graph).value;
+
   const vertices = graph.vertices.map((v) =>
     element(v.id, {
       label: v.label ?? '',
@@ -52,6 +59,7 @@ function derive(scene: Scene): GraphDerived {
       side: parts.bipartite ? (parts.side.get(v.id) ?? 0) : 0,
       x: v.x,
       y: v.y,
+      ...(prufer ? { in_code: prufer.occurrences.get(v.id) ?? 0 } : {}),
     }),
   );
 
@@ -77,6 +85,7 @@ function derive(scene: Scene): GraphDerived {
 
 export function graphEnvironment(scene: Scene): DslEnvironment {
   const { graph, vertices, edges } = derive(scene);
+  const prufer = pruferCode(graph).value;
   const cyclesOf = permutationCycles(graph);
   const match = matching(graph).value;
   const plane = planarity(graph).value;
@@ -96,6 +105,24 @@ export function graphEnvironment(scene: Scene): DslEnvironment {
       n: graph.vertices.length,
       m: graph.edges.length,
       components: connectedComponents(graph).count,
+
+      /**
+       * Cây và mã Prüfer (GR-09).
+       *
+       * `prufer_code` là **chuỗi nhãn nối bằng dấu phẩy**, để một claim viết được
+       * thẳng: `prufer_code == "4,5,5"`. Đồ thị không phải cây thì binding này
+       * **vắng mặt** — cây hai đỉnh có mã rỗng, nên trả `""` sẽ trộn hai chuyện
+       * khác hẳn nhau vào một giá trị.
+       */
+      is_tree: isTree(graph),
+      leaves: graph.vertices.filter((v) => (graph.degree.get(v.id) ?? 0) === 1).length,
+      ...(prufer
+        ? {
+            prufer_code: prufer.code
+              .map((id) => graph.byId.get(id)?.label ?? id)
+              .join(','),
+          }
+        : {}),
       /**
        * Số chu trình khi đồ thị có hướng là một hoán vị, và **dấu** của nó.
        *

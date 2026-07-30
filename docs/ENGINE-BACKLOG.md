@@ -1,6 +1,6 @@
 # CombViz — Checklist làm mạnh từng engine
 
-**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · `GM-05/06/07/08/09`, `BD-07` và `SQ-01` **đã làm ở M22–M26**
+**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · `GM-05/06/07/08/09`, `BD-07`, `SQ-01` và `GR-09` **đã làm ở M22–M27**
 
 ## 0. Đọc checklist này đúng cách
 
@@ -11,8 +11,9 @@ trong khi chưa có bài nào do chính chủ soạn là **R-1** (content bottle
 mới. `PRD-07` cấm thêm engine chỉ để tăng coverage. Tài liệu này là **danh sách
 chờ**, dựng sẵn để khi mở ra thì không phải nghĩ lại — không phải lệnh xuất phát.
 
-> **Ngoại lệ đã dùng, ngày 2026-07-30 (M22–M26).** Bảy hạng mục đã làm:
-> `GM-05/06/07` (#1–#3), `GM-08` (#13), `BD-07` (#7), `GM-09` (mới) và `SQ-01` (#4). Điều kiện chung để chúng
+> **Ngoại lệ đã dùng, ngày 2026-07-30 (M22–M27).** Tám hạng mục đã làm:
+> `GM-05/06/07` (#1–#3), `GM-08` (#13), `BD-07` (#7), `GM-09` (mới), `SQ-01` (#4)
+> và `GR-09` (#5). Điều kiện chung để chúng
 > **không** vi phạm `R-13` là điều kiện §2.6 vốn đã viết ra: không thêm engine nào
 > (`PRD-07` không đụng tới), chỉ mở rộng thứ đã có, và **mỗi hạng mục đi kèm nội
 > dung** — bốn bài mới, kho 56 → 60 — nên năng lực và nội dung tăng cùng nhịp.
@@ -36,12 +37,12 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 63 bài đã xuất bản (56 lúc dựng tài liệu này, cộng bảy bài của M22–M26):
+Đo trên 64 bài đã xuất bản (56 lúc dựng tài liệu này, cộng tám bài của M22–M27):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
 | `board` | 22 | Chủ lực. Khoảng trống ở đây là khoảng trống **thật sự cảm thấy được**. |
-| `graph` | 18 | Chủ lực. Cùng loại. |
+| `graph` | 19 | Chủ lực. Cùng loại. |
 | `sequence` | 11 | Đủ để tin. |
 | `game` | 6 | Tầng A ở §2.6 **đã làm hết** (M22–M23): ba luật mới kèm ba bài kinh điển, cộng phổ hai chiều. |
 | `point` | 3 | Nội dung trước. Engine chưa bị dùng đủ để biết nó thiếu gì. |
@@ -73,7 +74,7 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | ~~2~~ | ~~`GM-06` luật đọc đống khác~~ ✅ M22 | game | trò Euclid | rất rẻ | ~~❌ "nước ăn theo đống kia"~~ |
 | ~~3~~ | ~~`GM-07` hợp hai luật~~ ✅ M22 | game | Nim Lasker | rất rẻ | ~~§4 "`rule` là **một** thành viên"~~ |
 | ~~4~~ | ~~`SQ-01` analyzer dãy con đơn điệu~~ ✅ M26 | sequence | Erdős–Szekeres | rẻ | ~~🟡 "thiếu analyzer dãy con đơn điệu"~~ |
-| 5 | `GR-09` analyzer mã Prüfer | graph | Cayley $n^{n-2}$ | rẻ | 🟡 "thiếu analyzer sinh mã Prüfer" |
+| ~~5~~ | ~~`GR-09` analyzer mã Prüfer~~ ✅ M27 | graph | Cayley $n^{n-2}$ | rẻ | ~~🟡 "thiếu analyzer sinh mã Prüfer"~~ |
 | 6 | `BD-08`+`SQ-02` luật lan truyền | board+seq | chip-firing, lights-out | vừa | 🟡 "thiếu luật lan truyền" |
 | ~~7~~ | ~~`BD-07` lưới tam giác / lục giác~~ ✅ M24 | board | phủ hình phi vuông | vừa | ~~§2 — engine **không vẽ được**~~ |
 | 8 | `GR-05` tô mặt sau embedding | graph | công thức Euler, tô mặt | vừa | SRS `GR-05` [P2] |
@@ -117,13 +118,15 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
 
 - bàn 3D / nhiều lớp; bảng số có công thức trong ô; lưới vô hạn có cửa sổ trượt.
 
-### 2.2 `graph` — 18 bài, engine chủ lực
+### 2.2 `graph` — 19 bài, engine chủ lực
 
 **Tầng A**
 
-- **GR-09 [P2] SHOULD** — **analyzer mã Prüfer.** Dòng 🟡 của Cayley $n^{n-2}$ nói
-  đúng một câu: "view song ánh đã có; thiếu analyzer sinh mã Prüfer". Một analyzer
-  biến một 🟡 thành ✅, và đó là bài song ánh kinh điển nhất.
+- **GR-09 ✅ (M27)** — **analyzer mã Prüfer**, cộng view `show_prufer` vẽ mã thành
+  hàng ô dưới cây (mỗi ô có id `prufer-<i>` nên neo được), binding `is_tree` /
+  `prufer_code` / `leaves` và per-vertex `in_code`, cùng validator `tree`. Kèm bài
+  `cayley-prufer-bijection`. Test khứ hồi duyệt **mọi** dãy độ dài $n-2$ với
+  $n \le 5$ — tức dựng ra công thức Cayley chứ không tra nó.
 - **GR-10 [P2] SHOULD** — **analyzer cây**: đường kính, tâm/trọng tâm, đếm lá, dãy
   bậc. Hôm nay chỉ có liên thông chung. Họ bài về cây là họ thường trực.
 - **GR-05 [P2] SHOULD** — phần còn lại: **planar embedding rồi tô mặt.** Đã có

@@ -78,6 +78,17 @@ export const GraphConfig = Type.Object(
     ),
     /** Với `view: "matrix"`: hiện tổng hàng (bậc đỉnh) và tổng cả bảng. */
     show_sums: Type.Optional(Type.Boolean({ default: false })),
+    /**
+     * GR-09 — vẽ **mã Prüfer** của cây thành một hàng ô dưới hình.
+     *
+     * Đây là nửa còn lại của một song ánh: bên trên là cây, bên dưới là dãy, và
+     * cả hai cùng nằm trong một khung. Mỗi ô mang màu của đỉnh nó trỏ tới, nên
+     * "đỉnh $5$ xuất hiện hai lần" đọc được bằng mắt — mà đó chính là bổ đề bậc
+     * $=$ số lần $+\,1$. Ô thứ $i$ có id `prufer-<i>` nên neo được vào narrative.
+     *
+     * Đồ thị không phải cây thì hàng ô ấy **không** vẽ; hình nói ra lý do.
+     */
+    show_prufer: Type.Optional(Type.Boolean({ default: false })),
   },
   { additionalProperties: false },
 );

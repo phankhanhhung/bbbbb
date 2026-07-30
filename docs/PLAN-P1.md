@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M26 xong (7 engine, phủ ~85%); kho 63 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M27 xong (7 engine, phủ ~85%); kho 64 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,60 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M27 — Analyzer mã Prüfer (GR-09) · [E] — **xong**
+
+Hạng mục #5, và là dòng 🟡 cuối cùng của họ "đếm / song ánh" mà engine đồ thị còn
+nợ: *"view song ánh đã có; thiếu analyzer sinh mã Prüfer"*.
+
+Mã Prüfer là song ánh giữa **cây có nhãn trên $n$ đỉnh** và **dãy độ dài $n-2$
+trên $n$ nhãn**. Đếm dãy thì tầm thường — $n^{n-2}$ — nên toàn bộ công thức Cayley
+nằm ở chỗ chứng minh cái map ấy là song ánh. Bổ đề duy nhất phải tin: **bậc đỉnh
+$=$ số lần nó xuất hiện trong mã, cộng $1$**.
+
+Bốn mặt:
+
+1. **Tính** — `pruferCode` chạy thuật toán gốc (bỏ lá nhỏ nhất, ghi láng giềng),
+   và từ chối kèm lý do khi đồ thị không phải cây. Thứ tự nhãn đọc **kiểu số**:
+   bài nói về nhãn $1..n$, mà so chuỗi thì $10 < 9$.
+2. **Nhìn** — `show_prufer` vẽ mã thành một hàng ô **dưới cây**, mỗi ô mang màu của
+   đỉnh nó trỏ tới. Hai nửa của song ánh nằm trong cùng một khung, và "đỉnh $5$
+   xuất hiện hai lần" đọc được bằng mắt. Ô thứ $i$ có id `prufer-<i>` nên narrative
+   neo thẳng vào một vị trí của mã.
+3. **Hỏi** — `is_tree`, `prufer_code` (chuỗi, để claim viết thẳng
+   `prufer_code == "4,5,5"`), `leaves`, và per-vertex `in_code`. Đồ thị không phải
+   cây thì `prufer_code` và `in_code` **vắng mặt** — cây hai đỉnh có mã rỗng, nên
+   trả `""` sẽ trộn hai chuyện khác hẳn nhau.
+4. **Chấm** — validator `tree`, và nó **nói ra hỏng ở đâu**: thừa cạnh thì chỉ vào
+   chu trình, thiếu cạnh thì nói rời mấy mảnh.
+
+**Đối chứng là chứng minh, không phải ví dụ.** `pruferDecode` chỉ dùng trong test,
+và đó là chỗ nó đáng giá nhất: duyệt **mọi** dãy độ dài $n-2$ với $n = 4, 5$ —
+$16$ rồi $125$ dãy — giải mã, kiểm ra cây, mã hoá lại, và đếm số cây phân biệt.
+Con số ra đúng $n^{n-2}$. Tức công thức Cayley được **dựng ra** trong test chứ
+không được tra.
+
+Bài mới **`cayley-prufer-bijection`**.
+
+**Hai lỗi hình, và một trong hai là bài học về "nguyên tắc hơn" chưa chắc "tốt hơn".**
+
+- Ô cuối của mã **nằm ngoài khung**. Bản đầu ước bề rộng hàng mã rồi so với bề
+  rộng hình bằng một phép `max` — so nhầm hai thứ khác gốc toạ độ. Nay có một hộp
+  bao tính **một lần** cho cả khung lẫn renderer.
+- Badge bậc đặt cố định dưới–phải, **đè lên nhãn đỉnh** khi nhãn cũng rơi vào
+  dưới–phải: hai con số dính nhau đọc ra một số hai chữ số. Tôi sửa bằng "khoảng
+  trống rộng thứ hai" — dùng đúng cơ chế mà nhãn đã dùng, nghe nguyên tắc hơn hẳn
+  — rồi **render ra ảnh và bỏ nó đi**: khoảng trống thứ hai của đỉnh bậc $2$–$3$
+  thường là một nêm hẹp *giữa hai cạnh*, nên badge rơi thẳng lên nét vẽ. Luật một
+  dòng ("nhãn bên phải thì badge sang trái") cho hình sạch hơn. Ghi lại cả hai
+  trong comment, vì cái sai ở đây không phải code mà là **giả định rằng bản tổng
+  quát hơn thì tốt hơn**.
+
+Diff golden: **24 file, 5 bài** — đúng những bài bật cả `show_labels` lẫn
+`show_degrees`, và mỗi file chỉ đổi thuộc tính của $2$–$4$ node `<text>` badge;
+nội dung chữ và mọi thứ ngoài `<text>` giống hệt. Kiểm bằng script trước khi nhận.
+
+1043 test, 64 bài 0 lỗi 0 cảnh báo, e2e 42 xanh.
 
 ### M26 — Analyzer dãy con đơn điệu (SQ-01) · [E] — **xong**
 
@@ -1202,7 +1256,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 63 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 64 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):

@@ -13,7 +13,7 @@ proof assistant, LMS hay nền tảng multi-author. Đặc tả đầy đủ n�
 
 - Phase 1 đang chạy; đã có **7 engine**: board, graph, sequence, set, point,
   game và derivation.
-- Kho có **63 bài đã xuất bản**. Nội dung do tác giả soạn và tự duyệt; chất
+- Kho có **64 bài đã xuất bản**. Nội dung do tác giả soạn và tự duyệt; chất
   lượng editorial vẫn là gate của sản phẩm, không được tự động bỏ qua.
 - Coverage ước lượng khoảng **85%** các họ bài tổ hợp mà engine hiện tại có
   thể gánh phần lập luận. Đây là ước lượng chuyên gia, không phải benchmark

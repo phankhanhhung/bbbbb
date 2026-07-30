@@ -2,6 +2,7 @@ import type { Scene, Viewport } from '@combviz/schema';
 import {
   decorationAttrs,
   el,
+  estimateTextWidth,
   fillForClass,
   keyed,
   text,
@@ -12,6 +13,7 @@ import {
 import { buildGraph, SPACING, VERTEX_RADIUS, type Edge, type GraphModel } from './graph.js';
 import type { GraphConfig } from './schema.js';
 import { matrixViewport, renderMatrix } from './matrix.js';
+import { pruferCode } from './analyzers.js';
 
 /**
  * Bề rộng ước lượng của một ký tự nhãn, tính bằng đơn vị scene.
@@ -22,6 +24,140 @@ import { matrixViewport, renderMatrix } from './matrix.js';
  * phần trăm không ảnh hưởng gì ngoài một chút khoảng trắng thừa.
  */
 const LABEL_CHAR_WIDTH = 1.6;
+
+/** Cạnh một ô của hàng mã Prüfer. */
+const PRUFER_CELL = SPACING * 0.8;
+
+/**
+ * Hộp bao của hàng mã Prüfer, tính **một lần** rồi cả khung lẫn renderer đọc.
+ *
+ * Bản đầu ước bề rộng riêng rồi so với bề rộng hình bằng một phép `max` — và nó
+ * so nhầm hai thứ khác gốc toạ độ, nên ô cuối của mã nằm ngoài khung. Không test
+ * nào bắt được vì chẳng có gì *sai*; chỉ nhìn mới thấy, đúng lần thứ chín trong
+ * kho này.
+ */
+function pruferBox(
+  scene: Scene,
+): { left: number; top: number; right: number; bottom: number } | null {
+  const config = scene.config as GraphConfig | undefined;
+  if (!config?.show_prufer) return null;
+
+  const graph = buildGraph(scene);
+  const padding = config.padding ?? 6;
+  const xs = graph.vertices.map((v) => v.x);
+  const ys = graph.vertices.map((v) => v.y);
+  const left = graph.vertices.length === 0 ? 0 : Math.min(...xs);
+  const top =
+    (graph.vertices.length === 0 ? 0 : Math.max(...ys)) + VERTEX_RADIUS + padding * 0.6;
+
+  const result = pruferCode(graph);
+  if (result.value === null) {
+    return {
+      left,
+      top,
+      right: left + estimateTextWidth(PRUFER_REFUSED, SPACING * 0.32),
+      bottom: top + PRUFER_CELL,
+    };
+  }
+
+  const cells = left + PRUFER_GUTTER + result.value.code.length * PRUFER_CELL * 1.15;
+  return {
+    left,
+    top,
+    right: Math.max(cells, left + estimateTextWidth(PRUFER_LABEL, SPACING * 0.32)),
+    bottom: top + PRUFER_CELL,
+  };
+}
+
+/** Chỗ chừa cho chữ "Mã Prüfer:" trước ô đầu tiên. */
+const PRUFER_GUTTER = SPACING * 2.2;
+
+const PRUFER_LABEL = 'Mã Prüfer:';
+const PRUFER_REFUSED = 'Không phải cây — không có mã Prüfer';
+
+/**
+ * Hàng ô mã Prüfer, vẽ dưới hình (GR-09).
+ *
+ * Nửa còn lại của một song ánh, đặt cạnh nửa kia trong **cùng một khung**: bên
+ * trên là cây, bên dưới là dãy. Mỗi ô mang màu của đỉnh nó trỏ tới, nên "đỉnh $5$
+ * xuất hiện hai lần" đọc được bằng mắt — mà đó chính là bổ đề bậc $=$ số lần $+1$.
+ */
+function renderPrufer(scene: Scene, ctx: RenderContext): SvgNode[] {
+  const box = pruferBox(scene);
+  if (box === null) return [];
+  const graph = buildGraph(scene);
+  const result = pruferCode(graph);
+  const { left, top } = box;
+
+  if (result.value === null) {
+    // Nói ra là mình không vẽ được, thay vì để một khoảng trống mà người đọc
+    // tưởng là mã rỗng.
+    return [
+      text(
+        'text',
+        {
+          x: round(left),
+          y: round(top + PRUFER_CELL * 0.6),
+          'font-family': ctx.theme.type.uiFamily,
+          'font-size': SPACING * 0.32,
+          fill: ctx.theme.surface.guide,
+        },
+        PRUFER_REFUSED,
+      ),
+    ];
+  }
+
+  const nodes: SvgNode[] = [
+    text(
+      'text',
+      {
+        x: round(left),
+        y: round(top + PRUFER_CELL * 0.6),
+        'dominant-baseline': 'central',
+        'font-family': ctx.theme.type.uiFamily,
+        'font-size': SPACING * 0.32,
+        fill: ctx.theme.surface.guide,
+      },
+      PRUFER_LABEL,
+    ),
+  ];
+
+  const start = left + PRUFER_GUTTER;
+  result.value.code.forEach((id, i) => {
+    const vertex = graph.byId.get(id);
+    const x = start + i * PRUFER_CELL * 1.15;
+    nodes.push(
+      keyed(`prufer-${i}`, 'rect', {
+        x: round(x),
+        y: round(top),
+        width: PRUFER_CELL,
+        height: PRUFER_CELL,
+        rx: 1,
+        fill: fillForClass(ctx, vertex?.colorClass || undefined),
+        stroke: ctx.theme.surface.guide,
+        'stroke-width': ctx.theme.stroke.hairline,
+        ...decorationAttrs(ctx, `prufer-${i}`, undefined),
+      }),
+    );
+    nodes.push(
+      text(
+        'text',
+        {
+          x: round(x + PRUFER_CELL / 2),
+          y: round(top + PRUFER_CELL / 2),
+          'text-anchor': 'middle',
+          'dominant-baseline': 'central',
+          'font-family': ctx.theme.type.mathFamily,
+          'font-size': PRUFER_CELL * 0.5,
+          fill: ctx.theme.emphasis.focusHalo,
+        },
+        vertex?.label ?? id,
+      ),
+    );
+  });
+
+  return nodes;
+}
 
 /**
  * Renderer của Graph engine (GR-01, GR-08).
@@ -62,11 +198,17 @@ export const graphRenderer: EngineRenderer = {
     const maxX = Math.max(...xs) + VERTEX_RADIUS + padding + labelRoom;
     const maxY = Math.max(...ys) + VERTEX_RADIUS + padding;
 
+    // Hàng ô mã Prüfer nằm **dưới và bên phải** hình, nên khung phải nới cả hai
+    // chiều — và nới theo hộp bao **thật** của nó, không theo một ước lượng riêng.
+    const prufer = pruferBox(scene);
+    const right = prufer === null ? maxX : Math.max(maxX, prufer.right + padding);
+    const low = prufer === null ? maxY : Math.max(maxY, prufer.bottom + padding * 0.6);
+
     return {
       x: round(minX),
       y: round(minY),
-      width: round(Math.max(maxX - minX, SPACING)),
-      height: round(Math.max(maxY - minY, SPACING)),
+      width: round(Math.max(right - minX, SPACING)),
+      height: round(Math.max(low - minY, SPACING)),
     };
   },
 
@@ -82,6 +224,7 @@ export const graphRenderer: EngineRenderer = {
     const weight = ctx.theme.stroke.link / ctx.theme.stroke.base;
 
     return [
+      ...(config.show_prufer ? [el('g', { class: 'cv-prufer' }, renderPrufer(scene, ctx))] : []),
       el(
         'g',
         { class: 'cv-edge-labels' },
@@ -142,9 +285,12 @@ export const graphRenderer: EngineRenderer = {
               text(
                 'text',
                 {
-                  x: vertex.x + VERTEX_RADIUS + 1.4,
-                  y: vertex.y + VERTEX_RADIUS,
-                  'text-anchor': 'start',
+                  ...degreeAnchor(
+                    vertex,
+                    centre,
+                    graph,
+                    Boolean(vertex.label) && (config.show_labels ?? true),
+                  ),
                   'font-family': ctx.theme.type.uiFamily,
                   'font-size': VERTEX_RADIUS * 1.1,
                   fill: ctx.theme.surface.guide,
@@ -579,6 +725,33 @@ function labelAnchor(
     y: round(vertex.y + uy * gap),
     'text-anchor': ux > 0.3 ? 'start' : ux < -0.3 ? 'end' : 'middle',
     'dominant-baseline': uy > 0.3 ? 'hanging' : uy < -0.3 ? 'auto' : 'central',
+  };
+}
+
+/**
+ * Chỗ đặt **badge bậc** (GR-03): dưới–phải, **lật sang trái** khi nhãn đã ở bên phải.
+ *
+ * Badge từng đặt cố định ở dưới–phải. Với đỉnh có nhãn cũng rơi vào dưới–phải,
+ * hai con số dính vào nhau và đọc ra một số hai chữ số — hình không sai, chỉ là
+ * nói dối, và chỉ thấy khi bật cả `show_labels` lẫn `show_degrees`.
+ *
+ * Bản "khoảng trống rộng thứ hai" — dùng đúng cơ chế của nhãn — nghe nguyên tắc
+ * hơn, và tôi đã viết rồi **bỏ** sau khi render ra ảnh: khoảng trống thứ hai của
+ * đỉnh bậc $2$–$3$ thường là một nêm hẹp **giữa hai cạnh**, nên badge rơi thẳng
+ * lên nét vẽ. Luật một dòng ở đây cho hình sạch hơn.
+ */
+function degreeAnchor(
+  vertex: { id: string; x: number; y: number },
+  centre: { x: number; y: number },
+  graph: GraphModel,
+  labelled: boolean,
+): Record<string, string | number> {
+  const labelRight =
+    labelled && Number(labelAnchor(vertex, centre, graph)['x']) > vertex.x;
+  return {
+    x: round(vertex.x + (labelRight ? -1 : 1) * (VERTEX_RADIUS + 1.4)),
+    y: round(vertex.y + VERTEX_RADIUS),
+    'text-anchor': labelRight ? 'end' : 'start',
   };
 }
 

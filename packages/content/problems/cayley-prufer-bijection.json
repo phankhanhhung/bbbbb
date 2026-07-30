@@ -1,0 +1,504 @@
+{
+  "schema_version": "0.1.0",
+  "id": "cayley-prufer-bijection",
+  "statement": {
+    "vi": "Có bao nhiêu **cây có nhãn** trên $n$ đỉnh $1, 2, \\dots, n$? Chứng minh rằng số ấy bằng $n^{n-2}$ (công thức Cayley)."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chứng minh bằng mã Prüfer: song ánh giữa cây có nhãn và dãy độ dài n−2 trên bảng chữ cái n nhãn."
+    }
+  },
+  "topics": [
+    "graph-basics",
+    "counting"
+  ],
+  "techniques": [
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "n",
+      "id": "inv-n",
+      "label": {
+        "vi": "Số đỉnh"
+      }
+    },
+    {
+      "expr": "leaves",
+      "id": "inv-l",
+      "label": {
+        "vi": "Số lá"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một **cây có nhãn** trên $5$ đỉnh: ${{n}}$ đỉnh, ${{m}}$ cạnh, và cây thì luôn có $m = n-1$. Ba [[a1|đỉnh bậc $1$]] là lá. Câu hỏi của Cayley: có bao nhiêu cây có nhãn trên $n$ đỉnh? Đếm trực tiếp thì rối; ta sẽ **mã hoá** mỗi cây thành một dãy rồi đếm dãy."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v1",
+                "v2",
+                "v3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, 0]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [10, 0]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [20, 0]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [30, -8]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [30, 8]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "v5",
+                "v": "v2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "v5",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cây năm đỉnh: đỉnh 1 nối 4, 4 nối 5, 5 nối 2 và 3; badge bậc hiện trên mỗi đỉnh."
+          },
+          "verified": true,
+          "claims": [
+            "is_tree == true",
+            "n == 5",
+            "m == 4",
+            "leaves == 3"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cách mã hoá: bỏ **lá có nhãn nhỏ nhất**, ghi lại láng giềng của nó, lặp $n-2$ lần. Lá nhỏ nhất là $1$, láng giềng $4$ ⇒ ghi $4$. Rồi tới $2$ ⇒ ghi $5$, rồi $3$ ⇒ ghi $5$. Được [[a2|mã ${{prufer_code}}$]], dài đúng $n-2 = 3$."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "prufer-0",
+                "prufer-1",
+                "prufer-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_prufer": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, 0]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [10, 0]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [20, 0]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [30, -8]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [30, 8]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "v5",
+                "v": "v2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "v5",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Vẫn cây ấy, thêm một hàng ba ô dưới hình ghi bốn, năm, năm."
+          },
+          "verified": true,
+          "claims": [
+            "prufer_code == \"4,5,5\""
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vì sao mã hoá không mất thông tin: **bậc mỗi đỉnh bằng số lần nó xuất hiện trong mã cộng $1$**. [[a3|Đỉnh $5$]] xuất hiện hai lần và có bậc $3$; lá không xuất hiện lần nào và có bậc $1$. Máy đã kiểm quan hệ ấy trên cả năm đỉnh. Nhờ nó, từ mã ta dựng lại được cây — lá nhỏ nhất luôn xác định được."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "v5",
+                "prufer-1",
+                "prufer-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true,
+              "show_prufer": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, 0]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [10, 0]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [20, 0]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [30, -8]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [30, 8]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "v5",
+                "v": "v2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "v5",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Vẫn hình ấy, nhấn vào đỉnh năm và hai ô mã mang nhãn năm."
+          },
+          "verified": true,
+          "claims": [
+            "forall(vertices, v => v.deg == v.in_code + 1)"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cây khác thì mã khác. [[a4|Sao tâm $3$]] có bốn lá, và mã của nó là ${{prufer_code}}$ — tâm lặp lại đúng $n-2$ lần, khớp bổ đề vì tâm có bậc $4 = 3 + 1$. Hai cây khác nhau không bao giờ cho cùng một mã, và ngược lại mọi dãy đều dựng lại được thành một cây."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "v3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_prufer": true
+            },
+            "elements": [
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [15, 0]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -8]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [0, 8]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [30, -8]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [30, 8]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "v1",
+                "v": "v3"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "v4",
+                "v": "v3"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "v5",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cây hình sao: đỉnh ba ở giữa nối cả bốn đỉnh còn lại; hàng mã ghi ba, ba, ba."
+          },
+          "verified": true,
+          "claims": [
+            "prufer_code == \"3,3,3\"",
+            "leaves == 4"
+          ]
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy [[a5|cây trên $5$ đỉnh]] tương ứng một–một với dãy độ dài $3$, mỗi vị trí chọn tự do trong $5$ nhãn: $5^3 = 125$ cây. Tổng quát $n^{n-2}$ — công thức Cayley. Đếm dãy thì dễ, và song ánh đã làm hết phần khó."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "prufer-0",
+                "prufer-1",
+                "prufer-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_prufer": true
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, 0]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "4",
+                "pos": [10, 0]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "5",
+                "pos": [20, 0]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "2",
+                "pos": [30, -8]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "3",
+                "pos": [30, 8]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "v1",
+                "v": "v4"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "v5",
+                "v": "v2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "v5",
+                "v": "v3"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Trở lại cây đầu tiên cùng hàng mã bốn, năm, năm."
+          },
+          "verified": true,
+          "claims": [
+            "prufer_code == \"4,5,5\"",
+            "is_tree == true"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "tree"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

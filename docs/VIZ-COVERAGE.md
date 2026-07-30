@@ -50,8 +50,8 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
 | Lưới / phủ hình / tô màu | 15% | 94% | 14.1 | quân ghép trên lưới tam giác/lục giác (`BD-09`); luật lan truyền (`BD-08`) |
-| Đồ thị | 22% | 94% | 20.7 | tô mặt (phần còn lại của GR-05), kiểm tính phẳng tổng quát |
-| Đếm / song ánh / đếm hai chiều | 14% | 85% | 11.9 | animation biến hình của PRN-04 |
+| Đồ thị | 22% | 95% | 20.9 | tô mặt (phần còn lại của GR-05), analyzer cây (`GR-10`), kiểm tính phẳng tổng quát |
+| Đếm / song ánh / đếm hai chiều | 14% | 87% | 12.2 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 92% | 14.7 | luật lan truyền (`SQ-02`/`BD-08`) |
 | Trò chơi | 7% | 66% | 4.62 | thế phải là **đa tập số** cộng nhiều nhất một con số nhớ; mọi game không-phải-đống vẫn chưa — cần GM-01 rule script thật |
 | Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
@@ -83,7 +83,7 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | $K_5$ không phẳng | đồ thị | ✅ có trong kho (chặn $e \\le 3v-6$) |
 | Định lý König (ghép cặp = phủ đỉnh) | đồ thị hai phía | ✅ có trong kho |
 | Định lý Hall | đồ thị hai phía | ✅ có trong kho (ghép cặp + đường tăng + nhân chứng Hall) |
-| Cayley $n^{n-2}$ (mã Prüfer) | song ánh | 🟡 view song ánh đã có; thiếu analyzer sinh mã Prüfer |
+| Cayley $n^{n-2}$ (mã Prüfer) | song ánh | ✅ có trong kho (GR-09: mã vẽ thành hàng ô dưới cây) |
 | Đồng nhất thức Vandermonde | đếm hai chiều | 🟡 derivation viết được chuỗi biến đổi; thiếu bài trong kho |
 | Tập con ↔ xâu nhị phân ($2^n$) | song ánh | ✅ có trong kho (view song ánh) |
 | Quy tắc nhân, hoán vị, tổ hợp, Pascal, đường đi lưới | đếm cơ bản | ✅ mười bài trong kho |
@@ -464,7 +464,7 @@ không, và không phải vì thiếu công sức.
 ## 8. Cảnh báo về thứ tự
 
 **AUT-KPI là gate có răng:** *trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **63 bài** — nhưng **không bài nào do chính
+engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **64 bài** — nhưng **không bài nào do chính
 chủ soạn**, và người duyệt cũng là người soạn. Theo đúng luật của chính dự án,
 việc còn nợ không phải engine nào trong bảng §7, mà là **soạn tay 3–5 bài**
 (G-C), rồi mới đóng băng schema 1.0.0.

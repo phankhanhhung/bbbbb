@@ -113,3 +113,47 @@ describe('cung nhiều cạnh (GR-02)', () => {
     expect(Math.max(...controls)).toBeGreaterThan(0.3);
   });
 });
+
+describe('hàng mã Prüfer (GR-09)', () => {
+  const tree = (config: Record<string, unknown> = {}): Scene => ({
+    engine: 'graph',
+    config: { show_prufer: true, ...config },
+    elements: [
+      { id: '1', type: 'vertex', pos: [0, 0], label: '1' },
+      { id: '4', type: 'vertex', pos: [10, 0], label: '4' },
+      { id: '5', type: 'vertex', pos: [20, 0], label: '5' },
+      { id: '2', type: 'vertex', pos: [30, -8], label: '2' },
+      { id: '3', type: 'vertex', pos: [30, 8], label: '3' },
+      { id: 'e0', type: 'edge', u: '1', v: '4' },
+      { id: 'e1', type: 'edge', u: '4', v: '5' },
+      { id: 'e2', type: 'edge', u: '5', v: '2' },
+      { id: 'e3', type: 'edge', u: '5', v: '3' },
+    ] as Scene['elements'],
+  });
+
+  it('vẽ đúng $n-2$ ô, mỗi ô một key', () => {
+    const svg = renderer.toSvg(tree(), ctx);
+    for (const i of [0, 1, 2]) expect(svg).toContain(`>${['4', '5', '5'][i]}<`);
+    expect(svg).toContain('Mã Prüfer:');
+  });
+
+  it('khung chừa đủ chỗ — chữ không rơi ra ngoài mép dưới', () => {
+    const svg = renderer.toSvg(tree(), ctx);
+    const viewport = renderer.viewportOf(tree(), ctx);
+    const ys = [...svg.matchAll(/<(?:text|rect)[^>]*\by="(-?[\d.]+)"/g)].map((m) => Number(m[1]));
+    expect(Math.max(...ys)).toBeLessThan(viewport.y + viewport.height);
+    // Và không có `show_prufer` thì khung trở lại như cũ.
+    expect(renderer.viewportOf(tree({ show_prufer: false }), ctx).height).toBeLessThan(
+      viewport.height,
+    );
+  });
+
+  it('không phải cây thì **nói ra**, không để một khoảng trống', () => {
+    const cyclic = tree();
+    const withCycle: Scene = {
+      ...cyclic,
+      elements: [...cyclic.elements, { id: 'e4', type: 'edge', u: '1', v: '5' } as never],
+    };
+    expect(renderer.toSvg(withCycle, ctx)).toContain('Không phải cây');
+  });
+});

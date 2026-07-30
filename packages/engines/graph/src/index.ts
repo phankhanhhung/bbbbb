@@ -9,7 +9,14 @@ import {
 } from '@combviz/schema';
 import { buildGraph, VERTEX_RADIUS } from './graph.js';
 import { layoutPositions, type LayoutId } from './layout.js';
-import { bipartite, connectedComponents, matching, planarity } from './analyzers.js';
+import {
+  bipartite,
+  connectedComponents,
+  findCycle,
+  isTree,
+  matching,
+  planarity,
+} from './analyzers.js';
 import { analyzePoset } from './poset.js';
 import { EdgeElement, GRAPH_LIMITS, GraphConfig, VertexElement } from './schema.js';
 
@@ -487,9 +494,52 @@ const hasseDiagram: SceneValidator = {
   },
 };
 
+/**
+ * `tree` — liên thông, đơn, và $m = n - 1$ (GR-09).
+ *
+ * Mục tiêu sandbox của cả họ bài về cây, và nó **nói ra hỏng ở đâu**: thiếu cạnh
+ * thì chỉ vào các đỉnh bị rời, thừa cạnh thì chỉ vào một chu trình. Một câu "không
+ * phải cây" trơn không giúp người học sửa gì.
+ */
+const tree: SceneValidator = {
+  id: 'tree',
+  label: 'Là một cây',
+  check(scene) {
+    const graph = buildGraph(scene);
+    const n = graph.vertices.length;
+    if (n === 0) return { ok: true, violations: [] };
+    if (isTree(graph)) return { ok: true, violations: [] };
+
+    const cycle = findCycle(graph);
+    if (cycle.length > 0) {
+      return {
+        ok: false,
+        violations: [...cycle],
+        message: `Có chu trình dài ${cycle.length} — cây thì không có chu trình`,
+      };
+    }
+
+    const components = connectedComponents(graph);
+    if (components.count > 1) {
+      return {
+        ok: false,
+        violations: graph.vertices.map((v) => v.id),
+        message: `${components.count} thành phần rời nhau; cây phải liên thông`,
+      };
+    }
+
+    return {
+      ok: false,
+      violations: graph.edges.map((e) => e.id),
+      message: `${n} đỉnh nhưng ${graph.edges.length} cạnh; cây cần đúng ${n - 1}`,
+    };
+  },
+};
+
 const FIXED: readonly SceneValidator[] = [
   simpleGraph,
   connected,
+  tree,
   isBipartite,
   noMonoTriangle,
   triangleFree,
@@ -539,8 +589,21 @@ export const graphSchemaFragment: EngineSchemaFragment = {
   resolveValidator: resolveGraphValidator,
   validatorIds: GRAPH_VALIDATOR_IDS,
 
-  /** Đồ thị không có element ngầm định — mọi đỉnh và cạnh đều nằm trong file. */
-  implicitElementIds: () => new Set<string>(),
+  /**
+   * Đỉnh và cạnh đều nằm trong file; **ô mã Prüfer** thì không (GR-09).
+   *
+   * Ô thứ $i$ mang id `prufer-<i>` nên narrative neo thẳng vào một vị trí của mã
+   * được — "[[a1|ô thứ hai]] là đỉnh $5$" — mà ANC-02 không báo anchor rot. Cùng
+   * cơ chế với ô bàn cờ (D-16) và ô phổ của engine game.
+   */
+  implicitElementIds(scene: Scene): Set<string> {
+    const config = scene.config as GraphConfig | undefined;
+    if (!config?.show_prufer) return new Set<string>();
+    const n = scene.elements.filter((e) => e.type === 'vertex').length;
+    const ids = new Set<string>();
+    for (let i = 0; i < Math.max(0, n - 2); i += 1) ids.add(`prufer-${i}`);
+    return ids;
+  },
 
   checkBounds(scene: Scene, path: string): ValidationIssue[] {
     const issues: ValidationIssue[] = [];

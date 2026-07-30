@@ -7,6 +7,10 @@ import {
   eulerian,
   findCycle,
   hamiltonian,
+  isTree,
+  pruferCode,
+  pruferDecode,
+  pruferOrder,
 } from '../src/analyzers.js';
 import { layoutPositions } from '../src/layout.js';
 import { GRAPH_LIMITS } from '../src/schema.js';
@@ -238,5 +242,129 @@ describe('layout (GR-02)', () => {
     });
 
     expect(positions.get('c')).toEqual([expect.any(Number), 0]);
+  });
+});
+
+/**
+ * GR-09 — mã Prüfer.
+ *
+ * Chỗ đáng kiểm không phải "mã của cây này là gì" mà là **song ánh**: mã hoá rồi
+ * giải mã phải về đúng cây cũ, và giải mã rồi mã hoá phải về đúng dãy cũ, với
+ * **mọi** dãy. Kiểm được điều đó là kiểm được công thức Cayley — $n^{n-2}$ dãy,
+ * $n^{n-2}$ cây — bằng cách dựng ra, không phải bằng cách tra.
+ */
+describe('GR-09 — mã Prüfer', () => {
+  /** Cạnh của một cây dưới dạng chuỗi chuẩn tắc, để so hai cây. */
+  const edgeSet = (edges: readonly (readonly [string, string])[]): Set<string> =>
+    new Set(edges.map(([u, v]) => (u < v ? `${u}-${v}` : `${v}-${u}`)));
+
+  it('nhận đúng cây, và từ chối thứ không phải cây **kèm lý do**', () => {
+    expect(isTree(model(['1-2', '2-3']))).toBe(true);
+    expect(isTree(model(['1-2', '2-3', '3-1']))).toBe(false);
+    expect(isTree(model(['1-2'], ['3']))).toBe(false);
+    expect(isTree(model(['1-1', '1-2']))).toBe(false);
+
+    const refused = pruferCode(model(['1-2', '2-3', '3-1']));
+    expect(refused.value).toBeNull();
+    expect(refused.refused).toMatch(/Không phải cây/);
+  });
+
+  it('mã của cây mẫu, tính tay được', () => {
+    // Cây 1–4, 4–5, 5–2, 5–3. Lá nhỏ nhất là 1 ⇒ ghi 4; rồi 2 ⇒ ghi 5; rồi 3 ⇒ ghi 5.
+    const result = pruferCode(model(['1-4', '4-5', '5-2', '5-3']));
+    expect(result.value?.code).toEqual(['4', '5', '5']);
+    // Sao đơn: mọi lá trỏ về tâm, nên mã là tâm lặp $n-2$ lần.
+    expect(pruferCode(model(['1-3', '2-3', '4-3', '5-3'])).value?.code).toEqual([
+      '3', '3', '3',
+    ]);
+    // Đường thẳng 1–2–3–4–5: mã là các đỉnh trong, theo thứ tự.
+    expect(pruferCode(model(['1-2', '2-3', '3-4', '4-5'])).value?.code).toEqual([
+      '2', '3', '4',
+    ]);
+  });
+
+  it('mã dài đúng $n-2$, và cây hai đỉnh có mã **rỗng**', () => {
+    expect(pruferCode(model(['1-2'])).value?.code).toEqual([]);
+    for (const n of [3, 4, 5, 6]) {
+      const specs = Array.from({ length: n - 1 }, (_, i) => `${i + 1}-${i + 2}`);
+      expect({ n, len: pruferCode(model(specs)).value?.code.length }).toEqual({
+        n,
+        len: n - 2,
+      });
+    }
+  });
+
+  it('bổ đề: bậc đỉnh $=$ số lần xuất hiện, cộng $1$', () => {
+    // Đây là thứ duy nhất người học phải tin; phần còn lại là đếm.
+    for (const specs of [
+      ['1-4', '4-5', '5-2', '5-3'],
+      ['1-2', '2-3', '3-4', '4-5'],
+      ['1-3', '2-3', '4-3', '5-3'],
+      ['1-2', '1-3', '3-4', '3-5', '5-6'],
+    ]) {
+      const graph = model(specs);
+      const result = pruferCode(graph).value!;
+      for (const vertex of graph.vertices) {
+        expect({ specs, id: vertex.id, deg: graph.degree.get(vertex.id) }).toEqual({
+          specs,
+          id: vertex.id,
+          deg: (result.occurrences.get(vertex.id) ?? 0) + 1,
+        });
+      }
+    }
+  });
+
+  it('lá **đúng là** những nhãn vắng mặt trong mã', () => {
+    const graph = model(['1-4', '4-5', '5-2', '5-3']);
+    const result = pruferCode(graph).value!;
+    const leaves = graph.vertices
+      .filter((v) => (result.occurrences.get(v.id) ?? 0) === 0)
+      .map((v) => v.id)
+      .sort();
+    expect(leaves).toEqual(['1', '2', '3']);
+  });
+
+  it('**song ánh**: mọi dãy độ dài $n-2$ giải mã ra một cây, mã hoá lại ra chính nó', () => {
+    // Đây là công thức Cayley được **dựng ra**: với $n = 5$ có $5^3 = 125$ dãy, và
+    // test này khẳng định chúng cho ra 125 cây đôi một khác nhau.
+    for (const n of [4, 5]) {
+      const order = Array.from({ length: n }, (_, i) => String(i + 1));
+      const seen = new Set<string>();
+      let count = 0;
+
+      const walk = (code: string[]): void => {
+        if (code.length === n - 2) {
+          const edges = pruferDecode(code, order);
+          expect({ n, code, edges: edges.length }).toEqual({ n, code, edges: n - 1 });
+
+          const rebuilt = model(edges.map(([u, v]) => `${u}-${v}`));
+          expect({ n, code, tree: isTree(rebuilt) }).toEqual({ n, code, tree: true });
+          expect({ n, code, back: pruferCode(rebuilt).value?.code }).toEqual({
+            n,
+            code,
+            back: code,
+          });
+
+          seen.add([...edgeSet(edges)].sort().join('|'));
+          count += 1;
+          return;
+        }
+        for (const id of order) walk([...code, id]);
+      };
+      walk([]);
+
+      expect({ n, count, distinct: seen.size }).toEqual({
+        n,
+        count: n ** (n - 2),
+        distinct: n ** (n - 2),
+      });
+    }
+  });
+
+  it('thứ tự nhãn đọc **kiểu số**, không phải kiểu chuỗi', () => {
+    // Với $10$ đỉnh, so chuỗi thì "10" đứng trước "2" và mã ra khác hẳn.
+    const specs = ['1-2', '2-10', '10-3'];
+    expect(pruferOrder(model(specs))).toEqual(['1', '2', '3', '10']);
+    expect(pruferCode(model(specs)).value?.code).toEqual(['2', '10']);
   });
 });

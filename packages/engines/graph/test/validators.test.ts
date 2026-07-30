@@ -87,3 +87,29 @@ describe('triangle-free (G-12)', () => {
     expect(GRAPH_VALIDATOR_IDS).toContain('triangle-free');
   });
 });
+
+describe('validator `tree` (GR-09)', () => {
+  const check = (s: Scene) => resolveGraphValidator('tree')!.check(s);
+
+  it('cây thì đạt', () => {
+    expect(check(graphOf(['1-2', '2-3', '3-4'])).ok).toBe(true);
+    expect(check(graphOf(['1-2'])).ok).toBe(true);
+  });
+
+  it('**nói ra hỏng ở đâu**, không chỉ nói "không phải cây"', () => {
+    // Thừa cạnh ⇒ chỉ vào chu trình.
+    const cyclic = check(graphOf(['1-2', '2-3', '3-1']));
+    expect(cyclic.ok).toBe(false);
+    expect(cyclic.message).toMatch(/chu trình/);
+    expect(cyclic.violations).toHaveLength(3);
+
+    // Thiếu cạnh ⇒ nói rời mấy mảnh.
+    const split = check(graphOf(['1-2'], ['3', '4']));
+    expect(split.ok).toBe(false);
+    expect(split.message).toMatch(/thành phần rời nhau/);
+  });
+
+  it('có trong danh sách id để Studio bày ra', () => {
+    expect(GRAPH_VALIDATOR_IDS).toContain('tree');
+  });
+});
