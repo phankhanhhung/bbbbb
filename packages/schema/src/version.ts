@@ -10,5 +10,10 @@
  * cũ nào phải sửa gì, nên đúng nghĩa một minor bump. Nó cũng là lần đầu bộ máy
  * migrate (DAT-02) thật sự chạy: trước đó `MIGRATIONS` rỗng, và một cơ chế chưa
  * bao giờ chạy thì chưa phải một cơ chế.
+ *
+ * `0.3.0` thêm `cell_overrides[...].strike` của board (BD-10) — cũng optional,
+ * cũng không bài cũ nào phải sửa. Bump vì `cell_overrides` khai
+ * `additionalProperties: false`: một file dùng `strike` mà vẫn đóng dấu `0.2.0`
+ * sẽ bị chính schema `0.2.0` từ chối, tức con dấu nói sai về file.
  */
-export const SCHEMA_VERSION = '0.2.0';
+export const SCHEMA_VERSION = '0.3.0';

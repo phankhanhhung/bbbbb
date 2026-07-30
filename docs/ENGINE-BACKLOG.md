@@ -112,6 +112,12 @@ bằng toạ độ.
   region, validator và DSL không phải biết gì; chỗ duy nhất biết là `lattice.ts`.
   Kèm hai bài: `triangle-lozenge-parity` (lưới tam giác) và `hex-board-three-colours` (lưới lục giác). Ba tính năng **chỉ có nghĩa trên lưới vuông**
   — polyomino, bảng PRN-03, luật đi quân cờ — bị chặn ở cả `checkBounds` lẫn lệnh.
+- **BD-10 ✅ (M42)** — **gạch ô**: `cell_overrides[].strike`, một `color_class` cho
+  nét. Gạch khác tô ở đúng chỗ làm nên một cái sàng — ô bị gạch **vẫn đọc được** —
+  và màu nét gánh nghĩa "ai đã loại ô này". Nét có key riêng `strike-<r>-<c>` để
+  một pha `show` hiện được nét mà không hiện lại cả ô. Kèm `sieve-primes-100` viết
+  lại: bốn số nguyên tố sàng mang bốn màu, nét gạch mang màu của ước nguyên tố nhỏ
+  nhất.
 - **BD-09 ✅ (M30)** — **quân ghép trên lưới phi vuông**: `LATTICE_SHAPES` +
   `latticeTileCells` ở `lattice.ts`, hình `lozenge`, trường `dir` trên `tile`.
   `triangle-lozenge-parity` nay là `challenge`.

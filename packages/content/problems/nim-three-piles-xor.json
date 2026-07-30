@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "id": "nim-three-piles-xor",
   "statement": {
     "vi": "Nim ba đống $3$, $5$, $7$: mỗi lượt bốc **bao nhiêu tuỳ ý** từ **một** đống. Ai bốc viên cuối cùng thì thắng. Ai có chiến lược thắng, và chiến lược đó là gì?"

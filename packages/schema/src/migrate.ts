@@ -35,6 +35,19 @@ export const MIGRATIONS: readonly Migration[] = [
      */
     apply: (problem) => problem,
   },
+  {
+    from: '0.2.0',
+    to: '0.3.0',
+    summary:
+      'thêm cell_overrides[].strike của board (BD-10, optional) — không đổi dữ liệu, chỉ đóng dấu phiên bản',
+    /**
+     * Lại một bước nhảy đồng nhất, và lý do y hệt bước trước: `cell_overrides`
+     * đóng (`additionalProperties: false`), nên một file dùng `strike` mà vẫn
+     * mang dấu `0.2.0` sẽ bị chính schema `0.2.0` từ chối. Con dấu phải nói đúng
+     * về file nó đóng.
+     */
+    apply: (problem) => problem,
+  },
 ];
 
 export interface MigrateResult {

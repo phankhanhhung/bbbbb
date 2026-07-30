@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M41 xong (7 engine đều tự khai hình học; mọi element trong kho neo được; kho có sổ thứ tự bài); schema `0.2.0`; kho 83 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M42 xong (7 engine đều tự khai hình học; mọi element trong kho neo được; kho có sổ thứ tự bài; board gạch được ô); schema `0.3.0`; kho 83 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,37 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M42 — `BD-10` gạch ô, và sàng Eratosthenes kể lại bằng màu · [E] — **xong**
+
+Yêu cầu là sửa kịch bản bài `sieve-primes-100`: highlight $2$ màu xanh, gạch bội
+của $2$ bằng nét xanh, tương tự cho các số cao hơn. Engine **không làm được**: ô
+chỉ có `color_class` (tô) và `glyph` (chữ), không có nét gạch nào.
+
+**Gạch khác tô, và khác ở đúng chỗ làm nên một cái sàng.** Tô đè lên số $12$ thì
+người xem mất luôn con số; gạch nó thì họ thấy cả "số này" lẫn "số này đã bị loại"
+— mà cả hai đều là nội dung của lập luận. Nên `cell_overrides[].strike` nhận một
+`color_class`, và màu ấy gánh nghĩa **ai đã loại ô này**: bảng cuối cùng đọc được
+ước nguyên tố nhỏ nhất của từng hợp số, chứ không chỉ đếm được $74$ hợp số.
+
+**Nét phải có danh tính riêng, và đó là ràng buộc làm tính năng chạy được.**
+`applyChoreography` tra `data-el ?? key`, nên nếu nét dùng chung id với ô thì một
+pha "hiện dần bội của $2$" sẽ làm **cả ô** nhoà vào rồi hiện ra. Key riêng
+`strike-<r>-<c>`, chỉ sinh cho ô có khai — khai cả $1600$ nét không tồn tại sẽ bắt
+chốt canh ANC-01 đòi mực cho từng cái.
+
+Kịch bản mới: bốn pha `show` thay bốn pha `dim`, mỗi pha hiện nét của một số nguyên
+tố. Đếm chéo khớp bản cũ từng con số — $49 + 16 + 6 + 3 = 74$ hợp số, $25$ số
+nguyên tố — nên phần *toán* không đổi, chỉ phần *kể* đổi.
+
+Schema lên `0.3.0` kèm migration đồng nhất, đúng luật đã đặt ở lần bump trước:
+`cell_overrides` khai `additionalProperties: false`, nên một file dùng `strike` mà
+vẫn đóng dấu `0.2.0` sẽ bị chính schema `0.2.0` từ chối — con dấu phải nói đúng về
+file nó đóng.
+
+Một bài học nhỏ, cũ mà vẫn tái phạm: test `migrate` gõ thẳng `toHaveLength(1)` cho
+số bước nâng cấp, nên thêm một migration là đỏ một test không liên quan gì tới nó.
+Nay nó đếm theo `MIGRATIONS.length`.
 
 ### M41 — Sổ thứ tự bài, và nhãn "MỚI" tự hết hạn · [E] — **xong**
 

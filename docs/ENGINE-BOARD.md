@@ -1,7 +1,7 @@
 # CombViz — Board engine: mô tả chức năng
 
-Trạng thái: **mô tả code đang chạy**, không phải đặc tả mong muốn · Cập nhật: 2026-07-30 (sau M41)
-Nguồn yêu cầu: `docs/SRS-v1.0.md` §`BD-01..06` · Hàng đợi: `docs/ENGINE-BACKLOG.md` (`BD-07/08/09` đã xong)
+Trạng thái: **mô tả code đang chạy**, không phải đặc tả mong muốn · Cập nhật: 2026-07-30 (sau M42)
+Nguồn yêu cầu: `docs/SRS-v1.0.md` §`BD-01..06` · Hàng đợi: `docs/ENGINE-BACKLOG.md` (`BD-07/08/09/10` đã xong)
 Mã nguồn: `packages/engines/board/`
 
 > **Cách đọc tài liệu này.**
@@ -31,7 +31,7 @@ Trong 83 bài đã xuất bản, **30 bài** dùng board, trên **100 / 353** sc
 | Đếm hai chiều (bảng có nhãn và tổng) | `counting-double-counting-table` (#10), `counting-pascal-rule` (#14) |
 | Quân cờ, vùng khống chế | `queens-eight-non-attacking` (#33), `kings-domination-8x8` (#26) |
 | Bất biến của phép lật | `sign-flip-4x4` (#6), `lights-out-3x3` (#67), `lights-out-torus` (#68) |
-| Bàn như một cái bảng đánh dấu | `sieve-primes-100` (#79), `sum-odd-numbers-gnomon` (#81) |
+| Bàn như một cái bảng đánh dấu, gạch dần | `sieve-primes-100` (#79), `sum-odd-numbers-gnomon` (#81) |
 
 ### 1.1 Nguyên tắc xuyên suốt: đổi hình ô, không đổi toạ độ
 
@@ -71,7 +71,7 @@ engine, không phải bảy bản sao.
 | `holes` | `[r, c][]` | — | Ô khuyết |
 | `coloring_preset` | xem §4 | — | Phép tô tham số hoá (BD-01) |
 | `table` | xem §5 | — | Nhãn hàng/cột + dòng tổng (PRN-03). Chỉ lưới vuông |
-| `cell_overrides` | `Record<"cell-r-c", {color_class?, glyph?}>` | — | Tô tay, đè lên preset |
+| `cell_overrides` | `Record<"cell-r-c", {color_class?, glyph?, strike?}>` | — | Tô tay / ghi chữ / **gạch** ô, đè lên preset |
 
 `additionalProperties: false` — trường lạ là lỗi, không phải là bị bỏ qua.
 
@@ -201,6 +201,40 @@ $c$ của hàng $r$ và cột $c$ của hàng $r+1$ **không** thẳng hàng. N�
 $k=3$, dùng $r+c$ cho **hai ô kề nhau cùng màu**, tức là một phép tô trông hệt
 phép tô ba màu kinh điển của bàn ong và **sai**. Với toạ độ trục thì `diag-left`
 $k=3$ đúng là phép tô ba màu thật, và có test ép cả hai chiều.
+
+### 4.3 Gạch ô (BD-10)
+
+`cell_overrides[id].strike` = một `color_class` $1..8$: **gạch ô này bằng nét màu
+của lớp ấy**.
+
+**Gạch khác tô, và khác ở đúng chỗ làm nên một cái sàng: ô bị gạch vẫn đọc được.**
+Tô đè lên số $12$ thì người xem mất luôn con số; gạch nó thì họ thấy cả "số này"
+lẫn "số này đã bị loại" — mà cả hai đều là nội dung của lập luận.
+
+Màu gánh một nghĩa: **ai đã loại ô này**. Trong sàng Eratosthenes, nét mang màu của
+ước nguyên tố nhỏ nhất, nên bảng cuối cùng không chỉ nói "$74$ hợp số" mà đọc được
+*vì sao từng số một* bị loại.
+
+Ba chi tiết cài đặt đáng biết:
+
+- **Danh tính riêng** — nét mang key `strike-<r>-<c>`, không dùng chung với ô. Đó
+  là cả lý do nó tồn tại: `applyChoreography` tra `data-el ?? key`, nên chung id thì
+  một pha "hiện dần nét gạch" sẽ làm **cả ô** nhoà vào rồi hiện ra. Id chỉ sinh ra
+  cho ô **có khai** `strike` (§2.2 vẫn đúng: khai cả 1600 nét không tồn tại sẽ bắt
+  chốt canh ANC-01 đòi mực cho từng cái).
+- **Vẽ sau glyph**, để nét nằm trên con số. Gạch mà bị số đè lên thì nó thành gạch
+  chân.
+- **Vẽ chéo**, dựng quanh **tâm ô** với bán kính $0{,}35\,CELL$ — không theo đường
+  chéo hộp bao, vì đường ấy thò ra ngoài ô tam giác. Gạch ngang thì đọc thành dấu
+  trừ hoặc dấu phân số; cùng lý do đã ghi ở engine chuỗi biến đổi.
+
+Đánh đổi, ghi ra để không ai tưởng là sót: lúc được nhấn, nét **đổi màu** thành màu
+halo thay vì mọc thêm halo — `decorationAttrs` trả về `stroke` + `stroke-width`, mà
+một nét thì không có `fill` để `paint-order` dựng viền quanh. Với nét mảnh thì đó
+vẫn đọc được là "cái này đây", và cách duy nhất giữ được màu là phát thêm một node
+vô hình cho **mọi** ô bị gạch.
+
+Ô khuyết không gạch được: nó không phải một ô.
 
 ---
 
@@ -404,6 +438,7 @@ một pixel nào.
 | Node | `key` |
 |---|---|
 | ô | `cell-<r>-<c>` |
+| nét gạch (BD-10) | `strike-<r>-<c>` |
 | tile / piece / region | `element.id` |
 | dấu khống chế | `<pieceId>-atk-<r>-<c>` |
 | nhãn bảng | `row-label-<r>`, `col-label-<c>`, `row-sum-<r>`, `col-sum-<c>`, `grand-sum` |
@@ -726,18 +761,18 @@ hiện.
 
 | File | Dòng | Nội dung |
 |---|---|---|
-| `schema.ts` | 219 | Hợp đồng dữ liệu: `BoardConfig`, `PieceElement`, `TileElement`, `RegionElement`, `BOARD_LIMITS` |
+| `schema.ts` | 238 | Hợp đồng dữ liệu: `BoardConfig`, `PieceElement`, `TileElement`, `RegionElement`, `BOARD_LIMITS` |
 | `lattice.ts` | 534 | **Toàn bộ hình học của ba lưới**: đa giác, tâm, chạm, kề, hướng, dán mép, hình của lưới phi vuông |
 | `geometry.ts` | 177 | Polyomino: `TILE_SHAPES`, xoay/lật, đường bao; và `cellColorClass` (preset + override) |
-| `render.ts` | 745 | `Scene → SvgNode[]`, `defaultViewport`, `elementBoxes` |
+| `render.ts` | 778 | `Scene → SvgNode[]`, `defaultViewport`, `elementBoxes` |
 | `commands.ts` | 621 | 13 lệnh sandbox + `coverage` + `colorSummary` |
 | `validators.ts` | 332 | 9 validator (5 cố định + 4 có tham số) |
 | `dsl.ts` | 304 | Trạng thái dẫn xuất, biến và builtin |
 | `attacks.ts` | 113 | Luật đi quân — một cài đặt, ba nơi dùng |
-| `index.ts` | 438 | `EngineSchemaFragment`: id ngầm định + toàn bộ `checkBounds` |
+| `index.ts` | 444 | `EngineSchemaFragment`: id ngầm định + toàn bộ `checkBounds` |
 | `tools.ts` | 186 | Thanh công cụ sandbox, bày theo lưới |
 | `hit-test.ts` | 110 | Điểm → element, và bóng xem trước |
-| `ids.ts` | 21 | `cellId` / `parseCellId` |
+| `ids.ts` | 41 | `cellId` / `parseCellId`, `strikeId` / `parseStrikeId` |
 
 Test: `test/lattice.test.ts` (938 dòng) là lớn nhất — nó ép các bất biến hình học
 mà không phần nào của code tự phát biểu được (kề là đối xứng, đi–về là quay lại,

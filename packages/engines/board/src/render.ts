@@ -8,6 +8,7 @@ import {
   groupAttrs,
   inkForClass,
   keyed,
+  strokeForClass,
   text,
   type EngineRenderer,
   type RenderContext,
@@ -34,7 +35,7 @@ import {
   wrapOf,
 } from './lattice.js';
 import { tileCells } from './dsl.js';
-import { cellId, parseCellId } from './ids.js';
+import { cellId, parseCellId, parseStrikeId, strikeId } from './ids.js';
 import { attackedCells, cellCentre, type AttackBoard } from './attacks.js';
 import type { BoardConfig } from './schema.js';
 
@@ -79,7 +80,9 @@ function boxesOf(scene: Scene, id: string): readonly SceneBox[] {
     };
   };
 
-  const cell = parseCellId(id);
+  // Nét gạch (BD-10) nằm quanh tâm ô, nên hộp của ô trả lời đúng cho nó: tâm hộp
+  // ô **là** tâm nét.
+  const cell = parseCellId(id) ?? parseStrikeId(id);
   if (cell) {
     const box = boxOfCell([cell.row, cell.col]);
     return box ? [box] : [];
@@ -306,6 +309,10 @@ function renderCells(config: BoardConfig, ctx: RenderContext): SvgNode[] {
 
       nodes.push(shape);
 
+      // BD-10 — nét gạch. Vẽ **sau** ô và **trước** glyph? Không: sau cả glyph, để
+      // nét nằm trên con số. Gạch mà bị con số đè lên thì nó thành gạch chân.
+      const strike = isHole ? undefined : config.cell_overrides?.[cellId(r, c)]?.strike;
+
       if (glyph) {
         nodes.push(
           text(
@@ -325,6 +332,32 @@ function renderCells(config: BoardConfig, ctx: RenderContext): SvgNode[] {
             },
             glyph,
           ),
+        );
+      }
+
+      if (strike !== undefined) {
+        const sid = strikeId(r, c);
+        const reach = CELL * 0.35;
+        nodes.push(
+          keyed(sid, 'line', {
+            // Dựng quanh **tâm ô** chứ không theo hộp bao: tâm ô là thứ
+            // `lattice.ts` biết, nên một công thức chạy đúng ở cả ba lưới. Đường
+            // chéo của hộp bao thì thò ra ngoài ô tam giác.
+            x1: round(centre.x - reach),
+            y1: round(centre.y + reach),
+            x2: round(centre.x + reach),
+            y2: round(centre.y - reach),
+            stroke: strokeForClass(ctx, strike),
+            'stroke-width': ctx.theme.stroke.base,
+            'stroke-linecap': 'round',
+            // Neo được như mọi element khác. Đánh đổi ghi ra để không ai tưởng là
+            // sót: `decorationAttrs` trả về `stroke` + `stroke-width`, mà một nét
+            // thì không có `fill` để `paint-order` dựng viền quanh — nên lúc được
+            // nhấn, nét **đổi màu** thành màu halo thay vì mọc thêm halo. Với một
+            // nét mảnh thì đó vẫn là "cái này đây", và cách duy nhất giữ được màu
+            // là phát thêm một node vô hình cho mọi ô bị gạch.
+            ...decorationAttrs(ctx, sid, undefined, ctx.theme.stroke.base / ctx.theme.stroke.region),
+          }),
         );
       }
     }

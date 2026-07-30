@@ -11,7 +11,7 @@ import {
   TileElement,
   type BoardConfig as BoardConfigType,
 } from './schema.js';
-import { cellId } from './ids.js';
+import { cellId, strikeId } from './ids.js';
 import { latticeOf } from './geometry.js';
 import {
   cellCount,
@@ -83,6 +83,12 @@ export const boardSchemaFragment: EngineSchemaFragment = {
     for (let r = 0; r < config.rows; r += 1) {
       for (let c = 0; c < cellsInRow(lattice, config.cols, r); c += 1) {
         ids.add(cellId(r, c));
+        // BD-10 — nét gạch có danh tính riêng, và **chỉ khai khi có thật**: nó là
+        // thứ duy nhất phân biệt "hiện nét gạch" với "hiện lại cả ô". Khai cả
+        // 1600 nét không tồn tại sẽ làm chốt canh ANC-01 đòi mực cho từng cái.
+        if (!isHole(config, r, c) && config.cell_overrides?.[cellId(r, c)]?.strike !== undefined) {
+          ids.add(strikeId(r, c));
+        }
       }
     }
     return ids;
