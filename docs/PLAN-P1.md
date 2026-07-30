@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M38 xong (7 engine, phủ ~92%; backlog engine đã cạn; mọi element trong kho neo được); schema `0.2.0`; kho 73 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M40 xong (7 engine đều tự khai hình học; mọi element trong kho neo được); schema `0.2.0`; kho 83 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,35 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M39–M40 — `elementBoxes` đủ bảy engine, và mười bài cho tính năng mới · [E] — **xong**
+
+**M39.** Bốn engine còn lại tự khai hình học. `board` qua ngay từ lần đầu — phần
+thưởng của một quyết định cũ: mọi thứ đã quy về `cellPolygon` từ M24, nên bàn ong
+và bàn tam giác không cần một dòng riêng nào. `game` phải **tách hàm trước**:
+phép xếp sỏi nằm rải trong hai nhánh vòng vẽ cùng năm hằng số, nên `stonePlaces`
+thành nguồn duy nhất và vòng vẽ đọc nó — golden không đổi một file, tức refactor
+đúng nghĩa. `point`: đường thẳng khai theo **hai điểm định nghĩa nó**, không theo
+nét vẽ (nét được kéo dài quá khung rồi để `viewBox` cắt, nên hộp bao của nét là
+cả khung — đúng mà vô dụng).
+
+**M40.** Kho 73 bài mà chỉ **một** dùng choreography, **hai** dùng song ánh. Mười
+bài mới đưa hai con số ấy lên 6 và 6. Mỗi bài chọn tính năng vì lập luận cần nó:
+sàng Eratosthenes cần thứ tự gạch, gnomon cần thứ tự lớp, bóc lá cần thấy "vẫn
+là cây sau mỗi nhịp". Mọi con số vét cạn.
+
+Ba việc rút ra:
+
+1. **Oracle độc lập là thứ đáng giá nhất của cả hạng mục.** Nó bắt tao **năm**
+   lần đoán layout thay vì đọc code vẽ, trong bốn engine khác nhau — ô dãy cao 15
+   chứ không 10, cột sỏi hẹp 3 chứ không 10, nét cắt nằm giữa hai ô, chấm Venn
+   được rải quanh tâm vùng, ô ma trận tra bằng khoá có ký tự NUL.
+2. **Nội dung mới soi ra lỗi code mà test không soi được.**
+   `subset-complement-pairing` có hai pane cùng engine cùng view, nên đo được cả
+   bốn cặp mà **không cặp nào dịch chỗ**. Nút "Biến hình" sẽ chạy đủ thời lượng
+   với màn hình đứng im. Giờ generator từ chối hẳn khi tổng chuyển động bằng 0.
+3. **Cùng một bẫy hai lần.** Một e2e cũ đỏ vì `count()` không chờ — đúng cái đã
+   sửa cho morph mà quên sửa ở đây. Khẳng định e2e phải luôn có chờ.
 
 ### M38 — Hợp đồng danh tính element, và `PRN-04` làm cho đúng · [E] — **xong**
 

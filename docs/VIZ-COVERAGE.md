@@ -449,10 +449,10 @@ tĩnh viết sẵn trong file. Ba hệ quả, nói ra để không ai trông đ�
   duy nhất. Hình học do engine khai (`EngineRenderer.elementBoxes`) chứ không
   suy ngược từ thuộc tính SVG nữa. Giảm chuyển động cho ra bộ đếm pha — bấm qua
   từng cặp.
-  Giới hạn còn lại, đã biết: `board`, `point`, `game`, `derivation` chưa cài
-  `elementBoxes` (chưa bài song ánh nào dùng tới); cặp nào không đo được thì bỏ,
-  và bỏ quá một phần ba thì Player **không hiện nút** thay vì chạy một animation
-  có phần ba số cặp đứng im.
+  **Cả bảy engine** đều cài `elementBoxes` từ M39, và có chốt canh khoá lại chỗ
+  dừng ấy. Player **không hiện nút** khi quá một phần ba số cặp không đo được,
+  **hoặc** khi không cặp nào thật sự dịch chỗ — hai pane cùng engine cùng view
+  thì ảnh nằm đúng chỗ vật, và một animation đứng im tệ hơn hai hình cạnh nhau.
 - **Ánh xạ không được kiểm là song ánh thật.** Validate kiểm id có tồn tại đúng
   bên, và **cảnh báo** khi không đơn ánh — nhưng nó không biết cặp có đúng về mặt
   toán học hay không. Đó vẫn là việc của người duyệt.
