@@ -26,7 +26,7 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~+ ghép cặp, tính phẳng, ma trận kề (M12)~~ | ~~76%~~ | ~~84%~~ |
 | ~~Hôm nay (6 engine + poset/Hasse)~~ | ~~83%~~ | ~~90%~~ |
 | ~~Hôm nay (7 engine — thêm derivation + label atlas)~~ | ~~≈85%~~ | ~~≈97%~~ |
-| **Hôm nay** (7 engine, sau M22–M34: board và graph **hết hàng đợi**) | **~89%** | **~97%** |
+| **Hôm nay** (7 engine, sau M22–M36: tầng A của cả bảy **đã cạn**) | **~90%** | **~97%** |
 | Hàng đợi §7 — **đã hết** | — | — |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
@@ -54,13 +54,13 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 | Đồ thị | 22% | 99% | 21.8 | kiểm tính phẳng tổng quát (cố ý không làm — §4) |
 | Đếm / song ánh / đếm hai chiều | 14% | 87% | 12.2 | animation biến hình của PRN-04 |
 | Dãy số / thao tác lặp / quá trình | 16% | 96% | 15.4 | — (`SQ-02` và `BD-08` đều xong) |
-| Trò chơi | 7% | 66% | 4.62 | thế phải là **đa tập số** cộng nhiều nhất một con số nhớ; mọi game không-phải-đống vẫn chưa — cần GM-01 rule script thật |
+| Trò chơi | 7% | 72% | 5.04 | thế phải là **đa tập số** cộng nhiều nhất một con số nhớ; mọi game không-phải-đống vẫn chưa — cần GM-01 rule script thật |
 | Hệ tập hợp / siêu đồ thị | 8% | 96% | 7.68 | phần bù như khái niệm hiển ngôn; họ bài "mọi tập con của $[n]$" |
 | Hình học tổ hợp | 5% | 75% | 3.75 | tô vùng do các đoạn chia (PT-03), đường tròn |
 | Hoán vị / thứ tự | 6% | 97% | 5.8 | — (chu trình hoán vị + poset/Hasse + Dilworth + dãy con đơn điệu) |
 | Tổ hợp mang màu số học | 4% | 60% | 2.4 | — (bảng thặng dư dùng `table` của board) |
 | Trừu tượng (xác suất, entropy, đại số) | 3% | 25% | 0.75 | derivation gánh được phần *đại số*; xác suất và entropy thì **không** — xem §6 |
-| **Tổng** | **100%** | | **~89%** | |
+| **Tổng** | **100%** | | **~90%** | |
 
 ### Kiểm chứng bằng bài cụ thể
 
@@ -99,9 +99,10 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Dãy Ducci (hiệu tuyệt đối vòng quanh) | quá trình | ✅ có trong kho (SQ-02: `sequence/step`) |
 | Lights-out (lật chữ thập) | lưới + quá trình | ✅ có trong kho (BD-08: `board/toggle-cross`, chạy trên cả ba lưới) |
 | Nim | trò chơi | ✅ có trong kho (XOR + giá trị Grundy) |
+| Nim **misère** (ai bốc cuối thì thua) | trò chơi | ✅ có trong kho — và Grundy bị chặn ở đó, đúng như lý thuyết |
 | Bốc sỏi $1..k$ | trò chơi | ✅ có trong kho (phổ thắng-thua) |
 | Trò Grundy (chia đống không đều) | trò chơi | ✅ đối chiếu vét cạn, khớp dãy Grundy đã biết |
-| Bốc theo tập $\{1,3,4\}$ | trò chơi | ✅ thua ở $0,2,7,9,14,\dots$ — khớp |
+| Bốc theo tập $\{1,3,4\}$ | trò chơi | ✅ có trong kho (`subtraction-set-134`); thua ở $0,2,7,9,14,\dots$ |
 | Bốc **tối đa nửa đống** | trò chơi | ✅ có trong kho (luật `subtract-fraction`, thua ở $2^m-1$) |
 | Wythoff (hai đống, nước chéo) | trò chơi | ✅ có trong kho (`subtract-equal-pair`; phổ hai chiều cho ra **hai tia**) |
 | Trò Euclid | trò chơi | ✅ có trong kho (`subtract-multiple-of-other`; phổ hai chiều cho ra một **nêm**) |

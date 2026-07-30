@@ -96,6 +96,30 @@ export type ToolAction =
       readonly idPrefix?: string;
     }
   /**
+   * Bấm một element rồi bấm **chỗ đến** → di chuyển nó tới đó.
+   *
+   * **Hai chạm, không kéo thả** — cùng lý do đã ghi ở `two`: trên cảm ứng, kéo một
+   * vật đi vài chục pixel rất dễ trượt tay, mà trượt ở đây nghĩa là quân rơi vào ô
+   * khác và người học mất mạch lập luận đang thử.
+   *
+   * Vì sao cần một dạng riêng thay vì dùng `two`: `two` truyền **hai id**, còn di
+   * chuyển cần một id và một **vị trí**. Vị trí bóc từ id ô đích, y như `stamp`.
+   *
+   * Chỉ dùng được ở engine mà chỗ đến **là một element có id** (ô bàn cờ). Engine
+   * đồ thị và điểm cần toạ độ tự do, tức là phải biết điểm chạm ở đâu *khi không
+   * trúng element nào* — thao tác duy nhất trong cả kho cần điều đó, và nó vẫn
+   * đang để dành.
+   */
+  | {
+      readonly type: 'move';
+      readonly command: string;
+      readonly idParam: string;
+      /** Tên tham số nhận `[row, col]` bóc từ id ô đích. */
+      readonly posParam: string;
+      /** Tiền tố của id **chỗ đến**; vật được chọn thì không lọc theo tiền tố này. */
+      readonly prefix: string;
+    }
+  /**
    * Bấm một element → chạy lệnh với **id mới cấp** cộng vị trí của element đó.
    *
    * Id do phía gọi cấp, không do lệnh tự sinh — đó là điều kiện replay được của

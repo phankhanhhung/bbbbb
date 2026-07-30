@@ -37,7 +37,7 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 71 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười lăm bài của M22–M35):
+Đo trên 73 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười bảy bài của M22–M36):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
@@ -104,7 +104,12 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
   — polyomino, bảng PRN-03, luật đi quân cờ — bị chặn ở cả `checkBounds` lẫn lệnh.
 - **BD-09 ✅ (M30)** — **quân ghép trên lưới phi vuông**: `LATTICE_SHAPES` +
   `latticeTileCells` ở `lattice.ts`, hình `lozenge`, trường `dir` trên `tile`.
-  `triangle-lozenge-parity` nay là `challenge` kéo thả được, đúng như dự đoán.
+  `triangle-lozenge-parity` nay là `challenge`.
+
+  *Đính chính (M36):* M30 viết bài ấy "kéo thả được". Sai — **không có kéo thả
+  nào** trong sandbox, và `board/move-element` chưa từng có đường tới kể từ M4.
+  Thứ làm được lúc đó là đóng dấu quân mới rồi xoá. M36 nối lệnh ấy bằng thao tác
+  **hai chạm**.
 
   Chỗ khác với dự đoán: **không** dựng được song song với `TILE_SHAPES` bằng cùng
   mô hình. Mô hình polyomino là "tập offset, tịnh tiến tới `pos`, xoay $90°$", và
@@ -247,7 +252,7 @@ thứ hai bài mới **thật sự** đòi mà engine chưa có:
 - **PT-03 [P3] MAY** — tô vùng do các đoạn chia. **SRS tự nói hoãn**: "đắt và hiếm
   bài cần; chỉ làm khi seed content P3 đòi hỏi." Giữ nguyên chữ ấy.
 
-### 2.6 `game` — 7 bài · **Tầng A đã làm xong ở M22–M25**
+### 2.6 `game` — 9 bài · **Tầng A đã làm xong ở M22–M25**
 
 Ba hạng mục dưới đây đều là **mở rộng họ luật đóng**, và tiền lệ đã có: M17b thêm
 `subtract-fraction` trong một buổi và nó biến "bốc tối đa nửa đống" từ ❌ thành ✅.
@@ -286,6 +291,16 @@ tính ra một con số không ai kiểm.
 - **GM-01 / DOM-04** — rule script tổng quát cho Chomp, cờ trên đồ thị, game bàn
   cờ, game partizan. Đây là DSL-03 thật sự và nó đi thẳng vào **R-2**. Đã hoãn có
   lý do viết ra; đừng mở bằng cửa sau.
+
+**Hai năng lực có sẵn mà không bài nào dùng — lấp ở M36.** Rà bằng máy (cờ config
+khai trong schema mà không xuất hiện trong bài nào) chỉ ra `misere` và `allowed`.
+Cả hai đều **đã xong hết**: solver đi đường riêng cho misère, `subtract-set` có
+test, phổ vẽ đúng cả hai. Thứ thiếu là bài. Nay có `misere-nim-last-loses` và
+`subtraction-set-134`.
+
+Đáng nói hơn: `VIZ-COVERAGE.md` đánh ✅ cho "bốc theo tập $\{1,3,4\}$" trong bảng
+**"Kiểm chứng bằng bài cụ thể"**, trong khi cái ✅ ấy dựa vào một *test*, không phải
+một *bài*. Bảng nói một đằng, kho có một nẻo.
 
 ### 2.7 `derivation` — 2 bài · **nội dung trước**
 

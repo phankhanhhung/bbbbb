@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M35 xong (7 engine, phủ ~89%; board, graph và set đã cạn hàng đợi tầng A); kho 71 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M36 xong (7 engine, phủ ~90%; tầng A của cả bảy engine đã cạn); kho 73 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,66 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M36 — Rà bằng máy: tính năng chết, và hai lệnh chưa từng có đường tới · [E] — **xong**
+
+Backlog nói tầng A của cả bảy engine đã cạn. Đúng — nhưng ba milestone gần đây đều
+tìm ra **tính năng chết** mà tài liệu không biết (view ma trận không bài nào dùng,
+ST-02 mới xong một nửa, chú thích mô tả hành vi chưa cài). Nên milestone này rà
+bằng máy thay vì đọc tài liệu: quét cờ config khai trong schema mà không bài nào
+dùng, validator không ai gọi, và **lệnh không nút nào chạm tới**.
+
+**Phát hiện lớn nhất: sandbox chưa bao giờ có kéo thả.** `onPointerMove` chỉ gom nét
+quét, không hơn. Nên `board/move-element`, `graph/move-vertex`, `point/move`,
+`sequence/move` — bốn lệnh có từ M4 — **chưa từng có đường tới**. Nặng hơn là những
+gì đã viết quanh chúng:
+
+- Chú thích của `board/move-element` nói *"cho phép **kéo ra chỗ vi phạm**: chồng
+  lấn và tràn biên là thứ validator báo realtime (SBX-02), không phải thứ command
+  chặn"* — mô tả một hành vi không tồn tại.
+- M30 (chính tao) viết `triangle-lozenge-parity` nay "kéo thả được". **Sai.** Thứ
+  làm được lúc đó là đóng dấu quân mới rồi xoá.
+
+Cách chữa **không** phải thêm kéo thả: `ToolAction.two` đã ghi rõ lý do từ chối nó
+— *"trên cảm ứng, kéo một đống sỏi sang đống khác rất dễ trượt tay, mà lỡ tay ở đây
+nghĩa là gộp nhầm và mất mạch lập luận đang thử"*. Cùng lý do áp cho di chuyển
+quân. Nên: `ToolAction.move`, **hai chạm** — chạm vật, chạm ô đích. Vị trí bóc từ
+id ô, y như `stamp`. Engine đồ thị và điểm vẫn chưa dùng được, và lý do là cái cũ
+đã ghi: chỗ đến của chúng là toạ độ tự do, tức là phải biết điểm chạm ở đâu *khi
+không trúng element nào*.
+
+**Phím `R` cũng gõ cứng.** Ngay trên nó có chú thích *"Phím tắt cũng phải hỏi
+engine. Trước đây `Delete` luôn gọi `board/remove` và `R` luôn gọi
+`board/rotate-tile`…"* — nhưng chỉ `Delete` được sửa, `R` thì không. Chú thích mô
+tả một bản sửa mới áp một nửa. Nay `R` tra trong danh sách công cụ, và board có
+nút **Xoay** thật — trước đó BD-09 thêm phép quay theo `dir` cho quân lưới mà
+không có nút nào gọi nó.
+
+Test đặt ở e2e chứ không ở unit test của engine, và đó là chỗ đúng: một lệnh
+**không có đường tới** vẫn xanh ở unit test. Nó chỉ đỏ khi có ai đó bấm thật.
+
+**Hai năng lực có sẵn, không bài nào dùng.** Rà cờ config chỉ ra `misere` và
+`allowed` — cả hai đã xong hết từ lâu (solver misère đi đường riêng vì Grundy không
+áp dụng; `subtract-set` có test), chỉ thiếu bài.
+
+- `misere-nim-last-loses`. Bản nháp đầu định mở bằng "$(1,2,3)$ thường thì thua,
+  misère thì thắng" — **sai**, và script bắt được: hai luật chỉ khác nhau ở những
+  thế mà **mọi đống $\le 1$ viên**, mà $(1,2,3)$ không phải. Bài viết lại quanh sự
+  thật ấy: mở bằng chỗ hai luật đồng ý, rồi chỉ ra $(1,1,1)$ — cùng ba đống, hai
+  câu trả lời ngược nhau. Bước cuối là lưới hai chiều misère: đường chéo vẫn là
+  thế thua, trừ ô $(1,1)$ bị lấy ra và hai ô $(1,0)$, $(0,1)$ thêm vào. Một góc bị
+  hoán đổi, đúng bằng chỗ "ai bốc viên cuối" đổi nghĩa.
+
+  **`checkBounds` bắt tao một lần nữa**: bản đầu bật `show_grundy` cho scene
+  misère, và engine từ chối kèm lý do — Sprague–Grundy chỉ áp cho luật thường.
+  Guard viết từ M22 làm đúng việc của nó.
+
+- `subtraction-set-134`. `VIZ-COVERAGE.md` đánh ✅ cho "bốc theo tập $\{1,3,4\}$
+  trong bảng **"Kiểm chứng bằng bài cụ thể"** — nhưng ✅ ấy dựa vào một *test*,
+  không phải một *bài*. Nay nó dựa vào bài, và phổ vẽ ra đúng chu kỳ $7$: hai ô
+  đậm, một quãng trống, lại hai ô đậm.
+
+1165 test, 73 bài 0 lỗi 0 cảnh báo, e2e **44** xanh (thêm 2), **0 golden cũ đổi**.
 
 ### M35 — Set engine: ST-02, ST-03, và cực trị hệ tập hợp · [E] — **xong**
 
@@ -1632,7 +1692,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 71 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 73 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):

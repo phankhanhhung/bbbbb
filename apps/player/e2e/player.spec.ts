@@ -254,6 +254,44 @@ test.describe('Sandbox (SBX-01)', () => {
     await expect(gameTools.getByRole('button', { name: /^Bốc / }).first()).toBeVisible();
   });
 
+  /**
+   * Hai lệnh có từ M4 mà tới M36 **không nút nào gọi**: `board/move-element` và
+   * `board/rotate-tile`. Chú thích của lệnh đầu còn mô tả hành vi "kéo ra chỗ vi
+   * phạm" — một hành vi sandbox chưa bao giờ chạm tới được. Test này đứng ở chỗ
+   * đúng để bắt loại lỗi ấy: nó bấm **qua giao diện thật**, nên một lệnh không có
+   * đường tới sẽ đỏ ở đây chứ không xanh ở unit test của engine.
+   */
+  test('di chuyển quân bằng **hai chạm**, và xoay bằng nút', async ({ page }) => {
+    await page.goto('/?p=tromino-l-4x4&sol=sol-chia-tu&step=s3');
+    await reveal(page);
+    await page.getByRole('button', { name: 'Thử từ đây' }).click();
+
+    const canvas = page.locator('.sandbox .canvas svg');
+    // So **toàn bộ** tư thế các quân, không so một quân chọn sẵn: chỗ bấm rơi vào
+    // quân nào là chuyện của hit-test, còn điều cần khẳng định là "có gì đó đổi".
+    const poses = async (): Promise<string> =>
+      (await canvas.locator('g[transform^="translate"]').evaluateAll((nodes) =>
+        nodes.map((n) => `${n.getAttribute('transform')}|${n.querySelector('path')?.getAttribute('d') ?? ''}`),
+      )).join('~');
+
+    const box = (await canvas.boundingBox())!;
+    const at = (fx: number, fy: number) =>
+      page.mouse.click(box.x + box.width * fx, box.y + box.height * fy);
+
+    // Xoay: chọn công cụ, bấm vào quân ở giữa bàn.
+    const beforeRotate = await poses();
+    await page.getByRole('button', { name: /Xoay/ }).click();
+    await at(0.5, 0.5);
+    await expect.poll(poses).not.toBe(beforeRotate);
+
+    // Di chuyển: chạm quân, rồi chạm ô đích.
+    const beforeMove = await poses();
+    await page.getByRole('button', { name: /Di chuyển/ }).click();
+    await at(0.5, 0.5);
+    await at(0.85, 0.15);
+    await expect.poll(poses).not.toBe(beforeMove);
+  });
+
   test('bấm một nước đi trong sandbox game **thật sự** đổi thế', async ({ page }) => {
     await page.goto('/?p=nim-three-piles-xor');
     await reveal(page);

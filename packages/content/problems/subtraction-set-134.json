@@ -1,0 +1,237 @@
+{
+  "schema_version": "0.1.0",
+  "id": "subtraction-set-134",
+  "statement": {
+    "vi": "Một đống $20$ viên sỏi. Hai người lần lượt bốc **đúng** $1$, $3$ hoặc $4$ viên (không được bốc $2$). Ai không còn nước đi thì thua. Hỏi người đi trước thắng hay thua, và quy luật chung là gì?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Trò bốc sỏi theo tập $S = \\{1,3,4\\}$. Thế thua tuần hoàn với chu kỳ $7$: đúng các số có số dư $0$ hoặc $2$ khi chia cho $7$."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "invariant",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "game"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "total",
+      "id": "inv-t",
+      "label": {
+        "vi": "Số viên còn lại"
+      }
+    },
+    {
+      "expr": "total % 7",
+      "id": "inv-r",
+      "label": {
+        "vi": "… chia 7 dư"
+      }
+    },
+    {
+      "expr": "winning_moves",
+      "id": "inv-w",
+      "label": {
+        "vi": "Số nước thắng"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Chu kỳ 7"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một đống [[a1|20 viên]]. Mỗi lượt được bốc **đúng** $1$, $3$ hoặc $4$ viên — không được bốc $2$. Ai không còn nước đi thì thua. Người đi trước thắng hay thua?"
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "allowed": [1, 3, 4],
+                "type": "subtract-set"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 20
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một đống 20 viên sỏi."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vẽ cả phổ ra thì quy luật hiện ngay: [[a2|các thế thua]] là $0, 2, 7, 9, 14, 16, \\dots$, và dãy ấy **lặp lại sau mỗi $7$ viên**. Chu kỳ là thứ đọc được từ hình chứ không phải đoán — hai ô đậm, rồi một quãng trống, rồi lại đúng hai ô đậm ở cùng khoảng cách."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "pos-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "allowed": [1, 3, 4],
+                "type": "subtract-set"
+              },
+              "spectrum_to": 24,
+              "view": "spectrum"
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 20
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Dải ô 0..24, ô tô đậm ở các vị trí 0, 2, 7, 9, 14, 16, 21, 23 — thế thua."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đọc theo số dư khi chia cho $7$: thế thua đúng là những số dư $0$ và $2$. Kiểm nhanh — từ [[a3|một thế thua]], bốc $1$, $3$ hay $4$ đều đưa số dư sang $6, 4, 3$ hoặc $1, 6, 5$, và **không** số nào rơi lại vào $\\{0, 2\\}$. Còn từ thế khác thì luôn có ít nhất một nước đưa về được."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "pos-14",
+                "pos-16"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "allowed": [1, 3, 4],
+                "type": "subtract-set"
+              },
+              "spectrum_to": 24,
+              "view": "spectrum"
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 20
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng dải phổ, dùng để đọc số dư mod 7 của các thế thua."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Với $20$ viên: $20 = 7 \\cdot 2 + 6$, số dư $6$ không thuộc $\\{0,2\\}$, nên người đi trước **thắng**. Máy đếm ${{winning_moves}}$ nước thắng, và nó là bốc $4$ viên để lại [[a4|$16$]] — số dư $2$."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "allowed": [1, 3, 4],
+                "type": "subtract-set"
+              },
+              "spectrum_to": 24,
+              "view": "spectrum"
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 16
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sau nước thắng: đống còn 16 viên, rơi đúng vào một ô thế thua."
+          },
+          "verified": true,
+          "claims": [
+            "total == 16"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "hand-opponent-a-loss"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

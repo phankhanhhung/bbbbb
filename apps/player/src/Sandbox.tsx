@@ -233,6 +233,31 @@ export function Sandbox({
       // Thao tác hai bước: bấm phần tử thứ nhất, rồi phần tử thứ hai. Không
       // kéo-thả, vì trên cảm ứng kéo một đống sỏi sang đống khác là cử chỉ rất dễ
       // trượt tay — mà lỡ tay ở đây nghĩa là gộp nhầm và mất mạch lập luận.
+      // Hai chạm: lần đầu chọn vật, lần sau chọn ô đích. Vật và ô đích lọc bằng
+      // **hai** tiêu chí khác nhau, nên không dùng chung `target` ở trên được.
+      if (action.type === 'move') {
+        const holding = pending.current;
+        if (holding === null) {
+          const picked = hits.find((id) => !id.startsWith(action.prefix));
+          if (!picked) return;
+          pending.current = picked;
+          sandbox.setSelection(new Set([picked]) as Selection);
+          return;
+        }
+        const destination = hits.find((id) => id.startsWith(action.prefix));
+        pending.current = null;
+        sandbox.setSelection(new Set() as Selection);
+        if (!destination) return;
+        const [row, col] = destination.slice(action.prefix.length).split('-').map(Number);
+        sandbox.run(
+          command(action.command, {
+            [action.idParam]: holding,
+            [action.posParam]: [row ?? 0, col ?? 0],
+          }),
+        );
+        return;
+      }
+
       if (action.type === 'two' && target) {
         const first = pending.current;
         if (first === null) {
@@ -298,6 +323,16 @@ export function Sandbox({
     return null;
   }, [tools]);
 
+  /** Lệnh xoay của engine này, đọc từ công cụ nó khai — không đoán tên `board/*`. */
+  const rotateCommand = useMemo(() => {
+    for (const item of tools) {
+      if (item.action.type === 'one' && /rotate/.test(item.action.command)) {
+        return item.action.command;
+      }
+    }
+    return null;
+  }, [tools]);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
       const meta = event.metaKey || event.ctrlKey;
@@ -314,17 +349,16 @@ export function Sandbox({
         event.preventDefault();
         sandbox.run(command(removeCommand, { ids: [...state.selection] }));
       }
-      if (
-        event.key.toLowerCase() === 'r' &&
-        state.selection.size === 1 &&
-        Object.hasOwn(engine.commands, 'board/rotate-tile')
-      ) {
-        sandbox.run(command('board/rotate-tile', { id: [...state.selection][0], delta: 90 }));
+      // …và phím `R` cũng vậy. Chú thích ngay trên nói phím tắt "phải hỏi engine",
+      // nhưng chỉ `Delete` được sửa; `R` vẫn gõ cứng `board/rotate-tile` suốt từ
+      // đó. Nay nó tra trong danh sách công cụ, đúng như câu chú thích hứa.
+      if (event.key.toLowerCase() === 'r' && state.selection.size === 1 && rotateCommand) {
+        sandbox.run(command(rotateCommand, { id: [...state.selection][0], delta: 90 }));
       }
     };
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
-  }, [engine, removeCommand, sandbox, state.selection]);
+  }, [engine, removeCommand, rotateCommand, sandbox, state.selection]);
 
   const exportSvg = useCallback(() => {
     // REN-03: brand mark đóng vào mọi export và người học không tắt được.

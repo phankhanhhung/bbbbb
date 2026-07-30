@@ -1,0 +1,273 @@
+{
+  "schema_version": "0.1.0",
+  "id": "misere-nim-last-loses",
+  "statement": {
+    "vi": "Hai người lần lượt chọn một đống sỏi và bốc tuỳ ý số viên (ít nhất một). Ai bốc **viên cuối cùng** thì **thua** — khác Nim thường đúng một câu. Hỏi quy tắc XOR còn đúng không, và nếu không thì hỏng ở đâu?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Nim misère; lời giải của Bouton (1901) bao gồm cả biến thể này. Thế thua misère: nếu có đống $\\ge 2$ thì giống Nim thường (XOR $= 0$), còn nếu mọi đống $\\le 1$ thì đảo lại — thua khi số đống là **lẻ**."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "invariant",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "game"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "winning_moves",
+      "id": "inv-w",
+      "label": {
+        "vi": "Số nước thắng"
+      }
+    },
+    {
+      "expr": "total",
+      "id": "inv-t",
+      "label": {
+        "vi": "Tổng số viên"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "XOR hỏng ở đâu"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ba đống $1, 2, 3$ viên. Luật bốc y hệt Nim: mỗi lượt chọn **một** đống và bốc tuỳ ý, ít nhất một viên. Chỉ đổi đúng một câu — ai bốc [[a1|viên cuối cùng]] thì **thua**. Đó là Nim *misère*."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0",
+                "p1",
+                "p2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "misere": true,
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 1
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 2
+              },
+              {
+                "id": "p2",
+                "type": "pile",
+                "count": 3
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba đống sỏi: một viên, hai viên, ba viên."
+          },
+          "author_notes": "Draft máy — chưa duyệt.",
+          "verified": true,
+          "claims": [
+            "winning_moves == 0"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thử ngay: $1 \\oplus 2 \\oplus 3 = 0$, nên ở Nim thường đây là thế **thua**. Ở misère cũng vậy — máy đếm ${{winning_moves}}$ nước thắng. Hai luật **đồng ý**, và không phải tình cờ: chừng nào còn [[a2|một đống $\\ge 2$ viên]], chúng luôn đồng ý."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "p1",
+                "p2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "misere": true,
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 1
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 2
+              },
+              {
+                "id": "p2",
+                "type": "pile",
+                "count": 3
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng ba đống, kèm bảng giá trị Grundy."
+          },
+          "verified": true,
+          "claims": [
+            "winning_moves == 0"
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy hai luật rẽ ở đâu? Ở **cuối ván**. Xét [[a3|ba đống, mỗi đống một viên]]: $1 \\oplus 1 \\oplus 1 \\ne 0$ nên Nim thường nói người đi trước **thắng**, nhưng ở misère ván chỉ còn là đếm lượt — ba viên, ba lượt, người đi trước buộc phải bốc viên cuối. Người đi trước **thua**, và máy xác nhận: ${{winning_moves}} nước thắng."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "p0",
+                "p1",
+                "p2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "misere": true,
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              }
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 1
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 1
+              },
+              {
+                "id": "p2",
+                "type": "pile",
+                "count": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba đống, mỗi đống đúng một viên."
+          },
+          "verified": true,
+          "claims": [
+            "winning_moves == 0",
+            "total == 3"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cả quy tắc gói trong [[a4|một bức hình]]: lưới thắng–thua cho **hai** đống. Ở Nim thường, thế thua đúng là đường chéo $a = b$. Dưới misère, đường chéo ấy vẫn còn — trừ ô $(1,1)$ bị lấy ra, và bù lại hai ô $(1,0)$, $(0,1)$ thêm vào. Một góc bị hoán đổi, đúng bằng chỗ mà \"ai bốc viên cuối\" đổi nghĩa."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "pos-1-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "misere": true,
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              },
+              "spectrum_to": 8,
+              "view": "spectrum-2d"
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 1
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Lưới thắng-thua cho hai đống dưới luật misère: đường chéo là thế thua, trừ ô (1,1); bù lại (1,0) và (0,1) là thế thua."
+          },
+          "expects_violation": [
+            "hand-opponent-a-loss"
+          ],
+          "verified": true,
+          "claims": [
+            "total == 2"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "hand-opponent-a-loss"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

@@ -111,6 +111,31 @@ export function boardTools(scene?: Scene): readonly SandboxTool[] {
     });
   }
 
+  // BD-02/03 — **di chuyển** và **xoay**, hai lệnh có từ M4 mà tới giờ không nút
+  // nào gọi. `board/move-element` đặc biệt đáng nói: chú thích của nó nói "cho
+  // phép kéo ra chỗ vi phạm, validator mới là nơi báo" — mô tả một hành vi mà
+  // sandbox chưa bao giờ chạm tới được. Và BD-09 nói quân trên lưới tam giác "kéo
+  // thả được" trong khi thứ duy nhất làm được là đóng dấu quân mới rồi xoá.
+  //
+  // Hai chạm chứ không kéo thả, theo đúng quyết định đã ghi ở `ToolAction.two`.
+  tools.push({
+    id: 'move',
+    label: '✥ Di chuyển',
+    action: {
+      type: 'move',
+      command: 'board/move-element',
+      idParam: 'id',
+      posParam: 'pos',
+      prefix: 'cell-',
+    },
+  });
+
+  tools.push({
+    id: 'rotate',
+    label: '↻ Xoay',
+    action: { type: 'one', command: 'board/rotate-tile', idParam: 'id', params: { delta: 90 } },
+  });
+
   // Quân polyomino và phép lật hàng/cột chỉ có nghĩa trên lưới vuông — lệnh cũng
   // từ chối chúng ở đó. Bày nút mà lệnh từ chối là đúng cái bệnh mà lớp
   // `SandboxTool` sinh ra để dẹp, chỉ là ở dạng tinh vi hơn: nút **có** engine

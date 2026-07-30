@@ -313,7 +313,7 @@ không nói chúng đụng nhau. Cách gỡ, và nó phải được viết ra c
 ### P0 — chất lượng lõi
 
 1. **G-C** — soạn và publish 3–5 bài do **chính tác giả** xác minh, rồi freeze
-   schema `1.0.0`. Hôm nay 71 bài đều do máy soạn và người soạn cũng là người
+   schema `1.0.0`. Hôm nay 73 bài đều do máy soạn và người soạn cũng là người
    duyệt, nên AUT-09 đang là tự cấp chứng nhận.
 2. **G-A** — đo NFR-P1..P3 trên **iPad Gen 9 thật**. Số hiện có đo bằng Chromium
    desktop có bóp CPU; đó là hàng rào rẻ, không phải phép đo của gate.
@@ -402,7 +402,7 @@ dòng rủi ro riêng — SRS §17 chưa có, vì lúc viết SRS chưa có hai 
 | R-9 | **EXP-03/04 trượt thành DSL-03**: "primitive đã đăng ký" nới dần cho tới khi content chạy được logic tuỳ ý | Danh sách đóng có ID + test ép hai chiều (EXP-04); mỗi primitive mới là một PR có lý do, không phải một tham số |
 | R-10 | **Mất tính xác định**: seed thiếu (EXP-07) hoặc thời gian lọt vào renderer (CHO-01) làm golden test và REN-04 lệch Player | EXP-08 và CHO-08 đòi headless render khớp; golden SVG toàn kho là chốt canh sẵn có |
 | R-11 | **Choreography thành trang trí**: timeline đẹp mà không gánh lập luận (đúng NG-07) | CHO-07 buộc mỗi pha đồng bộ với anchor/narrative; CHO-09 buộc bỏ chuyển động vẫn đọc được |
-| R-12 | **EXP-10 làm lệch 71 bài đang publish** | PRD-12: diff golden phải rỗng, không phải "gần rỗng" |
+| R-12 | **EXP-10 làm lệch 73 bài đang publish** | PRD-12: diff golden phải rỗng, không phải "gần rỗng" |
 | R-13 | **Phình phạm vi trước khi G-C đóng**: xây EXP/CHO trong khi chưa có bài nào do chính chủ soạn — đúng R-1 (content bottleneck) ở dạng mới | P0 xếp trước P1/P2 trong §9 và thứ tự đó có răng: AUT-KPI trượt thì dồn sửa pipeline trước khi mở lớp mới (SRS §9, không phải §7 — chỗ này `PLAN-P1.md` và `VIZ-COVERAGE.md` đang trích sai) |
 
 ## 13. Ngoài phạm vi
