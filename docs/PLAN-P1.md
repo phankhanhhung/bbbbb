@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M27 xong (7 engine, phủ ~85%); kho 64 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M28 xong (7 engine, phủ ~86%); kho 66 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,46 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M28 — Luật lan truyền cho dãy (SQ-02) · [E] — **xong**
+
+Nửa **dãy** của hạng mục #6. Nửa còn lại — lights-out trên bàn cờ (`BD-08`) — vẫn
+mở, và bảng §1 của backlog nay tách thành `6a`/`6b` để không ai đọc nhầm là xong cả.
+
+Hai lệnh, và chúng khác nhau về **bản chất**, không phải về giao diện:
+
+- **`sequence/step`** đụng **cả dãy** một lần, theo enum đóng `STEP_RULES` — cùng
+  khuôn với `COMBINE_RULES` và `GameRule`. Ba luật: Ducci (`abs-diff-cycle`), bản
+  không vòng (`abs-diff-line`), và `add-neighbours-cycle`. Nhận cả dãy và trả cả
+  dãy, nên "vòng quanh" viết ra được — thứ mà một hàm hai biến không diễn đạt nổi.
+- **`sequence/fire`** đụng **một ô do người học chọn** (chip-firing). Đây không
+  phải chuyện tiện tay: định lý của họ bài nói **kết quả cuối không phụ thuộc thứ
+  tự đổ**, và một lệnh "chạy hết" sẽ giấu mất đúng điều đó. Sandbox phải cho đổ
+  từng nước thì câu ấy mới kiểm được.
+
+Cả hai bị chặn ở `mode: "piles"`: luật đọc phần tử **kế tiếp**, mà ở đa tập thì
+"kế tiếp" không tồn tại — cùng luật mà `swap`/`combine` đã theo từ đầu (G-11).
+
+Cộng validator `all-zero` (đích của Ducci) và `stable` (đích của chip-firing), cùng
+binding `unstable` / `zeros` — hai đơn biến đi một chiều, và đó là lý do quá trình
+dừng.
+
+**Hai bài mới**, mỗi lệnh một bài: `ducci-four-numbers` và `chip-firing-abelian`.
+
+**Test bắt được một lỗi ở đề bài, không phải ở code.** Bản đầu của test "tính abel"
+dùng $10$ hạt trên vòng $5$ ô, và nó đỏ. Nguyên nhân không phải lệnh sai: theo
+Björner–Lovász–Shor, chip-firing **không bao giờ dừng** khi số hạt vượt $2E - n$
+($= 5$ ở đây), nên hai thứ tự đổ cho hai cấu hình khác nhau ở lần cắt vòng lặp thứ
+$200$ — so hai thứ chưa hội tụ. Sửa thành $4$ hạt (ít hơn số cạnh $5$, ngưỡng dừng
+chắc chắn của cùng định lý) thì hai thứ tự ra đúng cùng một cấu hình. Test nay còn
+khẳng định thêm rằng nó **dừng thật**, không phải chạm trần vòng lặp.
+
+Ducci thì đối chiếu vét cạn: mọi bộ bốn số trong $[0,6]$ — $2401$ bộ — đều về
+$(0,0,0,0)$ trong $40$ bước. Và có một test khẳng định **ba** số thì **không**:
+$(0,1,2)$ rơi vào chu trình. Đó là lý do `abs-diff-cycle` và `abs-diff-line` là hai
+luật chứ không phải một tham số — biên khác thì bài khác.
+
+1061 test, 66 bài 0 lỗi 0 cảnh báo, e2e 42 xanh, **0 golden cũ đổi**.
 
 ### M27 — Analyzer mã Prüfer (GR-09) · [E] — **xong**
 
@@ -1256,7 +1296,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 64 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 66 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):

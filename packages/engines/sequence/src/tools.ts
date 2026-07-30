@@ -1,7 +1,12 @@
 import { SELECT_TOOL, type SandboxTool } from '@combviz/editor';
 import { MAX_COLOR_CLASS } from '@combviz/theme';
 import type { Scene } from '@combviz/schema';
-import { COMBINE_RULE_IDS, combineRuleLabel } from './commands.js';
+import {
+  COMBINE_RULE_IDS,
+  combineRuleLabel,
+  STEP_RULE_IDS,
+  stepRuleLabel,
+} from './commands.js';
 
 /**
  * Công cụ sandbox của Sequence engine.
@@ -37,6 +42,22 @@ export function sequenceTools(scene: Scene): readonly SandboxTool[] {
       id: 'swap',
       label: '⇄ Đổi chỗ hai phần tử',
       action: { type: 'two', command: 'sequence/swap', params: ['a', 'b'] },
+    });
+
+    // Lan truyền (SQ-02) chỉ có nghĩa khi thứ tự có nghĩa: luật đọc phần tử kế
+    // tiếp, mà ở đa tập thì "kế tiếp" không tồn tại.
+    for (const rule of STEP_RULE_IDS) {
+      tools.push({
+        id: `step-${rule}`,
+        label: `Một bước: ${stepRuleLabel(rule)}`,
+        action: { type: 'run', command: 'sequence/step', params: { rule } },
+      });
+    }
+
+    tools.push({
+      id: 'fire',
+      label: 'Đổ hạt sang hai bên',
+      action: { type: 'one', command: 'sequence/fire', idParam: 'id' },
     });
   }
 

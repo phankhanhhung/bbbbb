@@ -49,10 +49,10 @@ tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engi
 
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
-| Lưới / phủ hình / tô màu | 15% | 94% | 14.1 | quân ghép trên lưới tam giác/lục giác (`BD-09`); luật lan truyền (`BD-08`) |
+| Lưới / phủ hình / tô màu | 15% | 94% | 14.1 | quân ghép trên lưới phi vuông (`BD-09`); lan truyền trên bàn cờ (`BD-08`, lights-out) |
 | Đồ thị | 22% | 95% | 20.9 | tô mặt (phần còn lại của GR-05), analyzer cây (`GR-10`), kiểm tính phẳng tổng quát |
 | Đếm / song ánh / đếm hai chiều | 14% | 87% | 12.2 | animation biến hình của PRN-04 |
-| Dãy số / thao tác lặp / quá trình | 16% | 92% | 14.7 | luật lan truyền (`SQ-02`/`BD-08`) |
+| Dãy số / thao tác lặp / quá trình | 16% | 95% | 15.2 | — (`SQ-02` xong; phần bàn cờ là `BD-08`) |
 | Trò chơi | 7% | 66% | 4.62 | thế phải là **đa tập số** cộng nhiều nhất một con số nhớ; mọi game không-phải-đống vẫn chưa — cần GM-01 rule script thật |
 | Hệ tập hợp / siêu đồ thị | 8% | 90% | 7.2 | — (`engine-set`: bảng incidence + Venn ≤ 3 tập) |
 | Hình học tổ hợp | 5% | 75% | 3.75 | tô vùng do các đoạn chia (PT-03), đường tròn |
@@ -94,7 +94,9 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Định lý Dilworth | poset | ✅ có trong kho (sơ đồ Hasse + nhân chứng phản xích) |
 | Gộp đống sỏi theo mod | dãy / đa tập | ✅ engine sequence, chế độ `piles` |
 | Xoá hai số, viết $\|a-b\|$ | dãy / đa tập | ✅ có trong kho |
-| Chip-firing | quá trình | 🟡 vẽ và thao tác được, thiếu luật lan truyền |
+| Chip-firing | quá trình | ✅ có trong kho (SQ-02: `sequence/fire`, tính abel kiểm bằng máy) |
+| Dãy Ducci (hiệu tuyệt đối vòng quanh) | quá trình | ✅ có trong kho (SQ-02: `sequence/step`) |
+| Lights-out (lật chữ thập) | lưới + quá trình | ❌ cần `BD-08` — lan truyền phía **bàn cờ** |
 | Nim | trò chơi | ✅ có trong kho (XOR + giá trị Grundy) |
 | Bốc sỏi $1..k$ | trò chơi | ✅ có trong kho (phổ thắng-thua) |
 | Trò Grundy (chia đống không đều) | trò chơi | ✅ đối chiếu vét cạn, khớp dãy Grundy đã biết |
@@ -464,7 +466,7 @@ không, và không phải vì thiếu công sức.
 ## 8. Cảnh báo về thứ tự
 
 **AUT-KPI là gate có răng:** *trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **64 bài** — nhưng **không bài nào do chính
+engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **66 bài** — nhưng **không bài nào do chính
 chủ soạn**, và người duyệt cũng là người soạn. Theo đúng luật của chính dự án,
 việc còn nợ không phải engine nào trong bảng §7, mà là **soạn tay 3–5 bài**
 (G-C), rồi mới đóng băng schema 1.0.0.

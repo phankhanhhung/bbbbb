@@ -100,7 +100,45 @@ const sorted: SceneValidator = {
   },
 };
 
-const FIXED: readonly SceneValidator[] = [nonNegative, integers, distinct, sorted];
+/**
+ * `all-zero` — mọi phần tử bằng $0$ (SQ-02).
+ *
+ * Đích của họ bài Ducci: "chứng minh sau hữu hạn bước tất cả về $0$". Có validator
+ * thì người học bấm từng bước và **thấy** nó xanh lên, thay vì đọc một lời hứa.
+ */
+const allZero: SceneValidator = {
+  id: 'all-zero',
+  label: 'Mọi số bằng 0',
+  check(scene: Scene): ValidatorOutcome {
+    const violations = deriveSequence(scene)
+      .items.filter((item) => item.value !== 0)
+      .map((item) => item.id);
+    return violations.length === 0
+      ? OK
+      : { ok: false, violations, message: `${violations.length} số còn khác 0` };
+  },
+};
+
+/**
+ * `stable` — không ô nào còn đổ hạt được (SQ-02).
+ *
+ * Đích của họ chip-firing. Ngưỡng là $2$ vì trên vòng tròn mỗi ô có đúng hai láng
+ * giềng — cùng con số mà lệnh `sequence/fire` dùng, đọc từ cùng một chỗ.
+ */
+const stable: SceneValidator = {
+  id: 'stable',
+  label: 'Không ô nào đổ được nữa',
+  check(scene: Scene): ValidatorOutcome {
+    const violations = deriveSequence(scene)
+      .items.filter((item) => item.value >= 2)
+      .map((item) => item.id);
+    return violations.length === 0
+      ? OK
+      : { ok: false, violations, message: `${violations.length} ô còn ≥ 2 hạt` };
+  },
+};
+
+const FIXED: readonly SceneValidator[] = [nonNegative, integers, distinct, sorted, allZero, stable];
 
 export function resolveSequenceValidator(id: string): SceneValidator | null {
   const found = FIXED.find((v) => v.id === id);

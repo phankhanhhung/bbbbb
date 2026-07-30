@@ -243,6 +243,135 @@ const paint = defineCommand<{ ids: readonly string[]; color_class: number | null
   },
 });
 
+/**
+ * Luật **lan truyền một bước** — tập đóng, cùng khuôn với `COMBINE_RULES` (SQ-02).
+ *
+ * Khác `combine` ở chỗ nó đụng **cả dãy** cùng lúc, không phải hai phần tử: cả họ
+ * bài "mỗi bước, thay $a_i$ bằng …" là loại thao tác này. Nhận cả dãy và trả cả
+ * dãy, nên một luật viết ra được cả phần "vòng quanh" — thứ mà một hàm hai biến
+ * không diễn đạt nổi.
+ *
+ * Vẫn là enum, không phải biểu thức người dùng nhập, vì đúng lý do đã ghi ở
+ * `COMBINE_RULES`: cho nhập biểu thức là mở cửa hậu cho DSL-03.
+ */
+const STEP_RULES = {
+  /**
+   * Ducci: $a_i \leftarrow |a_i - a_{i+1}|$, **vòng quanh**.
+   *
+   * Bài kinh điển: viết bốn số trên vòng tròn, mỗi bước thay mỗi số bằng hiệu
+   * tuyệt đối của nó với số kế tiếp; chứng minh sau hữu hạn bước tất cả về $0$.
+   */
+  'abs-diff-cycle': (values: readonly number[]): number[] =>
+    values.map((v, i) => Math.abs(v - (values[(i + 1) % values.length] as number))),
+
+  /**
+   * Hiệu tuyệt đối **không** vòng: phần tử cuối giữ nguyên.
+   *
+   * Cùng phép toán, khác biên, và khác biên là khác bài: dãy thẳng thì tổng không
+   * còn bất biến theo cách của vòng tròn.
+   */
+  'abs-diff-line': (values: readonly number[]): number[] =>
+    values.map((v, i) =>
+      i + 1 < values.length ? Math.abs(v - (values[i + 1] as number)) : v,
+    ),
+
+  /** Mỗi số cộng thêm hai số kề (vòng quanh) — họ bài "tam giác Pascal trên vòng". */
+  'add-neighbours-cycle': (values: readonly number[]): number[] =>
+    values.map(
+      (v, i) =>
+        v +
+        (values[(i + values.length - 1) % values.length] as number) +
+        (values[(i + 1) % values.length] as number),
+    ),
+} as const;
+
+export type StepRule = keyof typeof STEP_RULES;
+export const STEP_RULE_IDS = Object.keys(STEP_RULES) as readonly StepRule[];
+
+const STEP_LABELS: Readonly<Record<StepRule, string>> = {
+  'abs-diff-cycle': '|aᵢ − aᵢ₊₁| vòng quanh',
+  'abs-diff-line': '|aᵢ − aᵢ₊₁| (cuối giữ nguyên)',
+  'add-neighbours-cycle': 'aᵢ + hai số kề',
+};
+
+export function stepRuleLabel(rule: string): string {
+  return Object.hasOwn(STEP_LABELS, rule) ? (STEP_LABELS[rule as StepRule] as string) : rule;
+}
+
+/**
+ * Một bước lan truyền trên **cả dãy** (SQ-02).
+ *
+ * Chỉ ở `mode: "sequence"`: luật đọc phần tử **kế tiếp**, mà ở `piles` thì thứ tự
+ * không mang nghĩa. Cho chạy ở đó là để người học rút ra một quy luật từ một thứ
+ * tự mà bài toán không nói tới.
+ */
+const step = defineCommand<{ rule: StepRule }>({
+  type: 'sequence/step',
+  label: (params) => `Một bước: ${stepRuleLabel(params.rule)}`,
+  apply(scene, params) {
+    if (sequenceConfig(scene).mode === 'piles') return null;
+    const rule = STEP_RULES[params.rule];
+    if (!rule) return null;
+
+    const items = deriveSequence(scene).items;
+    if (items.length === 0) return null;
+
+    const next = rule(items.map((item) => item.value));
+    const byId = new Map(items.map((item, i) => [item.id, next[i] as number]));
+    let changed = false;
+
+    const elements = scene.elements.map((element) => {
+      if (element.type !== 'item' || !byId.has(element.id)) return element;
+      const value = byId.get(element.id) as number;
+      if (value === Number(element['value'] ?? 0)) return element;
+      changed = true;
+      return { ...element, value };
+    });
+
+    return changed ? withElements(scene, elements) : null;
+  },
+});
+
+/**
+ * Đổ hạt từ **một** ô sang hai ô kề (SQ-02) — chip-firing.
+ *
+ * Khác `step` ở chỗ nó là thao tác **cục bộ và do người học chọn**, và đó chính
+ * là nội dung của họ bài: kết quả cuối **không phụ thuộc thứ tự đổ**. Một lệnh
+ * "chạy hết" sẽ giấu mất điều đó.
+ *
+ * Điều kiện đổ: ô phải có ít nhất $2$ hạt — bằng số láng giềng của nó trên vòng.
+ * Không đủ thì **từ chối**, không đổ một phần: một nước không tồn tại mà đi được
+ * thì người học "chứng minh" được thứ không đúng.
+ */
+const fire = defineCommand<{ id: string }>({
+  type: 'sequence/fire',
+  label: () => 'Đổ hạt sang hai bên',
+  apply(scene, params) {
+    if (sequenceConfig(scene).mode === 'piles') return null;
+
+    const items = deriveSequence(scene).items;
+    const index = items.findIndex((item) => item.id === params.id);
+    if (index === -1 || items.length < 3) return null;
+    if ((items[index] as { value: number }).value < 2) return null;
+
+    const left = items[(index + items.length - 1) % items.length] as { id: string };
+    const right = items[(index + 1) % items.length] as { id: string };
+    const delta = new Map<string, number>([[params.id, -2]]);
+    for (const neighbour of [left.id, right.id]) {
+      delta.set(neighbour, (delta.get(neighbour) ?? 0) + 1);
+    }
+
+    return withElements(
+      scene,
+      scene.elements.map((element) =>
+        element.type === 'item' && delta.has(element.id)
+          ? { ...element, value: Number(element['value'] ?? 0) + (delta.get(element.id) as number) }
+          : element,
+      ),
+    );
+  },
+});
+
 const append = defineCommand<{ id: string; value: number }>({
   type: 'sequence/append',
   label: (params) => `Thêm phần tử ${params.value}`,
@@ -271,6 +400,8 @@ export const sequenceCommands: CommandRegistry = {
   [swap.type]: swap,
   [combine.type]: combine,
   [split.type]: split,
+  [step.type]: step,
+  [fire.type]: fire,
   [move.type]: move,
   [paint.type]: paint,
   [append.type]: append,

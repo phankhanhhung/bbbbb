@@ -55,6 +55,15 @@ export function sequenceEnvironment(scene: Scene): DslEnvironment {
        */
       inversions: inversions(state),
       /**
+       * SQ-02 — hai con số mà họ bài lan truyền hỏi.
+       *
+       * `unstable` là số ô còn đổ hạt được (chip-firing), `zeros` là số ô đã về
+       * $0$ (Ducci). Cả hai đều là **đơn biến** của bài: chúng đi một chiều, và
+       * đó là lý do quá trình dừng.
+       */
+      unstable: state.items.filter((item) => item.value >= 2).length,
+      zeros: state.items.filter((item) => item.value === 0).length,
+      /**
        * SQ-01 — dãy con đơn điệu dài nhất của cả dãy.
        *
        * Có sẵn vì cả họ Erdős–Szekeres hỏi đúng hai con số này, và viết chúng bằng

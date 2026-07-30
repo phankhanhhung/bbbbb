@@ -1,6 +1,6 @@
 # CombViz — Checklist làm mạnh từng engine
 
-**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · `GM-05/06/07/08/09`, `BD-07`, `SQ-01` và `GR-09` **đã làm ở M22–M27**
+**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · `GM-05/06/07/08/09`, `BD-07`, `SQ-01/02` và `GR-09` **đã làm ở M22–M28**
 
 ## 0. Đọc checklist này đúng cách
 
@@ -11,9 +11,9 @@ trong khi chưa có bài nào do chính chủ soạn là **R-1** (content bottle
 mới. `PRD-07` cấm thêm engine chỉ để tăng coverage. Tài liệu này là **danh sách
 chờ**, dựng sẵn để khi mở ra thì không phải nghĩ lại — không phải lệnh xuất phát.
 
-> **Ngoại lệ đã dùng, ngày 2026-07-30 (M22–M27).** Tám hạng mục đã làm:
-> `GM-05/06/07` (#1–#3), `GM-08` (#13), `BD-07` (#7), `GM-09` (mới), `SQ-01` (#4)
-> và `GR-09` (#5). Điều kiện chung để chúng
+> **Ngoại lệ đã dùng, ngày 2026-07-30 (M22–M28).** Chín hạng mục đã làm:
+> `GM-05/06/07` (#1–#3), `GM-08` (#13), `BD-07` (#7), `GM-09` (mới), `SQ-01` (#4),
+> `GR-09` (#5) và `SQ-02` (nửa của #6). Điều kiện chung để chúng
 > **không** vi phạm `R-13` là điều kiện §2.6 vốn đã viết ra: không thêm engine nào
 > (`PRD-07` không đụng tới), chỉ mở rộng thứ đã có, và **mỗi hạng mục đi kèm nội
 > dung** — bốn bài mới, kho 56 → 60 — nên năng lực và nội dung tăng cùng nhịp.
@@ -37,13 +37,13 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 64 bài đã xuất bản (56 lúc dựng tài liệu này, cộng tám bài của M22–M27):
+Đo trên 66 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười bài của M22–M28):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
 | `board` | 22 | Chủ lực. Khoảng trống ở đây là khoảng trống **thật sự cảm thấy được**. |
 | `graph` | 19 | Chủ lực. Cùng loại. |
-| `sequence` | 11 | Đủ để tin. |
+| `sequence` | 13 | Đủ để tin. |
 | `game` | 6 | Tầng A ở §2.6 **đã làm hết** (M22–M23): ba luật mới kèm ba bài kinh điển, cộng phổ hai chiều. |
 | `point` | 3 | Nội dung trước. Engine chưa bị dùng đủ để biết nó thiếu gì. |
 | `set` | 3 | Nội dung trước. |
@@ -75,7 +75,8 @@ Sắp theo **bằng chứng × trọng số họ bài × độ rẻ**, không th
 | ~~3~~ | ~~`GM-07` hợp hai luật~~ ✅ M22 | game | Nim Lasker | rất rẻ | ~~§4 "`rule` là **một** thành viên"~~ |
 | ~~4~~ | ~~`SQ-01` analyzer dãy con đơn điệu~~ ✅ M26 | sequence | Erdős–Szekeres | rẻ | ~~🟡 "thiếu analyzer dãy con đơn điệu"~~ |
 | ~~5~~ | ~~`GR-09` analyzer mã Prüfer~~ ✅ M27 | graph | Cayley $n^{n-2}$ | rẻ | ~~🟡 "thiếu analyzer sinh mã Prüfer"~~ |
-| 6 | `BD-08`+`SQ-02` luật lan truyền | board+seq | chip-firing, lights-out | vừa | 🟡 "thiếu luật lan truyền" |
+| 6a | ~~`SQ-02` lan truyền trên dãy~~ ✅ M28 | sequence | chip-firing, Ducci | vừa | ~~🟡 "thiếu luật lan truyền"~~ |
+| 6b | `BD-08` lan truyền trên bàn cờ | board | lights-out | vừa | ❌ dòng lights-out ở VIZ-COVERAGE §2 |
 | ~~7~~ | ~~`BD-07` lưới tam giác / lục giác~~ ✅ M24 | board | phủ hình phi vuông | vừa | ~~§2 — engine **không vẽ được**~~ |
 | 8 | `GR-05` tô mặt sau embedding | graph | công thức Euler, tô mặt | vừa | SRS `GR-05` [P2] |
 | 9 | `GR-07` ma trận đồng bộ hai chiều | graph | đếm hai chiều | vừa | SRS `GR-07` [P2] |
@@ -107,10 +108,12 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
   và vì thế bài ấy khai `illustration` chứ không phải `challenge`. Đây là họ hình
   mới song song với `TILE_SHAPES`, không phải sửa lưới; xong nó thì
   `triangle-lozenge-parity` lên `challenge` được ngay.
-- **BD-08 [P2] SHOULD** — **luật lan truyền**: một thao tác kéo theo thay đổi ở ô
-  lân cận theo luật đóng (chip-firing đổ hạt sang láng giềng, lights-out lật chữ
-  thập). Dòng 🟡 của chip-firing nói đúng chỗ này. Phải là **tập luật đóng**, cùng
-  khuôn với `GameRule` và `COMBINE_RULES` — không phải script.
+- **BD-08 [P2] SHOULD** — **lan truyền trên bàn cờ**: lights-out (bấm một ô thì
+  lật cả chữ thập). Nửa còn lại của hạng mục #6 sau khi `SQ-02` xong ở M28. Rẻ hơn
+  tưởng vì `neighbours()` của `lattice.ts` đã có sẵn cho **cả ba lưới** — một lệnh
+  `board/toggle-cross` chạy đúng trên bàn vuông, bàn ong và lưới tam giác mà không
+  phải viết ba lần. Vẫn phải là **tập luật đóng**, cùng khuôn với `GameRule` và
+  `COMBINE_RULES` — không phải script.
 - **BD-05 [P2] SHOULD** — công cụ **vẽ** vùng khuyết và region tuỳ ý (config đã có
   từ P1); **[P2] MAY** torus wrap. Torus mở một họ nhỏ nhưng thật.
 
@@ -142,7 +145,7 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
   dùng thật. Giữ nguyên quyết định.
 - luồng cực đại / cắt nhỏ nhất — hiếm trong tổ hợp thi đấu.
 
-### 2.3 `sequence` — 11 bài
+### 2.3 `sequence` — 13 bài
 
 **Tầng A**
 
@@ -150,8 +153,11 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
   từng phần tử (`show_monotone`), hai binding DSL, và validator `no-monotone:<k>`
   — một mục tiêu sandbox **bất khả thi có chủ đích** khi $n > k^2$. Kèm bài
   `erdos-szekeres-monotone`.
-- **SQ-02 [P2] SHOULD** — **luật lan truyền cho quá trình lặp**, song song `BD-08`.
-  Cùng một họ bài nhìn từ phía dãy: "mỗi bước, thay $a_i$ bằng …".
+- **SQ-02 ✅ (M28)** — **luật lan truyền cho quá trình lặp**. Hai lệnh, hai bản
+  chất: `sequence/step` đụng **cả dãy** theo một enum đóng `STEP_RULES` (Ducci và
+  hai họ hàng), còn `sequence/fire` đụng **một ô** do người học chọn (chip-firing).
+  Cộng validator `all-zero` / `stable` và binding `unstable` / `zeros`. Kèm hai bài:
+  `ducci-four-numbers` và `chip-firing-abelian`.
 
 **Tầng B**
 

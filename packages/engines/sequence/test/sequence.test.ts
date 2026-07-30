@@ -503,3 +503,153 @@ describe('SQ-01 — dãy con đơn điệu', () => {
     expect(Math.max(...ys)).toBeLessThan(viewport.y + viewport.height);
   });
 });
+
+/**
+ * SQ-02 — luật lan truyền.
+ *
+ * Hai thao tác khác hẳn nhau về bản chất: `step` đụng **cả dãy** một lần, `fire`
+ * đụng **một ô** do người học chọn. Sự khác biệt ấy là nội dung, không phải giao
+ * diện: định lý của chip-firing nói kết quả cuối **không phụ thuộc thứ tự đổ**, và
+ * một lệnh "chạy hết" sẽ giấu mất đúng điều đó.
+ */
+describe('SQ-02 — lan truyền', () => {
+  const seq = (values: readonly number[], mode = 'sequence'): Scene => ({
+    engine: 'sequence',
+    config: { mode },
+    elements: values.map((value, pos) => ({ id: `i${pos}`, type: 'item', value, pos })),
+  });
+
+  const run = (s: Scene, type: string, params: unknown): Scene | null => {
+    const r = execute(createEditorState(s), sequenceCommands, command(type, params));
+    return r.applied ? r.state.scene : null;
+  };
+
+  const values = (s: Scene): number[] =>
+    deriveSequence(s).items.map((item) => item.value);
+
+  it('Ducci: hiệu tuyệt đối vòng quanh, và bốn số **luôn** về 0', () => {
+    const s = seq([1, 2, 3, 5]);
+    expect(values(run(s, 'sequence/step', { rule: 'abs-diff-cycle' })!)).toEqual([1, 1, 2, 4]);
+
+    // Định lý: với $n = 4$, mọi bộ khởi đầu về $(0,0,0,0)$ sau hữu hạn bước.
+    // Kiểm bằng máy trên mọi bộ tới 6, thay vì tin một câu.
+    for (let a = 0; a <= 6; a += 1) {
+      for (let b = 0; b <= 6; b += 1) {
+        for (let c = 0; c <= 6; c += 1) {
+          for (let d = 0; d <= 6; d += 1) {
+            let scene = seq([a, b, c, d]);
+            let steps = 0;
+            while (values(scene).some((v) => v !== 0) && steps < 40) {
+              const next = run(scene, 'sequence/step', { rule: 'abs-diff-cycle' });
+              if (next === null) break;
+              scene = next;
+              steps += 1;
+            }
+            expect({ start: [a, b, c, d], end: values(scene) }).toEqual({
+              start: [a, b, c, d],
+              end: [0, 0, 0, 0],
+            });
+          }
+        }
+      }
+    }
+  });
+
+  it('ba số thì **không** phải lúc nào cũng về 0 — biên khác, bài khác', () => {
+    // Đây là lý do `abs-diff-line` và `abs-diff-cycle` là hai luật, không phải một.
+    let s = seq([0, 1, 2]);
+    const seen = new Set<string>();
+    for (let i = 0; i < 20; i += 1) {
+      const key = values(s).join(',');
+      if (seen.has(key)) break;
+      seen.add(key);
+      s = run(s, 'sequence/step', { rule: 'abs-diff-cycle' }) ?? s;
+    }
+    // Rơi vào chu trình $(0,1,1) \to (1,0,1) \to (1,1,0) \to \dots$, không về 0.
+    expect(values(s).some((v) => v !== 0)).toBe(true);
+  });
+
+  it('`abs-diff-line` giữ nguyên phần tử cuối', () => {
+    expect(values(run(seq([1, 2, 3, 5]), 'sequence/step', { rule: 'abs-diff-line' })!)).toEqual(
+      [1, 1, 2, 5],
+    );
+  });
+
+  it('`add-neighbours-cycle` cộng hai số kề, vòng quanh', () => {
+    expect(
+      values(run(seq([1, 0, 0, 0]), 'sequence/step', { rule: 'add-neighbours-cycle' })!),
+    ).toEqual([1, 1, 0, 1]);
+  });
+
+  it('lan truyền **bị chặn** ở chế độ đa tập', () => {
+    // Luật đọc phần tử kế tiếp, mà ở `piles` thì "kế tiếp" không tồn tại.
+    expect(run(seq([1, 2, 3], 'piles'), 'sequence/step', { rule: 'abs-diff-cycle' })).toBeNull();
+    expect(run(seq([3, 0, 0], 'piles'), 'sequence/fire', { id: 'i0' })).toBeNull();
+  });
+
+  it('chip-firing: đổ đúng hai hạt sang hai bên, và từ chối khi chưa đủ', () => {
+    expect(values(run(seq([3, 0, 0, 0]), 'sequence/fire', { id: 'i0' })!)).toEqual([1, 1, 0, 1]);
+    expect(run(seq([1, 0, 0, 0]), 'sequence/fire', { id: 'i0' })).toBeNull();
+    // Dãy quá ngắn thì hai "láng giềng" trùng nhau — từ chối thay vì đổ hai hạt
+    // vào cùng một ô.
+    expect(run(seq([5, 0]), 'sequence/fire', { id: 'i0' })).toBeNull();
+  });
+
+  it('**abel**: thứ tự đổ không đổi kết quả cuối', () => {
+    // Đây là định lý của họ bài (Björner–Lovász–Shor), và nó kiểm được bằng máy:
+    // đổ theo thứ tự tham lam trái-sang-phải, và theo thứ tự luôn chọn ô lớn nhất,
+    // phải ra cùng một cấu hình ổn định.
+    //
+    // Bốn hạt trên vòng năm ô là **có chủ đích**: cùng định lý ấy nói quá trình
+    // dừng khi số hạt ít hơn số cạnh, và không bao giờ dừng khi số hạt vượt
+    // $2E - n$. Bản đầu của test này dùng $10$ hạt — nó chạy mãi, hai thứ tự cho
+    // hai cấu hình khác nhau ở lần cắt thứ $200$, và test đỏ vì **đề bài sai**,
+    // không phải vì code sai.
+    const start = [3, 1, 0, 0, 0];
+    const settle = (pick: (vals: readonly number[]) => number): number[] => {
+      let s = seq(start);
+      let fired = 0;
+      for (; fired < 200; fired += 1) {
+        const vals = values(s);
+        const index = pick(vals);
+        if (index === -1) break;
+        s = run(s, 'sequence/fire', { id: `i${index}` }) as Scene;
+      }
+      // Dừng **thật**, không phải chạm trần vòng lặp.
+      expect(fired).toBeLessThan(200);
+      return values(s);
+    };
+
+    const leftmost = settle((vals) => vals.findIndex((v) => v >= 2));
+    const biggest = settle((vals) => {
+      let best = -1;
+      vals.forEach((v, i) => {
+        if (v >= 2 && (best === -1 || v > (vals[best] as number))) best = i;
+      });
+      return best;
+    });
+
+    expect(leftmost).toEqual(biggest);
+    expect(leftmost.every((v) => v < 2)).toBe(true);
+    // Số hạt là bất biến: đổ hạt không sinh cũng không mất.
+    expect(leftmost.reduce((a, b) => a + b, 0)).toBe(start.reduce((a, b) => a + b, 0));
+  });
+
+  it('validator `all-zero` và `stable` chỉ ra đúng ô còn hỏng', () => {
+    const zero = resolveSequenceValidator('all-zero')!;
+    expect(zero.check(seq([0, 0, 0])).ok).toBe(true);
+    const bad = zero.check(seq([0, 2, 0]));
+    expect(bad.violations).toEqual(['i1']);
+
+    const stable = resolveSequenceValidator('stable')!;
+    expect(stable.check(seq([1, 1, 1, 1])).ok).toBe(true);
+    expect(stable.check(seq([3, 0, 1])).violations).toEqual(['i0']);
+  });
+
+  it('DSL đếm ô còn đổ được và ô đã về 0', () => {
+    const run2 = (s: Scene, expr: string): unknown =>
+      tryEvaluate(expr, sequenceEnvironment(s), DETERMINISTIC_BUDGET).value;
+    expect(run2(seq([3, 0, 2, 0]), 'unstable')).toBe(2);
+    expect(run2(seq([3, 0, 2, 0]), 'zeros')).toBe(2);
+  });
+});

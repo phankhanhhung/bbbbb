@@ -1,0 +1,340 @@
+{
+  "schema_version": "0.1.0",
+  "id": "chip-firing-abelian",
+  "statement": {
+    "vi": "Trên một vòng tròn gồm $5$ ô có tất cả $4$ hạt. Mỗi bước, chọn một ô có ít nhất $2$ hạt, lấy đi $2$ hạt từ ô đó và cho mỗi ô kề $1$ hạt. Chứng minh quá trình dừng sau hữu hạn bước, và cấu hình cuối **không phụ thuộc** thứ tự chọn."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chip-firing / sandpile abel (Björner–Lovász–Shor). Dừng vì số hạt ít hơn số cạnh; duy nhất vì hai nước đổ khác ô thì đổi chỗ được."
+    }
+  },
+  "topics": [
+    "sequences",
+    "counting"
+  ],
+  "techniques": [
+    "invariant",
+    "monovariant"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "total",
+      "id": "inv-t",
+      "label": {
+        "vi": "Số hạt"
+      }
+    },
+    {
+      "expr": "unstable",
+      "id": "inv-u",
+      "label": {
+        "vi": "Số ô còn đổ được"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Năm ô trên một vòng tròn, [[a1|bốn hạt]] chia thành $3$ và $1$. Mỗi bước: chọn một ô có **ít nhất hai** hạt, lấy đi hai hạt và cho mỗi ô kề một hạt. Đang có ${{unstable}}$ ô đổ được. Số hạt là bất biến hiển nhiên — nên câu hỏi thật là *quá trình có dừng không*, và *dừng ở đâu*."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "i0",
+                "i1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Bốn hạt trên vòng năm ô",
+              "mode": "sequence",
+              "show_index": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 3
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 1
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 0
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 0
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "pos": 4,
+                "value": 0
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm ô mang các số ba, một, không, không, không."
+          },
+          "expects_violation": [
+            "stable"
+          ],
+          "verified": true,
+          "claims": [
+            "total == 4",
+            "unstable == 1"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đổ ở ô $1$: nó mất hai hạt, hai ô kề — ô $2$ và ô $5$, vì vòng quanh — mỗi ô thêm một. Được [[a2|$1,2,0,0,1$]]. Quá trình **phải dừng**, và lý do là một bất đẳng thức đếm: với số hạt ít hơn số cạnh ($4 < 5$), không thể mọi ô đều đổ vô hạn lần."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "i0",
+                "i1",
+                "i4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Sau khi đổ ở ô 1",
+              "mode": "sequence",
+              "show_index": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 2
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 0
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 0
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "pos": 4,
+                "value": 1
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm ô mang các số một, hai, không, không, một."
+          },
+          "expects_violation": [
+            "stable"
+          ],
+          "verified": true,
+          "claims": [
+            "total == 4",
+            "unstable == 1"
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đổ tiếp ở ô $2$, rồi ở ô $1$, ta tới [[a3|$0,1,1,0,2$]]. Điểm đáng nói: **thứ tự chọn không quan trọng**. Nếu hai thứ tự đổ khác nhau, xét nước đầu tiên chúng khác nhau — ô kia vẫn còn đủ hạt để đổ sau, nên đổi chỗ hai nước ấy được, và cứ thế biến thứ tự này thành thứ tự kia."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "i1",
+                "i2",
+                "i4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Thứ tự đổ không đổi kết quả",
+              "mode": "sequence",
+              "show_index": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 0
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 1
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 1
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 0
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "pos": 4,
+                "value": 2
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm ô mang các số không, một, một, không, hai."
+          },
+          "expects_violation": [
+            "stable"
+          ],
+          "verified": true,
+          "claims": [
+            "total == 4",
+            "unstable == 1"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đổ nước cuối ở ô $5$: [[a4|$1,1,1,1,0$]], không ô nào còn hai hạt — ${{unstable}}$ ô đổ được. Đây là cấu hình dừng **duy nhất** của bộ khởi đầu ấy. Trong sandbox, thử đổ theo thứ tự khác: số hạt mỗi ô ở cuối vẫn y như đây."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Cấu hình dừng",
+              "mode": "sequence",
+              "show_index": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 1
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 1
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 1
+              },
+              {
+                "id": "i4",
+                "type": "item",
+                "pos": 4,
+                "value": 0
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Năm ô mang các số một, một, một, một, không."
+          },
+          "verified": true,
+          "claims": [
+            "total == 4",
+            "unstable == 0",
+            "zeros == 1"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "stable"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

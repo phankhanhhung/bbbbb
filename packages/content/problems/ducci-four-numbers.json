@@ -1,0 +1,383 @@
+{
+  "schema_version": "0.1.0",
+  "id": "ducci-four-numbers",
+  "statement": {
+    "vi": "Viết bốn số nguyên không âm trên một vòng tròn. Mỗi bước, thay đồng thời mỗi số bằng **hiệu tuyệt đối** giữa nó và số kế tiếp theo chiều kim đồng hồ. Chứng minh rằng sau hữu hạn bước, cả bốn số đều bằng $0$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Dãy Ducci độ dài 4. Hai đơn biến: số lớn nhất không tăng, và sau nhiều nhất bốn bước mọi số đều chẵn."
+    }
+  },
+  "topics": [
+    "sequences"
+  ],
+  "techniques": [
+    "monovariant",
+    "parity"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "max(items, x => x.value)",
+      "id": "inv-m",
+      "label": {
+        "vi": "Số lớn nhất"
+      }
+    },
+    {
+      "expr": "zeros",
+      "id": "inv-z",
+      "label": {
+        "vi": "Số ô đã về 0"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bốn số [[a1|$1, 2, 3, 5$]] trên một vòng tròn — ô cuối kề ô đầu. Mỗi bước, mỗi số bị thay bằng **hiệu tuyệt đối** giữa nó và số kế tiếp. Tổng ${{total}}$ không phải bất biến ở đây, nên phải tìm một đại lượng khác đi một chiều."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Vòng quanh: ô 4 kề ô 1",
+              "mode": "sequence",
+              "show_index": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 2
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 3
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 5
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn ô mang các số một, hai, ba, năm."
+          },
+          "expects_violation": [
+            "all-zero"
+          ],
+          "verified": true,
+          "claims": [
+            "n == 4",
+            "total == 11",
+            "zeros == 0"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một bước: $|1-2|, |2-3|, |3-5|, |5-1|$ cho [[a2|$1, 1, 2, 4$]]. Số **lớn nhất** không bao giờ tăng — mọi hiệu tuyệt đối của hai số trong $[0, M]$ vẫn nằm trong $[0, M]$. Đó là đơn biến thứ nhất, nhưng nó chưa đủ: nó có thể đứng yên."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Lớn nhất không tăng: 5 → 4",
+              "mode": "sequence",
+              "show_index": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 1
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 2
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 4
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn ô mang các số một, một, hai, bốn."
+          },
+          "expects_violation": [
+            "all-zero"
+          ],
+          "verified": true,
+          "claims": [
+            "total == 8",
+            "zeros == 0"
+          ]
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đơn biến thứ hai đến từ **tính chẵn lẻ**. Xét mọi số theo modulo $2$: phép $|a-b|$ thành $a+b$, và trên bốn ô thì sau nhiều nhất bốn bước mọi số đều chẵn — kiểm được bằng cách thử cả $16$ bộ chẵn lẻ. Ở đây sau hai bước đã ra [[a3|$0, 0, 2, 2$]], toàn số chẵn."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Sau vài bước: mọi số đều chẵn",
+              "mode": "sequence",
+              "show_index": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 0
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 0
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 2
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 2
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn ô mang các số không, không, hai, hai."
+          },
+          "expects_violation": [
+            "all-zero"
+          ],
+          "verified": true,
+          "claims": [
+            "zeros == 2",
+            "total == 4"
+          ]
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mọi số chẵn thì chia cả bộ cho $2$ được một bộ mới, và quá trình chạy y như cũ — nên nếu bộ chia đôi về $0$ thì bộ gốc cũng vậy. Số lớn nhất giảm ít nhất một nửa sau mỗi vòng bốn bước, nên sau $O(\\log M)$ vòng nó phải xuống $0$. Trên đường đi ta gặp [[a4|$2, 2, 2, 2$]]."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Bốn số bằng nhau — bước sau là 0",
+              "mode": "sequence",
+              "show_index": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 2
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 2
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 2
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 2
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn ô đều mang số hai."
+          },
+          "expects_violation": [
+            "all-zero"
+          ],
+          "verified": true,
+          "claims": [
+            "total == 8",
+            "zeros == 0"
+          ]
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bốn số bằng nhau thì mọi hiệu bằng $0$: [[a5|tất cả về $0$]], và từ đó đứng yên mãi. Lập luận không dùng gì về bộ số cụ thể, nên nó đúng với mọi bộ bốn số nguyên không âm — bấm **Một bước** trong sandbox với bộ khác mà xem."
+          },
+          "anchors": {
+            "a5": {
+              "ids": [
+                "i0",
+                "i1",
+                "i2",
+                "i3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Điểm dừng",
+              "mode": "sequence",
+              "show_index": true
+            },
+            "elements": [
+              {
+                "id": "i0",
+                "type": "item",
+                "pos": 0,
+                "value": 0
+              },
+              {
+                "id": "i1",
+                "type": "item",
+                "pos": 1,
+                "value": 0
+              },
+              {
+                "id": "i2",
+                "type": "item",
+                "pos": 2,
+                "value": 0
+              },
+              {
+                "id": "i3",
+                "type": "item",
+                "pos": 3,
+                "value": 0
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn ô đều mang số không."
+          },
+          "verified": true,
+          "claims": [
+            "zeros == 4",
+            "total == 0"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "all-zero"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}
