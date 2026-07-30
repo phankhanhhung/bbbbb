@@ -11,6 +11,7 @@ import {
   text,
   type EngineRenderer,
   type RenderContext,
+  type SceneBox,
   type SvgNode,
 } from '@combviz/render';
 import {
@@ -25,6 +26,7 @@ import {
 import {
   cellPolygon,
   cellsInRow,
+  inBoard,
   centreOf,
   isLatticeShape,
   latticeExtent,
@@ -32,7 +34,7 @@ import {
   wrapOf,
 } from './lattice.js';
 import { tileCells } from './dsl.js';
-import { cellId } from './ids.js';
+import { cellId, parseCellId } from './ids.js';
 import { attackedCells, cellCentre, type AttackBoard } from './attacks.js';
 import type { BoardConfig } from './schema.js';
 
@@ -43,8 +45,64 @@ import type { BoardConfig } from './schema.js';
  * Cùng hàm này chạy trong Player, trong golden test, và trong Node khi build OG
  * card — nên thứ người học thấy và thứ xuất bản ra không thể lệch nhau.
  */
+/**
+ * Chỗ mực của một element bàn cờ nằm.
+ *
+ * Mọi thứ quy về `cellPolygon` — cùng hàm mà renderer dùng để vẽ ô, dựng đường
+ * bao region và tính tâm. Một ô có **một** hình dạng, khai ở một chỗ; nhờ vậy
+ * bàn ong và bàn tam giác không cần một dòng riêng nào ở đây.
+ *
+ * Quân nhiều ô trả **một hộp cho mỗi ô**, không phải hộp bao chung. Với quân
+ * hình L thì tâm hộp bao chung rơi vào **cái khuyết** — một chỗ không có mực, và
+ * phép biến hình sẽ bay tới chỗ trống.
+ */
+function boxesOf(scene: Scene, id: string): readonly SceneBox[] {
+  const config = scene.config as BoardConfig | undefined;
+  if (!config) return [];
+
+  const lattice = latticeOf(config);
+  const rows = config.rows ?? 0;
+  const cols = config.cols ?? 0;
+  const board = { rows, cols, wrap: wrapOf(config) };
+
+  const boxOfCell = ([row, col]: Offset): SceneBox | null => {
+    if (!inBoard(lattice, rows, cols, row, col)) return null;
+    const points = cellPolygon(lattice, rows, cols, row, col);
+    if (points.length === 0) return null;
+    const x = Math.min(...points.map((pt) => pt.x));
+    const y = Math.min(...points.map((pt) => pt.y));
+    return {
+      x,
+      y,
+      width: Math.max(...points.map((pt) => pt.x)) - x,
+      height: Math.max(...points.map((pt) => pt.y)) - y,
+    };
+  };
+
+  const cell = parseCellId(id);
+  if (cell) {
+    const box = boxOfCell([cell.row, cell.col]);
+    return box ? [box] : [];
+  }
+
+  const element = scene.elements.find((e) => e.id === id);
+  if (!element) return [];
+
+  const cells: readonly Offset[] =
+    element.type === 'tile'
+      ? tileCells(element, lattice, board)
+      : element.type === 'region'
+        ? ((element['cells'] as Offset[] | undefined) ?? [])
+        : element.type === 'piece'
+          ? [(element['pos'] as Offset | undefined) ?? [-1, -1]]
+          : [];
+
+  return cells.map(boxOfCell).filter((box): box is SceneBox => box !== null);
+}
+
 export const boardRenderer: EngineRenderer = {
   id: 'board',
+  elementBoxes: boxesOf,
 
   defaultViewport(scene: Scene): Viewport {
     const config = scene.config as BoardConfig;

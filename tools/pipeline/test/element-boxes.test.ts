@@ -139,8 +139,14 @@ function centreInside(box: SceneBox, target: Box): boolean {
 }
 
 describe('elementBoxes khớp mực thật', () => {
-  it('có engine nào đó đã cài — test này vô nghĩa nếu chưa', () => {
-    expect(covered.size).toBeGreaterThan(0);
+  it('**cả bảy** engine đều cài — thiếu một là một mảng kho không biến hình được', () => {
+    // `elementBoxes` khai `optional` để làm dần từng engine, không phải để bỏ dở.
+    // Khẳng định này khoá lại chỗ dừng: thêm engine thứ tám thì nó đỏ ngay, thay
+    // vì để engine ấy im lặng không có hình học rồi phát hiện lúc một bài song
+    // ánh dùng tới.
+    expect([...covered].sort()).toEqual(
+      ENGINE_RENDERERS.map((e) => e.id).sort(),
+    );
   });
 
   for (const { label, scene } of scenes) {
