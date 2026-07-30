@@ -24,11 +24,24 @@ export const SET_LIMITS = {
  */
 export const SetConfig = Type.Object(
   {
-    view: Type.Union([Type.Literal('matrix'), Type.Literal('venn')], {
-      default: 'matrix',
-    }),
+    view: Type.Union(
+      [Type.Literal('matrix'), Type.Literal('venn'), Type.Literal('dots')],
+      { default: 'matrix' },
+    ),
     /** Hiện tổng hàng/cột ở view `matrix` — đếm hai chiều (PRN-03). */
     show_sums: Type.Optional(Type.Boolean({ default: false })),
+    /**
+     * ST-02 — bảng bao hàm–loại trừ dưới hình.
+     *
+     * Hiện từng hạng tử $\sum|A_i|$, $\sum|A_i \cap A_j|$, … cùng dấu của nó, rồi
+     * tổng, rồi $|A_1 \cup \dots|$ **đếm trực tiếp**. Hai con số cuối phải bằng
+     * nhau, và chúng được tính bằng hai đường khác nhau — nên bảng này không phải
+     * một lời khẳng định, nó là một phép đối chiếu.
+     *
+     * Chỉ có nghĩa với $\le 3$ tập, cùng trần với Venn: quá đó thì số hạng tử là
+     * $2^k - 1$ và bảng dài hơn cả hình.
+     */
+    show_inclusion_exclusion: Type.Optional(Type.Boolean({ default: false })),
     caption: Type.Optional(Type.String({ maxLength: 48 })),
   },
   { additionalProperties: false },

@@ -6,7 +6,9 @@ import { defaultTheme } from '@combviz/theme';
 import type { Scene } from '@combviz/schema';
 import {
   deriveSet,
+  inclusionExclusion,
   resolveSetValidator,
+  setRegions,
   setCommands,
   setEnvironment,
   setHitTest,
@@ -260,5 +262,141 @@ describe('hit test', () => {
 
   it('chạm ngoài bảng không trúng gì', () => {
     expect(setHitTest(FAMILY, { x: -50, y: -50 })).toEqual([]);
+  });
+});
+
+/**
+ * ST-02 / ST-03 — hai view mà SRS đòi mà engine chưa có.
+ */
+const RENDER_CTX = createContext(defaultTheme);
+
+describe('ST-02 — bao hàm–loại trừ', () => {
+  const abcScene = (tokens: readonly (readonly string[])[]): Scene => ({
+    engine: 'set',
+    config: { view: 'venn', show_inclusion_exclusion: true },
+    elements: [
+      { id: 'A', type: 'set', label: 'A', order: 0 },
+      { id: 'B', type: 'set', label: 'B', order: 1 },
+      { id: 'C', type: 'set', label: 'C', order: 2 },
+      ...tokens.map((sets, i) => ({
+        id: `t${i}`,
+        type: 'token' as const,
+        label: String(i),
+        sets: [...sets],
+      })),
+    ],
+  });
+
+  it('hai vế bằng nhau — và chúng đi qua **hai** đường tính khác nhau', () => {
+    for (const tokens of [
+      [['A'], ['A'], ['A', 'B'], ['A', 'B', 'C'], ['B'], ['B', 'C'], ['C'], []],
+      [['A'], ['B'], ['C']],
+      [['A', 'B', 'C'], ['A', 'B', 'C']],
+      [[], [], []],
+      [['A']],
+    ]) {
+      const result = inclusionExclusion(deriveSet(abcScene(tokens)));
+      expect({ tokens, total: result.total }).toEqual({ tokens, total: result.union });
+    }
+  });
+
+  it('hạng tử đọc đúng: $\\sum|A_i|$, $\\sum|A_i \\cap A_j|$, giao ba tập', () => {
+    const result = inclusionExclusion(
+      deriveSet(abcScene([['A'], ['A'], ['A', 'B'], ['A', 'B', 'C'], ['B'], ['B', 'C'], ['C'], []])),
+    );
+    // |A| = 4, |B| = 4, |C| = 3 ⇒ 11. Cặp: A∩B = 2, A∩C = 1, B∩C = 2 ⇒ 5. Ba: 1.
+    expect(result.terms).toEqual([11, 5, 1]);
+    expect(result.union).toBe(7);
+  });
+
+  it('vùng gom theo **danh sách tập**, không theo thứ tự tác giả gõ', () => {
+    const shuffled: Scene = {
+      engine: 'set',
+      config: { view: 'matrix' },
+      elements: [
+        { id: 'A', type: 'set', label: 'A', order: 0 },
+        { id: 'B', type: 'set', label: 'B', order: 1 },
+        { id: 't1', type: 'token', label: '1', sets: ['A', 'B'] },
+        { id: 't2', type: 'token', label: '2', sets: ['B', 'A'] },
+      ],
+    };
+    const regions = setRegions(deriveSet(shuffled));
+    // Hai phần tử phải rơi vào **một** vùng, không phải hai.
+    expect(regions.filter((r) => r.sets.length === 2)).toHaveLength(1);
+    expect(regions.find((r) => r.sets.length === 2)?.size).toBe(2);
+  });
+
+  it('bảng chỉ hiện với ≤ 3 tập, và khung nhìn **nới ra** để chứa nó', () => {
+    const withTable = abcScene([['A'], ['B']]);
+    const without: Scene = { ...withTable, config: { view: 'venn' } };
+    const box = (s: Scene) => setRenderer.defaultViewport(s);
+    expect(box(withTable).height).toBeGreaterThan(box(without).height);
+
+    const texts = (s: Scene): string[] => {
+      const out: string[] = [];
+      walk(setRenderer.render(s, RENDER_CTX), (n) => {
+        if (n.text !== undefined) out.push(n.text);
+      });
+      return out;
+    };
+    expect(texts(withTable).some((t) => t.includes('đếm thẳng'))).toBe(true);
+    expect(texts(without).some((t) => t.includes('đếm thẳng'))).toBe(false);
+  });
+});
+
+describe('ST-03 — view chấm', () => {
+  const dots = (): Scene => ({
+    engine: 'set',
+    config: { view: 'dots' },
+    elements: [
+      { id: 'A', type: 'set', label: 'A', order: 0 },
+      { id: 'B', type: 'set', label: 'B', order: 1 },
+      { id: 't1', type: 'token', label: '1', sets: ['A'] },
+      { id: 't2', type: 'token', label: '2', sets: ['A', 'B'] },
+      { id: 't3', type: 'token', label: '3', sets: ['B'] },
+      { id: 't4', type: 'token', label: '4', sets: [] },
+      { id: 't5', type: 'token', label: '5', sets: ['A', 'B'] },
+    ],
+  });
+
+  const circles = (s: Scene): { key?: string; attrs: Record<string, unknown> }[] => {
+    const out: { key?: string; attrs: Record<string, unknown> }[] = [];
+    walk(setRenderer.render(s, RENDER_CTX), (n) => {
+      if (n.tag === 'circle') out.push({ ...(n.key ? { key: n.key } : {}), attrs: n.attrs });
+    });
+    return out;
+  };
+
+  it('số chấm bằng `incidences`, **không** bằng số phần tử', () => {
+    // Đây là toàn bộ nội dung của phép đếm hai chiều: một phần tử thuộc $d$ tập
+    // hiện ra thành $d$ chấm, và tổng chấm là $\sum_S |S|$.
+    const derived = deriveSet(dots());
+    expect(circles(dots())).toHaveLength(derived.incidences);
+    // Năm phần tử nhưng **sáu** chấm: hai phần tử thuộc cả hai tập, một phần tử
+    // không thuộc tập nào. Hai con số khác nhau, và hình nói con số thứ hai.
+    expect(derived.tokens).toHaveLength(5);
+    expect(derived.incidences).toBe(6);
+  });
+
+  it('mọi bản sao của một phần tử mang **cùng** `data-el`', () => {
+    const shared = circles(dots()).filter((c) => c.attrs['data-el'] === 't2');
+    expect(shared).toHaveLength(2);
+    // …nhưng key khác nhau, không thì diff gộp hai chấm làm một và một chấm trượt
+    // ngang qua hình mỗi lần chuyển step.
+    expect(new Set(shared.map((c) => c.key)).size).toBe(2);
+  });
+
+  it('khung nhìn chứa **hết** cột cao nhất', () => {
+    // Cột mọc lên trên từ $y = 0$, nên mép trên là số âm. Bản đầu tính chiều cao
+    // như thể gốc nằm ở đỉnh cột, và hai chấm trên cùng bị cắt khỏi viewBox —
+    // vẫn vẽ ra, chỉ là không ai nhìn thấy.
+    const box = setRenderer.defaultViewport(dots());
+    const ys = circles(dots()).map((c) => Number(c.attrs['cy']));
+    expect(Math.min(...ys)).toBeGreaterThan(box.y);
+    expect(Math.max(...ys)).toBeLessThan(box.y + box.height);
+  });
+
+  it('phần tử ngoài mọi tập **không** sinh chấm nào', () => {
+    expect(circles(dots()).some((c) => c.attrs['data-el'] === 't4')).toBe(false);
   });
 });

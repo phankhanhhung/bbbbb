@@ -29,6 +29,9 @@ topics:
   - id: games
     label:
       vi: Trò chơi
+  - id: set-systems
+    label:
+      vi: Hệ tập hợp
   - id: sequences
     label:
       vi: Dãy và thao tác lặp

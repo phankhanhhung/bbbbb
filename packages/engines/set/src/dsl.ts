@@ -53,6 +53,30 @@ export function setEnvironment(scene: Scene): DslEnvironment {
       n: state.tokens.length,
       k: state.sets.length,
       incidences: state.incidences,
+
+      /**
+       * Cỡ hợp — số phần tử thuộc **ít nhất một** tập.
+       *
+       * Khác `n`: tập nền có thể chứa phần tử không thuộc tập nào, và trong bài
+       * bao hàm–loại trừ thì đúng chỗ khác nhau ấy là câu trả lời ("bao nhiêu học
+       * sinh không tham gia câu lạc bộ nào").
+       */
+      union_size: state.tokens.filter((t) => t.sets.length > 0).length,
+
+      /**
+       * Cỡ giao **nhỏ nhất** trên mọi cặp tập, và cỡ tập lớn nhất / nhỏ nhất.
+       *
+       * Ba con số của họ bài cực trị: Erdős–Ko–Rado hỏi "gia đình giao nhau lớn
+       * nhất", và điều kiện "giao nhau" đọc thẳng là `min_common >= 1`. Dưới hai
+       * tập thì `min_common` **vắng mặt** — không có cặp nào, nên mọi con số ở đây
+       * đều là bịa; cùng luật với `prufer_code` của engine đồ thị.
+       */
+      ...(state.sets.length >= 2 ? { min_common: minCommon(state) } : {}),
+      max_size: state.sets.reduce((max, s) => Math.max(max, s.size), 0),
+      min_size: state.sets.reduce(
+        (min, s) => Math.min(min, s.size),
+        state.sets.length === 0 ? 0 : Infinity,
+      ),
     },
 
     builtins: {
@@ -79,6 +103,22 @@ export function setEnvironment(scene: Scene): DslEnvironment {
       },
     },
   };
+}
+
+/** Cỡ giao nhỏ nhất trên mọi cặp tập. Gọi khi đã chắc có ít nhất hai tập. */
+function minCommon(state: SetDerived): number {
+  let best = Infinity;
+  for (let i = 0; i < state.sets.length; i += 1) {
+    for (let j = i + 1; j < state.sets.length; j += 1) {
+      const a = state.sets[i] as { id: string };
+      const b = state.sets[j] as { id: string };
+      best = Math.min(
+        best,
+        state.tokens.filter((t) => t.sets.includes(a.id) && t.sets.includes(b.id)).length,
+      );
+    }
+  }
+  return best;
 }
 
 function expectTwo(

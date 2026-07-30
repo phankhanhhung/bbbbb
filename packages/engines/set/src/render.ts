@@ -18,12 +18,14 @@ import {
   VENN_R,
   deriveSet,
   incidenceId,
+  inclusionExclusion,
   setConfig,
   vennCentres,
   vennRegionCentre,
   vennTooManySets,
   type SetDerived,
 } from './derive.js';
+import { SET_LIMITS, type SetConfig } from './schema.js';
 
 /**
  * Renderer của Set/Counting engine (ST-01).
@@ -35,6 +37,22 @@ import {
  */
 /** Cỡ chữ caption, và chiều cao nó cần được chừa. */
 const CAPTION_SIZE = CELL * 0.36;
+
+/** ST-03 — bề rộng một cột chấm, và khoảng cách hai chấm chồng nhau. */
+const DOT_COL = CELL * 0.9;
+const DOT_PITCH = CELL * 0.42;
+const DOT_R = CELL * 0.15;
+/** ST-02 — chiều cao một dòng của bảng bao hàm–loại trừ. */
+const IE_LINE = CELL * 0.5;
+
+/** Bảng bao hàm–loại trừ có hiện không: cần bật cờ, và cần $\le 3$ tập. */
+function ieVisible(derived: SetDerived, config: SetConfig): boolean {
+  return (
+    config.show_inclusion_exclusion === true &&
+    derived.sets.length >= 1 &&
+    derived.sets.length <= SET_LIMITS.maxVennSets
+  );
+}
 
 /**
  * Khung hình **và** chỗ đặt caption, tính một lần từ cùng một phép tính.
@@ -54,6 +72,21 @@ function layoutOf(scene: Scene): { viewport: Viewport; caption: { x: number; y: 
       ? (() => {
           const r = VENN_R * 2.6;
           return { x: -r, y: -r, width: r * 2.15, height: r * 2 };
+        })()
+      : derived.view === 'dots'
+      ? (() => {
+          // Cột mọc **lên trên** từ $y = 0$, nhãn nằm dưới. Nên mép trên là số âm
+          // và chiều cao là khoảng cách trên–dưới, không phải chỉ phần dương: bản
+          // đầu tính như thể gốc nằm ở đỉnh cột, và hai chấm trên cùng của mỗi cột
+          // bị cắt khỏi khung — vẫn vẽ ra, chỉ là nằm ngoài viewBox.
+          const cols = Math.max(1, derived.sets.length);
+          const top = dotsTop(derived);
+          return {
+            x: -PADDING - CELL * 0.4,
+            y: top - PADDING,
+            width: cols * DOT_COL + CELL * 0.8 + PADDING * 2,
+            height: DOTS_BOTTOM - top + PADDING * 2,
+          };
         })()
       : (() => {
           const rows = Math.max(1, derived.tokens.length);
@@ -77,11 +110,17 @@ function layoutOf(scene: Scene): { viewport: Viewport; caption: { x: number; y: 
       ? 0
       : estimateTextWidth(config.caption, CAPTION_SIZE) + PADDING * 2;
 
+  // ST-02 — bảng bao hàm–loại trừ nằm **dưới** hình, nên nó nới chiều cao chứ
+  // không đè lên hình. Chiều cao đọc từ số hạng tử thật, không từ một hằng số:
+  // hai tập cho ba dòng, ba tập cho năm.
+  const ieRows = ieVisible(derived, config) ? derived.sets.length + 2 : 0;
+  const ieRoom = ieRows === 0 ? 0 : ieRows * IE_LINE + CELL * 0.6;
+
   return {
     viewport: {
       ...body,
       y: body.y - room,
-      height: body.height + room,
+      height: body.height + room + ieRoom,
       width: Math.max(body.width, needed),
     },
     caption: { x: body.x + PADDING, y: body.y - room + CAPTION_SIZE },
@@ -103,10 +142,17 @@ export const setRenderer: EngineRenderer = {
     const body =
       derived.view === 'venn' && !vennTooManySets(derived)
         ? renderVenn(derived, ctx)
-        : renderMatrix(derived, config.show_sums === true, ctx);
+        : derived.view === 'dots'
+          ? renderDots(derived, ctx)
+          : renderMatrix(derived, config.show_sums === true, ctx);
+
+    const ie = ieVisible(derived, config)
+      ? renderInclusionExclusion(derived, bodyBottom(scene), ctx)
+      : [];
 
     return [
       el('g', { class: 'cv-set' }, body),
+      ...(ie.length > 0 ? [el('g', { class: 'cv-ie' }, ie)] : []),
       ...(config.caption
         ? [
             text(
@@ -129,6 +175,117 @@ export const setRenderer: EngineRenderer = {
     ];
   },
 };
+
+/** Mép trên của cột chấm cao nhất — cột mọc lên trên từ $y = 0$. */
+function dotsTop(derived: SetDerived): number {
+  const tallest = Math.max(1, ...derived.sets.map((s) => s.size));
+  return -(tallest * DOT_PITCH + DOT_PITCH * 0.6 + DOT_R);
+}
+
+/** Mép dưới của cột chấm: dưới nhãn tập và con số cỡ. */
+const DOTS_BOTTOM = CELL * 1.2;
+
+/**
+ * Mép dưới **thật** của phần hình, nơi bảng bao hàm–loại trừ bắt đầu.
+ *
+ * Phải là mép dưới của thứ đã vẽ ra, không phải một hằng số áng chừng: bản đầu
+ * ước cho Venn bằng $1{,}6R$ trong khi vùng "ngoài mọi tập" nằm đúng ở đó, nên
+ * bảng đè lên chấm cuối và lên nhãn tập thứ ba.
+ */
+function bodyBottom(scene: Scene): number {
+  const derived = deriveSet(scene);
+  if (derived.view === 'venn' && !vennTooManySets(derived)) return VENN_R * 2.1;
+  if (derived.view === 'dots') return DOTS_BOTTOM;
+  return derived.tokens.length * CELL + CELL * 0.6;
+}
+
+/**
+ * ST-03 — mỗi tập một **cột chấm**, mỗi chấm một phần tử.
+ *
+ * Vì sao view này đáng có, khi bảng incidence đã nói đủ mọi thứ: bảng trả lời
+ * "phần tử nào thuộc tập nào", còn cột chấm trả lời "**bao nhiêu**", và mắt đọc
+ * chiều cao nhanh hơn đọc số. Cả họ bài cực trị về hệ tập hợp hỏi đúng câu thứ
+ * hai — "gia đình lớn nhất thoả điều kiện này có bao nhiêu tập" — nên có nó thì
+ * người học so được hai phương án bằng một cái liếc.
+ *
+ * Một phần tử thuộc $d$ tập hiện ra thành $d$ chấm, ở $d$ cột khác nhau. Đó
+ * **không** phải trùng lặp cần dẹp: tổng số chấm chính là `incidences`, tức
+ * $\sum_S |S|$, và nhìn thấy một phần tử được đếm nhiều lần là toàn bộ nội dung
+ * của phép đếm hai chiều. Chấm mang id của phần tử qua `data-el`, nên rê vào một
+ * phần tử thì **mọi** bản sao của nó cùng sáng — cùng cơ chế mà ma trận kề của
+ * engine đồ thị dùng để làm sáng hai ô đối xứng.
+ */
+function renderDots(derived: SetDerived, ctx: RenderContext): SvgNode[] {
+  const nodes: SvgNode[] = [];
+
+  derived.sets.forEach((set, c) => {
+    const x = c * DOT_COL + DOT_COL / 2;
+    const members = derived.tokens.filter((t) => t.sets.includes(set.id));
+
+    members.forEach((token, i) => {
+      nodes.push(
+        keyed(incidenceId(token.id, set.id), 'circle', {
+          cx: round(x),
+          // Xếp từ dưới lên: cột cao hơn trông "nhiều hơn", đúng trực giác đọc
+          // biểu đồ cột. Xếp từ trên xuống thì tập lớn trông như tụt xuống thấp.
+          cy: round(-i * DOT_PITCH - DOT_PITCH * 0.6),
+          r: round(DOT_R),
+          fill: fillForClass(ctx, set.colorClass ?? token.colorClass ?? 1),
+          'data-el': token.id,
+          ...decorationAttrs(ctx, incidenceId(token.id, set.id), token.emphasis),
+        }),
+      );
+    });
+
+    nodes.push(
+      label(`set-label-${set.id}`, x, CELL * 0.35, set.label, 'middle', ctx),
+      // Con số dưới nhãn: chiều cao đọc nhanh nhưng đọc **xấp xỉ**, và một lập
+      // luận cực trị cần con số chính xác.
+      label(`set-size-${set.id}`, x, CELL * 0.95, String(set.size), 'middle', ctx),
+    );
+  });
+
+  return nodes;
+}
+
+/**
+ * ST-02 — bảng bao hàm–loại trừ, đặt dưới hình.
+ *
+ * Mỗi dòng là một hạng tử kèm dấu của nó, rồi tổng, rồi $|A \cup B \cup \dots|$
+ * **đếm trực tiếp**. Hai con số cuối bằng nhau, và chúng đi qua hai đường tính
+ * khác hẳn nhau — nên bảng này không phải một lời khẳng định mà là một phép đối
+ * chiếu người học tự làm được.
+ */
+function renderInclusionExclusion(
+  derived: SetDerived,
+  top: number,
+  ctx: RenderContext,
+): SvgNode[] {
+  const { terms, total, union } = inclusionExclusion(derived);
+  const nodes: SvgNode[] = [];
+  const left = 0;
+
+  const line = (i: number, head: string, value: string, key: string): void => {
+    const y = top + CELL * 0.5 + i * IE_LINE;
+    nodes.push(
+      label(`ie-${key}`, left, y, head, 'start', ctx, false, CELL * 0.32),
+      label(`ie-${key}-v`, left + CELL * 2.6, y, value, 'end', ctx, false, CELL * 0.32),
+    );
+  };
+
+  terms.forEach((term, i) => {
+    const sign = i % 2 === 0 ? '+' : '−';
+    const head =
+      i === 0 ? 'Σ|Aᵢ|' : i === 1 ? 'Σ|Aᵢ∩Aⱼ|' : 'Σ|Aᵢ∩Aⱼ∩Aₖ|';
+    line(i, `${sign} ${head}`, String(term), `t${i}`);
+  });
+
+  line(terms.length, '= tổng', String(total), 'sum');
+  // Đếm trực tiếp: mỗi phần tử **một** lần, bất kể nó thuộc mấy tập.
+  line(terms.length + 1, '|hợp| đếm thẳng', String(union), 'union');
+
+  return nodes;
+}
 
 /**
  * Bảng incidence: hàng là phần tử, cột là tập, ô tô = "thuộc".

@@ -34,7 +34,7 @@ export interface DerivedSet {
 }
 
 export interface SetDerived {
-  readonly view: 'matrix' | 'venn';
+  readonly view: 'matrix' | 'venn' | 'dots';
   readonly tokens: readonly DerivedToken[];
   readonly sets: readonly DerivedSet[];
   /** Tổng số cặp (phần tử, tập chứa nó) — con số của đếm hai chiều. */
@@ -106,6 +106,91 @@ export function deriveSet(scene: Scene): SetDerived {
     sets: sized,
     incidences: tokens.reduce((sum, t) => sum + t.sets.length, 0),
   };
+}
+
+/**
+ * Một **vùng**: nhóm phần tử có cùng danh sách tập chứa chúng (ST-02).
+ *
+ * Đây là đơn vị mà bao hàm–loại trừ nói tới. Công thức
+ * $|A \cup B| = |A| + |B| - |A \cap B|$ không phải một mẹo nhớ: nó chỉ là chuyện
+ * mỗi phần tử được đếm đúng **một** lần sau khi bù trừ, và bù trừ đúng bao nhiêu
+ * thì đọc thẳng ra từ *phần tử ấy nằm trong mấy tập*. Có vùng thành một khái niệm
+ * hiển ngôn thì cái "đúng một lần" ấy đếm được bằng mắt.
+ */
+export interface DerivedRegion {
+  /** Id các tập chứa vùng này, theo thứ tự `order`. Rỗng = ngoài mọi tập. */
+  readonly sets: readonly string[];
+  readonly tokens: readonly string[];
+  readonly size: number;
+}
+
+export function setRegions(derived: SetDerived): readonly DerivedRegion[] {
+  const order = derived.sets.map((s) => s.id);
+  const groups = new Map<string, string[]>();
+
+  for (const token of derived.tokens) {
+    // Khoá theo thứ tự `order` chứ không theo thứ tự tác giả gõ: hai phần tử cùng
+    // thuộc $\{A, B\}$ phải rơi vào **một** vùng dù một bên khai `["A","B"]` còn
+    // bên kia khai `["B","A"]`.
+    const key = order.filter((id) => token.sets.includes(id)).join(INCIDENCE_SEP);
+    const list = groups.get(key) ?? [];
+    list.push(token.id);
+    groups.set(key, list);
+  }
+
+  return [...groups]
+    .map(([key, tokens]) => ({
+      sets: key === '' ? [] : key.split(INCIDENCE_SEP),
+      tokens,
+      size: tokens.length,
+    }))
+    // Vùng ít tập trước, rồi theo thứ tự tập: bảng bao hàm–loại trừ đọc từ các
+    // hạng tử đơn tới các hạng tử giao nhiều tập, đúng thứ tự công thức viết ra.
+    .sort(
+      (a, b) =>
+        a.sets.length - b.sets.length ||
+        a.sets.join().localeCompare(b.sets.join()),
+    );
+}
+
+/**
+ * Cỡ hợp của một danh sách tập, và các hạng tử bao hàm–loại trừ dẫn tới nó (ST-02).
+ *
+ * Trả về **cả hai vế**: `union` đếm trực tiếp (mỗi phần tử một lần), còn `terms`
+ * là các hạng tử $\sum|A_i| - \sum|A_i \cap A_j| + \dots$ theo cỡ giao. Hai vế
+ * phải bằng nhau, và đó chính là điều bảng này sinh ra để cho thấy — nên chúng
+ * được tính bằng **hai đường khác nhau** chứ không phải một đường rồi chép lại.
+ */
+export function inclusionExclusion(derived: SetDerived): {
+  readonly union: number;
+  /** `terms[i]` = tổng cỡ mọi giao của đúng $i+1$ tập. Dấu là $(-1)^i$. */
+  readonly terms: readonly number[];
+  readonly total: number;
+} {
+  const ids = derived.sets.map((s) => s.id);
+  const union = derived.tokens.filter((t) => t.sets.length > 0).length;
+  const terms: number[] = [];
+
+  for (let size = 1; size <= ids.length; size += 1) {
+    let sum = 0;
+    for (const combo of combinations(ids, size)) {
+      sum += derived.tokens.filter((t) => combo.every((id) => t.sets.includes(id))).length;
+    }
+    terms.push(sum);
+  }
+
+  const total = terms.reduce((acc, term, i) => acc + (i % 2 === 0 ? term : -term), 0);
+  return { union, terms, total };
+}
+
+function combinations(ids: readonly string[], size: number): string[][] {
+  if (size === 0) return [[]];
+  if (size > ids.length) return [];
+  const [head, ...rest] = ids as [string, ...string[]];
+  return [
+    ...combinations(rest, size - 1).map((combo) => [head, ...combo]),
+    ...combinations(rest, size),
+  ];
 }
 
 /**
