@@ -74,7 +74,7 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | $8$ quân hậu | lưới | ✅ |
 | Lật dấu bảng $4\times4$ | lưới + thao tác | ✅ (sau `board/flip-line`) |
 | Lát tam giác đều bằng hình thoi | lưới **tam giác** | ✅ có trong kho (BD-07, đếm hai màu lên/xuống) |
-| Tô màu bàn ong lục giác | lưới **lục giác** | 🟡 vẽ và tô ba màu được; **thiếu bài** trong kho |
+| Tô màu bàn ong lục giác | lưới **lục giác** | ✅ có trong kho (sắc số $= 3$; phép tô ba màu do máy kiểm) |
 | Lát bằng hình thoi / tribone như **quân kéo thả** | lưới phi vuông | ❌ quân ghép mới chỉ có họ polyomino (ô vuông) — xem `BD-09` |
 | $R(3,3)=6$ | đồ thị | ✅ có trong kho |
 | Bảy cầu Königsberg | đồ thị | ✅ có trong kho |
@@ -459,7 +459,7 @@ không, và không phải vì thiếu công sức.
 ## 8. Cảnh báo về thứ tự
 
 **AUT-KPI là gate có răng:** *trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **60 bài** — nhưng **không bài nào do chính
+engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **61 bài** — nhưng **không bài nào do chính
 chủ soạn**, và người duyệt cũng là người soạn. Theo đúng luật của chính dự án,
 việc còn nợ không phải engine nào trong bảng §7, mà là **soạn tay 3–5 bài**
 (G-C), rồi mới đóng băng schema 1.0.0.

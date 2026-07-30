@@ -1,0 +1,261 @@
+{
+  "schema_version": "0.1.0",
+  "id": "hex-board-three-colours",
+  "statement": {
+    "vi": "Một bàn ong gồm các ô lục giác đều; hai ô chung cạnh gọi là **kề nhau**. Cần tô mỗi ô một màu sao cho hai ô kề nhau luôn khác màu. Hỏi ít nhất bao nhiêu màu là đủ?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Sắc số của lưới lục giác. Chặn dưới là Dirichlet trên một bộ ba đôi một kề nhau; chặn trên là một phép dựng."
+    }
+  },
+  "topics": [
+    "coloring"
+  ],
+  "techniques": [
+    "pigeonhole",
+    "contradiction",
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-07-30",
+  "updated": "2026-07-30",
+  "invariants": [
+    {
+      "expr": "count(cells)",
+      "id": "inv-n",
+      "label": {
+        "vi": "Số ô"
+      }
+    },
+    {
+      "expr": "max(cells, c => c.color_class)",
+      "id": "inv-k",
+      "label": {
+        "vi": "Số màu đã dùng"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bàn ong ${{rows}} hàng: ${{count(cells)}} ô. Mỗi ô **trong lòng bàn** kề đúng sáu ô, và đó là chỗ khác hẳn bàn cờ vuông — ở đó mỗi ô chỉ kề bốn. Ba ô [[a1|được khoanh]] đôi một kề nhau; trên bàn cờ vuông không có bộ ba nào như thế."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-1",
+                "cell-1-2",
+                "cell-0-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 6,
+              "lattice": "hex",
+              "rows": 5
+            },
+            "elements": [
+              {
+                "id": "tri",
+                "type": "region",
+                "cells": [[1, 1], [1, 2], [0, 2]],
+                "label": "ba ô đôi một kề nhau"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bàn ong năm hàng sáu cột, chưa tô màu; ba ô kề nhau được khoanh viền đậm."
+          },
+          "expects_violation": [
+            "proper-colouring:3"
+          ],
+          "verified": true,
+          "claims": [
+            "count(cells) == 30",
+            "exists(cells, a => a.row == 1 && a.col == 1 && exists(cells, b => adjacent(a, b) && exists(cells, c => adjacent(a, c) && adjacent(b, c))))"
+          ]
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: chỉ dùng hai màu"
+          },
+          "narrative": {
+            "vi": "Thử hai màu, và thử cách tốt nhất: tô theo một hướng chéo. Hoa văn ra đều đặn, nhưng nhìn [[a2|bộ ba]] vừa khoanh thì hỏng — ba ô, hai màu, nên theo Dirichlet có hai ô cùng màu, mà ba ô ấy **đôi một kề nhau**."
+          },
+          "anchors": {
+            "a2": {
+              "ids": [
+                "cell-1-1",
+                "cell-1-2",
+                "cell-0-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "k": 2,
+                "orientation": "diag-left",
+                "type": "stripes"
+              },
+              "cols": 6,
+              "lattice": "hex",
+              "rows": 5
+            },
+            "elements": [
+              {
+                "id": "tri",
+                "type": "region",
+                "cells": [[1, 1], [1, 2], [0, 2]],
+                "label": "ba ô đôi một kề nhau"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng bàn ong tô hai màu theo dải chéo; trong ba ô được khoanh có hai ô cùng màu và chúng kề nhau."
+          },
+          "expects_violation": [
+            "proper-colouring:3"
+          ],
+          "verified": true,
+          "claims": [
+            "exists(cells, a => exists(cells, b => adjacent(a, b) && a.color_class == b.color_class))"
+          ]
+        },
+        {
+          "id": "s1x",
+          "parent": "s1",
+          "edge_type": "contradiction",
+          "narrative": {
+            "vi": "Mà hai ô kề nhau **không được** cùng màu. Vậy hai màu là không thể — không phải vì cách tô này dở, mà vì [[a3|ba ô đôi một kề nhau]] thì cần ba màu khác nhau, ngay tại chỗ đó. Lập luận này không dùng gì về cỡ bàn, nên nó đúng với mọi bàn ong có đủ ba ô như thế."
+          },
+          "anchors": {
+            "a3": {
+              "ids": [
+                "cell-1-1",
+                "cell-1-2",
+                "cell-0-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "k": 2,
+                "orientation": "diag-left",
+                "type": "stripes"
+              },
+              "cols": 6,
+              "lattice": "hex",
+              "rows": 5
+            },
+            "elements": [
+              {
+                "id": "tri",
+                "type": "region",
+                "cells": [[1, 1], [1, 2], [0, 2]],
+                "label": "ba ô đôi một kề nhau"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Vẫn hình ấy, nhấn vào hai ô kề nhau cùng màu."
+          },
+          "expects_violation": [
+            "proper-colouring:3"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: dùng ba màu"
+          },
+          "narrative": {
+            "vi": "Ba màu thì **được**, và có cách tô rất gọn: đánh số ô theo hướng chéo rồi lấy phần dư khi chia cho $3$. [[a4|Bộ ba]] vừa xét nay mang ba màu khác nhau, và máy đã kiểm cả bàn: không tồn tại hai ô kề nhau cùng màu. Cộng với trường hợp trên, đáp số là **ba**."
+          },
+          "anchors": {
+            "a4": {
+              "ids": [
+                "cell-1-1",
+                "cell-1-2",
+                "cell-0-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "coloring_preset": {
+                "k": 3,
+                "orientation": "diag-left",
+                "type": "stripes"
+              },
+              "cols": 6,
+              "lattice": "hex",
+              "rows": 5
+            },
+            "elements": [
+              {
+                "id": "tri",
+                "type": "region",
+                "cells": [[1, 1], [1, 2], [0, 2]],
+                "label": "ba ô đôi một kề nhau"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng bàn ong tô ba màu theo dải chéo; ba ô được khoanh mang ba màu khác nhau."
+          },
+          "verified": true,
+          "claims": [
+            "forall(cells, a => forall(cells, b => !(adjacent(a, b) && a.color_class == b.color_class)))",
+            "max(cells, c => c.color_class) == 3",
+            "count(cells, c => c.color_class == 1) + count(cells, c => c.color_class == 2) + count(cells, c => c.color_class == 3) == 30"
+          ]
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "validators": [
+      "proper-colouring:3"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

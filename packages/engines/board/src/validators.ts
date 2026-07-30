@@ -5,6 +5,8 @@ import {
   type ValidatorOutcome,
 } from '@combviz/schema';
 import { deriveBoard, piecesAttack, tileCells } from './dsl.js';
+import { cellColorClass, latticeOf } from './geometry.js';
+import { cellsInRow, neighbours } from './lattice.js';
 import { cellId } from './ids.js';
 import type { BoardConfig } from './schema.js';
 
@@ -128,6 +130,81 @@ const noAttacks: SceneValidator = {
 };
 
 
+/**
+ * `proper-colouring[:k]` — không hai ô **kề nhau** nào cùng màu, và bàn tô kín.
+ *
+ * Đây là validator đầu tiên của board không nói gì về hình vuông: nó hỏi
+ * `lattice.ts` xem hai ô có kề nhau không, nên nó chạy đúng trên cả ba lưới. Với
+ * bàn ong nó chính là mục tiêu sandbox của bài sắc số — người học tô tay, và câu
+ * "phép tô này hợp lệ" được **chấm** chứ không phải tự nhận.
+ *
+ * Dạng có tham số chặn thêm số màu. `proper-colouring:2` trên bàn ong là một mục
+ * tiêu **không thể đạt**, và đó đúng là điều bài toán nói: người học thử bao lâu
+ * cũng không xanh, rồi đọc lời giải để biết vì sao.
+ */
+function properColouring(maxColours: number | null): SceneValidator {
+  return {
+    id: maxColours === null ? 'proper-colouring' : `proper-colouring:${maxColours}`,
+    label:
+      maxColours === null
+        ? 'Hai ô kề nhau khác màu'
+        : `Hai ô kề nhau khác màu, dùng tối đa ${maxColours} màu`,
+
+    check(scene: Scene): ValidatorOutcome {
+      const config = scene.config as BoardConfig | undefined;
+      if (!config || typeof config.rows !== 'number') return OK;
+
+      const lattice = latticeOf(config);
+      const holes = new Set((config.holes ?? []).map(([r, c]) => `${r},${c}`));
+      const clash = new Set<string>();
+      const blank: string[] = [];
+      const used = new Set<number>();
+
+      for (let r = 0; r < config.rows; r += 1) {
+        for (let c = 0; c < cellsInRow(lattice, config.cols, r); c += 1) {
+          if (holes.has(`${r},${c}`)) continue;
+          const mine = cellColorClass(config, r, c);
+          if (mine === undefined) {
+            blank.push(cellId(r, c));
+            continue;
+          }
+          used.add(mine);
+
+          for (const [nr, nc] of neighbours(lattice, config.rows, config.cols, r, c)) {
+            if (holes.has(`${nr},${nc}`)) continue;
+            if (cellColorClass(config, nr, nc) !== mine) continue;
+            clash.add(cellId(r, c));
+            clash.add(cellId(nr, nc));
+          }
+        }
+      }
+
+      if (clash.size > 0) {
+        return {
+          ok: false,
+          violations: [...clash],
+          message: `${clash.size} ô có láng giềng cùng màu`,
+        };
+      }
+      if (blank.length > 0) {
+        return {
+          ok: false,
+          violations: blank,
+          message: `${blank.length} ô chưa tô màu`,
+        };
+      }
+      if (maxColours !== null && used.size > maxColours) {
+        return {
+          ok: false,
+          violations: [],
+          message: `Dùng ${used.size} màu, quá ${maxColours}`,
+        };
+      }
+      return OK;
+    },
+  };
+}
+
 function piecesPerLine(axis: 'row' | 'col', expected: number): SceneValidator {
   const label =
     axis === 'row' ? `Mỗi hàng đúng ${expected} quân` : `Mỗi cột đúng ${expected} quân`;
@@ -171,6 +248,7 @@ const FIXED: readonly SceneValidator[] = [
   tilesInBounds,
   fullCover,
   noAttacks,
+  properColouring(null),
 ];
 
 export const BOARD_VALIDATORS: Readonly<Record<string, SceneValidator>> =
@@ -185,6 +263,7 @@ export function resolveBoardValidator(id: string): SceneValidator | null {
   if ((name === 'pieces-per-row' || name === 'pieces-per-col') && arg !== undefined) {
     return piecesPerLine(name === 'pieces-per-row' ? 'row' : 'col', arg);
   }
+  if (name === 'proper-colouring' && arg !== undefined) return properColouring(arg);
 
   return null;
 }
@@ -193,4 +272,5 @@ export const BOARD_VALIDATOR_IDS: readonly string[] = [
   ...FIXED.map((v) => v.id),
   'pieces-per-row:<k>',
   'pieces-per-col:<k>',
+  'proper-colouring:<k>',
 ];

@@ -36,11 +36,11 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 60 bài đã xuất bản (56 lúc dựng tài liệu này, cộng bốn bài của M22–M24):
+Đo trên 61 bài đã xuất bản (56 lúc dựng tài liệu này, cộng năm bài của M22–M24):
 
 | Engine | Số bài | Đọc con số này thế nào |
 |---:|---:|---|
-| `board` | 21 | Chủ lực. Khoảng trống ở đây là khoảng trống **thật sự cảm thấy được**. |
+| `board` | 22 | Chủ lực. Khoảng trống ở đây là khoảng trống **thật sự cảm thấy được**. |
 | `graph` | 18 | Chủ lực. Cùng loại. |
 | `sequence` | 10 | Đủ để tin. |
 | `game` | 6 | Tầng A ở §2.6 **đã làm hết** (M22–M23): ba luật mới kèm ba bài kinh điển, cộng phổ hai chiều. |
@@ -91,19 +91,21 @@ còn lại của họ "Đếm / song ánh" (14% đề thi, đang ở 85%). Nhưn
 
 ## 2. Chi tiết theo engine
 
-### 2.1 `board` — 21 bài, engine chủ lực
+### 2.1 `board` — 22 bài, engine chủ lực
 
 **Tầng A**
 
 - **BD-07 ✅ (M24)** — **lưới tam giác và lục giác**, `config.lattice`. Ô vẫn định
   danh bằng `(hàng, cột)` ở cả ba lưới nên `holes`, `cell_overrides`, anchor,
   region, validator và DSL không phải biết gì; chỗ duy nhất biết là `lattice.ts`.
-  Kèm bài `triangle-lozenge-parity`. Ba tính năng **chỉ có nghĩa trên lưới vuông**
+  Kèm hai bài: `triangle-lozenge-parity` (lưới tam giác) và `hex-board-three-colours` (lưới lục giác). Ba tính năng **chỉ có nghĩa trên lưới vuông**
   — polyomino, bảng PRN-03, luật đi quân cờ — bị chặn ở cả `checkBounds` lẫn lệnh.
 - **BD-09 [P2] MAY** — **quân ghép trên lưới phi vuông**: hình thoi, tribone như
   *element* kéo thả được, không phải `region` vẽ viền. Hôm nay bài lát tam giác
-  phải khai từng hình thoi bằng một region, nên sandbox không kéo thả được chúng.
-  Đây là họ hình mới song song với `TILE_SHAPES`, không phải sửa lưới.
+  phải khai từng hình thoi bằng một region, nên sandbox không kéo thả được chúng —
+  và vì thế bài ấy khai `illustration` chứ không phải `challenge`. Đây là họ hình
+  mới song song với `TILE_SHAPES`, không phải sửa lưới; xong nó thì
+  `triangle-lozenge-parity` lên `challenge` được ngay.
 - **BD-08 [P2] SHOULD** — **luật lan truyền**: một thao tác kéo theo thay đổi ở ô
   lân cận theo luật đóng (chip-firing đổ hạt sang láng giềng, lights-out lật chữ
   thập). Dòng 🟡 của chip-firing nói đúng chỗ này. Phải là **tập luật đóng**, cùng

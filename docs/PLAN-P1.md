@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M24 xong (7 engine, phủ ~85%); kho 60 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M24 xong (7 engine, phủ ~85%); kho 61 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -302,7 +302,7 @@ Ba việc rút ra, đã áp dụng:
 ### M24 — Lưới tam giác và lục giác cho board engine (BD-07) · [E] — **xong**
 
 Hạng mục #7 của backlog, và là khoảng trống lớn nhất còn lại của engine **được
-dùng nhiều nhất** (21/60 bài). Trước nó, board chỉ vẽ được lưới vuông, nên cả họ
+dùng nhiều nhất** (22/61 bài). Trước nó, board chỉ vẽ được lưới vuông, nên cả họ
 phủ hình phi vuông — tam giác đều chia thành tam giác đơn vị, bàn ong lục giác —
 không có cách nào vẽ.
 
@@ -344,17 +344,43 @@ trên bàn ong hai ô kề nhau lệch cả hàng lẫn cột, trên lưới tam
 **ba** láng giềng. Nay nó hỏi `lattice.ts`, và test so tổng bậc của cả bàn giữa DSL
 và module hình học, cộng một dòng chứng minh công thức cũ cho ra số khác.
 
-Bài mới: **`triangle-lozenge-parity`** — tam giác đều cạnh $n$ không lát kín được
-bằng hình thoi. Lời giải là một phép đếm hai màu: $\frac{n(n+1)}{2}$ ô hướng lên,
+**Hai bài mới, một cho mỗi lưới.**
+
+**`triangle-lozenge-parity`** — tam giác đều cạnh $n$ không lát kín được bằng hình
+thoi. Lời giải là một phép đếm hai màu: $\frac{n(n+1)}{2}$ ô hướng lên,
 $\frac{n(n-1)}{2}$ ô hướng xuống, hiệu đúng bằng $n$; mà mỗi hình thoi phủ một ô
 mỗi kiểu. Step cuối xếp thật $10$ hình thoi trên $T(5)$ và để lại đúng $5$ ô — con
 số không phải trang trí.
+
+**`hex-board-three-colours`** — sắc số của bàn ong bằng $3$. Bài này là bài
+*showcase* của lưới lục giác, và nó cho thấy đúng chỗ bàn ong khác bàn cờ vuông:
+có **ba ô đôi một kề nhau**, thứ mà lưới vuông không có. Chặn dưới là Dirichlet
+trên bộ ba ấy (nhánh `case` + `contradiction` của cây lời giải); chặn trên là phép
+dựng $q - r \bmod 3$. Điểm đáng nói về **cách kiểm**: khẳng định "phép tô này hợp
+lệ" không phải câu tác giả viết mà là một claim DSL duyệt **mọi** cặp ô —
+`forall(cells, a => forall(cells, b => !(adjacent(a,b) && a.color_class == b.color_class)))`
+— nên nếu ai đó đổi hình học lưới hay đổi công thức preset, bài này đỏ ngay ở
+`validate`. Đó cũng là chỗ ăn ngay quả sửa `adjacent()` ở trên: với công thức cũ,
+claim ấy sẽ **đạt** một cách vô nghĩa vì nó đếm sai láng giềng.
+
+**Một validator mới đi kèm: `proper-colouring[:k]`.** Không có nó thì bài bàn ong
+là một bài `challenge` mà sandbox chẳng chấm được gì — nhãn `challenge` chỉ là một
+chữ trong file. Đây cũng là validator đầu tiên của board **không nói gì về hình
+vuông**: nó hỏi `lattice.ts` xem hai ô có kề nhau không, nên chạy đúng trên cả ba
+lưới. Dạng có tham số đáng chú ý ở chỗ nó cho phép khai một mục tiêu **không thể
+đạt**: `proper-colouring:2` trên bàn ong không bao giờ xanh, và đó đúng là điều
+bài toán nói — có test duyệt cả tám preset hai màu để khoá.
+
+Bài `triangle-lozenge-parity` thì khai `illustration`, không phải `challenge`, và
+lý do nói thẳng: sandbox của nó **chưa** làm được gì có nghĩa, vì hình thoi hôm nay
+là `region` vẽ viền chứ không phải quân kéo thả. Khi `BD-09` xong thì nó lên
+`challenge`; trước đó, gọi nó là challenge là tự chấm điểm cho mình.
 
 Còn nợ, đã đặt tên: **`BD-09`** — hình thoi và tribone như **quân kéo thả**, không
 phải `region` vẽ viền. Hôm nay bài trên phải khai từng hình thoi bằng một region,
 nên sandbox không kéo thả được chúng.
 
-981 test, 60 bài 0 lỗi 0 cảnh báo, e2e 42 xanh, **0 golden cũ đổi**.
+985 test, 61 bài 0 lỗi 0 cảnh báo, e2e 42 xanh, **0 golden cũ đổi**.
 
 ### M23 — Phổ hai chiều cho game hai đống (GM-08) · [E] — **xong**
 
@@ -1086,7 +1112,7 @@ gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái
 lập luận là đường duy nhất phải tránh.
 
 Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 60 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
+engine mới. Kho có 61 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
 người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):

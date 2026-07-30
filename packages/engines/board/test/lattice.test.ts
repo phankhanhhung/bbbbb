@@ -8,6 +8,7 @@ import { boardCommands } from '../src/commands.js';
 import { boardEnvironment } from '../src/dsl.js';
 import { boardHitTest } from '../src/hit-test.js';
 import { boardSchemaFragment } from '../src/index.js';
+import { resolveBoardValidator } from '../src/validators.js';
 import { boardRenderer } from '../src/render.js';
 import { boardTools } from '../src/tools.js';
 import { CELL, cellColorClass, outlinePath } from '../src/geometry.js';
@@ -482,5 +483,130 @@ describe('nối lưới vào engine', () => {
     // Lưới vuông vẫn là `<rect>`: đổi thẻ sẽ làm lệch golden của hai mươi bài
     // đang publish mà không đổi một pixel nào.
     expect(renderer.toSvg(scene({ rows: 3, cols: 3 }), ctx)).not.toContain('<polygon');
+  });
+});
+
+describe('validator `proper-colouring`', () => {
+  const scene = (config: Record<string, unknown>): Scene => ({
+    engine: 'board',
+    config,
+    elements: [],
+  });
+  const check = (id: string, s: Scene) => resolveBoardValidator(id)!.check(s);
+
+  it('bàn ong tô ba màu theo trục thì **đạt**', () => {
+    const s = scene({
+      lattice: 'hex',
+      rows: 5,
+      cols: 6,
+      coloring_preset: { type: 'stripes', orientation: 'diag-left', k: 3 },
+    });
+    expect(check('proper-colouring', s).ok).toBe(true);
+    expect(check('proper-colouring:3', s).ok).toBe(true);
+    // Cùng phép tô ấy nhưng chỉ cho hai màu thì hỏng ở chỗ đếm màu.
+    expect(check('proper-colouring:2', s).message).toMatch(/quá 2/);
+  });
+
+  it('hai màu trên bàn ong **không bao giờ** đạt, mọi hướng mọi pha', () => {
+    // Đây là nội dung của bài `hex-board-three-colours`, kiểm bằng máy chứ không
+    // bằng lời: không một preset hai màu nào qua được.
+    for (const orientation of ['row', 'col', 'diag-right', 'diag-left'] as const) {
+      for (const phase of [0, 1]) {
+        const s = scene({
+          lattice: 'hex',
+          rows: 5,
+          cols: 6,
+          coloring_preset: { type: 'stripes', orientation, k: 2, phase },
+        });
+        expect({ orientation, phase, ok: check('proper-colouring', s).ok }).toEqual({
+          orientation,
+          phase,
+          ok: false,
+        });
+      }
+    }
+  });
+
+  it('ô chưa tô cũng là chưa xong, và nói ra bằng thông điệp khác', () => {
+    const s = scene({ lattice: 'hex', rows: 3, cols: 3 });
+    const result = check('proper-colouring', s);
+    expect(result.ok).toBe(false);
+    expect(result.message).toMatch(/chưa tô màu/);
+    expect(result.violations).toHaveLength(9);
+  });
+
+  it('chỉ ra **đúng những ô** đụng nhau, không đổ lỗi cả bàn', () => {
+    const s = scene({
+      lattice: 'triangle',
+      rows: 3,
+      cols: 3,
+      coloring_preset: { type: 'checkerboard' },
+      cell_overrides: { 'cell-2-1': { color_class: 1 } },
+    });
+    // Ô (2,1) hướng xuống, vốn màu 2; đổi sang 1 thì nó đụng hai ô lên kề bên.
+    const result = check('proper-colouring', s);
+    expect(result.ok).toBe(false);
+    expect(new Set(result.violations)).toEqual(
+      new Set(['cell-2-1', 'cell-2-0', 'cell-2-2', 'cell-1-0']),
+    );
+  });
+
+  it('ô khuyết không tính — không phải "chưa tô", cũng không đụng ai', () => {
+    const s = scene({
+      lattice: 'square',
+      rows: 2,
+      cols: 2,
+      holes: [[0, 0]],
+      coloring_preset: { type: 'checkerboard' },
+    });
+    expect(check('proper-colouring', s).ok).toBe(true);
+  });
+});
+
+describe('sandbox của bài bàn ong **thật sự** chơi được', () => {
+  /**
+   * Nối đủ ba mắt xích: chạm → lệnh tô → validator chấm.
+   *
+   * Một bài `challenge` mà sandbox không đi được từ đầu tới cuối thì nhãn
+   * `challenge` chỉ là một chữ trong file. Ở đây kiểm bằng đúng đường mà người học
+   * đi: lấy toạ độ tâm ô, hỏi `boardHitTest` xem chạm trúng ô nào, đưa id ấy cho
+   * lệnh `board/paint-cells`, rồi hỏi validator.
+   */
+  it('tô tay bốn ô của bàn ong $2\\times2$ cho tới khi validator xanh', () => {
+    let scene: Scene = {
+      engine: 'board',
+      config: { lattice: 'hex', rows: 2, cols: 2 },
+      elements: [],
+    };
+    const validator = resolveBoardValidator('proper-colouring:3')!;
+
+    // Chưa tô gì: chưa đạt, và lý do là "chưa tô", không phải "đụng màu".
+    expect(validator.check(scene).message).toMatch(/chưa tô màu/);
+
+    // Bốn ô, ba màu. Ba ô đầu đôi một kề nhau nên buộc phải khác nhau cả ba.
+    for (const [row, col, colour] of [[0, 0, 1], [0, 1, 2], [1, 0, 3], [1, 1, 1]] as const) {
+      const target = boardHitTest(scene, centreOf('hex', 2, 2, row, col));
+      expect(target).toEqual([`cell-${row}-${col}`]);
+
+      const result = execute(
+        createEditorState(scene),
+        boardCommands,
+        command('board/paint-cells', { cells: target, color_class: colour }),
+      );
+      expect(result.applied).toBe(true);
+      scene = result.state.scene;
+    }
+
+    expect(validator.check(scene)).toEqual({ ok: true, violations: [] });
+
+    // Và đổi một ô cho sai thì nó đỏ lại, chỉ đúng vào cặp đụng nhau.
+    const broken = execute(
+      createEditorState(scene),
+      boardCommands,
+      command('board/paint-cells', { cells: ['cell-1-0'], color_class: 1 }),
+    ).state.scene;
+    const failed = validator.check(broken);
+    expect(failed.ok).toBe(false);
+    expect(new Set(failed.violations)).toEqual(new Set(['cell-0-0', 'cell-1-0', 'cell-1-1']));
   });
 });
