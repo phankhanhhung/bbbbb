@@ -102,6 +102,9 @@ bằng toạ độ.
 
 ### 2.1 `board` — 25 bài, engine chủ lực
 
+> Mô tả chức năng đầy đủ của engine này: **`docs/ENGINE-BOARD.md`**. Mục dưới đây
+> chỉ ghi *hàng đợi* — cái gì đã làm, cái gì còn nợ.
+
 **Tầng A**
 
 - **BD-07 ✅ (M24)** — **lưới tam giác và lục giác**, `config.lattice`. Ô vẫn định
