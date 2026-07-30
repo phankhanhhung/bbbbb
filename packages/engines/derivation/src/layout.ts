@@ -4,11 +4,20 @@ import {
   labelWidth,
   lookupLabel,
   type LabelAtlas,
+  UNITS_PER_CELL,
 } from '@combviz/render';
 import type { DerivationModel, Row, Term } from './model.js';
 
 /** Quy ước đơn vị G-10: một dòng công thức *thường* cao chừng một "ô". */
-export const ROW = 10;
+/**
+ * Đơn vị gốc, lấy từ **một** chỗ (G-10).
+ *
+ * Trước đây bảy engine mỗi cái tự khai `= 10`. Bảy bản sao của một quy ước là bảy
+ * chỗ có thể lệch, và quy ước này lệch một cái là cả hình đổi cỡ — đúng thứ vừa
+ * phải sửa ở M20. Nay nó là một hằng số, và engine thứ tám không có cách nào chọn
+ * số khác mà vẫn trông như đang theo quy ước.
+ */
+export const ROW = UNITS_PER_CELL;
 export const FONT = 5;
 /** Khoảng hở giữa hai dòng, tính thêm ngoài phần cao–sâu thật của chúng. */
 const LEADING = FONT * 0.5;

@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M20 xong (7 engine, phủ ~85%); kho 56 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M21 xong (7 engine, phủ ~85%); kho 56 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,57 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M21 — Rà quy ước nào còn bị bỏ qua · [E] — **xong**
+
+Sau M20, câu hỏi tự nhiên: còn quy ước nào viết ra rồi để đó nữa? Rà cả 17 quyết
+định D-* và 12 điểm G-*. Kết quả, và nó không phải toàn tin xấu:
+
+**Hai chỗ hỏng thật, đã sửa.**
+
+1. **Macro LaTeX rò giữa các nhãn** — hệ quả đã ghi của G-02 ("không macro tự
+   định nghĩa") **không ai canh**. MathJax giữ macro trong *document*, và phần sinh
+   atlas dùng **một** document cho cả bảng. Kiểm bằng tay:
+   `['\newcommand{\zz}{x+1}\zz', '\zz']` dựng **thành công cả hai**, còn
+   `['\zz']` một mình thì lỗi. Tức atlas là hàm của **tập** nhãn chứ không của
+   từng chuỗi — mà bảng thì khoá theo chuỗi, nên chỗ lệch ấy không gì phát hiện.
+   Nay hai lớp: mỗi nhãn dựng trong một document **riêng** (chốt cấu trúc), và
+   lệnh định nghĩa macro bị **từ chối** kèm lý do (luật đã ghi). Bốn test mới.
+
+2. **Style Guide cấm đúng thứ M18 vừa làm.** §1.2 viết "nhãn canvas chỉ nhận văn
+   bản thuần, chưa nhận LaTeX (G-02: label atlas còn ở M6+)" — câu đó sai từ M18,
+   khi label atlas xong và engine `derivation` bắt đầu vẽ công thức thật. Tôi làm
+   M18 mà không sửa tài liệu mà chính M18 phủ định. Nay §1.2 tách hai loại nhãn
+   với luật riêng, và §1.3 mới ghi quy ước tỉ lệ G-10 cho người soạn.
+
+**Một chỗ làm cho quy ước khỏi lệch được nữa.** Bảy engine mỗi cái tự khai
+`CELL/SLOT/UNIT/ROW/SPACING = 10`. Bảy bản sao của một quy ước là bảy chỗ có thể
+lệch, và quy ước này lệch một cái là cả hình đổi cỡ. Nay cả bảy import
+`UNITS_PER_CELL` từ `@combviz/render` — một con số, và engine thứ tám không có
+cách nào chọn số khác mà vẫn trông như đang theo quy ước.
+
+**Một chỗ tôi đã nói sai và xin sửa lại.** Ở lượt trước tôi nói "không có gì đo
+thời gian soạn, nên gate P0 số 3 (AUT-KPI) không đánh giá được". Sai:
+`combviz stats` **đã** đọc log JSONL thủ công và so với ngưỡng (90 phút qua
+pipeline, 240 phút soạn tay) — đó đúng là "bản đo tối thiểu ở P1" mà G-06 chốt.
+Công cụ có, chỉ chưa có dữ liệu. Việc còn lại là chính chủ ghi log khi soạn.
+
+**Ba chỗ lệch nhẹ, ghi lại chứ không sửa vội:**
+
+- **D-11** khai dùng MiniSearch; thực tế là lọc chuỗi con cộng fold dấu
+  (`Bank.tsx`). Với trần 500 bài thì đủ, nhưng tài liệu nên nói đúng thứ đang chạy.
+- **D-02** nói JSON Schema "công bố kèm repo"; hiện chỉ sinh được bằng
+  `combviz schema`, **không có bản commit**. DAT-01 đòi công bố, nên đây là một
+  hạng mục còn nợ thật.
+- **D-09** (prerender HTML shell per bài, OG meta cho SEO) chưa làm — nhưng nó
+  được hoãn **có ghi chú trong code** (`main.tsx`), nên đây là nợ minh bạch chứ
+  không phải lệch âm thầm.
+
+**D-03, D-05, D-10, D-12, D-15, D-16, D-17 đều đang được thi hành thật** — eslint
+chặn DOM trong renderer và chặn lớp phụ thuộc, không có WAAPI/CSS transition nào
+trong lớp animate, golden SVG phủ toàn kho, ô ngầm định và ô khuyết đều có test.
+
+878 test, 56 bài 0 lỗi 0 cảnh báo.
 
 ### M20 — Khoá tỉ lệ scene → màn hình (G-10) · [E] — **xong**
 

@@ -70,6 +70,46 @@ describe('dựng atlas', () => {
     expect(labelWidth(lookupLabel(atlas, 'n^2')!, 5)).toBeCloseTo(2.345 * 2.5, 1);
   });
 
+  it('nhãn dựng **độc lập**: macro không rò từ nhãn này sang nhãn khác', () => {
+    // Lỗi thật, kiểm được bằng tay trước khi sửa: MathJax giữ macro trong
+    // document, nên `['\\newcommand{\\zz}{x+1}\\zz', '\\zz']` dựng **thành công**
+    // cả hai trong khi `['\\zz']` một mình thì lỗi. Atlas khoá theo chuỗi mà lại
+    // là hàm của cả **tập** — thêm một bài không liên quan có thể đổi cách một
+    // công thức khác dựng ra, và không gì phát hiện chỗ lệch đó.
+    const alone = buildAtlas(['\\zz']);
+    expect(alone.failures.map((f) => f.tex)).toEqual(['\\zz']);
+
+    const together = buildAtlas(['\\newcommand{\\zz}{x+1}\\zz', '\\zz']);
+    // Cả hai đều phải **trượt**: một vì định nghĩa macro (cấm), một vì `\\zz`
+    // không tồn tại khi đứng riêng.
+    expect(together.failures.map((f) => f.tex).sort()).toEqual(
+      ['\\newcommand{\\zz}{x+1}\\zz', '\\zz'].sort(),
+    );
+  });
+
+  it('từ chối lệnh định nghĩa macro, nêu đúng lý do (G-02)', () => {
+    for (const tex of [
+      '\\newcommand{\\a}{1}\\a',
+      '\\def\\b{2}\\b',
+      '\\DeclareMathOperator{\\lcm}{lcm}\\lcm(a,b)',
+    ]) {
+      const { failures } = buildAtlas([tex]);
+      expect({ tex, n: failures.length }).toEqual({ tex, n: 1 });
+      expect(failures[0]!.message).toMatch(/macro/);
+    }
+  });
+
+  it('công thức thường **không** bị luật macro chặn oan', () => {
+    const { failures } = buildAtlas([
+      '\\binom{n}{k}',
+      '\\sum_{k=1}^{n} k',
+      '\\left\\{1,2\\right\\}',
+      '\\frac{n(n+1)}{2}',
+      '\\#\\{S : n \\in S\\}',
+    ]);
+    expect(failures).toEqual([]);
+  });
+
   it('phiên bản đổi khi tập chuỗi đổi', () => {
     expect(buildAtlas(['n^2']).atlas.version).not.toBe(
       buildAtlas(['n^2', 'k']).atlas.version,

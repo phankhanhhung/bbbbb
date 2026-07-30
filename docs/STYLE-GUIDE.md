@@ -39,22 +39,60 @@ dựa vào điều này — `c.color_class == 1` trả về `false` cho ô chưa
 
 ### 1.2 Notation trong hình
 
-Nhãn trong canvas chỉ nhận **văn bản thuần**, chưa nhận LaTeX (G-02: label atlas
-còn ở M6+). Cụ thể:
+Có **hai** loại nhãn trong canvas, và luật của chúng khác nhau. Mục này từng viết
+"canvas chỉ nhận văn bản thuần, label atlas còn ở M6+" — câu đó **đã sai** từ M18,
+khi label atlas (D-07, G-02) làm xong và engine `derivation` bắt đầu vẽ công thức
+thật trong hình.
+
+**Nhãn LaTeX** — chỉ ở trường `tex` của `derivation`, đi qua label atlas:
+
+- Phải nằm trong atlas: `combviz labels --write` sau khi thêm công thức mới. Thiếu
+  thì hình vẽ hẳn `⟨thiếu atlas: …⟩` ra màn hình và `pnpm labels` báo đỏ ở CI.
+- **Không định nghĩa macro** (`\newcommand`, `\def`, `\DeclareMathOperator`…).
+  Đây là hệ quả đã ghi của G-02, và nó có lý do cứng: MathJax giữ macro trong
+  document, nên một nhãn định nghĩa `\zz` làm **nhãn khác** đọc được `\zz` —
+  atlas thành hàm của *tập* nhãn thay vì của từng chuỗi. Phần sinh atlas dựng mỗi
+  nhãn trong một document riêng **và** từ chối lệnh định nghĩa macro; hai lớp, vì
+  đây là cửa mất tính xác định chứ không phải chuyện gu.
+- Một hạng tử là **một** hạng tử: trần 120 ký tự. Nhét cả dòng vào một `tex` là
+  mất sạch thứ engine sinh ra để có — từng hạng tử một danh tính, neo được, theo
+  dõi được qua các bước.
+
+**Nhãn văn bản thuần** — mọi engine còn lại (đỉnh đồ thị, đống sỏi, tập hợp, điểm,
+ghi chú dòng). Chưa đi qua atlas, nên:
 
 - Đỉnh đồ thị: đặt tên bằng số `1, 2, 3…` hoặc chữ `a, b, c…`. Không `$v_1$`.
 - Ô bàn cờ: không đặt nhãn; vị trí đã là danh tính (`cell-3-4`).
-- LaTeX **được** dùng thoải mái trong `statement`, `narrative`, `case_label`,
-  `invariants[].label` — những chỗ đó render bằng KaTeX.
+- Ghi chú dòng của `derivation` (`row.note`) là **chữ**, không phải toán: viết
+  `n = 4`, không viết `$n = 4$` — dấu `$` sẽ hiện ra nguyên trên hình.
 
-### 1.3 Cấu trúc file
+LaTeX **được** dùng thoải mái trong `statement`, `narrative`, `case_label`,
+`invariants[].label` — những chỗ đó render bằng KaTeX lúc chạy.
+
+### 1.3 Tỉ lệ và đơn vị scene (G-10)
+
+**Một ô bàn cờ, một khoảng cách giữa hai đỉnh chuẩn = 10 đơn vị scene.** Engine
+mới chọn tỉ lệ theo quy ước này, không ngược lại. Con số ấy giờ là **một** hằng số
+(`UNITS_PER_CELL` ở `@combviz/render`) mà cả bảy engine import — trước đây mỗi
+engine tự khai `= 10`, tức bảy chỗ có thể lệch.
+
+Trên màn hình, một ô luôn là **44px** — cùng con số với ngưỡng chạm NFR-A3. Scene
+rộng quá pane thì co lại, **chỉ co không bao giờ giãn**, và hệ số co tính từ step
+rộng nhất của cả bài. Hệ quả cho người soạn:
+
+- Bài nhỏ **không** được thổi phồng cho đầy khung, và đó là chủ đích: bàn $4\times4$
+  phải nhỏ hơn bàn $8\times8$ trên màn hình.
+- Một step rất rộng sẽ **kéo cả bài co lại**, vì tỉ lệ dùng chung. Muốn tránh thì
+  tách step rộng ra bài khác, đừng để một phổ 40 ô ngồi cùng bài với một hình 3 đỉnh.
+
+### 1.4 Cấu trúc file
 
 - `combviz fmt` quyết định định dạng. Không sửa tay thứ tự khoá.
 - Id step: `s0, s1, …`; **không tái dùng số đã xoá** (A-02).
 - Id anchor: `a1, a2, …` theo thứ tự xuất hiện trong narrative.
 - Mỗi step lưu **snapshot scene đầy đủ** (DAT-11), không lưu delta.
 
-### 1.4 `case_label`
+### 1.5 `case_label`
 
 Lint ép định dạng: `Trường hợp N: …` ở mức một, `Na: …` ở mức hai.
 
@@ -66,7 +104,7 @@ Trường hợp 1: ba cạnh đó màu 1
 Lý do là kỹ thuật: breadcrumb ghép chúng bằng `›`, nên chúng phải đọc được khi
 đứng cạnh nhau.
 
-### 1.5 Glossary
+### 1.6 Glossary
 
 Kho chọn **một** cách gọi cho mỗi khái niệm (lint cảnh báo khi lệch):
 
@@ -82,7 +120,7 @@ Cả hai cột đều đúng tiếng Việt. Chọn một là để người h�
 hai cách gọi là cùng một thứ — thuế nhận thức đó đánh vào đúng người ít khả năng
 trả nhất.
 
-### 1.6 Vi phạm có chủ đích
+### 1.7 Vi phạm có chủ đích
 
 Lời giải thường phải bày ra đúng thứ sandbox cấm. Khai bằng `expects_violation`:
 

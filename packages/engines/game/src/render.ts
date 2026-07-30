@@ -9,13 +9,22 @@ import {
   type EngineRenderer,
   type RenderContext,
   type SvgNode,
+  UNITS_PER_CELL,
 } from '@combviz/render';
 import { GAME_LIMITS } from './schema.js';
 import { analyzeGame, losingSpectrum } from './solver.js';
 import { readGame, type GameModel } from './model.js';
 
 /** Bề rộng một cột đống, theo quy ước đơn vị G-10. */
-const SLOT = 10;
+/**
+ * Đơn vị gốc, lấy từ **một** chỗ (G-10).
+ *
+ * Trước đây bảy engine mỗi cái tự khai `= 10`. Bảy bản sao của một quy ước là bảy
+ * chỗ có thể lệch, và quy ước này lệch một cái là cả hình đổi cỡ — đúng thứ vừa
+ * phải sửa ở M20. Nay nó là một hằng số, và engine thứ tám không có cách nào chọn
+ * số khác mà vẫn trông như đang theo quy ước.
+ */
+const SLOT = UNITS_PER_CELL;
 const STONE_R = 1.6;
 const PADDING = 4;
 /** Trên ngưỡng này thì hiện số thay vì vẽ từng viên. */

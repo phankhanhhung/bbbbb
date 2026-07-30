@@ -1,8 +1,17 @@
 import type { Scene, SceneElement } from '@combviz/schema';
 import { SET_LIMITS, type SetConfig } from './schema.js';
+import { UNITS_PER_CELL } from '@combviz/render';
 
 /** Bề rộng một ô của bảng incidence, theo quy ước 10 đơn vị scene (G-10). */
-export const CELL = 10;
+/**
+ * Đơn vị gốc, lấy từ **một** chỗ (G-10).
+ *
+ * Trước đây bảy engine mỗi cái tự khai `= 10`. Bảy bản sao của một quy ước là bảy
+ * chỗ có thể lệch, và quy ước này lệch một cái là cả hình đổi cỡ — đúng thứ vừa
+ * phải sửa ở M20. Nay nó là một hằng số, và engine thứ tám không có cách nào chọn
+ * số khác mà vẫn trông như đang theo quy ước.
+ */
+export const CELL = UNITS_PER_CELL;
 export const PADDING = 4;
 /** Bán kính một hình tròn Venn. */
 export const VENN_R = 13;

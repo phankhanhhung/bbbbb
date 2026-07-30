@@ -1,5 +1,6 @@
 import type { Scene, SceneElement } from '@combviz/schema';
 import { SEQUENCE_LIMITS, type SequenceConfig } from './schema.js';
+import { UNITS_PER_CELL } from '@combviz/render';
 
 /**
  * Bề rộng một ô, tính bằng **đơn vị scene**.
@@ -9,7 +10,15 @@ import { SEQUENCE_LIMITS, type SequenceConfig } from './schema.js';
  * nhờ vậy nét vẽ của theme cho ra độ dày như nhau ở cả ba engine mà không engine
  * nào phải tự chỉnh.
  */
-export const SLOT = 10;
+/**
+ * Đơn vị gốc, lấy từ **một** chỗ (G-10).
+ *
+ * Trước đây bảy engine mỗi cái tự khai `= 10`. Bảy bản sao của một quy ước là bảy
+ * chỗ có thể lệch, và quy ước này lệch một cái là cả hình đổi cỡ — đúng thứ vừa
+ * phải sửa ở M20. Nay nó là một hằng số, và engine thứ tám không có cách nào chọn
+ * số khác mà vẫn trông như đang theo quy ước.
+ */
+export const SLOT = UNITS_PER_CELL;
 
 /** Khe giữa hai ô. Có khe vì hai số cạnh nhau là **hai** vật, không phải một dải. */
 export const GAP = 2.4;

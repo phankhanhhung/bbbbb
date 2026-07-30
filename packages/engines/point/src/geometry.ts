@@ -1,8 +1,17 @@
 import type { Scene, SceneElement } from '@combviz/schema';
 import { POINT_LIMITS } from './schema.js';
+import { UNITS_PER_CELL } from '@combviz/render';
 
 /** Khoảng cách chuẩn giữa hai điểm "kề nhau" trên lưới, theo quy ước G-10. */
-export const UNIT = 10;
+/**
+ * Đơn vị gốc, lấy từ **một** chỗ (G-10).
+ *
+ * Trước đây bảy engine mỗi cái tự khai `= 10`. Bảy bản sao của một quy ước là bảy
+ * chỗ có thể lệch, và quy ước này lệch một cái là cả hình đổi cỡ — đúng thứ vừa
+ * phải sửa ở M20. Nay nó là một hằng số, và engine thứ tám không có cách nào chọn
+ * số khác mà vẫn trông như đang theo quy ước.
+ */
+export const UNIT = UNITS_PER_CELL;
 export const POINT_RADIUS = 1.5;
 
 export interface Pt {
