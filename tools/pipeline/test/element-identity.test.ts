@@ -21,6 +21,11 @@ import { ENGINE_FRAGMENTS, ENGINE_RENDERERS } from '../src/engines.js';
  * **có tồn tại** — nó chỉ không được vẽ kèm danh tính. `ANC-02` bắt được anchor
  * trỏ tới id không tồn tại; nó không bắt được anchor trỏ tới id có tồn tại mà
  * không vẽ.
+ *
+ * Lần chạy đầu tiên: **314 cặp (scene, id) chết** trên 13 bài và 4 engine. Chúng
+ * được sửa dần qua M38b–M38f, mỗi engine một commit, với một bảng nợ tạm giữ cho
+ * CI xanh trong lúc bào. Bảng ấy giờ **rỗng** và đã bị xoá — không còn miễn trừ
+ * nào, và mọi element trong kho đều sáng được.
  */
 const CONTENT = fileURLToPath(new URL('../../../packages/content/problems', import.meta.url));
 
@@ -143,50 +148,6 @@ function differs(before: readonly SvgNode[], after: readonly SvgNode[]): boolean
   return canonicalStringify(before) !== canonicalStringify(after);
 }
 
-/**
- * Nợ đã biết, ghi thành **luật** chứ không thành danh sách 314 dòng.
- *
- * Lần chạy đầu tiên của chốt canh này soi ra 314 cặp (scene, id) chết trên 13
- * bài và 4 engine — nhiều hơn hẳn ba lỗi tìm được bằng mắt. Sửa hết trong một
- * commit thì không review nổi, mà để test đỏ thì CI mất tác dụng cảnh báo.
- *
- * Nên nợ nằm ở đây, dưới dạng luật đọc được, và mỗi lần sửa xong một engine thì
- * **xoá một luật**. Test khẳng định cả hai chiều: id chết phải khớp một luật, và
- * mỗi luật phải còn khớp ít nhất một id chết — luật hết tác dụng mà nằm lại là
- * cách một allowlist mục ruỗng thành lời nói dối.
- */
-interface DebtRule {
-  readonly why: string;
-  readonly engine: string;
-  readonly view?: RegExp;
-  /** Khớp theo `type` của element khai tường minh. */
-  readonly type?: string;
-  /** Khớp theo chính chuỗi id — dùng cho element ngầm định. */
-  readonly id?: RegExp;
-}
-
-const DEBT: readonly DebtRule[] = [
-  {
-    why: 'derivation: element `row` chưa sinh node nào có danh tính',
-    engine: 'derivation',
-    type: 'row',
-  },
-];
-
-function debtFor(scene: Scene, id: string): DebtRule | undefined {
-  const view = String((scene.config as { view?: unknown } | undefined)?.view ?? '');
-  const type = (scene.elements as { id: string; type?: string }[]).find((e) => e.id === id)?.type;
-  return DEBT.find(
-    (rule) =>
-      rule.engine === scene.engine &&
-      (rule.view === undefined || rule.view.test(view)) &&
-      (rule.type === undefined || rule.type === type) &&
-      (rule.id === undefined || rule.id.test(id)),
-  );
-}
-
-/** Luật nào đã thật sự được dùng — để phát hiện luật mục. */
-const used = new Set<string>();
 
 describe('ANC-01 — mọi element phải sáng được', () => {
   it('kho không rỗng — test này vô nghĩa nếu không quét được scene nào', () => {
@@ -211,16 +172,7 @@ describe('ANC-01 — mọi element phải sáng được', () => {
         .filter((id) => !lit.sure.has(id))
         .filter((id) => !differs(base, render(scene, new Set([id]))));
 
-      const unexpected = dead.filter((id) => {
-        const rule = debtFor(scene, id);
-        if (rule) used.add(rule.why);
-        return !rule;
-      });
-
-      expect(
-        unexpected,
-        `element không sáng lên khi được highlight: ${unexpected.join(', ')}`,
-      ).toEqual([]);
+      expect(dead, `element không sáng lên khi được highlight: ${dead.join(', ')}`).toEqual([]);
     });
   }
 });
@@ -239,25 +191,8 @@ describe('danh tính mực — mỗi element phải có ít nhất một node nh
       };
       walk(render(scene, new Set()));
 
-      const orphans = elementIds(scene)
-        .filter((id) => !owned.has(id))
-        .filter((id) => {
-          const rule = debtFor(scene, id);
-          if (rule) used.add(rule.why);
-          return !rule;
-        });
+      const orphans = elementIds(scene).filter((id) => !owned.has(id));
       expect(orphans, `element không node nào nhận: ${orphans.join(', ')}`).toEqual([]);
     });
   }
-});
-
-describe('bảng nợ không được mục', () => {
-  it('mọi luật miễn trừ đều còn khớp ít nhất một id chết thật', () => {
-    // Chạy **sau** hai describe trên (vitest giữ thứ tự khai báo trong file), nên
-    // `used` đã đầy. Luật nằm lại sau khi engine đã sửa xong là cách một
-    // allowlist mục ruỗng thành lời nói dối: nó vẫn tha thứ, chỉ là không còn gì
-    // để tha.
-    const stale = DEBT.filter((rule) => !used.has(rule.why)).map((rule) => rule.why);
-    expect(stale, `luật đã hết tác dụng, xoá đi: ${stale.join(' | ')}`).toEqual([]);
-  });
 });

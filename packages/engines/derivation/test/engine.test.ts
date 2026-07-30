@@ -230,7 +230,18 @@ describe('renderer', () => {
     walk(renderer.render(SIMPLE, ctx), (node) => {
       if (node.key !== undefined) keys.push(node.key);
     });
-    expect(keys).toEqual(['a', 'eq', 'b']);
+    // Dòng cũng có key kể từ khi nó neo được: `row` là một trong hai loại element
+    // của engine này, và trước đó nó không sinh ra node nào mang danh tính —
+    // `[[a1|dòng thứ hai]]` validate xanh mà không làm sáng gì.
+    expect(keys).toEqual(['a', 'eq', 'b', 'r1']);
+  });
+
+  it('dòng có tay cầm vô hình để neo được', () => {
+    const handles: string[] = [];
+    walk(renderer.render(SIMPLE, ctx), (node) => {
+      if (node.attrs['fill'] === 'none' && node.key !== undefined) handles.push(node.key);
+    });
+    expect(handles).toContain('r1');
   });
 
   it('hạng tử triệt tiêu có gạch chéo, hạng tử thường thì không', () => {

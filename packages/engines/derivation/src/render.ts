@@ -70,6 +70,26 @@ export const derivationRenderer: EngineRenderer = {
         nodes.push(renderTerm(item, placed.shift, placed.y, ctx));
       }
 
+      // Tay cầm cho **dòng**.
+      //
+      // `row` là một trong hai loại element của engine này, nhưng nó chưa bao giờ
+      // sinh ra node nào có danh tính: chỉ hạng tử được vẽ, còn dòng thì chỉ là
+      // một toạ độ $y$. Hệ quả là `[[a1|dòng thứ hai]]` — một anchor hoàn toàn tự
+      // nhiên với một chuỗi biến đổi — validate xanh và không làm sáng gì.
+      //
+      // Dựng thẳng từ `PlacedRow`: layout đã biết chân dòng, phần trên và phần
+      // dưới của nó. `fill: 'none'` như mọi tay cầm khác — nó chỉ mang halo.
+      nodes.push(
+        keyed(placed.row.id, 'rect', {
+          x: round(placed.shift),
+          y: round(placed.y - placed.ascent),
+          width: round(Math.max(placed.width - placed.shift, 1)),
+          height: round(placed.ascent + placed.descent),
+          fill: 'none',
+          ...decorationAttrs(ctx, placed.row.id),
+        }),
+      );
+
       if (placed.row.note !== undefined) {
         nodes.push(
           text(
