@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M47 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 88 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M47 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 89 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,40 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M47c — Bất đẳng thức đổi chiều, hằng đẳng thức, và $|x|$ · [E] — **xong**
+
+Chính chủ muốn engine phủ toàn bộ đại số phổ thông. Đợt này ba mảng, và mảng đầu là
+**sửa lỗi sai về toán**, không phải thêm tính năng.
+
+`<` và `<=` có trong kiểu dữ liệu từ đầu, `mul_both_sides` áp lên chúng bình thường,
+và engine cho ra `x < 3 ⟶ −x < −3` với `unsound = 0`. Không gì kêu, vì `model` **bỏ
+qua hẳn** nút `rel`: đặc tả §6 khai nhóm ★ "bảo toàn tập nghiệm do cấu trúc" nên miễn
+kiểm. Đó là một lời hứa chưa được chứng minh, và nó che đúng lỗi này.
+
+Chữa ở **hai** chỗ. Luật: nhân số âm thì đổi chiều; dấu chưa biết thì **từ chối**, vì
+ở trường người ta tách trường hợp và một điều kiện "$y>0$" sẽ giấu mất đúng cái phải
+tách. Bộ kiểm: thêm `sameSolutionSet` — biểu thức hỏi "có đồng nhất bằng nhau không",
+quan hệ hỏi "có cùng tập nghiệm không", hai câu hỏi khác nhau và trộn chúng là bỏ
+lọt. Nó cũng làm điều kiện AL-08 có **nghĩa vận hành**: điểm làm điều kiện triệt tiêu
+bị bỏ qua khi kiểm.
+
+**Bài học ghi lại: mỗi lần đặc tả nói "đúng do cấu trúc nên miễn kiểm", đó là chỗ nên
+kiểm.**
+
+Thêm nút `abs` — có vì thiếu nó thì $\sqrt{x^2}$ không rút được, và M47b đã phải từ
+chối một phép biến đổi có trong mọi sách giáo khoa. Kéo theo `hasRadical` thành
+`needsRealEval`: cả căn lẫn $|\cdot|$ đều không sống trên $\mathbb{F}_p$, một cái cần
+thặng dư bậc hai, cái kia cần **thứ tự**.
+
+Và năm luật mới cho trục chính của đại số THCS: `expand_cube`, `factor_diff_squares`,
+`factor_cubes`, `factor_quadratic`, `fold_coefficients`. Bài `factoring-identities`
+(#89) chạy cả bốn nhánh.
+
+Hai lỗi hiển thị nữa, cả hai chỉ thấy khi mở Player: dấu âm chỉ được tách khi hạng tử
+nằm **trong một tổng** (nên $-3x$ đứng một mình in ra `−1·3x`), và thừa số âm không
+đứng đầu thiếu ngoặc (`3x·−1`). Cộng một lỗi tầng luật: `splitCoefficient` chỉ lấy
+thừa số nguyên **đầu tiên**, nên $-3x$ và $5x$ bị coi là không đồng dạng.
 
 ### M47b — Căn thức, và một lỗi hiển thị nằm im ở 21 bài · [E] — **xong**
 

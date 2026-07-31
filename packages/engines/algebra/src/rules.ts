@@ -1,11 +1,14 @@
-import { definitelyNonNegative, definitelyNonZero } from './check.js';
+import { definiteSign, definitelyNonNegative, definitelyNonZero } from './check.js';
 import {
   Minter,
+  abs,
   add,
   div,
   int,
   mul,
+  negate,
   pow,
+  flipOp,
   rat,
   root,
   same,
@@ -91,10 +94,19 @@ function freshCopy(m: Minter, e: Expr): { copy: Expr; pairs: Array<readonly [Ter
 function splitCoefficient(m: Minter, e: Expr): { coef: number; rest: Expr | null } {
   if (e.k === 'int') return { coef: e.v, rest: null };
   if (e.k !== 'mul') return { coef: 1, rest: e };
-  const head = e.args[0];
-  if (head === undefined || head.k !== 'int') return { coef: 1, rest: e };
-  const tail = e.args.slice(1);
-  return { coef: head.v, rest: tail.length === 1 ? (tail[0] as Expr) : mul(m, tail) };
+
+  // Gom **mọi** thừa số nguyên, không chỉ cái đứng đầu: `a - 3*x` parse ra
+  // `mul[−1, 3, x]`, và lấy mỗi số đầu thì hệ số ra $-1$ còn phần còn lại là $3x$ —
+  // nên $-3x$ và $5x$ bị coi là không đồng dạng.
+  let coef = 1;
+  const rest: Expr[] = [];
+  for (const a of e.args) {
+    if (a.k === 'int') coef *= a.v;
+    else rest.push(a);
+  }
+  if (rest.length === e.args.length) return { coef: 1, rest: e };
+  if (rest.length === 0) return { coef, rest: null };
+  return { coef, rest: rest.length === 1 ? (rest[0] as Expr) : mul(m, rest) };
 }
 
 const withCoefficient = (m: Minter, coef: number, rest: Expr | null): Expr => {
@@ -394,16 +406,15 @@ const pullSquareOut: Rule = {
 
     if (outside.length === 0) return no('không có thừa số nào rút ra được');
 
-    // $\sqrt{x^2} = x$ **sai** với mọi $x < 0$; đúng phải là $|x|$, mà engine không có
-    // nút giá trị tuyệt đối. Từ chối, không ghi điều kiện: một điều kiện "$x \ge 0$"
-    // ở đây làm người đọc tưởng đẳng thức đúng nếu chịu thêm giả thiết, trong khi
-    // thứ thiếu là **một ký hiệu khác**, không phải một giả thiết.
-    if (n % 2 === 0 && outside.some((o) => !definitelyNonNegative(o))) {
-      return no('rút biến ra khỏi căn bậc chẵn cần dấu giá trị tuyệt đối — engine chưa có');
-    }
+    // $\sqrt{x^2} = |x|$, **không** phải $x$ — vế sau sai với mọi $x < 0$. Trước khi có
+    // nút `abs` thì engine phải từ chối chỗ này; nay nó viết ra đúng ký hiệu. Không
+    // ghi điều kiện "$x \ge 0$": thứ thiếu là một **ký hiệu**, không phải một giả thiết,
+    // và một điều kiện ở đây làm người đọc tưởng đẳng thức đúng nếu chịu thêm giả thiết.
+    const wrapped =
+      n % 2 === 0 ? outside.map((o) => (definitelyNonNegative(o) ? o : abs(m, o))) : outside;
 
     const left = inside.length === 0 ? [] : [root(m, n, mul(m, inside))];
-    return { after: mul(m, [...outside, ...left]) };
+    return { after: mul(m, [...wrapped, ...left]) };
   },
 };
 
@@ -481,6 +492,205 @@ const evalRoot: Rule = {
     const r = Math.round(Math.pow(v.p, 1 / node.index));
     if (Math.pow(r, node.index) !== v.p) return no(`${v.p} không phải luỹ thừa bậc ${node.index}`);
     return { after: int(m, r) };
+  },
+};
+
+/**
+ * Bảy hằng đẳng thức đáng nhớ — trục chính của đại số THCS.
+ *
+ * $(a\pm b)^2$ đã có ở `expand_square` (dấu trừ đi qua vì $b$ nhận giá trị âm). Ở đây
+ * là bốn cái còn lại, chia hai chiều: **khai triển** và **phân tích**.
+ */
+const expandCube: Rule = {
+  id: 'expand_cube',
+  label: 'khai triển lập phương',
+  run(m, node) {
+    if (node.k !== 'pow' || node.exp !== 3) return no('cần một luỹ thừa bậc 3');
+    if (node.base.k !== 'add' || node.base.args.length !== 2) {
+      return no('cơ số phải là tổng hai hạng tử');
+    }
+    const [a, b] = node.base.args as [Expr, Expr];
+    const dup: Array<readonly [TermId, TermId]> = [];
+    const twin = (e: Expr): Expr => {
+      const { copy, pairs } = freshCopy(m, e);
+      dup.push(...pairs);
+      return copy;
+    };
+    // $(a+b)^3 = a^3 + 3a^2b + 3ab^2 + b^3$.
+    return {
+      after: add(m, [
+        pow(m, a, 3),
+        mul(m, [int(m, 3), pow(m, twin(a), 2), twin(b)]),
+        mul(m, [int(m, 3), twin(a), pow(m, twin(b), 2)]),
+        pow(m, b, 3),
+      ]),
+      dup,
+    };
+  },
+};
+
+/** $a^2 - b^2 = (a-b)(a+b)$ — hằng đẳng thức được dùng nhiều nhất khi phân tích. */
+const factorDiffSquares: Rule = {
+  id: 'factor_diff_squares',
+  label: 'hiệu hai bình phương',
+  run(m, node) {
+    if (node.k !== 'add' || node.args.length !== 2) return no('cần một tổng hai hạng tử');
+    const [x, y] = node.args as [Expr, Expr];
+    const root2 = (e: Expr): Expr | null => {
+      if (e.k === 'pow' && e.exp === 2) return e.base;
+      if (e.k === 'int' && e.v > 0) {
+        const r = Math.round(Math.sqrt(e.v));
+        return r * r === e.v ? int(m, r) : null;
+      }
+      return null;
+    };
+    const neg = (e: Expr): Expr | null => {
+      if (e.k === 'int' && e.v < 0) return int(m, -e.v);
+      if (e.k !== 'mul') return null;
+      const head = e.args[0];
+      if (head === undefined || head.k !== 'int' || head.v !== -1) return null;
+      const tail = e.args.slice(1);
+      return tail.length === 1 ? (tail[0] as Expr) : mul(m, tail);
+    };
+
+    const negY = neg(y);
+    if (negY === null) return no('hạng tử thứ hai phải mang dấu trừ');
+    const a = root2(x);
+    const b = root2(negY);
+    if (a === null || b === null) return no('hai hạng tử phải là bình phương đúng');
+
+    const { copy: a2 } = freshCopy(m, a);
+    const { copy: b2 } = freshCopy(m, b);
+    return { after: mul(m, [add(m, [a, negate(m, b)]), add(m, [a2, b2])]) };
+  },
+};
+
+/** $a^3 \pm b^3 = (a \pm b)(a^2 \mp ab + b^2)$. */
+const factorCubes: Rule = {
+  id: 'factor_cubes',
+  label: 'tổng/hiệu hai lập phương',
+  run(m, node) {
+    if (node.k !== 'add' || node.args.length !== 2) return no('cần một tổng hai hạng tử');
+    const cube = (e: Expr): { base: Expr; sign: 1 | -1 } | null => {
+      if (e.k === 'pow' && e.exp === 3) return { base: e.base, sign: 1 };
+      if (e.k === 'int') {
+        const r = Math.round(Math.cbrt(Math.abs(e.v)));
+        if (r * r * r !== Math.abs(e.v)) return null;
+        return { base: int(m, r), sign: e.v < 0 ? -1 : 1 };
+      }
+      if (e.k === 'mul' && e.args.length === 2) {
+        const head = e.args[0] as Expr;
+        const tail = e.args[1] as Expr;
+        if (head.k === 'int' && head.v === -1 && tail.k === 'pow' && tail.exp === 3) {
+          return { base: tail.base, sign: -1 };
+        }
+      }
+      return null;
+    };
+
+    const x = cube(node.args[0] as Expr);
+    const y = cube(node.args[1] as Expr);
+    if (x === null || y === null) return no('hai hạng tử phải là lập phương đúng');
+    if (x.sign !== 1) return no('hạng tử đầu phải dương');
+
+    const a = x.base;
+    const b = y.base;
+    const s = y.sign; // $+$ cho tổng, $-$ cho hiệu
+    const c = (e: Expr): Expr => freshCopy(m, e).copy;
+    return {
+      after: mul(m, [
+        add(m, [a, s > 0 ? b : negate(m, b)]),
+        add(m, [
+          pow(m, c(a), 2),
+          s > 0 ? negate(m, mul(m, [c(a), c(b)])) : mul(m, [c(a), c(b)]),
+          pow(m, c(b), 2),
+        ]),
+      ]),
+    };
+  },
+};
+
+/**
+ * $x^2 + bx + c = (x+p)(x+q)$ với $p+q=b$, $pq=c$ — "tách hạng tử" ở dạng gọn nhất.
+ *
+ * Chỉ tìm nghiệm **nguyên**: engine không hứa phân tích được mọi tam thức, và một
+ * kết quả chứa căn ở đây thì nên đi qua công thức nghiệm chứ không qua luật này.
+ */
+const factorQuadratic: Rule = {
+  id: 'factor_quadratic',
+  label: 'phân tích tam thức',
+  run(m, node) {
+    if (node.k !== 'add') return no('cần một tổng');
+    let variableName: string | null = null;
+    let A = 0;
+    let B = 0;
+    let C = 0;
+
+    for (const t of node.args) {
+      const { coef, rest } = splitCoefficient(m, t);
+      if (rest === null) {
+        C += coef;
+        continue;
+      }
+      if (rest.k === 'var') {
+        variableName ??= rest.name;
+        if (rest.name !== variableName) return no('có nhiều hơn một biến');
+        B += coef;
+        continue;
+      }
+      if (rest.k === 'pow' && rest.exp === 2 && rest.base.k === 'var') {
+        variableName ??= rest.base.name;
+        if (rest.base.name !== variableName) return no('có nhiều hơn một biến');
+        A += coef;
+        continue;
+      }
+      return no('không phải tam thức bậc hai một biến');
+    }
+
+    if (A !== 1) return no('mới phân tích được tam thức có hệ số dẫn đầu bằng 1');
+    if (variableName === null) return no('không có biến nào');
+
+    for (let p = -Math.abs(C) - Math.abs(B) - 1; p <= Math.abs(C) + Math.abs(B) + 1; p += 1) {
+      const q = B - p;
+      if (p * q !== C) continue;
+      if (p > q) continue; // một cặp, không hai lần
+      const v = variable(m, variableName);
+      const w = variable(m, variableName);
+      return {
+        after: mul(m, [
+          add(m, [v, int(m, p)]),
+          add(m, [w, int(m, q)]),
+        ]),
+      };
+    }
+    return no('không có cặp số nguyên nào thoả');
+  },
+};
+
+/**
+ * Gộp các thừa số **số** của một tích: $(-3)\cdot x\cdot(-1) \to 3x$.
+ *
+ * Thiếu nó thì chuỗi giải bất phương trình dừng lại ở một dòng đúng nhưng chưa gọn,
+ * và `eval_int` không giúp được vì tích còn chứa biến.
+ */
+const foldCoefficients: Rule = {
+  id: 'fold_coefficients',
+  label: 'gộp hệ số',
+  run(m, node) {
+    if (node.k !== 'mul') return no('cần một tích');
+    const numeric = node.args.filter((a) => a.k === 'int' || a.k === 'rat');
+    if (numeric.length < 2) return no('không có hai thừa số số nào để gộp');
+
+    const v = exactValue(mul(m, numeric));
+    if (v === null) return no('không tính được');
+    const rest = node.args.filter((a) => a.k !== 'int' && a.k !== 'rat');
+    const coef = rat(m, v.p, v.q);
+    const merged: Array<readonly [readonly TermId[], TermId]> = [
+      [numeric.map((a) => a.id), coef.id],
+    ];
+    if (rest.length === 0) return { after: coef, merged };
+    const isOne = coef.k === 'int' && coef.v === 1;
+    return { after: isOne ? mul(m, rest) : mul(m, [coef, ...rest]), merged };
   },
 };
 
@@ -581,6 +791,27 @@ const mulBothSides: Rule = {
     if (node.k !== 'rel') return no('cần một đẳng thức hoặc bất đẳng thức');
     if (arg === undefined) return no('cần nói nhân với gì');
     const term = parse(arg, m);
+    const sign = definiteSign(term);
+
+    // **Bất đẳng thức nhân số âm thì ĐỔI CHIỀU.** Bản đầu quên, nên engine cho ra
+    // $x < 3 \Rightarrow -x < -3$ — sai trắng trợn, và không gì kêu vì bộ kiểm bỏ qua
+    // nút `rel`. Dấu **chưa biết** thì từ chối: ở trường người ta tách trường hợp, và
+    // một điều kiện "$y > 0$" ở đây sẽ giấu mất đúng cái phải tách.
+    const isEquation = node.op === '=' || node.op === '!=';
+    if (!isEquation) {
+      if (sign === 0) {
+        return no(`chưa biết dấu của "${arg}" — bất đẳng thức phải tách trường hợp trước`);
+      }
+      const { copy } = freshCopy(m, term);
+      return {
+        after: {
+          ...node,
+          op: sign < 0 ? flipOp(node.op) : node.op,
+          lhs: mul(m, [node.lhs, term]),
+          rhs: mul(m, [node.rhs, copy]),
+        },
+      };
+    }
 
     // **AL-08 — cái bẫy nổi tiếng nhất của đại số phổ thông.** Nhân hai vế với thứ
     // có thể bằng 0 không bảo toàn tập nghiệm; đó là đường đi của mọi "chứng minh
@@ -648,6 +879,11 @@ export const RULES: readonly Rule[] = [
   evalInt,
   expandSquare,
   dropUnit,
+  foldCoefficients,
+  expandCube,
+  factorDiffSquares,
+  factorCubes,
+  factorQuadratic,
   evalRoot,
   pullSquareOut,
   rootOfProduct,

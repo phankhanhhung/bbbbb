@@ -12,7 +12,11 @@
 /** Danh tính bền của một nút: cấp lúc ra đời, đi theo nút qua mọi bước biến đổi. */
 export type TermId = string;
 
-export type RelOp = '=' | '<' | '<=' | '!=';
+export type RelOp = '=' | '<' | '<=' | '>' | '>=' | '!=';
+
+/** Đổi chiều bất đẳng thức — nhân hai vế với số âm thì bắt buộc. */
+export const flipOp = (op: RelOp): RelOp =>
+  op === '<' ? '>' : op === '<=' ? '>=' : op === '>' ? '<' : op === '>=' ? '<=' : op;
 
 interface WithId {
   readonly id: TermId;
@@ -35,6 +39,13 @@ export type Expr =
    * `div` không bị chuẩn hoá thành `mul` với luỹ thừa âm.
    */
   | ({ readonly k: 'root'; readonly index: number; readonly arg: Expr } & WithId)
+  /**
+   * Giá trị tuyệt đối.
+   *
+   * Có vì thiếu nó thì $\sqrt{x^2}$ **không rút được** — engine phải từ chối, và từ
+   * chối một phép biến đổi có trong mọi sách giáo khoa là lỗ hổng nhìn thấy được.
+   */
+  | ({ readonly k: 'abs'; readonly arg: Expr } & WithId)
   | ({ readonly k: 'rel'; readonly op: RelOp; readonly lhs: Expr; readonly rhs: Expr } & WithId);
 
 /**
@@ -112,6 +123,8 @@ export const div = (m: Minter, num: Expr, den: Expr): Expr => ({
   id: m.next(),
 });
 
+export const abs = (m: Minter, arg: Expr): Expr => ({ k: 'abs', arg, id: m.next() });
+
 export const root = (m: Minter, index: number, arg: Expr): Expr => ({
   k: 'root',
   index,
@@ -146,6 +159,7 @@ export function children(e: Expr): readonly Expr[] {
     case 'div':
       return [e.num, e.den];
     case 'root':
+    case 'abs':
       return [e.arg];
     case 'rel':
       return [e.lhs, e.rhs];
@@ -166,6 +180,7 @@ export function withChildren(e: Expr, kids: readonly Expr[]): Expr {
     case 'div':
       return { ...e, num: kids[0] as Expr, den: kids[1] as Expr };
     case 'root':
+    case 'abs':
       return { ...e, arg: kids[0] as Expr };
     case 'rel':
       return { ...e, lhs: kids[0] as Expr, rhs: kids[1] as Expr };
@@ -202,11 +217,16 @@ export function varsOf(e: Expr): Set<string> {
 
 export const isConst = (e: Expr): boolean => varsOf(e).size === 0;
 
-/** Cây có chứa căn không — quyết định dùng bộ kiểm nào (`check.ts`). */
-export function hasRadical(e: Expr): boolean {
+/**
+ * Cây có phần **không đại số** không — quyết định dùng bộ kiểm nào (`check.ts`).
+ *
+ * Căn và giá trị tuyệt đối đều không sống trên $\mathbb{F}_p$: một cái cần khái niệm
+ * thặng dư bậc hai, cái kia cần **thứ tự**, mà trường hữu hạn thì không có thứ tự.
+ */
+export function needsRealEval(e: Expr): boolean {
   let found = false;
   walk(e, (n) => {
-    if (n.k === 'root') found = true;
+    if (n.k === 'root' || n.k === 'abs') found = true;
   });
   return found;
 }
@@ -227,6 +247,8 @@ export function totalDegree(e: Expr): number {
       return totalDegree(e.base) * Math.abs(e.exp);
     case 'div':
       return totalDegree(e.num) + totalDegree(e.den);
+    case 'abs':
+      return totalDegree(e.arg);
     case 'root':
       // Bậc **làm tròn lên**: nó chỉ dùng làm cận cho Schwartz–Zippel, mà biểu thức
       // có căn thì không đi đường ấy nữa (xem `check.ts`). Ước dôi ở đây là an toàn.
@@ -337,6 +359,8 @@ export function same(a: Expr, b: Expr): boolean {
       return a.exp === (b as typeof a).exp && same(a.base, (b as typeof a).base);
     case 'root':
       return a.index === (b as typeof a).index && same(a.arg, (b as typeof a).arg);
+    case 'abs':
+      return same(a.arg, (b as typeof a).arg);
     case 'rel':
       return (
         a.op === (b as typeof a).op &&

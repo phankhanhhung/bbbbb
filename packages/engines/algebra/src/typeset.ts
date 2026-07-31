@@ -51,7 +51,9 @@ const EM: Readonly<Record<string, number>> = {
   '−': 0.62,
   '=': 0.66,
   '<': 0.62,
+  '>': 0.62,
   '≤': 0.62,
+  '≥': 0.62,
   '≠': 0.66,
   '·': 0.3,
   '(': 0.32,
@@ -97,6 +99,8 @@ export type Box =
    * tới đâu, và ăn sai một hạng tử là đọc ra một biểu thức khác.
    */
   | { t: 'radical'; inner: Box; index: number; size: number }
+  /** Giá trị tuyệt đối: hai vạch đứng cao bằng ruột. */
+  | { t: 'bars'; inner: Box; size: number }
   /** Dịch đường chân xuống `dy` — chỉ số dưới. */
   | { t: 'shift'; dy: number; inner: Box }
   /** Bọc danh tính: không đổi hình học, chỉ nói "phần này là nút `id`". */
@@ -163,6 +167,10 @@ export function measure(box: Box): Metrics {
         below: inner.below,
       };
     }
+    case 'bars': {
+      const inner = measure(box.inner);
+      return { w: inner.w + box.size * BAR_PAD * 2, above: inner.above, below: inner.below };
+    }
     case 'paren': {
       const inner = measure(box.inner);
       // Ngoặc cao theo ruột: một ngoặc cỡ chữ thường bên cạnh một phân số hai tầng
@@ -181,6 +189,8 @@ export function measure(box: Box): Metrics {
 const RAD_HOOK = 0.62;
 /** Cỡ chỉ số căn — nhỏ hơn số mũ, vì nó ngồi trong góc chứ không đứng riêng. */
 const RAD_INDEX = 0.52;
+/** Hở hai bên vạch đứng của dấu giá trị tuyệt đối. */
+const BAR_PAD = 0.26;
 const RAD_LIFT = 0.34;
 const RAD_PAD = 0.16;
 
@@ -333,6 +343,21 @@ export function place(box: Box, x: number, y: number): Placed {
         go(b.inner, x0 + hook, by, owner);
         return m;
       }
+      case 'bars': {
+        const m = measure(b);
+        const stroke = b.size * 0.07;
+        const top = by - m.above;
+        const bottom = by + m.below;
+        for (const x of [bx + b.size * BAR_PAD * 0.4, bx + m.w - b.size * BAR_PAD * 0.4]) {
+          paths.push({
+            d: `M${round(x)} ${round(top)}L${round(x)} ${round(bottom)}`,
+            width: stroke,
+            owner,
+          });
+        }
+        go(b.inner, bx + b.size * BAR_PAD, by, owner);
+        return m;
+      }
       case 'paren': {
         const inner = measure(b.inner);
         const scale = parenScale(inner, b.size);
@@ -365,6 +390,7 @@ const PREC: Readonly<Record<Expr['k'], number>> = {
   // Căn tự bọc ruột bằng vạch trùm nên nó **là** dấu gộp — không cần ngoặc quanh nó,
   // và ruột của nó cũng không cần ngoặc dù là tổng.
   root: 4,
+  abs: 4,
   int: 4,
   rat: 4,
   var: 4,
@@ -374,6 +400,8 @@ const REL_TEXT: Readonly<Record<string, string>> = {
   '=': '=',
   '<': '<',
   '<=': '≤',
+  '>': '>',
+  '>=': '≥',
   '!=': '≠',
 };
 
@@ -492,6 +520,17 @@ export function toBox(e: Expr, size: number = FONT): Box {
       return tag({ t: 'row', items });
     }
     case 'mul': {
+      // Tách dấu âm ở **mọi vị trí**, không riêng khi hạng tử nằm trong một tổng.
+      // Bản đầu chỉ tách trong `add`, nên một tích âm đứng một mình — vế trái của
+      // $-3x < 6$ chẳng hạn — in ra `−1·3x`. Lỗi chỉ thấy khi giải bất phương trình,
+      // vì trước đó tích âm luôn nằm trong một tổng.
+      if (isNegative(e)) {
+        const body = stripSign(e);
+        return tag({
+          t: 'row',
+          items: [text('−', size), body.k === 'mul' ? bareMul(body, size) : toBox(body, size)],
+        });
+      }
       const items: Box[] = [];
       // Hệ số $1$ không viết ra khi còn thừa số khác — `1x` và `1√2` là thứ không ai
       // viết tay. Chỉ bỏ ở tầng **hiển thị**: nút $1$ vẫn còn trong cây, vì bỏ nó đi
@@ -522,6 +561,8 @@ export function toBox(e: Expr, size: number = FONT): Box {
     }
     case 'root':
       return tag({ t: 'radical', inner: toBox(e.arg, size), index: e.index, size });
+    case 'abs':
+      return tag({ t: 'bars', inner: toBox(e.arg, size), size });
     case 'div':
       return tag({
         t: 'frac',
@@ -539,6 +580,22 @@ export function toBox(e: Expr, size: number = FONT): Box {
         ],
       });
   }
+}
+
+/** Ruột của một tích, không bọc `tag` — dùng khi dấu đã được tách ra ngoài. */
+function bareMul(e: Expr & { k: 'mul' }, size: number): Box {
+  const items: Box[] = [];
+  const shown = e.args.filter((a, i) => !(a.k === 'int' && a.v === 1 && e.args.length > 1 && i === 0));
+  shown.forEach((arg, i) => {
+    if (i > 0 && needsDot(shown[i - 1] as Expr, arg)) items.push(...binop('·', size, 0.06));
+    else if (i > 0 && arg.k === 'root' && arg.index !== 2) items.push(gap(size * 0.16));
+    // Thừa số âm **không đứng đầu** phải có ngoặc: `3x·−1` đọc ra hai phép toán liền
+    // nhau, `3x·(−1)` thì không. Bảng ưu tiên không bắt được vì số là nguyên tử.
+    const bare = toBox(arg, size);
+    const needsParen = PREC[arg.k] < PREC['mul'] || (i > 0 && isNegative(arg));
+    items.push(needsParen ? { t: 'paren', inner: bare, size } : bare);
+  });
+  return { t: 'row', items };
 }
 
 /**

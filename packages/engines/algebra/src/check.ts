@@ -1,4 +1,4 @@
-import { hasRadical, totalDegree, varsOf, type Expr } from './expr.js';
+import { needsRealEval, totalDegree, varsOf, type Expr } from './expr.js';
 
 /**
  * Kiểm một bước biến đổi có **đúng** không, bằng đánh giá ngẫu nhiên trên
@@ -91,6 +91,8 @@ export function evalAt(e: Expr, env: ReadonlyMap<string, bigint>): bigint | null
       const inv = modInverse(d);
       return inv === null ? null : (n * inv) % P;
     }
+    case 'abs':
+      return null;
     case 'root':
       // Căn không sống trên $\mathbb{F}_p$: $\sqrt a$ chỉ tồn tại khi $a$ là thặng dư
       // bậc hai, và khi tồn tại thì có **hai** nghiệm không có nhánh chính tắc. Biểu
@@ -147,6 +149,10 @@ export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | nu
       if (n === null || d === null || Math.abs(d) < 1e-9) return null;
       return ok(n / d);
     }
+    case 'abs': {
+      const a = evalReal(e.arg, env);
+      return a === null ? null : Math.abs(a);
+    }
     case 'root': {
       const a = evalReal(e.arg, env);
       if (a === null) return null;
@@ -171,7 +177,7 @@ export interface SoundnessResult {
  */
 export function sameValue(a: Expr, b: Expr, seed = 20260731, trials = 8): SoundnessResult {
   // Có căn thì đổi sân: $\mathbb{F}_p$ không có khái niệm "căn bậc hai của $2$".
-  if (hasRadical(a) || hasRadical(b)) return sameValueReal(a, b, seed, trials);
+  if (needsRealEval(a) || needsRealEval(b)) return sameValueReal(a, b, seed, trials);
 
   const d = Math.max(totalDegree(a), totalDegree(b));
   if (d > 4096) {
@@ -244,6 +250,84 @@ export function sameValueReal(a: Expr, b: Expr, seed: number, trials: number): S
 }
 
 /**
+ * Giá trị chân lý của một quan hệ tại một điểm. `null` = không xác định ở đây.
+ */
+export function evalRelation(e: Expr, env: ReadonlyMap<string, number>): boolean | null {
+  if (e.k !== 'rel') return null;
+  const l = evalReal(e.lhs, env);
+  const r = evalReal(e.rhs, env);
+  if (l === null || r === null) return null;
+  const eps = 1e-9 * Math.max(1, Math.abs(l), Math.abs(r));
+  switch (e.op) {
+    case '=':
+      return Math.abs(l - r) <= eps;
+    case '!=':
+      return Math.abs(l - r) > eps;
+    case '<':
+      return l < r - eps;
+    case '<=':
+      return l <= r + eps;
+    case '>':
+      return l > r + eps;
+    case '>=':
+      return l >= r - eps;
+  }
+}
+
+/**
+ * Hai quan hệ có **cùng tập nghiệm** không.
+ *
+ * Đây là chốt canh mà nhóm ★ thiếu suốt từ lúc dựng. Đặc tả §6 nói nhóm ★ "bảo toàn
+ * tập nghiệm **do cấu trúc**" nên không cần kiểm — và câu ấy sai: nhân hai vế một
+ * **bất đẳng thức** với số âm phải đổi chiều, mà `mul_both_sides` bản đầu không đổi.
+ * Engine cho ra $x<3 \Rightarrow -x<-3$, sai trắng trợn, và không có gì kêu vì
+ * `model` bỏ qua hẳn nút `rel`. "Đúng do cấu trúc" là thứ phải chứng minh, không
+ * phải thứ để khai.
+ *
+ * `guard` là điều kiện bước ấy tự khai (AL-08): điểm làm `guard` triệt tiêu bị bỏ
+ * qua, vì bước chỉ hứa đúng ở ngoài đó. Nhờ vậy điều kiện in ra hình có **nghĩa vận
+ * hành** chứ không chỉ là một dòng chữ.
+ */
+export function sameSolutionSet(
+  a: Expr,
+  b: Expr,
+  guard: Expr | null,
+  seed: number,
+  trials = 24,
+): SoundnessResult {
+  const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
+  let s = (seed >>> 0) || 1;
+  const rand = (): number => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const u = s / 0x7fffffff;
+    return u < 0.5 ? -(0.25 + u * 9) : 0.25 + (u - 0.5) * 9;
+  };
+  let done = 0;
+  let agree = 0;
+
+  for (let attempt = 0; attempt < trials * 20 && done < trials; attempt += 1) {
+    const env = new Map<string, number>();
+    for (const n of names) env.set(n, rand());
+    if (guard !== null) {
+      const g = evalReal(guard, env);
+      if (g === null || Math.abs(g) < 1e-6) continue;
+    }
+    const va = evalRelation(a, env);
+    const vb = evalRelation(b, env);
+    if (va === null || vb === null) continue;
+    done += 1;
+    if (va === vb) agree += 1;
+    else {
+      const at = names.map((n) => `${n}=${(env.get(n) as number).toFixed(4)}`).join(', ');
+      return { ok: false, message: `tập nghiệm khác nhau tại ${at || 'điểm hằng'}` };
+    }
+  }
+
+  if (done === 0) return { ok: true, message: 'không tìm được điểm nào xác định' };
+  return { ok: true, message: `cùng chân lý trên ${agree} điểm` };
+}
+
+/**
  * Biểu thức này có **chắc chắn khác $0$** không (AL-08).
  *
  * Chỉ trả `true` khi nó là hằng khác $0$. Có biến ⇒ `false`, kể cả $x^2+1$ vốn không
@@ -253,7 +337,7 @@ export function sameValueReal(a: Expr, b: Expr, seed: number, trials: number): S
  */
 export function definitelyNonZero(e: Expr): boolean {
   if (varsOf(e).size > 0) return false;
-  if (hasRadical(e)) {
+  if (needsRealEval(e)) {
     const v = evalReal(e, new Map());
     return v !== null && Math.abs(v) > 1e-12;
   }
@@ -268,6 +352,14 @@ export function definitelyNonZero(e: Expr): boolean {
  * một số không âm. Có biến ⇒ `false`, kể cả $x^2$ vốn luôn $\ge 0$ trên $\mathbb{R}$ —
  * vì engine không biết miền của biến, và thà ghi điều kiện thừa còn hơn để lọt.
  */
+/** Dấu chắc chắn của một biểu thức hằng: `1`, `-1`, hoặc `0` khi không biết. */
+export function definiteSign(e: Expr): 1 | -1 | 0 {
+  if (varsOf(e).size > 0) return 0;
+  const v = evalReal(e, new Map());
+  if (v === null || Math.abs(v) < 1e-12) return 0;
+  return v > 0 ? 1 : -1;
+}
+
 export function definitelyNonNegative(e: Expr): boolean {
   if (varsOf(e).size > 0) return false;
   const v = evalReal(e, new Map());

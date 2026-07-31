@@ -87,9 +87,10 @@
     "polynomial-long-division",
     "polynomial-division-longform",
     "equation-moves-that-lie",
-    "radical-simplify"
+    "radical-simplify",
+    "factoring-identities"
   ],
   "newest": [
-    "radical-simplify"
+    "factoring-identities"
   ]
 }

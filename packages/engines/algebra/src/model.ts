@@ -1,5 +1,5 @@
 import type { Scene } from '@combviz/schema';
-import { sameValue } from './check.js';
+import { sameSolutionSet, sameValue } from './check.js';
 import {
   Minter,
   depth,
@@ -117,10 +117,23 @@ export function readAlgebra(scene: Scene): AlgebraModel {
     // thì sinh ra `add` lồng `add`, và từ đó mọi đường dẫn của bước sau trỏ lệch.
     const next = normalize(spliced);
 
-    // Phép kiểm §6: canh **engine**, không canh tác giả. Nhóm ★ đổi quan hệ chứ
-    // không đổi một biểu thức, nên nó bảo toàn tập nghiệm bằng cấu trúc, không bằng
-    // đồng nhất thức — kiểm bằng điểm ngẫu nhiên ở đó là hỏi sai câu hỏi.
-    if (!rule.onRelation && target.k !== 'rel' && outcome.after.k !== 'rel') {
+    // Phép kiểm: canh **engine**, không canh tác giả.
+    //
+    // Hai câu hỏi khác nhau, và trộn chúng là bỏ lọt. Biểu thức thì hỏi "có **đồng
+    // nhất bằng nhau**không"; quan hệ thì hỏi "có **cùng tập nghiệm** không". Đặc tả
+    // §6 nói nhóm ★ đúng "do cấu trúc" nên miễn kiểm — câu ấy sai, và nó che đúng
+    // một lỗi: nhân bất đẳng thức với số âm mà không đổi chiều.
+    if (target.k === 'rel' && outcome.after.k === 'rel' && rule.id !== 'substitute') {
+      const guard =
+        outcome.condition === undefined || step.arg === undefined
+          ? null
+          : ((): Expr | null => {
+              const g = tryParse(step.arg, m);
+              return 'error' in g ? null : g.expr;
+            })();
+      const verdict = sameSolutionSet(target, outcome.after, guard, 20260731 + i);
+      if (!verdict.ok) unsound.push(`bước ${i + 1} (${rule.label}): ${verdict.message}`);
+    } else if (!rule.onRelation && target.k !== 'rel' && outcome.after.k !== 'rel') {
       const verdict = sameValue(target, outcome.after, 20260731 + i);
       if (!verdict.ok) unsound.push(`bước ${i + 1} (${rule.label}): ${verdict.message}`);
     }

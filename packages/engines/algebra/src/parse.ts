@@ -5,6 +5,7 @@ import {
   int,
   mul,
   negate,
+  abs,
   pow,
   rel,
   root,
@@ -34,7 +35,8 @@ export class ParseError extends Error {
   }
 }
 
-const RELS: readonly RelOp[] = ['<=', '!=', '=', '<'];
+// Dài trước ngắn: `<=` phải thử trước `<`, nếu không `<` nuốt mất dấu bằng.
+const RELS: readonly RelOp[] = ['<=', '>=', '!=', '=', '<', '>'];
 
 class Parser {
   private i = 0;
@@ -144,6 +146,13 @@ class Parser {
 
     // Hàm: `sqrt(x)` và `root(3, x)`. Hai cái tên, không mở cửa cho hàm tuỳ ý —
     // ngữ pháp phải đóng thì printer mới biết trước mình phải in những gì.
+    if (this.src.startsWith('abs', this.i)) {
+      this.i += 3;
+      if (!this.eat('(')) throw new ParseError('abs cần dấu "("', this.i);
+      const inner = this.sum();
+      if (!this.eat(')')) throw new ParseError('thiếu dấu ")"', this.i);
+      return abs(this.m, inner);
+    }
     if (this.src.startsWith('sqrt', this.i)) {
       this.i += 4;
       if (!this.eat('(')) throw new ParseError('sqrt cần dấu "("', this.i);
@@ -221,6 +230,8 @@ export function unparse(e: Expr): string {
       return `(${unparse(e.base)})^${e.exp < 0 ? `-${-e.exp}` : e.exp}`;
     case 'div':
       return `(${unparse(e.num)} / ${unparse(e.den)})`;
+    case 'abs':
+      return `abs(${unparse(e.arg)})`;
     case 'root':
       return e.index === 2 ? `sqrt(${unparse(e.arg)})` : `root(${e.index}, ${unparse(e.arg)})`;
     case 'rel':
