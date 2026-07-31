@@ -1,0 +1,164 @@
+{
+  "schema_version": "0.3.0",
+  "id": "fractions-common-denominator",
+  "statement": {
+    "vi": "Cộng hai phân số đại số cần đúng hai thao tác: **quy đồng** cho hai mẫu bằng nhau, rồi **gộp** hai tử lại. Chúng là hai bước riêng, có tên riêng, và mỗi bước đổi đúng một thứ."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: quy đồng **không** sinh điều kiện nào, vì hai vế cùng không xác định đúng tại chỗ một mẫu triệt tiêu. Rút gọn thì khác — nó bỏ đi một mẫu, nên nó phải khai điều kiện."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mẫu chung là tích hai mẫu, và mỗi tử được nhân với mẫu **của phân số kia**. Engine không đi tìm bội chung nhỏ nhất: BCNN của hai đa thức là một bài toán riêng, còn rút gọn về sau đã có [[a1|luật riêng]] mang tên nó."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "1/x + 1/y",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "common_denominator"
+                },
+                {
+                  "at": "0.1",
+                  "rule": "drop_unit"
+                },
+                {
+                  "at": "0.0",
+                  "rule": "drop_unit"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bốn dòng: một phần x cộng một phần y, quy đồng thành (y cộng x) trên xy."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cùng mẫu rồi thì gộp là một bước riêng: hai tử cộng lại, mẫu giữ nguyên. [[a1|Nút mẫu]] không bị dựng lại mà dùng chính nút cũ — nếu dựng mới thì trên màn hình nó nhấp nháy dù người đọc thấy nó đứng yên."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a/c + b/c",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "combine_fraction"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: a trên c cộng b trên c, rồi (a cộng b) trên c."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Với mẫu là nhị thức thì cùng hai luật ấy chạy y hệt. Sau khi gộp, hai hạng tử $-1$ và $+1$ triệt tiêu và [[a1|tử còn $2x$]]. Mẫu để nguyên dạng tích, vì nhân ra là mất chỗ nhìn thấy nó bằng $x^2-1$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "1/(x - 1) + 1/(x + 1)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "common_denominator"
+                },
+                {
+                  "at": "0.1",
+                  "rule": "drop_unit"
+                },
+                {
+                  "at": "0.0",
+                  "rule": "drop_unit"
+                },
+                {
+                  "at": "0",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Năm dòng quy đồng hai phân số mẫu nhị thức, kết quả 2x trên tích (x trừ 1)(x cộng 1)."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

@@ -1,5 +1,10 @@
-import { definiteSign, definitelyNonNegative, definitelyNonZero } from './check.js';
-import { needsRealEval } from './expr.js';
+import {
+  definiteSign,
+  definitelyNonNegative,
+  definitelyNonZero,
+  type Guard,
+} from './check.js';
+import { intExp, needsRealEval } from './expr.js';
 import {
   Minter,
   abs,
@@ -16,12 +21,13 @@ import {
   root,
   same,
   variable,
+  varsOf,
   walk,
   withChildren,
   type Expr,
   type TermId,
 } from './expr.js';
-import { parse } from './parse.js';
+import { parse, toPlain, unparse } from './parse.js';
 
 /**
  * Tập luật (`ENGINE-ALGEBRA.md` §4).
@@ -41,8 +47,17 @@ export interface RuleOutcome {
   readonly dup?: ReadonlyArray<readonly [TermId, TermId]>;
   /** Nút bị **nhập một**: các id cũ → id còn lại. `collect_like` là ca chính. */
   readonly merged?: ReadonlyArray<readonly [readonly TermId[], TermId]>;
-  /** Điều kiện kèm theo (AL-08), ví dụ `"x − 1 ≠ 0"`. */
+  /** Điều kiện kèm theo (AL-08), ví dụ `"x − 1 ≠ 0"` — **chữ để in ra hình**. */
   readonly condition?: string;
+  /**
+   * Cùng điều kiện ấy, nhưng **máy đọc được**: bộ kiểm bỏ những điểm vi phạm nó.
+   *
+   * Trước M50, `model` dựng thứ này bằng cách parse lại `step.arg` — đúng tình cờ cho
+   * `mul_both_sides` (arg *là* thừa số) và sai với mọi luật khác. Luật phải tự khai,
+   * vì chỉ nó biết điều kiện là gì: `abs_case` cần "$A \ge 0$", thứ không đọc ra được
+   * từ chuỗi tác giả gõ.
+   */
+  readonly guard?: Guard;
   /**
    * Biến phụ vừa đặt: `after` chỉ đúng **dưới ràng buộc** này.
    *
@@ -56,8 +71,16 @@ export interface RuleOutcome {
    * `'root'`: `after` có dạng $x = r$ và điều phải kiểm là $r$ **thoả** phương trình
    * trước đó — một nhánh nghiệm thì hẹp hơn tập nghiệm gốc, nên hỏi "cùng tập
    * nghiệm" là hỏi sai.
+   *
+   * `'implies'`: bước **nới rộng** tập nghiệm (bình phương hai vế). Chỉ hỏi được chiều
+   * "nghiệm cũ còn là nghiệm mới", và nghĩa vụ còn lại — thử lại để loại nghiệm ngoại
+   * lai — engine ghi ra hình chứ không tự làm.
+   *
+   * `'instance'`: `after` là `before` sau khi **thế một giá trị cụ thể** vào một ẩn.
+   * Không phải chuyện tập nghiệm mà là chuyện "có thế đúng không", nên kiểm bằng cấu
+   * trúc. Đây cũng là đường trả nợ cho `'implies'`.
    */
-  readonly verify?: 'root';
+  readonly verify?: 'root' | 'implies' | 'instance';
 }
 
 export type RuleRun = (
@@ -97,7 +120,7 @@ function freshCopy(m: Minter, e: Expr): { copy: Expr; pairs: Array<readonly [Ter
       case 'mul':
         return { ...n, id, args: n.args.map(go) };
       case 'pow':
-        return { ...n, id, base: go(n.base) };
+        return { ...n, id, base: go(n.base), exp: go(n.exp) };
       case 'div':
         return { ...n, id, num: go(n.num), den: go(n.den) };
       case 'rel':
@@ -159,13 +182,17 @@ function exactValue(e: Expr): { p: number; q: number } | null {
       return acc;
     }
     case 'pow': {
+      // Chỉ số mũ **nguyên** mới cho ra giá trị hữu tỉ chính xác. $2^{1/2}$ là số vô
+      // tỉ, và cả hàm này nói về "giá trị đúng dạng $p/q$" — nên nó trả `null`.
+      const k = intExp(e);
+      if (k === null) return null;
       const b = exactValue(e.base);
       if (b === null) return null;
-      const n = Math.abs(e.exp);
+      const n = Math.abs(k);
       const p = Math.pow(b.p, n);
       const q = Math.pow(b.q, n);
       if (!Number.isSafeInteger(p) || !Number.isSafeInteger(q)) return null;
-      return e.exp > 0 ? { p, q } : { p: q, q: p };
+      return k > 0 ? { p, q } : { p: q, q: p };
     }
     case 'div': {
       const n = exactValue(e.num);
@@ -330,7 +357,7 @@ const expandSquare: Rule = {
   id: 'expand_square',
   label: 'khai triển bình phương',
   run(m, node) {
-    if (node.k !== 'pow' || node.exp !== 2) return no('cần một luỹ thừa bậc 2');
+    if (node.k !== 'pow' || intExp(node) !== 2) return no('cần một luỹ thừa bậc 2');
     if (node.base.k !== 'add' || node.base.args.length !== 2) {
       return no('cơ số phải là tổng hai hạng tử');
     }
@@ -416,8 +443,9 @@ const pullSquareOut: Rule = {
         }
       }
       // $\sqrt{x^4} = x^2$ khi số mũ chia hết cho chỉ số căn.
-      if (f.k === 'pow' && f.exp > 0 && f.exp % n === 0) {
-        outside.push(pow(m, f.base, f.exp / n));
+      const fe = f.k === 'pow' ? intExp(f) : null;
+      if (f.k === 'pow' && fe !== null && fe > 0 && fe % n === 0) {
+        outside.push(pow(m, f.base, fe / n));
         continue;
       }
       inside.push(f);
@@ -466,7 +494,7 @@ const rootPow: Rule = {
   label: 'căn rồi luỹ thừa thì triệt tiêu',
   run(m, node) {
     if (node.k !== 'pow' || node.base.k !== 'root') return no('cần luỹ thừa của một căn');
-    if (node.exp !== node.base.index) return no('số mũ phải bằng chỉ số căn');
+    if (intExp(node) !== node.base.index) return no('số mũ phải bằng chỉ số căn');
     // Không cần điều kiện: nếu $\sqrt[n]a$ đã xác định thì $(\sqrt[n]a)^n = a$ đúng
     // hệt. Điều kiện tồn tại nằm ở chính dấu căn của dòng trước, không ở bước này.
     return { after: node.base.arg };
@@ -524,7 +552,7 @@ const expandCube: Rule = {
   id: 'expand_cube',
   label: 'khai triển lập phương',
   run(m, node) {
-    if (node.k !== 'pow' || node.exp !== 3) return no('cần một luỹ thừa bậc 3');
+    if (node.k !== 'pow' || intExp(node) !== 3) return no('cần một luỹ thừa bậc 3');
     if (node.base.k !== 'add' || node.base.args.length !== 2) {
       return no('cơ số phải là tổng hai hạng tử');
     }
@@ -556,7 +584,7 @@ const factorDiffSquares: Rule = {
     if (node.k !== 'add' || node.args.length !== 2) return no('cần một tổng hai hạng tử');
     const [x, y] = node.args as [Expr, Expr];
     const root2 = (e: Expr): Expr | null => {
-      if (e.k === 'pow' && e.exp === 2) return e.base;
+      if (e.k === 'pow' && intExp(e) === 2) return e.base;
       if (e.k === 'int' && e.v > 0) {
         const r = Math.round(Math.sqrt(e.v));
         return r * r === e.v ? int(m, r) : null;
@@ -591,7 +619,7 @@ const factorCubes: Rule = {
   run(m, node) {
     if (node.k !== 'add' || node.args.length !== 2) return no('cần một tổng hai hạng tử');
     const cube = (e: Expr): { base: Expr; sign: 1 | -1 } | null => {
-      if (e.k === 'pow' && e.exp === 3) return { base: e.base, sign: 1 };
+      if (e.k === 'pow' && intExp(e) === 3) return { base: e.base, sign: 1 };
       if (e.k === 'int') {
         const r = Math.round(Math.cbrt(Math.abs(e.v)));
         if (r * r * r !== Math.abs(e.v)) return null;
@@ -600,7 +628,7 @@ const factorCubes: Rule = {
       if (e.k === 'mul' && e.args.length === 2) {
         const head = e.args[0] as Expr;
         const tail = e.args[1] as Expr;
-        if (head.k === 'int' && head.v === -1 && tail.k === 'pow' && tail.exp === 3) {
+        if (head.k === 'int' && head.v === -1 && tail.k === 'pow' && intExp(tail) === 3) {
           return { base: tail.base, sign: -1 };
         }
       }
@@ -657,7 +685,7 @@ const factorQuadratic: Rule = {
         B += coef;
         continue;
       }
-      if (rest.k === 'pow' && rest.exp === 2 && rest.base.k === 'var') {
+      if (rest.k === 'pow' && intExp(rest) === 2 && rest.base.k === 'var') {
         variableName ??= rest.base.name;
         if (rest.base.name !== variableName) return no('có nhiều hơn một biến');
         A += coef;
@@ -874,11 +902,16 @@ function flatten(e: Expr): Array<{ coef: number; powers: Map<string, number>; ba
       return acc;
     }
     case 'pow': {
-      if (e.exp < 0) return null;
+      // Chỉ số mũ nguyên không âm mới khai triển được thành đa thức. $x^{1/2}$ và
+      // $x^n$ không phải đơn thức, nên chúng ra khỏi cửa này chứ không được coi là
+      // một "biến lạ" — coi thế thì $x^{1/2} \cdot x^{1/2}$ thu gọn thành $x^{1}$ theo
+      // đúng luật đa thức, và ăn may đúng, nhưng $x^n \cdot x^{n}$ thì không.
+      const k = intExp(e);
+      if (k === null || k < 0) return null;
       const base = flatten(e.base);
       if (base === null) return null;
       let acc = unit();
-      for (let i = 0; i < e.exp; i += 1) {
+      for (let i = 0; i < k; i += 1) {
         const next: ReturnType<typeof flatten> = [];
         for (const x of acc) {
           for (const y of base) {
@@ -927,7 +960,7 @@ const multiplyOut: Rule = {
     if (node.k === 'mul' && !node.args.some((a) => a.k === 'add')) {
       return no('không có thừa số nào là tổng');
     }
-    if (node.k === 'pow' && (node.base.k !== 'add' || node.exp < 2)) {
+    if (node.k === 'pow' && (node.base.k !== 'add' || (intExp(node) ?? 0) < 2)) {
       return no('cần luỹ thừa bậc ≥ 2 của một tổng');
     }
 
@@ -1094,13 +1127,25 @@ const quadraticFormula: Rule = {
   },
 };
 
+/**
+ * Cộng/nhân hai số mũ.
+ *
+ * Hai số nguyên thì **gộp thành một số** — $x^2x^3$ phải ra $x^5$, không ra $x^{2+3}$,
+ * và đó là hành vi mọi bài đang có trong kho trông chờ. Ngoài ra thì dựng cây, và nhờ
+ * thế $x^ax^b = x^{a+b}$ chạy **ký hiệu** mà không cần một luật riêng nào.
+ */
+const addExp = (m: Minter, a: Expr, b: Expr): Expr =>
+  a.k === 'int' && b.k === 'int' ? int(m, a.v + b.v) : add(m, [a, b]);
+const mulExp = (m: Minter, a: Expr, b: Expr): Expr =>
+  a.k === 'int' && b.k === 'int' ? int(m, a.v * b.v) : mul(m, [a, b]);
+
 const powAdd: Rule = {
   id: 'pow_add',
   label: 'cộng số mũ',
   run(m, node) {
     if (node.k !== 'mul') return no('cần một tích');
-    const asPow = (e: Expr): { base: Expr; exp: number } =>
-      e.k === 'pow' ? { base: e.base, exp: e.exp } : { base: e, exp: 1 };
+    const asPow = (e: Expr): { base: Expr; exp: Expr } =>
+      e.k === 'pow' ? { base: e.base, exp: e.exp } : { base: e, exp: int(m, 1) };
 
     const args = [...node.args];
     for (let i = 0; i < args.length; i += 1) {
@@ -1109,7 +1154,7 @@ const powAdd: Rule = {
         const b = asPow(args[j] as Expr);
         if (!same(a.base, b.base) || a.base.k === 'int' || a.base.k === 'rat') continue;
         const rest = args.filter((_, k) => k !== i && k !== j);
-        const joined = pow(m, a.base, a.exp + b.exp);
+        const joined = pow(m, a.base, addExp(m, a.exp, b.exp));
         return {
           after: rest.length === 0 ? joined : mul(m, [...rest.slice(0, i), joined, ...rest.slice(i)]),
           merged: [[[(args[i] as Expr).id, (args[j] as Expr).id], joined.id]],
@@ -1125,7 +1170,358 @@ const powMul: Rule = {
   label: 'nhân số mũ',
   run(m, node) {
     if (node.k !== 'pow' || node.base.k !== 'pow') return no('cần luỹ thừa của luỹ thừa');
-    return { after: pow(m, node.base.base, node.base.exp * node.exp) };
+    // $(x^a)^b = x^{ab}$ đúng ở mọi chỗ **cả hai vế cùng xác định** — trừ đúng một hình
+    // dạng: số mũ trong **chẵn**, số mũ ngoài không nguyên. Ở đó luỹ thừa chẵn giấu mất
+    // dấu rồi số mũ không nguyên lấy nhánh chính luôn dương, nên $(x^2)^{1/2}$ ra $|x|$
+    // chứ không ra $x$. Cùng cái bẫy `pull_square_out` phải viết ra `abs` mới đúng.
+    const inner = intExp(node.base);
+    if (
+      intExp(node) === null &&
+      inner !== null &&
+      inner % 2 === 0 &&
+      !definitelyNonNegative(node.base.base)
+    ) {
+      return no('cơ số có thể âm: (x²)^(1/2) là |x|, không phải x');
+    }
+    return { after: pow(m, node.base.base, mulExp(m, node.base.exp, node.exp)) };
+  },
+};
+
+/**
+ * Số mũ ở dạng $p/q$ **chính xác**, khi nó có dạng ấy. `q` luôn dương.
+ *
+ * Nhận cả `rat` (do luật dựng) lẫn `div` hai số nguyên (do parser dựng cho `x^(1/2)`),
+ * và cả `mul[-1, …]` cho số mũ âm — ba dạng cùng một vật, vì cây không chuẩn hoá số mũ.
+ */
+function ratioExp(e: Expr): { p: number; q: number } | null {
+  if (e.k === 'int') return { p: e.v, q: 1 };
+  if (e.k === 'rat') return { p: e.p, q: e.q };
+  if (e.k === 'div' && e.num.k === 'int' && e.den.k === 'int' && e.den.v !== 0) {
+    const s = e.den.v < 0 ? -1 : 1;
+    return { p: s * e.num.v, q: s * e.den.v };
+  }
+  if (e.k === 'mul' && e.args.length === 2) {
+    const [h, t] = e.args as [Expr, Expr];
+    if (h.k === 'int' && h.v === -1) {
+      const inner = ratioExp(t);
+      return inner === null ? null : { p: -inner.p, q: inner.q };
+    }
+  }
+  return null;
+}
+
+/**
+ * $\sqrt[q]{a} \to a^{1/q}$ — chính là bài "luỹ thừa với số mũ hữu tỉ" của lớp 11.
+ *
+ * **Chỉ số lẻ bị từ chối trừ khi cơ số chắc chắn không âm**, và đó không phải sự thận
+ * trọng thừa: $\sqrt[3]{-8} = -2$ trong khi $(-8)^{1/3}$ **không xác định** trên
+ * $\mathbb{R}$ (luỹ thừa thực đòi cơ số dương). Hai vế khác nhau ở đúng nửa trục âm.
+ *
+ * Và bộ kiểm **không bắt được** chỗ này: nơi chúng khác nhau lại đúng là nơi vế phải
+ * trả `null`, tức là điểm bị bỏ qua chứ không bị kết tội. Nên chặn phải nằm ở luật.
+ * Mỗi lần đặc tả nói "bộ kiểm lo được" thì phải hỏi lại nó lo bằng cách nào — đây là
+ * lần thứ ba câu hỏi ấy tìm ra một lỗ (M47b, M47c, và đây).
+ */
+const rootToPower: Rule = {
+  id: 'root_to_power',
+  label: 'căn thành luỹ thừa hữu tỉ',
+  run(m, node) {
+    if (node.k !== 'root') return no('cần một dấu căn');
+    if (node.index % 2 === 1 && !definitelyNonNegative(node.arg)) {
+      return no(`căn bậc lẻ của số âm có nghĩa, còn luỹ thừa số mũ 1/${node.index} thì không`);
+    }
+    return { after: pow(m, node.arg, div(m, int(m, 1), int(m, node.index))) };
+  },
+};
+
+/** $a^{p/q} \to \sqrt[q]{a^p}$ — chiều ngược của {@link rootToPower}, cùng một dè dặt. */
+const powerToRoot: Rule = {
+  id: 'power_to_root',
+  label: 'luỹ thừa hữu tỉ thành căn',
+  run(m, node) {
+    if (node.k !== 'pow') return no('cần một luỹ thừa');
+    const r = ratioExp(node.exp);
+    if (r === null) return no('số mũ phải là một phân số cụ thể');
+    if (r.q < 2) return no('số mũ đã là số nguyên, không có căn nào để viết');
+    if (r.q % 2 === 1 && !definitelyNonNegative(node.base)) {
+      return no(`căn bậc ${r.q} nhận cả cơ số âm, còn luỹ thừa số mũ hữu tỉ thì không`);
+    }
+    return { after: root(m, r.q, pow(m, node.base, r.p)) };
+  },
+};
+
+/* ---------- lớp lõi: quy đồng, gộp, nhóm, hoàn thành bình phương ---------- */
+
+/**
+ * Tử và mẫu của một hạng tử trong tổng. Hạng tử không phải phân số là $t/1$.
+ *
+ * Có riêng vì cả `common_denominator` lẫn `combine_fraction` đều phải hỏi cùng câu ấy,
+ * và hỏi khác nhau ở hai chỗ là cách chắc nhất để hai luật nối vào nhau không khớp.
+ */
+const asFraction = (m: Minter, e: Expr): { num: Expr; den: Expr } =>
+  e.k === 'div' ? { num: e.num, den: e.den } : { num: e, den: int(m, 1) };
+
+/**
+ * Quy đồng một tổng các phân số.
+ *
+ * $\frac ab + \frac cd \to \frac{ad + cb}{bd}$, tổng quát cho $n$ hạng tử. **Miền không
+ * đổi**: hai vế cùng không xác định đúng tại chỗ một mẫu triệt tiêu, nên không sinh
+ * điều kiện nào — khác hẳn `cancel_common`, vốn *bỏ đi* một mẫu và vì thế phải khai.
+ *
+ * Mỗi mẫu xuất hiện **hai lần** trong kết quả (một trong tử mới, một trong tích mẫu),
+ * nên phải nhân bản có khai `dup`; không thì một nút mang hai chỗ và hình nhấp nháy.
+ */
+const commonDenominator: Rule = {
+  id: 'common_denominator',
+  label: 'quy đồng mẫu',
+  run(m, node) {
+    if (node.k !== 'add') return no('quy đồng cần một tổng');
+    const parts = node.args.map((a) => asFraction(m, a));
+    if (parts.filter((p) => p.den.k !== 'int' || p.den.v !== 1).length < 2) {
+      return no('cần ít nhất hai phân số có mẫu khác 1');
+    }
+    if (parts.every((p, i) => i === 0 || same(p.den, (parts[0] as { den: Expr }).den))) {
+      return no('các mẫu đã giống nhau — dùng `combine_fraction`');
+    }
+
+    const dup: Array<readonly [TermId, TermId]> = [];
+    const twin = (e: Expr): Expr => {
+      const { copy, pairs } = freshCopy(m, e);
+      dup.push(...pairs);
+      return copy;
+    };
+
+    // Tử thứ $i$ nhân với **mọi** mẫu khác nó; mẫu chung là tích tất cả các mẫu. Không
+    // đi tìm BCNN: bội chung nhỏ nhất của hai đa thức là một bài toán riêng, và rút gọn
+    // sau đó là việc của `cancel_common` — một luật có tên, có dòng trên hình.
+    const numerators = parts.map((p, i) => {
+      const others = parts.filter((_, j) => j !== i).map((q) => twin(q.den));
+      return others.length === 0 ? p.num : mul(m, [p.num, ...others]);
+    });
+    const denominator = mul(m, parts.map((p) => p.den));
+
+    return { after: div(m, add(m, numerators), denominator), dup };
+  },
+};
+
+/**
+ * Gộp các phân số **cùng mẫu** thành một. Nghịch đảo của `split_fraction`.
+ *
+ * Chỗ hổng rõ nhất của tập luật cũ: tách phân số ra được mà gộp lại thì không, nên mọi
+ * chuỗi biến đổi hữu tỉ đều đi một chiều.
+ */
+const combineFraction: Rule = {
+  id: 'combine_fraction',
+  label: 'gộp phân số cùng mẫu',
+  run(m, node) {
+    if (node.k !== 'add') return no('cần một tổng');
+    const fracs = node.args.filter((a) => a.k === 'div') as Array<Expr & { k: 'div' }>;
+    if (fracs.length < 2) return no('cần ít nhất hai phân số');
+
+    const den = (fracs[0] as { den: Expr }).den;
+    if (!fracs.every((f) => same(f.den, den))) {
+      return no('các mẫu chưa giống nhau — chạy `common_denominator` trước');
+    }
+
+    const rest = node.args.filter((a) => a.k !== 'div');
+    const joined = div(m, add(m, fracs.map((f) => f.num)), den);
+    // Các mẫu **nhập một**: giữ lại nút mẫu của phân số đầu, không dựng nút mới. Bài
+    // học M47 ở `collect_like`: dựng lại một nút đáng lẽ giữ nguyên thì id đổi vô cớ
+    // và hạng tử nhấp nháy dù người đọc thấy nó đứng yên.
+    const merged: Array<readonly [readonly TermId[], TermId]> = [
+      [fracs.slice(1).map((f) => f.den.id), den.id],
+      [fracs.map((f) => f.id), joined.id],
+    ];
+    return { after: rest.length === 0 ? joined : add(m, [joined, ...rest]), merged };
+  },
+};
+
+/**
+ * Một đơn thức tách thành hệ số và bảng **cơ số → số mũ**.
+ *
+ * Khoá là chuỗi `unparse` của cơ số, tức so theo **cấu trúc** chứ không theo danh tính:
+ * hai nút $x$ khác id vẫn phải là cùng một cơ số. Bảng số mũ là thứ bắt buộc phải có —
+ * so thừa số bằng `same` thì $x^2$ và $x$ thành hai vật khác nhau, và nhân tử chung của
+ * $2x^2+2x$ ra $2$ thay vì $2x$. Mà $2x$ mới là cái làm lộ ra thừa số $(x+1)$ chung với
+ * nhóm kia — tức là làm hỏng đúng việc `factor_by_grouping` sinh ra để làm.
+ */
+function monomial(
+  m: Minter,
+  e: Expr,
+): { coef: number; parts: Map<string, { base: Expr; exp: number }> } | null {
+  const { coef, rest } = splitCoefficient(m, e);
+  const parts = new Map<string, { base: Expr; exp: number }>();
+  if (rest === null) return { coef, parts };
+
+  for (const f of rest.k === 'mul' ? rest.args : [rest]) {
+    const n = f.k === 'pow' ? intExp(f) : 1;
+    if (n === null || n < 1) return null;
+    const base = f.k === 'pow' ? f.base : f;
+    const key = unparse(base);
+    const seen = parts.get(key);
+    parts.set(key, { base, exp: (seen?.exp ?? 0) + n });
+  }
+  return { coef, parts };
+}
+
+/**
+ * Nhân tử chung của một nhóm hạng tử — **tính ra**, không đi tìm.
+ *
+ * Ước chung của các hệ số, và với mỗi cơ số có mặt ở **mọi** hạng tử thì lấy số mũ nhỏ
+ * nhất. Xác định hoàn toàn: không có lựa chọn nào để "chọn cho khéo", nên nó không phải
+ * một mẩu solver lén.
+ */
+function commonFactorOf(m: Minter, terms: readonly Expr[]): Expr | null {
+  const gcdOf = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcdOf(b, a % b));
+  const monos = terms.map((t) => monomial(m, t));
+  if (monos.some((x) => x === null)) return null;
+  const first = monos[0] as NonNullable<(typeof monos)[number]>;
+
+  let coef = Math.abs(first.coef);
+  for (const s of monos) coef = gcdOf(coef, (s as NonNullable<typeof s>).coef);
+
+  const factors: Expr[] = [];
+  for (const [key, { base }] of first.parts) {
+    let exp = Infinity;
+    for (const s of monos) {
+      const here = (s as NonNullable<typeof s>).parts.get(key);
+      if (here === undefined) {
+        exp = 0;
+        break;
+      }
+      exp = Math.min(exp, here.exp);
+    }
+    if (exp > 0) factors.push(pow(m, freshCopy(m, base).copy, exp));
+  }
+
+  if (coef === 1 && factors.length === 0) return null;
+  if (factors.length === 0) return int(m, coef);
+  return coef === 1 ? mul(m, factors) : mul(m, [int(m, coef), ...factors]);
+}
+
+/** Chia một đơn thức cho một đơn thức; `null` khi không chia hết. */
+function divideMonomial(m: Minter, term: Expr, by: Expr): Expr | null {
+  const a = monomial(m, term);
+  const b = monomial(m, by);
+  if (a === null || b === null || b.coef === 0 || a.coef % b.coef !== 0) return null;
+
+  const left: Expr[] = [];
+  const seen = new Set<string>();
+  for (const [key, { base, exp }] of a.parts) {
+    seen.add(key);
+    const cut = b.parts.get(key)?.exp ?? 0;
+    if (cut > exp) return null;
+    if (exp - cut > 0) left.push(pow(m, base, exp - cut));
+  }
+  // Cơ số chỉ có ở mẫu ⇒ không chia hết (engine không sinh số mũ âm lén ở đây).
+  for (const key of b.parts.keys()) if (!seen.has(key)) return null;
+
+  return withCoefficient(m, a.coef / b.coef, left.length === 0 ? null : mul(m, left));
+}
+
+/**
+ * Nhóm hạng tử theo phân hoạch **tác giả chọn**, rồi đặt nhân tử chung của từng nhóm.
+ *
+ * `arg` là `"0,1|2,3"` — dấu phẩy ngăn chỉ số (như `commute`, `multiply_out`), dấu `|`
+ * ngăn nhóm. Chọn cách nhóm nào là *mẹo của bài*, nên nó phải do tác giả khai; engine
+ * chỉ tính phần còn lại.
+ *
+ * **Không có dòng trung gian `(ab+ac)+(bd+cd)`**, và không thể có: dạng chuẩn tắc §3.1
+ * làm phẳng `add`, nên hai cách nhóm là *cùng một cây*. Bỏ bất biến ấy để vẽ được cái
+ * ngoặc là mở lại lỗi M47 #8 (đường dẫn của bước sau trỏ lệch). Việc cho người đọc
+ * **thấy** cách nhóm thuộc về choreography: `hold` một pha tô sáng hai nhóm trước khi
+ * đổi (CHO-11, M48). Hình học của lời giải, không phải cấu trúc của cây.
+ */
+const factorByGrouping: Rule = {
+  id: 'factor_by_grouping',
+  label: 'nhóm hạng tử',
+  needsArg: true,
+  run(m, node, arg) {
+    if (node.k !== 'add') return no('nhóm hạng tử cần một tổng');
+    if (arg === undefined) return no('cần nói nhóm thế nào, ví dụ "0,1|2,3"');
+
+    const groups = arg.split('|').map((g) => g.split(',').map((s) => Number(s.trim())));
+    if (groups.length < 2) return no('cần ít nhất hai nhóm');
+
+    const seen = new Set<number>();
+    for (const g of groups) {
+      if (g.length === 0) return no('có nhóm rỗng');
+      for (const i of g) {
+        if (!Number.isInteger(i) || node.args[i] === undefined) {
+          return no(`chỉ số ngoài khoảng 0..${node.args.length - 1}`);
+        }
+        if (seen.has(i)) return no(`hạng tử ${i} nằm ở hai nhóm`);
+        seen.add(i);
+      }
+    }
+    if (seen.size !== node.args.length) {
+      const missing = node.args.map((_, i) => i).filter((i) => !seen.has(i));
+      return no(`hạng tử ${missing.join(', ')} không thuộc nhóm nào`);
+    }
+
+    const pieces: Expr[] = [];
+    for (const [gi, g] of groups.entries()) {
+      const terms = g.map((i) => node.args[i] as Expr);
+      const common = commonFactorOf(m, terms);
+      if (common === null) return no(`nhóm ${gi + 1} không có nhân tử chung nào khác 1`);
+      const rests: Expr[] = [];
+      for (const t of terms) {
+        const rest = divideMonomial(m, t, common);
+        if (rest === null) return no(`nhóm ${gi + 1}: không chia được hạng tử cho nhân tử chung`);
+        rests.push(rest);
+      }
+      pieces.push(mul(m, [common, add(m, rests)]));
+    }
+    return { after: add(m, pieces) };
+  },
+};
+
+/**
+ * Hoàn thành bình phương: $ax^2+bx+c \to a\left(x+\frac b{2a}\right)^2 + \frac{4ac-b^2}{4a}$.
+ *
+ * Trung tâm của bất đẳng thức, cực trị, và cách giải phương trình bậc hai *không* qua
+ * công thức nghiệm. Số học đi bằng `rat` — **chính xác**, không dấu phẩy động: hệ số
+ * $\frac b{2a}$ hầu như luôn là phân số, và một sai số $10^{-16}$ ở đây là một dòng
+ * hình sai.
+ */
+const completeSquare: Rule = {
+  id: 'complete_square',
+  label: 'hoàn thành bình phương',
+  run(m, node) {
+    const parts = flatten(node);
+    if (parts === null) return no('cần một đa thức');
+
+    let name: string | null = null;
+    const coefs = new Map<number, number>();
+    for (const p of parts) {
+      const live = [...p.powers.entries()].filter(([, e]) => e !== 0);
+      if (live.length > 1) return no('không phải đa thức một biến');
+      if (live.length === 0) {
+        coefs.set(0, (coefs.get(0) ?? 0) + p.coef);
+        continue;
+      }
+      const [key, deg] = live[0] as [string, number];
+      const base = p.bases.get(key) as Expr;
+      if (base.k !== 'var') return no('ẩn phải là một biến');
+      name ??= base.name;
+      if (base.name !== name) return no('không phải đa thức một biến');
+      coefs.set(deg, (coefs.get(deg) ?? 0) + p.coef);
+    }
+
+    const top = Math.max(...[...coefs.keys()]);
+    if (top !== 2 || name === null) return no('cần một tam thức bậc hai một biến');
+    const a = coefs.get(2) ?? 0;
+    const b = coefs.get(1) ?? 0;
+    const c = coefs.get(0) ?? 0;
+    if (a === 0) return no('hệ số bậc hai bằng 0');
+    if (b === 0) return no('đã không còn hạng tử bậc nhất để gộp');
+
+    const inner = add(m, [variable(m, name), rat(m, b, 2 * a)]);
+    const square = pow(m, inner, 2);
+    const scaled = a === 1 ? square : mul(m, [int(m, a), square]);
+    const remainder = rat(m, 4 * a * c - b * b, 4 * a);
+    const isZero = 4 * a * c - b * b === 0;
+    return { after: isZero ? scaled : add(m, [scaled, remainder]) };
   },
 };
 
@@ -1217,11 +1613,12 @@ const mulBothSides: Rule = {
     // có thể bằng 0 không bảo toàn tập nghiệm; đó là đường đi của mọi "chứng minh
     // 1 = 2". Engine không chặn — nó **ghi điều kiện ra**, vì bước ấy vẫn hợp lệ khi
     // điều kiện đúng, và vì chỗ này chính là nội dung đáng dạy.
-    const condition = definitelyNonZero(term) ? undefined : conditionText(arg);
+    const safe = definitelyNonZero(term);
     const { copy } = freshCopy(m, term);
     return {
       after: { ...node, lhs: mul(m, [node.lhs, term]), rhs: mul(m, [node.rhs, copy]) },
-      condition,
+      condition: safe ? undefined : conditionText(arg),
+      guard: safe ? undefined : { expr: freshCopy(m, term).copy, sign: '!=0' },
     };
   },
 };
@@ -1255,7 +1652,7 @@ const substitute: Rule = {
         case 'mul':
           return { ...e, args: e.args.map(go) };
         case 'pow':
-          return { ...e, base: go(e.base) };
+          return { ...e, base: go(e.base), exp: go(e.exp) };
         case 'div':
           return { ...e, num: go(e.num), den: go(e.den) };
         case 'rel':
@@ -1270,6 +1667,215 @@ const substitute: Rule = {
     return { after, dup };
   },
 };
+
+/* ---------- lớp phương trình có điều kiện ---------- */
+
+/**
+ * Nâng cả hai vế lên luỹ thừa $n$ — và **ba nhánh của nó chính là nội dung đáng dạy**.
+ *
+ * - **$n$ lẻ**: $x \mapsto x^n$ là song ánh **tăng** trên $\mathbb R$, nên nó bảo toàn
+ *   tập nghiệm, cả với bất đẳng thức. Đi hợp đồng `sameSolutionSet` như mọi luật ★.
+ * - **$n$ chẵn, đẳng thức**: **nới rộng** — $x = -2$ sai mà $x^2 = 4$ đúng. Hợp đồng
+ *   `implies`, và nghĩa vụ thử lại được ghi ra hình.
+ * - **$n$ chẵn, bất đẳng thức**: **từ chối** trừ khi hai vế chắc chắn không âm.
+ *   $-5 < 3$ mà $25 > 9$. Bám đúng tiền lệ `mul_both_sides` từ chối khi chưa biết dấu:
+ *   ở trường người ta tách trường hợp, và một điều kiện lấp liếm ở đây sẽ giấu mất
+ *   đúng cái phải tách.
+ *
+ * Nhãn để trung tính; tác giả muốn chữ "bình phương hai vế" thì dùng `AlgebraStep.note`,
+ * vốn sinh ra để đè nhãn luật.
+ */
+const powBothSides: Rule = {
+  id: 'pow_both_sides',
+  label: 'nâng luỹ thừa hai vế',
+  onRelation: true,
+  needsArg: true,
+  run(m, node, arg) {
+    if (node.k !== 'rel') return no('cần một đẳng thức hoặc bất đẳng thức');
+    const n = Number((arg ?? '2').trim());
+    if (!Number.isInteger(n) || n < 2) return no('số mũ phải là số nguyên ≥ 2');
+
+    const after: Expr = { ...node, lhs: pow(m, node.lhs, n), rhs: pow(m, node.rhs, n) };
+    if (n % 2 === 1) return { after };
+
+    const isEquation = node.op === '=' || node.op === '!=';
+    if (!isEquation && !(definitelyNonNegative(node.lhs) && definitelyNonNegative(node.rhs))) {
+      return no(
+        `luỹ thừa bậc chẵn không giữ chiều khi hai vế có thể âm — tách trường hợp trước`,
+      );
+    }
+    if (!isEquation) return { after };
+
+    // Không kèm `condition`: món nợ này đã có dòng đỏ riêng (`AlgebraModel.extraneous`),
+    // và trộn nó vào dòng điều kiện là nói rằng "giả thiết" với "nợ phải trả" cùng loại.
+    return { after, verify: 'implies' };
+  },
+};
+
+/**
+ * Bỏ dấu giá trị tuyệt đối theo **một nhánh**: `arg` là `"+"` hoặc `"-"`.
+ *
+ * Cùng quy ước với `quadratic_formula`, và cùng lý lẽ (§24.3): chia nhánh là việc của
+ * **cây lời giải** (`edge_type: "case"`), vốn sinh ra để làm đúng việc ấy. Nhét một nút
+ * "hoặc" vào cây biểu thức là dựng lại cùng một khái niệm ở tầng thứ hai.
+ *
+ * `guard` là thứ làm bước này kiểm được: $|A| = A$ **sai** ở mọi điểm $A<0$, nên không
+ * có `guard` thì bộ kiểm kết tội đúng — và kết tội oan, vì nhánh này chỉ hứa đúng bên
+ * trong điều kiện của nó.
+ */
+const absCase: Rule = {
+  id: 'abs_case',
+  label: 'bỏ dấu giá trị tuyệt đối',
+  needsArg: true,
+  run(m, node, arg) {
+    if (node.k !== 'abs') return no('cần một dấu giá trị tuyệt đối');
+    const sign = (arg ?? '+').trim();
+    if (sign !== '+' && sign !== '-') return no('cần tham số "+" hoặc "-"');
+
+    const inner = node.arg;
+    const text = toPlain(inner);
+    return {
+      after: sign === '+' ? inner : negate(m, freshCopy(m, inner).copy),
+      condition: `${text} ${sign === '+' ? '≥' : '≤'} 0`,
+      guard: { expr: freshCopy(m, inner).copy, sign: sign === '+' ? '>=0' : '<=0' },
+    };
+  },
+};
+
+/**
+ * Thế một giá trị cụ thể vào một ẩn: `arg` là `"x := 3"`, cùng quy ước `substitute`.
+ *
+ * Hai việc thật: kiểm một nhân tử (định lý Bézout — $P(a)=0 \iff (x-a) \mid P$), và
+ * **thử lại nghiệm ngoại lai** sau `pow_both_sides`. Nên nó không phải tiện ích: nó là
+ * đường trả nợ cho hợp đồng `implies`.
+ *
+ * Hợp đồng `'instance'` kiểm bằng **cấu trúc** — `after` phải đúng bằng `before` sau
+ * khi thay. `substitute` đang được **miễn kiểm**, và M47c dạy rằng chỗ miễn kiểm là
+ * chỗ lỗ hổng nằm; luật này không xin miễn.
+ */
+const evaluateAt: Rule = {
+  id: 'evaluate_at',
+  label: 'thay giá trị vào',
+  needsArg: true,
+  run(m, node, arg) {
+    const parts = (arg ?? '').split(':=');
+    if (parts.length !== 2) return no('cần tham số dạng "x := 3"');
+    const name = (parts[0] as string).trim();
+    if (!/^[a-zA-Z](_[0-9])?$/.test(name)) return no(`"${name}" không phải tên biến`);
+    const value = parse(parts[1] as string, m);
+    if (varsOf(value).size > 0) return no('giá trị thay vào phải là hằng');
+
+    let found = false;
+    const go = (e: Expr): Expr => {
+      if (e.k === 'var' && e.name === name) {
+        found = true;
+        return freshCopy(m, value).copy;
+      }
+      const kids = children(e);
+      return kids.length === 0 ? e : withChildren(e, kids.map(go));
+    };
+    const after = go(node);
+    if (!found) return no(`không thấy biến "${name}" trong cây con này`);
+    return { after, verify: 'instance', binding: { name, expr: value } };
+  },
+};
+
+/* ---------- hằng đẳng thức luỹ thừa bậc n ---------- */
+
+/** Nhận ra $a^n$ với $n$ nguyên $\ge 2$; số nguyên thì thử khai căn đúng bậc. */
+function asPowerOf(m: Minter, e: Expr, n: number): Expr | null {
+  if (e.k === 'pow' && intExp(e) === n) return e.base;
+  if (e.k === 'int' && e.v > 0) {
+    const r = Math.round(Math.pow(e.v, 1 / n));
+    return Math.pow(r, n) === e.v ? int(m, r) : null;
+  }
+  return null;
+}
+
+/** Bậc chung lớn nhất đọc ra được từ hai hạng tử — không đoán, chỉ đọc số mũ đã viết. */
+function sharedPower(a: Expr, b: Expr): number | null {
+  const deg = (e: Expr): number | null => (e.k === 'pow' ? intExp(e) : null);
+  const x = deg(a);
+  const y = deg(b);
+  if (x !== null && y !== null && x === y && x >= 2) return x;
+  return x ?? y;
+}
+
+/**
+ * $a^n - b^n \to (a-b)\left(a^{n-1} + a^{n-2}b + \dots + b^{n-1}\right)$.
+ *
+ * Tổng quát hoá `factor_diff_squares`. **Không tự đặt trần $n$**: nhân tử sau có $n$
+ * hạng tử nên nó đụng `maxNodes` và `maxWidthCells` rất nhanh — mà từ M49 hai trần ấy
+ * đo **đúng thứ chúng nói**, nên để chúng từ chối là đúng phân công. Đặt thêm một trần
+ * $n \le 5$ ở đây là dựng lại đúng cái lỗi M49 vừa gỡ: một con số đứng thay cho một
+ * con số khác.
+ */
+const factorPowerDifference: Rule = {
+  id: 'factor_power_difference',
+  label: 'hiệu hai luỹ thừa',
+  run(m, node) {
+    if (node.k !== 'add' || node.args.length !== 2) return no('cần một tổng hai hạng tử');
+    const [x, y] = node.args as [Expr, Expr];
+    const neg = stripNegative(m, y);
+    if (neg === null) return no('hạng tử thứ hai phải mang dấu trừ');
+
+    const n = sharedPower(x, neg);
+    if (n === null || n < 2) return no('hai hạng tử phải là luỹ thừa cùng bậc ≥ 2');
+    const a = asPowerOf(m, x, n);
+    const b = asPowerOf(m, neg, n);
+    if (a === null || b === null) return no(`hai hạng tử phải là luỹ thừa bậc ${n} đúng`);
+
+    const terms: Expr[] = [];
+    for (let i = n - 1; i >= 0; i -= 1) {
+      const factors: Expr[] = [];
+      if (i > 0) factors.push(pow(m, freshCopy(m, a).copy, i));
+      if (n - 1 - i > 0) factors.push(pow(m, freshCopy(m, b).copy, n - 1 - i));
+      terms.push(factors.length === 0 ? int(m, 1) : mul(m, factors));
+    }
+    return { after: mul(m, [add(m, [a, negate(m, b)]), add(m, terms)]) };
+  },
+};
+
+/**
+ * $a^n + b^n \to (a+b)\left(a^{n-1} - a^{n-2}b + \dots + b^{n-1}\right)$, **chỉ khi $n$ lẻ**.
+ *
+ * $n$ chẵn thì $a^n+b^n$ *không* phân tích được trên $\mathbb{Q}$ — $a^2+b^2$ là ví dụ
+ * ai cũng biết. Từ chối và nói ra, chứ không im lặng trả về chính nó.
+ */
+const factorPowerSumOdd: Rule = {
+  id: 'factor_power_sum_odd',
+  label: 'tổng hai luỹ thừa bậc lẻ',
+  run(m, node) {
+    if (node.k !== 'add' || node.args.length !== 2) return no('cần một tổng hai hạng tử');
+    const [x, y] = node.args as [Expr, Expr];
+    const n = sharedPower(x, y);
+    if (n === null || n < 3) return no('hai hạng tử phải là luỹ thừa cùng bậc ≥ 3');
+    if (n % 2 === 0) return no(`bậc chẵn thì a^${n} + b^${n} không phân tích được trên ℚ`);
+    const a = asPowerOf(m, x, n);
+    const b = asPowerOf(m, y, n);
+    if (a === null || b === null) return no(`hai hạng tử phải là luỹ thừa bậc ${n} đúng`);
+
+    const terms: Expr[] = [];
+    for (let i = n - 1; i >= 0; i -= 1) {
+      const factors: Expr[] = [];
+      if (i > 0) factors.push(pow(m, freshCopy(m, a).copy, i));
+      if (n - 1 - i > 0) factors.push(pow(m, freshCopy(m, b).copy, n - 1 - i));
+      const piece = factors.length === 0 ? int(m, 1) : mul(m, factors);
+      terms.push((n - 1 - i) % 2 === 1 ? negate(m, piece) : piece);
+    }
+    return { after: mul(m, [add(m, [a, b]), add(m, terms)]) };
+  },
+};
+
+/** Bỏ dấu trừ của một hạng tử âm; `null` khi nó không mang dấu trừ. */
+function stripNegative(m: Minter, e: Expr): Expr | null {
+  if (e.k === 'int' && e.v < 0) return int(m, -e.v);
+  if (e.k !== 'mul') return null;
+  const head = e.args[0];
+  if (head === undefined || head.k !== 'int' || head.v !== -1) return null;
+  const tail = e.args.slice(1);
+  return tail.length === 1 ? (tail[0] as Expr) : mul(m, tail);
+}
 
 export const RULES: readonly Rule[] = [
   commute,
@@ -1297,10 +1903,21 @@ export const RULES: readonly Rule[] = [
   rationalize,
   powAdd,
   powMul,
+  rootToPower,
+  powerToRoot,
+  commonDenominator,
+  combineFraction,
+  factorByGrouping,
+  completeSquare,
   cancelCommon,
   splitFraction,
+  factorPowerDifference,
+  factorPowerSumOdd,
   addBothSides,
   mulBothSides,
+  powBothSides,
+  absCase,
+  evaluateAt,
   substitute,
 ];
 

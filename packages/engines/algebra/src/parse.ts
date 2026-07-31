@@ -109,15 +109,21 @@ class Parser {
     return this.power();
   }
 
+  /**
+   * `power := atom ('^' unary)?` — **kết hợp phải**, như mọi ký pháp toán: $x$^$2$^$3$
+   * là $x^{(2^3)}$.
+   *
+   * Số mũ đi qua `unary` chứ không qua `sum`: `x^2 + 1` phải là $x^2+1$, không phải
+   * $x^{2+1}$. Muốn tổng trong số mũ thì viết ngoặc — `x^(n+1)` — và ngoặc ấy chính là
+   * thứ mắt người cũng cần.
+   */
   private power(): Expr {
     const base = this.atom();
     this.ws();
     if (!this.eat('^')) return base;
-    this.ws();
-    const neg = this.eat('-');
-    const digits = this.digits();
-    if (digits === null) throw new ParseError('số mũ phải là số nguyên', this.i);
-    return pow(this.m, base, neg ? -digits : digits);
+    const exp = this.unary();
+    if (exp.k === 'rel') throw new ParseError('số mũ không thể là một quan hệ', this.i);
+    return pow(this.m, base, exp);
   }
 
   private digits(): number | null {
@@ -204,6 +210,116 @@ export function tryParse(
   }
 }
 
+/* ---------- chữ trơn, cho dòng điều kiện ---------- */
+
+const PLAIN_PREC: Readonly<Record<Expr['k'], number>> = {
+  rel: 0,
+  add: 1,
+  mul: 2,
+  div: 2,
+  pow: 3,
+  root: 4,
+  abs: 4,
+  int: 4,
+  rat: 4,
+  var: 4,
+};
+
+const PLAIN_REL: Readonly<Record<string, string>> = {
+  '=': '=',
+  '<': '<',
+  '<=': '≤',
+  '>': '>',
+  '>=': '≥',
+  '!=': '≠',
+};
+
+const negativeTerm = (e: Expr): boolean =>
+  (e.k === 'int' && e.v < 0) ||
+  (e.k === 'rat' && e.p < 0) ||
+  (e.k === 'mul' && e.args.some((a) => (a.k === 'int' && a.v < 0) || (a.k === 'rat' && a.p < 0)));
+
+/**
+ * Chữ **trơn** của một biểu thức — cho dòng điều kiện dưới hình, và cho lời từ chối.
+ *
+ * Khác `unparse` ở đúng một chỗ, và chỗ ấy quyết định: `unparse` in **dư ngoặc** có
+ * chủ ý để khứ hồi giữ nguyên cấu trúc, nên $x-2$ ra `(x + (-2))`. Đọc được, nhưng
+ * dòng điều kiện là chữ cho **người học**, và "(x + (−2)) ≥ 0" thì không ai viết thế.
+ *
+ * Không dùng `typeset` vì chỗ này cần một chuỗi, không cần một hộp: dòng điều kiện in
+ * bằng phông giao diện, ngang hàng với nhãn luật. Và cũng vì `lint/label-not-plain` —
+ * chữ vào giao diện nguyên văn thì phải là chữ trơn, không phải LaTeX.
+ */
+export function toPlain(e: Expr): string {
+  const wrap = (child: Expr, tight = false): string => {
+    const s = toPlain(child);
+    return PLAIN_PREC[child.k] < PLAIN_PREC[e.k] || (tight && PLAIN_PREC[child.k] === PLAIN_PREC[e.k])
+      ? `(${s})`
+      : s;
+  };
+
+  switch (e.k) {
+    case 'int':
+      return String(e.v).replace('-', '−');
+    case 'rat':
+      return `${String(e.p).replace('-', '−')}/${e.q}`;
+    case 'var':
+      return e.name;
+    case 'add':
+      return e.args
+        .map((a, i) => {
+          const neg = negativeTerm(a);
+          const body = wrap(neg ? stripSignPlain(a) : a);
+          if (i === 0) return neg ? `−${body}` : body;
+          return `${neg ? ' − ' : ' + '}${body}`;
+        })
+        .join('');
+    case 'mul': {
+      // Bỏ hệ số $1$ và gộp dấu âm ra đầu — `1·x` và `−1·x` là thứ không ai viết tay.
+      const neg = negativeTerm(e);
+      const body = neg ? stripSignPlain(e) : e;
+      if (body.k !== 'mul') return `${neg ? '−' : ''}${toPlain(body)}`;
+      const shown = body.args.filter((a) => !(a.k === 'int' && a.v === 1));
+      const text = shown
+        .map((a, i) => {
+          const s = PLAIN_PREC[a.k] < PLAIN_PREC['mul'] ? `(${toPlain(a)})` : toPlain(a);
+          return i > 0 && (a.k === 'int' || a.k === 'rat') ? `·${s}` : s;
+        })
+        .join('');
+      return `${neg ? '−' : ''}${text}`;
+    }
+    case 'div':
+      return `${wrap(e.num)}/${wrap(e.den, true)}`;
+    case 'pow':
+      return `${wrap(e.base, true)}^${wrap(e.exp, true)}`;
+    case 'root':
+      return e.index === 2 ? `√(${toPlain(e.arg)})` : `căn bậc ${e.index} của (${toPlain(e.arg)})`;
+    case 'abs':
+      return `|${toPlain(e.arg)}|`;
+    case 'rel':
+      return `${wrap(e.lhs)} ${PLAIN_REL[e.op] as string} ${wrap(e.rhs)}`;
+  }
+}
+
+/** Bỏ dấu âm của một hạng tử để in sau dấu $-$ đã tách ra. Chỉ dùng cho chữ trơn. */
+function stripSignPlain(e: Expr): Expr {
+  if (e.k === 'int') return { ...e, v: Math.abs(e.v) };
+  if (e.k === 'rat') return { ...e, p: Math.abs(e.p) };
+  if (e.k !== 'mul') return e;
+  const at = e.args.findIndex((a) => (a.k === 'int' && a.v < 0) || (a.k === 'rat' && a.p < 0));
+  if (at === -1) return e;
+  const coef = e.args[at] as Expr;
+  const rest = e.args.filter((_, i) => i !== at);
+  if (coef.k === 'int' && coef.v === -1) {
+    return rest.length === 1 ? (rest[0] as Expr) : { ...e, args: rest };
+  }
+  const positive: Expr =
+    coef.k === 'int'
+      ? { ...coef, v: -coef.v }
+      : { ...(coef as Extract<Expr, { k: 'rat' }>), p: -(coef as Extract<Expr, { k: 'rat' }>).p };
+  return { ...e, args: [positive, ...rest] };
+}
+
 /**
  * Chuỗi nguồn từ một cây — **không** phải để hiển thị (việc đó là của `typeset`),
  * mà để chốt canh khứ hồi `parse(unparse(e)) ≡ e` và để thông báo lỗi đọc được.
@@ -227,7 +343,9 @@ export function unparse(e: Expr): string {
     case 'mul':
       return `(${e.args.map(unparse).join(' * ')})`;
     case 'pow':
-      return `(${unparse(e.base)})^${e.exp < 0 ? `-${-e.exp}` : e.exp}`;
+      // Ngoặc quanh **cả hai** phía: số mũ nay là một biểu thức bất kỳ, và `x^-2`
+      // không ngoặc thì khứ hồi qua `unary` cho ra `mul[-1, 2]` thay vì `int(-2)`.
+      return `(${unparse(e.base)})^(${unparse(e.exp)})`;
     case 'div':
       return `(${unparse(e.num)} / ${unparse(e.den)})`;
     case 'abs':

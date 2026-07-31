@@ -1,4 +1,4 @@
-import { needsRealEval, totalDegree, varsOf, type Expr } from './expr.js';
+import { intExp, needsRealEval, totalDegree, varsOf, type Expr } from './expr.js';
 
 /**
  * Kiểm một bước biến đổi có **đúng** không, bằng đánh giá ngẫu nhiên trên
@@ -80,9 +80,14 @@ export function evalAt(e: Expr, env: ReadonlyMap<string, bigint>): bigint | null
       return s;
     }
     case 'pow': {
+      const n = intExp(e);
+      // Số mũ không nguyên không có mặt ở đây — `needsRealEval` đã lái cây ấy sang
+      // `sameValueReal` trước khi tới dòng này. Giữ nhánh `null` để nếu ngày nào đó
+      // lối lái ấy hỏng thì kết quả là "không kiểm được", không phải một số bịa ra.
+      if (n === null) return null;
       const b = evalAt(e.base, env);
       if (b === null) return null;
-      return modPow(b, e.exp);
+      return modPow(b, n);
     }
     case 'div': {
       const n = evalAt(e.num, env);
@@ -140,8 +145,14 @@ export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | nu
     case 'pow': {
       const b = evalReal(e.base, env);
       if (b === null) return null;
-      if (b === 0 && e.exp < 0) return null;
-      return ok(Math.pow(b, e.exp));
+      const n = evalReal(e.exp, env);
+      if (n === null) return null;
+      if (b === 0 && n <= 0) return null;
+      // Cơ số **âm** với số mũ không nguyên: $(-8)^{1/3}$ không xác định trên
+      // $\mathbb{R}$ theo định nghĩa luỹ thừa thực (`Math.pow` trả `NaN`). Điểm này vô
+      // dụng chứ không phải bằng chứng sai — cùng lối với căn bậc chẵn của số âm.
+      if (b < 0 && !Number.isInteger(n)) return null;
+      return ok(Math.pow(b, n));
     }
     case 'div': {
       const n = evalReal(e.num, env);
@@ -164,9 +175,45 @@ export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | nu
   }
 }
 
+/**
+ * Điều kiện một bước tự khai: điểm vi phạm nó bị **bỏ qua** khi kiểm.
+ *
+ * Trước M50 chỗ này là một mẹo: `model` dựng guard bằng cách **parse lại `step.arg`**,
+ * đúng tình cờ cho `mul_both_sides` (arg *là* thừa số) và sai với mọi luật khác. Luật
+ * phải tự khai điều kiện của nó, vì chỉ nó biết điều kiện ấy là gì — `abs_case` cần
+ * "$A \ge 0$", một thứ không đọc ra được từ chuỗi tác giả gõ.
+ */
+export interface Guard {
+  readonly expr: Expr;
+  readonly sign: '!=0' | '>=0' | '<=0';
+}
+
+/** Điểm này có dùng được không: `false` khi nó vi phạm điều kiện bước tự khai. */
+function guardHolds(guard: Guard | null, env: ReadonlyMap<string, number>): boolean {
+  if (guard === null) return true;
+  const v = evalReal(guard.expr, env);
+  if (v === null) return false;
+  if (guard.sign === '!=0') return Math.abs(v) > 1e-6;
+  return guard.sign === '>=0' ? v >= 0 : v <= 0;
+}
+
 export interface SoundnessResult {
   readonly ok: boolean;
   readonly message: string;
+  /**
+   * Đã thật sự kiểm được chưa.
+   *
+   * `ok: true` một mình là câu trả lời **nhập nhằng**: nó vừa nghĩa là "đã thử và
+   * khớp", vừa nghĩa là "không tìm được điểm nào để thử". Hai thứ ấy khác nhau như
+   * đêm với ngày, và trước khi có số mũ hữu tỉ thì nhánh thứ hai gần như không với
+   * tới nên nhập nhằng ấy không hại ai. Nay $x^{1/2}$ đòi cơ số $\ge 0$ mà bộ bốc
+   * điểm bốc cả hai dấu, nên **quá nửa số điểm bị bỏ** — nhánh ấy thành với tới được.
+   *
+   * `model` gom mọi bước `verified: false` vào `unchecked` và engine nói ra. Một bước
+   * không kiểm được mà đi qua **im lặng như bước đã kiểm** là đúng cái bẫy đã cắn
+   * engine này hai lần (M47b, M47c).
+   */
+  readonly verified: boolean;
 }
 
 /**
@@ -175,22 +222,43 @@ export interface SoundnessResult {
  * Bậc vượt trần thì trả `ok` kèm lời khai — cận Schwartz–Zippel không còn ý nghĩa,
  * và im lặng coi như đúng thì tệ hơn nói ra rằng không kiểm được.
  */
-export function sameValue(a: Expr, b: Expr, seed = 20260731, trials = 8): SoundnessResult {
+export function sameValue(
+  a: Expr,
+  b: Expr,
+  seed = 20260731,
+  trials = 8,
+  guard: Guard | null = null,
+): SoundnessResult {
   // Có căn thì đổi sân: $\mathbb{F}_p$ không có khái niệm "căn bậc hai của $2$".
-  if (needsRealEval(a) || needsRealEval(b)) return sameValueReal(a, b, seed, trials);
+  // Điều kiện có **dấu** cũng buộc đổi sân: trường hữu hạn không có thứ tự, nên
+  // "$A \ge 0$" ở đó là một câu vô nghĩa chứ không phải một câu khó kiểm.
+  if (needsRealEval(a) || needsRealEval(b) || (guard !== null && guard.sign !== '!=0')) {
+    return sameValueReal(a, b, seed, trials, guard);
+  }
 
   const d = Math.max(totalDegree(a), totalDegree(b));
   if (d > 4096) {
-    return { ok: true, message: `bậc ${d} quá lớn — không kiểm được bằng điểm ngẫu nhiên` };
+    return {
+      ok: true,
+      verified: false,
+      message: `bậc ${d} quá lớn — không kiểm được bằng điểm ngẫu nhiên`,
+    };
   }
 
   const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
   const rand = lcg(seed);
   let done = 0;
 
-  for (let attempt = 0; attempt < trials * 4 && done < trials; attempt += 1) {
+  for (let attempt = 0; attempt < trials * 8 && done < trials; attempt += 1) {
     const env = new Map<string, bigint>();
     for (const n of names) env.set(n, rand());
+
+    // Điều kiện "$\ne 0$" kiểm được ngay trên $\mathbb{F}_p$; loại dấu đã bị lái sang
+    // đường thực ở trên.
+    if (guard !== null) {
+      const g = evalAt(guard.expr, env);
+      if (g === null || g === 0n) continue;
+    }
 
     const va = evalAt(a, env);
     const vb = evalAt(b, env);
@@ -199,12 +267,14 @@ export function sameValue(a: Expr, b: Expr, seed = 20260731, trials = 8): Soundn
     done += 1;
     if (va !== vb) {
       const at = names.map((n) => `${n}=${env.get(n)}`).join(', ');
-      return { ok: false, message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}` };
+      return { ok: false, verified: true, message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}` };
     }
   }
 
-  if (done === 0) return { ok: true, message: 'không tìm được điểm nào mẫu khác 0' };
-  return { ok: true, message: `khớp trên ${done} điểm ngẫu nhiên` };
+  if (done === 0) {
+    return { ok: true, verified: false, message: 'không tìm được điểm nào mẫu khác 0' };
+  }
+  return { ok: true, verified: true, message: `khớp trên ${done} điểm ngẫu nhiên` };
 }
 
 /**
@@ -219,7 +289,13 @@ export function sameValue(a: Expr, b: Expr, seed = 20260731, trials = 8): Soundn
  * mù đúng chỗ nguy hiểm nhất của căn thức. Điểm rơi vào miền không xác định thì bị bỏ
  * qua, không bị kết tội — nên trần số lần thử phải rộng.
  */
-export function sameValueReal(a: Expr, b: Expr, seed: number, trials: number): SoundnessResult {
+export function sameValueReal(
+  a: Expr,
+  b: Expr,
+  seed: number,
+  trials: number,
+  guard: Guard | null = null,
+): SoundnessResult {
   const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
   let s = (seed >>> 0) || 1;
   const rand = (): number => {
@@ -233,6 +309,7 @@ export function sameValueReal(a: Expr, b: Expr, seed: number, trials: number): S
   for (let attempt = 0; attempt < trials * 40 && done < trials; attempt += 1) {
     const env = new Map<string, number>();
     for (const n of names) env.set(n, rand());
+    if (!guardHolds(guard, env)) continue;
 
     const va = evalReal(a, env);
     const vb = evalReal(b, env);
@@ -241,12 +318,14 @@ export function sameValueReal(a: Expr, b: Expr, seed: number, trials: number): S
     const scale = Math.max(1, Math.abs(va), Math.abs(vb));
     if (Math.abs(va - vb) > 1e-9 * scale) {
       const at = names.map((n) => `${n}=${(env.get(n) as number).toFixed(4)}`).join(', ');
-      return { ok: false, message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}` };
+      return { ok: false, verified: true, message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}` };
     }
   }
 
-  if (done === 0) return { ok: true, message: 'không tìm được điểm nào xác định' };
-  return { ok: true, message: `khớp trên ${done} điểm thực` };
+  if (done === 0) {
+    return { ok: true, verified: false, message: 'không tìm được điểm nào xác định' };
+  }
+  return { ok: true, verified: true, message: `khớp trên ${done} điểm thực` };
 }
 
 /**
@@ -291,7 +370,7 @@ export function evalRelation(e: Expr, env: ReadonlyMap<string, number>): boolean
 export function sameSolutionSet(
   a: Expr,
   b: Expr,
-  guard: Expr | null,
+  guard: Guard | null,
   seed: number,
   trials = 24,
 ): SoundnessResult {
@@ -308,10 +387,7 @@ export function sameSolutionSet(
   for (let attempt = 0; attempt < trials * 20 && done < trials; attempt += 1) {
     const env = new Map<string, number>();
     for (const n of names) env.set(n, rand());
-    if (guard !== null) {
-      const g = evalReal(guard, env);
-      if (g === null || Math.abs(g) < 1e-6) continue;
-    }
+    if (!guardHolds(guard, env)) continue;
     const va = evalRelation(a, env);
     const vb = evalRelation(b, env);
     if (va === null || vb === null) continue;
@@ -319,12 +395,91 @@ export function sameSolutionSet(
     if (va === vb) agree += 1;
     else {
       const at = names.map((n) => `${n}=${(env.get(n) as number).toFixed(4)}`).join(', ');
-      return { ok: false, message: `tập nghiệm khác nhau tại ${at || 'điểm hằng'}` };
+      return { ok: false, verified: true, message: `tập nghiệm khác nhau tại ${at || 'điểm hằng'}` };
     }
   }
 
-  if (done === 0) return { ok: true, message: 'không tìm được điểm nào xác định' };
-  return { ok: true, message: `cùng chân lý trên ${agree} điểm` };
+  if (done === 0) {
+    return { ok: true, verified: false, message: 'không tìm được điểm nào xác định' };
+  }
+  return { ok: true, verified: true, message: `cùng chân lý trên ${agree} điểm` };
+}
+
+export interface ImplicationResult extends SoundnessResult {
+  /** Tìm được điểm mà `after` đúng còn `before` sai ⇒ bước này **sinh nghiệm ngoại lai**. */
+  readonly widened: boolean;
+}
+
+/**
+ * `before` có **kéo theo** `after` không — hợp đồng kiểm **một chiều**.
+ *
+ * Có vì bình phương hai vế không bảo toàn tập nghiệm, nó **nới rộng**. Viết luật ấy
+ * dưới hợp đồng `sameSolutionSet` thì engine báo `unsound` — và báo đúng. Nên thứ phải
+ * thêm không phải một luật mà là một **câu hỏi khác**: "mọi nghiệm cũ còn là nghiệm
+ * mới chứ?" thay vì "hai tập nghiệm trùng nhau chứ?".
+ *
+ * Ba thứ đọc ra từ cùng một lượt bốc điểm:
+ *
+ * | thấy ở một điểm | kết luận |
+ * |---|---|
+ * | `before` đúng, `after` **sai** | kéo theo **sai** — lỗi engine thật |
+ * | `after` đúng, `before` sai | có **nghiệm ngoại lai** ⇒ `widened` |
+ * | không điểm nào `before` đúng | `verified: false` ⇒ vào `unchecked` |
+ *
+ * **Răng của nó nằm ở bất đẳng thức**, và có thật: $x<3 \to x^2<9$ sai tại $x=-5$, mà
+ * bộ bốc điểm trúng nửa trục âm một nửa số lần. Với **phương trình** thì "`before`
+ * đúng" có độ đo $0$ nên hầu như không bao giờ chạm tới — và ở đó nó trả `verified:
+ * false` chứ **không** giả vờ xanh. Đó đúng là chỗ máy móc `unchecked` của M49 sinh ra
+ * để đứng.
+ */
+export function impliesSolutionSet(
+  before: Expr,
+  after: Expr,
+  guard: Guard | null,
+  seed: number,
+  trials = 40,
+): ImplicationResult {
+  const names = [...new Set([...varsOf(before), ...varsOf(after)])].sort();
+  let s = (seed >>> 0) || 1;
+  const rand = (): number => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const u = s / 0x7fffffff;
+    return u < 0.5 ? -(0.25 + u * 9) : 0.25 + (u - 0.5) * 9;
+  };
+  let held = 0;
+  let widened = false;
+
+  for (let attempt = 0; attempt < trials * 20; attempt += 1) {
+    const env = new Map<string, number>();
+    for (const n of names) env.set(n, rand());
+    if (!guardHolds(guard, env)) continue;
+
+    const vb = evalRelation(before, env);
+    const va = evalRelation(after, env);
+    if (vb === null || va === null) continue;
+
+    if (vb && !va) {
+      const at = names.map((n) => `${n}=${(env.get(n) as number).toFixed(4)}`).join(', ');
+      return {
+        ok: false,
+        verified: true,
+        widened,
+        message: `kéo theo sai tại ${at || 'điểm hằng'}: vế trước đúng mà vế sau sai`,
+      };
+    }
+    if (vb) held += 1;
+    if (va && !vb) widened = true;
+  }
+
+  if (held === 0) {
+    return {
+      ok: true,
+      verified: false,
+      widened,
+      message: 'không bốc trúng điểm nào thoả quan hệ trước — chưa kiểm được chiều kéo theo',
+    };
+  }
+  return { ok: true, verified: true, widened, message: `kéo theo đúng trên ${held} điểm` };
 }
 
 /**

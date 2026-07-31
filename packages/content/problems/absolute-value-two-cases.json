@@ -1,0 +1,187 @@
+{
+  "schema_version": "0.3.0",
+  "id": "absolute-value-two-cases",
+  "statement": {
+    "vi": "Phương trình chứa dấu giá trị tuyệt đối tách thành hai nhánh, và **mỗi nhánh mang theo điều kiện của nó**. Bỏ quên điều kiện là cách nhanh nhất để nhận một nghiệm không tồn tại. Giải $|x-2| = 3x$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: điều kiện không phải chữ trang trí — engine dùng chính nó để kiểm bước biến đổi, bỏ qua những điểm ngẫu nhiên nằm ngoài miền. Không có nó thì $|x-2| = x-2$ bị kết tội sai ngay tại mọi $x < 2$."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Dấu giá trị tuyệt đối không bỏ được nếu chưa biết dấu của biểu thức bên trong. Nên bài tách làm hai nhánh, và [[a1|dòng đỏ]] dưới mỗi hình ghi rõ nhánh ấy chỉ có nghĩa ở đâu. Chia nhánh là việc của cây lời giải, không phải của một nút trong biểu thức."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "abs(x - 2) = 3*x",
+              "steps": [
+                {
+                  "arg": "+",
+                  "at": "L",
+                  "rule": "abs_case"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: trị tuyệt đối của x trừ 2 bằng 3x, rồi x trừ 2 bằng 3x, kèm điều kiện x trừ 2 lớn hơn hoặc bằng 0."
+          },
+          "verified": true
+        },
+        {
+          "id": "c1",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: x − 2 ≥ 0"
+          },
+          "narrative": {
+            "vi": "Nhánh này giả thiết $x \\ge 2$. Chuyển vế và thu gọn được [[a1|$-2x = 2$]], tức $x = -1$. Nhưng $-1 < 2$ nên nó **vi phạm chính điều kiện của nhánh** — loại, dù nó là nghiệm đúng của phương trình đã bỏ dấu."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "abs(x - 2) = 3*x",
+              "steps": [
+                {
+                  "arg": "+",
+                  "at": "L",
+                  "rule": "abs_case"
+                },
+                {
+                  "arg": "-3*x + 2",
+                  "at": "",
+                  "rule": "add_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "collect_like"
+                },
+                {
+                  "at": "R",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Năm dòng nhánh dương, kết thúc ở âm 2x bằng 2 với điều kiện x trừ 2 không âm."
+          },
+          "verified": true
+        },
+        {
+          "id": "c2",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: x − 2 ≤ 0"
+          },
+          "narrative": {
+            "vi": "Nhánh kia giả thiết $x \\le 2$, và dấu trừ được phân phối vào trong ngoặc. Thu gọn cho [[a1|$2 = 4x$]], tức $x = \\frac12$. Lần này $\\frac12 \\le 2$ nên điều kiện thoả — đây là nghiệm duy nhất của bài."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row6"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "abs(x - 2) = 3*x",
+              "steps": [
+                {
+                  "arg": "-",
+                  "at": "L",
+                  "rule": "abs_case"
+                },
+                {
+                  "at": "L",
+                  "rule": "distribute"
+                },
+                {
+                  "at": "L.1",
+                  "rule": "fold_coefficients"
+                },
+                {
+                  "arg": "x",
+                  "at": "",
+                  "rule": "add_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "collect_like"
+                },
+                {
+                  "at": "R",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bảy dòng nhánh âm, kết thúc ở 2 bằng 4x với điều kiện x trừ 2 không dương."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

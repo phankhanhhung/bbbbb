@@ -249,7 +249,22 @@ RuleResult | Refusal`. Không luật nào đi ra ngoài cây con nó được g�
 | ★ `substitute` | bất kỳ | thay biến bằng biểu thức | `"x := 2*y"` |
 | `drop_unit` | `mul` có thừa số $1$, hoặc `add` có hạng tử $0$ | bỏ chúng đi | — |
 
-`associate` và `common_denominator` **chưa cài** — xem §20.
+Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn nó nhiều — **41 luật** tính
+đến M50 — và hai chỗ bảng này khai sai:
+
+- `associate` **không cài, và sẽ không cài**: dạng chuẩn tắc §3.1 làm phẳng `add`/`mul`
+  nên hai cách nhóm là *cùng một cây*. Xem §26.1.
+- `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
+  `split_fraction`.
+
+Xem §21–§26 để biết tập luật thật, xếp theo ba lớp:
+
+| lớp | luật |
+|---|---|
+| **lõi đại số** | `commute`, `distribute`, `factor`, `collect_like`, `eval_int`, `drop_unit`, `fold_coefficients`, `common_denominator`, `combine_fraction`, `split_fraction`, `cancel_common`, `factor_by_grouping` |
+| **hằng đẳng thức & đa thức** | `expand_square`, `expand_cube`, `multiply_out`, `expand_diff_squares`, `factor_diff_squares`, `factor_cubes`, `factor_quadratic`, `complete_square`, `factor_power_difference`, `factor_power_sum_odd` |
+| **căn & luỹ thừa** | `pow_add`, `pow_mul`, `root_pow`, `root_of_product`, `eval_root`, `pull_square_out`, `rationalize`, `multiply_by_conjugate`, `denest_radical`, `root_to_power`, `power_to_root` |
+| **phương trình có điều kiện (★)** | `add_both_sides`, `mul_both_sides`, `pow_both_sides`, `abs_case`, `evaluate_at`, `set_variable`, `substitute`, `quadratic_formula` |
 
 **Hai điều luật này cố ý không có:**
 
@@ -330,6 +345,32 @@ và cho phép quét $A = BQ+R$ của `longdiv`.
 Nhóm ★ kiểm khác: `add_both_sides` bảo toàn tập nghiệm **do cấu trúc** (cùng một cây
 cộng vào hai vế), `mul_both_sides` theo AL-08, `substitute` thì không phải đẳng thức
 nên không kiểm bằng cách này.
+
+> Câu trên **sai**, và nó đã che đúng một lỗi: nhân bất đẳng thức với số âm mà không
+> đổi chiều (§22.1). "Đúng do cấu trúc" là thứ phải chứng minh, không phải thứ để khai.
+> Đây là lần đầu trong ba lần cùng một bài học lặp lại — xem §25.4.
+
+### 6.1 Sáu hợp đồng kiểm (M50)
+
+Không có một câu hỏi chung. Mỗi bước khai **nó hứa gì**, và engine hỏi đúng câu ấy;
+trộn chúng lại là bỏ lọt.
+
+| hợp đồng | câu hỏi | ai dùng |
+|---|---|---|
+| mặc định (biểu thức) | hai vế **đồng nhất bằng nhau**? | mọi rewrite thuần |
+| mặc định (quan hệ) | hai quan hệ **cùng tập nghiệm**? | `add_both_sides`, `mul_both_sides`, `pow_both_sides` bậc lẻ |
+| `binding` | thế ngược ẩn phụ rồi mới hỏi câu thứ nhất | `set_variable` |
+| `verify: 'root'` | nghiệm ấy có **thoả** phương trình trước? | `quadratic_formula` |
+| `verify: 'implies'` | mọi nghiệm cũ còn là nghiệm mới? (một chiều) | `pow_both_sides` bậc chẵn |
+| `verify: 'instance'` | `after` có đúng bằng `before` sau khi thế? | `evaluate_at` |
+
+Kèm theo hai thứ mà kết quả kiểm phải phân biệt được:
+
+- **`verified`** — đã thật sự thử được chưa. `ok: true` một mình nhập nhằng giữa "đã
+  thử và khớp" với "không tìm được điểm nào để thử" (§25.4a).
+- **`guard`** — điều kiện bước tự khai, **máy đọc được**. Bộ kiểm bỏ những điểm vi
+  phạm nó. Trước M50 `model` dựng guard bằng cách parse lại `step.arg`: đúng tình cờ
+  cho `mul_both_sides`, nơi arg *là* thừa số, và sai với mọi luật khác.
 
 ---
 
@@ -503,14 +544,24 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
 
 ## 16. Cố ý **không** làm
 
-- **Hàm siêu việt.** Không $\sin$, không $\log$, không $e^x$. Lúc cần chúng thì đây
-  là dự án khác, không phải một phiên bản sau.
-- **Số mũ ký hiệu.** $x^n$ với $n$ là biến. Nó kéo theo luật luỹ thừa có điều kiện và
-  kéo theo cả một tầng suy luận về miền — không đáng cho họ bài đang nhắm.
+- **Hàm siêu việt.** Không $\sin$, không $\log$. Lúc cần chúng thì đây là dự án khác,
+  không phải một phiên bản sau. ($2^x$ **vẽ** được từ M49 vì số mũ là `Expr`, nhưng
+  không có **luật** nào biến đổi nó — muốn có thì phải có logarit. Biểu diễn được
+  không đồng nghĩa biến đổi được, và ranh giới ấy là cố ý.)
+- ~~**Số mũ ký hiệu**~~ — **đã làm** (M49). Lời khai cũ nói $x^n$ "kéo theo cả một
+  tầng suy luận về miền — không đáng". Nửa đầu đúng, nửa sau sai: $x^n$ có mặt từ lớp
+  8, và tầng suy luận về miền ấy hoá ra gói gọn được trong hai chỗ, không hơn — xem
+  §25.
 - ~~**Căn thức**~~ — **đã làm** (M47b, theo yêu cầu chính chủ). Xem §21: nó không
   phải "thêm một loại nút", nó **đổi bộ kiểm**.
 - ~~**Giá trị tuyệt đối**~~ — **đã làm** (M47c), chính vì cái thiếu ấy đã cắn.
-- **Phần nguyên, luỹ thừa số mũ hữu tỉ, logarit.** Chưa có.
+- ~~**Luỹ thừa số mũ hữu tỉ**~~ — **đã làm** (M49). Nó là nội dung lớp 11–12; khai nó
+  là "chưa có" trong khi engine nhắm toàn bộ đại số phổ thông là tự mâu thuẫn.
+- **Phần nguyên, logarit.** Chưa có.
+- ~~**Quy đồng, nhóm hạng tử, hoàn thành bình phương, bình phương hai vế**~~ — **đã
+  làm** (M50, theo góp ý ngoài). Xem §26.
+- **Căn bậc ký hiệu** ($\sqrt[n]{x}$ với $n$ là biến). `root.index` vẫn là số nguyên;
+  ai cần thì viết $x^{1/n}$, nay đã có.
 - **Hệ phương trình.** Cần một nút chứa **nhiều** quan hệ; chưa có. Đây là mảng lớn
   nhất còn thiếu của chương trình phổ thông.
 - ~~**Công thức nghiệm bậc hai**~~ — **đã làm** (M47e), và **không** cần nút "hoặc":
@@ -855,3 +906,233 @@ Ba hợp đồng kiểm, khai tường minh thay vì đoán theo dáng nút:
 
 **Biệt thức âm thì từ chối** — và lời từ chối ấy chính là câu trả lời của nhánh đó.
 Bài `quartic-by-substitution` (#91) dùng đúng nó làm nội dung nhánh thứ hai.
+
+---
+
+## 25. Lồng sâu và số mũ là **biểu thức** (M49)
+
+Hai yêu cầu của chính chủ: nâng độ cồng kềnh hai bậc, và số mũ phải biểu diễn được cả
+hữu tỉ lẫn vô tỉ. Đo trước khi thiết kế, và phép đo đổi hẳn cách làm phần đầu.
+
+### 25.1 Trần cũ đo nhầm vật
+
+`maxDepth: 6` đếm **mọi** tầng nút, với chú thích nói rằng nó đứng thay cho chiều cao
+dòng và cỡ chữ. Nó không đứng thay được:
+
+| | `depth` | cao/ô | chữ nhỏ nhất | trần cũ |
+|---|---:|---:|---:|---|
+| phân thức lồng 3 tầng | 6 | 1,69 | 2,76 | cho qua |
+| kết quả nhân liên hợp (mẫu có căn lồng) | 9 | **1,66** | **4,10** | **chặn** |
+
+Cái bị chặn **thấp hơn** và **chữ to hơn** cái được cho qua. Vì `add` tốn một tầng và
+tốn $0$ chiều cao, còn căn lồng gần như miễn phí cả hai chiều. Hậu quả cụ thể:
+`multiply_by_conjugate` trên `1/(1 + sqrt(3 + 2*sqrt(2)))` — bài trục căn thức bình
+thường của THCS — bị từ chối với lời "cây sâu 7 tầng, quá 6".
+
+**Bài học:** một trần đứng thay cho thứ khác thì sớm muộn cũng chặn nhầm. Nay
+`readAlgebra` gọi thẳng `measure(toBox(...))` — hỏi đúng bộ sắp chữ sẽ vẽ nó — và lời
+từ chối nói con số đo được (`cao 3.9 ô, quá 3`), không nói độ sâu.
+
+### 25.2 Sàn cỡ chữ, rồi mới nâng trần
+
+Số đo nói nút thắt của "nâng hai bậc" **không phải chiều cao mà là cỡ chữ**: căn lồng
+giữ $5{,}00$ ở mọi tầng, còn phân thức lồng teo $0{,}82$ mỗi tầng và tới tầng 5 còn
+$1{,}85$ đơn vị $\approx 8$px. Nâng trần mà không chạm chỗ teo chữ thì được hai tầng
+không đọc nổi.
+
+TeX có đúng **ba** cỡ rồi dừng. `typeset.ts` làm đúng thế: `SIZE_FLOOR = FONT * 0.6`
+và mọi chỗ thu nhỏ đi qua `shrink(size, factor)`. Đổi lại chiều cao tăng nhanh hơn ở
+tầng sâu — mà chiều cao thì nay đo được.
+
+| tầng | 3 | 4 | 5 | 6 | 7 |
+|---|---:|---:|---:|---:|---:|
+| cao (ô) | 1,74 | 2,14 | 2,53 | 2,93 | 3,33 |
+| chữ nhỏ nhất | 3,00 | 3,00 | 3,00 | 3,00 | 3,00 |
+
+`maxHeightCells: 3` cho qua tới tầng **6** — trần cũ dừng ở tầng 3, nên là nâng ba
+bậc. `maxWidthCells: 12` có **riêng** vì Player co cả hình cho vừa khung: một dòng quá
+rộng không tràn ra ngoài mà làm *mọi thứ* nhỏ lại, nên sàn ở đơn vị scene không cứu
+được. Thứ rộng nhất viết ra được trong thực tế — khai triển $(a+b)^6$ — đo $7{,}78$ ô.
+
+### 25.3 `pow.exp` thành `Expr` — rẻ vì cây chưa bao giờ được serialize
+
+`start` và `arg` trong scene là **chuỗi**, nên đổi kiểu nút không cần migration,
+`SCHEMA_VERSION` đứng yên, và 91 bài không đụng tới một ký tự.
+
+Chìa khoá giữ mọi luật cũ nguyên hành vi là đúng một hàm: `intExp(e)` trả số mũ khi nó
+là số nguyên, `null` khi không. Mười luật giả định số nguyên hỏi qua đó và từ chối khi
+`null`. `pow_add`/`pow_mul` thì **bỏ** cửa ấy và tự tổng quát hoá — $x^ax^b = x^{a+b}$
+dựng bằng `add` trên cây số mũ — nhưng vẫn gộp hai số nguyên thành một số, vì $x^2x^3$
+phải ra $x^5$ chứ không ra $x^{2+3}$.
+
+Số mũ nay là con `.1` của `pow`, nên nó **neo được**: có `TermId`, tô sáng được, và áp
+luật vào chính nó được (`eval_int` tại `"1"`). Đường dẫn cũ vào cơ số vẫn là `.0`.
+
+### 25.4 Chỗ số mũ vô tỉ **không** miễn phí
+
+Kiểu dữ liệu cho không — $\sqrt2$ vốn đã là một `Expr`. Bộ kiểm thì không, và cả ba
+chỗ đều là biến thể của cùng cái bẫy đã cắn engine này hai lần.
+
+**(a) `ok: true` là câu trả lời nhập nhằng.** `sameValueReal` bỏ những điểm biểu thức
+không xác định, và khi bỏ hết thì vẫn trả `ok: true` với lời "không tìm được điểm nào
+xác định". Trước đây nhánh ấy gần như không với tới; nay số mũ không nguyên đòi cơ số
+$\ge 0$ trong khi bộ bốc điểm cố ý bốc cả hai dấu, nên **quá nửa số điểm bị bỏ**.
+`SoundnessResult.verified` tách hai nghĩa ra, `AlgebraModel.unchecked` gom lại, và
+`checkBounds` cảnh báo. Cả kho hiện ở 0, nên nó không phải một vệt vàng thường trực.
+
+**(b) Không được bốc riêng số dương cho dễ.** Cách "sửa" hiển nhiên cho (a) là thấy số
+mũ không nguyên thì chỉ bốc cơ số dương. Làm thế là dựng lại đúng lỗ M47b lùi một
+tầng: $(x^2)^{1/2} = x$ sẽ **qua**, dù đúng phải là $|x|$. Giữ nguyên hai dấu, sống
+với điểm bỏ đi, và để `verified` canh phần còn lại.
+
+**(c) Có chỗ bộ kiểm *không thể* bắt, và ở đó luật phải tự chặn.**
+$\sqrt[3]{-8} = -2$ trong khi $(-8)^{1/3}$ không xác định trên $\mathbb{R}$. Chỗ hai vế
+khác nhau lại **đúng là** chỗ vế phải trả `null`, tức là điểm bị bỏ qua chứ không bị
+kết tội — nên `sameValue` im lặng cho $\sqrt[3]x = x^{1/3}$ đi qua. `root_to_power` và
+`power_to_root` vì thế từ chối chỉ số lẻ trừ khi cơ số chắc chắn không âm.
+
+`pow_mul` có một hình dạng cùng họ: số mũ trong **chẵn**, số mũ ngoài không nguyên —
+luỹ thừa chẵn giấu mất dấu rồi số mũ không nguyên lấy nhánh chính luôn dương, nên
+$(x^2)^{1/2}$ ra $|x|$ chứ không ra $x$. Ở đây bộ kiểm *có* bắt được (cả hai vế cùng
+xác định ở $x<0$), nhưng luật vẫn tự chặn: lời báo phải là "từ chối", không phải
+"engine sai" — `unsound` mang nghĩa lỗi của engine, và tác giả chọn nhầm luật thì
+không phải lỗi ấy.
+
+> Ba lần rồi: mỗi khi đặc tả nói "chỗ này bộ kiểm lo được", phải hỏi lại **nó lo bằng
+> cách nào**. M47c là "đúng do cấu trúc" (sai), M47b là "chỉ cần bốc số dương" (sai),
+> và đây là "điểm vô định thì bỏ qua" (đúng, nhưng vì thế mà mù).
+
+### 25.5 Một lỗi sắp chữ, lại chỉ thấy khi nhìn
+
+`SUP_RISE` nâng số mũ theo **vươn lên của cơ số** — đủ khi số mũ là một chữ số. Số mũ
+nay là `Expr`, nên nó có thể là phân số, và phân số thò xuống dưới đường chân của
+chính nó rất sâu. Kết quả trên trang: $x^{1/2}$ vẽ ra thành $x$ đứng cạnh $\frac12$
+ngang tầm mắt — đọc là "x một phần hai", không phải "x mũ một phần hai". Không test
+nào đỏ; lượt nhìn PNG bắt ngay.
+
+Sửa: nâng theo **đáy của số mũ**, `max(base.above · SUP_RISE, exp.below + base.above ·
+SUP_CLEAR)`. `SUP_CLEAR = 0,22` chọn để số mũ là chữ số **không xê dịch một li**.
+
+Cùng một hình dạng lỗi với `NEST` (M47) và `SUP_RISE` ở đây: **một hằng số hiệu chỉnh
+cho một hình dạng, rồi hình dạng ấy thôi độc quyền.**
+
+
+---
+
+## 26. Tập luật mở rộng (M50)
+
+Một danh sách góp ý từ ngoài đề nghị thêm ~20 luật. Soát bằng code thì **5 mục đã có
+sẵn** — `expand_binomial_n` chính là `multiply_out`, `factor_minus_one` là `factor`
+với `arg: "-1"`, `negate_sum` là `distribute`, `divide_by_linear_factor` là cả một
+engine (`longdiv`, M46), `substitute_pattern` là `set_variable` — **1 mục không biểu
+diễn được**, và danh sách **bỏ sót** chỗ đắt nhất. Kết quả: 32 → **41 luật**.
+
+### 26.1 `associate` là một phép toán rỗng ở đây
+
+Đề nghị xếp nó đầu bảng, và nó **không cài được**. Dạng chuẩn tắc §3.1 làm phẳng
+`add`/`mul`:
+
+```
+(a*b + a*c) + (b*d + c*d)   →   (a*b + a*c + b*d + c*d)     gốc có 4 con
+```
+
+Hai cách nhóm là *cùng một cây*, nên không có gì để đổi. Và bất biến ấy không bỏ được:
+bỏ nó là mở lại lỗi M47 #8 — `add` lồng `add` làm **mọi đường dẫn của bước sau trỏ
+lệch**, một triệu chứng cực khó đọc.
+
+Nhu cầu thì có thật, và chỗ giải quyết nằm ở tầng khác: `factor_by_grouping` nhảy
+thẳng từ $ab+ac+bd+cd$ tới $a(b+c)+d(b+c)$, còn việc cho người đọc **thấy** cách nhóm
+là `hold` một pha tô sáng hai nhóm trước khi đổi (CHO-11, M48). **Cách nhóm là hình
+học của lời giải, không phải cấu trúc của cây.**
+
+Cùng lý lẽ ấy áp cho `abs_to_cases`: chia nhánh là việc của cây lời giải
+(`edge_type: "case"`), nên `abs_case` chỉ làm **một** nhánh và nhận `arg` là `"+"`/`"-"`
+— y hệt `quadratic_formula` (§24.3).
+
+### 26.2 Nhân tử chung phải biết số mũ
+
+`factor_by_grouping` cần nhân tử chung của một nhóm. So thừa số bằng `same` thì $x^2$
+và $x$ là hai vật khác nhau, nên nhân tử chung của $2x^2+2x$ ra $2$ thay vì $2x$ — và
+$2(x^2+x) + 3(x+1)$ **không lộ ra** thừa số $(x+1)$ chung, tức hỏng đúng việc luật này
+sinh ra để làm. Nên `monomial()` tách mỗi hạng tử thành hệ số + bảng *cơ số → số mũ*
+(khoá là chuỗi `unparse`, tức so theo **cấu trúc** chứ không theo danh tính), rồi lấy
+số mũ nhỏ nhất trên mỗi cơ số.
+
+`complete_square` đi bằng `rat`, không bằng `number`: $2x^2+3x+1 = 2(x+\frac34)^2 -
+\frac18$, mà tính bằng số thực thì $-\frac18$ ra $-0{,}12499999999999997$ và **dòng
+hình sai**.
+
+### 26.3 Bình phương hai vế là chuyện **lõi kiểm**, không phải chuyện thêm luật
+
+Đây là chỗ danh sách góp ý viết nhẹ tay ("kèm điều kiện rõ"). Hợp đồng kiểm cho
+`rel → rel` là `sameSolutionSet`; bình phương hai vế **nới rộng** tập nghiệm, nên viết
+luật ấy dưới hợp đồng cũ thì engine báo `unsound` — và báo **đúng**. Phải thêm một câu
+hỏi khác (§6.1), không phải thêm một hàm.
+
+`pow_both_sides` có ba nhánh, và sự phân biệt ấy *là* nội dung đáng dạy:
+
+| $n$ | quan hệ | kết quả |
+|---|---|---|
+| lẻ | bất kỳ | $x \mapsto x^n$ song ánh **tăng** ⇒ bảo toàn tập nghiệm, không mắc nợ gì |
+| chẵn | `=`, `!=` | **nới rộng** ⇒ hợp đồng `implies`, ghi món nợ ra hình |
+| chẵn | bất đẳng thức | **từ chối** trừ khi hai vế chắc chắn không âm — $-5<3$ mà $25>9$ |
+
+Nhánh thứ ba bám tiền lệ `mul_both_sides` từ chối khi chưa biết dấu: ở trường người ta
+tách trường hợp, và một điều kiện lấp liếm ở đây sẽ giấu mất đúng cái phải tách.
+
+**Món nợ ghi theo hợp đồng, không theo kết quả bốc điểm.** Bản đầu treo dòng đỏ vào cờ
+`widened` — "đã tìm thấy điểm mà vế sau đúng còn vế trước sai". Với **phương trình**,
+tập nghiệm có độ đo $0$ nên cờ ấy gần như không bao giờ bật, tức dòng đỏ sẽ không hiện
+ra ở đúng ca cần nó nhất. Chọn `verify: 'implies'` đã là lời khai "bước này một
+chiều"; `widened` chỉ xác nhận thêm khi may mắn bốc trúng (thường là ca bất đẳng thức).
+
+Và tình trạng kiểm được ghi **vào dòng đỏ ấy**, không vào `unchecked`: với phương trình
+thì "không bốc trúng nghiệm nào" là chuyện **cấu trúc**, xảy ra ở mọi bước bình phương,
+nên đẩy nó thành cảnh báo cho tác giả là dựng một vệt vàng thường trực mà tác giả không
+sửa được — đúng cái M45 dạy đừng làm.
+
+Răng của `implies` nằm ở **bất đẳng thức**: $x<3 \to x^2<9$ sai tại $x=-5$, và bộ bốc
+điểm trúng nửa trục âm một nửa số lần. Chốt canh dựng thẳng cặp ấy để chứng minh phép
+kiểm có răng, chứ không chỉ tin vào cái chặn ở luật.
+
+Món nợ được trả bằng `evaluate_at` — thay nghiệm ứng viên vào phương trình **gốc**. Nó
+đi hợp đồng `'instance'`, kiểm bằng **cấu trúc**: `substitute` đang được miễn kiểm, và
+M47c dạy rằng chỗ miễn kiểm là chỗ lỗ hổng nằm, nên luật này không xin miễn.
+
+### 26.4 Chốt canh quét ngẫu nhiên đã **không** quét gì suốt bốn hạng mục
+
+Thêm một khẳng định độ phủ vào phép quét ngẫu nhiên của §6, và nó lộ ra ngay: **13
+luật chưa từng được áp một lần nào**, trong đó 6 luật có từ trước M50. Hai nguyên nhân,
+cả hai đều thuộc loại "test xanh mà không kiểm gì":
+
+1. **Bộ sinh không với tới.** Nó không bao giờ sinh một quan hệ, nên cả nhóm ★ vô
+   hình; không có `^` nên không bao giờ dựng $(A+B)^2$; không có số mũ hữu tỉ nên
+   `power_to_root` cũng thế.
+2. **Bốc một cặp (nút, luật) mỗi vòng.** Đo ra thì $40\,000$ vòng chỉ áp được $175$
+   lần và chạm $4$ luật — xác suất trúng cả *hình dạng nút đúng* lẫn *luật đúng* cùng
+   lúc là tích của hai số nhỏ.
+
+Sửa: quét **mọi luật tại mọi nút**, thêm nhánh sinh quan hệ, và gieo thẳng một danh
+sách hình dạng mà bộ sinh không với tới được. Cùng ngần ấy công, độ phủ 41/41.
+
+Bảng `arg` cũng đổi từ chuỗi `?:` ba tầng sang một **bảng tra**: chuỗi `?:` thì luật
+thứ tư lặng lẽ rơi vào nhánh mặc định, luôn bị từ chối, và không ai biết.
+
+Và khẳng định độ phủ vừa bật lên đã bắt thêm một lỗi thật trong chính chốt canh: nó
+kiểm `set_variable` bằng câu hỏi "hai vế bằng nhau" trong khi luật ấy trả về một
+`binding`. Nay bỏ theo **cấu trúc kết quả** (`out.guard`, `out.binding`) chứ không theo
+danh sách tên luật — danh sách tên thì luật thứ mười lại lọt.
+
+### 26.5 Hai lỗi dấu, cả hai chỉ thấy khi nhìn PNG
+
+Lượt nhìn bắt hai lỗi mà 2654 test không bắt, và cả hai đều sai **về toán**, không chỉ
+xấu:
+
+- $-(x-2)$ in ra `−x − 2`. Dấu trừ chỉ ăn hạng tử đầu, nên đó là một biểu thức **khác**.
+  Bảng ưu tiên không bắt được vì dấu trừ ấy không phải một nút — nó là thứ `stripSign`
+  vừa bóc ra, nên chỗ duy nhất biết nó tồn tại là chỗ bóc.
+- $(-1)\cdot(-2)$ in ra `−−2`. `isNegative` tìm *một* thừa số âm rồi tách, nên phần còn
+  lại vẫn âm. Dấu của một tích phải đọc từ **tích các hệ số**.
+
+Lỗi thứ hai có sẵn trong kho: bài `factoring-identities` in $-1 \cdot 3x \cdot -1$
+với dấu sai suốt từ M47c. Sửa xong thì 2 golden đổi, và cả hai là **sửa lỗi**.

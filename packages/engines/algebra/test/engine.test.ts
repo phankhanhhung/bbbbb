@@ -8,16 +8,24 @@ import {
   algebraRenderer,
   algebraSchemaFragment,
   allPaths,
+  impliesSolutionSet,
   layout,
+  measure,
   nodeAt,
   parse,
+  place,
   readAlgebra,
   resolveAlgebraValidator,
+  ROW,
   RULES,
   sameSolutionSet,
   sameValue,
   same,
+  glyphBox,
+  shrink,
+  toBox,
   unparse,
+  FONT,
   type AlgebraStep,
 } from '../src/index.js';
 
@@ -26,6 +34,37 @@ const ctx = createContext(defaultTheme);
 
 const scene = (start: string, steps: AlgebraStep[] = [], extra: object = {}): Scene =>
   ({ engine: 'algebra', config: { start, steps, ...extra }, elements: [] }) as never;
+
+/**
+ * Tham số cho phép quét ngẫu nhiên — **một dòng cho mỗi luật nhận tham số**.
+ *
+ * Bảng chứ không phải chuỗi `?:` lồng nhau, vì bảng thì thiếu một dòng là nhìn ra ngay,
+ * còn chuỗi ba tầng `?:` thì luật thứ tư lặng lẽ rơi vào nhánh mặc định `'y'`, luôn bị
+ * từ chối, và không bao giờ được quét.
+ */
+type ArgMaker = (pickAtom: () => string, node: { k: string; args?: readonly unknown[] }) => string;
+
+const ARGS: Readonly<Record<string, ArgMaker>> = {
+  commute: () => '0,1',
+  factor: (p) => p(),
+  cancel_common: (p) => p(),
+  substitute: () => 'x := (y + 1)',
+  set_variable: () => 't := (x^2 + 5*x)',
+  quadratic_formula: () => '+',
+  pow_both_sides: () => '2',
+  abs_case: () => '+',
+  evaluate_at: () => 'x := 3',
+  // Phân hoạch phải **vừa với nút gặp phải**: `add` làm phẳng nên số hạng tử thay đổi
+  // theo từng biểu thức, và một `arg` cố định `"0,1|2,3"` chỉ áp được cho tổng đúng
+  // bốn hạng tử — tức là hầu như không bao giờ.
+  factor_by_grouping: (_p, node) => {
+    const n = node.args?.length ?? 0;
+    if (n < 2) return '0|1';
+    const half = Math.max(1, Math.floor(n / 2));
+    const idx = Array.from({ length: n }, (_, i) => i);
+    return `${idx.slice(0, half).join(',')}|${idx.slice(half).join(',')}`;
+  },
+};
 
 /** Chuỗi biến đổi dùng đi dùng lại: khai triển rồi gộp. */
 const EXPAND = scene('(x + 1)^2 + 3*x', [
@@ -77,7 +116,15 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
   it('mọi luật áp được đều **bảo toàn giá trị** trên quét ngẫu nhiên', () => {
     // Bản đại số của phép quét $A = BQ + R$ ở `longdiv`. Chốt canh này canh **engine**,
     // không canh tác giả: tác giả không gõ vế sau nên không sai kiểu đó được.
-    const ATOMS = ['x', 'y', '2', '3', '-1', 'x^2', 'sqrt(x)', 'sqrt(6)', 'abs(x)'];
+    //
+    // Bộ sinh phải **với tới được mọi luật**, và bản đầu thì không: nó không bao giờ
+    // sinh một quan hệ, nên cả nhóm ★ chưa từng bị quét lần nào; không có số mũ hữu tỉ
+    // nên `power_to_root` cũng thế. Chốt canh độ phủ ở cuối test này là thứ phát hiện
+    // ra chuyện đó — 13 luật, trong đó 6 luật có từ trước M50.
+    const ATOMS = [
+      'x', 'y', '2', '3', '-1', 'x^2', 'y^2', 'x^3', 'y^3',
+      'sqrt(x)', 'sqrt(6)', 'abs(x)', 'x^(1/2)', '1/x', '2/y',
+    ];
     let s = 4242;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
     const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(rand() * xs.length)] as T;
@@ -85,39 +132,65 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       d === 0 || rand() < 0.3
         ? pick(ATOMS)
         : `(${gen(d - 1)} ${pick(['+', '-', '*', '/'])} ${gen(d - 1)})`;
+    // Một phần tư số lượt là **quan hệ** — không có nhánh này thì nhóm ★ vô hình.
+    const genTop = (): string =>
+      rand() < 0.25 ? `${gen(2)} ${pick(['=', '<', '>', '<=', '>='])} ${gen(2)}` : gen(3);
+
+    // Hình dạng mà bộ sinh ngẫu nhiên **không với tới được**: nó không có toán tử `^`
+    // nên không bao giờ dựng $(A+B)^2$, và xác suất bốc trúng $\sqrt{48}$ hay một căn
+    // lồng đúng dạng là số không. Gieo thẳng, và ghi rõ đây là gieo — chốt canh độ phủ
+    // ở cuối nói cho biết còn thiếu gì, chứ không im lặng nhận là đã quét hết.
+    const SEEDS = [
+      '(x + 1)^2', '(x + y)^3', '(x + 1)^2 - (y + 2)^2', 'x^2 - y^2', 'x^2 - 4',
+      '(x - y)*(x + y)', 'sqrt(48)', 'sqrt(4)', '(sqrt(x))^2', '(x^2)^3',
+      'sqrt(3 + 2*sqrt(2))', 'sqrt(x)*sqrt(y)', 'x^2 + 5*x + 4 = 0',
+      'x^2 + 5*x + 4', '(x^2 + 5*x) + 4 = 0', '1/x + 1/y', 'x/6 + y/6',
+      'a*b + a*c + b*d + c*d', '2*x^2 + 2*x + 3*x + 3', 'a^4 - b^4', 'a^3 + b^3',
+      'sqrt(x + 5) = x - 1', 'abs(x - 2) = 3*x', 'x^2 + 6*x + 5',
+    ];
 
     const bad: string[] = [];
+    const seen = new Set<string>();
     let applied = 0;
 
-    for (let i = 0; i < 16000; i += 1) {
-      const src = gen(3);
+    // **Mọi luật tại mọi nút**, không phải một luật ngẫu nhiên mỗi vòng. Bản cũ bốc
+    // một cặp (nút, luật) mỗi vòng, và đo ra thì $40\,000$ vòng chỉ áp được $175$ lần
+    // và chạm tới $4$ luật: xác suất trúng cả *hình dạng nút đúng* lẫn *luật đúng* cùng
+    // lúc là tích của hai số nhỏ. Quét đủ thì cùng ngần ấy công cho độ phủ toàn phần.
+    const sources = [...SEEDS, ...Array.from({ length: 900 }, () => genTop())];
+    for (const [i, src] of sources.entries()) {
       const root = parse(src, new Minter());
-      const at = pick([...allPaths(root).keys()]);
-      const node = nodeAt(root, at);
-      const rule = pick(RULES);
-      if (node === null) continue;
 
-      const arg =
-        rule.id === 'commute'
-          ? '0,1'
-          : rule.id === 'factor' || rule.id === 'cancel_common'
-            ? pick(ATOMS)
-            : rule.id === 'substitute'
-              ? 'x := (y + 1)'
+      for (const [at, node] of allPaths(root)) {
+        for (const rule of RULES) {
+          // Mỗi luật nhận tham số phải có dòng riêng trong `ARGS`. Thiếu dòng thì luật
+          // ấy **luôn từ chối** và trôi qua phép quét mà không ai biết — lỗ im lặng
+          // đúng kiểu ba test rỗng đã bị bắt ở M48. Chốt canh độ phủ ở cuối bắt nó.
+          const arg =
+            ARGS[rule.id] !== undefined
+              ? (ARGS[rule.id] as ArgMaker)(() => pick(ATOMS), node)
               : rule.needsArg
                 ? 'y'
                 : undefined;
 
-      const out = rule.run(new Minter(), node, arg);
-      if ('refusal' in out) continue;
-      applied += 1;
-      // Nhóm ★ và `substitute` đổi *nghĩa*, không phải giá trị — kiểm bằng điểm
-      // ngẫu nhiên ở đó là hỏi sai câu hỏi.
-      if (rule.onRelation || rule.id === 'substitute') continue;
-      if (node.k === 'rel' || out.after.k === 'rel') continue;
+          const out = rule.run(new Minter(), node, arg);
+          if ('refusal' in out) continue;
+          applied += 1;
+          seen.add(rule.id);
+          // Nhóm ★, `substitute`, `evaluate_at` đổi *nghĩa* chứ không đổi giá trị; luật
+          // có `guard` thì chỉ hứa đúng **trong** điều kiện của nó. Kiểm chúng bằng
+          // điểm ngẫu nhiên không điều kiện là hỏi sai câu hỏi.
+          if (rule.onRelation || rule.id === 'substitute' || rule.id === 'evaluate_at') continue;
+          // Bỏ theo **cấu trúc kết quả**, không theo danh sách tên: `guard` nghĩa là
+          // "chỉ hứa đúng trong điều kiện này", `binding` nghĩa là "viết bằng biến mới,
+          // phải thế ngược lại rồi mới so". Danh sách tên thì luật thứ mười lại lọt.
+          if (out.guard !== undefined || out.binding !== undefined) continue;
+          if (node.k === 'rel' || out.after.k === 'rel') continue;
 
-      const verdict = sameValue(node, out.after, 777 + i);
-      if (!verdict.ok) bad.push(`${rule.id} tại "${at}" của ${src}: ${verdict.message}`);
+          const verdict = sameValue(node, out.after, 777 + i);
+          if (!verdict.ok) bad.push(`${rule.id} tại "${at}" của ${src}: ${verdict.message}`);
+        }
+      }
     }
 
     // Ngưỡng canh **phép quét có chạy thật**, không canh tỉ lệ trúng. Thêm luật thì
@@ -125,6 +198,11 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
     // hạ ngưỡng thay vì tăng vòng là làm chốt canh yếu đi mà vẫn xanh.
     expect(applied).toBeGreaterThan(300);
     expect(bad.slice(0, 5), bad.slice(0, 5).join('\n')).toEqual([]);
+
+    // Và canh **độ phủ**, không chỉ số lượt: 300 lượt dồn hết vào ba luật dễ áp thì
+    // vẫn qua ngưỡng trên trong khi cả tầng A không được sờ tới lần nào.
+    const untouched = RULES.map((r) => r.id).filter((id) => !seen.has(id));
+    expect(untouched, `luật chưa từng áp được lần nào: ${untouched.join(', ')}`).toEqual([]);
   });
 
   it('bắt được luật hỏng — chốt canh trên có răng', () => {
@@ -473,6 +551,419 @@ describe('bound', () => {
 
     expect(issues.map((i) => i.code)).toContain('bounds/algebra-refused');
     expect(issues[0]!.message).toContain('vị trí');
+  });
+});
+
+describe('lồng sâu và số mũ biểu thức', () => {
+  /** Liên phân số lồng `n` tầng — mỗi tầng một nhánh, không nhân đôi. */
+  const nestedFraction = (n: number): string => {
+    let s = 'x';
+    for (let i = 0; i < n; i += 1) s = `1 / (2 + ${s})`;
+    return s;
+  };
+  const nestedRadical = (n: number): string => {
+    let s = 'x';
+    for (let i = 0; i < n; i += 1) s = `sqrt(1 + ${s})`;
+    return s;
+  };
+  const drawn = (src: string): ReturnType<typeof place> =>
+    place(toBox(parse(src, new Minter())), 0, 0);
+
+  it('sàn cỡ chữ giữ được: lồng bao nhiêu tầng cũng không teo dưới 3 đơn vị', () => {
+    // TeX có ba cỡ rồi dừng. Không dừng thì mỗi tầng nhân $0{,}82$, và tầng 5 còn
+    // $1{,}85$ đơn vị $\approx 8$px — vẽ ra mà không đọc được.
+    for (const n of [1, 3, 6]) {
+      const sizes = drawn(nestedFraction(n)).glyphs.map((g) => g.size);
+      expect(Math.min(...sizes), `lồng ${n} tầng`).toBeGreaterThanOrEqual(shrink(0, 1));
+    }
+    expect(shrink(FONT, 0.01)).toBe(FONT * 0.6);
+  });
+
+  it('không glyph nào chồng lên glyph nào — so **hộp với hộp**, hai chiều', () => {
+    // So từng cặp, không chỉ cặp cùng đường chân: hai ca đè nguy hiểm nhất của engine
+    // này (số mũ đè cơ số, tử phân số đè vạch) nằm ở **khác** đường chân, nên phép so
+    // theo đường chân bỏ qua đúng chỗ cần nhìn.
+    //
+    // Và đo bằng bảng `EM` của engine, không bằng `estimateTextWidth` — hàm ấy ước đều
+    // $0{,}55$ em và ước **dôi**, nên nó báo nhầm hai ca lúc khảo sát.
+    const cases = [
+      nestedFraction(5),
+      nestedRadical(5),
+      'x^(1/2) + x^((n + 1) / 2)',
+      'x^sqrt(2) * x^(1 + sqrt(5))',
+      '(x^(1/2) + 1) / (x^(1/3) - 1)',
+      '2^x + x^-2',
+    ];
+    let compared = 0;
+
+    for (const src of cases) {
+      const boxes = drawn(src).glyphs.map((g) => ({ g, b: glyphBox(g) }));
+      for (let i = 0; i < boxes.length; i += 1) {
+        for (let j = i + 1; j < boxes.length; j += 1) {
+          const a = boxes[i]!;
+          const z = boxes[j]!;
+          compared += 1;
+          const overlap =
+            a.b.x1 < z.b.x2 - 1e-9 &&
+            z.b.x1 < a.b.x2 - 1e-9 &&
+            a.b.y1 < z.b.y2 - 1e-9 &&
+            z.b.y1 < a.b.y2 - 1e-9;
+          expect(overlap, `${src}: "${a.g.s}" đè "${z.g.s}"`).toBe(false);
+        }
+      }
+    }
+    // Chốt canh của chốt canh: nếu vòng lặp không so cặp nào thì nó xanh vô nghĩa.
+    expect(compared).toBeGreaterThan(200);
+  });
+
+  it('nâng đúng hai bậc trở lên, và trần cắn theo **chiều cao** chứ không theo độ sâu', () => {
+    // Trần cũ `maxDepth: 6` chặn ở lồng 3 tầng (depth 7). Nay:
+    for (const n of [3, 4, 5, 6]) {
+      expect(readAlgebra(scene(nestedFraction(n))).refusal, `lồng ${n} tầng`).toBeNull();
+    }
+    // Và vẫn có trần — không phải bỏ trần, mà là đo đúng vật.
+    const refusal = readAlgebra(scene(nestedFraction(8))).refusal;
+    expect(refusal).toContain('cao');
+    expect(refusal).not.toContain('sâu');
+  });
+
+  it('căn lồng sâu gần như miễn phí, và trần mới không phạt nó', () => {
+    // Số đo: căn lồng 6 tầng cao $1{,}50$ ô, chữ vẫn $5{,}00$. Trần theo độ sâu phạt
+    // nó ngang với phân thức lồng 6 tầng (cao $2{,}93$) — đó là chỗ nó đo nhầm.
+    const m = measure(toBox(parse(nestedRadical(6), new Minter())));
+    expect((m.above + m.below) / ROW).toBeLessThan(2);
+    expect(readAlgebra(scene(nestedRadical(6))).refusal).toBeNull();
+  });
+
+  it('ca trục căn thức từng bị chặn nay chạy', () => {
+    // `depth` của kết quả là 9, nhưng nó **thấp hơn và chữ to hơn** phân thức lồng 3
+    // tầng vốn được cho qua. Đây là bài THCS bình thường.
+    const m = readAlgebra(
+      scene('1 / (1 + sqrt(3 + 2*sqrt(2)))', [{ rule: 'multiply_by_conjugate', at: '' }]),
+    );
+
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    expect(m.rows).toHaveLength(2);
+  });
+
+  it('số mũ là biểu thức: hữu tỉ, ký hiệu, vô tỉ — parse, khứ hồi, vẽ', () => {
+    for (const src of [
+      'x^(1/2)',
+      'x^(2/3)',
+      'x^n',
+      'x^(n + 1)',
+      'x^-2',
+      'x^sqrt(2)',
+      'x^(1 + sqrt(5))',
+      '2^x',
+    ]) {
+      const m = new Minter();
+      const e = parse(src, m);
+      expect(same(parse(unparse(e), new Minter()), e), `khứ hồi ${src}`).toBe(true);
+      expect(drawn(src).glyphs.length, `vẽ ${src}`).toBeGreaterThan(1);
+      expect(readAlgebra(scene(src)).refusal, `dựng ${src}`).toBeNull();
+    }
+  });
+
+  it('bộ kiểm đổi sân đúng lúc: $\\sqrt x = x^{1/2}$, và $x^{1/2} \\ne x^{1/3}$', () => {
+    const p = (s: string): ReturnType<typeof parse> => parse(s, new Minter());
+
+    expect(sameValue(p('sqrt(x)'), p('x^(1/2)')).ok).toBe(true);
+    expect(sameValue(p('x^(1/2)'), p('x^(1/3)')).ok).toBe(false);
+    expect(sameValue(p('x^sqrt(2)*x^sqrt(2)'), p('x^(2*sqrt(2))')).ok).toBe(true);
+  });
+
+  it('§2.5(a) — không kiểm được thì **nói ra**, không im lặng cho qua', () => {
+    // `ok: true` một mình nhập nhằng giữa "đã thử và khớp" với "không tìm được điểm
+    // nào để thử". Trước khi có số mũ hữu tỉ, nhánh sau gần như không với tới.
+    const verdict = sameValue(parse('x^(1/2)', new Minter()), parse('x^(1/2)', new Minter()));
+    expect(verdict.ok).toBe(true);
+    expect(verdict.verified).toBe(true);
+
+    // Cơ số âm với số mũ không nguyên là vô định ở **mọi** điểm bốc được.
+    const blind = sameValue(parse('(0 - 3)^(1/2)', new Minter()), parse('1', new Minter()));
+    expect(blind.verified).toBe(false);
+
+    const m = readAlgebra(scene('sqrt(48)', [{ rule: 'pull_square_out', at: '' }]));
+    expect(m.unchecked).toEqual([]);
+  });
+
+  it('§2.5(b) — bộ kiểm vẫn bốc cả số âm, nên $(x^2)^{1/2} \\ne x$ vẫn bị bắt', () => {
+    // Cách "sửa" hiển nhiên cho (a) là chỉ bốc cơ số dương khi có số mũ hữu tỉ. Làm
+    // thế là dựng lại lỗ M47b lùi một tầng.
+    const p = (s: string): ReturnType<typeof parse> => parse(s, new Minter());
+
+    expect(sameValue(p('(x^2)^(1/2)'), p('x')).ok).toBe(false);
+    expect(sameValue(p('(x^2)^(1/2)'), p('abs(x)')).ok).toBe(true);
+
+    // Và luật tự chặn trước cả bộ kiểm — để lời báo là "từ chối", không phải "engine sai".
+    const m = readAlgebra(scene('(x^2)^(1/2)', [{ rule: 'pow_mul', at: '' }]));
+    expect(m.refusal).toContain('cơ số có thể âm');
+  });
+
+  it('§2.5(c) — căn bậc lẻ không thành luỹ thừa hữu tỉ được, và bộ kiểm không bắt nổi', () => {
+    // $\sqrt[3]{-8} = -2$ còn $(-8)^{1/3}$ không xác định trên $\mathbb R$. Chỗ chúng
+    // khác nhau đúng là chỗ vế phải trả `null`, tức là điểm bị **bỏ qua** — nên bộ
+    // kiểm im lặng, và chặn buộc phải nằm ở luật.
+    expect(sameValue(parse('root(3, x)', new Minter()), parse('x^(1/3)', new Minter())).ok).toBe(true);
+
+    expect(readAlgebra(scene('root(3, x)', [{ rule: 'root_to_power', at: '' }])).refusal).toContain(
+      'căn bậc lẻ',
+    );
+    const ok = readAlgebra(scene('root(3, 8)', [{ rule: 'root_to_power', at: '' }]));
+    expect(ok.refusal).toBeNull();
+    expect(ok.unsound).toEqual([]);
+
+    // Bậc chẵn thì hai vế xác định ở đúng cùng một miền, nên đi được cả hai chiều.
+    const both = readAlgebra(
+      scene('sqrt(x)', [{ rule: 'root_to_power', at: '' }, { rule: 'power_to_root', at: '' }]),
+    );
+    expect(both.refusal).toBeNull();
+    expect(both.unsound).toEqual([]);
+    expect(same(both.rows[2]!.expr, parse('sqrt(x^1)', new Minter()))).toBe(true);
+  });
+
+  it('`pow_add` và `pow_mul` chạy ký hiệu, mà số nguyên vẫn gộp thành một số', () => {
+    const symbolic = readAlgebra(scene('x^a * x^b', [{ rule: 'pow_add', at: '' }]));
+    expect(symbolic.refusal).toBeNull();
+    expect(symbolic.unsound).toEqual([]);
+    expect(symbolic.unchecked).toEqual([]);
+    expect(same(symbolic.rows[1]!.expr, parse('x^(a + b)', new Minter()))).toBe(true);
+
+    // Hành vi cũ không đổi: $x^2x^3$ vẫn ra $x^5$, không ra $x^{2+3}$.
+    const numeric = readAlgebra(scene('x^2 * x^3', [{ rule: 'pow_add', at: '' }]));
+    expect(same(numeric.rows[1]!.expr, parse('x^5', new Minter()))).toBe(true);
+  });
+
+  it('luật cũ giữ nguyên hành vi: số mũ không nguyên thì **từ chối**, không đoán', () => {
+    for (const rule of ['expand_square', 'expand_cube', 'multiply_out']) {
+      const m = readAlgebra(scene('(x + 1)^(1/2)', [{ rule, at: '' }]));
+      expect(m.refusal, rule).not.toBeNull();
+    }
+    // Còn với số mũ nguyên thì vẫn chạy y như trước.
+    expect(readAlgebra(scene('(x + 1)^2', [{ rule: 'expand_square', at: '' }])).refusal).toBeNull();
+  });
+
+  it('số mũ neo được: nó là một nút thật, có id và có đường dẫn `.1`', () => {
+    // Trước đây số mũ là một `number` nên không có danh tính, không tô sáng được, và
+    // không luật nào áp vào nó được.
+    const e = parse('x^(n + 1)', new Minter());
+    expect(nodeAt(e, '1')).not.toBeNull();
+    expect(unparse(nodeAt(e, '1') as never)).toContain('n');
+
+    const m = readAlgebra(scene('x^(2 + 3)', [{ rule: 'eval_int', at: '1' }]));
+    expect(m.refusal).toBeNull();
+    expect(same(m.rows[1]!.expr, parse('x^5', new Minter()))).toBe(true);
+  });
+});
+
+describe('tập luật mở rộng — quy đồng, nhóm, hoàn thành bình phương', () => {
+  const run = (start: string, steps: AlgebraStep[]): ReturnType<typeof readAlgebra> =>
+    readAlgebra(scene(start, steps));
+  const tree = (src: string): ReturnType<typeof parse> => parse(src, new Minter());
+
+  it('quy đồng rồi gộp là một chuỗi chạy được, và cả hai đều đúng giá trị', () => {
+    // Lỗ rõ nhất của tập luật cũ: `split_fraction` có mà nghịch đảo thì không, nên mọi
+    // chuỗi biến đổi hữu tỉ chỉ đi được một chiều.
+    const m = run('1/x + 1/y', [{ rule: 'common_denominator', at: '' }]);
+
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    expect(m.unchecked).toEqual([]);
+    // Miền không đổi ⇒ **không** sinh điều kiện. Khác hẳn `cancel_common`, vốn bỏ đi
+    // một mẫu và vì thế phải khai.
+    expect(m.conditions).toEqual([]);
+    expect(sameValue(m.rows[1]!.expr, tree('1/x + 1/y')).ok).toBe(true);
+  });
+
+  it('hai luật phân số nối vào nhau, và lời từ chối chỉ sang luật kia', () => {
+    expect(run('a/c + b/d', [{ rule: 'combine_fraction', at: '' }]).refusal).toContain(
+      'common_denominator',
+    );
+    expect(run('1/x + 2/x', [{ rule: 'common_denominator', at: '' }]).refusal).toContain(
+      'combine_fraction',
+    );
+
+    const ok = run('a/c + b/c', [{ rule: 'combine_fraction', at: '' }]);
+    expect(ok.unsound).toEqual([]);
+    expect(same(ok.rows[1]!.expr, tree('(a + b)/c'))).toBe(true);
+  });
+
+  it('hoàn thành bình phương giữ số học **hữu tỉ chính xác**', () => {
+    expect(same(run('x^2 + 6*x + 5', [{ rule: 'complete_square', at: '' }]).rows[1]!.expr,
+      tree('(x + 3)^2 - 4'))).toBe(true);
+
+    // $2x^2+3x+1 = 2(x+\frac34)^2 - \frac18$. Đi bằng `number` thì $-1/8$ ra
+    // $-0.12499999999999997$ và dòng hình sai — nên `rat` là bắt buộc, không phải gu.
+    const m = run('2*x^2 + 3*x + 1', [{ rule: 'complete_square', at: '' }]);
+    expect(m.unsound).toEqual([]);
+    expect(sameValue(m.rows[1]!.expr, tree('2*x^2 + 3*x + 1')).ok).toBe(true);
+    expect(unparse(m.rows[1]!.expr)).toContain('3 / 4');
+
+    // Bình phương đúng thì **không** còn phần dư lủng lẳng `+ 0`.
+    expect(same(run('x^2 + 4*x + 4', [{ rule: 'complete_square', at: '' }]).rows[1]!.expr,
+      tree('(x + 2)^2'))).toBe(true);
+  });
+
+  it('nhóm hạng tử lấy nhân tử chung **có số mũ**, không chỉ thừa số y hệt', () => {
+    // $2x^2+2x$ có nhân tử chung $2x$, không phải $2$. So thừa số bằng `same` thì $x^2$
+    // và $x$ là hai vật khác nhau, ra $2(x^2+x)$ — và thế là **không lộ** ra thừa số
+    // $(x+1)$ chung với nhóm kia, tức hỏng đúng việc luật này sinh ra để làm.
+    const m = run('2*x^2 + 2*x + 3*x + 3', [
+      { rule: 'factor_by_grouping', at: '', arg: '0,1|2,3' },
+    ]);
+    expect(m.unsound).toEqual([]);
+    expect(same(m.rows[1]!.expr, tree('2*x*(x + 1) + 3*(x + 1)'))).toBe(true);
+
+    // Và nối tiếp được: nhóm xong thì `factor` rút $(x+1)$ ra.
+    const full = run('2*x^2 + 2*x + 3*x + 3', [
+      { rule: 'factor_by_grouping', at: '', arg: '0,1|2,3' },
+      { rule: 'factor', at: '', arg: '(x + 1)' },
+    ]);
+    expect(full.unsound).toEqual([]);
+    expect(sameValue(full.rows.at(-1)!.expr, tree('2*x^2 + 5*x + 3')).ok).toBe(true);
+  });
+
+  it('phân hoạch hỏng thì từ chối, và nói hỏng ở đâu', () => {
+    const bad = (arg: string): string | null =>
+      run('a*b + a*c + b*d + c*d', [{ rule: 'factor_by_grouping', at: '', arg }]).refusal;
+
+    expect(bad('0,1|2')).toContain('không thuộc nhóm nào');
+    expect(bad('0,1|1,2,3')).toContain('hai nhóm');
+    expect(bad('0,1,2,3|4')).toContain('ngoài khoảng');
+  });
+});
+
+describe('nghiệm ngoại lai và các bước có điều kiện', () => {
+  const run = (start: string, steps: AlgebraStep[]): ReturnType<typeof readAlgebra> =>
+    readAlgebra(scene(start, steps));
+
+  it('bình phương bất đẳng thức khi chưa biết dấu thì **từ chối**', () => {
+    // $-5<3$ mà $25>9$. Bám tiền lệ `mul_both_sides`: ở trường người ta tách trường
+    // hợp, và một điều kiện lấp liếm ở đây sẽ giấu mất đúng cái phải tách.
+    expect(run('x < 3', [{ rule: 'pow_both_sides', at: '', arg: '2' }]).refusal).toContain(
+      'tách trường hợp',
+    );
+  });
+
+  it('và nếu quên cái chặn ấy thì bộ kiểm một chiều **bắt được** — chốt canh có răng', () => {
+    // Chỗ `implies` thật sự có răng là bất đẳng thức: "vế trước đúng" xảy ra ở nửa số
+    // điểm, nên phản ví dụ $x=-5$ hiện ra ngay. Dựng thẳng cặp quan hệ để kiểm.
+    const before = parse('x < 3', new Minter());
+    const after = parse('x^2 < 9', new Minter());
+    const verdict = impliesSolutionSet(before, after, null, 20260731);
+
+    expect(verdict.ok).toBe(false);
+    expect(verdict.verified).toBe(true);
+    expect(verdict.message).toContain('kéo theo sai');
+  });
+
+  it('bậc **lẻ** thì bảo toàn tập nghiệm, không mắc nợ gì', () => {
+    // $x \mapsto x^3$ là song ánh tăng trên $\mathbb R$ — đúng cả với bất đẳng thức.
+    const eq = run('root(3, x) = 2', [{ rule: 'pow_both_sides', at: '', arg: '3' }]);
+    expect(eq.unsound).toEqual([]);
+    expect(eq.extraneous).toEqual([]);
+
+    const ineq = run('x < 3', [{ rule: 'pow_both_sides', at: '', arg: '3' }]);
+    expect(ineq.refusal).toBeNull();
+    expect(ineq.unsound).toEqual([]);
+    expect(ineq.extraneous).toEqual([]);
+  });
+
+  it('bậc chẵn trên phương trình ghi **món nợ** ra hình, không ghi cảnh báo cho tác giả', () => {
+    const m = run('sqrt(x + 5) = x - 1', [{ rule: 'pow_both_sides', at: '', arg: '2' }]);
+
+    expect(m.unsound).toEqual([]);
+    expect(m.extraneous).toHaveLength(1);
+    // Món nợ ghi theo **hợp đồng**, không theo kết quả bốc điểm: tập nghiệm có độ đo
+    // $0$ nên bốc trúng nó là chuyện không xảy ra, và treo dòng đỏ vào `widened` là để
+    // nó không bao giờ hiện ra ở đúng ca cần nó nhất.
+    expect(m.unchecked).toEqual([]);
+
+    const svg = renderer.toSvg(
+      scene('sqrt(x + 5) = x - 1', [{ rule: 'pow_both_sides', at: '', arg: '2' }]),
+      ctx,
+    );
+    expect(svg).toContain('ngoại lai');
+
+    // Và không sinh cảnh báo thường trực cho tác giả — bài học M45.
+    const codes = algebraSchemaFragment
+      .checkBounds(scene('sqrt(x + 5) = x - 1', [{ rule: 'pow_both_sides', at: '', arg: '2' }]), '')
+      .map((issue) => issue.code);
+    expect(codes).not.toContain('algebra/unchecked');
+  });
+
+  it('`abs_case` chỉ đúng **trong** điều kiện, và `guard` là thứ làm nó kiểm được', () => {
+    const plus = run('abs(x - 2) = 3*x', [{ rule: 'abs_case', at: 'L', arg: '+' }]);
+    const minus = run('abs(x - 2) = 3*x', [{ rule: 'abs_case', at: 'L', arg: '-' }]);
+
+    expect(plus.unsound).toEqual([]);
+    expect(minus.unsound).toEqual([]);
+    // Điều kiện in ra hình phải là **chữ trơn đọc được**, không phải `unparse` dư ngoặc.
+    expect(plus.conditions).toEqual(['x − 2 ≥ 0']);
+    expect(minus.conditions).toEqual(['x − 2 ≤ 0']);
+
+    // Chốt canh của chính `guard`: bỏ nó đi thì $|x-2| = x-2$ sai ở mọi điểm $x<2$.
+    expect(sameValue(parse('abs(x - 2)', new Minter()), parse('x - 2', new Minter())).ok).toBe(false);
+  });
+
+  it('`evaluate_at` kiểm bằng **cấu trúc**, nên nó không xin miễn kiểm', () => {
+    const m = run('x^2 - 3*x - 4 = 0', [
+      { rule: 'evaluate_at', at: '', arg: 'x := 4' },
+      { rule: 'eval_int', at: 'L' },
+    ]);
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    // $4^2-3\cdot4-4 = 0$ ⇒ nghiệm nhận.
+    expect(same(m.rows.at(-1)!.expr, parse('0 = 0', new Minter()))).toBe(true);
+
+    // Nghiệm ngoại lai bị loại: $\sqrt{-1+5} = 2$ còn $-1-1 = -2$.
+    const bad = run('sqrt(x + 5) = x - 1', [
+      { rule: 'evaluate_at', at: '', arg: 'x := -1' },
+      { rule: 'eval_int', at: 'R' },
+      { rule: 'eval_int', at: 'L.0' },
+      { rule: 'eval_root', at: 'L' },
+    ]);
+    expect(bad.unsound).toEqual([]);
+    expect(same(bad.rows.at(-1)!.expr, parse('2 = -2', new Minter()))).toBe(true);
+
+    expect(run('y + 1', [{ rule: 'evaluate_at', at: '', arg: 'x := 3' }]).refusal).toContain(
+      'không thấy biến',
+    );
+  });
+});
+
+describe('hằng đẳng thức luỹ thừa bậc n', () => {
+  const run = (start: string, steps: AlgebraStep[]): ReturnType<typeof readAlgebra> =>
+    readAlgebra(scene(start, steps));
+
+  it('hiệu và tổng bậc n ra đúng nhân tử, không sót thừa số 1', () => {
+    const diff = run('a^4 - b^4', [{ rule: 'factor_power_difference', at: '' }]);
+    expect(diff.unsound).toEqual([]);
+    expect(same(diff.rows[1]!.expr, parse('(a - b)*(a^3 + a^2*b + a*b^2 + b^3)', new Minter()))).toBe(true);
+
+    const sum = run('a^3 + b^3', [{ rule: 'factor_power_sum_odd', at: '' }]);
+    expect(sum.unsound).toEqual([]);
+    expect(same(sum.rows[1]!.expr, parse('(a + b)*(a^2 - a*b + b^2)', new Minter()))).toBe(true);
+
+    expect(run('a^5 + b^5', [{ rule: 'factor_power_sum_odd', at: '' }]).unsound).toEqual([]);
+  });
+
+  it('bậc chẵn của **tổng** thì từ chối, và lời từ chối là chữ trơn', () => {
+    const refusal = run('a^4 + b^4', [{ rule: 'factor_power_sum_odd', at: '' }]).refusal as string;
+    expect(refusal).toContain('không phân tích được');
+    // Lời từ chối đi thẳng vào `checkBounds`, nơi nó hiện nguyên văn — nên không LaTeX.
+    expect(refusal).not.toContain('$');
+  });
+
+  it('bậc quá lớn thì **trần kích thước** từ chối, và nói ra số đo', () => {
+    // Không có trần $n$ riêng trong luật: nhân tử sau có $n$ hạng tử nên nó tự đụng
+    // trần rộng, mà từ M49 trần ấy đo đúng thứ nó nói. Thêm một trần $n \le 5$ ở đây
+    // là dựng lại đúng cái lỗi M49 vừa gỡ.
+    const m = run('a^12 - b^12', [{ rule: 'factor_power_difference', at: '' }]);
+    expect(m.refusal).not.toBeNull();
+    expect(m.refusal).toMatch(/rộng|nút/);
   });
 });
 

@@ -179,18 +179,18 @@ export const algebraRenderer: EngineRenderer = {
       nodes.push(el('g', { class: 'cv-alg-row' }, children));
     }
 
-    if (box.conditions !== null) {
+    for (const note of box.notes) {
       nodes.push(
         text(
           'text',
           {
-            x: round(box.conditions.x),
-            y: round(box.conditions.y),
+            x: round(note.x),
+            y: round(note.y),
             'font-family': ctx.theme.type.uiFamily,
             'font-size': round(FONT * 0.6),
             fill: ctx.theme.stroke.invalid,
           },
-          box.conditions.text,
+          note.text,
         ),
       );
     }

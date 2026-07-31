@@ -18,13 +18,15 @@ export { RULES, ruleById, applicableRules, type Rule } from './rules.js';
 export {
   sameValue,
   sameSolutionSet,
+  impliesSolutionSet,
   evalRelation,
   definitelyNonZero,
   definitelyNonNegative,
   definiteSign,
+  type Guard,
 } from './check.js';
 export { layout, boxOf, drawnIds } from './layout.js';
-export { toBox, measure, place, FONT, ROW } from './typeset.js';
+export { toBox, measure, place, textWidth, shrink, glyphBox, FONT, ROW } from './typeset.js';
 export { algebraRenderer } from './render.js';
 
 /**
@@ -84,6 +86,20 @@ export const algebraSchemaFragment: EngineSchemaFragment = {
         message: `Bước không bảo toàn giá trị: ${bad}`,
         path: `${path}/config/steps`,
         hint: 'Đây là lỗi của luật trong engine, không phải của nội dung bài',
+      });
+    }
+
+    // Không kiểm được **khác** đã kiểm và đúng, nên nó phải hiện ra. Cảnh báo chứ
+    // không chặn: bước vẫn có thể đúng, chỉ là bộ bốc điểm ngẫu nhiên không tìm được
+    // chỗ nào cả hai vế cùng xác định — thường vì miền hẹp ($x^{1/2}$ đòi $x \ge 0$).
+    // Cả kho 91 bài hiện ở 0, nên nó không phải một vệt vàng thường trực (bài học M45).
+    for (const u of model.unchecked) {
+      issues.push({
+        code: 'algebra/unchecked',
+        severity: 'warning',
+        message: `Bước không kiểm được: ${u}`,
+        path: `${path}/config/steps`,
+        hint: 'Mọi điểm ngẫu nhiên đều rơi ngoài miền xác định — hãy tự soát bước này',
       });
     }
 
