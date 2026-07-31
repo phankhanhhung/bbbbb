@@ -25,7 +25,8 @@ export {
   definiteSign,
   type Guard,
 } from './check.js';
-export { layout, boxOf, drawnIds } from './layout.js';
+export { layout, boxOf, drawnIds, explainIds, elementId } from './layout.js';
+export { algebraChoreography, choreographyOf, choreographyTargets } from './choreography.js';
 export { toBox, measure, place, textWidth, shrink, glyphBox, FONT, ROW } from './typeset.js';
 export { algebraRenderer } from './render.js';
 

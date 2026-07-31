@@ -95,13 +95,14 @@
     "extraneous-root-by-squaring",
     "fractions-common-denominator",
     "grouping-and-completing-square",
-    "power-identities-degree-n"
+    "power-identities-degree-n",
+    "distribute-and-group-in-colour",
+    "identity-roles-in-colour",
+    "what-disappears-and-why"
   ],
   "newest": [
-    "absolute-value-two-cases",
-    "extraneous-root-by-squaring",
-    "fractions-common-denominator",
-    "grouping-and-completing-square",
-    "power-identities-degree-n"
+    "distribute-and-group-in-colour",
+    "identity-roles-in-colour",
+    "what-disappears-and-why"
   ]
 }

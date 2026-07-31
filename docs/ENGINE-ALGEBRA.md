@@ -455,6 +455,9 @@ quan hệ được **suy**, không được **khai**.
 Nhãn pha là **chữ trơn**, không LaTeX — nó đi thẳng vào `aria-valuetext`
 (`lint/label-not-plain`, M46). Tên luật tiếng Việt dùng luôn làm nhãn.
 
+> **Cài ở M51**, và `move` mở khoá ở M53 sau khi lược đồ pha có `from` (CHO-12).
+> Xem §27 và §29.
+
 ---
 
 ## 11. Mặt DSL
@@ -1136,3 +1139,212 @@ xấu:
 
 Lỗi thứ hai có sẵn trong kho: bài `factoring-identities` in $-1 \cdot 3x \cdot -1$
 với dấu sai suốt từ M47c. Sửa xong thì 2 golden đổi, và cả hai là **sửa lỗi**.
+
+
+---
+
+## 27. Choreography sinh tự động — cài thật (M51)
+
+§10 khai mục này từ đầu và nó **chưa từng được cài**. Số đo lúc bắt tay:
+
+```
+414 step có scene  →  20 step có choreography
+ 39 step engine algebra  →  0
+```
+
+Toàn bộ hình đại số trong kho là **ảnh tĩnh**: mọi dòng hiện cùng lúc, không nhịp,
+không mốc dừng. Cả bộ máy timeline, nhãn pha và `hold` dựng ở M48 chưa chạm tới engine
+mới nhất và lớn nhất.
+
+### 27.1 Danh tính phải mang tên **theo dòng**
+
+`TermId` bền qua các dòng — đó là cả thiết kế (DAT-11/12): $e_2$ ở dòng ba đúng là nút
+$e_2$ của dòng một. Nhưng choreography **địa chỉ hoá bằng tên**, nên một pha chạm `e2`
+chạm mọi dòng còn chứa nó. Đo trên SVG thật:
+
+```
+hàng 0: e1 e2 e3 e6 e7 e9 e10 e12 e13
+hàng 1: e2 … e14 e16 …          ← e2 có ở cả hai
+hàng 2: e14 e16 …
+```
+
+Với `focus` thì va chạm ấy lại **hay** — hạng tử sáng lên ở mọi chỗ nó còn sống, đúng
+nghĩa "vẫn là một vật ấy". Với `show` thì hỏng hẳn: không hiện được dòng $k$ mà giữ
+dòng $k-1$ nguyên. Nên mực mang tên `r{k}-{TermId}` (dấu `-` vì `ENTITY_ID_PATTERN`
+không nhận dấu hai chấm), còn `TermId` vẫn nguyên trong model để `trace` nói được ai là
+ai. Muốn hiệu ứng "sáng ở mọi dòng" thì pha khai nhiều đích — bộ sinh làm được vì nó
+biết hạng tử sống ở những dòng nào.
+
+Đổi được rẻ vì **không anchor nào trong kho trỏ vào tên hạng tử**: 39/39 step đại số chỉ
+neo vào `row0`…`row7`, mà tên dòng giữ nguyên.
+
+### 27.2 Vì sao **không** có `move`/`morph`
+
+Bảng §10 xếp `move`/`morph` làm phương tiện chính. Không dùng được, và lý do thuộc về
+cấu trúc chứ không phải công sức: trong một chuỗi biến đổi **mọi dòng đều ở lại trên màn
+hình**. `move` hiện có nghĩa "bay **tới**" một đích rồi đậu ở đó, nên muốn hạng tử dòng
+$k$ bay xuống dòng $k+1$ thì phải lấy bản của dòng $k$ đi — và dòng $k$ thủng một lỗ.
+
+Thứ cần là "bay **từ**", tức một trường `from` hoặc một `kind` mới trên
+`ChoreographyPhase` — lược đồ **dùng chung cho cả chín engine**. Không lén thêm ở đây.
+
+Nên "hạng tử này chính là hạng tử kia" được kể bằng `focus` **đồng thời ở cả hai dòng**.
+Nhờ `TermId` bền, bộ sinh biết chính xác cặp ấy — thứ mà một lớp animation suy từ chênh
+lệch hai ảnh (`interpolateNodes`, CHO-10) không bao giờ biết được.
+
+### 27.3 Nhịp suy từ **hình dạng kết quả**, không từ bảng tên luật
+
+Mỗi bước sinh tối đa bốn pha:
+
+| pha | đọc từ | kể gì |
+|---|---|---|
+| `focus` + **`hold`** | `row.at` | chỗ sắp đổi, ở dòng trên — và dừng lại đây |
+| `dim` | `trace[x] = []` | cái sắp biến mất, mờ đi trước khi dòng mới hiện |
+| `show` | mọi id của dòng $k$ | dòng mới hiện ra |
+| `focus` | `trace` ra nhiều bản / nhiều về một / `born` | nhân bản, gộp lại, hay phần mới |
+
+Một bảng `rule.id → kiểu chuyển động` sẽ quên luật thứ 42. Đọc cấu trúc thì luật mới có
+nhịp đúng ngay hôm nó ra đời — cùng bài học với `out.guard`/`out.binding` ở M50.
+
+`hold` đặt đúng ở pha "chỗ sắp đổi" chứ không rải đều: đó là khoảnh khắc người đọc cần
+để nhìn ra *vì sao* luật áp được. Và nó không bao giờ rơi vào pha cuối (luôn còn pha
+"hiện dòng" phía sau), nên bất biến của `lint/hold-at-end` được giữ — dù lint **không
+soi được** timeline sinh lúc chạy, nên chốt canh cho nó phải nằm trong test engine.
+
+Tác giả vẫn đè được: `step.choreography` luôn thắng. Engine chỉ lấp chỗ trống.
+
+### 27.4 Một lỗi nữa chỉ lượt nhìn bắt được
+
+Khung $0$ của timeline vừa sinh bày sẵn **tên cả bốn phép biến đổi** trong khi mới có
+một dòng: nhãn luật không mang danh tính nào, nên `show` không chạm tới nó.
+
+Và chốt canh đầu tiên tao viết cho nó **không có răng** — nó hỏi "danh tính này thuộc
+dòng nào", mà lỗi chính là nhãn *không có* danh tính, nên nó bỏ qua đúng cái phải bắt.
+Câu hỏi đúng: **"chữ nào còn mực ở khung 0"**, và mọi chữ ấy phải thuộc dòng một. Bản
+sửa được kiểm bằng cách bỏ lại dòng `data-el` và xem test đỏ — bắt đúng ba nhãn.
+
+
+---
+
+## 28. Mực giải thích (M52)
+
+Không làm `move`/`morph` (§27.2) thì phải bù bằng thứ khác, và thứ khác ấy hoá ra
+mạnh hơn: **engine được phép vẽ mực không thuộc về biểu thức**, chỉ thuộc về lời giải
+thích cho một bước. Choreography chỉ bật/tắt.
+
+### 28.1 Cái chốt phải dựng trước: `ctx.explain`
+
+Golden và OG card render **không qua** choreography (`renderer.toSvg(scene, ctx)`
+trần), nên mực giải thích sẽ lọt vào ảnh tĩnh của cả kho.
+
+Và `opacity: 0` **không cứu được**: `applyChoreography` **nhân** vào độ mờ sẵn có
+(`base * progress`), nên mực khai $0$ thì nhân kiểu gì cũng ra $0$ — nó sẽ không bao
+giờ hiện, im lặng, không lỗi, không cảnh báo. Đây đúng là loại bẫy mà cả engine này
+sinh ra để bịt, nên nó phải được ghi ra.
+
+Cửa đúng nằm ở `RenderContext.explain`: nó nói "khung này có ai kể chuyện không", tức
+một sự thật về **nơi vẽ**, không phải về scene. Player bật; golden, OG, sandbox không.
+
+### 28.2 Sáu loại mực, tất cả suy từ cấu trúc
+
+| mực | đọc từ | nói gì |
+|---|---|---|
+| **màu vai** | `RuleOutcome.roles` | $(a+b)^2$: $a$ một màu, $b$ một màu, **bắc cầu qua hai dòng** vì `TermId` bền |
+| **sợi nối** | `trace` | "cái này thành cái kia" — nội dung ngữ nghĩa của `move`, không cần chuyển động |
+| **gạch triệt tiêu** | `trace[x] = []` | §10 hứa từ đầu, nay mới vẽ |
+| **ngoặc nhóm** | `roles` nằm gọn trong dòng nguồn | cách nhóm là mẹo của bài, nên nó phải nhìn thấy được |
+| **nối dòng điều kiện** | `conditions` | dòng đỏ thôi lơ lửng, nó chỉ vào chỗ nó ràng buộc |
+| **dòng tự viết ra** | thứ tự đọc của hộp bao | mấy pha `show` so le, không cần primitive mới |
+
+Màu vai là thứ rẻ nhất và nói được nhiều nhất, vì nó nói đúng cái mà một hằng đẳng
+thức *là*: một khuôn, và những thứ điền vào khuôn. Bảng màu lấy đúng bộ Okabe-Ito mà
+`patterns` (NFR-A1) đang dùng, nên hai kênh dự phòng cho người mù màu nói cùng một
+thứ tiếng.
+
+### 28.3 Hai tiêu chí lọc, cả hai tìm ra bằng cách nhìn
+
+Bản đầu vẽ đủ thứ và hình thành mạng nhện. Hai lỗi, cả hai chỉ lộ ở lượt nhìn PNG:
+
+**Sợi nối từ nút bao.** `freshCopy` khai cặp cho *mọi* nút trong cây con nó sao, kể cả
+nút bao. Nối hai nút bao thì sợi chạy từ giữa cả biểu thức tới giữa cả biểu thức —
+đúng về dữ liệu, vô nghĩa với mắt. Lọc: **chỉ mảnh sơ cấp** (nút không có con) mới có
+sợi. Nút không con là một vật người đọc chỉ tay vào được.
+
+**Gạch chéo qua cả dòng.** Nút được áp luật biến mất là chuyện *cấu trúc* — "chỗ này
+vừa được viết lại" — chứ không phải một phép triệt tiêu, và `focus` đã nói điều ấy
+rồi. `factor_by_grouping` dựng lại toàn bộ tổng, nên bản đầu gạch nát cả dòng. Lọc:
+gạch **chỉ khi nút được áp luật sống sót** sang dòng sau. Lúc ấy thứ mất đi thật sự là
+*bị triệt tiêu khỏi một biểu thức đang đứng yên* — đúng ca `drop_unit` bỏ thừa số $1$,
+`cancel_common` rút một nhân tử.
+
+### 28.4 Không phải đồ trang trí — đo trên cả kho
+
+```
+39 step algebra:  sợi 30 (9 step)   gạch 14 (5)   ngoặc 4 (3)
+                  nối điều kiện 6   glyph có vai 60 (6 step)
+```
+
+Chín luật sinh ra mực. Nếu con số nào về $0$ thì đó là tính năng chết, và bảng này là
+chỗ để phát hiện điều đó.
+
+### 28.5 Danh tính mực giải thích **không** neo được
+
+`explainIds` tách khỏi `drawnIds` có chủ ý: `drawnIds` là tập anchor
+(`implicitElementIds`), mà mực giải thích chỉ tồn tại khi `ctx.explain` — một anchor
+trỏ vào nó sẽ trỏ vào hư không ở golden và OG card. Choreography thì nhắm được, vì
+Player vẽ với `explain`.
+
+
+---
+
+## 29. `move` lật chiều: `from` (M53, CHO-12)
+
+§27.2 để lại `move`/`morph` với một lý do thuộc về cấu trúc: trong chuỗi biến đổi
+**mọi dòng đều ở lại trên màn hình**, mà `move` chỉ biết "bay **tới**" rồi đậu — cho
+hạng tử dòng $k$ bay xuống dòng $k+1$ sẽ đục một lỗ vào dòng $k$.
+
+Lối ra không phải một thủ thuật trong engine mà là **một trường trong lược đồ pha**,
+tức tầng dùng chung cho chín engine — nên nó là quyết định của chính chủ, không phải
+việc lén nhét vào một engine.
+
+### 29.1 `to` và `from` là hai câu chuyện, không phải hai cách nói một chuyện
+
+- **`to`** — "vật này **rời chỗ**": nó bỏ trống chỗ cũ và đậu ở chỗ mới.
+- **`from`** — "vật này **đến**": chỗ cũ vẫn còn nguyên nội dung của nó, chỉ có vật
+  này là mới tới.
+
+Chuỗi biến đổi cần đúng vế thứ hai và **không có** vế thứ nhất. Với `from` thì bản ở
+dòng dưới xuất phát từ chỗ của bản dòng trên rồi về chỗ của mình, và không ai mất gì.
+
+Chỉ đi được đường **toạ độ scene** (`boxOf`), không đi đường sao chép thuộc tính: "lúc
+đầu mày đứng ở đâu" là một phát biểu về **vị trí**, mà vị trí thì chỉ toạ độ scene nói
+được bằng thứ tiếng chung của mọi engine (G-10).
+
+Hệ quả: chỉ những hạng tử **giữ nguyên danh tính** mới bay. Đó chính là lời hứa của
+`TermId` bền (DAT-11/12) — "$e_2$ ở dòng ba đúng là nút $e_2$ của dòng một" — được nói
+ra thành chuyển động, thay vì chỉ là một câu trong tài liệu.
+
+### 29.2 Ba chỗ phải sửa, và một chỗ chưa từng chạy
+
+Trường mới thì rẻ; ba chỗ quanh nó mới là việc.
+
+- **Có tác dụng *trước* mốc.** "Bay tới từ đó" nghĩa là trước khi bay nó **đang ở đó**.
+  `applyChoreography` bỏ qua pha chưa bắt đầu (trừ `show`), nên thiếu nhánh này thì vật
+  đứng sẵn ở chỗ đích suốt phần đầu timeline rồi mới nhúc nhích — tức không bay đi đâu.
+- **Player chưa bao giờ truyền `boxOf`.** Đường còn lại sao chép thuộc tính hình học,
+  mà hai `<g>` rỗng thuộc tính thì không có gì để chép: pha chạy đủ thời lượng trong
+  khi màn hình đứng im. Nghĩa là `move`/`morph` **chưa từng chạy trong Player** kể từ
+  khi có CHO-01 — không test nào bắt, vì không bài nào dùng.
+- **`key` nằm trên node, không trong `attrs`.** Nhét `key` vào attrs thì nó thành một
+  thuộc tính SVG vô nghĩa, `node.key` vẫn rỗng, và pha nhắm vào nó không khớp gì cả.
+  Lỗi ấy đã xảy ra với dòng chữ đỏ và chỉ lộ ở lượt nhìn khung 0.
+
+### 29.3 Dòng đỏ hiện ở cuối
+
+Điều kiện AL-08 và món nợ nghiệm ngoại lai tóm tắt **cả chuỗi**, không thuộc dòng nào
+— nên không pha `show` nào của một dòng chạm tới chúng, và chúng bày ra ngay khung
+đầu: đọc kết luận trước khi nghe kể. Nay chúng có danh tính (`noteId`) và một pha
+`show` ở cuối timeline, cùng lúc với sợi nối chỉ vào chỗ chúng ràng buộc.
+
+Danh tính ấy vào `explainIds` chứ không vào `drawnIds`: choreography nhắm được, anchor
+thì không — cùng lý lẽ với mực giải thích (§28.5).

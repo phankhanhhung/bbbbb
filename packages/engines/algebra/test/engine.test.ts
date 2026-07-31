@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { createContext, createRenderer } from '@combviz/render';
+import { applyChoreography, createContext, createRenderer } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
 import type { Scene } from '@combviz/schema';
+import type { SceneBox, SvgNode } from '@combviz/render';
 import {
   Minter,
   algebraHitTest,
   algebraRenderer,
   algebraSchemaFragment,
+  algebraChoreography,
   allPaths,
+  drawnIds,
+  elementId,
+  explainIds,
   impliesSolutionSet,
   layout,
   measure,
@@ -521,13 +526,16 @@ describe('danh tính', () => {
   });
 
   it('chạm vào một chỗ thì chọn trúng nút **sâu nhất**', () => {
-    const box = algebraRenderer.elementBoxes!(EXPAND, 'e1')[0]!;
+    // Danh tính mực mang tên **theo dòng** (`r0-e1`), vì `TermId` bền qua các dòng
+    // nên một tên trần chạm vào mọi dòng còn chứa nó — xem `elementId`.
+    const id = elementId(0, 'e1');
+    const box = algebraRenderer.elementBoxes!(EXPAND, id)[0]!;
     const hits = algebraHitTest(EXPAND, {
       x: box.x + box.width / 2,
       y: box.y + box.height / 2,
     });
 
-    expect(hits[0]).toBe('e1');
+    expect(hits[0]).toBe(id);
   });
 });
 
@@ -964,6 +972,331 @@ describe('hằng đẳng thức luỹ thừa bậc n', () => {
     const m = run('a^12 - b^12', [{ rule: 'factor_power_difference', at: '' }]);
     expect(m.refusal).not.toBeNull();
     expect(m.refusal).toMatch(/rộng|nút/);
+  });
+});
+
+describe('AL-06 — choreography sinh từ model', () => {
+  const spec = (start: string, steps: AlgebraStep[]): NonNullable<ReturnType<typeof algebraChoreography>> =>
+    algebraChoreography(scene(start, steps)) as never;
+
+  it('mọi đích của mọi pha đều là danh tính **có mực**', () => {
+    // Một pha nhắm vào tên không tồn tại là một pha im lặng không làm gì: chạy đủ
+    // thời lượng, màn hình đứng im. Vì choreography này sinh lúc chạy nên
+    // `structure.ts` không soi nó — chốt canh phải nằm ở đây.
+    let checked = 0;
+    for (const [start, steps] of [
+      ['(x + 1)^2 + 3*x', [{ rule: 'expand_square', at: '0' }, { rule: 'collect_like', at: '' }]],
+      ['1/x + 1/y', [{ rule: 'common_denominator', at: '' }]],
+      ['a*(a - b)', [{ rule: 'distribute', at: '' }]],
+      ['sqrt(x + 5) = x - 1', [{ rule: 'pow_both_sides', at: '', arg: '2' }]],
+      ['2*x^2 + 2*x + 3*x + 3', [{ rule: 'factor_by_grouping', at: '', arg: '0,1|2,3' }]],
+    ] as Array<[string, AlgebraStep[]]>) {
+      const s = scene(start, steps);
+      const box = layout(readAlgebra(s));
+      // Đích hợp lệ = mực thường **và** mực giải thích. Cái sau chỉ tồn tại khi
+      // `ctx.explain` — tức đúng lúc Player vẽ, đúng lúc timeline chạy.
+      const drawn = new Set([...drawnIds(box), ...explainIds(box)]);
+      const timeline = algebraChoreography(s);
+      expect(timeline, start).toBeDefined();
+
+      for (const phase of (timeline as NonNullable<typeof timeline>).phases) {
+        for (const id of phase.targets) {
+          checked += 1;
+          expect(drawn.has(id), `${start}: pha ${phase.id} nhắm "${id}" — không có mực`).toBe(true);
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(50);
+  });
+
+  it('`hold` đứng ở chỗ **sắp đổi**, và không bao giờ ở pha cuối', () => {
+    // Luật `lint/hold-at-end` (M48) không soi được timeline sinh lúc chạy, nên bất
+    // biến ấy phải tự giữ ở đây.
+    const timeline = spec('(x + 1)^2 + 3*x', [
+      { rule: 'expand_square', at: '0' },
+      { rule: 'drop_unit', at: '1' },
+      { rule: 'collect_like', at: '' },
+    ]);
+    const ordered = [...timeline.phases].sort((a, b) => a.at - b.at);
+    const holds = ordered.filter((p) => p.hold === true);
+
+    expect(holds.length).toBe(3);
+    expect(holds.every((p) => p.kind === 'focus')).toBe(true);
+    // Mỗi `hold` phải có nhãn — dừng lại mà không có gì đọc là kẹt, không phải nghỉ.
+    expect(holds.every((p) => (p.label?.vi ?? '').length > 0)).toBe(true);
+    expect(ordered.at(-1)?.hold).not.toBe(true);
+  });
+
+  it('nhãn pha là **chữ trơn**, không LaTeX', () => {
+    // Nhãn vào giao diện nguyên văn (aria-valuetext, bộ đếm pha). `$x^2$` ở đó hiện
+    // ra đúng bốn ký tự và trình đọc màn hình đọc "đô la x mũ hai đô la" — chính là
+    // luật `lint/label-not-plain` của M48, nay áp cho chữ engine tự sinh.
+    const timeline = spec('a*(a - b)', [{ rule: 'distribute', at: '' }]);
+    for (const p of timeline.phases) {
+      const text = p.label?.vi ?? '';
+      expect(text).not.toMatch(/\$.+\$/);
+      expect(text).not.toMatch(/\\[a-zA-Z]/);
+    }
+  });
+
+  it('kể đúng chuyện: nhân bản, gộp lại, phần mới', () => {
+    // Đọc từ **cấu trúc** `trace`, không từ tên luật — nên luật thứ 42 cũng có nhịp.
+    const label = (start: string, steps: AlgebraStep[]): string[] =>
+      spec(start, steps).phases.map((p) => p.label?.vi ?? '');
+
+    // `distribute` nhân bản một nhánh ⇒ `trace` có mục ra hai bản.
+    expect(label('a*(a - b)', [{ rule: 'distribute', at: '' }])).toContain('nhân bản');
+    // `collect_like` nhập hai hạng tử ⇒ nhiều mục cùng về một.
+    expect(
+      label('x + 2*x', [{ rule: 'collect_like', at: '' }]),
+    ).toContain('gộp lại');
+    // Nhãn của pha `focus` đầu là **tên luật**, hoặc `note` khi tác giả đè.
+    expect(label('sqrt(48)', [{ rule: 'pull_square_out', at: '', note: 'rút ra ngoài' }])).toContain(
+      'rút ra ngoài',
+    );
+  });
+
+  it('khung đầu chỉ có **dòng một** — kể cả nhãn luật', () => {
+    // Chốt canh cho một lỗi mà 78 test không bắt và lượt nhìn khung 0 bắt ngay: nhãn
+    // luật không mang danh tính nào, nên `show` không chạm tới nó và khung đầu bày
+    // sẵn tên cả bốn phép biến đổi trong khi mới có một dòng.
+    // Dùng scene **có dòng điều kiện**: nó là ca dễ lọt nhất, vì dòng đỏ không thuộc
+    // dòng nào nên không pha `show` nào của một dòng chạm tới nó.
+    const s = scene('(6*a)/(3*a)', [
+      { rule: 'cancel_common', at: '', arg: 'a' },
+      { rule: 'eval_int', at: '' },
+    ]);
+    const nodes = applyChoreography(
+      algebraRenderer.render(s, ctx),
+      algebraChoreography(s) as never,
+      0,
+    );
+
+    // Soi **mọi `<text>`**, không soi theo `data-el`. Đó là cả điểm: lỗi vừa sửa là
+    // nhãn **không có** `data-el`, nên một chốt canh hỏi "danh tính này thuộc dòng
+    // nào" sẽ bỏ qua đúng cái nó phải bắt. Câu hỏi đúng là "chữ nào còn mực ở khung
+    // 0", và mọi chữ ấy phải thuộc dòng một. (Scene này không có dòng điều kiện — mấy
+    // dòng đỏ ấy là tóm tắt cả chuỗi, không thuộc dòng nào.)
+    const leaked: string[] = [];
+    const visit = (list: readonly SvgNode[]): void => {
+      for (const n of list) {
+        if (n.tag === 'text' && Number(n.attrs['opacity'] ?? 1) > 0) {
+          const owner = n.attrs['data-el'];
+          if (typeof owner !== 'string' || !owner.startsWith('r0-')) {
+            leaked.push(`${String(n.children?.[0] ?? '?')} (${String(owner)})`);
+          }
+        }
+        if (n.children) visit(n.children as readonly SvgNode[]);
+      }
+    };
+    visit(nodes as readonly SvgNode[]);
+
+    expect(leaked, `lộ trước ở khung 0: ${leaked.join(' | ')}`).toEqual([]);
+  });
+
+  it('CHO-12 — hạng tử đi tiếp **bay xuống từ chỗ cũ**, và dòng trên không thủng lỗ', () => {
+    // Thứ M51 phải bỏ vì `move` khi ấy chỉ biết "bay tới". `from` lật đúng chiều.
+    const s = scene('(a + b)^2 + 3*a', [{ rule: 'expand_square', at: '0' }]);
+    const spec = algebraChoreography(s) as NonNullable<ReturnType<typeof algebraChoreography>>;
+    const fly = spec.phases.filter((p) => p.kind === 'move');
+
+    expect(fly.length).toBeGreaterThan(0);
+    // Mọi pha bay phải khai `from`, **không** khai `to`: `to` sẽ lấy bản ở dòng trên
+    // đi và đục một lỗ vào nó.
+    expect(fly.every((p) => p.from !== undefined && p.to === undefined)).toBe(true);
+    // Và nguồn phải ở **dòng ngay trên** đích — cùng hạng tử, khác dòng.
+    for (const p of fly) {
+      const target = p.targets[0] as string;
+      const source = p.from as string;
+      expect(target.slice(target.indexOf('-'))).toBe(source.slice(source.indexOf('-')));
+      expect(Number(target.slice(1, target.indexOf('-')))).toBe(
+        Number(source.slice(1, source.indexOf('-'))) + 1,
+      );
+    }
+
+    // Chốt canh có răng: giữa chừng pha bay, hạng tử phải **lệch khỏi** chỗ của nó.
+    const boxOf = (id: string): readonly SceneBox[] => algebraRenderer.elementBoxes!(s, id);
+    const mid = (fly[0] as (typeof fly)[number]).at + (fly[0] as (typeof fly)[number]).duration / 2;
+    const shifted = applyChoreography(algebraRenderer.render(s, ctx), spec, mid, { boxOf });
+    const moved: string[] = [];
+    const visit = (list: readonly SvgNode[]): void => {
+      for (const n of list) {
+        if (typeof n.attrs['transform'] === 'string') moved.push(String(n.key ?? n.attrs['data-el']));
+        if (n.children) visit(n.children as readonly SvgNode[]);
+      }
+    };
+    visit(shifted as readonly SvgNode[]);
+    expect(moved.length, 'không nút nào lệch chỗ giữa pha bay').toBeGreaterThan(0);
+
+    // Còn ở cuối pha thì về đúng chỗ — không còn `translate` nào.
+    const landed = applyChoreography(algebraRenderer.render(s, ctx), spec, 100_000, { boxOf });
+    const still: string[] = [];
+    const visit2 = (list: readonly SvgNode[]): void => {
+      for (const n of list) {
+        if (typeof n.attrs['transform'] === 'string') still.push(String(n.key));
+        if (n.children) visit2(n.children as readonly SvgNode[]);
+      }
+    };
+    visit2(landed as readonly SvgNode[]);
+    expect(still, 'vẫn còn lệch chỗ ở khung cuối').toEqual([]);
+  });
+
+  it('không có gì để kể thì **không** sinh timeline', () => {
+    // Một dòng thì không có bước nào, và một timeline rỗng chỉ tổ hiện thanh điều
+    // khiển trống.
+    expect(algebraChoreography(scene('x + 1', []))).toBeUndefined();
+    // Scene bị từ chối cũng thế — không có model thì không có nhịp.
+    expect(algebraChoreography(scene('2x +', []))).toBeUndefined();
+  });
+
+  it('pha xếp theo thời gian và không pha nào dài quá trần lược đồ', () => {
+    const timeline = spec('(x + 1)^2 + 3*x', [
+      { rule: 'expand_square', at: '0' },
+      { rule: 'drop_unit', at: '1' },
+      { rule: 'eval_int', at: '2' },
+      { rule: 'collect_like', at: '' },
+    ]);
+    for (const p of timeline.phases) {
+      expect(p.at).toBeGreaterThanOrEqual(0);
+      expect(p.at + p.duration).toBeLessThanOrEqual(60_000);
+      expect(p.targets.length).toBeGreaterThan(0);
+      expect(p.targets.length).toBeLessThanOrEqual(200);
+    }
+    // Mỗi bước sinh ít nhất hai pha: chỗ sắp đổi, rồi dòng mới.
+    expect(timeline.phases.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it('danh tính mực mang tên theo dòng, nên `show` dòng sau không đụng dòng trước', () => {
+    // Đây là lý do `elementId` tồn tại. `TermId` bền qua các dòng (DAT-11/12) nên một
+    // tên trần chạm mọi dòng còn chứa nó — hiện dòng 2 sẽ hiện luôn dòng 1.
+    const s = scene('(x + 1)^2 + 3*x', [{ rule: 'expand_square', at: '0' }]);
+    const box = layout(readAlgebra(s));
+    const row0 = new Set(box.lines[0]!.boxes.map((b) => b.id));
+    const row1 = new Set(box.lines[1]!.boxes.map((b) => b.id));
+
+    const shared = [...row0].filter((id) => row1.has(id));
+    expect(shared, `tên dùng chung giữa hai dòng: ${shared.join(', ')}`).toEqual([]);
+
+    // Và hạng tử **không đổi** vẫn nhận ra được là một vật, qua phần đuôi của tên.
+    const term = (id: string): string => id.slice(id.indexOf('-') + 1);
+    const carried = [...row0].map(term).filter((t) => [...row1].map(term).includes(t));
+    expect(carried.length).toBeGreaterThan(0);
+  });
+});
+
+describe('mực giải thích (M52)', () => {
+  const explainOf = (start: string, steps: AlgebraStep[]): ReturnType<typeof layout>['explain'] =>
+    layout(readAlgebra(scene(start, steps))).explain;
+  const explainCtx = createContext(defaultTheme, { explain: true });
+
+  it('**vắng mặt** ở ảnh tĩnh, có mặt khi có người kể chuyện', () => {
+    // Đây là cả lý do `ctx.explain` tồn tại: golden và OG card render **không qua**
+    // choreography, nên mực nào engine vẽ ra là hiện luôn. Và `opacity: 0` không cứu
+    // được — `applyChoreography` **nhân** vào độ mờ sẵn có, nên $0$ nhân gì cũng ra $0$
+    // và mực ấy sẽ không bao giờ hiện, im lặng, không lỗi.
+    const s = scene('2*x^2 + 2*x + 3*x + 3', [
+      { rule: 'factor_by_grouping', at: '', arg: '0,1|2,3' },
+    ]);
+    const plain = algebraRenderer.render(s, ctx);
+    const told = algebraRenderer.render(s, explainCtx);
+
+    const keys = (nodes: readonly SvgNode[]): string[] => {
+      const out: string[] = [];
+      const go = (list: readonly SvgNode[]): void => {
+        for (const n of list) {
+          if (n.key !== undefined) out.push(n.key);
+          if (n.children) go(n.children as readonly SvgNode[]);
+        }
+      };
+      go(nodes);
+      return out;
+    };
+
+    const extra = keys(told).filter((k) => !keys(plain).includes(k));
+    expect(extra.length, 'không vẽ thêm mực nào khi bật explain').toBeGreaterThan(0);
+    expect(keys(plain).some((k) => k.startsWith('g1-') || k.startsWith('t1-'))).toBe(false);
+  });
+
+  it('màu vai bắc cầu **qua hai dòng**, vì `TermId` bền', () => {
+    // $(a+b)^2 = a^2+2ab+b^2$: $a$ một màu, $b$ một màu, và cùng màu ấy ở cả hai dòng.
+    // Mắt nối hai vế mà không cần một mũi tên nào.
+    const e = explainOf('(x + 1)^2', [{ rule: 'expand_square', at: '' }]);
+    const rows = new Map<number, Set<number>>();
+    for (const [id, role] of e.roleOf) {
+      const k = Number(id.slice(1, id.indexOf('-')));
+      rows.set(k, (rows.get(k) ?? new Set()).add(role));
+    }
+
+    expect(rows.get(0)?.size, 'dòng nguồn phải có cả hai vai').toBe(2);
+    expect(rows.get(1)?.size, 'dòng kết quả phải có cả hai vai').toBe(2);
+  });
+
+  it('sợi nối chỉ đi từ **mảnh sơ cấp**, không từ nút bao', () => {
+    // `freshCopy` khai cặp cho *mọi* nút nó sao, kể cả nút bao. Nối hai nút bao thì sợi
+    // chạy từ giữa cả biểu thức tới giữa cả biểu thức — đúng dữ liệu, vô nghĩa với mắt,
+    // và mấy sợi ấy phủ kín hình.
+    const m = readAlgebra(scene('a*(a - b)', [{ rule: 'distribute', at: '' }]));
+    const box = layout(m);
+    const leafWidth = Math.max(
+      ...box.lines[0]!.boxes.filter((b) => b.width < FONT).map((b) => b.width),
+    );
+
+    expect(box.explain.threads.length).toBeGreaterThan(0);
+    for (const t of box.explain.threads) {
+      // Sợi phải đi **xuống** (dòng sau nằm dưới) và xuất phát từ một chỗ hẹp.
+      expect(t.y2).toBeGreaterThan(t.y1);
+      const source = box.lines[0]!.boxes.find(
+        (b) => Math.abs(b.x + b.width / 2 - t.x1) < 0.01,
+      );
+      expect(source?.width ?? 0, `sợi ${t.id} xuất phát từ một nút bao`).toBeLessThanOrEqual(
+        leafWidth * 2,
+      );
+    }
+  });
+
+  it('gạch triệt tiêu chỉ khi nút được áp luật **sống sót**', () => {
+    // Nút được áp luật mà biến mất nghĩa là cả cây con vừa bị viết lại; lúc ấy mọi lá
+    // bên trong "biến mất" theo và gạch từng cái là gạch nát cả dòng. Đo trên chính ca
+    // đã bắt được lỗi: `factor_by_grouping` dựng lại toàn bộ tổng.
+    expect(
+      explainOf('2*x^2 + 2*x + 3*x + 3', [
+        { rule: 'factor_by_grouping', at: '', arg: '0,1|2,3' },
+      ]).strikes,
+    ).toEqual([]);
+    expect(explainOf('(x + 1)^2', [{ rule: 'expand_square', at: '' }]).strikes).toEqual([]);
+
+    // Còn thế ẩn phụ **bên trong một tích đang đứng yên** thì có: nút `mul` sống sót,
+    // và mấy hạng tử bị nuốt vào ẩn phụ mới là thứ thật sự biến mất. Đây đúng chuỗi
+    // của bài `quartic-by-substitution` trong kho.
+    const swap = explainOf('(x^2 + 5*x + 4)*(x^2 + 5*x + 6) - 8 = 0', [
+      { rule: 'set_variable', at: 'L', arg: 't := x^2 + 5*x' },
+    ]);
+    expect(swap.strikes.length).toBeGreaterThan(0);
+  });
+
+  it('ngoặc nhóm chỉ mọc ở luật thật sự **nhóm**', () => {
+    const grouped = explainOf('2*x^2 + 2*x + 3*x + 3', [
+      { rule: 'factor_by_grouping', at: '', arg: '0,1|2,3' },
+    ]);
+    expect(grouped.braces).toHaveLength(2);
+    // Hai ngoặc không được đè lên nhau — chúng nói về hai nhóm rời.
+    const [a, b] = [...grouped.braces].sort((p, q) => p.x1 - q.x1) as [
+      (typeof grouped.braces)[number],
+      (typeof grouped.braces)[number],
+    ];
+    expect(a.x2).toBeLessThanOrEqual(b.x1);
+
+    expect(explainOf('sqrt(48)', [{ rule: 'pull_square_out', at: '' }]).braces).toEqual([]);
+  });
+
+  it('dòng điều kiện được **nối** với hình', () => {
+    // Trước M52 dòng đỏ lơ lửng dưới hình không dính vào gì: người đọc phải tự đoán
+    // "$a \\ne 0$" đang ràng buộc cái mẫu số nào.
+    const cut = explainOf('(6*a)/(3*a)', [{ rule: 'cancel_common', at: '', arg: 'a' }]);
+    expect(cut.conditionLinks).toHaveLength(1);
+
+    // Không có điều kiện thì không có sợi — nó không phải đồ trang trí thường trực.
+    expect(explainOf('sqrt(48)', [{ rule: 'pull_square_out', at: '' }]).conditionLinks).toEqual([]);
   });
 });
 

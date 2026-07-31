@@ -1,0 +1,176 @@
+{
+  "schema_version": "0.3.0",
+  "id": "identity-roles-in-colour",
+  "statement": {
+    "vi": "Một hằng đẳng thức là một **cái khuôn**: $(a+b)^2$ đúng với $a, b$ là bất cứ thứ gì. Xem cái khuôn ấy hoạt động bằng cách tô mỗi vai một màu và nhìn màu đi từ vế này sang vế kia."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: màu không do ai gán tay. Luật khai \"những nút này là một vai\", còn danh tính hạng tử thì bền qua các dòng — nên màu tự bắc cầu giữa hai vế mà không cần một mũi tên nào."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vai $a$ một màu, vai $b$ một màu. [[a1|Dòng dưới]] cho thấy $a$ xuất hiện ba lần và $b$ ba lần — đúng số lần cái khuôn đòi. Sợi nối chỉ ra bản nào của $a$ đi từ đâu xuống đâu."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(a + b)^2",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "expand_square"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: (a cộng b) bình phương, rồi a bình cộng 2ab cộng b bình, tô hai màu theo vai."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cùng cái khuôn ấy lên bậc ba. Số lần mỗi vai xuất hiện tăng lên, nhưng [[a1|cách đọc]] không đổi: đếm màu là đếm được hệ số $1, 3, 3, 1$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(a + b)^3",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "expand_cube"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng khai triển lập phương một tổng, bốn hạng tử tô theo hai vai."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chiều ngược lại cũng là cái khuôn ấy. [[a1|Hai vai]] tách ra thành hai ngoặc, và mỗi ngoặc chứa đúng một bản của mỗi vai."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a^2 - b^2",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_diff_squares"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: a bình trừ b bình, rồi (a trừ b)(a cộng b), tô theo vai."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Khuôn cuối, và là khuôn khó nhớ nhất. Màu cho thấy vì sao nhân tử thứ hai có ba hạng tử: nó phải chứa $a^2$, $ab$, $b^2$ — [[a1|đủ mọi cách]] ghép hai vai thành bậc hai."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a^3 + b^3",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_cubes"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: a lập phương cộng b lập phương, rồi (a cộng b)(a bình trừ ab cộng b bình)."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

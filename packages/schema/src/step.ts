@@ -95,6 +95,23 @@ export const ChoreographyPhase = Type.Object(
     targets: Type.Array(EntityId, { minItems: 1, maxItems: 200 }),
     /** Đích của `move`/`morph`: id element mà target đi tới. */
     to: Type.Optional(EntityId),
+    /**
+     * **Nguồn** của `move`/`morph`: id element mà target *bay tới từ đó* (CHO-12).
+     *
+     * `to` và `from` là hai câu chuyện khác nhau, không phải hai cách nói một chuyện.
+     * `to` là "vật này rời chỗ": nó rỗng chỗ cũ và đậu ở chỗ mới. `from` là "vật này
+     * **đến**": chỗ cũ vẫn còn nguyên nội dung của nó, chỉ có vật này là mới tới.
+     *
+     * Chuỗi biến đổi đại số cần đúng vế thứ hai và **không có** vế thứ nhất: mọi dòng
+     * đều ở lại trên màn hình, nên cho hạng tử dòng $k$ bay xuống dòng $k+1$ bằng `to`
+     * sẽ đục một lỗ vào dòng $k$. Với `from` thì bản ở dòng $k+1$ xuất phát từ chỗ của
+     * bản dòng $k$ rồi về chỗ của mình, và không ai mất gì.
+     *
+     * Chỉ đi được đường **toạ độ scene** (`boxOf`), không đi đường sao chép thuộc
+     * tính: "bắt đầu ở chỗ khác" là một phát biểu về vị trí, mà vị trí thì chỉ có
+     * `boxOf` nói được bằng thứ tiếng chung của mọi engine (G-10).
+     */
+    from: Type.Optional(EntityId),
     /** Mốc bắt đầu, ms tính từ đầu timeline của step. */
     at: Type.Integer({ minimum: 0, maximum: 60_000 }),
     /** Thời lượng, ms. `0` nghĩa là đổi tức thì — hợp lệ và hay dùng cho `show`. */
@@ -247,6 +264,7 @@ export interface Step {
       kind: 'focus' | 'dim' | 'show' | 'hide' | 'move' | 'morph';
       targets: string[];
       to?: string;
+      from?: string;
       at: number;
       duration: number;
       easing?: 'linear' | 'ease-in-out';

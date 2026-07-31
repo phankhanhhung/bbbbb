@@ -45,9 +45,25 @@ export interface RenderContext {
    * — và cả ba vẫn dùng đúng một renderer.
    */
   readonly labels: LabelAtlas;
+  /**
+   * Cho phép engine vẽ thêm **mực giải thích** — thứ chỉ tồn tại để kể chuyện.
+   *
+   * Sợi nối hai dòng, gạch triệt tiêu, ngoặc nhóm: chúng không thuộc về *biểu thức*,
+   * chúng thuộc về *lời giải thích cho một bước*. Nên chúng chỉ có nghĩa ở chỗ có
+   * timeline, và phải vắng mặt ở golden lẫn OG card — hai chỗ ấy render **không qua**
+   * choreography, nên mực nào engine vẽ ra là hiện luôn.
+   *
+   * Vì sao không dùng `opacity: 0` rồi để `show` bật lên: `applyChoreography` **nhân**
+   * vào độ mờ sẵn có (`base * progress`), nên mực khai $0$ thì nhân kiểu gì cũng ra
+   * $0$ — nó sẽ không bao giờ hiện, im lặng, không lỗi. Cờ ở tầng ngữ cảnh là chỗ
+   * đúng: nó nói "khung này có ai kể chuyện không", và đó là một sự thật về **nơi
+   * vẽ**, không phải về scene.
+   */
+  readonly explain: boolean;
 }
 
 export interface ContextOptions {
+  readonly explain?: boolean;
   readonly patterns?: boolean;
   readonly highlight?: ReadonlySet<string>;
   readonly invalid?: ReadonlySet<string>;
@@ -63,6 +79,7 @@ export function createContext(theme: Theme, options: ContextOptions = {}): Rende
     highlight: options.highlight ?? EMPTY,
     invalid: options.invalid ?? EMPTY,
     labels: options.labels ?? EMPTY_ATLAS,
+    explain: options.explain ?? false,
   };
 }
 

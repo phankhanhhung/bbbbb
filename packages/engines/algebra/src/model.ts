@@ -40,6 +40,13 @@ export interface AlgebraRow {
   readonly born: readonly TermId[];
   /** Cây con được áp luật, để tô sáng chỗ đang biến đổi. */
   readonly at: string;
+  /**
+   * Các **vai** trong hằng đẳng thức của bước này — nhóm $i$ một màu.
+   *
+   * `TermId` bền qua các dòng, nên cùng một danh sách id tô được **cả** dòng nguồn lẫn
+   * dòng kết quả: mắt nối hai vế của $(a+b)^2 = a^2+2ab+b^2$ mà không cần mũi tên nào.
+   */
+  readonly roles: ReadonlyArray<readonly TermId[]>;
 }
 
 export interface AlgebraModel {
@@ -168,6 +175,7 @@ export function readAlgebra(scene: Scene): AlgebraModel {
       trace: new Map(),
       born: [],
       at: '',
+      roles: [],
     },
   ];
   const conditions: string[] = [];
@@ -296,6 +304,7 @@ export function readAlgebra(scene: Scene): AlgebraModel {
       trace,
       born,
       at: step.at,
+      roles: outcome.roles ?? [],
     });
     current = next;
 

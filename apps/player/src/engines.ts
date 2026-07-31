@@ -1,7 +1,7 @@
 import type { EngineRenderer, LabelAtlas } from '@combviz/render';
 import type { DslEnvironment } from '@combviz/dsl';
 import type { CommandRegistry, HitTest, SandboxToolsFn } from '@combviz/editor';
-import type { Scene, SceneValidator } from '@combviz/schema';
+import type { Choreography, Scene, SceneValidator } from '@combviz/schema';
 
 /**
  * Composition root phía Player — **nạp động** theo `engines_used[]` (D-10).
@@ -27,6 +27,15 @@ export interface LoadedEngine {
   readonly sandboxTools: SandboxToolsFn;
   environment(scene: Scene): DslEnvironment;
   resolveValidator(id: string): SceneValidator | null;
+  /**
+   * Timeline **do engine tự sinh** (AL-06), khi tác giả không viết tay.
+   *
+   * Chỉ engine nào mà cả hình *lẫn nhịp* đều là kết quả tính toán mới có. Với
+   * `algebra` thì chuỗi biến đổi do engine tính ra, nên để tác giả gõ tay nhịp của
+   * nó là mở đúng khe mà engine ấy sinh ra để bịt: hai bên lệch nhau ngay lần sửa
+   * đầu. Tác giả vẫn đè được — `step.choreography` luôn thắng.
+   */
+  readonly choreography?: (scene: Scene, anchor: string) => Choreography | undefined;
   /** BD-06 — đếm ô theo color_class. Chỉ engine dạng lưới có. */
   colorSummary?(scene: Scene): Map<number, number>;
   /** BD-03 — độ phủ. Chỉ engine dạng lưới có. */
@@ -150,6 +159,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       sandboxTools: module.algebraTools,
       environment: module.algebraEnvironment,
       resolveValidator: module.resolveAlgebraValidator,
+      choreography: (scene, anchor) => module.algebraChoreography(scene, { anchor }),
     };
   },
 };
