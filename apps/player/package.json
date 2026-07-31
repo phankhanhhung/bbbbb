@@ -16,6 +16,7 @@
     "@combviz/editor": "workspace:*",
     "@combviz/engine-board": "workspace:*",
     "@combviz/engine-derivation": "workspace:*",
+    "@combviz/engine-algebra": "workspace:*",
     "@combviz/engine-longdiv": "workspace:*",
     "@combviz/engine-game": "workspace:*",
     "@combviz/engine-graph": "workspace:*",

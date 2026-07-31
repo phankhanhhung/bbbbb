@@ -53,6 +53,9 @@ importers:
       '@combviz/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      '@combviz/engine-algebra':
+        specifier: workspace:*
+        version: link:../../packages/engines/algebra
       '@combviz/engine-board':
         specifier: workspace:*
         version: link:../../packages/engines/board
@@ -209,6 +212,27 @@ importers:
       '@combviz/engine-set':
         specifier: workspace:*
         version: link:../engines/set
+
+  packages/engines/algebra:
+    dependencies:
+      '@combviz/dsl':
+        specifier: workspace:*
+        version: link:../../dsl
+      '@combviz/editor':
+        specifier: workspace:*
+        version: link:../../editor
+      '@combviz/render':
+        specifier: workspace:*
+        version: link:../../render
+      '@combviz/schema':
+        specifier: workspace:*
+        version: link:../../schema
+      '@combviz/theme':
+        specifier: workspace:*
+        version: link:../../theme
+      '@sinclair/typebox':
+        specifier: ^0.34.13
+        version: 0.34.52
 
   packages/engines/board:
     dependencies:
@@ -409,6 +433,9 @@ importers:
       '@combviz/dsl':
         specifier: workspace:*
         version: link:../../packages/dsl
+      '@combviz/engine-algebra':
+        specifier: workspace:*
+        version: link:../../packages/engines/algebra
       '@combviz/engine-board':
         specifier: workspace:*
         version: link:../../packages/engines/board

@@ -1,0 +1,268 @@
+{
+  "schema_version": "0.3.0",
+  "id": "equation-moves-that-lie",
+  "statement": {
+    "vi": "Biến đổi một đẳng thức thì được phép làm gì? Cộng cùng một lượng vào hai vế luôn giữ nguyên tập nghiệm, nhưng **nhân** hai vế thì không phải lúc nào cũng vậy. Tìm chỗ hỏng trong chuỗi biến đổi dẫn từ $a = b$ tới một đẳng thức vô nghĩa, và phát biểu điều kiện làm phép nhân trở nên hợp lệ."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Nguỵ biện quen thuộc, ở đây do **máy** dựng chứ không do người gõ: engine áp từng luật rồi tự ghi điều kiện, nên chỗ hỏng hiện ra thành một dòng đỏ thay vì thành một câu văn nhắc nhở."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Cộng thì an toàn, nhân thì phải hỏi"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mọi phép biến đổi đại số phải giữ nguyên **tập nghiệm**, và hầu hết đều giữ: [[a1|khai triển bình phương]] rồi gộp hạng tử đồng dạng chỉ viết lại cùng một biểu thức theo cách khác. Cột bên phải ghi tên luật của từng dòng, nên mỗi bước đều nói ra mình là bước gì. Câu hỏi thật là: luật nào **không** giữ, và vì sao."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(x + 1)^2 + 3*x",
+              "steps": [
+                {
+                  "at": "0",
+                  "rule": "expand_square"
+                },
+                {
+                  "at": "1",
+                  "rule": "drop_unit"
+                },
+                {
+                  "at": "2",
+                  "rule": "eval_int"
+                },
+                {
+                  "at": "",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Chuỗi bốn bước biến đổi (x+1)²+3x thành x²+5x+1, mỗi dòng ghi tên luật bên phải."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đây là chỗ hỏng, viết bằng đúng bộ luật ấy. Xuất phát từ $a = b$, [[a1|nhân hai vế]] với $a-b$ rồi khai triển hai lần — không bước nào sai hình thức. Nhưng dòng đỏ dưới cùng ghi [[a2|điều kiện $a-b \\ne 0$]], mà giả thiết $a=b$ nói đúng $a-b=0$. Nhân hai vế với $0$ biến mọi đẳng thức thành đúng, nên chuỗi này không chứng minh gì cả."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a = b",
+              "steps": [
+                {
+                  "arg": "a - b",
+                  "at": "",
+                  "rule": "mul_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "distribute"
+                },
+                {
+                  "at": "R",
+                  "rule": "distribute"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Chuỗi từ a = b, nhân hai vế với a−b rồi khai triển; dưới cùng là dòng đỏ ghi điều kiện a−b khác 0."
+          },
+          "verified": true
+        },
+        {
+          "id": "c1",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: cộng vào hai vế"
+          },
+          "narrative": {
+            "vi": "Cộng $-3$ vào hai vế rồi gộp hạng tử: $3$ và $-3$ triệt tiêu, còn [[a1|dòng cuối]] $x = 2$. Không dòng đỏ nào xuất hiện, và đó không phải may mắn — phép cộng bảo toàn tập nghiệm với **mọi** giá trị cộng vào, nên không có điều kiện nào để mà ghi."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x + 3 = 5",
+              "steps": [
+                {
+                  "arg": "-3",
+                  "at": "",
+                  "rule": "add_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "collect_like"
+                },
+                {
+                  "at": "R",
+                  "rule": "eval_int"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Chuỗi giải x + 3 = 5 bằng cách cộng −3 vào hai vế, kết thúc ở x = 2, không có dòng điều kiện."
+          },
+          "verified": true
+        },
+        {
+          "id": "m1",
+          "parent": "c1",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "c2",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: rút gọn phân số"
+          },
+          "narrative": {
+            "vi": "Rút gọn cũng là phép chia, nên nó cùng họ với phép nhân hỏng ở trên. [[a1|Đặt nhân tử chung]] rồi bỏ $x+2$ khỏi cả tử lẫn mẫu cho ra $2$ — đúng với mọi $x$ **trừ** $x = -2$, chỗ mà biểu thức ban đầu không xác định. Dòng đỏ ghi đúng điều kiện ấy chứ không giấu đi."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(2*x + 4)/(x + 2)",
+              "steps": [
+                {
+                  "arg": "2",
+                  "at": "0",
+                  "rule": "factor"
+                },
+                {
+                  "arg": "x + 2",
+                  "at": "",
+                  "rule": "cancel_common"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Chuỗi rút gọn (2x+4)/(x+2) thành 2, kèm dòng đỏ ghi điều kiện x+2 khác 0."
+          },
+          "verified": true
+        },
+        {
+          "id": "end",
+          "parent": "c2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một luật rút ra: phép **cộng** vào hai vế luôn an toàn, phép **nhân** thì chỉ an toàn khi thừa số chắc chắn khác $0$. Máy phân biệt được hai chuyện đó — hằng số thì nó tính ra ngay, còn biểu thức chứa biến thì nó [[a1|ghi điều kiện]] và để người đọc kiểm. Đó là lý do dòng đỏ có mặt trong hình chứ không nằm trong ghi chú."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(2*x + 4)/(x + 2)",
+              "steps": [
+                {
+                  "arg": "2",
+                  "at": "0",
+                  "rule": "factor"
+                },
+                {
+                  "arg": "x + 2",
+                  "at": "",
+                  "rule": "cancel_common"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Lặp lại hình rút gọn, nhấn vào dòng điều kiện màu đỏ ở dưới cùng."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

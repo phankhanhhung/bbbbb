@@ -140,6 +140,18 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       resolveValidator: module.resolveLongDivValidator,
     };
   },
+
+  algebra: async () => {
+    const module = await import('@combviz/engine-algebra');
+    return {
+      renderer: module.algebraRenderer,
+      commands: {},
+      hitTest: module.algebraHitTest,
+      sandboxTools: module.algebraTools,
+      environment: module.algebraEnvironment,
+      resolveValidator: module.resolveAlgebraValidator,
+    };
+  },
 };
 
 const cache = new Map<string, LoadedEngine>();

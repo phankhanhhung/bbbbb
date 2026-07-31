@@ -33,10 +33,11 @@ function enginesWithCaption(): string[] {
 }
 
 describe('caption nằm trong khung', () => {
-  it('sáu engine có caption, và danh sách ấy đọc từ schema chứ không gõ tay', () => {
-    // Nếu engine thứ bảy thêm `caption`, dòng này đỏ trước khi hình bị cắt chữ —
-    // và nó đã đỏ đúng như thế lúc `longdiv` ra đời.
+  it('bảy engine có caption, và danh sách ấy đọc từ schema chứ không gõ tay', () => {
+    // Nếu engine thứ tám thêm `caption`, dòng này đỏ trước khi hình bị cắt chữ —
+    // và nó đã đỏ đúng như thế lúc `longdiv` rồi `algebra` ra đời.
     expect(enginesWithCaption().sort()).toEqual([
+      'algebra',
       'derivation',
       'game',
       'longdiv',

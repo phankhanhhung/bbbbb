@@ -38,6 +38,11 @@ import {
   longDivRenderer,
   longDivSchemaFragment,
 } from '@combviz/engine-longdiv';
+import {
+  algebraEnvironment,
+  algebraRenderer,
+  algebraSchemaFragment,
+} from '@combviz/engine-algebra';
 import type { EngineSchemaFragment } from '@combviz/schema';
 import type { EngineRenderer } from '@combviz/render';
 import type { EngineDslModule } from '@combviz/check';
@@ -60,6 +65,7 @@ export const ENGINE_FRAGMENTS: readonly EngineSchemaFragment[] = [
   gameSchemaFragment,
   derivationSchemaFragment,
   longDivSchemaFragment,
+  algebraSchemaFragment,
 ];
 
 /**
@@ -78,6 +84,7 @@ export const ENGINE_RENDERERS: readonly EngineRenderer[] = [
   gameRenderer,
   derivationRenderer,
   longDivRenderer,
+  algebraRenderer,
 ];
 
 /**
@@ -99,4 +106,5 @@ export const ENGINE_DSL: Readonly<Record<string, EngineDslModule>> = {
     environment: derivationEnvironment,
   },
   longdiv: { fragment: longDivSchemaFragment, environment: longDivEnvironment },
+  algebra: { fragment: algebraSchemaFragment, environment: algebraEnvironment },
 };

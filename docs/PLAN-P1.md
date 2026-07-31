@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M46 xong (8 engine — `longdiv` dựng cả bảng chia dọc từ hai dãy hệ số; mọi element trong kho neo được; kho có sổ thứ tự bài); schema `0.3.0`; kho 86 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M47 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 87 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,49 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M47 — Engine thứ chín `algebra`: máy giữ phép toán · [E] — **xong**
+
+Chính chủ hỏi engine cho biến đổi biểu thức nên như nào, tao viết `docs/ENGINE-ALGEBRA.md`,
+rồi chính chủ bảo cân tất. Dựng theo đúng thứ tự §17 của đặc tả: rủi ro giảm dần.
+
+Lý do có engine, đo bằng máy trên bài **đang xuất bản**: đổi vế phải của
+`geometric-sum-doubling` từ `1 + 2 + 4 + 8` thành `1 + 2 + 4 + 9` — bộ kiểm trả về
+**0 lỗi, 0 cảnh báo**. `derivation` xếp chỗ cho công thức chứ không hiểu công thức,
+và không luật nào trong `check` đọc nội dung `tex`.
+
+`algebra` lấy phép toán về cho máy: tác giả khai **biểu thức gốc + dãy luật**, engine
+tính ra mọi dòng còn lại. Không gõ được vế sau thì không sai kiểu đó được. Kéo theo
+bốn thứ: không cần label atlas (in thẳng từ cây), danh tính hạng tử là **cấu trúc**
+chứ không phải lời khai `becomes`, ánh xạ id nói được cả nhân bản lẫn nhập một, và
+mỗi bước tự kiểm bằng đánh giá ngẫu nhiên trên $\mathbb{F}_p$ — cùng phương pháp đã
+dùng cho bảng Grundy và phép quét $A = BQ+R$.
+
+**Phép kiểm ấy canh engine, không canh tác giả.** Tác giả không gõ vế sau nên không
+làm ra được bước sai; thứ có thể sai là luật viết lỗi. Chốt canh: quét $6000$ lượt
+(biểu thức ngẫu nhiên × luật × vị trí), mọi lượt áp được đều phải bảo toàn giá trị.
+
+Chỗ đáng giá nhất là `AL-08`: nhân hai vế bởi biểu thức **có thể bằng $0$** — đường
+đi của mọi "chứng minh $1 = 2$". Engine không chặn, nó **ghi điều kiện ra hình bằng
+mực đỏ**. Bài đầu tiên `equation-moves-that-lie` lấy đúng chốt canh ấy làm nội dung.
+
+Tám chỗ thực tế bác lại thiết kế, ghi đủ ở §20 của đặc tả. Ba cái đáng nhớ:
+
+1. **`replaceAt` phá dạng chuẩn tắc**, và triệu chứng rất khó đọc: `add` lồng `add`
+   làm **mọi đường dẫn của bước sau trỏ lệch**. Đặc tả nói dạng chuẩn tắc là bất
+   biến nhưng không nói ai giữ nó.
+2. **Cảnh báo `AL-08` bắn vào đúng bài lấy `AL-08` làm nội dung.** Đã bỏ: điều kiện
+   in đỏ trong hình là chốt canh mạnh hơn, và nó nói với *người đọc* chứ không phải
+   *người soạn*. Kho chạy ở mức 0 cảnh báo, và một vệt vàng thường trực là cách
+   nhanh nhất để người ta ngừng đọc mọi cảnh báo (bài học M45).
+3. **Cái §18 lo nhất — printer — qua được ngay lượt đầu.** Rủi ro thật nằm ở chỗ
+   không ai liệt kê trước: bất biến cấu trúc, danh tính hạng tử, và một cảnh báo
+   đúng nguyên tắc mà sai chỗ. Bốn lỗi sắp chữ còn lại đều **chỉ thấy khi render ra
+   PNG rồi nhìn**, và một cái chỉ thấy khi mở Player (khoảng trắng đầu `<text>` bị
+   lớp patch DOM nuốt, `a = b` thành `a= b`).
+
+**Tầng 4 — sandbox tương tác — chưa làm**, đúng kế hoạch: nó đợi ≥ 3 bài dùng engine
+ở chế độ đọc. `movesAt()` đã có (lọc luật áp được tại một nút), giao diện thì chưa.
 
 ### M46 — Engine thứ tám `longdiv`, và nhãn ngắn không phải chỗ để viết LaTeX · [E] — **xong**
 

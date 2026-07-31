@@ -1,20 +1,19 @@
 # CombViz — Algebra engine: đặc tả
 
-Trạng thái: **đặc tả cho code chưa viết** · Viết: 2026-07-31 (sau M46)
+Trạng thái: **đã dựng — tầng 0–3 chạy được, tầng 4 chưa** · Viết: 2026-07-31 (sau M46), dựng: M47
+Mã nguồn: `packages/engines/algebra/` · Bài đầu tiên: `equation-moves-that-lie`
 Nguồn yêu cầu: chưa có trong `docs/SRS-v1.0.md` — họ ID mới `AL-*` (xem `ENGINE-BACKLOG.md` §0.4)
 Tiền lệ gần nhất: `packages/engines/longdiv/` (M46), `packages/engines/derivation/` (M18)
 
-> **Cách đọc tài liệu này — nó ngược với `ENGINE-BOARD.md`.**
+> **Cách đọc tài liệu này.**
 >
-> `ENGINE-BOARD.md` mô tả code **đang chạy**. Tài liệu này mô tả code **chưa tồn
-> tại**: nó là bản thiết kế, và mọi câu trong đây là một lời hứa chưa được máy nào
-> kiểm. Chỗ nào tao chưa chắc thì §18 nói ra, và §17 xếp thứ tự dựng sao cho phần
-> rủi ro nhất bị đâm thủng trước.
+> Viết ra khi chưa có dòng code nào, rồi **dựng theo nó** ở M47. Phần lớn giữ
+> nguyên; chỗ nào thực tế bác lại thiết kế thì §20 ghi lại, không sửa lén cho khớp.
+> Tầng 0–3 của §17 đã chạy và có chốt canh; **tầng 4 (sandbox tương tác) chưa làm**
+> — đúng kế hoạch, nó đợi ≥ 3 bài dùng engine ở chế độ đọc.
 >
-> **Engine này chưa được duyệt để làm.** `PRD-07` chặn mở engine mới trước khi
-> P0–P2 chứng minh giá trị học tập, và nợ lớn hơn là gate **G-C** (chính chủ soạn
-> tay 3–5 bài rồi đóng băng schema `1.0.0`). Viết spec ra để lúc mở thì không phải
-> nghĩ lại từ đầu, không phải để mở ngay.
+> **Engine này được mở theo yêu cầu trực tiếp của chính chủ**, không đi qua hàng
+> đợi. `PRD-07` và gate **G-C** vẫn đứng nguyên, và §19 vẫn là nợ chưa trả.
 
 ---
 
@@ -248,6 +247,9 @@ RuleResult | Refusal`. Không luật nào đi ra ngoài cây con nó được g�
 | ★ `add_both_sides` | `rel` | cộng `arg` vào hai vế | biểu thức |
 | ★ `mul_both_sides` | `rel` | nhân hai vế với `arg` | biểu thức |
 | ★ `substitute` | bất kỳ | thay biến bằng biểu thức | `"x := 2*y"` |
+| `drop_unit` | `mul` có thừa số $1$, hoặc `add` có hạng tử $0$ | bỏ chúng đi | — |
+
+`associate` và `common_denominator` **chưa cài** — xem §20.
 
 **Hai điều luật này cố ý không có:**
 
@@ -568,3 +570,58 @@ Không phải mở màn — đây là hàng đợi thật:
 3. **Bảng đo phủ cho miền đại số.** `VIZ-COVERAGE.md` đo phủ *tổ hợp*; `longdiv` và
    engine này đều đóng góp $0$ vào đó. Không có bảng đo riêng thì không có cách nào
    nói engine này đáng hay không đáng — chỉ có cảm giác.
+
+
+---
+
+## 20. Thực tế bác lại thiết kế ở chỗ nào (M47)
+
+Ghi lại thay vì sửa lén cho khớp: một spec luôn đúng là một spec chưa ai thử.
+
+1. **Thiếu hẳn một luật.** `expand_square` trên $(x+1)^2$ cho ra $2 \cdot x \cdot 1$
+   và $1^2$ — đúng toán, nhưng không ai viết thế. Phải thêm `drop_unit`. Nó **không**
+   được là chuẩn hoá lặng lẽ trong hàm dựng: tác giả gõ `x*1` thì engine không có
+   quyền sửa lời họ viết, và một nút biến mất giữa hai dòng mà không luật nào giải
+   thích là đúng thứ engine này sinh ra để dẹp.
+
+2. **`replaceAt` phá dạng chuẩn tắc.** Luật trả về `add` mà chỗ thay vào nằm trong
+   `add` thì sinh ra `add` lồng `add`, và từ đó **mọi đường dẫn của bước sau trỏ
+   lệch** — bước tiếp theo nhắm `"1"` lại trúng một nút khác hẳn. Phải chuẩn hoá lại
+   sau mỗi lần ghép (`normalize`). §3.1 nói dạng chuẩn tắc là bất biến nhưng không
+   nói ai giữ nó; nay là `model`.
+
+3. **`collect_like` làm mất danh tính hạng tử không liên quan.** Nhóm chỉ có một
+   thành viên vẫn bị dựng lại bằng `withCoefficient`, tức cấp id mới cho một hạng tử
+   không hề đổi — và diff biến nó thành một cặp xoá–thêm, nên $2$ trong
+   $3x + 2 + 5x$ nhấp nháy trong khi lời kể nói nó đứng yên.
+
+4. **Cảnh báo AL-08 bắn vào đúng bài lấy AL-08 làm nội dung.** §15 khai
+   `algebra/multiplier-may-vanish` là cảnh báo. Bài đầu tiên của engine — nguỵ biện
+   $1 = 2$ — dính ba cảnh báo, và kho chạy ở mức **0 cảnh báo**. Đã bỏ luật ấy: điều
+   kiện được in **đỏ ngay trong hình**, vĩnh viễn, cho *người đọc*; một dòng vàng
+   trong `validate` chỉ nói với *người soạn*, và nói sai. Tác giả muốn khẳng định bài
+   mình không cần điều kiện nào thì bật validator `no-vanishing-divisor`.
+
+5. **Ba lỗi sắp chữ chỉ thấy khi render ra PNG rồi nhìn**, không lỗi nào làm test đỏ:
+   `String(-2)` cho ra gạch nối ASCII đứng cạnh dấu trừ toán học; chỉ số dưới của
+   $a_1$ không hạ xuống; và $x/(y/z)$ vẽ ba dòng với hai vạch **bằng nhau**, đọc
+   được thành $(x/y)/z$ — một biểu thức khác hẳn. Cái thứ ba sửa bằng cách thu nhỏ
+   tầng phân số lồng, đúng như sách toán làm.
+
+6. **Một lỗi nữa chỉ thấy trong Player, không thấy ở SVG rời.** Khoảng trắng đầu
+   chuỗi `<text>` bị lớp patch DOM nuốt, nên `a = b` hiện ra `a= b`. Khoảng cách nay
+   là **hình học** (`{t:'gap'}`), không phải ký tự trắng — đúng chỗ của nó, và hết
+   phụ thuộc `xml:space`.
+
+7. **Chốt canh `elementBoxes` đòi mực đo được.** Oracle bỏ qua node `fill: 'none'`
+   (đúng — tay cầm không phải mực), nên khi id nằm thẳng trên hình chữ nhật halo thì
+   mực duy nhất của một nút là mấy **điểm** toạ độ của `<text>`, và không hộp nào có
+   tâm rơi trúng một điểm. Phải đặt danh tính lên `<g>` bọc ngoài, y như `longdiv`.
+
+8. **Nhãn luật đo bằng sai thước.** Bảng bề ngang của engine dựng cho chữ toán;
+   nhãn luật là chữ giao diện tiếng Việt, và "nhân phân phối" hiện ra "nhân phân
+   phố". Chữ giao diện đo bằng `estimateTextWidth`, hàm sinh ra cho đúng việc ấy.
+
+**Cái §18 lo nhất — printer — lại qua được ngay lượt đầu.** Rủi ro thật nằm ở những
+chỗ không ai liệt kê trước: bất biến dạng chuẩn tắc, danh tính hạng tử, và một cảnh
+báo đúng về nguyên tắc mà sai chỗ.
