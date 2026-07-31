@@ -271,6 +271,7 @@
                 "anchor": "a2",
                 "at": 0,
                 "duration": 600,
+                "hold": true,
                 "id": "f0",
                 "kind": "focus",
                 "label": {
@@ -284,6 +285,7 @@
                 "anchor": "a2",
                 "at": 700,
                 "duration": 600,
+                "hold": true,
                 "id": "f1",
                 "kind": "focus",
                 "label": {
@@ -297,6 +299,7 @@
                 "anchor": "a2",
                 "at": 1400,
                 "duration": 600,
+                "hold": true,
                 "id": "f2",
                 "kind": "focus",
                 "label": {

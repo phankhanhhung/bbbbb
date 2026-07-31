@@ -511,6 +511,7 @@
                 "anchor": "a5",
                 "at": 0,
                 "duration": 500,
+                "hold": true,
                 "id": "p1",
                 "kind": "hide",
                 "label": {
@@ -527,6 +528,7 @@
                 "anchor": "a5",
                 "at": 600,
                 "duration": 500,
+                "hold": true,
                 "id": "p2",
                 "kind": "hide",
                 "label": {
@@ -543,6 +545,7 @@
                 "anchor": "a5",
                 "at": 1200,
                 "duration": 500,
+                "hold": true,
                 "id": "p3",
                 "kind": "hide",
                 "label": {

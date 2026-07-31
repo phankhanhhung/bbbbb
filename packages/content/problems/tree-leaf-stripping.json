@@ -297,6 +297,7 @@
                 "anchor": "a2",
                 "at": 0,
                 "duration": 600,
+                "hold": true,
                 "id": "cut00",
                 "kind": "hide",
                 "label": {

@@ -550,6 +550,7 @@
                 "anchor": "a2",
                 "at": 0,
                 "duration": 700,
+                "hold": true,
                 "id": "p0",
                 "kind": "show",
                 "label": {
@@ -564,6 +565,7 @@
                 "anchor": "a1",
                 "at": 900,
                 "duration": 700,
+                "hold": true,
                 "id": "p1",
                 "kind": "show",
                 "label": {

@@ -140,6 +140,34 @@ function checkPlainLabels(step: Step, path: string): ValidationIssue[] {
 
   if (step.case_label) flag(step.case_label.vi, `${path}/case_label/vi`, 'case_label');
 
+  const phases = [...(step.choreography?.phases ?? [])].sort(
+    (a, b) => a.at + a.duration - (b.at + b.duration),
+  );
+  const lastPhase = phases.at(-1);
+
+  // Bốn thay đổi liên tiếp không một chỗ nghỉ là đúng thứ làm timeline "chạy vù vù
+  // khó hiểu". Ngưỡng đặt ở **bốn** chứ không phải hai: hai ba pha ngắn thì mạch
+  // liền vẫn đọc được, và ép nghỉ ở đó chỉ tổ thêm một cú bấm.
+  if (phases.length >= 4 && !phases.some((p) => p.hold === true)) {
+    issues.push({
+      code: 'lint/timeline-no-hold',
+      severity: 'warning',
+      message: `Timeline ${phases.length} pha mà không có mốc dừng nào`,
+      path: `${path}/choreography/phases`,
+      hint: 'Đặt `hold: true` ở cuối mỗi nhịp người đọc cần hấp thụ (CHO-11)',
+    });
+  }
+
+  // `hold` ở pha cuối không làm gì: phát lại đằng nào cũng dừng ở đó.
+  if (lastPhase?.hold === true) {
+    issues.push({
+      code: 'lint/hold-at-end',
+      severity: 'warning',
+      message: `Pha cuối "${lastPhase.id}" đặt hold — phát lại đằng nào cũng dừng ở đó`,
+      path: `${path}/choreography/phases`,
+    });
+  }
+
   step.choreography?.phases.forEach((phase, i) => {
     // **Mỗi pha phải có chữ.** Nhãn nay hiện ở mọi chế độ, nên một pha không nhãn là
     // một đoạn hình đổi mà không ai nói vì sao — đúng thứ làm timeline khó theo. Cả
