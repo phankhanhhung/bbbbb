@@ -1,6 +1,6 @@
 import type { Choreography, Scene } from '@combviz/schema';
 import { nodeAt, walk, type Expr, type TermId } from './expr.js';
-import { elementId, layout, type Layout } from './layout.js';
+import { elementId, layout, noteId, type Layout } from './layout.js';
 import { readAlgebra, type AlgebraModel } from './model.js';
 
 /**
@@ -20,14 +20,18 @@ import { readAlgebra, type AlgebraModel } from './model.js';
  * động` sẽ quên luật thứ 42; đọc cấu trúc thì luật mới có nhịp đúng ngay hôm nó ra
  * đời. Cùng bài học với `out.guard`/`out.binding` ở chốt canh M50.
  *
- * ## Vì sao không có `move`/`morph`
+ * ## `move` phải lật chiều mới dùng được (CHO-12)
  *
- * Vì trong một chuỗi biến đổi **mọi dòng đều ở lại trên màn hình**. `move` hiện có
- * nghĩa "bay **tới**" một đích và đậu ở đó, nên muốn hạng tử dòng $k$ "bay xuống"
- * dòng $k+1$ thì phải lấy bản của dòng $k$ đi — và dòng $k$ thủng một lỗ. Thứ cần là
- * "bay **từ**", mà thêm nó là đổi lược đồ pha dùng chung cho cả chín engine. Không
- * lén làm ở đây. Nên chuyện "hạng tử này chính là hạng tử kia" được kể bằng `focus`
- * đồng thời ở cả hai dòng — nhờ `TermId` bền, bộ sinh biết chính xác cặp ấy.
+ * Trong một chuỗi biến đổi **mọi dòng đều ở lại trên màn hình**. `move` bản đầu chỉ
+ * biết "bay **tới**" một đích rồi đậu ở đó, nên cho hạng tử dòng $k$ bay xuống dòng
+ * $k+1$ sẽ đục một lỗ vào dòng $k$. M51 vì thế bỏ hẳn `move` và kể bằng `focus` đồng
+ * thời ở hai dòng.
+ *
+ * M53 thêm `from` vào lược đồ pha — một đổi thay ở tầng **dùng chung cho chín
+ * engine**, nên nó là quyết định của chính chủ chứ không phải việc lén nhét vào một
+ * engine. Với `from` thì bản ở dòng dưới xuất phát từ chỗ của bản dòng trên rồi về chỗ
+ * của mình: không ai mất gì, và lời hứa của `TermId` bền (DAT-11/12) — "$e_2$ ở dòng
+ * ba đúng là nút $e_2$ của dòng một" — được nói ra thành chuyển động.
  */
 
 const STEP_MS = 1400;
@@ -57,6 +61,10 @@ function orderedIds(box: Layout, rowIndex: number): string[] {
     .filter((b) => (seen.has(b.id) ? false : (seen.add(b.id), true)))
     .map((b) => b.id);
 }
+
+/** Hạng tử này có được vẽ ở dòng ấy không. */
+const boxIn = (box: Layout, rowIndex: number, term: string): boolean =>
+  box.lines[rowIndex]?.boxes.some((b) => b.id === elementId(rowIndex, term)) ?? false;
 
 /** `TermId` của mọi nút trong một cây con. */
 function termsIn(e: Expr): Set<TermId> {
@@ -214,6 +222,31 @@ export function choreographyOf(
       }
     }
 
+    // 3a. **Hạng tử đi tiếp thì bay xuống từ chỗ cũ của nó** (CHO-12).
+    //
+    //     Đây là thứ M51 phải bỏ vì `move` khi ấy chỉ biết "bay **tới**": lấy bản ở
+    //     dòng trên đi thì dòng trên thủng một lỗ, mà trong một chuỗi biến đổi mọi
+    //     dòng đều ở lại. `from` lật đúng chiều — bản ở dòng dưới xuất phát từ chỗ của
+    //     bản dòng trên rồi về chỗ của mình, và không ai mất gì.
+    //
+    //     Chỉ những hạng tử **giữ nguyên danh tính** mới bay: đó chính là lời hứa của
+    //     `TermId` bền (DAT-11/12), và bay là cách nói lời hứa ấy ra thành hình.
+    const carried = idsOfRow(box, k)
+      .map((id) => ({ id, term: id.slice(id.indexOf('-') + 1) }))
+      .filter(({ term }) => boxIn(box, k - 1, term))
+      .map(({ id, term }) => ({ id, from: elementId(k - 1, term) }));
+    for (const [i, c] of carried.slice(0, 60).entries()) {
+      push({
+        id: `s${k}-fly${i}`,
+        kind: 'move',
+        targets: [c.id],
+        from: c.from,
+        at: t + FOCUS_MS + 180,
+        duration: REVEAL_MS + 160,
+        anchor,
+      });
+    }
+
     // 3b. Sợi nối hiện **sau** dòng mới: chúng nối hai đầu, nên đầu kia phải có mặt đã.
     const threads = box.explain.threads.filter((th) => th.step === k).map((th) => th.id);
     if (threads.length > 0) {
@@ -267,20 +300,26 @@ export function choreographyOf(
     }
   }
 
+  // Dòng chữ đỏ hiện **sau cùng** cùng sợi nối của nó. Chúng tóm tắt cả chuỗi — điều
+  // kiện của một bước, hay món nợ nghiệm ngoại lai — nên bày ra ngay khung đầu là đọc
+  // kết luận trước khi nghe kể.
+  const noteTargets = box.notes.map((_, i) => noteId(i));
+
   // Sợi nối dòng điều kiện hiện **sau cùng**: nó nói về cả chuỗi, không về một bước.
   // Trước M52 dòng đỏ ấy lơ lửng dưới hình không dính vào gì — người đọc phải tự đoán
   // "$x - 1 \\ne 0$" đang ràng buộc cái mẫu số nào.
   const links = box.explain.conditionLinks.map((c) => c.id);
-  if (links.length > 0 && phases.length > 0) {
+  const tail = [...noteTargets, ...links];
+  if (tail.length > 0 && phases.length > 0) {
     const end = Math.max(...phases.map((p) => p.at + p.duration));
     push({
       id: 'cond-link',
       kind: 'show',
-      targets: links,
+      targets: tail.slice(0, 200),
       at: end,
       duration: 300,
       anchor,
-      label: { vi: 'điều kiện của bước' },
+      label: { vi: 'điều kiện kèm theo' },
     });
   }
 

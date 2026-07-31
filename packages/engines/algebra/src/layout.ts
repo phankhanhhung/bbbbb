@@ -119,6 +119,9 @@ export interface Layout {
  */
 export const elementId = (rowIndex: number, term: string): string => `r${rowIndex}-${term}`;
 
+/** Danh tính của dòng chữ đỏ thứ `i` — choreography nhắm được, anchor thì không. */
+export const noteId = (index: number): string => `note${index}`;
+
 /** Bề ngang phần đứng **trước** dấu quan hệ — thứ mọi dòng phải gióng theo. */
 function leadWidth(row: AlgebraRow): number {
   return row.expr.k === 'rel' ? measure(toBox(row.expr.lhs)).w : 0;
@@ -359,6 +362,7 @@ export function boxOf(box: Layout, id: string): NodeBox | null {
 export function explainIds(box: Layout): Set<string> {
   const e = box.explain;
   return new Set([
+    ...box.notes.map((_, i) => noteId(i)),
     ...e.threads.map((t) => t.id),
     ...e.strikes.map((s) => s.id),
     ...e.braces.map((g) => g.id),

@@ -10,7 +10,7 @@ import {
   type SceneBox,
   type SvgNode,
 } from '@combviz/render';
-import { boxOf, layout, RULE_SIZE, type Layout } from './layout.js';
+import { boxOf, layout, noteId, RULE_SIZE, type Layout } from './layout.js';
 import { readAlgebra } from './model.js';
 import { FONT, ROW } from './typeset.js';
 
@@ -188,9 +188,17 @@ export const algebraRenderer: EngineRenderer = {
 
     if (ctx.explain) nodes.push(...explainNodes(box, ctx));
 
-    for (const note of box.notes) {
-      nodes.push(
-        text(
+    for (const [i, note] of box.notes.entries()) {
+      nodes.push({
+        // Danh tính để choreography hiện nó **đúng lúc**: dòng đỏ tóm tắt cả chuỗi —
+        // điều kiện của một bước, hay món nợ nghiệm ngoại lai — nên bày nó ra ngay
+        // khung đầu là đọc kết luận trước khi nghe kể.
+        //
+        // `key` nằm trên **node**, không phải trong `attrs`. Nhét `key` vào attrs thì
+        // nó thành một thuộc tính SVG vô nghĩa, `node.key` vẫn rỗng, và pha nhắm vào
+        // nó không khớp gì cả — chạy đủ thời lượng trong khi dòng chữ đứng nguyên từ
+        // khung đầu. Lỗi ấy đã xảy ra và chỉ lộ ở lượt nhìn khung 0.
+        ...text(
           'text',
           {
             x: round(note.x),
@@ -201,7 +209,8 @@ export const algebraRenderer: EngineRenderer = {
           },
           note.text,
         ),
-      );
+        key: noteId(i),
+      });
     }
 
     return [el('g', { class: 'cv-algebra' }, nodes), ...caption(model.config.caption, box, ctx)];

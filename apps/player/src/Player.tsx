@@ -232,8 +232,14 @@ export function Player({
 
     if (!renderer || !container || !baseNodes) return;
 
+    // `boxOf` là **đường duy nhất** cho `move`/`morph` xuyên engine, và Player chưa
+    // bao giờ truyền nó: đường còn lại sao chép thuộc tính hình học, nên hai `<g>`
+    // rỗng thuộc tính thì không có gì để chép và pha chạy đủ thời lượng trong khi màn
+    // hình đứng im. `from` (CHO-12) thì **chỉ** có đường này.
     const next = choreography
-      ? applyChoreography(baseNodes, choreography, timeline.ms)
+      ? applyChoreography(baseNodes, choreography, timeline.ms, {
+          boxOf: (id) => (step.scene ? renderer?.boxesOf(step.scene, id, ctx) : undefined),
+        })
       : baseNodes;
 
     const isStepChange = previous.current.length > 0 && lastStepId.current !== step.id;

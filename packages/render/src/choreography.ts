@@ -92,6 +92,14 @@ export function applyChoreography(
       if (phase.kind === 'show') {
         for (const id of phase.targets) merge(effects, id, { opacity: 0 });
       }
+      // `from` cũng có tác dụng **trước** mốc, và cùng lý do với `show`: "bay tới từ
+      // đó" nghĩa là trước khi bay nó **đang ở đó**. Bỏ qua thì vật đứng sẵn ở chỗ
+      // đích suốt phần đầu timeline rồi mới nhúc nhích — tức là không bay đi đâu cả.
+      if ((phase.kind === 'move' || phase.kind === 'morph') && phase.from !== undefined) {
+        for (const id of phase.targets) {
+          merge(effects, id, { comesFrom: phase.from, amount: 0, shape: phase.kind === 'morph' });
+        }
+      }
       continue;
     }
 
@@ -112,7 +120,9 @@ export function applyChoreography(
         case 'move':
         case 'morph':
           merge(effects, id, {
-            towards: phase.to,
+            ...(phase.from === undefined
+              ? { towards: phase.to }
+              : { comesFrom: phase.from }),
             amount: progress,
             shape: phase.kind === 'morph',
           });
@@ -147,6 +157,8 @@ interface Effect {
   opacity?: number;
   emphasis?: number;
   towards?: string;
+  /** CHO-12 — id mà vật này **xuất phát từ đó**; ngược chiều với `towards`. */
+  comesFrom?: string;
   amount?: number;
   shape?: boolean;
 }
@@ -211,6 +223,25 @@ function rewrite(
       // hoặc CSS quyết định "được nhấn" trông thế nào — cùng cách `data-el` đang
       // dùng để nối anchor với hình.
       attrs['data-phase'] = round(effect.emphasis);
+    }
+
+    // CHO-12 — "bay **từ**": lệch đi đúng bằng hiệu hai tâm ở đầu pha, rồi về $0$.
+    // Chỉ có đường `boxOf`: đường sao chép thuộc tính nói "hãy giống cái kia", còn câu
+    // hỏi ở đây là "lúc đầu mày đứng ở đâu" — một phát biểu về vị trí, mà vị trí thì
+    // chỉ toạ độ scene nói được bằng thứ tiếng chung của mọi engine (G-10).
+    if (effect.comesFrom !== undefined && effect.amount !== undefined && boxOf && id !== undefined) {
+      const pair = nearestPair(boxOf(id), boxOf(effect.comesFrom));
+      if (pair) {
+        const left = 1 - effect.amount;
+        const dx = round((pair.to.x - pair.at.x) * left);
+        const dy = round((pair.to.y - pair.at.y) * left);
+        if (dx !== 0 || dy !== 0) {
+          const shift = `translate(${dx} ${dy})`;
+          const existing = attrs['transform'];
+          attrs['transform'] = existing === undefined ? shift : `${shift} ${String(existing)}`;
+        }
+        return children ? { ...node, attrs, children } : { ...node, attrs };
+      }
     }
 
     if (effect.towards !== undefined && effect.amount !== undefined && boxOf && id !== undefined) {

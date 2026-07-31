@@ -455,8 +455,8 @@ quan hệ được **suy**, không được **khai**.
 Nhãn pha là **chữ trơn**, không LaTeX — nó đi thẳng vào `aria-valuetext`
 (`lint/label-not-plain`, M46). Tên luật tiếng Việt dùng luôn làm nhãn.
 
-> **Cài ở M51.** Bảng trên đúng về nguyên tắc và sai ở hai chỗ về phương tiện —
-> `move`/`morph` không dùng được, và danh tính phải mang tên theo dòng. Xem §27.
+> **Cài ở M51**, và `move` mở khoá ở M53 sau khi lược đồ pha có `from` (CHO-12).
+> Xem §27 và §29.
 
 ---
 
@@ -1293,3 +1293,58 @@ chỗ để phát hiện điều đó.
 (`implicitElementIds`), mà mực giải thích chỉ tồn tại khi `ctx.explain` — một anchor
 trỏ vào nó sẽ trỏ vào hư không ở golden và OG card. Choreography thì nhắm được, vì
 Player vẽ với `explain`.
+
+
+---
+
+## 29. `move` lật chiều: `from` (M53, CHO-12)
+
+§27.2 để lại `move`/`morph` với một lý do thuộc về cấu trúc: trong chuỗi biến đổi
+**mọi dòng đều ở lại trên màn hình**, mà `move` chỉ biết "bay **tới**" rồi đậu — cho
+hạng tử dòng $k$ bay xuống dòng $k+1$ sẽ đục một lỗ vào dòng $k$.
+
+Lối ra không phải một thủ thuật trong engine mà là **một trường trong lược đồ pha**,
+tức tầng dùng chung cho chín engine — nên nó là quyết định của chính chủ, không phải
+việc lén nhét vào một engine.
+
+### 29.1 `to` và `from` là hai câu chuyện, không phải hai cách nói một chuyện
+
+- **`to`** — "vật này **rời chỗ**": nó bỏ trống chỗ cũ và đậu ở chỗ mới.
+- **`from`** — "vật này **đến**": chỗ cũ vẫn còn nguyên nội dung của nó, chỉ có vật
+  này là mới tới.
+
+Chuỗi biến đổi cần đúng vế thứ hai và **không có** vế thứ nhất. Với `from` thì bản ở
+dòng dưới xuất phát từ chỗ của bản dòng trên rồi về chỗ của mình, và không ai mất gì.
+
+Chỉ đi được đường **toạ độ scene** (`boxOf`), không đi đường sao chép thuộc tính: "lúc
+đầu mày đứng ở đâu" là một phát biểu về **vị trí**, mà vị trí thì chỉ toạ độ scene nói
+được bằng thứ tiếng chung của mọi engine (G-10).
+
+Hệ quả: chỉ những hạng tử **giữ nguyên danh tính** mới bay. Đó chính là lời hứa của
+`TermId` bền (DAT-11/12) — "$e_2$ ở dòng ba đúng là nút $e_2$ của dòng một" — được nói
+ra thành chuyển động, thay vì chỉ là một câu trong tài liệu.
+
+### 29.2 Ba chỗ phải sửa, và một chỗ chưa từng chạy
+
+Trường mới thì rẻ; ba chỗ quanh nó mới là việc.
+
+- **Có tác dụng *trước* mốc.** "Bay tới từ đó" nghĩa là trước khi bay nó **đang ở đó**.
+  `applyChoreography` bỏ qua pha chưa bắt đầu (trừ `show`), nên thiếu nhánh này thì vật
+  đứng sẵn ở chỗ đích suốt phần đầu timeline rồi mới nhúc nhích — tức không bay đi đâu.
+- **Player chưa bao giờ truyền `boxOf`.** Đường còn lại sao chép thuộc tính hình học,
+  mà hai `<g>` rỗng thuộc tính thì không có gì để chép: pha chạy đủ thời lượng trong
+  khi màn hình đứng im. Nghĩa là `move`/`morph` **chưa từng chạy trong Player** kể từ
+  khi có CHO-01 — không test nào bắt, vì không bài nào dùng.
+- **`key` nằm trên node, không trong `attrs`.** Nhét `key` vào attrs thì nó thành một
+  thuộc tính SVG vô nghĩa, `node.key` vẫn rỗng, và pha nhắm vào nó không khớp gì cả.
+  Lỗi ấy đã xảy ra với dòng chữ đỏ và chỉ lộ ở lượt nhìn khung 0.
+
+### 29.3 Dòng đỏ hiện ở cuối
+
+Điều kiện AL-08 và món nợ nghiệm ngoại lai tóm tắt **cả chuỗi**, không thuộc dòng nào
+— nên không pha `show` nào của một dòng chạm tới chúng, và chúng bày ra ngay khung
+đầu: đọc kết luận trước khi nghe kể. Nay chúng có danh tính (`noteId`) và một pha
+`show` ở cuối timeline, cùng lúc với sợi nối chỉ vào chỗ chúng ràng buộc.
+
+Danh tính ấy vào `explainIds` chứ không vào `drawnIds`: choreography nhắm được, anchor
+thì không — cùng lý lẽ với mực giải thích (§28.5).

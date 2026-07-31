@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { applyChoreography, createContext, createRenderer } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
 import type { Scene } from '@combviz/schema';
-import type { SvgNode } from '@combviz/render';
+import type { SceneBox, SvgNode } from '@combviz/render';
 import {
   Minter,
   algebraHitTest,
@@ -1060,10 +1060,11 @@ describe('AL-06 — choreography sinh từ model', () => {
     // Chốt canh cho một lỗi mà 78 test không bắt và lượt nhìn khung 0 bắt ngay: nhãn
     // luật không mang danh tính nào, nên `show` không chạm tới nó và khung đầu bày
     // sẵn tên cả bốn phép biến đổi trong khi mới có một dòng.
-    const s = scene('(x + 1)^2 + 3*x', [
-      { rule: 'expand_square', at: '0' },
-      { rule: 'drop_unit', at: '1' },
-      { rule: 'collect_like', at: '' },
+    // Dùng scene **có dòng điều kiện**: nó là ca dễ lọt nhất, vì dòng đỏ không thuộc
+    // dòng nào nên không pha `show` nào của một dòng chạm tới nó.
+    const s = scene('(6*a)/(3*a)', [
+      { rule: 'cancel_common', at: '', arg: 'a' },
+      { rule: 'eval_int', at: '' },
     ]);
     const nodes = applyChoreography(
       algebraRenderer.render(s, ctx),
@@ -1091,6 +1092,53 @@ describe('AL-06 — choreography sinh từ model', () => {
     visit(nodes as readonly SvgNode[]);
 
     expect(leaked, `lộ trước ở khung 0: ${leaked.join(' | ')}`).toEqual([]);
+  });
+
+  it('CHO-12 — hạng tử đi tiếp **bay xuống từ chỗ cũ**, và dòng trên không thủng lỗ', () => {
+    // Thứ M51 phải bỏ vì `move` khi ấy chỉ biết "bay tới". `from` lật đúng chiều.
+    const s = scene('(a + b)^2 + 3*a', [{ rule: 'expand_square', at: '0' }]);
+    const spec = algebraChoreography(s) as NonNullable<ReturnType<typeof algebraChoreography>>;
+    const fly = spec.phases.filter((p) => p.kind === 'move');
+
+    expect(fly.length).toBeGreaterThan(0);
+    // Mọi pha bay phải khai `from`, **không** khai `to`: `to` sẽ lấy bản ở dòng trên
+    // đi và đục một lỗ vào nó.
+    expect(fly.every((p) => p.from !== undefined && p.to === undefined)).toBe(true);
+    // Và nguồn phải ở **dòng ngay trên** đích — cùng hạng tử, khác dòng.
+    for (const p of fly) {
+      const target = p.targets[0] as string;
+      const source = p.from as string;
+      expect(target.slice(target.indexOf('-'))).toBe(source.slice(source.indexOf('-')));
+      expect(Number(target.slice(1, target.indexOf('-')))).toBe(
+        Number(source.slice(1, source.indexOf('-'))) + 1,
+      );
+    }
+
+    // Chốt canh có răng: giữa chừng pha bay, hạng tử phải **lệch khỏi** chỗ của nó.
+    const boxOf = (id: string): readonly SceneBox[] => algebraRenderer.elementBoxes!(s, id);
+    const mid = (fly[0] as (typeof fly)[number]).at + (fly[0] as (typeof fly)[number]).duration / 2;
+    const shifted = applyChoreography(algebraRenderer.render(s, ctx), spec, mid, { boxOf });
+    const moved: string[] = [];
+    const visit = (list: readonly SvgNode[]): void => {
+      for (const n of list) {
+        if (typeof n.attrs['transform'] === 'string') moved.push(String(n.key ?? n.attrs['data-el']));
+        if (n.children) visit(n.children as readonly SvgNode[]);
+      }
+    };
+    visit(shifted as readonly SvgNode[]);
+    expect(moved.length, 'không nút nào lệch chỗ giữa pha bay').toBeGreaterThan(0);
+
+    // Còn ở cuối pha thì về đúng chỗ — không còn `translate` nào.
+    const landed = applyChoreography(algebraRenderer.render(s, ctx), spec, 100_000, { boxOf });
+    const still: string[] = [];
+    const visit2 = (list: readonly SvgNode[]): void => {
+      for (const n of list) {
+        if (typeof n.attrs['transform'] === 'string') still.push(String(n.key));
+        if (n.children) visit2(n.children as readonly SvgNode[]);
+      }
+    };
+    visit2(landed as readonly SvgNode[]);
+    expect(still, 'vẫn còn lệch chỗ ở khung cuối').toEqual([]);
   });
 
   it('không có gì để kể thì **không** sinh timeline', () => {
