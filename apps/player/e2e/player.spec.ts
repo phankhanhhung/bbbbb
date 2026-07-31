@@ -37,8 +37,9 @@ test.describe('Kho bài (CMS-02)', () => {
   test('liệt kê, lọc và mở được một bài', async ({ page }) => {
     await page.goto('/');
     const cards = page.locator('.bank__card');
+    // Chờ kho vẽ xong rồi mới chụp mốc — `count()` không tự chờ.
+    await expect.poll(() => cards.count()).toBeGreaterThan(1);
     const total = await cards.count();
-    expect(total).toBeGreaterThan(1);
 
     // Tìm kiếm chuẩn hoá dấu: học sinh gõ bàn phím điện thoại hay bỏ dấu.
     await page.getByPlaceholder('Tìm trong đề bài và lời giải…').fill('ban co khuyet hai o goc');
@@ -355,13 +356,19 @@ test.describe('Choreography (CHO-02, CHO-09)', () => {
     await expect(page.getByLabel('Tua trong bước')).toHaveCount(0);
     await expect(page.getByText(/Pha \d+\/\d+/)).toBeVisible();
 
+    // Đồng bộ theo **bộ đếm pha**, không theo thứ tự lệnh: `count()` không tự chờ,
+    // nên đọc ngay sau `click()` là đọc trạng thái của pha *trước*. Chờ nhãn pha nhảy
+    // số rồi mới đếm — đó là chỗ giao diện tự khai nó đã sang pha mới.
     const hidden = (): Promise<number> => page.locator('.canvas svg [opacity="0"]').count();
-    await page.getByRole('button', { name: 'Pha sau' }).click();
-    const afterOne = await hidden();
-    await page.getByRole('button', { name: 'Pha sau' }).click();
-    const afterTwo = await hidden();
+    const phase = page.getByText(/Pha \d+\/\d+/);
 
-    expect(afterTwo).toBeGreaterThan(afterOne);
+    await page.getByRole('button', { name: 'Pha sau' }).click();
+    await expect(phase).toContainText('Pha 2/');
+    const afterOne = await hidden();
+
+    await page.getByRole('button', { name: 'Pha sau' }).click();
+    await expect(phase).toContainText('Pha 3/');
+    await expect.poll(hidden).toBeGreaterThan(afterOne);
     await context.close();
   });
 });
@@ -510,7 +517,18 @@ test.describe('Sandbox (SBX-01)', () => {
     await reveal(page);
     await page.getByRole('button', { name: 'Thử từ đây' }).click();
 
-    const before = await page.locator('.sandbox .canvas svg circle').count();
+    const stones = page.locator('.sandbox .canvas svg circle');
+    // **Chờ sandbox vẽ xong rồi mới chụp mốc.** `count()` không tự chờ như
+    // `expect(locator)`: gọi ngay sau khi bấm "Thử từ đây" thì nó trả $0$, và khẳng
+    // định cuối bài thành "số sỏi < 0" — một điều kiện **không bao giờ đúng**, nên
+    // test đỏ với thông báo vô nghĩa `Expected: < 0, Received: 14`. Nó xanh trên máy
+    // rảnh và đỏ khi CI chạy hai worker song song.
+    //
+    // Khẳng định mốc khác $0$ chứ không chỉ chờ: mốc $0$ là một lỗi của **test**, và
+    // nó phải nói ra điều đó thay vì hoá trang thành một lỗi của sản phẩm.
+    await expect.poll(() => stones.count()).toBeGreaterThan(0);
+    const before = await stones.count();
+
     await page.getByRole('button', { name: /^Bốc 1$/ }).first().click();
 
     const canvas = page.locator('.sandbox .canvas svg');
@@ -518,9 +536,7 @@ test.describe('Sandbox (SBX-01)', () => {
     await page.mouse.click(box.x + box.width * 0.12, box.y + box.height * 0.4);
 
     // Ít nhất một viên sỏi biến mất — nút không còn im lặng nữa.
-    await expect
-      .poll(async () => page.locator('.sandbox .canvas svg circle').count())
-      .toBeLessThan(before);
+    await expect.poll(() => stones.count()).toBeLessThan(before);
   });
 });
 
