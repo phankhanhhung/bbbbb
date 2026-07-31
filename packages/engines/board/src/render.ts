@@ -329,6 +329,23 @@ function renderCells(config: BoardConfig, ctx: RenderContext): SvgNode[] {
               // Mực theo lớp màu của **chính ô này**: một dấu "−" trên ô lớp 8
               // vẽ bằng mực đen chung thì gần như biến mất.
               fill: inkForClass(ctx, colorClassIndex),
+              /**
+               * Chữ trong ô **thuộc về ô**, và phải nói ra điều đó.
+               *
+               * `key` đã nằm trên `<rect>`, nên node chữ này không mang danh tính
+               * nào cả — mà `applyChoreography` tra chủ sở hữu theo `data-el ?? key`.
+               * Hệ quả: một pha `dim`/`show`/`hide` nhắm vào một ô chỉ chạm **cái
+               * ô**, con số bên trong đứng nguyên. Bài `sum-odd-numbers-gnomon` xây
+               * hình vuông theo từng lớp gnomon bằng năm pha `show`, và ở khung đầu
+               * cả lưới $5\times5$ con số đã hiện sẵn trong khi mọi ô còn ẩn — hình
+               * lộ đáp án trước khi lập luận bắt đầu.
+               *
+               * Không đặt `key` mà đặt `data-el`: `key` là danh tính **DOM** và ô đã
+               * dùng nó cho `<rect>`; hai node cùng key thì auto-diff (DAT-12) không
+               * phân biệt được chúng. `data-el` đúng là "element ngữ nghĩa mà node
+               * này thuộc về, khi nó khác danh tính DOM" — xem `patch.ts`.
+               */
+              'data-el': cellId(r, c),
             },
             glyph,
           ),

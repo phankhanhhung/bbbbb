@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M43 xong (7 engine đều tự khai hình học; mọi element trong kho neo được; kho có sổ thứ tự bài; board gạch được ô); schema `0.3.0`; kho 84 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M44 xong (7 engine đều tự khai hình học; mọi element trong kho neo được; kho có sổ thứ tự bài; board gạch được ô); schema `0.3.0`; kho 85 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,47 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M44 — Chữ trong ô đi cùng ô, và bài đại số đầu tiên · [E] — **xong**
+
+Chính chủ đặt một bài **năm ví dụ minh hoạ thuật toán chia đa thức**. Khảo sát để
+dựng hình thì lộ ra một **lỗi đang xuất bản**, và bài mới dính đúng lỗi ấy nếu
+không sửa trước — nên hạng mục này có ba phần theo thứ tự bắt buộc.
+
+**Glyph của ô không mang danh tính ô.** `renderCells` phát hai node cho một ô có
+chữ: `<rect>` mang `key`, `<text>` mang **không gì cả**. Mà `applyChoreography` tra
+chủ sở hữu theo `data-el ?? key`, nên một pha `dim`/`show`/`hide` nhắm vào một ô chỉ
+chạm **cái ô**, con số bên trong đứng nguyên.
+
+Bài `sum-odd-numbers-gnomon` (#81) đang hỏng vì nó: năm pha `show` xây hình vuông
+theo từng lớp gnomon, $25$ target là ô có glyph, và ở khung $t=0$ **cả lưới
+$5\times5$ con số đã hiện sẵn** trong khi mọi ô màu còn ẩn — hình lộ đáp án trước
+khi lập luận bắt đầu. Golden vẫn xanh suốt vì golden chụp *scene*, không chụp
+*timeline*. Sửa bằng một thuộc tính: `data-el` trên node chữ. $37$ golden đổi, và
+tước `data-el` ra thì cả $37$ khớp byte-for-byte.
+
+**Topic đầu tiên ngoài tổ hợp.** `algebra` vào `topics.yaml` — thêm vì có bài cần
+nó, không phải để mở sẵn chỗ.
+
+**Hình của bài: bảng hệ số tách rời.** Cột là luỹ thừa của $x$, hàng là từng dòng
+phép chia dọc, nên phép trừ đọc theo cột đúng như trên giấy. Ba chi tiết làm hình
+nói đúng thứ thuật toán nói: `holes` cho ô không thuộc dòng ấy còn glyph `0` cho hệ
+số $0$ **thật** (phân biệt này *là* nội dung ví dụ 3); `strike` lên cặp hệ số dẫn
+đầu triệt tiêu nhau mỗi nhịp; và choreography mở bảng theo đúng nhịp *chia rồi trừ*
+— phần này chỉ đúng sau khi sửa lỗi trên.
+
+Ba việc rút ra:
+
+1. **Golden mù với thời gian.** Nó chụp scene ở $t$ vô hạn, nên mọi lỗi *chỉ hiện ra
+   giữa timeline* lọt qua sạch. Bài #81 sống với lỗi ấy từ M40. Chốt canh mới là hai
+   khẳng định: node chữ khai `data-el`, và pha `dim` làm mờ **cả** ô lẫn chữ.
+2. **Luật taxonomy bắt đúng.** Tao tag `monovariant` vì bậc dư giảm ngặt; `validate`
+   từ chối: tag ấy đòi widget `invariants[]`, mà scene ở đây là bảng tĩnh, không có
+   gì để tính. Tag phải có widget đỡ — bỏ tag, giữ lời giải thích trong narrative.
+3. **Nhãn cột dính nhau, lần thứ hai.** `deg A / deg B / deg Q / deg R` rộng gần
+   trọn ô nên hiện ra `deg Adeg Bdeg Qdeg R` — đúng cái mà chú thích của
+   `colLabelSize` đã cảnh báo từ trước. Chỉ nhìn ảnh mới thấy. Nay script soạn tự
+   khẳng định mọi nhãn cột hẹp hơn $0{,}8$ ô.
 
 ### M43 — Bài `IMO Shortlist C5` đầu tiên: trò xoá lớp thặng dư · [E] — **xong**
 

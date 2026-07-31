@@ -1,0 +1,1431 @@
+{
+  "schema_version": "0.3.0",
+  "id": "polynomial-long-division",
+  "statement": {
+    "vi": "Cho hai đa thức $A$ và $B \\ne 0$ hệ số nguyên. Mô tả thuật toán tìm **thương** $Q$ và **dư** $R$ sao cho $A = B \\cdot Q + R$ với $\\deg R < \\deg B$, giải thích vì sao thuật toán dừng, và chạy nó trên năm ví dụ đủ các trường hợp hay gặp."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Thuật toán chia đa thức có dư. Chỗ đáng nhìn: mỗi nhịp **triệt tiêu đúng một hạng tử bậc cao nhất**, nên bậc phần còn lại là một đại lượng giảm ngặt — thuật toán dừng vì lý do ấy, không vì lý do nào khác."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Chia dọc bằng bảng hệ số tách rời"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thuật toán chạy theo **một nhịp lặp**: lấy hạng tử bậc cao nhất của phần còn lại chia cho hạng tử bậc cao nhất của $B$, được một hạng tử của [[a2|thương]], rồi nhân ngược lại và trừ đi. Phép trừ ấy **triệt tiêu hạng tử bậc cao nhất**, nên bậc phần còn lại giảm ngặt và thuật toán phải dừng; cái còn lại lúc ấy là [[a3|dư $R$]]. Bảng dưới xếp hệ số theo cột luỹ thừa, [[a1|hàng $A$]] là số bị chia."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-0-1",
+                "cell-0-2"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "cell-5-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-1-0": {
+                  "glyph": "1"
+                },
+                "cell-1-1": {
+                  "glyph": "5"
+                },
+                "cell-1-2": {
+                  "glyph": "6"
+                }
+              },
+              "cols": 3,
+              "holes": [
+                [0, 0],
+                [2, 2],
+                [3, 0],
+                [4, 0],
+                [5, 0],
+                [5, 1]
+              ],
+              "rows": 6,
+              "table": {
+                "col_labels": [
+                  "x²",
+                  "x",
+                  "1"
+                ],
+                "row_labels": [
+                  "thương Q",
+                  "A",
+                  "x·B",
+                  "hiệu",
+                  "3·B",
+                  "dư R"
+                ]
+              }
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bảng ba cột x², x, 1 với các hàng còn trống, chỉ hàng A mang 1, 5, 6."
+          },
+          "verified": true
+        },
+        {
+          "id": "e1",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: chia hết, dư $0$"
+          },
+          "narrative": {
+            "vi": "Nhịp cơ bản, và $B$ chia hết $A$. Lấy $x^2$ chia $x$ được $x$, nhân ngược rồi trừ; [[a1|hạng tử bậc cao nhất]] triệt tiêu, nên hai ô ấy bị gạch. Lặp thêm một nhịp nữa thì [[a3|phần còn lại bằng $0$]], tức $A = B \\cdot Q$ và [[a2|thương]] là $x + 3$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-0-1",
+                "cell-0-2"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "cell-5-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-1": {
+                  "color_class": 1,
+                  "glyph": "1"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "3"
+                },
+                "cell-1-0": {
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-1-1": {
+                  "glyph": "5"
+                },
+                "cell-1-2": {
+                  "glyph": "6"
+                },
+                "cell-2-0": {
+                  "color_class": 3,
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-2-1": {
+                  "color_class": 3,
+                  "glyph": "2"
+                },
+                "cell-3-1": {
+                  "glyph": "3",
+                  "strike": 8
+                },
+                "cell-3-2": {
+                  "glyph": "6"
+                },
+                "cell-4-1": {
+                  "color_class": 3,
+                  "glyph": "3",
+                  "strike": 8
+                },
+                "cell-4-2": {
+                  "color_class": 3,
+                  "glyph": "6"
+                },
+                "cell-5-2": {
+                  "color_class": 4,
+                  "glyph": "0"
+                }
+              },
+              "cols": 3,
+              "holes": [
+                [0, 0],
+                [2, 2],
+                [3, 0],
+                [4, 0],
+                [5, 0],
+                [5, 1]
+              ],
+              "rows": 6,
+              "table": {
+                "col_labels": [
+                  "x²",
+                  "x",
+                  "1"
+                ],
+                "row_labels": [
+                  "thương Q",
+                  "A",
+                  "x·B",
+                  "hiệu",
+                  "3·B",
+                  "dư R"
+                ]
+              }
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a2",
+                "at": 0,
+                "duration": 700,
+                "id": "b0",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-1",
+                  "cell-2-0",
+                  "cell-2-1",
+                  "strike-1-0",
+                  "strike-2-0"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 900,
+                "duration": 700,
+                "id": "d0",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 1"
+                },
+                "targets": [
+                  "cell-3-1",
+                  "cell-3-2"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 1800,
+                "duration": 700,
+                "id": "b1",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-2",
+                  "cell-4-1",
+                  "cell-4-2",
+                  "strike-3-1",
+                  "strike-4-1"
+                ]
+              },
+              {
+                "anchor": "a3",
+                "at": 2700,
+                "duration": 700,
+                "id": "d1",
+                "kind": "show",
+                "label": {
+                  "vi": "phần còn lại chính là dư R"
+                },
+                "targets": [
+                  "cell-5-2"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng ba cột x², x, 1. Hàng A là 1, 5, 6; hai nhịp trừ; hàng dư cuối bằng 0; hàng thương là 1, 3."
+          },
+          "verified": true
+        },
+        {
+          "id": "m1",
+          "parent": "e1",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "e2",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: dư là hằng khác $0$"
+          },
+          "narrative": {
+            "vi": "Cùng nhịp ấy trên [[a1|$A = x^2+3x+5$]], nhưng lần này [[a3|phần còn lại là $3$]] — bậc $0$, đã nhỏ hơn $\\deg B = 1$, nên thuật toán dừng và $3$ chính là dư. Đọc lại thành đẳng thức: $x^2+3x+5 = (x+1)([[a2|x+2]]) + 3$. Dư khác $0$ không phải là hỏng, nó là trường hợp thường gặp hơn."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-0-1",
+                "cell-0-2"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "cell-5-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-1": {
+                  "color_class": 1,
+                  "glyph": "1"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "2"
+                },
+                "cell-1-0": {
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-1-1": {
+                  "glyph": "3"
+                },
+                "cell-1-2": {
+                  "glyph": "5"
+                },
+                "cell-2-0": {
+                  "color_class": 3,
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-2-1": {
+                  "color_class": 3,
+                  "glyph": "1"
+                },
+                "cell-3-1": {
+                  "glyph": "2",
+                  "strike": 8
+                },
+                "cell-3-2": {
+                  "glyph": "5"
+                },
+                "cell-4-1": {
+                  "color_class": 3,
+                  "glyph": "2",
+                  "strike": 8
+                },
+                "cell-4-2": {
+                  "color_class": 3,
+                  "glyph": "2"
+                },
+                "cell-5-2": {
+                  "color_class": 4,
+                  "glyph": "3"
+                }
+              },
+              "cols": 3,
+              "holes": [
+                [0, 0],
+                [2, 2],
+                [3, 0],
+                [4, 0],
+                [5, 0],
+                [5, 1]
+              ],
+              "rows": 6,
+              "table": {
+                "col_labels": [
+                  "x²",
+                  "x",
+                  "1"
+                ],
+                "row_labels": [
+                  "thương Q",
+                  "A",
+                  "x·B",
+                  "hiệu",
+                  "2·B",
+                  "dư R"
+                ]
+              }
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a2",
+                "at": 0,
+                "duration": 700,
+                "id": "b0",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-1",
+                  "cell-2-0",
+                  "cell-2-1",
+                  "strike-1-0",
+                  "strike-2-0"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 900,
+                "duration": 700,
+                "id": "d0",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 1"
+                },
+                "targets": [
+                  "cell-3-1",
+                  "cell-3-2"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 1800,
+                "duration": 700,
+                "id": "b1",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-2",
+                  "cell-4-1",
+                  "cell-4-2",
+                  "strike-3-1",
+                  "strike-4-1"
+                ]
+              },
+              {
+                "anchor": "a3",
+                "at": 2700,
+                "duration": 700,
+                "id": "d1",
+                "kind": "show",
+                "label": {
+                  "vi": "phần còn lại chính là dư R"
+                },
+                "targets": [
+                  "cell-5-2"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng ba cột. Hàng A là 1, 3, 5; sau hai nhịp còn lại số 3 ở cột hằng số, tô lục."
+          },
+          "verified": true
+        },
+        {
+          "id": "m2",
+          "parent": "e2",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "e3",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 3: $A$ khuyết hạng tử"
+          },
+          "narrative": {
+            "vi": "$A = x^3 - 1$ **khuyết** hạng tử $x^2$ và hạng tử $x$. Bảng đòi mỗi cột một hệ số, nên [[a1|hàng $A$]] phải viết $1, 0, 0, -1$ — bỏ trống là lệch cột và mọi phép trừ sau đó sai theo. Ba nhịp cho [[a2|thương $x^2+x+1$]] và [[a3|dư $0$]], tức hằng đẳng thức quen thuộc."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2",
+                "cell-1-3"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-0-1",
+                "cell-0-2",
+                "cell-0-3"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "cell-7-3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-1": {
+                  "color_class": 1,
+                  "glyph": "1"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "1"
+                },
+                "cell-0-3": {
+                  "color_class": 1,
+                  "glyph": "1"
+                },
+                "cell-1-0": {
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-1-1": {
+                  "glyph": "0"
+                },
+                "cell-1-2": {
+                  "glyph": "0"
+                },
+                "cell-1-3": {
+                  "glyph": "−1"
+                },
+                "cell-2-0": {
+                  "color_class": 3,
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-2-1": {
+                  "color_class": 3,
+                  "glyph": "−1"
+                },
+                "cell-3-1": {
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-3-2": {
+                  "glyph": "0"
+                },
+                "cell-3-3": {
+                  "glyph": "−1"
+                },
+                "cell-4-1": {
+                  "color_class": 3,
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-4-2": {
+                  "color_class": 3,
+                  "glyph": "−1"
+                },
+                "cell-5-2": {
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-5-3": {
+                  "glyph": "−1"
+                },
+                "cell-6-2": {
+                  "color_class": 3,
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-6-3": {
+                  "color_class": 3,
+                  "glyph": "−1"
+                },
+                "cell-7-3": {
+                  "color_class": 4,
+                  "glyph": "0"
+                }
+              },
+              "cols": 4,
+              "holes": [
+                [0, 0],
+                [2, 2],
+                [2, 3],
+                [3, 0],
+                [4, 0],
+                [4, 3],
+                [5, 0],
+                [5, 1],
+                [6, 0],
+                [6, 1],
+                [7, 0],
+                [7, 1],
+                [7, 2]
+              ],
+              "rows": 8,
+              "table": {
+                "col_labels": [
+                  "x³",
+                  "x²",
+                  "x",
+                  "1"
+                ],
+                "row_labels": [
+                  "thương Q",
+                  "A",
+                  "x²·B",
+                  "hiệu",
+                  "x·B",
+                  "hiệu",
+                  "1·B",
+                  "dư R"
+                ]
+              }
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a2",
+                "at": 0,
+                "duration": 700,
+                "id": "b0",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-1",
+                  "cell-2-0",
+                  "cell-2-1",
+                  "strike-1-0",
+                  "strike-2-0"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 900,
+                "duration": 700,
+                "id": "d0",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 1"
+                },
+                "targets": [
+                  "cell-3-1",
+                  "cell-3-2",
+                  "cell-3-3"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 1800,
+                "duration": 700,
+                "id": "b1",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-2",
+                  "cell-4-1",
+                  "cell-4-2",
+                  "strike-3-1",
+                  "strike-4-1"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 2700,
+                "duration": 700,
+                "id": "d1",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 2"
+                },
+                "targets": [
+                  "cell-5-2",
+                  "cell-5-3"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 3600,
+                "duration": 700,
+                "id": "b2",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-3",
+                  "cell-6-2",
+                  "cell-6-3",
+                  "strike-5-2",
+                  "strike-6-2"
+                ]
+              },
+              {
+                "anchor": "a3",
+                "at": 4500,
+                "duration": 700,
+                "id": "d2",
+                "kind": "show",
+                "label": {
+                  "vi": "phần còn lại chính là dư R"
+                },
+                "targets": [
+                  "cell-7-3"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng bốn cột x³, x², x, 1. Hàng A là 1, 0, 0, −1; ba nhịp trừ; dư bằng 0; thương là 1, 1, 1."
+          },
+          "verified": true
+        },
+        {
+          "id": "m3",
+          "parent": "e3",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "e4",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 4: chia cho đa thức bậc hai"
+          },
+          "narrative": {
+            "vi": "$\\deg B = 2$, nên thuật toán dừng khi phần còn lại có bậc $\\le 1$ — không cần về $0$. Với [[a1|$A$ bậc bốn]] ở đây, [[a3|dư là $-2x-2$]], bậc $1$, và đó là đáp số cuối. Mỗi nhịp vẫn chỉ triệt tiêu **một** hạng tử, nên [[a2|thương]] có $3$ hạng tử sau $3$ nhịp."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2",
+                "cell-1-3",
+                "cell-1-4"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-0-2",
+                "cell-0-3",
+                "cell-0-4"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "cell-7-3",
+                "cell-7-4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "1"
+                },
+                "cell-0-3": {
+                  "color_class": 1,
+                  "glyph": "−1"
+                },
+                "cell-0-4": {
+                  "color_class": 1,
+                  "glyph": "3"
+                },
+                "cell-1-0": {
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-1-1": {
+                  "glyph": "0"
+                },
+                "cell-1-2": {
+                  "glyph": "3"
+                },
+                "cell-1-3": {
+                  "glyph": "0"
+                },
+                "cell-1-4": {
+                  "glyph": "1"
+                },
+                "cell-2-0": {
+                  "color_class": 3,
+                  "glyph": "1",
+                  "strike": 8
+                },
+                "cell-2-1": {
+                  "color_class": 3,
+                  "glyph": "1"
+                },
+                "cell-2-2": {
+                  "color_class": 3,
+                  "glyph": "1"
+                },
+                "cell-3-1": {
+                  "glyph": "−1",
+                  "strike": 8
+                },
+                "cell-3-2": {
+                  "glyph": "2"
+                },
+                "cell-3-3": {
+                  "glyph": "0"
+                },
+                "cell-3-4": {
+                  "glyph": "1"
+                },
+                "cell-4-1": {
+                  "color_class": 3,
+                  "glyph": "−1",
+                  "strike": 8
+                },
+                "cell-4-2": {
+                  "color_class": 3,
+                  "glyph": "−1"
+                },
+                "cell-4-3": {
+                  "color_class": 3,
+                  "glyph": "−1"
+                },
+                "cell-5-2": {
+                  "glyph": "3",
+                  "strike": 8
+                },
+                "cell-5-3": {
+                  "glyph": "1"
+                },
+                "cell-5-4": {
+                  "glyph": "1"
+                },
+                "cell-6-2": {
+                  "color_class": 3,
+                  "glyph": "3",
+                  "strike": 8
+                },
+                "cell-6-3": {
+                  "color_class": 3,
+                  "glyph": "3"
+                },
+                "cell-6-4": {
+                  "color_class": 3,
+                  "glyph": "3"
+                },
+                "cell-7-3": {
+                  "color_class": 4,
+                  "glyph": "−2"
+                },
+                "cell-7-4": {
+                  "color_class": 4,
+                  "glyph": "−2"
+                }
+              },
+              "cols": 5,
+              "holes": [
+                [0, 0],
+                [0, 1],
+                [2, 3],
+                [2, 4],
+                [3, 0],
+                [4, 0],
+                [4, 4],
+                [5, 0],
+                [5, 1],
+                [6, 0],
+                [6, 1],
+                [7, 0],
+                [7, 1],
+                [7, 2]
+              ],
+              "rows": 8,
+              "table": {
+                "col_labels": [
+                  "x⁴",
+                  "x³",
+                  "x²",
+                  "x",
+                  "1"
+                ],
+                "row_labels": [
+                  "thương Q",
+                  "A",
+                  "x²·B",
+                  "hiệu",
+                  "−x·B",
+                  "hiệu",
+                  "3·B",
+                  "dư R"
+                ]
+              }
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a2",
+                "at": 0,
+                "duration": 700,
+                "id": "b0",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-2",
+                  "cell-2-0",
+                  "cell-2-1",
+                  "cell-2-2",
+                  "strike-1-0",
+                  "strike-2-0"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 900,
+                "duration": 700,
+                "id": "d0",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 1"
+                },
+                "targets": [
+                  "cell-3-1",
+                  "cell-3-2",
+                  "cell-3-3",
+                  "cell-3-4"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 1800,
+                "duration": 700,
+                "id": "b1",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-3",
+                  "cell-4-1",
+                  "cell-4-2",
+                  "cell-4-3",
+                  "strike-3-1",
+                  "strike-4-1"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 2700,
+                "duration": 700,
+                "id": "d1",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 2"
+                },
+                "targets": [
+                  "cell-5-2",
+                  "cell-5-3",
+                  "cell-5-4"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 3600,
+                "duration": 700,
+                "id": "b2",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-4",
+                  "cell-6-2",
+                  "cell-6-3",
+                  "cell-6-4",
+                  "strike-5-2",
+                  "strike-6-2"
+                ]
+              },
+              {
+                "anchor": "a3",
+                "at": 4500,
+                "duration": 700,
+                "id": "d2",
+                "kind": "show",
+                "label": {
+                  "vi": "phần còn lại chính là dư R"
+                },
+                "targets": [
+                  "cell-7-3",
+                  "cell-7-4"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng năm cột. Hàng A là 1, 0, 3, 0, 1; ba nhịp trừ; hàng dư mang −2 và −2 ở hai cột cuối."
+          },
+          "verified": true
+        },
+        {
+          "id": "m4",
+          "parent": "e4",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "e5",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 5: hệ số dẫn đầu khác $1$"
+          },
+          "narrative": {
+            "vi": "Hệ số dẫn đầu của $B$ là $3$, không phải $1$, nên mỗi nhịp phải **chia** cho $3$ chứ không chỉ nhìn ra. [[a1|Hạng tử đầu]] $6x^3$ chia $3x$ được $2x^2$, và cứ thế. Ở đây mọi phép chia đều ra số nguyên nên [[a2|thương]] đẹp, còn [[a3|dư bằng $0$]]."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-0",
+                "cell-1-1",
+                "cell-1-2",
+                "cell-1-3"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-0-1",
+                "cell-0-2",
+                "cell-0-3"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "cell-7-3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-1": {
+                  "color_class": 1,
+                  "glyph": "2"
+                },
+                "cell-0-2": {
+                  "color_class": 1,
+                  "glyph": "1"
+                },
+                "cell-0-3": {
+                  "color_class": 1,
+                  "glyph": "−1"
+                },
+                "cell-1-0": {
+                  "glyph": "6",
+                  "strike": 8
+                },
+                "cell-1-1": {
+                  "glyph": "−1"
+                },
+                "cell-1-2": {
+                  "glyph": "−5"
+                },
+                "cell-1-3": {
+                  "glyph": "2"
+                },
+                "cell-2-0": {
+                  "color_class": 3,
+                  "glyph": "6",
+                  "strike": 8
+                },
+                "cell-2-1": {
+                  "color_class": 3,
+                  "glyph": "−4"
+                },
+                "cell-3-1": {
+                  "glyph": "3",
+                  "strike": 8
+                },
+                "cell-3-2": {
+                  "glyph": "−5"
+                },
+                "cell-3-3": {
+                  "glyph": "2"
+                },
+                "cell-4-1": {
+                  "color_class": 3,
+                  "glyph": "3",
+                  "strike": 8
+                },
+                "cell-4-2": {
+                  "color_class": 3,
+                  "glyph": "−2"
+                },
+                "cell-5-2": {
+                  "glyph": "−3",
+                  "strike": 8
+                },
+                "cell-5-3": {
+                  "glyph": "2"
+                },
+                "cell-6-2": {
+                  "color_class": 3,
+                  "glyph": "−3",
+                  "strike": 8
+                },
+                "cell-6-3": {
+                  "color_class": 3,
+                  "glyph": "2"
+                },
+                "cell-7-3": {
+                  "color_class": 4,
+                  "glyph": "0"
+                }
+              },
+              "cols": 4,
+              "holes": [
+                [0, 0],
+                [2, 2],
+                [2, 3],
+                [3, 0],
+                [4, 0],
+                [4, 3],
+                [5, 0],
+                [5, 1],
+                [6, 0],
+                [6, 1],
+                [7, 0],
+                [7, 1],
+                [7, 2]
+              ],
+              "rows": 8,
+              "table": {
+                "col_labels": [
+                  "x³",
+                  "x²",
+                  "x",
+                  "1"
+                ],
+                "row_labels": [
+                  "thương Q",
+                  "A",
+                  "2x²·B",
+                  "hiệu",
+                  "x·B",
+                  "hiệu",
+                  "−1·B",
+                  "dư R"
+                ]
+              }
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a2",
+                "at": 0,
+                "duration": 700,
+                "id": "b0",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-1",
+                  "cell-2-0",
+                  "cell-2-1",
+                  "strike-1-0",
+                  "strike-2-0"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 900,
+                "duration": 700,
+                "id": "d0",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 1"
+                },
+                "targets": [
+                  "cell-3-1",
+                  "cell-3-2",
+                  "cell-3-3"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 1800,
+                "duration": 700,
+                "id": "b1",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-2",
+                  "cell-4-1",
+                  "cell-4-2",
+                  "strike-3-1",
+                  "strike-4-1"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 2700,
+                "duration": 700,
+                "id": "d1",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 2"
+                },
+                "targets": [
+                  "cell-5-2",
+                  "cell-5-3"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 3600,
+                "duration": 700,
+                "id": "b2",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "cell-0-3",
+                  "cell-6-2",
+                  "cell-6-3",
+                  "strike-5-2",
+                  "strike-6-2"
+                ]
+              },
+              {
+                "anchor": "a3",
+                "at": 4500,
+                "duration": 700,
+                "id": "d2",
+                "kind": "show",
+                "label": {
+                  "vi": "phần còn lại chính là dư R"
+                },
+                "targets": [
+                  "cell-7-3"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bảng bốn cột. Hàng A là 6, −1, −5, 2; ba nhịp trừ; dư bằng 0; thương là 2, 1, −1."
+          },
+          "verified": true
+        },
+        {
+          "id": "end",
+          "parent": "e5",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Năm ví dụ, một định lý: với $B \\ne 0$ luôn tồn tại **duy nhất** cặp $Q, R$ sao cho $A = B \\cdot Q + R$ và $\\deg R < \\deg B$. Bảng dưới ghi **bậc** của bốn đa thức trong cả năm ví dụ: [[a1|$\\deg Q$]] luôn bằng $\\deg A - \\deg B$, vì mỗi nhịp hạ bậc đúng một đơn vị. Và [[a2|$\\deg R$]] luôn nhỏ hơn [[a3|$\\deg B$]] — đó chính là điều kiện dừng, viết thành một cột."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-2",
+                "cell-1-2",
+                "cell-2-2",
+                "cell-3-2",
+                "cell-4-2"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-0-3",
+                "cell-1-3",
+                "cell-2-3",
+                "cell-3-3",
+                "cell-4-3"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "cell-0-1",
+                "cell-1-1",
+                "cell-2-1",
+                "cell-3-1",
+                "cell-4-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "glyph": "2"
+                },
+                "cell-0-1": {
+                  "color_class": 3,
+                  "glyph": "1"
+                },
+                "cell-0-2": {
+                  "glyph": "1"
+                },
+                "cell-0-3": {
+                  "color_class": 4,
+                  "glyph": "−∞"
+                },
+                "cell-1-0": {
+                  "glyph": "2"
+                },
+                "cell-1-1": {
+                  "color_class": 3,
+                  "glyph": "1"
+                },
+                "cell-1-2": {
+                  "glyph": "1"
+                },
+                "cell-1-3": {
+                  "color_class": 4,
+                  "glyph": "0"
+                },
+                "cell-2-0": {
+                  "glyph": "3"
+                },
+                "cell-2-1": {
+                  "color_class": 3,
+                  "glyph": "1"
+                },
+                "cell-2-2": {
+                  "glyph": "2"
+                },
+                "cell-2-3": {
+                  "color_class": 4,
+                  "glyph": "−∞"
+                },
+                "cell-3-0": {
+                  "glyph": "4"
+                },
+                "cell-3-1": {
+                  "color_class": 3,
+                  "glyph": "2"
+                },
+                "cell-3-2": {
+                  "glyph": "2"
+                },
+                "cell-3-3": {
+                  "color_class": 4,
+                  "glyph": "1"
+                },
+                "cell-4-0": {
+                  "glyph": "3"
+                },
+                "cell-4-1": {
+                  "color_class": 3,
+                  "glyph": "1"
+                },
+                "cell-4-2": {
+                  "glyph": "2"
+                },
+                "cell-4-3": {
+                  "color_class": 4,
+                  "glyph": "−∞"
+                }
+              },
+              "cols": 4,
+              "rows": 5,
+              "table": {
+                "col_labels": [
+                  "A",
+                  "B",
+                  "Q",
+                  "R"
+                ],
+                "row_labels": [
+                  "ví dụ 1",
+                  "ví dụ 2",
+                  "ví dụ 3",
+                  "ví dụ 4",
+                  "ví dụ 5"
+                ]
+              }
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bảng năm hàng, bốn cột A, B, Q, R, mỗi ô là **bậc** của đa thức ấy; cột R luôn nhỏ hơn cột B, và có ba ô ghi âm vô cùng."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "end"
+  }
+}
