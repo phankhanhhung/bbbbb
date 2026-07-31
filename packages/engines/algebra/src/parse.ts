@@ -109,15 +109,21 @@ class Parser {
     return this.power();
   }
 
+  /**
+   * `power := atom ('^' unary)?` — **kết hợp phải**, như mọi ký pháp toán: $x$^$2$^$3$
+   * là $x^{(2^3)}$.
+   *
+   * Số mũ đi qua `unary` chứ không qua `sum`: `x^2 + 1` phải là $x^2+1$, không phải
+   * $x^{2+1}$. Muốn tổng trong số mũ thì viết ngoặc — `x^(n+1)` — và ngoặc ấy chính là
+   * thứ mắt người cũng cần.
+   */
   private power(): Expr {
     const base = this.atom();
     this.ws();
     if (!this.eat('^')) return base;
-    this.ws();
-    const neg = this.eat('-');
-    const digits = this.digits();
-    if (digits === null) throw new ParseError('số mũ phải là số nguyên', this.i);
-    return pow(this.m, base, neg ? -digits : digits);
+    const exp = this.unary();
+    if (exp.k === 'rel') throw new ParseError('số mũ không thể là một quan hệ', this.i);
+    return pow(this.m, base, exp);
   }
 
   private digits(): number | null {
@@ -227,7 +233,9 @@ export function unparse(e: Expr): string {
     case 'mul':
       return `(${e.args.map(unparse).join(' * ')})`;
     case 'pow':
-      return `(${unparse(e.base)})^${e.exp < 0 ? `-${-e.exp}` : e.exp}`;
+      // Ngoặc quanh **cả hai** phía: số mũ nay là một biểu thức bất kỳ, và `x^-2`
+      // không ngoặc thì khứ hồi qua `unary` cho ra `mul[-1, 2]` thay vì `int(-2)`.
+      return `(${unparse(e.base)})^(${unparse(e.exp)})`;
     case 'div':
       return `(${unparse(e.num)} / ${unparse(e.den)})`;
     case 'abs':

@@ -31,7 +31,47 @@ const DESCENT = 0.24;
 const AXIS = 0.28;
 /** Cỡ chữ tầng số mũ và tầng phân số lồng. */
 const SCRIPT = 0.68;
+
+/**
+ * **Sàn cỡ chữ.** Teo bao nhiêu tầng cũng không xuống dưới đây.
+ *
+ * TeX có đúng ba cỡ — text, script, scriptscript — rồi **dừng**; số mũ của số mũ của
+ * số mũ vẫn vẽ bằng scriptscript. Không dừng thì mỗi tầng lồng nhân thêm một hệ số
+ * $<1$, và số đo trên engine này là $0{,}82$ mỗi tầng phân thức: tầng 5 còn $1{,}85$
+ * đơn vị $\approx 8$px trên thiết bị đích, tức là có vẽ mà không đọc được.
+ *
+ * $0{,}6$ của cỡ gốc là $3{,}0$ đơn vị $\approx 13$px — cỡ chỉ số dưới của một cuốn
+ * sách in. Đổi lại cây lồng sâu **cao** hơn, và chiều cao thì có trần đo được (§1.2);
+ * cỡ chữ thì không, nên phải chặn ở đây.
+ */
+const SIZE_FLOOR = FONT * 0.6;
+
+/** Teo một cỡ chữ, nhưng không qua sàn. Mọi chỗ thu nhỏ đi qua đây. */
+export const shrink = (size: number, factor: number): number =>
+  Math.max(size * factor, SIZE_FLOOR);
 const SUP_RISE = 0.46;
+/**
+ * Đáy số mũ phải cao hơn đường chân cơ số ít nhất chừng này (đo theo vươn lên của cơ số).
+ *
+ * $0{,}22$ chọn để **số mũ là chữ số thì không xê dịch một li**: một chữ số ở cỡ
+ * `SCRIPT` có `below` nhỏ nên `SUP_RISE` vẫn thắng, và cả kho giữ nguyên hình.
+ */
+const SUP_CLEAR = 0.22;
+
+/**
+ * Nâng số mũ lên bao nhiêu.
+ *
+ * `SUP_RISE` một mình đủ khi số mũ là một chữ số — nó **chỉ nhìn cơ số**, và với một
+ * glyph con con thì thế là đủ. Nay số mũ là `Expr`, nên nó có thể là một phân số, và
+ * phân số thì thò xuống dưới đường chân của **chính nó** rất sâu. Kết quả trên trang:
+ * $x^{1/2}$ vẽ ra thành $x$ đứng cạnh $\frac12$ ngang tầm mắt — đọc là "x một phần
+ * hai" chứ không phải "x mũ một phần hai". Bẫy cũ: một hằng số hiệu chỉnh cho một
+ * hình dạng, rồi hình dạng ấy thôi độc quyền.
+ *
+ * Nên nâng theo **đáy của số mũ**, không theo mỗi cơ số.
+ */
+const supRise = (base: Metrics, exp: Metrics): number =>
+  Math.max(base.above * SUP_RISE, exp.below + base.above * SUP_CLEAR);
 /** Hở trên/dưới vạch phân số. */
 const FRAC_GAP = 0.18;
 const FRAC_PAD = 0.22;
@@ -139,7 +179,7 @@ export function measure(box: Box): Metrics {
     case 'sup': {
       const b = measure(box.base);
       const e = measure(box.exp);
-      const rise = b.above * SUP_RISE;
+      const rise = supRise(b, e);
       return {
         w: b.w + e.w,
         above: Math.max(b.above, rise + e.above),
@@ -160,7 +200,7 @@ export function measure(box: Box): Metrics {
     case 'radical': {
       const inner = measure(box.inner);
       const hook = box.size * RAD_HOOK;
-      const idx = box.index === 2 ? 0 : textWidth(String(box.index), box.size * RAD_INDEX);
+      const idx = box.index === 2 ? 0 : textWidth(String(box.index), shrink(box.size, RAD_INDEX));
       return {
         w: hook + idx + inner.w + box.size * RAD_PAD,
         above: inner.above + box.size * RAD_LIFT,
@@ -213,6 +253,23 @@ export interface PlacedGlyph {
   /** Nút gần nhất bao lấy glyph này — dùng để tô khi nhấn. */
   readonly owner: TermId | null;
 }
+
+/**
+ * Hộp mực của một glyph đã đặt — bề ngang thật và vươn lên/xuống thật.
+ *
+ * Có mặt để chốt canh "không chồng chữ" hỏi được câu đúng. Hỏi "cùng đường chân và
+ * cách nhau đủ xa" là hỏi hụt: hai vật nguy hiểm nhất của engine này — số mũ đè cơ số,
+ * tử phân số đè vạch — nằm ở **hai đường chân khác nhau**, nên phép so ấy bỏ qua đúng
+ * chỗ cần nhìn. Trả hộp ra đây để phép so là so hộp với hộp, hai chiều.
+ */
+export const glyphBox = (
+  g: PlacedGlyph,
+): { x1: number; x2: number; y1: number; y2: number } => ({
+  x1: g.x,
+  x2: g.x + textWidth(g.s, g.size),
+  y1: g.y - g.size * ASCENT,
+  y2: g.y + g.size * DESCENT,
+});
 
 export interface PlacedRule {
   readonly x1: number;
@@ -287,7 +344,7 @@ export function place(box: Box, x: number, y: number): Placed {
       case 'sup': {
         const bm = measure(b.base);
         go(b.base, bx, by, owner);
-        go(b.exp, bx + bm.w, by - bm.above * SUP_RISE, owner);
+        go(b.exp, bx + bm.w, by - supRise(bm, measure(b.exp)), owner);
         return measure(b);
       }
       case 'frac': {
@@ -307,16 +364,17 @@ export function place(box: Box, x: number, y: number): Placed {
         const m = measure(b);
         const inner = measure(b.inner);
         const hook = b.size * RAD_HOOK;
-        const idx = b.index === 2 ? 0 : textWidth(String(b.index), b.size * RAD_INDEX);
+        const idxSize = shrink(b.size, RAD_INDEX);
+        const idx = b.index === 2 ? 0 : textWidth(String(b.index), idxSize);
         const top = by - m.above;
         const bottom = by + inner.below;
         const stroke = b.size * 0.075;
 
         if (b.index !== 2) {
           go(
-            { t: 'text', s: String(b.index), size: b.size * RAD_INDEX, italic: false },
+            { t: 'text', s: String(b.index), size: idxSize, italic: false },
             bx,
-            top + b.size * RAD_INDEX * 0.9,
+            top + idxSize * 0.9,
             owner,
           );
         }
@@ -487,8 +545,8 @@ export function toBox(e: Expr, size: number = FONT): Box {
     case 'rat':
       return tag({
         t: 'frac',
-        num: text(num(e.p), size * NEST),
-        den: text(num(e.q), size * NEST),
+        num: text(num(e.p), shrink(size, NEST)),
+        den: text(num(e.q), shrink(size, NEST)),
         size,
       });
     case 'var': {
@@ -501,7 +559,7 @@ export function toBox(e: Expr, size: number = FONT): Box {
               t: 'row',
               items: [
                 body,
-                { t: 'shift', dy: size * 0.2, inner: text(sub, size * SCRIPT, false) },
+                { t: 'shift', dy: size * 0.2, inner: text(sub, shrink(size, SCRIPT), false) },
               ],
             },
       );
@@ -561,7 +619,7 @@ export function toBox(e: Expr, size: number = FONT): Box {
       return tag({
         t: 'sup',
         base: needsGuard ? { t: 'paren', inner, size } : wrap(e.base, inner, true),
-        exp: text(num(e.exp), size * SCRIPT),
+        exp: toBox(e.exp, shrink(size, SCRIPT)),
       });
     }
     case 'root':
@@ -571,8 +629,8 @@ export function toBox(e: Expr, size: number = FONT): Box {
     case 'div':
       return tag({
         t: 'frac',
-        num: toBox(e.num, size * NEST),
-        den: toBox(e.den, size * NEST),
+        num: toBox(e.num, shrink(size, NEST)),
+        den: toBox(e.den, shrink(size, NEST)),
         size,
       });
     case 'rel':

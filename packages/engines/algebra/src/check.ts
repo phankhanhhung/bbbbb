@@ -1,4 +1,4 @@
-import { needsRealEval, totalDegree, varsOf, type Expr } from './expr.js';
+import { intExp, needsRealEval, totalDegree, varsOf, type Expr } from './expr.js';
 
 /**
  * Kiểm một bước biến đổi có **đúng** không, bằng đánh giá ngẫu nhiên trên
@@ -80,9 +80,14 @@ export function evalAt(e: Expr, env: ReadonlyMap<string, bigint>): bigint | null
       return s;
     }
     case 'pow': {
+      const n = intExp(e);
+      // Số mũ không nguyên không có mặt ở đây — `needsRealEval` đã lái cây ấy sang
+      // `sameValueReal` trước khi tới dòng này. Giữ nhánh `null` để nếu ngày nào đó
+      // lối lái ấy hỏng thì kết quả là "không kiểm được", không phải một số bịa ra.
+      if (n === null) return null;
       const b = evalAt(e.base, env);
       if (b === null) return null;
-      return modPow(b, e.exp);
+      return modPow(b, n);
     }
     case 'div': {
       const n = evalAt(e.num, env);
@@ -140,8 +145,14 @@ export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | nu
     case 'pow': {
       const b = evalReal(e.base, env);
       if (b === null) return null;
-      if (b === 0 && e.exp < 0) return null;
-      return ok(Math.pow(b, e.exp));
+      const n = evalReal(e.exp, env);
+      if (n === null) return null;
+      if (b === 0 && n <= 0) return null;
+      // Cơ số **âm** với số mũ không nguyên: $(-8)^{1/3}$ không xác định trên
+      // $\mathbb{R}$ theo định nghĩa luỹ thừa thực (`Math.pow` trả `NaN`). Điểm này vô
+      // dụng chứ không phải bằng chứng sai — cùng lối với căn bậc chẵn của số âm.
+      if (b < 0 && !Number.isInteger(n)) return null;
+      return ok(Math.pow(b, n));
     }
     case 'div': {
       const n = evalReal(e.num, env);
@@ -167,6 +178,20 @@ export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | nu
 export interface SoundnessResult {
   readonly ok: boolean;
   readonly message: string;
+  /**
+   * Đã thật sự kiểm được chưa.
+   *
+   * `ok: true` một mình là câu trả lời **nhập nhằng**: nó vừa nghĩa là "đã thử và
+   * khớp", vừa nghĩa là "không tìm được điểm nào để thử". Hai thứ ấy khác nhau như
+   * đêm với ngày, và trước khi có số mũ hữu tỉ thì nhánh thứ hai gần như không với
+   * tới nên nhập nhằng ấy không hại ai. Nay $x^{1/2}$ đòi cơ số $\ge 0$ mà bộ bốc
+   * điểm bốc cả hai dấu, nên **quá nửa số điểm bị bỏ** — nhánh ấy thành với tới được.
+   *
+   * `model` gom mọi bước `verified: false` vào `unchecked` và engine nói ra. Một bước
+   * không kiểm được mà đi qua **im lặng như bước đã kiểm** là đúng cái bẫy đã cắn
+   * engine này hai lần (M47b, M47c).
+   */
+  readonly verified: boolean;
 }
 
 /**
@@ -181,7 +206,11 @@ export function sameValue(a: Expr, b: Expr, seed = 20260731, trials = 8): Soundn
 
   const d = Math.max(totalDegree(a), totalDegree(b));
   if (d > 4096) {
-    return { ok: true, message: `bậc ${d} quá lớn — không kiểm được bằng điểm ngẫu nhiên` };
+    return {
+      ok: true,
+      verified: false,
+      message: `bậc ${d} quá lớn — không kiểm được bằng điểm ngẫu nhiên`,
+    };
   }
 
   const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
@@ -199,12 +228,14 @@ export function sameValue(a: Expr, b: Expr, seed = 20260731, trials = 8): Soundn
     done += 1;
     if (va !== vb) {
       const at = names.map((n) => `${n}=${env.get(n)}`).join(', ');
-      return { ok: false, message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}` };
+      return { ok: false, verified: true, message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}` };
     }
   }
 
-  if (done === 0) return { ok: true, message: 'không tìm được điểm nào mẫu khác 0' };
-  return { ok: true, message: `khớp trên ${done} điểm ngẫu nhiên` };
+  if (done === 0) {
+    return { ok: true, verified: false, message: 'không tìm được điểm nào mẫu khác 0' };
+  }
+  return { ok: true, verified: true, message: `khớp trên ${done} điểm ngẫu nhiên` };
 }
 
 /**
@@ -241,12 +272,14 @@ export function sameValueReal(a: Expr, b: Expr, seed: number, trials: number): S
     const scale = Math.max(1, Math.abs(va), Math.abs(vb));
     if (Math.abs(va - vb) > 1e-9 * scale) {
       const at = names.map((n) => `${n}=${(env.get(n) as number).toFixed(4)}`).join(', ');
-      return { ok: false, message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}` };
+      return { ok: false, verified: true, message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}` };
     }
   }
 
-  if (done === 0) return { ok: true, message: 'không tìm được điểm nào xác định' };
-  return { ok: true, message: `khớp trên ${done} điểm thực` };
+  if (done === 0) {
+    return { ok: true, verified: false, message: 'không tìm được điểm nào xác định' };
+  }
+  return { ok: true, verified: true, message: `khớp trên ${done} điểm thực` };
 }
 
 /**
@@ -319,12 +352,14 @@ export function sameSolutionSet(
     if (va === vb) agree += 1;
     else {
       const at = names.map((n) => `${n}=${(env.get(n) as number).toFixed(4)}`).join(', ');
-      return { ok: false, message: `tập nghiệm khác nhau tại ${at || 'điểm hằng'}` };
+      return { ok: false, verified: true, message: `tập nghiệm khác nhau tại ${at || 'điểm hằng'}` };
     }
   }
 
-  if (done === 0) return { ok: true, message: 'không tìm được điểm nào xác định' };
-  return { ok: true, message: `cùng chân lý trên ${agree} điểm` };
+  if (done === 0) {
+    return { ok: true, verified: false, message: 'không tìm được điểm nào xác định' };
+  }
+  return { ok: true, verified: true, message: `cùng chân lý trên ${agree} điểm` };
 }
 
 /**

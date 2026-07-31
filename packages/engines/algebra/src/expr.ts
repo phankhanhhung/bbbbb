@@ -28,15 +28,27 @@ export type Expr =
   | ({ readonly k: 'var'; readonly name: string } & WithId)
   | ({ readonly k: 'add'; readonly args: readonly Expr[] } & WithId)
   | ({ readonly k: 'mul'; readonly args: readonly Expr[] } & WithId)
-  | ({ readonly k: 'pow'; readonly base: Expr; readonly exp: number } & WithId)
+  /**
+   * Luỹ thừa. Số mũ là một **`Expr`**, không phải số nguyên.
+   *
+   * Bản đầu khai `exp: number` và đặc tả §16 gọi đó là giới hạn cố ý. Lời khai ấy sai
+   * với chương trình học: $x^{1/2}$, $x^{2/3}$ là lớp 11–12, $x^{\sqrt 2}$ là bậc đại
+   * học, và $x^n$ thì có mặt từ lớp 8. Đổi được rẻ vì cây `Expr` **chưa bao giờ được
+   * serialize** — `start` và `arg` trong scene là chuỗi — nên không có migration nào.
+   *
+   * Luật nào cần số nguyên thì hỏi qua {@link intExp} và từ chối khi `null`.
+   */
+  | ({ readonly k: 'pow'; readonly base: Expr; readonly exp: Expr } & WithId)
   | ({ readonly k: 'div'; readonly num: Expr; readonly den: Expr } & WithId)
   /**
-   * Căn bậc `index` (≥ 2). Chỉ số là **số nguyên**, không phải `Expr` — cùng lý lẽ
-   * với `pow.exp`, và cũng vì căn bậc ký hiệu kéo theo cả một tầng suy luận về miền.
+   * Căn bậc `index` (≥ 2). Chỉ số là **số nguyên**, không phải `Expr`: căn bậc ký hiệu
+   * kéo theo cả một tầng suy luận về miền mà không luật phổ thông nào gói gọn được.
+   * Ai cần nó thì viết $x^{1/n}$ — số mũ đã là `Expr`.
    *
-   * Không mã hoá thành `pow(x, 1/2)`: số mũ ở đây là số nguyên theo thiết kế, và
-   * dấu căn là một **vật thể thị giác** có bố cục riêng (móc, vạch trùm) — hệt lý do
-   * `div` không bị chuẩn hoá thành `mul` với luỹ thừa âm.
+   * Không chuẩn hoá thành `pow(x, 1/2)`: dấu căn là một **vật thể thị giác** có bố cục
+   * riêng (móc, vạch trùm), hệt lý do `div` không bị chuẩn hoá thành `mul` với luỹ
+   * thừa âm. Hai chiều đi lại giữa chúng là hai **luật có tên**, có dòng riêng trên
+   * hình: `root_to_power` và `power_to_root`.
    */
   | ({ readonly k: 'root'; readonly index: number; readonly arg: Expr } & WithId)
   /**
@@ -110,10 +122,27 @@ export function mul(m: Minter, args: readonly Expr[]): Expr {
   return { k: 'mul', args: flat, id: m.next() };
 }
 
-export function pow(m: Minter, base: Expr, exp: number): Expr {
-  if (exp === 0) return int(m, 1);
-  if (exp === 1) return base;
-  return { k: 'pow', base, exp, id: m.next() };
+/**
+ * Số mũ khi nó là số nguyên; `null` khi không.
+ *
+ * **Mọi luật giả định số nguyên phải hỏi qua đây** — đó là toàn bộ cách giữ cho việc
+ * mở `exp` thành `Expr` không đổi hành vi của một luật cũ nào. Nghiêm ngặt cố ý: chỉ
+ * nút `int` mới tính. `x^(4/2)` là `pow(x, div(4,2))` và **không** được coi là $x^2$
+ * — muốn thế thì rút gọn số mũ bằng một luật có tên, đừng làm lén trong hàm tra.
+ */
+export function intExp(e: Expr & { k: 'pow' }): number | null {
+  return e.exp.k === 'int' ? e.exp.v : null;
+}
+
+/** Số mũ nhận `Expr`; một `number` được hiểu là số mũ nguyên và tự nâng thành `int`. */
+export function pow(m: Minter, base: Expr, exp: Expr | number): Expr {
+  const e = typeof exp === 'number' ? int(m, exp) : exp;
+  // Quan hệ không có "giá trị" nên $x^{(a=b)}$ vô nghĩa; parser cho phép về cú pháp
+  // (ngoặc chứa được cả `rel`), nên chặn phải nằm ở đây.
+  if (e.k === 'rel') throw new Error('số mũ không thể là một quan hệ');
+  if (e.k === 'int' && e.v === 0) return int(m, 1);
+  if (e.k === 'int' && e.v === 1) return base;
+  return { k: 'pow', base, exp: e, id: m.next() };
 }
 
 export const div = (m: Minter, num: Expr, den: Expr): Expr => ({
@@ -154,8 +183,10 @@ export function children(e: Expr): readonly Expr[] {
     case 'add':
     case 'mul':
       return e.args;
+    // Cơ số là `.0`, số mũ là `.1` — nên mọi đường dẫn cũ trỏ vào cơ số vẫn đúng, và
+    // `.1` là đường mới, nhờ nó neo và áp luật được **vào chính số mũ**.
     case 'pow':
-      return [e.base];
+      return [e.base, e.exp];
     case 'div':
       return [e.num, e.den];
     case 'root':
@@ -176,7 +207,7 @@ export function withChildren(e: Expr, kids: readonly Expr[]): Expr {
     case 'mul':
       return { ...e, args: kids };
     case 'pow':
-      return { ...e, base: kids[0] as Expr };
+      return { ...e, base: kids[0] as Expr, exp: kids[1] as Expr };
     case 'div':
       return { ...e, num: kids[0] as Expr, den: kids[1] as Expr };
     case 'root':
@@ -227,6 +258,10 @@ export function needsRealEval(e: Expr): boolean {
   let found = false;
   walk(e, (n) => {
     if (n.k === 'root' || n.k === 'abs') found = true;
+    // Số mũ không nguyên cũng không sống ở đó: $x^{1/2}$ cần chọn một trong hai căn,
+    // $x^{\sqrt 2}$ thì không có nghĩa gì trên trường hữu hạn. `walk` chui cả vào số
+    // mũ (nó là con `.1`), nên căn **nằm trong** số mũ cũng bị bắt ở nhánh trên.
+    if (n.k === 'pow' && intExp(n) === null) found = true;
   });
   return found;
 }
@@ -243,8 +278,16 @@ export function totalDegree(e: Expr): number {
       return Math.max(...e.args.map(totalDegree));
     case 'mul':
       return e.args.reduce((s, a) => s + totalDegree(a), 0);
-    case 'pow':
-      return totalDegree(e.base) * Math.abs(e.exp);
+    case 'pow': {
+      // Số mũ nguyên hoặc hữu tỉ ⇒ bậc tính được. Ngoài ra ($x^n$, $x^{\sqrt 2}$) thì
+      // vật này **không phải hàm hữu tỉ**, và "bậc" của nó không có nghĩa: trả
+      // `Infinity` để chỗ dùng phải tự quyết. Cổng bậc ở `model.ts` bỏ qua `Infinity`
+      // — nếu không thì $x^n$ bị từ chối vì "bậc vượt trần", đúng cái vừa mở ra.
+      const d = totalDegree(e.base);
+      if (e.exp.k === 'int') return d * Math.abs(e.exp.v);
+      if (e.exp.k === 'rat') return (d * Math.abs(e.exp.p)) / Math.abs(e.exp.q);
+      return Infinity;
+    }
     case 'div':
       return totalDegree(e.num) + totalDegree(e.den);
     case 'abs':
@@ -356,7 +399,7 @@ export function same(a: Expr, b: Expr): boolean {
     case 'var':
       return a.name === (b as typeof a).name;
     case 'pow':
-      return a.exp === (b as typeof a).exp && same(a.base, (b as typeof a).base);
+      return same(a.exp, (b as typeof a).exp) && same(a.base, (b as typeof a).base);
     case 'root':
       return a.index === (b as typeof a).index && same(a.arg, (b as typeof a).arg);
     case 'abs':

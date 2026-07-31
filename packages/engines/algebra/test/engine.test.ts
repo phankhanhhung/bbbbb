@@ -9,15 +9,22 @@ import {
   algebraSchemaFragment,
   allPaths,
   layout,
+  measure,
   nodeAt,
   parse,
+  place,
   readAlgebra,
   resolveAlgebraValidator,
+  ROW,
   RULES,
   sameSolutionSet,
   sameValue,
   same,
+  glyphBox,
+  shrink,
+  toBox,
   unparse,
+  FONT,
   type AlgebraStep,
 } from '../src/index.js';
 
@@ -473,6 +480,210 @@ describe('bound', () => {
 
     expect(issues.map((i) => i.code)).toContain('bounds/algebra-refused');
     expect(issues[0]!.message).toContain('vị trí');
+  });
+});
+
+describe('lồng sâu và số mũ biểu thức', () => {
+  /** Liên phân số lồng `n` tầng — mỗi tầng một nhánh, không nhân đôi. */
+  const nestedFraction = (n: number): string => {
+    let s = 'x';
+    for (let i = 0; i < n; i += 1) s = `1 / (2 + ${s})`;
+    return s;
+  };
+  const nestedRadical = (n: number): string => {
+    let s = 'x';
+    for (let i = 0; i < n; i += 1) s = `sqrt(1 + ${s})`;
+    return s;
+  };
+  const drawn = (src: string): ReturnType<typeof place> =>
+    place(toBox(parse(src, new Minter())), 0, 0);
+
+  it('sàn cỡ chữ giữ được: lồng bao nhiêu tầng cũng không teo dưới 3 đơn vị', () => {
+    // TeX có ba cỡ rồi dừng. Không dừng thì mỗi tầng nhân $0{,}82$, và tầng 5 còn
+    // $1{,}85$ đơn vị $\approx 8$px — vẽ ra mà không đọc được.
+    for (const n of [1, 3, 6]) {
+      const sizes = drawn(nestedFraction(n)).glyphs.map((g) => g.size);
+      expect(Math.min(...sizes), `lồng ${n} tầng`).toBeGreaterThanOrEqual(shrink(0, 1));
+    }
+    expect(shrink(FONT, 0.01)).toBe(FONT * 0.6);
+  });
+
+  it('không glyph nào chồng lên glyph nào — so **hộp với hộp**, hai chiều', () => {
+    // So từng cặp, không chỉ cặp cùng đường chân: hai ca đè nguy hiểm nhất của engine
+    // này (số mũ đè cơ số, tử phân số đè vạch) nằm ở **khác** đường chân, nên phép so
+    // theo đường chân bỏ qua đúng chỗ cần nhìn.
+    //
+    // Và đo bằng bảng `EM` của engine, không bằng `estimateTextWidth` — hàm ấy ước đều
+    // $0{,}55$ em và ước **dôi**, nên nó báo nhầm hai ca lúc khảo sát.
+    const cases = [
+      nestedFraction(5),
+      nestedRadical(5),
+      'x^(1/2) + x^((n + 1) / 2)',
+      'x^sqrt(2) * x^(1 + sqrt(5))',
+      '(x^(1/2) + 1) / (x^(1/3) - 1)',
+      '2^x + x^-2',
+    ];
+    let compared = 0;
+
+    for (const src of cases) {
+      const boxes = drawn(src).glyphs.map((g) => ({ g, b: glyphBox(g) }));
+      for (let i = 0; i < boxes.length; i += 1) {
+        for (let j = i + 1; j < boxes.length; j += 1) {
+          const a = boxes[i]!;
+          const z = boxes[j]!;
+          compared += 1;
+          const overlap =
+            a.b.x1 < z.b.x2 - 1e-9 &&
+            z.b.x1 < a.b.x2 - 1e-9 &&
+            a.b.y1 < z.b.y2 - 1e-9 &&
+            z.b.y1 < a.b.y2 - 1e-9;
+          expect(overlap, `${src}: "${a.g.s}" đè "${z.g.s}"`).toBe(false);
+        }
+      }
+    }
+    // Chốt canh của chốt canh: nếu vòng lặp không so cặp nào thì nó xanh vô nghĩa.
+    expect(compared).toBeGreaterThan(200);
+  });
+
+  it('nâng đúng hai bậc trở lên, và trần cắn theo **chiều cao** chứ không theo độ sâu', () => {
+    // Trần cũ `maxDepth: 6` chặn ở lồng 3 tầng (depth 7). Nay:
+    for (const n of [3, 4, 5, 6]) {
+      expect(readAlgebra(scene(nestedFraction(n))).refusal, `lồng ${n} tầng`).toBeNull();
+    }
+    // Và vẫn có trần — không phải bỏ trần, mà là đo đúng vật.
+    const refusal = readAlgebra(scene(nestedFraction(8))).refusal;
+    expect(refusal).toContain('cao');
+    expect(refusal).not.toContain('sâu');
+  });
+
+  it('căn lồng sâu gần như miễn phí, và trần mới không phạt nó', () => {
+    // Số đo: căn lồng 6 tầng cao $1{,}50$ ô, chữ vẫn $5{,}00$. Trần theo độ sâu phạt
+    // nó ngang với phân thức lồng 6 tầng (cao $2{,}93$) — đó là chỗ nó đo nhầm.
+    const m = measure(toBox(parse(nestedRadical(6), new Minter())));
+    expect((m.above + m.below) / ROW).toBeLessThan(2);
+    expect(readAlgebra(scene(nestedRadical(6))).refusal).toBeNull();
+  });
+
+  it('ca trục căn thức từng bị chặn nay chạy', () => {
+    // `depth` của kết quả là 9, nhưng nó **thấp hơn và chữ to hơn** phân thức lồng 3
+    // tầng vốn được cho qua. Đây là bài THCS bình thường.
+    const m = readAlgebra(
+      scene('1 / (1 + sqrt(3 + 2*sqrt(2)))', [{ rule: 'multiply_by_conjugate', at: '' }]),
+    );
+
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    expect(m.rows).toHaveLength(2);
+  });
+
+  it('số mũ là biểu thức: hữu tỉ, ký hiệu, vô tỉ — parse, khứ hồi, vẽ', () => {
+    for (const src of [
+      'x^(1/2)',
+      'x^(2/3)',
+      'x^n',
+      'x^(n + 1)',
+      'x^-2',
+      'x^sqrt(2)',
+      'x^(1 + sqrt(5))',
+      '2^x',
+    ]) {
+      const m = new Minter();
+      const e = parse(src, m);
+      expect(same(parse(unparse(e), new Minter()), e), `khứ hồi ${src}`).toBe(true);
+      expect(drawn(src).glyphs.length, `vẽ ${src}`).toBeGreaterThan(1);
+      expect(readAlgebra(scene(src)).refusal, `dựng ${src}`).toBeNull();
+    }
+  });
+
+  it('bộ kiểm đổi sân đúng lúc: $\\sqrt x = x^{1/2}$, và $x^{1/2} \\ne x^{1/3}$', () => {
+    const p = (s: string): ReturnType<typeof parse> => parse(s, new Minter());
+
+    expect(sameValue(p('sqrt(x)'), p('x^(1/2)')).ok).toBe(true);
+    expect(sameValue(p('x^(1/2)'), p('x^(1/3)')).ok).toBe(false);
+    expect(sameValue(p('x^sqrt(2)*x^sqrt(2)'), p('x^(2*sqrt(2))')).ok).toBe(true);
+  });
+
+  it('§2.5(a) — không kiểm được thì **nói ra**, không im lặng cho qua', () => {
+    // `ok: true` một mình nhập nhằng giữa "đã thử và khớp" với "không tìm được điểm
+    // nào để thử". Trước khi có số mũ hữu tỉ, nhánh sau gần như không với tới.
+    const verdict = sameValue(parse('x^(1/2)', new Minter()), parse('x^(1/2)', new Minter()));
+    expect(verdict.ok).toBe(true);
+    expect(verdict.verified).toBe(true);
+
+    // Cơ số âm với số mũ không nguyên là vô định ở **mọi** điểm bốc được.
+    const blind = sameValue(parse('(0 - 3)^(1/2)', new Minter()), parse('1', new Minter()));
+    expect(blind.verified).toBe(false);
+
+    const m = readAlgebra(scene('sqrt(48)', [{ rule: 'pull_square_out', at: '' }]));
+    expect(m.unchecked).toEqual([]);
+  });
+
+  it('§2.5(b) — bộ kiểm vẫn bốc cả số âm, nên $(x^2)^{1/2} \\ne x$ vẫn bị bắt', () => {
+    // Cách "sửa" hiển nhiên cho (a) là chỉ bốc cơ số dương khi có số mũ hữu tỉ. Làm
+    // thế là dựng lại lỗ M47b lùi một tầng.
+    const p = (s: string): ReturnType<typeof parse> => parse(s, new Minter());
+
+    expect(sameValue(p('(x^2)^(1/2)'), p('x')).ok).toBe(false);
+    expect(sameValue(p('(x^2)^(1/2)'), p('abs(x)')).ok).toBe(true);
+
+    // Và luật tự chặn trước cả bộ kiểm — để lời báo là "từ chối", không phải "engine sai".
+    const m = readAlgebra(scene('(x^2)^(1/2)', [{ rule: 'pow_mul', at: '' }]));
+    expect(m.refusal).toContain('cơ số có thể âm');
+  });
+
+  it('§2.5(c) — căn bậc lẻ không thành luỹ thừa hữu tỉ được, và bộ kiểm không bắt nổi', () => {
+    // $\sqrt[3]{-8} = -2$ còn $(-8)^{1/3}$ không xác định trên $\mathbb R$. Chỗ chúng
+    // khác nhau đúng là chỗ vế phải trả `null`, tức là điểm bị **bỏ qua** — nên bộ
+    // kiểm im lặng, và chặn buộc phải nằm ở luật.
+    expect(sameValue(parse('root(3, x)', new Minter()), parse('x^(1/3)', new Minter())).ok).toBe(true);
+
+    expect(readAlgebra(scene('root(3, x)', [{ rule: 'root_to_power', at: '' }])).refusal).toContain(
+      'căn bậc lẻ',
+    );
+    const ok = readAlgebra(scene('root(3, 8)', [{ rule: 'root_to_power', at: '' }]));
+    expect(ok.refusal).toBeNull();
+    expect(ok.unsound).toEqual([]);
+
+    // Bậc chẵn thì hai vế xác định ở đúng cùng một miền, nên đi được cả hai chiều.
+    const both = readAlgebra(
+      scene('sqrt(x)', [{ rule: 'root_to_power', at: '' }, { rule: 'power_to_root', at: '' }]),
+    );
+    expect(both.refusal).toBeNull();
+    expect(both.unsound).toEqual([]);
+    expect(same(both.rows[2]!.expr, parse('sqrt(x^1)', new Minter()))).toBe(true);
+  });
+
+  it('`pow_add` và `pow_mul` chạy ký hiệu, mà số nguyên vẫn gộp thành một số', () => {
+    const symbolic = readAlgebra(scene('x^a * x^b', [{ rule: 'pow_add', at: '' }]));
+    expect(symbolic.refusal).toBeNull();
+    expect(symbolic.unsound).toEqual([]);
+    expect(symbolic.unchecked).toEqual([]);
+    expect(same(symbolic.rows[1]!.expr, parse('x^(a + b)', new Minter()))).toBe(true);
+
+    // Hành vi cũ không đổi: $x^2x^3$ vẫn ra $x^5$, không ra $x^{2+3}$.
+    const numeric = readAlgebra(scene('x^2 * x^3', [{ rule: 'pow_add', at: '' }]));
+    expect(same(numeric.rows[1]!.expr, parse('x^5', new Minter()))).toBe(true);
+  });
+
+  it('luật cũ giữ nguyên hành vi: số mũ không nguyên thì **từ chối**, không đoán', () => {
+    for (const rule of ['expand_square', 'expand_cube', 'multiply_out']) {
+      const m = readAlgebra(scene('(x + 1)^(1/2)', [{ rule, at: '' }]));
+      expect(m.refusal, rule).not.toBeNull();
+    }
+    // Còn với số mũ nguyên thì vẫn chạy y như trước.
+    expect(readAlgebra(scene('(x + 1)^2', [{ rule: 'expand_square', at: '' }])).refusal).toBeNull();
+  });
+
+  it('số mũ neo được: nó là một nút thật, có id và có đường dẫn `.1`', () => {
+    // Trước đây số mũ là một `number` nên không có danh tính, không tô sáng được, và
+    // không luật nào áp vào nó được.
+    const e = parse('x^(n + 1)', new Minter());
+    expect(nodeAt(e, '1')).not.toBeNull();
+    expect(unparse(nodeAt(e, '1') as never)).toContain('n');
+
+    const m = readAlgebra(scene('x^(2 + 3)', [{ rule: 'eval_int', at: '1' }]));
+    expect(m.refusal).toBeNull();
+    expect(same(m.rows[1]!.expr, parse('x^5', new Minter()))).toBe(true);
   });
 });
 

@@ -503,14 +503,22 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
 
 ## 16. Cố ý **không** làm
 
-- **Hàm siêu việt.** Không $\sin$, không $\log$, không $e^x$. Lúc cần chúng thì đây
-  là dự án khác, không phải một phiên bản sau.
-- **Số mũ ký hiệu.** $x^n$ với $n$ là biến. Nó kéo theo luật luỹ thừa có điều kiện và
-  kéo theo cả một tầng suy luận về miền — không đáng cho họ bài đang nhắm.
+- **Hàm siêu việt.** Không $\sin$, không $\log$. Lúc cần chúng thì đây là dự án khác,
+  không phải một phiên bản sau. ($2^x$ **vẽ** được từ M49 vì số mũ là `Expr`, nhưng
+  không có **luật** nào biến đổi nó — muốn có thì phải có logarit. Biểu diễn được
+  không đồng nghĩa biến đổi được, và ranh giới ấy là cố ý.)
+- ~~**Số mũ ký hiệu**~~ — **đã làm** (M49). Lời khai cũ nói $x^n$ "kéo theo cả một
+  tầng suy luận về miền — không đáng". Nửa đầu đúng, nửa sau sai: $x^n$ có mặt từ lớp
+  8, và tầng suy luận về miền ấy hoá ra gói gọn được trong hai chỗ, không hơn — xem
+  §25.
 - ~~**Căn thức**~~ — **đã làm** (M47b, theo yêu cầu chính chủ). Xem §21: nó không
   phải "thêm một loại nút", nó **đổi bộ kiểm**.
 - ~~**Giá trị tuyệt đối**~~ — **đã làm** (M47c), chính vì cái thiếu ấy đã cắn.
-- **Phần nguyên, luỹ thừa số mũ hữu tỉ, logarit.** Chưa có.
+- ~~**Luỹ thừa số mũ hữu tỉ**~~ — **đã làm** (M49). Nó là nội dung lớp 11–12; khai nó
+  là "chưa có" trong khi engine nhắm toàn bộ đại số phổ thông là tự mâu thuẫn.
+- **Phần nguyên, logarit.** Chưa có.
+- **Căn bậc ký hiệu** ($\sqrt[n]{x}$ với $n$ là biến). `root.index` vẫn là số nguyên;
+  ai cần thì viết $x^{1/n}$, nay đã có.
 - **Hệ phương trình.** Cần một nút chứa **nhiều** quan hệ; chưa có. Đây là mảng lớn
   nhất còn thiếu của chương trình phổ thông.
 - ~~**Công thức nghiệm bậc hai**~~ — **đã làm** (M47e), và **không** cần nút "hoặc":
@@ -855,3 +863,112 @@ Ba hợp đồng kiểm, khai tường minh thay vì đoán theo dáng nút:
 
 **Biệt thức âm thì từ chối** — và lời từ chối ấy chính là câu trả lời của nhánh đó.
 Bài `quartic-by-substitution` (#91) dùng đúng nó làm nội dung nhánh thứ hai.
+
+---
+
+## 25. Lồng sâu và số mũ là **biểu thức** (M49)
+
+Hai yêu cầu của chính chủ: nâng độ cồng kềnh hai bậc, và số mũ phải biểu diễn được cả
+hữu tỉ lẫn vô tỉ. Đo trước khi thiết kế, và phép đo đổi hẳn cách làm phần đầu.
+
+### 25.1 Trần cũ đo nhầm vật
+
+`maxDepth: 6` đếm **mọi** tầng nút, với chú thích nói rằng nó đứng thay cho chiều cao
+dòng và cỡ chữ. Nó không đứng thay được:
+
+| | `depth` | cao/ô | chữ nhỏ nhất | trần cũ |
+|---|---:|---:|---:|---|
+| phân thức lồng 3 tầng | 6 | 1,69 | 2,76 | cho qua |
+| kết quả nhân liên hợp (mẫu có căn lồng) | 9 | **1,66** | **4,10** | **chặn** |
+
+Cái bị chặn **thấp hơn** và **chữ to hơn** cái được cho qua. Vì `add` tốn một tầng và
+tốn $0$ chiều cao, còn căn lồng gần như miễn phí cả hai chiều. Hậu quả cụ thể:
+`multiply_by_conjugate` trên `1/(1 + sqrt(3 + 2*sqrt(2)))` — bài trục căn thức bình
+thường của THCS — bị từ chối với lời "cây sâu 7 tầng, quá 6".
+
+**Bài học:** một trần đứng thay cho thứ khác thì sớm muộn cũng chặn nhầm. Nay
+`readAlgebra` gọi thẳng `measure(toBox(...))` — hỏi đúng bộ sắp chữ sẽ vẽ nó — và lời
+từ chối nói con số đo được (`cao 3.9 ô, quá 3`), không nói độ sâu.
+
+### 25.2 Sàn cỡ chữ, rồi mới nâng trần
+
+Số đo nói nút thắt của "nâng hai bậc" **không phải chiều cao mà là cỡ chữ**: căn lồng
+giữ $5{,}00$ ở mọi tầng, còn phân thức lồng teo $0{,}82$ mỗi tầng và tới tầng 5 còn
+$1{,}85$ đơn vị $\approx 8$px. Nâng trần mà không chạm chỗ teo chữ thì được hai tầng
+không đọc nổi.
+
+TeX có đúng **ba** cỡ rồi dừng. `typeset.ts` làm đúng thế: `SIZE_FLOOR = FONT * 0.6`
+và mọi chỗ thu nhỏ đi qua `shrink(size, factor)`. Đổi lại chiều cao tăng nhanh hơn ở
+tầng sâu — mà chiều cao thì nay đo được.
+
+| tầng | 3 | 4 | 5 | 6 | 7 |
+|---|---:|---:|---:|---:|---:|
+| cao (ô) | 1,74 | 2,14 | 2,53 | 2,93 | 3,33 |
+| chữ nhỏ nhất | 3,00 | 3,00 | 3,00 | 3,00 | 3,00 |
+
+`maxHeightCells: 3` cho qua tới tầng **6** — trần cũ dừng ở tầng 3, nên là nâng ba
+bậc. `maxWidthCells: 12` có **riêng** vì Player co cả hình cho vừa khung: một dòng quá
+rộng không tràn ra ngoài mà làm *mọi thứ* nhỏ lại, nên sàn ở đơn vị scene không cứu
+được. Thứ rộng nhất viết ra được trong thực tế — khai triển $(a+b)^6$ — đo $7{,}78$ ô.
+
+### 25.3 `pow.exp` thành `Expr` — rẻ vì cây chưa bao giờ được serialize
+
+`start` và `arg` trong scene là **chuỗi**, nên đổi kiểu nút không cần migration,
+`SCHEMA_VERSION` đứng yên, và 91 bài không đụng tới một ký tự.
+
+Chìa khoá giữ mọi luật cũ nguyên hành vi là đúng một hàm: `intExp(e)` trả số mũ khi nó
+là số nguyên, `null` khi không. Mười luật giả định số nguyên hỏi qua đó và từ chối khi
+`null`. `pow_add`/`pow_mul` thì **bỏ** cửa ấy và tự tổng quát hoá — $x^ax^b = x^{a+b}$
+dựng bằng `add` trên cây số mũ — nhưng vẫn gộp hai số nguyên thành một số, vì $x^2x^3$
+phải ra $x^5$ chứ không ra $x^{2+3}$.
+
+Số mũ nay là con `.1` của `pow`, nên nó **neo được**: có `TermId`, tô sáng được, và áp
+luật vào chính nó được (`eval_int` tại `"1"`). Đường dẫn cũ vào cơ số vẫn là `.0`.
+
+### 25.4 Chỗ số mũ vô tỉ **không** miễn phí
+
+Kiểu dữ liệu cho không — $\sqrt2$ vốn đã là một `Expr`. Bộ kiểm thì không, và cả ba
+chỗ đều là biến thể của cùng cái bẫy đã cắn engine này hai lần.
+
+**(a) `ok: true` là câu trả lời nhập nhằng.** `sameValueReal` bỏ những điểm biểu thức
+không xác định, và khi bỏ hết thì vẫn trả `ok: true` với lời "không tìm được điểm nào
+xác định". Trước đây nhánh ấy gần như không với tới; nay số mũ không nguyên đòi cơ số
+$\ge 0$ trong khi bộ bốc điểm cố ý bốc cả hai dấu, nên **quá nửa số điểm bị bỏ**.
+`SoundnessResult.verified` tách hai nghĩa ra, `AlgebraModel.unchecked` gom lại, và
+`checkBounds` cảnh báo. Cả kho hiện ở 0, nên nó không phải một vệt vàng thường trực.
+
+**(b) Không được bốc riêng số dương cho dễ.** Cách "sửa" hiển nhiên cho (a) là thấy số
+mũ không nguyên thì chỉ bốc cơ số dương. Làm thế là dựng lại đúng lỗ M47b lùi một
+tầng: $(x^2)^{1/2} = x$ sẽ **qua**, dù đúng phải là $|x|$. Giữ nguyên hai dấu, sống
+với điểm bỏ đi, và để `verified` canh phần còn lại.
+
+**(c) Có chỗ bộ kiểm *không thể* bắt, và ở đó luật phải tự chặn.**
+$\sqrt[3]{-8} = -2$ trong khi $(-8)^{1/3}$ không xác định trên $\mathbb{R}$. Chỗ hai vế
+khác nhau lại **đúng là** chỗ vế phải trả `null`, tức là điểm bị bỏ qua chứ không bị
+kết tội — nên `sameValue` im lặng cho $\sqrt[3]x = x^{1/3}$ đi qua. `root_to_power` và
+`power_to_root` vì thế từ chối chỉ số lẻ trừ khi cơ số chắc chắn không âm.
+
+`pow_mul` có một hình dạng cùng họ: số mũ trong **chẵn**, số mũ ngoài không nguyên —
+luỹ thừa chẵn giấu mất dấu rồi số mũ không nguyên lấy nhánh chính luôn dương, nên
+$(x^2)^{1/2}$ ra $|x|$ chứ không ra $x$. Ở đây bộ kiểm *có* bắt được (cả hai vế cùng
+xác định ở $x<0$), nhưng luật vẫn tự chặn: lời báo phải là "từ chối", không phải
+"engine sai" — `unsound` mang nghĩa lỗi của engine, và tác giả chọn nhầm luật thì
+không phải lỗi ấy.
+
+> Ba lần rồi: mỗi khi đặc tả nói "chỗ này bộ kiểm lo được", phải hỏi lại **nó lo bằng
+> cách nào**. M47c là "đúng do cấu trúc" (sai), M47b là "chỉ cần bốc số dương" (sai),
+> và đây là "điểm vô định thì bỏ qua" (đúng, nhưng vì thế mà mù).
+
+### 25.5 Một lỗi sắp chữ, lại chỉ thấy khi nhìn
+
+`SUP_RISE` nâng số mũ theo **vươn lên của cơ số** — đủ khi số mũ là một chữ số. Số mũ
+nay là `Expr`, nên nó có thể là phân số, và phân số thò xuống dưới đường chân của
+chính nó rất sâu. Kết quả trên trang: $x^{1/2}$ vẽ ra thành $x$ đứng cạnh $\frac12$
+ngang tầm mắt — đọc là "x một phần hai", không phải "x mũ một phần hai". Không test
+nào đỏ; lượt nhìn PNG bắt ngay.
+
+Sửa: nâng theo **đáy của số mũ**, `max(base.above · SUP_RISE, exp.below + base.above ·
+SUP_CLEAR)`. `SUP_CLEAR = 0,22` chọn để số mũ là chữ số **không xê dịch một li**.
+
+Cùng một hình dạng lỗi với `NEST` (M47) và `SUP_RISE` ở đây: **một hằng số hiệu chỉnh
+cho một hình dạng, rồi hình dạng ấy thôi độc quyền.**
