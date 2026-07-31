@@ -47,7 +47,8 @@ nhất để lặp lại chuyện đó.
 | `game` | 6 | Tầng A ở §2.6 **đã làm hết** (M22–M23): ba luật mới kèm ba bài kinh điển, cộng phổ hai chiều. |
 | `point` | 3 | Nội dung trước. Engine chưa bị dùng đủ để biết nó thiếu gì. |
 | `set` | 3 | Nội dung trước. |
-| `derivation` | 2 | Nội dung trước — và dòng 🟡 duy nhất của nó nói **thiếu bài**, không thiếu năng lực. |
+| `derivation` | 2 | Nội dung trước — và dòng 🟡 duy nhất của nó nói **thiếu bài**, không thiếu năng lực. Nhưng xem §2.8: nó **không kiểm được đại số**, và chỗ đó không phải thiếu bài. |
+| `longdiv` | 1 | Mới ở M46. Chưa bị dùng đủ để biết nó thiếu gì. |
 
 Bốn engine cuối cộng lại có **14 bài**, và $6$ trong số đó là của `game`. Thêm năng lực cho một engine mới 2–3 bài là
 đoán, không phải đáp ứng.
@@ -61,6 +62,8 @@ họ mới cho hai engine dựng ngoài roadmap SRS nên chưa có họ nào:
 |---|---|
 | `SQ-*` | sequence / multiset |
 | `DV-*` | derivation |
+| `LD-*` | longdiv (chia dọc) |
+| `AL-*` | algebra (biến đổi biểu thức) — **chưa mở**, xem `docs/ENGINE-ALGEBRA.md` |
 
 ---
 
@@ -330,6 +333,28 @@ thiếu năng lực. Nên hạng mục đúng ở đây là **soạn bài**, kh�
   còn thiếu là chuyển động). Lớp `CHO-05` đã có từ **M37** và `move`/`morph` gọi
   được ngay; việc còn lại là dịch quan hệ `becomes` thành pha, chưa làm.
 
+### 2.8 `algebra` — engine chưa mở · **đã có đặc tả đầy đủ**
+
+Đặc tả: **`docs/ENGINE-ALGEBRA.md`**. Tóm tắt lý do có nó, đo bằng máy trên bài đang
+xuất bản:
+
+```
+geometric-sum-doubling · hạng tử t1b: "1 + 2 + 4 + 8" → "1 + 2 + 4 + 9"
+lỗi: []   cảnh báo: []   hasErrors: false
+```
+
+`derivation` **xếp chỗ cho công thức chứ không hiểu công thức** — chính comment trong
+`validators.ts` của nó khai thế. Không luật nào trong `check` đọc nội dung `tex`, nên
+một đẳng thức sai qua sạch bộ kiểm. Đây không phải "thiếu bài"; đây là khoảng trống
+năng lực, và nó không lấp được bằng cách thêm luật vào `derivation`.
+
+Engine mới đặt cược y hệt `longdiv`: **tác giả khai biểu thức gốc + dãy luật, engine
+tính ra mọi dòng còn lại**. Không gõ được vế sau thì không sai kiểu đó được.
+
+**Chưa được duyệt để làm.** `PRD-07` chặn mở engine mới trước khi P0–P2 chứng minh
+giá trị học tập; nợ lớn hơn là **G-C**. §19 của đặc tả liệt kê ba việc phải xong
+trước.
+
 ---
 
 ## 3. Hai hạng mục xuyên engine, và cả hai thuộc PRD
@@ -350,6 +375,9 @@ Ba thứ hay bị nhầm là "làm engine mạnh hơn":
 
 - **Thêm engine mới.** Hàng đợi engine ở `VIZ-COVERAGE.md` §7 đã cạn, và `PRD-07`
   chặn việc mở thêm trước khi P0–P2 chứng minh giá trị học tập.
+  Hai ngoại lệ, ghi ra để không ai tưởng luật này đã bị bỏ: `longdiv` **đã mở** ở
+  M46 theo yêu cầu trực tiếp của chính chủ, và `algebra` ở §2.8 mới chỉ có **đặc
+  tả**, chưa có dòng code nào. Luật vẫn đứng — cả hai đều không đi qua hàng đợi này.
 - **Nâng coverage bằng cách chọn bài dễ vẽ.** `VIZ-COVERAGE.md` §6 đã nói: ~12% đề
   có lập luận **không mang nội dung không gian**, và con số đó không co theo engine.
 - **Sửa những chỗ engine cố ý không làm.** Ba chỗ có lý do viết ra — tính phẳng
