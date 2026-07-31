@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M44 xong (7 engine đều tự khai hình học; mọi element trong kho neo được; kho có sổ thứ tự bài; board gạch được ô); schema `0.3.0`; kho 85 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M45 xong (7 engine đều tự khai hình học; mọi element trong kho neo được; kho có sổ thứ tự bài; board gạch được ô); schema `0.3.0`; kho 85 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,35 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M45 — CI đỏ 18 lần liên tiếp, và một bài xuất bản toàn chữ đỏ · [E] — **xong**
+
+Chính chủ báo CI lỗi. Nó **đỏ từ M40** — xanh lần cuối ở `9b977ac2`, đỏ ngay ở lần
+merge M40 kế tiếp, rồi đỏ liên tục **18 lần chạy** qua bốn hạng mục.
+
+Nguyên nhân một dòng: bước `pnpm labels` báo atlas cũ, thiếu $7$ nhãn — tất cả đều
+của `geometric-sum-doubling`, bài soạn ở M40. Tao soạn xong mà quên
+`combviz labels --write`.
+
+**Hậu quả nặng hơn "CI đỏ".** Nhãn không có trong atlas thì `missingLabel` vẽ ra
+`⟨thiếu atlas: …⟩` bằng mực đỏ — cố ý ồn ào. Nhưng ồn ào chỉ có tác dụng với người
+**nhìn** hình, và golden thì không nhìn: nó chụp đúng cái nó thấy, kể cả khi cái nó
+thấy là bốn dòng chữ báo lỗi chồng lên nhau. Bài #76 đã **xuất bản** như thế suốt
+bốn hạng mục, với $8$ node đỏ thay cho công thức.
+
+Ba việc rút ra, và cái thứ nhất là về tao chứ không về code:
+
+1. **`pnpm check` có sẵn từ đầu, và nó gồm `pnpm labels`.** Tao chạy lẻ
+   `typecheck`, `lint`, `test`, `validate` — bỏ đúng bước còn lại, đúng bước CI
+   chạy. Bộ kiểm chạy tay mà khác bộ kiểm CI thì nó không phải bộ kiểm.
+2. **Cảnh báo "nhìn là thấy" không thay được một khẳng định.** Thêm một chốt canh:
+   *không golden nào được chứa chuỗi `thiếu atlas`*. Nó rẻ, và nó đưa lỗi về đúng
+   chỗ người soạn chạy trước khi commit. Kiểm ngược lại bằng cách stash atlas đã
+   sửa — chốt canh đỏ đúng như mong đợi.
+3. **CI đỏ dài ngày là một lỗi riêng của nó.** Mười tám lần đỏ liên tiếp nghĩa là
+   không ai còn đọc màu ấy nữa; hạng mục M39–M40 từng ghi bài học "một job chỉ đỏ ở
+   CI thì kiểm xem đường chạy local có đúng đường CI đi không" — và đây đúng là lần
+   ấy lặp lại, chỉ khác chiều.
 
 ### M44 — Chữ trong ô đi cùng ô, và bài đại số đầu tiên · [E] — **xong**
 
