@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { defaultTheme } from '@combviz/theme';
 import {
+  applyChoreography,
   collectKeys,
   createContext,
   createRenderer,
@@ -211,6 +212,62 @@ describe('BD-10 — gạch ô', () => {
 
     expect(collectKeys(renderer.render(scene, ctx)).has('strike-0-0')).toBe(false);
     expect(boardSchemaFragment.implicitElementIds(scene).has('strike-0-0')).toBe(false);
+  });
+});
+
+/**
+ * Chữ trong ô phải **đi cùng ô** khi timeline chạm vào nó.
+ *
+ * Node `<rect>` mang `key`, node `<text>` thì không mang gì — và
+ * `applyChoreography` tra chủ sở hữu theo `data-el ?? key`, nên trước khi có
+ * `data-el` thì một pha `dim`/`show`/`hide` nhắm vào một ô chỉ chạm cái ô, con số
+ * bên trong đứng nguyên.
+ *
+ * Đây không phải lỗi giả định: bài `sum-odd-numbers-gnomon` xây hình vuông theo
+ * từng lớp gnomon bằng năm pha `show`, và ở khung đầu cả lưới $5\times5$ con số đã
+ * hiện sẵn trong khi mọi ô còn ẩn — hình lộ đáp án trước khi lập luận bắt đầu, mà
+ * golden vẫn xanh vì golden chụp scene chứ không chụp timeline.
+ */
+describe('glyph mang danh tính của ô', () => {
+  const scene = {
+    engine: 'board',
+    config: { rows: 1, cols: 2, cell_overrides: { 'cell-0-0': { glyph: '7' } } },
+    elements: [],
+  } as never;
+
+  const textNodes = (nodes: ReturnType<typeof renderer.render>) => {
+    const out: { attrs: Record<string, unknown>; text?: string }[] = [];
+    const walk = (list: readonly { tag: string; attrs: Record<string, unknown>; text?: string; children?: never[] }[]): void => {
+      for (const n of list) {
+        if (n.tag === 'text') out.push(n);
+        if (n.children) walk(n.children);
+      }
+    };
+    walk(nodes as never);
+    return out;
+  };
+
+  it('node chữ khai `data-el` trỏ về ô chứa nó', () => {
+    const [glyph] = textNodes(renderer.render(scene, ctx));
+
+    expect(glyph?.text).toBe('7');
+    expect(glyph?.attrs['data-el']).toBe('cell-0-0');
+  });
+
+  it('pha `dim` nhắm vào ô làm mờ **cả** ô lẫn chữ', () => {
+    const nodes = renderer.render(scene, ctx);
+    const after = applyChoreography(
+      nodes,
+      { phases: [{ id: 'p', kind: 'dim', targets: ['cell-0-0'], at: 0, duration: 0, anchor: 'a1' }] } as never,
+      100,
+    );
+
+    const rect = (after[0]!.children ?? []).find((n) => n.key === 'cell-0-0')!;
+    const [glyph] = textNodes(after);
+
+    // Một con số mờ đi cùng ô của nó, chứ không nổi lên trên một ô đã mờ.
+    expect(rect.attrs['opacity']).toBe(glyph!.attrs['opacity']);
+    expect(Number(glyph!.attrs['opacity'])).toBeLessThan(1);
   });
 });
 

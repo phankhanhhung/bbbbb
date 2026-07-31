@@ -35,3 +35,11 @@ topics:
   - id: sequences
     label:
       vi: Dãy và thao tác lặp
+  # Topic đầu tiên **ngoài tổ hợp**. Thêm vì có bài cần nó, không phải để mở sẵn
+  # chỗ: `PRODUCT-REQUIREMENTS.md` §3.2 xếp đại số vào `DOM-01` và ghi rõ engine
+  # hiện chỉ gánh được phần "chuỗi biến đổi, telescoping, đếm hai cách". Bài dùng
+  # nó đầu tiên là thuật toán chia đa thức có dư — một thuật toán, và nó
+  # visualize được vì bảng hệ số tách rời đúng là một cái bàn cờ.
+  - id: algebra
+    label:
+      vi: Đại số

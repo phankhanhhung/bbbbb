@@ -83,9 +83,10 @@
     "sum-odd-numbers-gnomon",
     "tree-leaf-stripping",
     "wheel-faces-two-colours",
-    "erase-residue-classes-game"
+    "erase-residue-classes-game",
+    "polynomial-long-division"
   ],
   "newest": [
-    "erase-residue-classes-game"
+    "polynomial-long-division"
   ]
 }
