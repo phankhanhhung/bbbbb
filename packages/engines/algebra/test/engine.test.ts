@@ -14,6 +14,7 @@ import {
   readAlgebra,
   resolveAlgebraValidator,
   RULES,
+  sameSolutionSet,
   sameValue,
   same,
   unparse,
@@ -76,7 +77,7 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
   it('mọi luật áp được đều **bảo toàn giá trị** trên quét ngẫu nhiên', () => {
     // Bản đại số của phép quét $A = BQ + R$ ở `longdiv`. Chốt canh này canh **engine**,
     // không canh tác giả: tác giả không gõ vế sau nên không sai kiểu đó được.
-    const ATOMS = ['x', 'y', '2', '3', '-1', 'x^2', 'sqrt(x)', 'sqrt(6)'];
+    const ATOMS = ['x', 'y', '2', '3', '-1', 'x^2', 'sqrt(x)', 'sqrt(6)', 'abs(x)'];
     let s = 4242;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
     const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(rand() * xs.length)] as T;
@@ -88,7 +89,7 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
     const bad: string[] = [];
     let applied = 0;
 
-    for (let i = 0; i < 6000; i += 1) {
+    for (let i = 0; i < 16000; i += 1) {
       const src = gen(3);
       const root = parse(src, new Minter());
       const at = pick([...allPaths(root).keys()]);
@@ -119,7 +120,10 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       if (!verdict.ok) bad.push(`${rule.id} tại "${at}" của ${src}: ${verdict.message}`);
     }
 
-    expect(applied).toBeGreaterThan(200);
+    // Ngưỡng canh **phép quét có chạy thật**, không canh tỉ lệ trúng. Thêm luật thì
+    // tỉ lệ trúng giảm (mỗi vòng bốc 1 trong N luật), nên số vòng phải tăng theo —
+    // hạ ngưỡng thay vì tăng vòng là làm chốt canh yếu đi mà vẫn xanh.
+    expect(applied).toBeGreaterThan(300);
     expect(bad.slice(0, 5), bad.slice(0, 5).join('\n')).toEqual([]);
   });
 
@@ -188,14 +192,6 @@ describe('căn thức', () => {
     expect(unparse(m.rows[1]!.expr)).toBe(unparse(parse('4*sqrt(3)', new Minter())));
   });
 
-  it('**từ chối** rút biến ra khỏi căn bậc chẵn — thiếu ký hiệu, không thiếu giả thiết', () => {
-    // Một điều kiện "$x \ge 0$" ở đây làm người đọc tưởng đẳng thức đúng nếu chịu
-    // thêm giả thiết, trong khi thứ thiếu là dấu giá trị tuyệt đối.
-    const m = readAlgebra(scene('sqrt(x^2)', [{ rule: 'pull_square_out', at: '' }]));
-
-    expect(m.refusal).toContain('giá trị tuyệt đối');
-  });
-
   it('trục căn thức ở mẫu, và hệ số $1$ không hiện ra', () => {
     const one = scene('1/sqrt(2)', [{ rule: 'rationalize', at: '' }]);
     const m = readAlgebra(one);
@@ -221,6 +217,74 @@ describe('căn thức', () => {
 
     expect(renderer.toSvg(scene('sqrt(x + 1)'), ctx)).toContain('<path');
     expect(bar('sqrt(x + 1)')).toBeGreaterThan(bar('sqrt(x)'));
+  });
+});
+
+describe('bất đẳng thức', () => {
+  it('nhân số âm thì **đổi chiều** — và bộ kiểm quan hệ bắt được nếu quên', () => {
+    // Lỗi thật, đã có trong kho một lượt: engine cho ra $x<3 \Rightarrow -x<-3$ và
+    // không gì kêu, vì `model` bỏ qua hẳn nút `rel`. Đặc tả §6 khai nhóm ★ đúng "do
+    // cấu trúc" nên miễn kiểm — câu ấy sai, và nó che đúng lỗi này.
+    const m = readAlgebra(scene('x < 3', [{ rule: 'mul_both_sides', at: '', arg: '-1' }]));
+
+    expect(m.unsound).toEqual([]);
+    expect((m.rows[1]!.expr as { op: string }).op).toBe('>');
+
+    const right = parse('x < 3', new Minter());
+    expect(sameSolutionSet(right, parse('-x < -3', new Minter()), null, 1).ok).toBe(false);
+    expect(sameSolutionSet(right, parse('-x > -3', new Minter()), null, 1).ok).toBe(true);
+  });
+
+  it('dấu chưa biết thì **từ chối**, không ghi điều kiện', () => {
+    // Ở trường người ta tách trường hợp. Một điều kiện "$y > 0$" ở đây giấu mất đúng
+    // cái phải tách, và người đọc tưởng chỉ cần thêm một giả thiết là xong.
+    const m = readAlgebra(scene('x < 3', [{ rule: 'mul_both_sides', at: '', arg: 'y' }]));
+
+    expect(m.refusal).toContain('tách trường hợp');
+  });
+
+  it('với đẳng thức thì vẫn là chuyện điều kiện, không phải chuyện chiều', () => {
+    const m = readAlgebra(scene('a = b', [{ rule: 'mul_both_sides', at: '', arg: 'a - b' }]));
+
+    expect(m.conditions).toEqual(['a − b ≠ 0']);
+    expect(m.unsound).toEqual([]);
+  });
+});
+
+describe('hằng đẳng thức và phân tích nhân tử', () => {
+  const cases: Array<[string, string, string]> = [
+    ['(a+b)³', '(a + b)^3', 'expand_cube'],
+    ['hiệu hai bình phương', 'x^2 - 9', 'factor_diff_squares'],
+    ['tổng hai lập phương', 'a^3 + 8', 'factor_cubes'],
+    ['hiệu hai lập phương', 'a^3 - b^3', 'factor_cubes'],
+    ['tam thức', 'x^2 + 5*x + 6', 'factor_quadratic'],
+    ['tam thức hệ số âm', 'x^2 - x - 6', 'factor_quadratic'],
+  ];
+
+  for (const [name, start, rule] of cases) {
+    it(`${name} — áp được và **bảo toàn giá trị**`, () => {
+      const m = readAlgebra(scene(start, [{ rule, at: '' }]));
+
+      expect(m.refusal).toBeNull();
+      expect(m.unsound).toEqual([]);
+      expect(m.rows).toHaveLength(2);
+    });
+  }
+
+  it('tam thức không phân tích được bằng số nguyên thì từ chối', () => {
+    const m = readAlgebra(scene('x^2 + x + 1', [{ rule: 'factor_quadratic', at: '' }]));
+
+    expect(m.refusal).toContain('không có cặp số nguyên');
+  });
+
+  it('$\\sqrt{x^2}$ rút thành $|x|$, không phải $x$', () => {
+    // Trước khi có nút `abs`, engine phải **từ chối** chỗ này. Nay nó viết ra đúng
+    // ký hiệu — và bộ kiểm (bốc cả số âm) xác nhận.
+    const m = readAlgebra(scene('sqrt(x^2)', [{ rule: 'pull_square_out', at: '' }]));
+
+    expect(m.unsound).toEqual([]);
+    expect(unparse(m.rows[1]!.expr)).toBe('abs(x)');
+    expect(sameValue(parse('abs(x)', new Minter()), parse('x', new Minter())).ok).toBe(false);
   });
 });
 

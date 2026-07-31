@@ -15,7 +15,14 @@ export * from './schema.js';
 export { parse, tryParse, unparse, ParseError } from './parse.js';
 export { readAlgebra, type AlgebraModel, type AlgebraRow } from './model.js';
 export { RULES, ruleById, applicableRules, type Rule } from './rules.js';
-export { sameValue, definitelyNonZero } from './check.js';
+export {
+  sameValue,
+  sameSolutionSet,
+  evalRelation,
+  definitelyNonZero,
+  definitelyNonNegative,
+  definiteSign,
+} from './check.js';
 export { layout, boxOf, drawnIds } from './layout.js';
 export { toBox, measure, place, FONT, ROW } from './typeset.js';
 export { algebraRenderer } from './render.js';

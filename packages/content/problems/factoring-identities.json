@@ -1,0 +1,249 @@
+{
+  "schema_version": "0.3.0",
+  "id": "factoring-identities",
+  "statement": {
+    "vi": "Phân tích đa thức thành nhân tử bằng **hằng đẳng thức đáng nhớ** và bằng cách tách hạng tử, rồi dùng cùng bộ luật ấy để giải một bất phương trình. Mỗi bước do máy áp và máy tự kiểm, nên chỗ hay nhớ nhầm — dấu ở giữa của hằng đẳng thức bậc ba, chiều của bất đẳng thức — không lọt được."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chương trình đại số THCS. Chỗ đáng nhìn: bước trên **quan hệ** được kiểm bằng cách so giá trị chân lý tại các điểm ngẫu nhiên, không phải so giá trị số — đó là cách bắt được lỗi quên đổi chiều bất đẳng thức."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Hằng đẳng thức, tách hạng tử, và chiều bất đẳng thức"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Phân tích đa thức thành nhân tử là đi ngược chiều khai triển, và **hằng đẳng thức** là bộ công cụ chính. Quen nhất là hiệu hai bình phương: $x^2-9$ có [[a1|hai nhân tử]] vì $9 = 3^2$. Engine kiểm bước này bằng cách thay số ngẫu nhiên vào hai dòng — nếu nhận nhầm $x^2+9$ thì nó đỏ ngay chứ không đợi người đọc phát hiện."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x^2 - 9",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_diff_squares"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: x bình phương trừ 9, rồi tích của x trừ 3 với x cộng 3."
+          },
+          "verified": true
+        },
+        {
+          "id": "c1",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: tổng hai lập phương"
+          },
+          "narrative": {
+            "vi": "Bậc ba có hằng đẳng thức riêng, và nhân tử thứ hai là một tam thức chứ không phải nhị thức: $a^3+8 = (a+2)(a^2-2a+4)$. [[a1|Dấu ở giữa]] ngược với dấu của nhị thức — đó là chỗ hay nhớ nhầm nhất, và cũng là chỗ phép kiểm bắt được ngay nếu viết sai."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a^3 + 8",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_cubes"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: a mũ ba cộng 8, rồi tích của a cộng 2 với a bình trừ 2a cộng 4."
+          },
+          "verified": true
+        },
+        {
+          "id": "c2",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: tách hạng tử"
+          },
+          "narrative": {
+            "vi": "Tam thức không khớp hằng đẳng thức nào thì tìm hai số có tổng bằng hệ số bậc nhất và tích bằng hạng tử tự do: với $x^2-x-6$ là $-3$ và $2$. [[a1|Kết quả]] là $(x-3)(x+2)$. Engine chỉ tìm nghiệm **nguyên** — tam thức cần tới căn thì đó là việc của công thức nghiệm, không phải của luật này."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x^2 - x - 6",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_quadratic"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: x bình trừ x trừ 6, rồi tích của x trừ 3 với x cộng 2."
+          },
+          "verified": true
+        },
+        {
+          "id": "c3",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 3: bất phương trình đổi chiều"
+          },
+          "narrative": {
+            "vi": "Giải bất phương trình dùng đúng bộ luật ấy, thêm một điều: nhân hai vế với số **âm** thì [[a1|dấu đổi chiều]]. Engine đổi giúp, và nếu quên thì bộ kiểm bắt được — nó thử các điểm ngẫu nhiên rồi so **giá trị chân lý** của hai dòng, không so giá trị số."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2 - 3*x < 8",
+              "steps": [
+                {
+                  "arg": "-2",
+                  "at": "",
+                  "rule": "add_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "collect_like"
+                },
+                {
+                  "at": "R",
+                  "rule": "eval_int"
+                },
+                {
+                  "arg": "-1",
+                  "at": "",
+                  "rule": "mul_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "fold_coefficients"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Sáu dòng giải 2 − 3x < 8, kết thúc ở 3x lớn hơn −6."
+          },
+          "verified": true
+        },
+        {
+          "id": "m1",
+          "parent": "c1",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "m2",
+          "parent": "c2",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "end",
+          "parent": "c3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một chỗ đáng nhớ để kết: $\\sqrt{x^2}$ **không** bằng $x$. Nó bằng [[a1|$|x|$]], vì căn bậc hai luôn cho giá trị không âm còn $x$ thì có thể âm. Engine viết ra đúng ký hiệu ấy chứ không ghi thêm điều kiện $x \\ge 0$ — thứ thiếu là một ký hiệu, không phải một giả thiết."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "sqrt(x^2)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "pull_square_out"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: căn bậc hai của x bình phương, rồi giá trị tuyệt đối của x."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

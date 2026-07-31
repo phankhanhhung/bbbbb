@@ -509,8 +509,12 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
   kéo theo cả một tầng suy luận về miền — không đáng cho họ bài đang nhắm.
 - ~~**Căn thức**~~ — **đã làm** (M47b, theo yêu cầu chính chủ). Xem §21: nó không
   phải "thêm một loại nút", nó **đổi bộ kiểm**.
-- **Giá trị tuyệt đối, phần nguyên.** Chưa có, và cái thiếu đầu tiên đã cắn: engine
-  phải **từ chối** rút $x$ ra khỏi $\sqrt{x^2}$ vì kết quả đúng là $|x|$.
+- ~~**Giá trị tuyệt đối**~~ — **đã làm** (M47c), chính vì cái thiếu ấy đã cắn.
+- **Phần nguyên, luỹ thừa số mũ hữu tỉ, logarit.** Chưa có.
+- **Hệ phương trình.** Cần một nút chứa **nhiều** quan hệ; chưa có. Đây là mảng lớn
+  nhất còn thiếu của chương trình phổ thông.
+- **Công thức nghiệm bậc hai.** Chưa có: nó cho ra **hai** nghiệm, mà một dòng chỉ
+  chứa một quan hệ. Cần hoặc nút "hoặc", hoặc quy ước tách hai nhánh `case`.
 - **Bộ giải / gợi ý.** §4.
 - **`simplify` một phát.** §4.
 - **Đồ thị hàm số.** Miền khác, engine khác.
@@ -693,3 +697,71 @@ vào hệ số đứng trước nên $3\sqrt[3]2$ đọc thành `33√2`.
 lâu: nhìn lướt thì tưởng ghi chú vốn viết thế. Sửa ở chỗ vẽ (một dòng), không bắt 21
 ghi chú viết lại thành chữ trơn — ghi chú nguồn là chỗ hay có công thức nhất sau
 narrative. Kèm một khẳng định e2e khoá lại.
+
+
+---
+
+## 22. Bất đẳng thức, hằng đẳng thức, $|x|$ (M47c)
+
+Chính chủ: phủ toàn bộ đại số phổ thông. Đợt này ba mảng, và mảng đầu là **sửa lỗi
+sai về toán**, không phải thêm tính năng.
+
+### 22.1 Lỗi: nhân bất đẳng thức với số âm không đổi chiều
+
+Kiểu dữ liệu đã có `<` và `<=` từ đầu, `mul_both_sides` áp lên chúng bình thường, và
+engine cho ra:
+
+```
+x < 3   ⟶   −x < −3        unsound = 0
+```
+
+Sai trắng trợn. Không gì kêu, vì `model` **bỏ qua hẳn** nút `rel` — §6 khai nhóm ★
+"bảo toàn tập nghiệm do cấu trúc" nên miễn kiểm. Câu ấy là một lời hứa chưa được
+chứng minh, và nó che đúng lỗi này.
+
+**Chữa ở hai chỗ, không một chỗ.**
+
+- Luật: nhân bất đẳng thức với số âm thì `flipOp`. Dấu **chưa biết** thì **từ chối** —
+  ở trường người ta tách trường hợp, và một điều kiện "$y > 0$" ở đây giấu mất đúng
+  cái phải tách.
+- Bộ kiểm: thêm `sameSolutionSet`. Biểu thức hỏi "có **đồng nhất bằng nhau** không";
+  quan hệ hỏi "có **cùng tập nghiệm** không" — hai câu hỏi khác nhau, và trộn chúng là
+  bỏ lọt. Nó so **giá trị chân lý** tại các điểm ngẫu nhiên, và `guard` là điều kiện
+  bước ấy tự khai: điểm làm `guard` triệt tiêu bị bỏ qua. Nhờ vậy điều kiện in ra hình
+  có **nghĩa vận hành** chứ không chỉ là một dòng chữ.
+
+Bài học: mỗi lần đặc tả nói "đúng do cấu trúc nên miễn kiểm", đó là chỗ nên kiểm.
+
+### 22.2 Giá trị tuyệt đối
+
+Nút `abs`. Có vì thiếu nó thì $\sqrt{x^2}$ **không rút được** — M47b phải từ chối, và
+từ chối một phép biến đổi có trong mọi sách giáo khoa là lỗ hổng nhìn thấy được. Nay
+`pull_square_out` cho ra $|x|$.
+
+Kéo theo: `hasRadical` thành `needsRealEval`. Cả căn lẫn $|\cdot|$ đều không sống trên
+$\mathbb{F}_p$ — một cái cần khái niệm thặng dư bậc hai, cái kia cần **thứ tự**, mà
+trường hữu hạn thì không có thứ tự.
+
+### 22.3 Hằng đẳng thức và phân tích nhân tử
+
+| Tên | Cho ra |
+|---|---|
+| `expand_cube` | $(a+b)^3 = a^3+3a^2b+3ab^2+b^3$ |
+| `factor_diff_squares` | $a^2-b^2 = (a-b)(a+b)$ |
+| `factor_cubes` | $a^3 \pm b^3 = (a\pm b)(a^2 \mp ab + b^2)$ |
+| `factor_quadratic` | $x^2+bx+c = (x+p)(x+q)$, **chỉ nghiệm nguyên** |
+| `fold_coefficients` | $(-3)\cdot x\cdot(-1) \to 3x$ |
+
+`factor_quadratic` không hứa phân tích được mọi tam thức: kết quả chứa căn thì nên đi
+qua công thức nghiệm, chứ không qua luật này.
+
+### 22.4 Hai lỗi hiển thị nữa, và cả hai chỉ thấy khi mở Player
+
+- **Dấu âm chỉ được tách khi hạng tử nằm trong một tổng.** Tích âm đứng một mình — vế
+  trái của $-3x < 6$ — in ra `−1·3x`. Trước đợt này không thấy, vì tích âm luôn nằm
+  trong một tổng; giải bất phương trình mới lôi nó ra.
+- **Thừa số âm không đứng đầu thiếu ngoặc**: `3x·−1` đọc ra hai phép toán liền nhau.
+
+Và một lỗi ở tầng luật: `splitCoefficient` chỉ lấy **thừa số nguyên đầu tiên**, nên
+`a - 3*x` (parse ra `mul[−1, 3, x]`) có hệ số $-1$ và phần còn lại $3x$ — tức $-3x$ và
+$5x$ bị coi là **không đồng dạng**. Nay nó gom mọi thừa số nguyên.
