@@ -513,8 +513,8 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
 - **Phần nguyên, luỹ thừa số mũ hữu tỉ, logarit.** Chưa có.
 - **Hệ phương trình.** Cần một nút chứa **nhiều** quan hệ; chưa có. Đây là mảng lớn
   nhất còn thiếu của chương trình phổ thông.
-- **Công thức nghiệm bậc hai.** Chưa có: nó cho ra **hai** nghiệm, mà một dòng chỉ
-  chứa một quan hệ. Cần hoặc nút "hoặc", hoặc quy ước tách hai nhánh `case`.
+- ~~**Công thức nghiệm bậc hai**~~ — **đã làm** (M47e), và **không** cần nút "hoặc":
+  xem §24.
 - **Bộ giải / gợi ý.** §4.
 - **`simplify` một phát.** §4.
 - **Đồ thị hàm số.** Miền khác, engine khác.
@@ -801,3 +801,57 @@ cùng một số, vì $(2-\sqrt3)(2+\sqrt3)=1$ và $(2-\sqrt3)^2 = 7-4\sqrt3$.
 thành $\sqrt{3^2}$ — số mũ đứng ngay sau vạch trùm nên mắt không biết nó thuộc về căn
 hay về ruột căn. Bảng ưu tiên không bắt được vì căn xếp ngang nguyên tử, và đúng là
 thế ở **mọi** chỗ khác; chỗ này là ngoại lệ phải viết ra tay.
+
+
+---
+
+## 24. Đặt ẩn phụ và công thức nghiệm (M47e)
+
+Chính chủ đưa một dòng: $(x+1)(x+2)(x+3)(x+4)-8=0$. Thử bằng engine thì nó vướng ở
+**ba** chỗ, và cả ba đều là thiếu sót thật.
+
+### 24.1 Nhân hai đa thức phải là **một** bước
+
+$(x+1)(x+4)$ tốn sáu bước vi mô: `distribute` ba lần, `drop_unit`, `pow_add`, rồi
+`collect_like`. Học sinh viết đúng một dòng. Sáu dòng cho một phép nhân làm **chìm
+mất** bước thật sự đáng nhìn của bài, và trần $12$ bước cũng không đủ cho bài nào có
+hai phép nhân. `multiply_out` khai triển và thu gọn trong một bước có tên.
+
+Nó nhận `arg` là **chỉ số các thừa số** cần nhân với nhau. Cần vì `mul` làm phẳng:
+$(x+1)(x+2)(x+3)(x+4)$ là **một** tích bốn thừa số, không phải hai tích lồng nhau,
+nên không có cách nào nhóm cặp bằng cấu trúc — mà nhóm cặp lại chính là mẹo của cả
+họ bài này. Nhân hết ra bậc bốn là mất mẹo.
+
+### 24.2 Ẩn phụ phải khớp **một phần** trong tổng
+
+$x^2+5x$ nằm trong $x^2+5x+4$ mà **không phải một nút**, vì `add` làm phẳng. Khớp cả
+cây thì `set_variable` gần như vô dụng — người ta hầu như luôn đặt ẩn phụ theo kiểu
+ấy. Nay nó tìm một **đa tập con** các hạng tử của tổng.
+
+Phép kiểm phải biết ràng buộc: `RuleOutcome.binding` mang $t = x^2+5x$ về cho `model`,
+và `model` **thế ngược lại** trước khi so. Không có nó thì bộ kiểm thấy hai biểu thức
+khác biến rồi kết tội oan.
+
+### 24.3 Hai nghiệm, và vì sao **không** cần nút "hoặc"
+
+Một phương trình bậc hai có hai nghiệm, còn một dòng chỉ chứa một quan hệ. Chỗ đúng
+để tách hai nghiệm là **cây lời giải** (`edge_type: "case"`) — vốn đã có sẵn, và vốn
+sinh ra để làm đúng việc ấy. Thêm một nút "hoặc" vào cây biểu thức là dựng lại cùng
+một khái niệm ở tầng thứ hai. `quadratic_formula` nhận `arg` là `"+"` hoặc `"-"`.
+
+Kéo theo một **hợp đồng kiểm thứ ba**. Một nhánh nghiệm **hẹp hơn** tập nghiệm gốc,
+nên hỏi "cùng tập nghiệm" là hỏi sai; điều phải kiểm là nghiệm ấy **thoả** phương
+trình trước đó. `RuleOutcome.verify: 'root'` khai điều đó, và `model` thay giá trị
+vào rồi so.
+
+Ba hợp đồng kiểm, khai tường minh thay vì đoán theo dáng nút:
+
+| Hợp đồng | Câu hỏi |
+|---|---|
+| mặc định (biểu thức) | hai vế **đồng nhất bằng nhau** không |
+| mặc định (quan hệ) | hai quan hệ **cùng tập nghiệm** không |
+| `binding` | thế ngược ẩn phụ rồi mới hỏi câu thứ nhất |
+| `verify: 'root'` | nghiệm ấy có **thoả** phương trình trước không |
+
+**Biệt thức âm thì từ chối** — và lời từ chối ấy chính là câu trả lời của nhánh đó.
+Bài `quartic-by-substitution` (#91) dùng đúng nó làm nội dung nhánh thứ hai.

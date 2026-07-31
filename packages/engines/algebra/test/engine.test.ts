@@ -288,6 +288,79 @@ describe('hằng đẳng thức và phân tích nhân tử', () => {
   });
 });
 
+describe('đặt ẩn phụ và công thức nghiệm', () => {
+  it('nhân hai đa thức là **một** bước, không phải sáu', () => {
+    // Không có `multiply_out` thì $(x+1)(x+4)$ tốn `distribute` ba lần, `drop_unit`,
+    // `pow_add`, rồi `collect_like`. Học sinh viết một dòng, và sáu dòng cho một phép
+    // nhân làm chìm mất bước thật sự đáng nhìn của bài.
+    const m = readAlgebra(scene('(x + 1)*(x + 4)', [{ rule: 'multiply_out', at: '' }]));
+
+    expect(m.unsound).toEqual([]);
+    expect(unparse(m.rows[1]!.expr)).toBe(unparse(parse('x^2 + 5*x + 4', new Minter())));
+  });
+
+  it('chọn được **cặp** thừa số để nhân — `mul` làm phẳng nên không nhóm bằng cấu trúc', () => {
+    const m = readAlgebra(
+      scene('(x + 1)*(x + 4)*(x + 3)', [{ rule: 'multiply_out', at: '', arg: '0,1' }]),
+    );
+
+    expect(m.unsound).toEqual([]);
+    const after = m.rows[1]!.expr as { args: readonly { k: string }[] };
+    expect(after.args).toHaveLength(2);
+  });
+
+  it('ẩn phụ khớp **một phần** trong tổng, và phép kiểm biết ràng buộc', () => {
+    // $x^2+5x$ nằm trong $x^2+5x+4$ mà không phải một nút, vì `add` làm phẳng. Khớp
+    // cả cây thì luật này gần như vô dụng. Và phép kiểm phải thế ngược lại — không thì
+    // nó thấy hai biểu thức khác biến rồi kết tội oan.
+    const m = readAlgebra(
+      scene('(x^2 + 5*x + 4)*(x^2 + 5*x + 6)', [
+        { rule: 'set_variable', at: '', arg: 't := x^2 + 5*x' },
+      ]),
+    );
+
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    expect(unparse(m.rows[1]!.expr)).toBe(unparse(parse('(t + 4)*(t + 6)', new Minter())));
+  });
+
+  it('công thức nghiệm cho **một nhánh mỗi lần**, và nghiệm ấy phải thoả phương trình', () => {
+    // Một nhánh nghiệm hẹp hơn tập nghiệm gốc, nên hỏi "cùng tập nghiệm" là hỏi sai.
+    // Điều phải kiểm là nghiệm ấy **thoả** phương trình trước đó.
+    const plus = readAlgebra(scene('x^2 + 5*x + 2 = 0', [{ rule: 'quadratic_formula', at: '', arg: '+' }]));
+    const minus = readAlgebra(scene('x^2 + 5*x + 2 = 0', [{ rule: 'quadratic_formula', at: '', arg: '-' }]));
+
+    expect(plus.unsound).toEqual([]);
+    expect(minus.unsound).toEqual([]);
+    expect(unparse(plus.rows[1]!.expr)).toContain('sqrt(17)');
+    expect(unparse(plus.rows[1]!.expr)).not.toBe(unparse(minus.rows[1]!.expr));
+  });
+
+  it('biệt thức âm thì **từ chối**, và lời từ chối là câu trả lời', () => {
+    const m = readAlgebra(scene('x^2 + 5*x + 8 = 0', [{ rule: 'quadratic_formula', at: '', arg: '+' }]));
+
+    expect(m.refusal).toContain('vô nghiệm thực');
+    expect(m.refusal).toContain('-7');
+  });
+
+  it('cả bài $(x+1)(x+2)(x+3)(x+4)-8=0$ rút về bậc hai, mọi bước đều qua kiểm', () => {
+    const m = readAlgebra(
+      scene('(x + 1)*(x + 2)*(x + 3)*(x + 4) - 8 = 0', [
+        { rule: 'commute', at: 'L.0', arg: '1,3' },
+        { rule: 'multiply_out', at: 'L.0', arg: '0,1' },
+        { rule: 'multiply_out', at: 'L.0', arg: '1,2' },
+        { rule: 'set_variable', at: 'L', arg: 't := x^2 + 5*x' },
+        { rule: 'multiply_out', at: 'L.0' },
+        { rule: 'collect_like', at: 'L' },
+      ]),
+    );
+
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    expect(unparse(m.rows.at(-1)!.expr)).toBe(unparse(parse('t^2 + 10*t + 16 = 0', new Minter())));
+  });
+});
+
 describe('AL-08 — cái bẫy nhân hai vế', () => {
   it('nhân với thứ **có thể bằng 0** thì ghi điều kiện ra hình', () => {
     // Đường đi của mọi "chứng minh 1 = 2". Engine không chặn — nó nói ra, vì bước

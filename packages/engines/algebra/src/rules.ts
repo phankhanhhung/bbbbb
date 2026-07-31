@@ -6,15 +6,18 @@ import {
   add,
   div,
   int,
+  children,
   mul,
   negate,
   pow,
   flipOp,
   rat,
+  rel,
   root,
   same,
   variable,
   walk,
+  withChildren,
   type Expr,
   type TermId,
 } from './expr.js';
@@ -40,6 +43,21 @@ export interface RuleOutcome {
   readonly merged?: ReadonlyArray<readonly [readonly TermId[], TermId]>;
   /** Điều kiện kèm theo (AL-08), ví dụ `"x − 1 ≠ 0"`. */
   readonly condition?: string;
+  /**
+   * Biến phụ vừa đặt: `after` chỉ đúng **dưới ràng buộc** này.
+   *
+   * `model` kiểm bằng cách thế ngược lại rồi so — không có nó thì phép kiểm thấy hai
+   * biểu thức khác biến và kết tội oan.
+   */
+  readonly binding?: { readonly name: string; readonly expr: Expr };
+  /**
+   * Hợp đồng kiểm của bước này, khi nó không phải "đồng nhất" hay "cùng tập nghiệm".
+   *
+   * `'root'`: `after` có dạng $x = r$ và điều phải kiểm là $r$ **thoả** phương trình
+   * trước đó — một nhánh nghiệm thì hẹp hơn tập nghiệm gốc, nên hỏi "cùng tập
+   * nghiệm" là hỏi sai.
+   */
+  readonly verify?: 'root';
 }
 
 export type RuleRun = (
@@ -810,6 +828,272 @@ const denestRadical: Rule = {
   },
 };
 
+/* ---------- nhân đa thức, đặt ẩn phụ, công thức nghiệm ---------- */
+
+/** Khoá gom hạng tử: tích các luỹ thừa đã sắp, để $2xy$ và $2yx$ vào cùng một nhóm. */
+function monomialKey(factors: ReadonlyMap<string, number>): string {
+  return [...factors.entries()]
+    .filter(([, e]) => e !== 0)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([b, e]) => `${b}^${e}`)
+    .join('*');
+}
+
+/** Khai triển thành danh sách (hệ số, các luỹ thừa) — dạng chuẩn của đa thức. */
+function flatten(e: Expr): Array<{ coef: number; powers: Map<string, number>; bases: Map<string, Expr> }> | null {
+  const unit = () => [{ coef: 1, powers: new Map<string, number>(), bases: new Map<string, Expr>() }];
+  switch (e.k) {
+    case 'int':
+      return [{ coef: e.v, powers: new Map(), bases: new Map() }];
+    case 'add': {
+      const out: ReturnType<typeof flatten> = [];
+      for (const a of e.args) {
+        const part = flatten(a);
+        if (part === null) return null;
+        out!.push(...part);
+      }
+      return out;
+    }
+    case 'mul': {
+      let acc = unit();
+      for (const a of e.args) {
+        const part = flatten(a);
+        if (part === null) return null;
+        const next: ReturnType<typeof flatten> = [];
+        for (const x of acc) {
+          for (const y of part) {
+            const powers = new Map(x.powers);
+            const bases = new Map(x.bases);
+            for (const [k, v] of y.powers) powers.set(k, (powers.get(k) ?? 0) + v);
+            for (const [k, v] of y.bases) bases.set(k, v);
+            next!.push({ coef: x.coef * y.coef, powers, bases });
+          }
+        }
+        acc = next as never;
+      }
+      return acc;
+    }
+    case 'pow': {
+      if (e.exp < 0) return null;
+      const base = flatten(e.base);
+      if (base === null) return null;
+      let acc = unit();
+      for (let i = 0; i < e.exp; i += 1) {
+        const next: ReturnType<typeof flatten> = [];
+        for (const x of acc) {
+          for (const y of base) {
+            const powers = new Map(x.powers);
+            const bases = new Map(x.bases);
+            for (const [k, v] of y.powers) powers.set(k, (powers.get(k) ?? 0) + v);
+            for (const [k, v] of y.bases) bases.set(k, v);
+            next!.push({ coef: x.coef * y.coef, powers, bases });
+          }
+        }
+        acc = next as never;
+      }
+      return acc;
+    }
+    case 'var':
+    case 'root':
+    case 'abs': {
+      const key = unparseKey(e);
+      return [{ coef: 1, powers: new Map([[key, 1]]), bases: new Map([[key, e]]) }];
+    }
+    default:
+      return null;
+  }
+}
+
+function unparseKey(e: Expr): string {
+  if (e.k === 'var') return e.name;
+  if (e.k === 'root') return `root${e.index}(${unparseKey(e.arg)})`;
+  if (e.k === 'abs') return `abs(${unparseKey(e.arg)})`;
+  return `?${e.id}`;
+}
+
+/**
+ * Nhân đa thức và thu gọn — **một** bước.
+ *
+ * Không có nó thì $(x+1)(x+4)$ tốn sáu bước vi mô: `distribute` ba lần, `drop_unit`,
+ * `pow_add`, rồi `collect_like`. Học sinh viết đúng một dòng, và một chuỗi sáu dòng
+ * cho một phép nhân làm chìm mất bước thật sự đáng nhìn của bài. Trần 12 bước cũng
+ * không đủ cho bài nào có hai phép nhân.
+ */
+const multiplyOut: Rule = {
+  id: 'multiply_out',
+  label: 'nhân ra và thu gọn',
+  run(m, node, arg) {
+    if (node.k !== 'mul' && node.k !== 'pow') return no('cần một tích hoặc một luỹ thừa');
+    if (node.k === 'mul' && !node.args.some((a) => a.k === 'add')) {
+      return no('không có thừa số nào là tổng');
+    }
+    if (node.k === 'pow' && (node.base.k !== 'add' || node.exp < 2)) {
+      return no('cần luỹ thừa bậc ≥ 2 của một tổng');
+    }
+
+    // `arg` chọn **thừa số nào** được nhân với nhau; thiếu nó thì nhân hết.
+    //
+    // Cần vì `mul` làm phẳng: $(x+1)(x+2)(x+3)(x+4)$ là **một** tích bốn thừa số,
+    // không phải hai tích lồng nhau, nên không có cách nào nhóm cặp bằng cấu trúc.
+    // Mà nhóm cặp lại chính là mẹo của cả họ bài này — nhân hết ra bậc bốn là mất mẹo.
+    if (arg !== undefined && node.k === 'mul') {
+      const picked = arg.split(',').map((x) => Number(x.trim()));
+      if (picked.some((i) => !Number.isInteger(i) || node.args[i] === undefined)) {
+        return no(`chỉ số ngoài khoảng 0..${node.args.length - 1}`);
+      }
+      if (picked.length < 2) return no('cần ít nhất hai thừa số');
+      const chosen = picked.map((i) => node.args[i] as Expr);
+      const inner = multiplyOut.run(m, mul(m, chosen), undefined);
+      if ('refusal' in inner) return inner;
+      const rest = node.args.filter((_, i) => !picked.includes(i));
+      const at = Math.min(...picked);
+      return {
+        after: mul(m, [...rest.slice(0, at), inner.after, ...rest.slice(at)]),
+      };
+    }
+
+    const parts = flatten(node);
+    if (parts === null) return no('có phần không khai triển được (phân số, số mũ âm)');
+
+    const groups = new Map<string, { coef: number; powers: Map<string, number>; bases: Map<string, Expr> }>();
+    for (const p of parts) {
+      const key = monomialKey(p.powers);
+      const g = groups.get(key);
+      if (g) g.coef += p.coef;
+      else groups.set(key, { ...p, powers: new Map(p.powers), bases: new Map(p.bases) });
+    }
+
+    const degree = (g: { powers: Map<string, number> }): number =>
+      [...g.powers.values()].reduce((s, v) => s + v, 0);
+    const live = [...groups.values()].filter((g) => g.coef !== 0).sort((a, b) => degree(b) - degree(a));
+    if (live.length === 0) return { after: int(m, 0) };
+
+    const terms = live.map((g) => {
+      const factors: Expr[] = [];
+      for (const [k, e] of [...g.powers.entries()].sort(([a], [b]) => (a < b ? -1 : 1))) {
+        if (e === 0) continue;
+        factors.push(pow(m, g.bases.get(k) as Expr, e));
+      }
+      return withCoefficient(m, g.coef, factors.length === 0 ? null : mul(m, factors));
+    });
+    return { after: add(m, terms) };
+  },
+};
+
+/**
+ * Đặt ẩn phụ: thay **mọi** chỗ xuất hiện của một biểu thức bằng một biến mới.
+ *
+ * Ngược chiều `substitute`, và là mấu chốt của cả một họ bài — $(x+1)(x+2)(x+3)(x+4)-8=0$
+ * giải được là nhờ nó. Phép kiểm phải biết ràng buộc, nếu không nó thấy hai biểu thức
+ * khác biến rồi kết tội oan; `binding` mang thông tin ấy cho `model`.
+ */
+const setVariable: Rule = {
+  id: 'set_variable',
+  label: 'đặt ẩn phụ',
+  needsArg: true,
+  run(m, node, arg) {
+    const parts = (arg ?? '').split(':=');
+    if (parts.length !== 2) return no('cần tham số dạng "t := x^2 + 5*x"');
+    const name = (parts[0] as string).trim();
+    if (!/^[a-zA-Z](_[0-9])?$/.test(name)) return no('tên biến phải là một chữ cái');
+    const defn = parse((parts[1] as string).trim(), m);
+
+    let hits = 0;
+    const go = (e: Expr): Expr => {
+      if (same(e, defn)) {
+        hits += 1;
+        return variable(m, name);
+      }
+      // Khớp **một phần** trong một tổng: $x^2+5x$ nằm trong $x^2+5x+4$ mà không phải
+      // một nút, vì `add` làm phẳng. Người ta vẫn đặt được ẩn phụ ở đó — và đây là
+      // cách duy nhất họ đặt, nên khớp cả cây thì luật này gần như vô dụng.
+      if (e.k === 'add' && defn.k === 'add' && defn.args.length < e.args.length) {
+        const rest = [...e.args];
+        const taken: number[] = [];
+        for (const want of defn.args) {
+          const at = rest.findIndex((r, i) => !taken.includes(i) && same(r, want));
+          if (at === -1) {
+            taken.length = 0;
+            break;
+          }
+          taken.push(at);
+        }
+        if (taken.length === defn.args.length) {
+          hits += 1;
+          const left = e.args.filter((_, i) => !taken.includes(i)).map(go);
+          return add(m, [variable(m, name), ...left]);
+        }
+      }
+      const kids = children(e).map(go);
+      return kids.length === 0 ? e : withChildren(e, kids);
+    };
+    const after = go(node);
+    if (hits === 0) return no(`không thấy "${parts[1]}" ở đâu trong cây con này`);
+    return { after, binding: { name, expr: defn } };
+  },
+};
+
+/**
+ * Công thức nghiệm bậc hai — **một nhánh mỗi lần**, chọn bằng `arg` là `"+"` hoặc `"-"`.
+ *
+ * Không dựng nút "hoặc": một phương trình bậc hai có hai nghiệm, và chỗ đúng để tách
+ * hai nghiệm là **cây lời giải** (`edge_type: "case"`), vốn đã có sẵn và vốn sinh ra
+ * để làm đúng việc ấy. Thêm một nút "hoặc" vào cây biểu thức là dựng lại cùng khái
+ * niệm ở tầng thứ hai.
+ *
+ * Biệt thức âm thì **từ chối** — và lời từ chối ấy chính là nội dung đáng dạy.
+ */
+const quadraticFormula: Rule = {
+  id: 'quadratic_formula',
+  label: 'công thức nghiệm',
+  needsArg: true,
+  onRelation: true,
+  run(m, node, arg) {
+    if (node.k !== 'rel' || node.op !== '=') return no('cần một phương trình');
+    const sign = (arg ?? '+').trim();
+    if (sign !== '+' && sign !== '-') return no('cần tham số "+" hoặc "-"');
+
+    const zeroSide = (e: Expr): boolean => e.k === 'int' && e.v === 0;
+    const poly = zeroSide(node.rhs) ? node.lhs : zeroSide(node.lhs) ? node.rhs : null;
+    if (poly === null) return no('một vế phải bằng 0 — chuyển vế trước đã');
+
+    const parts = flatten(poly);
+    if (parts === null) return no('vế này không phải đa thức');
+    let name: string | null = null;
+    const coefs = new Map<number, number>();
+    for (const p of parts) {
+      const live = [...p.powers.entries()].filter(([, e]) => e !== 0);
+      if (live.length > 1) return no('không phải đa thức một biến');
+      if (live.length === 0) {
+        coefs.set(0, (coefs.get(0) ?? 0) + p.coef);
+        continue;
+      }
+      const [key, deg] = live[0] as [string, number];
+      const base = p.bases.get(key) as Expr;
+      if (base.k !== 'var') return no('ẩn phải là một biến');
+      name ??= base.name;
+      if (base.name !== name) return no('không phải đa thức một biến');
+      coefs.set(deg, (coefs.get(deg) ?? 0) + p.coef);
+    }
+    if (name === null) return no('không có ẩn nào');
+    const top = Math.max(...coefs.keys());
+    if (top !== 2) return no(`đa thức bậc ${top}, không phải bậc hai`);
+
+    const a = coefs.get(2) ?? 0;
+    const b = coefs.get(1) ?? 0;
+    const c = coefs.get(0) ?? 0;
+    const delta = b * b - 4 * a * c;
+    if (delta < 0) return no(`biệt thức bằng ${delta} < 0 — phương trình vô nghiệm thực`);
+
+    const rootPart = root(m, 2, int(m, delta));
+    const numerator = add(m, [int(m, -b), sign === '+' ? rootPart : negate(m, rootPart)]);
+    return {
+      after: rel(m, '=', variable(m, name), div(m, numerator, int(m, 2 * a))),
+      verify: 'root',
+    };
+  },
+};
+
 const powAdd: Rule = {
   id: 'pow_add',
   label: 'cộng số mũ',
@@ -1000,6 +1284,9 @@ export const RULES: readonly Rule[] = [
   factorDiffSquares,
   factorCubes,
   factorQuadratic,
+  multiplyOut,
+  setVariable,
+  quadraticFormula,
   evalRoot,
   pullSquareOut,
   expandDiffSquares,

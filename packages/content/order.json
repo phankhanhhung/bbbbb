@@ -89,9 +89,10 @@
     "equation-moves-that-lie",
     "radical-simplify",
     "factoring-identities",
-    "conjugate-and-nested-radicals"
+    "conjugate-and-nested-radicals",
+    "quartic-by-substitution"
   ],
   "newest": [
-    "conjugate-and-nested-radicals"
+    "quartic-by-substitution"
   ]
 }
