@@ -287,6 +287,61 @@ test.describe('Choreography (CHO-02, CHO-09)', () => {
     await expect(hidden).toHaveCount(12);
   });
 
+  test('CHO-11 — nhãn pha **hiện ra**, không chỉ nằm trong aria', async ({ page }) => {
+    // Chữ giải thích từng pha đã được viết sẵn cho cả 87 pha của kho, nhưng chỉ bộ
+    // đếm pha (giảm chuyển động) in nó ra. Người sáng mắt ở chế độ thường xem hình
+    // đổi mà không có một chữ nào.
+    await page.goto(TELESCOPE);
+    await reveal(page);
+
+    const phase = page.locator('.timeline__phase');
+    await expect(phase).toBeVisible();
+    await page.getByLabel('Tua trong bước').fill('900');
+    await expect(page.locator('.timeline__label')).not.toBeEmpty();
+  });
+
+  test('CHO-11 — timeline **không tự chạy** khi vừa mở bước', async ({ page }) => {
+    // Tự chạy nghĩa là hình bắt đầu đổi trước khi người xem kịp đọc câu đầu của lời
+    // kể — mà lời kể mới là thứ nói cho họ biết phải nhìn cái gì.
+    await page.goto(TELESCOPE);
+    await reveal(page);
+
+    // `exact` vì "Chạy lại" cũng chứa "Chạy"; khoanh vùng vì bảng điều khiển bước
+    // cũng có một nút tên "Chạy".
+    await expect(
+      page.locator('.timeline').getByRole('button', { name: 'Chạy', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByLabel('Tua trong bước')).toHaveValue('0');
+    await page.waitForTimeout(400);
+    await expect(page.getByLabel('Tua trong bước')).toHaveValue('0');
+  });
+
+  test('CHO-11 — ai cũng bật được chế độ từng pha, không riêng reduced-motion', async ({ page }) => {
+    await page.goto(TELESCOPE);
+    await reveal(page);
+
+    await expect(page.getByLabel('Tua trong bước')).toBeVisible();
+    await page.getByRole('button', { name: 'Từng pha' }).click();
+    await expect(page.getByLabel('Tua trong bước')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Pha sau' })).toBeVisible();
+  });
+
+  test('CHO-11 — `hold` **dừng** phát lại giữa chừng, và nút đổi thành "Tiếp"', async ({ page }) => {
+    // Không phải chuyện tốc độ: chỉnh chậm lại thì cả timeline chậm đều, mà thứ cần
+    // là **nhịp không đều** — dừng đúng chỗ tác giả bảo dừng.
+    await page.goto('/?p=polynomial-division-longform&sol=sol&step=e1');
+    await reveal(page);
+
+    const scrub = page.getByLabel('Tua trong bước');
+    const bar = page.locator('.timeline');
+    await bar.getByRole('button', { name: 'Chạy', exact: true }).click();
+    await expect(bar.getByRole('button', { name: 'Tiếp' })).toBeVisible({ timeout: 8000 });
+
+    const stopped = Number(await scrub.inputValue());
+    expect(stopped).toBeGreaterThan(0);
+    expect(stopped).toBeLessThan(Number(await scrub.getAttribute('max')));
+  });
+
   test('reduced-motion: bộ đếm pha thay thanh tua, và đi được từng pha', async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();

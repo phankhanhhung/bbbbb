@@ -155,6 +155,7 @@
                 "anchor": "a2",
                 "at": 900,
                 "duration": 700,
+                "hold": true,
                 "id": "d0",
                 "kind": "show",
                 "label": {
@@ -188,6 +189,7 @@
                 "anchor": "a2",
                 "at": 2700,
                 "duration": 700,
+                "hold": true,
                 "id": "d1",
                 "kind": "show",
                 "label": {
@@ -308,6 +310,7 @@
                 "anchor": "a2",
                 "at": 900,
                 "duration": 700,
+                "hold": true,
                 "id": "d0",
                 "kind": "show",
                 "label": {
@@ -421,6 +424,7 @@
                 "anchor": "a2",
                 "at": 900,
                 "duration": 700,
+                "hold": true,
                 "id": "d0",
                 "kind": "show",
                 "label": {
@@ -452,6 +456,7 @@
                 "anchor": "a2",
                 "at": 2700,
                 "duration": 700,
+                "hold": true,
                 "id": "d1",
                 "kind": "show",
                 "label": {
@@ -565,6 +570,7 @@
                 "anchor": "a2",
                 "at": 900,
                 "duration": 700,
+                "hold": true,
                 "id": "d0",
                 "kind": "show",
                 "label": {
@@ -597,6 +603,7 @@
                 "anchor": "a2",
                 "at": 2700,
                 "duration": 700,
+                "hold": true,
                 "id": "d1",
                 "kind": "show",
                 "label": {
@@ -711,6 +718,7 @@
                 "anchor": "a2",
                 "at": 900,
                 "duration": 700,
+                "hold": true,
                 "id": "d0",
                 "kind": "show",
                 "label": {
@@ -725,6 +733,7 @@
                 "anchor": "a2",
                 "at": 2700,
                 "duration": 700,
+                "hold": true,
                 "id": "d1",
                 "kind": "show",
                 "label": {

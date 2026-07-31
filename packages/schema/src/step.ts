@@ -106,8 +106,26 @@ export const ChoreographyPhase = Type.Object(
     ),
     /** CHO-07 — khoá anchor mà pha này giải thích. Bắt buộc, xem chú thích trên. */
     anchor: Type.String({ pattern: ANCHOR_KEY_PATTERN }),
-    /** Nhãn ngắn cho bộ đếm pha ở chế độ giảm chuyển động (CHO-09). */
+    /**
+     * Nhãn ngắn của pha — **chữ trơn**, và nay nó hiện ở **mọi** chế độ.
+     *
+     * Trước đây chỉ bộ đếm pha (giảm chuyển động) in nó ra; chế độ thường chỉ đưa
+     * vào `aria-valuetext`. Nghĩa là người sáng mắt xem chuyển động mà không có chữ
+     * nào giải thích — trong khi chữ **đã được viết sẵn** cho cả 87 pha của kho.
+     */
     label: Type.Optional(LangString),
+    /**
+     * Dừng phát lại **sau** pha này, đợi người xem bấm tiếp (CHO-11).
+     *
+     * Một timeline chạy một mạch từ đầu đến cuối thì mọi pha trôi qua với tốc độ như
+     * nhau, kể cả pha mang bước lập luận nặng nhất. `hold` là chỗ tác giả nói "đọc
+     * cái này đã rồi hãy đi tiếp". Không phải chuyện tốc độ — chỉnh chậm lại thì cả
+     * timeline chậm đều, mà thứ cần là **nhịp không đều**.
+     *
+     * Pha có `hold` bắt buộc có `label`: dừng lại mà không có gì để đọc là kẹt, không
+     * phải nghỉ. Luật `lint/phase-hold-no-label` ép điều đó.
+     */
+    hold: Type.Optional(Type.Boolean()),
   },
   { additionalProperties: false },
 );
@@ -234,6 +252,7 @@ export interface Step {
       easing?: 'linear' | 'ease-in-out';
       anchor: string;
       label?: { vi: string; en?: string };
+      hold?: boolean;
     }[];
   };
   bijection?: {
