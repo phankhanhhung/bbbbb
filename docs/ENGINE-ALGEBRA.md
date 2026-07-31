@@ -765,3 +765,39 @@ qua công thức nghiệm, chứ không qua luật này.
 Và một lỗi ở tầng luật: `splitCoefficient` chỉ lấy **thừa số nguyên đầu tiên**, nên
 `a - 3*x` (parse ra `mul[−1, 3, x]`) có hệ số $-1$ và phần còn lại $3x$ — tức $-3x$ và
 $5x$ bị coi là **không đồng dạng**. Nay nó gom mọi thừa số nguyên.
+
+
+---
+
+## 23. Nhân liên hợp và căn lồng (M47d)
+
+Ba luật, và cả ba đều là bài trong sách giáo khoa chứ không phải tiện ích.
+
+| Tên | Cho ra |
+|---|---|
+| `expand_diff_squares` | $(a+b)(a-b) \to a^2-b^2$ — chiều **khai triển** |
+| `multiply_by_conjugate` | $\dfrac{c}{a+\sqrt b} \to \dfrac{c(a-\sqrt b)}{(a+\sqrt b)(a-\sqrt b)}$ |
+| `denest_radical` | $\sqrt{a \pm 2\sqrt b} \to \sqrt c \pm \sqrt d$ với $c+d=a$, $cd=b$ |
+
+**`expand_diff_squares` có riêng chứ không bắt người học `distribute` hai lần rồi
+`collect_like`.** Đây là *lý do* người ta nhân liên hợp, nên nó phải là một bước có
+tên, đọc ra được ý đồ — bốn bước máy móc thì kết quả đúng mà mất hẳn nghĩa.
+
+**`rationalize` không đủ cho mẫu là tổng.** Nó chỉ xử được mẫu là một dấu căn trần;
+mẫu $a+\sqrt b$ mà nhân với chính nó thì không giúp gì. Hai luật khác nhau, và giữ
+riêng thì thông báo từ chối nói đúng chỗ hỏng.
+
+**`denest_radical` không hứa khử được mọi căn lồng**, và đó là sự thật toán học chứ
+không phải giới hạn cài đặt: phần lớn căn lồng **không** viết lại được bằng căn bậc
+hai. Luật đi tìm cặp $(c,d)$ **nguyên** và từ chối khi không có. Dấu trừ đòi
+$c \ge d$ — vế trái là một căn bậc hai nên luôn không âm, mà $\sqrt c-\sqrt d$ âm khi
+$c<d$.
+
+Bài `conjugate-and-nested-radicals` (#90) khép hai nhánh lại ở một chỗ đẹp: nhân liên
+hợp cho $1/(2+\sqrt3) = 2-\sqrt3$, khử căn lồng cho $\sqrt{7-4\sqrt3} = 2-\sqrt3$ —
+cùng một số, vì $(2-\sqrt3)(2+\sqrt3)=1$ và $(2-\sqrt3)^2 = 7-4\sqrt3$.
+
+**Một lỗi hiển thị nữa:** căn làm cơ số của luỹ thừa thiếu ngoặc, nên `√3²` đọc được
+thành $\sqrt{3^2}$ — số mũ đứng ngay sau vạch trùm nên mắt không biết nó thuộc về căn
+hay về ruột căn. Bảng ưu tiên không bắt được vì căn xếp ngang nguyên tử, và đúng là
+thế ở **mọi** chỗ khác; chỗ này là ngoại lệ phải viết ra tay.

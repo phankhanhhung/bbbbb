@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M47 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 89 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M47 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 90 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,26 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M47d — Nhân liên hợp và căn lồng · [E] — **xong**
+
+Chính chủ đặt bài về trục căn thức bằng nhân liên hợp, kèm căn lồng. Ba luật engine
+chưa có, và cả ba đều là bài trong sách giáo khoa: `expand_diff_squares` (chiều khai
+triển của hiệu hai bình phương), `multiply_by_conjugate`, `denest_radical`.
+
+`expand_diff_squares` có **riêng** chứ không bắt người học `distribute` hai lần rồi
+`collect_like`: đây là *lý do* người ta nhân liên hợp, nên nó phải là một bước có
+tên. Bốn bước máy móc thì kết quả đúng mà mất hẳn nghĩa.
+
+`denest_radical` **không hứa khử được mọi căn lồng**, và đó là sự thật toán học chứ
+không phải giới hạn cài đặt — phần lớn căn lồng không viết lại được bằng căn bậc hai.
+
+Bài `conjugate-and-nested-radicals` (#90) khép hai nhánh ở một chỗ đẹp: nhân liên hợp
+cho $1/(2+\sqrt3) = 2-\sqrt3$, khử căn lồng cho $\sqrt{7-4\sqrt3} = 2-\sqrt3$ — cùng
+một số, vì $(2-\sqrt3)(2+\sqrt3)=1$ và $(2-\sqrt3)^2 = 7-4\sqrt3$.
+
+Một lỗi hiển thị nữa, lại chỉ thấy khi nhìn: căn làm cơ số luỹ thừa thiếu ngoặc, nên
+`√3²` đọc được thành $\sqrt{3^2}$.
 
 ### M47c — Bất đẳng thức đổi chiều, hằng đẳng thức, và $|x|$ · [E] — **xong**
 

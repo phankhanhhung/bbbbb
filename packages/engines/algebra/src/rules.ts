@@ -1,4 +1,5 @@
 import { definiteSign, definitelyNonNegative, definitelyNonZero } from './check.js';
+import { needsRealEval } from './expr.js';
 import {
   Minter,
   abs,
@@ -694,6 +695,121 @@ const foldCoefficients: Rule = {
   },
 };
 
+/**
+ * $(a+b)(a-b) = a^2 - b^2$ — chiều **khai triển** của hiệu hai bình phương.
+ *
+ * Có riêng chứ không bắt người học `distribute` hai lần rồi `collect_like`: đây là
+ * *lý do* người ta nhân liên hợp, nên nó phải là một bước có tên, đọc ra được ý đồ.
+ */
+const expandDiffSquares: Rule = {
+  id: 'expand_diff_squares',
+  label: 'nhân liên hợp',
+  run(m, node) {
+    if (node.k !== 'mul' || node.args.length !== 2) return no('cần tích hai nhân tử');
+    const [p, q] = node.args as [Expr, Expr];
+    if (p.k !== 'add' || q.k !== 'add' || p.args.length !== 2 || q.args.length !== 2) {
+      return no('hai nhân tử phải là nhị thức');
+    }
+    const [a1, b1] = p.args as [Expr, Expr];
+    const [a2, b2] = q.args as [Expr, Expr];
+    if (!same(a1, a2)) return no('hạng tử đầu của hai nhân tử phải giống nhau');
+
+    // Hạng tử thứ hai phải đối nhau. So bằng cấu trúc sau khi cùng đổi dấu một bên.
+    const opposite = same(negate(m, b1), b2) || same(b1, negate(m, b2));
+    if (!opposite) return no('hạng tử thứ hai của hai nhân tử phải đối nhau');
+
+    const positive = b1.k === 'mul' || (b1.k === 'int' && b1.v < 0) ? b2 : b1;
+    return {
+      after: add(m, [pow(m, a1, 2), negate(m, pow(m, positive, 2))]),
+      merged: [[[p.id, q.id], a1.id]],
+    };
+  },
+};
+
+/**
+ * Trục căn thức ở mẫu **bằng nhân liên hợp**: $\dfrac{c}{a+\sqrt b}$ nhân cả tử lẫn
+ * mẫu với $a-\sqrt b$.
+ *
+ * `rationalize` chỉ xử được mẫu là một dấu căn trần. Mẫu là **tổng** thì nhân với
+ * chính nó không giúp gì — phải nhân với liên hợp, và đó là chỗ hiệu hai bình phương
+ * làm việc: căn bị bình phương nên biến mất.
+ */
+const multiplyByConjugate: Rule = {
+  id: 'multiply_by_conjugate',
+  label: 'nhân liên hợp tử và mẫu',
+  run(m, node) {
+    if (node.k !== 'div') return no('cần một phân số');
+    const den = node.den;
+    if (den.k !== 'add' || den.args.length !== 2) return no('mẫu phải là tổng hai hạng tử');
+    if (!needsRealEval(den)) return no('mẫu không chứa căn — không cần liên hợp');
+
+    const [a, b] = den.args as [Expr, Expr];
+    const conj = (): Expr => {
+      const { copy: ca } = freshCopy(m, a);
+      const { copy: cb } = freshCopy(m, b);
+      return add(m, [ca, negate(m, cb)]);
+    };
+    const c1 = conj();
+    const c2 = conj();
+
+    // Liên hợp bằng $0$ thì phép nhân này mất nghiệm — cùng họ AL-08. Hằng số thì
+    // máy kiểm ngay; còn biến thì ghi điều kiện ra hình.
+    const condition = definitelyNonZero(c1) ? undefined : conditionText('liên hợp');
+    return { after: div(m, mul(m, [node.num, c1]), mul(m, [den, c2])), condition };
+  },
+};
+
+/**
+ * Khử căn lồng: $\sqrt{a \pm 2\sqrt b} = \sqrt c \pm \sqrt d$ với $c+d=a$, $cd=b$.
+ *
+ * Cách làm ở trường: nhận ra biểu thức dưới căn **là một bình phương**. Ở đây engine
+ * đi tìm cặp $(c,d)$ nguyên, và chỉ nhận khi tìm được — nó không hứa khử được mọi căn
+ * lồng, vì phần lớn căn lồng **không** khử được bằng căn bậc hai.
+ *
+ * Dấu trừ đòi $c \ge d$: vế trái là một căn bậc hai nên luôn không âm, mà
+ * $\sqrt c - \sqrt d$ âm khi $c < d$ — đổi chỗ là ra đúng.
+ */
+const denestRadical: Rule = {
+  id: 'denest_radical',
+  label: 'khử căn lồng',
+  run(m, node) {
+    if (node.k !== 'root' || node.index !== 2) return no('cần một căn bậc hai');
+    const inner = node.arg;
+    if (inner.k !== 'add' || inner.args.length !== 2) return no('dưới căn phải là tổng hai hạng tử');
+
+    let a: number | null = null;
+    let k = 1;
+    let b: number | null = null;
+    for (const t of inner.args) {
+      if (t.k === 'int') {
+        a = t.v;
+        continue;
+      }
+      const { coef, rest } = splitCoefficient(m, t);
+      if (rest !== null && rest.k === 'root' && rest.index === 2 && rest.arg.k === 'int') {
+        k = coef;
+        b = rest.arg.v;
+      }
+    }
+    if (a === null || b === null) return no('dưới căn phải có dạng a ± k·√b');
+
+    // $k\sqrt b = 2\sqrt{k^2 b/4}$ — đưa về hệ số $2$ chuẩn của công thức.
+    const scaled = (k * k * b) / 4;
+    if (!Number.isInteger(scaled)) return no('không đưa được về dạng a ± 2√b');
+    const negative = k < 0;
+
+    for (let c = 0; c <= a; c += 1) {
+      const d = a - c;
+      if (c * d !== scaled) continue;
+      if (negative && c < d) continue;
+      const rc = root(m, 2, int(m, c));
+      const rd = root(m, 2, int(m, d));
+      return { after: add(m, [rc, negative ? negate(m, rd) : rd]) };
+    }
+    return no('không tách được thành hai căn nguyên — căn lồng này không khử được');
+  },
+};
+
 const powAdd: Rule = {
   id: 'pow_add',
   label: 'cộng số mũ',
@@ -886,6 +1002,9 @@ export const RULES: readonly Rule[] = [
   factorQuadratic,
   evalRoot,
   pullSquareOut,
+  expandDiffSquares,
+  multiplyByConjugate,
+  denestRadical,
   rootOfProduct,
   rootPow,
   rationalize,
