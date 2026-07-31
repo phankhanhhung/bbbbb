@@ -2,6 +2,7 @@ import type { Scene } from '@combviz/schema';
 import { evalReal, impliesSolutionSet, sameSolutionSet, sameValue } from './check.js';
 import {
   Minter,
+  allPaths,
   children,
   depth,
   nodeAt,
@@ -125,8 +126,12 @@ function tooBig(e: Expr): string | null {
   if (h > ALGEBRA_LIMITS.maxHeightCells) {
     return `cao ${h.toFixed(2)} ô, quá ${ALGEBRA_LIMITS.maxHeightCells}`;
   }
-  // Player giữ tỉ lệ khung cố định (chốt canh G-10), nên công thức quá rộng **tràn**
-  // chứ không co lại. Bề ngang phải có trần riêng, không suy ra được từ chiều cao.
+  // Player **co** hình cho vừa pane và không bao giờ giãn (`render/scale.ts`), nên một
+  // dòng quá rộng không tràn ra ngoài — nó kéo *mọi* step của cùng bài nhỏ lại, vì hệ số
+  // co dùng chung. Bề ngang phải có trần riêng, không suy ra được từ chiều cao.
+  //
+  // (Chú thích cũ ở đây nói "tràn chứ không co lại" — sai, và sai theo hướng làm người
+  //  đọc tưởng trần này canh chuyện khác. `scale.ts` là nguồn sự thật.)
   if (w > ALGEBRA_LIMITS.maxWidthCells) {
     return `rộng ${w.toFixed(2)} ô, quá ${ALGEBRA_LIMITS.maxWidthCells}`;
   }
@@ -138,6 +143,39 @@ const idsOfExpr = (e: Expr): Set<string> => {
   walk(e, (n) => out.add(n.id));
   return out;
 };
+
+/**
+ * Giải `step.at` thành một đường dẫn — và cho phép **trỏ bằng nội dung**.
+ *
+ * `at: "@abs(x - 2)"` nghĩa là "cây con nào khớp mẫu này". Có vì đường dẫn theo vị trí
+ * **dịch chỗ** khi một luật trả về `add` vào trong một `add`: đo được ở M55, chạy
+ * `abs_case` tại `L.0` của $|x-1|+|x-2|=3$ thì dấu $|\cdot|$ thứ hai nhảy từ `L.1` sang
+ * `L.2`, vì `x + (-1)` bị làm phẳng vào tổng cha và đẩy mọi chỉ số sau nó lùi một nấc.
+ * Bất biến làm phẳng là **cố ý** (bỏ nó là mở lại lỗi M47 #8), nên chỗ chữa nằm ở đây.
+ *
+ * **Không** cho trỏ bằng `TermId`: id do `Minter` cấp theo thứ tự dựng cây, tác giả
+ * không đoán được nó, nên id-trong-`at` là một đường cụt đội lốt tính năng.
+ *
+ * Mẫu parse bằng một `Minter` **riêng**: `same()` bỏ qua id, nên so sánh không cần id
+ * thật, và mượn bộ đếm của scene thì mọi nút sinh sau đó mang số khác — danh tính bền
+ * là thứ cả choreography dựa vào (§3.4).
+ */
+function resolveAt(root: Expr, at: string): { path: string } | { refusal: string } {
+  if (!at.startsWith('@')) return { path: at };
+  const source = at.slice(1).trim();
+  const pattern = tryParse(source, new Minter());
+  if ('error' in pattern) return { refusal: `mẫu "${source}" không đọc được: ${pattern.error}` };
+
+  const hits = [...allPaths(root)]
+    .filter(([, node]) => same(node, pattern.expr))
+    .map(([path]) => path);
+  if (hits.length === 0) return { refusal: `không cây con nào khớp mẫu "${source}"` };
+  if (hits.length > 1) {
+    const where = hits.map((h) => `"${h || 'gốc'}"`).join(', ');
+    return { refusal: `${hits.length} cây con cùng khớp mẫu "${source}" (${where}) — hãy dùng đường dẫn` };
+  }
+  return { path: hits[0] as string };
+}
 
 export function readAlgebra(scene: Scene): AlgebraModel {
   const config = (scene.config ?? {}) as AlgebraConfig;
@@ -151,6 +189,18 @@ export function readAlgebra(scene: Scene): AlgebraModel {
     extraneous: [],
     refusal: null,
   };
+
+  // Trần số bước phải ép **ở đây**, không chỉ ở `maxItems` của TypeBox.
+  //
+  // Đo được ở lượt soát M55: `readAlgebra` chạy tuốt 14 bước và `checkBounds` im lặng
+  // hoàn toàn — thứ duy nhất chặn là ajv, tức chỉ chặn nội dung tác giả gõ. Mọi trần
+  // khác (`maxNodes`, `maxDegree`, `maxHeightCells`, `maxWidthCells`) đều ép ở tầng
+  // này; riêng cái này lệch, và lệch **âm thầm**. Sandbox, engine gọi thẳng, hay bất
+  // kỳ đường vào nào không qua ajv đều đi vòng qua nó.
+  const stepCount = (config.steps ?? []).length;
+  if (stepCount > ALGEBRA_LIMITS.maxSteps) {
+    return { ...empty, refusal: `${stepCount} bước, quá trần ${ALGEBRA_LIMITS.maxSteps}` };
+  }
 
   const parsed = tryParse(config.start ?? '', m);
   if ('error' in parsed) return { ...empty, refusal: `không đọc được biểu thức: ${parsed.error}` };
@@ -189,9 +239,17 @@ export function readAlgebra(scene: Scene): AlgebraModel {
     const rule = ruleById(step.rule);
     if (rule === null) return { ...empty, rows, refusal: `không có luật tên "${step.rule}"` };
 
-    const target = nodeAt(current, step.at);
+    // Giải `at` **trước** khi đi tìm nút: nó có thể là một mẫu nội dung (`"@..."`), và
+    // `nodeAt` thì chỉ hiểu đường dẫn theo vị trí.
+    const resolved = resolveAt(current, step.at);
+    if ('refusal' in resolved) {
+      return { ...empty, rows, refusal: `bước ${i + 1} (${rule.label}): ${resolved.refusal}` };
+    }
+    const at = resolved.path;
+
+    const target = nodeAt(current, at);
     if (target === null) {
-      return { ...empty, rows, refusal: `đường dẫn "${step.at}" không trỏ vào nút nào` };
+      return { ...empty, rows, refusal: `đường dẫn "${at}" không trỏ vào nút nào` };
     }
 
     const before = idsOfExpr(current);
@@ -200,12 +258,12 @@ export function readAlgebra(scene: Scene): AlgebraModel {
       return {
         ...empty,
         rows,
-        refusal: `bước ${i + 1} (${rule.label} tại "${step.at || 'gốc'}"): ${outcome.refusal}`,
+        refusal: `bước ${i + 1} (${rule.label} tại "${at || 'gốc'}"): ${outcome.refusal}`,
       };
     }
 
-    const spliced = replaceAt(current, step.at, outcome.after);
-    if (spliced === null) return { ...empty, rows, refusal: `không thay được cây con tại "${step.at}"` };
+    const spliced = replaceAt(current, at, outcome.after);
+    if (spliced === null) return { ...empty, rows, refusal: `không thay được cây con tại "${at}"` };
     // Ghép xong phải chuẩn hoá lại: luật trả về `add` mà chỗ thay vào nằm trong `add`
     // thì sinh ra `add` lồng `add`, và từ đó mọi đường dẫn của bước sau trỏ lệch.
     const next = normalize(spliced);
@@ -303,7 +361,9 @@ export function readAlgebra(scene: Scene): AlgebraModel {
       note: step.note ?? null,
       trace,
       born,
-      at: step.at,
+      // Đường dẫn **đã giải**, không phải chuỗi tác giả gõ: `layout` và `choreography`
+      // đưa nó thẳng vào `nodeAt` để tìm cây con vừa đổi, mà `nodeAt` không hiểu `"@..."`.
+      at,
       roles: outcome.roles ?? [],
     });
     current = next;

@@ -530,7 +530,20 @@ const rootPow: Rule = {
   },
 };
 
-/** Trục căn thức ở mẫu: $\dfrac{a}{\sqrt b} = \dfrac{a\sqrt b}{b}$. */
+/**
+ * Trục căn thức ở mẫu: $\dfrac{a}{\sqrt[n]{b}} = \dfrac{a\sqrt[n]{b^{\,n-1}}}{b}$.
+ *
+ * Bậc hai là ca quen thuộc và là ca duy nhất bản đầu làm được (*"mới trục được căn bậc
+ * hai"*), nhưng công thức chẳng qua là cùng một ý ở mọi bậc: nhân cho đủ $n$ bản của
+ * $\sqrt[n]b$ thì dấu căn tan. $\dfrac1{\sqrt[3]2} \to \dfrac{\sqrt[3]4}{2}$.
+ *
+ * Hai nhánh dựng cây tách riêng **cố ý**: nhánh bậc hai giữ nguyên từng chữ của bản cũ,
+ * kể cả thứ tự cấp danh tính, nên kho không đổi một nét. Gộp lại thì đẹp hơn mà đánh đổi
+ * bằng việc phải soát lại mọi golden — không đáng.
+ *
+ * Mẫu **nhị thức** chứa căn ($\sqrt[3]a - \sqrt[3]b$) không đi đường này: nó cần hằng
+ * đẳng thức $x^3-y^3$, tức một nhân tử liên hợp ba hạng tử. Từ chối có lời thay vì im.
+ */
 const rationalize: Rule = {
   id: 'rationalize',
   label: 'trục căn thức ở mẫu',
@@ -543,16 +556,28 @@ const rationalize: Rule = {
         : den.k === 'mul'
           ? (den.args.find((a) => a.k === 'root') as (Expr & { k: 'root' }) | undefined)
           : undefined;
-    if (r === undefined || r.k !== 'root') return no('mẫu không chứa căn');
-    if (r.index !== 2) return no('mới trục được căn bậc hai');
+    if (r === undefined || r.k !== 'root') {
+      if (den.k === 'add' && den.args.some((a) => a.k === 'root')) {
+        return no('mẫu là tổng chứa căn — dùng `multiply_by_conjugate`');
+      }
+      return no('mẫu không chứa căn');
+    }
 
-    const { copy } = freshCopy(m, r);
     const others = den.k === 'mul' ? den.args.filter((a) => a.id !== r.id) : [];
     const newDen = mul(m, [...others, r.arg]);
-    return {
-      after: div(m, mul(m, [node.num, copy]), newDen),
-      condition: definitelyNonZero(r.arg) ? undefined : conditionText('mẫu'),
-    };
+    const condition = definitelyNonZero(r.arg) ? undefined : conditionText('mẫu');
+
+    if (r.index === 2) {
+      const { copy } = freshCopy(m, r);
+      return { after: div(m, mul(m, [node.num, copy]), newDen), condition };
+    }
+
+    // Bậc $n$: nhân cho $\sqrt[n]{b^{\,n-1}}$, vì $\sqrt[n]b \cdot \sqrt[n]{b^{n-1}}
+    // = \sqrt[n]{b^n} = b$. Ruột phải là **bản sao**: nó xuất hiện thêm một lần trên
+    // hình, và dùng lại chính nút cũ thì một nút có hai chỗ đứng (bài học M47).
+    const { copy: arg } = freshCopy(m, r.arg);
+    const multiplier = root(m, r.index, pow(m, arg, r.index - 1));
+    return { after: div(m, mul(m, [node.num, multiplier]), newDen), condition };
   },
 };
 
@@ -702,60 +727,88 @@ const factorCubes: Rule = {
   },
 };
 
+/** Ước dương của $|n|$, tăng dần. `0` không có ước nào hữu hạn nên trả rỗng. */
+function positiveDivisors(n: number): number[] {
+  const a = Math.abs(n);
+  if (a === 0) return [];
+  const out: number[] = [];
+  for (let d = 1; d <= a; d += 1) if (a % d === 0) out.push(d);
+  return out;
+}
+
+/** Mọi ước của $n$, âm trước dương, tăng dần: $6 \mapsto [-6,-3,-2,-1,1,2,3,6]$. */
+const allDivisors = (n: number): number[] => {
+  const pos = positiveDivisors(n);
+  return [...pos.map((d) => -d).reverse(), ...pos];
+};
+
 /**
- * $x^2 + bx + c = (x+p)(x+q)$ với $p+q=b$, $pq=c$ — "tách hạng tử" ở dạng gọn nhất.
+ * Một nhân tử bậc nhất $px + q$ quanh một biến **đã cấp danh tính sẵn**.
  *
- * Chỉ tìm nghiệm **nguyên**: engine không hứa phân tích được mọi tam thức, và một
- * kết quả chứa căn ở đây thì nên đi qua công thức nghiệm chứ không qua luật này.
+ * Nhận `x` từ ngoài chứ không tự dựng, để phía gọi quyết định thứ tự cấp id. Nghe như
+ * chi tiết vụn, nhưng `data-el` trong SVG *là* `TermId`, nên đổi thứ tự cấp là đổi
+ * golden — mà ở đây hình không đổi một nét, nên diff ấy chỉ là nhiễu.
+ *
+ * Hệ số $1$ không dựng nút: $1x$ là thứ không ai viết tay, và giữ nguyên dạng cũ cho
+ * nhánh $a=1$ nghĩa là cả kho không phải soát lại.
+ */
+const linearFactor = (m: Minter, p: number, x: Expr, q: number): Expr =>
+  add(m, [p === 1 ? x : mul(m, [int(m, p), x]), int(m, q)]);
+
+/**
+ * $ax^2 + bx + c = (p_1x + q_1)(p_2x + q_2)$ — "tách hạng tử".
+ *
+ * Chỉ tìm nghiệm **hữu tỉ**, và chỉ nhận kết quả **hệ số nguyên**: engine không hứa
+ * phân tích được mọi tam thức, và một kết quả chứa căn ở đây thì nên đi qua công thức
+ * nghiệm chứ không qua luật này.
+ *
+ * Bản trước từ chối thẳng khi $a \ne 1$ (*"mới phân tích được tam thức có hệ số dẫn đầu
+ * bằng 1"*), tức bó tay ở $2x^2+7x+3$ — nội dung lớp 9. Cách tìm nay là vét cạn xác
+ * định trên ước của $a$ và của $c$: $p_1 \mid a$, $q_1 \mid c$, rồi kiểm hạng tử giữa.
+ * Không phải tìm kiếm mò, và không dùng số thực — mọi phép so đều trên số nguyên, nên
+ * không có sai số nào để lọt.
+ *
+ * Thứ tự duyệt cố định (ước tăng dần, âm trước dương) nên với $a = 1$ nó cho ra **đúng
+ * cặp cũ**: hình của kho không đổi một nét.
  */
 const factorQuadratic: Rule = {
   id: 'factor_quadratic',
   label: 'phân tích tam thức',
   run(m, node) {
     if (node.k !== 'add') return no('cần một tổng');
-    let variableName: string | null = null;
-    let A = 0;
-    let B = 0;
-    let C = 0;
+    const poly = univariate(node);
+    if (typeof poly === 'string') return no(poly);
+    const { name, coefs } = poly;
 
-    for (const t of node.args) {
-      const { coef, rest } = splitCoefficient(m, t);
-      if (rest === null) {
-        C += coef;
-        continue;
-      }
-      if (rest.k === 'var') {
-        variableName ??= rest.name;
-        if (rest.name !== variableName) return no('có nhiều hơn một biến');
-        B += coef;
-        continue;
-      }
-      if (rest.k === 'pow' && intExp(rest) === 2 && rest.base.k === 'var') {
-        variableName ??= rest.base.name;
-        if (rest.base.name !== variableName) return no('có nhiều hơn một biến');
-        A += coef;
-        continue;
-      }
-      return no('không phải tam thức bậc hai một biến');
+    const top = Math.max(...[...coefs.keys()]);
+    if (top !== 2) return no('không phải tam thức bậc hai một biến');
+    const a = coefs.get(2) ?? 0;
+    const b = coefs.get(1) ?? 0;
+    const c = coefs.get(0) ?? 0;
+    if (a === 0) return no('hệ số bậc hai bằng 0');
+
+    // $c = 0$: không có ước nào của $0$ để vét, mà lời giải thì hiển nhiên —
+    // $ax^2+bx = x(ax+b)$. Tách riêng thay vì để vòng lặp im lặng không tìm thấy gì.
+    if (c === 0) {
+      const x1 = variable(m, name);
+      const x2 = variable(m, name);
+      return { after: mul(m, [x1, linearFactor(m, a, x2, b)]) };
     }
 
-    if (A !== 1) return no('mới phân tích được tam thức có hệ số dẫn đầu bằng 1');
-    if (variableName === null) return no('không có biến nào');
-
-    for (let p = -Math.abs(C) - Math.abs(B) - 1; p <= Math.abs(C) + Math.abs(B) + 1; p += 1) {
-      const q = B - p;
-      if (p * q !== C) continue;
-      if (p > q) continue; // một cặp, không hai lần
-      const v = variable(m, variableName);
-      const w = variable(m, variableName);
-      return {
-        after: mul(m, [
-          add(m, [v, int(m, p)]),
-          add(m, [w, int(m, q)]),
-        ]),
-      };
+    for (const p1 of positiveDivisors(a)) {
+      const p2 = a / p1;
+      for (const q1 of allDivisors(c)) {
+        const q2 = c / q1;
+        if (!Number.isInteger(q2)) continue;
+        if (p1 * q2 + p2 * q1 !== b) continue;
+        // Cấp danh tính cho **cả hai** biến trước rồi mới dựng — đúng thứ tự bản cũ,
+        // nên nhánh $a = 1$ cho ra `TermId` y hệt và golden của kho không nhúc nhích.
+        const x1 = variable(m, name);
+        const x2 = variable(m, name);
+        return { after: mul(m, [linearFactor(m, p1, x1, q1), linearFactor(m, p2, x2, q2)]) };
+      }
     }
-    return no('không có cặp số nguyên nào thoả');
+    return no('không có cặp số nguyên nào thoả — hãy dùng công thức nghiệm');
   },
 };
 

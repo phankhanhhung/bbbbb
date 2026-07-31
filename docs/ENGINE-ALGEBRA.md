@@ -513,18 +513,23 @@ Kèm `reaches:` ⇒ bài khai được `kind: "both"`.
 ```ts
 export const ALGEBRA_LIMITS = {
   maxNodes: 120,        // mỗi biểu thức
-  maxDepth: 6,          // độ sâu cây; phân số lồng phân số ăn 2 tầng
+  maxDepth: 24,         // **chỉ** chặn đệ quy bệnh lý, không phải trần đọc được
   maxSteps: 12,         // số dòng, khớp maxRows của derivation
   maxVars: 6,
-  maxAbsInt: 9999,
   maxDegree: 64,        // bậc tổng, cận cho Schwartz–Zippel ở §6
   maxSourceLength: 200,
+  maxHeightCells: 3,    // đo bằng chính bộ sắp chữ sẽ vẽ nó
+  maxWidthCells: 13,
 } as const;
 ```
 
-`maxDepth: 6` không phải để tiết kiệm bộ nhớ mà vì **printer**: mỗi tầng phân số
-lồng nhau làm cỡ chữ giảm và chiều cao dòng tăng, và quá sáu tầng thì không đọc được
-trên iPad — thiết bị đích của NFR-P1..P3.
+**Trần đọc được đo bằng kích thước vẽ ra, không bằng độ sâu cây** (M49, §25.1). Bản đầu
+khai `maxDepth: 6` và nói nó đứng thay cho chiều cao dòng; nó không đứng thay được, vì
+`add` tốn một tầng và tốn $0$ chiều cao còn căn lồng gần như miễn phí cả hai chiều.
+
+`maxSteps` được ép ở **`model.ts`** từ M55, không chỉ ở `maxItems` của TypeBox — trước
+đó `readAlgebra` chạy tuốt 14 bước và `checkBounds` im lặng, nên mọi đường vào không qua
+ajv đều đi vòng qua nó. `maxWidthCells` cũng đo lại ở M55; xem §31.
 
 ---
 
@@ -568,7 +573,15 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
 - **Căn bậc ký hiệu** ($\sqrt[n]{x}$ với $n$ là biến). `root.index` vẫn là số nguyên;
   ai cần thì viết $x^{1/n}$, nay đã có.
 - **Hệ phương trình.** Cần một nút chứa **nhiều** quan hệ; chưa có. Đây là mảng lớn
-  nhất còn thiếu của chương trình phổ thông.
+  nhất còn thiếu của chương trình phổ thông. (Kế hoạch: M59.)
+- **Hàm tổ hợp** $n!$, $C_n^k$, $A_n^k$ — chưa có, và với một nền tảng nhắm Olympiad
+  Combinatorics thì đây là lỗ **to hơn** $\log$: chúng là ký hiệu nền của cả môn.
+  (Kế hoạch: M56.)
+- **Ký hiệu $\Sigma$, $\Pi$.** Cần một construct **ràng buộc biến** — thứ engine chưa
+  từng có. (Kế hoạch: M57.)
+- **Tập nghiệm / khoảng.** $x^2-3x+2>0$ phân tích ra $(x-2)(x-1)>0$ rồi **dừng**: không
+  có nút nào để đặt đáp số. Thêm luật không cứu được, phải thêm chỗ cho kết quả rơi vào.
+  (Kế hoạch: M60.)
 - ~~**Công thức nghiệm bậc hai**~~ — **đã làm** (M47e), và **không** cần nút "hoặc":
   xem §24.
 - **Bộ giải / gợi ý.** §4.
@@ -1401,3 +1414,102 @@ trả chuỗi khi từ chối để phía gọi tự gói vào ngữ cảnh củ
 ### 30.4 Còn lại gì
 
 `associate` **sẽ không có** (§26.1). Ngoài nó, tập luật 42 phủ hết danh sách rà soát.
+
+---
+
+## 31. Dọn nhà trước khi mở ngữ pháp (M55)
+
+Ba lượt review — của tao, của người ngoài, và lượt đối chiếu bằng code — hội tụ vào một
+câu: engine khoẻ ở việc viết lại biểu thức cục bộ, bất lực ở chỗ **ngữ pháp không có nút
+để biểu diễn**. Kế hoạch mở ngữ pháp (hàm tổ hợp, $\Sigma$, hệ phương trình, hàm siêu
+việt) nằm ở M56–M61. M55 là lượt dọn trước, và nó đóng đúng những lỗ mà lượt soát bằng
+probe **đo được** chứ không đoán ra.
+
+### 31.1 Đường dẫn theo vị trí **dịch chỗ**, và chỗ chữa nằm ở đầu kia
+
+Đo được: $|x-1| + |x-2| = 3$, chạy `abs_case` tại `L.0`, thì dấu $|\cdot|$ thứ hai
+**nhảy từ `L.1` sang `L.2`**. Vì luật trả về `x + (-1)`, một `add`, và nó bị làm phẳng
+vào tổng cha — mọi chỉ số sau nó lùi một nấc.
+
+Bất biến làm phẳng **không bỏ được**: bỏ nó là mở lại lỗi M47 #8 (`add` lồng `add` ⇒ mọi
+đường dẫn của bước sau trỏ lệch). Nên chỗ chữa ở đầu kia — cho `at` trỏ bằng **nội dung**:
+
+```json
+{ "rule": "abs_case", "at": "@abs(x - 2)", "arg": "+" }
+```
+
+Tiền tố `@` nghĩa là "cây con nào khớp mẫu này". Từ chối khi không khớp chỗ nào, và khi
+khớp **nhiều hơn một** chỗ thì nói ra *có mấy chỗ và ở đâu*, để tác giả chuyển sang đường
+dẫn được ngay. Cả họ bài từ hai dấu trị tuyệt đối trở lên nay soạn được.
+
+**Không** cho trỏ bằng `TermId`. Id do `Minter` cấp theo thứ tự dựng cây; tác giả không
+đoán được nó, nên id-trong-`at` là một đường cụt đội lốt tính năng.
+
+Một chi tiết dễ bỏ sót: `row.at` phải giữ đường dẫn **đã giải**, không giữ chuỗi tác giả
+gõ — `layout` và `choreography` đưa thẳng nó vào `nodeAt`, mà `nodeAt` không hiểu `@`.
+
+### 31.2 Một trần được khai mà **không được ép**
+
+`readAlgebra` chạy đủ 14 bước và `checkBounds` trả về **không một issue nào**. Thứ duy
+nhất chặn `maxSteps` là `maxItems` của TypeBox, tức chỉ chặn nội dung đi qua ajv.
+
+Mọi trần khác — `maxNodes`, `maxDegree`, `maxHeightCells`, `maxWidthCells` — đều ép ở
+`model.ts`. Riêng cái này lệch, và lệch **âm thầm**: không có triệu chứng nào cho tới lúc
+một đường vào khác xuất hiện. Đây là lớp lỗi khó thấy nhất của kho: một luật viết ra rồi
+để đó, y như quy ước G-10 trước khi `render/scale.ts` thi hành nó.
+
+### 31.3 Trần bề ngang là một **số chọn**, không phải một số đo
+
+`maxWidthCells: 12` đặt ở M49 theo cảm tính. Hậu quả đo được:
+
+| biểu thức sau khi khai triển | rộng |
+|---|---:|
+| $(a+b+c)^2$ | 6,16 ô |
+| $(a+b)^6$ | 9,88 ô |
+| $(a+b)^7$ | 11,75 ô — lọt |
+| **$(a+b+c)^3$** | **12,55 ô — bị từ chối** |
+
+Một hằng đẳng thức sách giáo khoa bị chặn còn một thứ hiếm hơn nhiều thì qua. Thứ tự ưu
+tiên ngược với thực tế dạy học.
+
+Cách sửa **không** phải nâng lên 13 cho vừa một bài, mà là hỏi trần này thật ra canh cái
+gì. Câu trả lời nằm ở `render/scale.ts`: Player **co** hình cho vừa pane và không bao giờ
+giãn, nên một dòng quá rộng không tràn ra ngoài — nó kéo *mọi* step của cùng bài nhỏ lại,
+vì hệ số co dùng chung. Tức trần này canh **số pixel cuối cùng của chữ**, và đo được:
+
+| rộng (ô) | ĐT 360px | ĐT 390px | tablet | desktop |
+|---:|---:|---:|---:|---:|
+| 12 | 13,7px | 14,9px | 22px | 22px |
+| **13** | **12,6px** | 13,8px | 22px | 22px |
+| 14 | 11,7px | 12,8px | 22px | 22px |
+
+$13$ là bề rộng cuối cùng còn giữ chữ trên $12$px ở màn hẹp nhất. Nó cho qua
+$(a+b+c)^3$ và $a^9-b^9$ đã phân tích ($12{,}32$), vẫn chặn $(a+b)^8$ ($13{,}62$). Cả kho
+đo tối đa $7{,}06$ ô, trung vị $2{,}30$ — trần này không chạm nội dung thật, nó là hàng
+rào cho thứ **luật** có thể sinh ra.
+
+Kèm theo là một chú thích sai bị gỡ: `model.ts` nói *"công thức quá rộng **tràn** chứ
+không co lại"* — ngược hẳn với `scale.ts`. Một chú thích sai ở đúng chỗ biện minh cho một
+con số thì tệ hơn không có chú thích.
+
+### 31.4 Hai lỗ mà review ngoài bắt trúng
+
+**`factor_quadratic` chỉ nhận hệ số dẫn đầu $=1$.** $2x^2+7x+3$ bị từ chối — nội dung lớp
+9. Cách tìm mới là vét cạn **xác định** trên ước của $a$ và của $c$: $p_1 \mid a$,
+$q_1 \mid c$, rồi kiểm hạng tử giữa. Mọi phép so trên số nguyên, không có sai số nào để
+lọt. Thứ tự duyệt cố định nên nhánh $a=1$ cho ra **đúng cặp cũ** — và ở đây có một bài
+học nhỏ: bản đầu dựng cây theo thứ tự khác, hình **giống hệt từng toạ độ** mà hai golden
+vẫn đổi, vì `data-el` *là* `TermId`. Cấp danh tính cho cả hai biến trước rồi mới dựng thì
+diff về không.
+
+**`rationalize` chỉ trục được căn bậc hai.** $\frac{1}{\sqrt[3]2}$ bị từ chối, dù công
+thức là cùng một ý ở mọi bậc: $\frac{a}{\sqrt[n]b} = \frac{a\sqrt[n]{b^{\,n-1}}}{b}$. Hai
+nhánh dựng cây tách riêng **cố ý** — nhánh bậc hai giữ nguyên từng chữ của bản cũ, kể cả
+thứ tự cấp danh tính. Mẫu **nhị thức** chứa căn thì từ chối có lời và chỉ sang
+`multiply_by_conjugate`, thay vì im lặng rơi vào "mẫu không chứa căn".
+
+### 31.5 Chốt canh, và phép thử răng
+
+14 chốt canh mới. Rồi bẻ từng chỗ đã sửa và xem test có đỏ không — cả 7 chỗ đều bị bắt.
+Đây không phải nghi thức: M48 đã dạy rằng một test không với tới được nhánh nó nhắm là
+một test xanh vô nghĩa, và cách duy nhất biết được là **thử làm hỏng**.

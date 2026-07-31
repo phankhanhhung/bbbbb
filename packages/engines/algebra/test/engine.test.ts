@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyChoreography, createContext, createRenderer } from '@combviz/render';
+import { applyChoreography, createContext, createRenderer, CELL_PX } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
 import type { Scene } from '@combviz/schema';
 import type { SceneBox, SvgNode } from '@combviz/render';
@@ -31,6 +31,7 @@ import {
   toBox,
   unparse,
   FONT,
+  ALGEBRA_LIMITS,
   type AlgebraStep,
 } from '../src/index.js';
 
@@ -1396,5 +1397,151 @@ describe('hình', () => {
 
     expect(layout(readAlgebra(off)).lines.every((l) => l.label === null)).toBe(true);
     expect(renderer.toSvg(off, ctx)).not.toContain('khai triển');
+  });
+});
+
+describe('M55 — dọn nhà', () => {
+  const run = (start: string, steps: AlgebraStep[]) => readAlgebra(scene(start, steps));
+  const last = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return unparse(m.rows.at(-1)!.expr);
+  };
+
+  describe('`at` trỏ bằng **nội dung**', () => {
+    // Cái bẫy: `abs_case` trả về một `add`, nó bị làm phẳng vào tổng cha, và mọi chỉ
+    // số sau nó lùi một nấc. Dấu $|\cdot|$ thứ hai đứng ở `L.1` trước bước, `L.2` sau.
+    it('đường dẫn theo vị trí **dịch chỗ** — đó là lý do `@` tồn tại', () => {
+      const shifted = run('abs(x - 1) + abs(x - 2) = 3', [
+        { rule: 'abs_case', at: 'L.0', arg: '+' },
+        { rule: 'abs_case', at: 'L.1', arg: '+' },
+      ]);
+      expect(shifted.refusal).toContain('cần một dấu giá trị tuyệt đối');
+
+      // Cùng bài, khai bằng nội dung: chạy thẳng, không phải đoán chỉ số nào cả.
+      expect(
+        last('abs(x - 1) + abs(x - 2) = 3', [
+          { rule: 'abs_case', at: '@abs(x - 1)', arg: '+' },
+          { rule: 'abs_case', at: '@abs(x - 2)', arg: '+' },
+        ]),
+      ).toBe('((x + (-1) + x + (-2)) = 3)');
+    });
+
+    it('không khớp, khớp nhiều chỗ, và mẫu hỏng — ba lời từ chối khác nhau', () => {
+      expect(run('x + 1 = 2', [{ rule: 'abs_case', at: '@abs(y)', arg: '+' }]).refusal).toContain(
+        'không cây con nào khớp',
+      );
+
+      const many = run('abs(x) + abs(x) = 3', [{ rule: 'abs_case', at: '@abs(x)', arg: '+' }]);
+      expect(many.refusal).toContain('2 cây con cùng khớp');
+      // Nói **chỗ nào** khớp, để tác giả chuyển sang đường dẫn được ngay.
+      expect(many.refusal).toContain('"L.0"');
+
+      expect(run('x + 1 = 2', [{ rule: 'commute', at: '@((', arg: '0,1' }]).refusal).toContain(
+        'không đọc được',
+      );
+    });
+
+    it('`row.at` giữ đường dẫn **đã giải**, không giữ chuỗi tác giả gõ', () => {
+      // `layout` và `choreography` đưa thẳng nó vào `nodeAt`, mà `nodeAt` không hiểu `@`.
+      const m = run('abs(x - 1) + abs(x - 2) = 3', [
+        { rule: 'abs_case', at: '@abs(x - 2)', arg: '+' },
+      ]);
+      expect(m.rows.at(-1)!.at).toBe('L.1');
+      expect(nodeAt(m.rows[0]!.expr, m.rows.at(-1)!.at)).not.toBeNull();
+    });
+  });
+
+  it('`maxSteps` bị chặn ở **tầng model**, không chỉ ở ajv', () => {
+    const many = (n: number): AlgebraStep[] =>
+      Array.from({ length: n }, () => ({ rule: 'commute', at: '', arg: '0,1' }));
+
+    // Trước M55 chỗ này im lặng chạy đủ 13 bước: `maxItems` của TypeBox là hàng rào
+    // duy nhất, nên mọi đường vào không qua ajv đều đi vòng qua nó.
+    const over = run('a + b', many(ALGEBRA_LIMITS.maxSteps + 1));
+    expect(over.refusal).toContain(`quá trần ${ALGEBRA_LIMITS.maxSteps}`);
+    expect(run('a + b', many(ALGEBRA_LIMITS.maxSteps)).refusal).toBeNull();
+  });
+
+  describe('`factor_quadratic` hệ số dẫn đầu khác 1', () => {
+    const factor = (s: string): string => last(s, [{ rule: 'factor_quadratic', at: '' }]);
+
+    it('hệ số nguyên, không dùng số thực', () => {
+      expect(factor('2*x^2 + 7*x + 3')).toBe('((x + 3) * ((2 * x) + 1))');
+      expect(factor('3*x^2 - 5*x - 2')).toBe('((x + (-2)) * ((3 * x) + 1))');
+      expect(factor('6*x^2 + 11*x + 3')).toBe('(((2 * x) + 3) * ((3 * x) + 1))');
+      expect(factor('4*x^2 - 9')).toBe('(((2 * x) + (-3)) * ((2 * x) + 3))');
+      // Hệ số dẫn đầu **âm** cũng đi được, không phải đổi dấu trước.
+      expect(factor('-2*x^2 + 5*x - 3')).toBe('((x + (-1)) * (((-2) * x) + 3))');
+      // $c = 0$ có nhánh riêng: $0$ không có ước nào để vét.
+      expect(factor('2*x^2 + 3*x')).toBe('(x * ((2 * x) + 3))');
+    });
+
+    it('nhánh $a = 1$ cho ra **đúng cây cũ** — kho không phải soát lại', () => {
+      expect(factor('x^2 + 5*x + 6')).toBe('((x + 2) * (x + 3))');
+      expect(factor('x^2 - x - 6')).toBe('((x + (-3)) * (x + 2))');
+      expect(factor('x^2 - 4')).toBe('((x + (-2)) * (x + 2))');
+    });
+
+    it('vô tỉ thì từ chối, và **chỉ đường** sang công thức nghiệm', () => {
+      const why = run('2*x^2 + 2*x + 3', [{ rule: 'factor_quadratic', at: '' }]).refusal as string;
+      expect(why).toContain('không có cặp số nguyên');
+      expect(why).toContain('công thức nghiệm');
+    });
+  });
+
+  describe('`rationalize` cho căn bậc $n$', () => {
+    const rat = (s: string): string => last(s, [{ rule: 'rationalize', at: '' }]);
+
+    it('bậc ba trở lên nhân cho $\\sqrt[n]{b^{n-1}}$', () => {
+      expect(rat('1/root(3, 2)')).toBe('((1 * root(3, (2)^(2))) / 2)');
+      expect(rat('5/root(4, x)')).toBe('((5 * root(4, (x)^(3))) / x)');
+      expect(rat('1/root(5, 2)')).toBe('((1 * root(5, (2)^(4))) / 2)');
+    });
+
+    it('bậc hai giữ nguyên từng chữ của bản cũ', () => {
+      expect(rat('1/sqrt(2)')).toBe('((1 * sqrt(2)) / 2)');
+      expect(rat('3/sqrt(x)')).toBe('((3 * sqrt(x)) / x)');
+    });
+
+    it('kết quả **đúng về giá trị** — không phải chỉ đúng hình dạng', () => {
+      // Chốt canh thật của luật này: bộ kiểm thực phải xác nhận, và nó có xác nhận
+      // được (chứ không rơi vào `unchecked`, thứ nghĩa là "không tìm được điểm nào").
+      for (const s of ['1/root(3, 2)', '5/root(4, x)', '1/root(5, 2)']) {
+        const m = run(s, [{ rule: 'rationalize', at: '' }]);
+        expect(m.unsound).toEqual([]);
+        expect(m.unchecked).toEqual([]);
+      }
+    });
+
+    it('mẫu là **tổng** chứa căn thì chỉ sang luật đúng', () => {
+      expect(run('1/(sqrt(2) + 1)', [{ rule: 'rationalize', at: '' }]).refusal).toContain(
+        'multiply_by_conjugate',
+      );
+    });
+  });
+
+  describe('trần bề ngang đo lại', () => {
+    it('$(a+b+c)^3$ **qua được** — hằng đẳng thức SGK không còn bị chặn', () => {
+      const m = run('(a + b + c)^3', [{ rule: 'multiply_out', at: '' }]);
+      expect(m.refusal).toBeNull();
+    });
+
+    it('trần vẫn còn răng, và lời từ chối nói **rộng bao nhiêu ô**', () => {
+      const why = run('(a + b)^8', [{ rule: 'multiply_out', at: '' }]).refusal as string;
+      expect(why).toContain('rộng');
+      expect(why).toContain(`quá ${ALGEBRA_LIMITS.maxWidthCells}`);
+    });
+
+    it('trần khớp với chỗ chữ tụt xuống dưới 12px trên màn hẹp nhất', () => {
+      // Con số $13$ không phải chọn cho vừa một bài: nó là bề rộng cuối cùng còn giữ
+      // chữ trên 12px ở điện thoại 360px, với luật co của `render/scale.ts`.
+      // Khẳng định lại phép tính ấy ở đây để nó không lặng lẽ hết đúng.
+      const pane = 360 - 32; // padding 1rem hai bên
+      const px = (w: number): number => FONT * (CELL_PX / ROW) * Math.min(1, pane / (CELL_PX * w));
+
+      expect(px(ALGEBRA_LIMITS.maxWidthCells)).toBeGreaterThan(12);
+      expect(px(ALGEBRA_LIMITS.maxWidthCells + 1)).toBeLessThan(12);
+    });
   });
 });
