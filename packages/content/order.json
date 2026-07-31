@@ -98,11 +98,10 @@
     "power-identities-degree-n",
     "distribute-and-group-in-colour",
     "identity-roles-in-colour",
-    "what-disappears-and-why"
+    "what-disappears-and-why",
+    "cubic-by-known-root"
   ],
   "newest": [
-    "distribute-and-group-in-colour",
-    "identity-roles-in-colour",
-    "what-disappears-and-why"
+    "cubic-by-known-root"
   ]
 }
