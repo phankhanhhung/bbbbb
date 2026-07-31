@@ -242,6 +242,7 @@
                 "anchor": "a1",
                 "at": 0,
                 "duration": 550,
+                "hold": true,
                 "id": "g0",
                 "kind": "show",
                 "label": {
@@ -255,6 +256,7 @@
                 "anchor": "a2",
                 "at": 650,
                 "duration": 550,
+                "hold": true,
                 "id": "g1",
                 "kind": "show",
                 "label": {
@@ -270,6 +272,7 @@
                 "anchor": "a3",
                 "at": 1300,
                 "duration": 550,
+                "hold": true,
                 "id": "g2",
                 "kind": "show",
                 "label": {
@@ -287,6 +290,7 @@
                 "anchor": "a4",
                 "at": 1950,
                 "duration": 550,
+                "hold": true,
                 "id": "g3",
                 "kind": "show",
                 "label": {

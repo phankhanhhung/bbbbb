@@ -229,6 +229,7 @@
                 "anchor": "b1",
                 "at": 0,
                 "duration": 700,
+                "hold": true,
                 "id": "d0",
                 "kind": "focus",
                 "label": {
@@ -242,6 +243,7 @@
                 "anchor": "b2",
                 "at": 800,
                 "duration": 700,
+                "hold": true,
                 "id": "d1",
                 "kind": "focus",
                 "label": {
@@ -255,6 +257,7 @@
                 "anchor": "b3",
                 "at": 1600,
                 "duration": 700,
+                "hold": true,
                 "id": "d2",
                 "kind": "focus",
                 "label": {

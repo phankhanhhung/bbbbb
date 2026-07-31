@@ -329,6 +329,27 @@ nhãn, nên nó không đòi sửa gì.
 vòng debug vì `hold` nằm trong JSON, nằm trong schema, mà bundle thì không có. Nay
 luôn build lại: bộ kiểm chạy tay mà khác bộ kiểm CI thì nó không phải bộ kiểm.
 
+### M48b — Rà `hold` cho cả kho · [E] — **xong**
+
+17 timeline trong 9 bài, **36/87 pha** có mốc dừng. Không rải đều, và chỗ *không* đặt
+mới là chỗ phải nghĩ:
+
+- **Chia dọc** (`polynomial-division-longform`, `polynomial-long-division`): một nhịp
+  của thuật toán gồm **hai** pha — chia–nhân ngược, rồi trừ–hạ. Dừng giữa hai pha ấy
+  là cắt ngang một nhịp, nên chỉ dừng sau pha thứ hai. 2/5 mốc, không phải 5/5.
+- **`tree-leaf-stripping`**: bảy pha lặp đúng một thao tác, cùng một anchor, mà
+  narrative chỉ có **một** câu. Dừng bảy lần là bắt bấm chứ không phải cho hiểu — nên
+  dừng **một** lần, sau nhịp bóc đầu tiên, rồi để nhịp tự chạy.
+- **Đếm và dựng** (`sieve-primes-100`, `sum-odd-numbers-gnomon`,
+  `wheel-faces-two-colours`, `telescoping-sum-fractions`): mỗi pha là **một** thứ phải
+  đếm hoặc một mệnh đề riêng trong narrative — narrative của gnomon còn gọi tên từng
+  lớp bằng anchor riêng. Dừng ở mọi pha trừ pha cuối.
+- **Timeline 1 pha**: không có nhịp nào để tạo.
+
+Hai luật giữ chỗ này: `lint/timeline-no-hold` (từ **bốn** pha trở lên mà không mốc
+dừng nào thì kêu — hai ba pha ngắn thì mạch liền vẫn đọc được) và `lint/hold-at-end`
+(`hold` ở pha cuối không làm gì, phát lại đằng nào cũng dừng ở đó).
+
 ### M47e — Đặt ẩn phụ và công thức nghiệm · [E] — **xong**
 
 Chính chủ đưa một dòng: $(x+1)(x+2)(x+3)(x+4)-8=0$. Thử bằng engine trước khi đoán,

@@ -110,6 +110,38 @@ describe('AUT-10 — lint biên tập', () => {
     expect(codes(problem)).not.toContain('lint/label-not-plain');
   });
 
+  it('CHO-11 — timeline dài mà không có mốc dừng nào thì kêu', () => {
+    // Bốn thay đổi liên tiếp không một chỗ nghỉ là đúng thứ làm timeline "chạy vù vù
+    // khó hiểu". Ngưỡng ở **bốn**: hai ba pha ngắn thì mạch liền vẫn đọc được.
+    const problem = loadExample();
+    const step = problem.solutions[0]!.steps[0]!;
+    const phase = (id: string, at: number): NonNullable<Step['choreography']>['phases'][number] =>
+      ({ id, kind: 'show', targets: ['cell-0-0'], at, duration: 400, anchor: 'a1', label: { vi: id } }) as never;
+
+    const three = [phase('p1', 0), phase('p2', 500), phase('p3', 1000)];
+    step.choreography = { phases: three } as Step['choreography'];
+    expect(codes(problem)).not.toContain('lint/timeline-no-hold');
+
+    three.push(phase('p4', 1500));
+    expect(codes(problem)).toContain('lint/timeline-no-hold');
+
+    three[1]!.hold = true;
+    expect(codes(problem)).not.toContain('lint/timeline-no-hold');
+  });
+
+  it('CHO-11 — `hold` ở pha cuối là vô ích, và lint nói ra', () => {
+    const problem = loadExample();
+    const step = problem.solutions[0]!.steps[0]!;
+    step.choreography = {
+      phases: [
+        { id: 'p1', kind: 'show', targets: ['cell-0-0'], at: 0, duration: 400, anchor: 'a1', label: { vi: 'một' } },
+        { id: 'p2', kind: 'show', targets: ['cell-0-1'], at: 500, duration: 400, anchor: 'a1', label: { vi: 'hai' }, hold: true },
+      ],
+    } as Step['choreography'];
+
+    expect(codes(problem)).toContain('lint/hold-at-end');
+  });
+
   it('bắt LaTeX trong nhãn pha, không chỉ trong case_label', () => {
     const problem = loadExample();
     const step = problem.solutions[0]!.steps[0]!;
