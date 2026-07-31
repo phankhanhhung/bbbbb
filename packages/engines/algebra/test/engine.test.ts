@@ -59,6 +59,10 @@ const ARGS: Readonly<Record<string, ArgMaker>> = {
   pow_both_sides: () => '2',
   abs_case: () => '+',
   evaluate_at: () => 'x := 3',
+  // Chia cho **chính biến** ($a = 0$): ca đơn giản nhất mà bộ sinh có sẵn, và nó áp
+  // được bất cứ khi nào hạng tử tự do bằng 0. Ghi ra thay vì để rơi vào nhánh mặc
+  // định — trúng tình cờ thì hôm nào đó thôi trúng mà không ai biết.
+  divide_by_linear_factor: () => 'y',
   // Phân hoạch phải **vừa với nút gặp phải**: `add` làm phẳng nên số hạng tử thay đổi
   // theo từng biểu thức, và một `arg` cố định `"0,1|2,3"` chỉ áp được cho tổng đúng
   // bốn hạng tử — tức là hầu như không bao giờ.
@@ -939,6 +943,83 @@ describe('nghiệm ngoại lai và các bước có điều kiện', () => {
     expect(run('y + 1', [{ rule: 'evaluate_at', at: '', arg: 'x := 3' }]).refusal).toContain(
       'không thấy biến',
     );
+  });
+});
+
+describe('chia cho nhân tử tuyến tính (M54)', () => {
+  const run = (start: string, steps: AlgebraStep[]): ReturnType<typeof readAlgebra> =>
+    readAlgebra(scene(start, steps));
+
+  it('chia đúng, và thương do **engine tính** nên nó không thể lệch', () => {
+    const m = run('x^3 - 3*x + 2', [
+      { rule: 'divide_by_linear_factor', at: '', arg: 'x - 1' },
+    ]);
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    expect(same(m.rows[1]!.expr, parse('(x - 1)*(x^2 + x - 2)', new Minter()))).toBe(true);
+
+    // Và nối tiếp được tới hết: nghiệm kép $x=1$ hiện ra.
+    const full = run('x^3 - 3*x + 2', [
+      { rule: 'divide_by_linear_factor', at: '', arg: 'x - 1' },
+      { rule: 'factor_quadratic', at: '1' },
+    ]);
+    expect(full.unsound).toEqual([]);
+    expect(sameValue(full.rows.at(-1)!.expr, parse('x^3 - 3*x + 2', new Minter())).ok).toBe(true);
+  });
+
+  it('**dư ≠ 0 thì từ chối, và nói số dư** — lời từ chối chính là câu trả lời', () => {
+    // "$(x-3)$ có phải nhân tử không" là *câu hỏi của bài*, không phải lỗi kỹ thuật.
+    const refusal = run('x^3 - 3*x + 2', [
+      { rule: 'divide_by_linear_factor', at: '', arg: 'x - 3' },
+    ]).refusal as string;
+
+    expect(refusal).toContain('dư 20');
+    expect(refusal).toContain('không phải nhân tử');
+  });
+
+  it('ước số phải bậc nhất và đơn khởi — nói rõ hỏng ở đâu', () => {
+    const why = (arg: string): string =>
+      run('x^3 - 3*x + 2', [{ rule: 'divide_by_linear_factor', at: '', arg }]).refusal as string;
+
+    expect(why('x^2 - 1')).toContain('bậc nhất');
+    expect(why('2*x - 2')).toContain('hệ số dẫn đầu');
+    expect(why('y - 1')).toContain('cùng biến');
+  });
+
+  it('hệ số hữu tỉ bị chặn **từ trước** — và chốt canh nói đúng chỗ nó bị chặn', () => {
+    // Luật có một cửa "hệ số phải nguyên", nhưng cửa ấy không với tới được: `flatten`
+    // đã từ chối cả `rat` lẫn `div` từ trước. Khẳng định ở đây là **hành vi quan sát
+    // được**, không phải nhánh code tao mong nó chạy — một test không với tới được
+    // nhánh nó nhắm là một test xanh vô nghĩa (bài học M48).
+    expect(
+      run('x^2/3 + x', [{ rule: 'divide_by_linear_factor', at: '', arg: 'x - 1' }]).refusal,
+    ).toContain('không phải đa thức');
+
+    // Kể cả khi hệ số hữu tỉ do chính engine sinh ra ở bước trước.
+    expect(
+      run('2*x^2 + 3*x + 1', [
+        { rule: 'complete_square', at: '' },
+        { rule: 'divide_by_linear_factor', at: '', arg: 'x - 1' },
+      ]).refusal,
+    ).toContain('không phải đa thức');
+  });
+
+  it('mạch chuyên toán liền một hơi: định lý dư → tách nhân tử → bậc hai', () => {
+    // Đây là mạch mà bản rà soát chỉ ra là **gãy ở giữa**, và nó gãy thật: `longdiv`
+    // là một scene riêng nên không giảm bậc được *bên trong* một chuỗi đại số.
+    const check = run('x^3 - 3*x + 2', [
+      { rule: 'evaluate_at', at: '', arg: 'x := 1' },
+      { rule: 'eval_int', at: '' },
+    ]);
+    expect(same(check.rows.at(-1)!.expr, parse('0', new Minter()))).toBe(true);
+
+    const solve = run('x^3 - 3*x + 2 = 0', [
+      { rule: 'divide_by_linear_factor', at: 'L', arg: 'x - 1' },
+      { rule: 'factor_quadratic', at: 'L.1' },
+    ]);
+    expect(solve.refusal).toBeNull();
+    expect(solve.unsound).toEqual([]);
+    expect(sameSolutionSet(solve.rows[0]!.expr, solve.rows.at(-1)!.expr, null, 7).ok).toBe(true);
   });
 });
 

@@ -555,6 +555,8 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
   tầng suy luận về miền — không đáng". Nửa đầu đúng, nửa sau sai: $x^n$ có mặt từ lớp
   8, và tầng suy luận về miền ấy hoá ra gói gọn được trong hai chỗ, không hơn — xem
   §25.
+- ~~**Chia đa thức cho $(x-a)$**~~ — **đã làm** (M54). Câu trả lời cũ "đã có engine
+  `longdiv`" đúng một nửa; xem §30.
 - ~~**Căn thức**~~ — **đã làm** (M47b, theo yêu cầu chính chủ). Xem §21: nó không
   phải "thêm một loại nút", nó **đổi bộ kiểm**.
 - ~~**Giá trị tuyệt đối**~~ — **đã làm** (M47c), chính vì cái thiếu ấy đã cắn.
@@ -1348,3 +1350,54 @@ Trường mới thì rẻ; ba chỗ quanh nó mới là việc.
 
 Danh tính ấy vào `explainIds` chứ không vào `drawnIds`: choreography nhắm được, anchor
 thì không — cùng lý lẽ với mực giải thích (§28.5).
+
+
+---
+
+## 30. Chia cho nhân tử tuyến tính (M54)
+
+Một bản rà soát ngoài liệt kê ~10 luật còn thiếu. Đối chiếu bằng code thì **9 trong 10
+đã có từ M50**, một cái (`associate`) không cài được vì dạng chuẩn tắc làm phẳng
+`add`/`mul` — và đúng **một** mục là lỗ thật.
+
+### 30.1 "Đã có `longdiv`" đúng một nửa
+
+Lần trước câu trả lời cho mục này là "engine `longdiv` lo rồi". Nửa sai mới quan trọng:
+`longdiv` là một **scene riêng**, nên nó không giảm bậc được như một *bước bên trong*
+một chuỗi đại số. Mạch chuyên toán kinh điển gãy đúng ở giữa:
+
+```
+P(1) = 0   ⟶   P = (x−1)·Q   ⟶   giải Q bậc hai
+evaluate_at      (không có)      quadratic_formula
+```
+
+Đo để chắc chứ không đoán: `cancel_common` **từ chối** $(x^3-3x+2)/(x-1)$ — nó chỉ rút
+thừa số **cú pháp**, không chia được.
+
+### 30.2 Lời từ chối **chính là** nội dung
+
+`divide_by_linear_factor` nhận ước số, chạy Horner, và **dư $\ne 0$ thì từ chối kèm số
+dư**: *"dư 20 ≠ 0 — x - 3 không phải nhân tử"*. Đó không phải lỗi kỹ thuật mà là câu
+trả lời cho câu hỏi của bài. Bài `cubic-by-known-root` lấy đúng chuyện ấy làm bước cuối:
+đoán sai vẫn dạy được một điều.
+
+Hệ số phải nguyên — Horner trên số thực thì một dư $10^{-16}$ được nhận là $0$, nghĩa
+là engine **khẳng định một nhân tử không tồn tại**, rồi mọi bước sau xây trên lời nói
+dối ấy.
+
+Nhưng cửa ấy hiện **không với tới được**: `flatten` đã từ chối cả `rat` lẫn `div` từ
+trước. Giữ lại làm lớp chắn thứ hai, và **không** viết chốt canh cho nó — một test
+không với tới được nhánh nó nhắm là một test xanh vô nghĩa (bài học M48). Chốt canh
+thay vào đó khẳng định **hành vi quan sát được**: hệ số hữu tỉ dừng ở "không phải đa
+thức", kể cả khi hệ số ấy do chính engine sinh ra ở bước trước.
+
+### 30.3 Ba bản chép tay thành một hàm
+
+`quadratic_formula`, `complete_square` và luật mới đều cần đúng một câu hỏi: "hệ số của
+đa thức một biến này là gì". Trước M54 nó nằm ở hai chỗ dưới dạng hai bản chép tay gần
+giống nhau; thêm bản thứ ba là mời một chỗ lệch đi mà không ai nhìn. Nay là `univariate`,
+trả chuỗi khi từ chối để phía gọi tự gói vào ngữ cảnh của nó.
+
+### 30.4 Còn lại gì
+
+`associate` **sẽ không có** (§26.1). Ngoài nó, tập luật 42 phủ hết danh sách rà soát.

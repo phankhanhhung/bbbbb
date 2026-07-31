@@ -1135,24 +1135,9 @@ const quadraticFormula: Rule = {
     const poly = zeroSide(node.rhs) ? node.lhs : zeroSide(node.lhs) ? node.rhs : null;
     if (poly === null) return no('một vế phải bằng 0 — chuyển vế trước đã');
 
-    const parts = flatten(poly);
-    if (parts === null) return no('vế này không phải đa thức');
-    let name: string | null = null;
-    const coefs = new Map<number, number>();
-    for (const p of parts) {
-      const live = [...p.powers.entries()].filter(([, e]) => e !== 0);
-      if (live.length > 1) return no('không phải đa thức một biến');
-      if (live.length === 0) {
-        coefs.set(0, (coefs.get(0) ?? 0) + p.coef);
-        continue;
-      }
-      const [key, deg] = live[0] as [string, number];
-      const base = p.bases.get(key) as Expr;
-      if (base.k !== 'var') return no('ẩn phải là một biến');
-      name ??= base.name;
-      if (base.name !== name) return no('không phải đa thức một biến');
-      coefs.set(deg, (coefs.get(deg) ?? 0) + p.coef);
-    }
+    const parsed = univariate(poly);
+    if (typeof parsed === 'string') return no(parsed);
+    const { name, coefs } = parsed;
     if (name === null) return no('không có ẩn nào');
     const top = Math.max(...coefs.keys());
     if (top !== 2) return no(`đa thức bậc ${top}, không phải bậc hai`);
@@ -1532,32 +1517,49 @@ const factorByGrouping: Rule = {
  * $\frac b{2a}$ hầu như luôn là phân số, và một sai số $10^{-16}$ ở đây là một dòng
  * hình sai.
  */
+/**
+ * Hệ số của một **đa thức một biến**, theo bậc.
+ *
+ * Ba luật cần đúng câu hỏi này — `quadratic_formula`, `complete_square`, và
+ * `divide_by_linear_factor` — nên nó ở một chỗ. Ba bản chép tay thì bản thứ tư sẽ khác
+ * bản thứ nhất, và khác ở đúng chỗ không ai nhìn.
+ *
+ * Trả chuỗi khi từ chối, để phía gọi tự gói vào `no()` với ngữ cảnh của nó.
+ */
+function univariate(e: Expr): { name: string; coefs: Map<number, number> } | string {
+  const parts = flatten(e);
+  if (parts === null) return 'không phải đa thức';
+
+  let name: string | null = null;
+  const coefs = new Map<number, number>();
+  for (const p of parts) {
+    const live = [...p.powers.entries()].filter(([, exp]) => exp !== 0);
+    if (live.length > 1) return 'không phải đa thức một biến';
+    if (live.length === 0) {
+      coefs.set(0, (coefs.get(0) ?? 0) + p.coef);
+      continue;
+    }
+    const [key, deg] = live[0] as [string, number];
+    const base = p.bases.get(key) as Expr;
+    if (base.k !== 'var') return 'ẩn phải là một biến';
+    name ??= base.name;
+    if (base.name !== name) return 'không phải đa thức một biến';
+    coefs.set(deg, (coefs.get(deg) ?? 0) + p.coef);
+  }
+  if (name === null) return 'không có biến nào';
+  return { name, coefs };
+}
+
 const completeSquare: Rule = {
   id: 'complete_square',
   label: 'hoàn thành bình phương',
   run(m, node) {
-    const parts = flatten(node);
-    if (parts === null) return no('cần một đa thức');
-
-    let name: string | null = null;
-    const coefs = new Map<number, number>();
-    for (const p of parts) {
-      const live = [...p.powers.entries()].filter(([, e]) => e !== 0);
-      if (live.length > 1) return no('không phải đa thức một biến');
-      if (live.length === 0) {
-        coefs.set(0, (coefs.get(0) ?? 0) + p.coef);
-        continue;
-      }
-      const [key, deg] = live[0] as [string, number];
-      const base = p.bases.get(key) as Expr;
-      if (base.k !== 'var') return no('ẩn phải là một biến');
-      name ??= base.name;
-      if (base.name !== name) return no('không phải đa thức một biến');
-      coefs.set(deg, (coefs.get(deg) ?? 0) + p.coef);
-    }
+    const poly = univariate(node);
+    if (typeof poly === 'string') return no(poly);
+    const { name, coefs } = poly;
 
     const top = Math.max(...[...coefs.keys()]);
-    if (top !== 2 || name === null) return no('cần một tam thức bậc hai một biến');
+    if (top !== 2) return no('cần một tam thức bậc hai một biến');
     const a = coefs.get(2) ?? 0;
     const b = coefs.get(1) ?? 0;
     const c = coefs.get(0) ?? 0;
@@ -1713,6 +1715,86 @@ const substitute: Rule = {
     const after = go(node);
     if (!found) return no(`không thấy biến "${name}" trong cây con này`);
     return { after, dup };
+  },
+};
+
+/**
+ * $P(x) \to (x-a)\,Q(x)$ — chia Horner cho một nhân tử tuyến tính.
+ *
+ * Lỗ duy nhất còn lại của tập luật, và nó nằm ở giữa đúng mạch chuyên toán:
+ *
+ * ```
+ * P(1) = 0   ⟶   P = (x−1)·Q   ⟶   giải Q bậc hai
+ *  evaluate_at      chỗ này         quadratic_formula
+ * ```
+ *
+ * Trước đây câu trả lời là "đã có engine `longdiv`". Đúng một nửa, và nửa sai mới quan
+ * trọng: `longdiv` là một **scene riêng**, nên nó không giảm bậc được như một *bước bên
+ * trong* một chuỗi đại số. Mạch trên gãy đúng ở giữa.
+ *
+ * Tác giả khai **chia cho cái gì**, engine tính thương — cùng đặt cược với cả engine.
+ * Và **dư $\\ne 0$ thì từ chối**, kèm số dư: đó không phải lỗi kỹ thuật mà là câu trả
+ * lời cho câu hỏi "$(x-a)$ có phải nhân tử không". Lời từ chối *là* nội dung.
+ *
+ * Hệ số phải nguyên. Horner trên số nguyên là chính xác; thả ra số thực thì một dư
+ * $10^{-16}$ sẽ được nhận là $0$ và engine **khẳng định một nhân tử không tồn tại** —
+ * rồi mọi bước sau xây trên lời nói dối ấy.
+ *
+ * Cửa ấy hiện **không với tới được**: `flatten` đã từ chối cả `rat` lẫn `div` từ trước,
+ * nên đa thức hệ số hữu tỉ dừng ở "không phải đa thức". Giữ lại làm lớp chắn thứ hai
+ * cho ngày `flatten` biết đọc `rat` — nhưng **không** viết chốt canh cho nó: một test
+ * không với tới được nhánh nó nhắm là một test xanh vô nghĩa (bài học M48).
+ */
+const divideByLinearFactor: Rule = {
+  id: 'divide_by_linear_factor',
+  label: 'chia cho nhân tử tuyến tính',
+  needsArg: true,
+  run(m, node, arg) {
+    if (arg === undefined) return no('cần nói chia cho cái gì, ví dụ "x - 1"');
+
+    const poly = univariate(node);
+    if (typeof poly === 'string') return no(poly);
+    const divisor = univariate(parse(arg, m));
+    if (typeof divisor === 'string') return no(`ước số: ${divisor}`);
+    if (divisor.name !== poly.name) return no('ước số phải cùng biến với đa thức');
+
+    const top = Math.max(...[...poly.coefs.keys()]);
+    if (top < 1) return no('đa thức phải có bậc ≥ 1');
+    if (Math.max(...[...divisor.coefs.keys()]) !== 1) return no('ước số phải là bậc nhất');
+    if ((divisor.coefs.get(1) ?? 0) !== 1) return no('ước số phải có hệ số dẫn đầu bằng 1');
+
+    // $x - a$ nên hệ số tự do là $-a$.
+    const root = -(divisor.coefs.get(0) ?? 0);
+    const c: number[] = [];
+    for (let d = top; d >= 0; d -= 1) c.push(poly.coefs.get(d) ?? 0);
+    if (!c.every(Number.isInteger) || !Number.isInteger(root)) {
+      return no('hệ số phải nguyên — Horner trên số thực làm dư nhỏ bị nhận nhầm là 0');
+    }
+
+    // Horner: $b_{k-1} = c_k + a\\,b_k$, và số cuối là **dư**.
+    const q: number[] = [c[0] as number];
+    for (let i = 1; i < c.length; i += 1) {
+      q.push((c[i] as number) + root * (q[i - 1] as number));
+    }
+    const remainder = q.pop() as number;
+    if (remainder !== 0) {
+      return no(`dư ${remainder} ≠ 0 — ${arg} không phải nhân tử`);
+    }
+
+    const terms: Expr[] = [];
+    q.forEach((coef, i) => {
+      if (coef === 0) return;
+      const deg = q.length - 1 - i;
+      const power = deg === 0 ? null : pow(m, variable(m, poly.name), deg);
+      terms.push(withCoefficient(m, coef, power));
+    });
+
+    const quotient = terms.length === 0 ? int(m, 0) : add(m, terms);
+    const linear = parse(arg, m);
+    return {
+      after: mul(m, [linear, quotient]),
+      roles: [subtreeIds(linear), subtreeIds(quotient)],
+    };
   },
 };
 
@@ -1961,6 +2043,7 @@ export const RULES: readonly Rule[] = [
   splitFraction,
   factorPowerDifference,
   factorPowerSumOdd,
+  divideByLinearFactor,
   addBothSides,
   mulBothSides,
   powBothSides,
