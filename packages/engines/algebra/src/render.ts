@@ -109,6 +109,20 @@ export const algebraRenderer: EngineRenderer = {
         );
       }
 
+      for (const q of line.paths) {
+        children.push(
+          el('path', {
+            d: q.d,
+            fill: 'none',
+            stroke: ink,
+            'stroke-width': round(q.width),
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round',
+            ...(q.owner === null ? {} : { 'data-el': q.owner }),
+          }),
+        );
+      }
+
       // Tay cầm của từng nút: chỗ nhận halo. Không đặt `stroke` lên chính glyph —
       // stroke trên chữ vẽ viền quanh từng nét và biến hạng tử thành vệt mực.
       // Danh tính nằm trên `<g>`, hình chữ nhật nằm bên trong. Trông thừa một tầng,

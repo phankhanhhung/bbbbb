@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M47 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 87 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M47 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 88 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,35 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M47b — Căn thức, và một lỗi hiển thị nằm im ở 21 bài · [E] — **xong**
+
+Chính chủ: "Căn chưa thấy." Đúng — §16 của đặc tả khai căn thức là **cố ý không
+làm**, và đó là chỗ đáng bác.
+
+Phần đắt nhất không phải nút mới mà là **bộ kiểm**. $\sqrt{\cdot}$ không phải hàm hữu
+tỉ nên §6 không dùng được: trên $\mathbb{F}_p$ thì $\sqrt a$ chỉ tồn tại khi $a$ là
+thặng dư bậc hai, và khi tồn tại thì có hai nghiệm không có nhánh chính tắc. Biểu
+thức có căn chuyển sang đánh giá trên $\mathbb{R}$; biểu thức hữu tỉ vẫn đi đường
+$\mathbb{F}_p$ chính xác tuyệt đối.
+
+**Và bộ lấy mẫu phải bốc cả số âm** — bản đầu chỉ bốc số dương cho căn bậc chẵn luôn
+xác định, nhưng thế thì $\sqrt{x^2} = x$ **qua được**, dù nó sai với mọi $x<0$. Đó là
+lỗ hổng tao tự tạo trong cùng một lượt viết, và nó là loại lỗ hổng tệ nhất: bộ kiểm
+vẫn chạy, vẫn xanh, chỉ là mù đúng chỗ nguy hiểm nhất.
+
+`pull_square_out` **từ chối** rút biến ra khỏi căn bậc chẵn: $\sqrt{x^2} = |x|$ và
+engine không có nút giá trị tuyệt đối. Không ghi điều kiện "$x \ge 0$" — một dòng như
+thế làm người đọc tưởng đẳng thức đúng nếu chịu thêm giả thiết, trong khi thứ thiếu
+là **một ký hiệu khác**, không phải một giả thiết.
+
+Bài `radical-simplify` (#88) chạy ba thao tác cơ bản trên cả căn bậc hai lẫn bậc ba.
+
+**Và một lỗi ngoài engine, chỉ thấy khi mở Player**: `source.note` bị nội suy thẳng
+vào chuỗi, không qua bộ sắp chữ — `$R(3,3)=6$` hiện ra đúng mười ba ký tự, `**mọi**`
+hiện ra kèm bốn dấu sao, ở **21 bài** trong kho. Statement ngay phía trên thì sắp chữ
+đúng, nên lỗi nằm im rất lâu: nhìn lướt thì tưởng ghi chú vốn viết thế. Sửa một dòng
+ở chỗ vẽ, không bắt 21 ghi chú viết lại — và khoá lại bằng một khẳng định e2e.
 
 ### M47 — Engine thứ chín `algebra`: máy giữ phép toán · [E] — **xong**
 

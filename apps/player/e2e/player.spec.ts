@@ -190,6 +190,20 @@ test.describe('Cây lời giải phân nhánh (PLY-02)', () => {
   });
 });
 
+test.describe('Đầu bài', () => {
+  test('ghi chú nguồn được **sắp chữ**, không in ra `$...$` thô', async ({ page }) => {
+    // `source.note` từng bị nội suy thẳng vào chuỗi, nên `$R(3,3)=6$` hiện ra đúng
+    // mười ba ký tự — ở 21 bài trong kho. Statement ngay phía trên thì sắp chữ đúng,
+    // nên lỗi này nằm im rất lâu: nhìn lướt thì tưởng ghi chú vốn viết thế.
+    await page.goto('/?p=ramsey-3-3-six');
+    const source = page.locator('.source');
+
+    await expect(source).toBeVisible();
+    await expect(source).not.toContainText('$');
+    await expect(source.locator('.katex').first()).toBeVisible();
+  });
+});
+
 test.describe('Anchor hai chiều (ANC-01)', () => {
   test('rê vào anchor thì tô sáng element, rời ra thì tắt', async ({ page }) => {
     await page.goto(CHESS);

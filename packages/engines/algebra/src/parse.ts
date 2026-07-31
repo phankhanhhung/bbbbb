@@ -7,6 +7,7 @@ import {
   negate,
   pow,
   rel,
+  root,
   variable,
   type Expr,
   type RelOp,
@@ -141,6 +142,26 @@ class Parser {
       return int(this.m, v);
     }
 
+    // Hàm: `sqrt(x)` và `root(3, x)`. Hai cái tên, không mở cửa cho hàm tuỳ ý —
+    // ngữ pháp phải đóng thì printer mới biết trước mình phải in những gì.
+    if (this.src.startsWith('sqrt', this.i)) {
+      this.i += 4;
+      if (!this.eat('(')) throw new ParseError('sqrt cần dấu "("', this.i);
+      const inner = this.sum();
+      if (!this.eat(')')) throw new ParseError('thiếu dấu ")"', this.i);
+      return root(this.m, 2, inner);
+    }
+    if (this.src.startsWith('root', this.i)) {
+      this.i += 4;
+      if (!this.eat('(')) throw new ParseError('root cần dấu "("', this.i);
+      const n = this.digits();
+      if (n === null || n < 2) throw new ParseError('chỉ số căn phải là số nguyên ≥ 2', this.i);
+      if (!this.eat(',')) throw new ParseError('root cần dấu ","', this.i);
+      const inner = this.sum();
+      if (!this.eat(')')) throw new ParseError('thiếu dấu ")"', this.i);
+      return root(this.m, n, inner);
+    }
+
     if (/[a-zA-Z]/.test(ch)) {
       this.i += 1;
       let name = ch;
@@ -200,6 +221,8 @@ export function unparse(e: Expr): string {
       return `(${unparse(e.base)})^${e.exp < 0 ? `-${-e.exp}` : e.exp}`;
     case 'div':
       return `(${unparse(e.num)} / ${unparse(e.den)})`;
+    case 'root':
+      return e.index === 2 ? `sqrt(${unparse(e.arg)})` : `root(${e.index}, ${unparse(e.arg)})`;
     case 'rel':
       return `(${unparse(e.lhs)} ${e.op} ${unparse(e.rhs)})`;
   }

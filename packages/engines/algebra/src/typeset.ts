@@ -61,6 +61,9 @@ const EM: Readonly<Record<string, number>> = {
 const DIGIT_EM = 0.5;
 const LETTER_EM = 0.5;
 
+/** Làm tròn toạ độ để lệnh path không dài lê thê vì sai số dấu phẩy động. */
+const round = (v: number): number => Math.round(v * 1000) / 1000 + 0;
+
 export function textWidth(value: string, size: number): number {
   let em = 0;
   for (const ch of value) em += EM[ch] ?? (ch >= '0' && ch <= '9' ? DIGIT_EM : LETTER_EM);
@@ -85,6 +88,15 @@ export type Box =
   | { t: 'frac'; num: Box; den: Box; size: number }
   | { t: 'sup'; base: Box; exp: Box }
   | { t: 'paren'; inner: Box; size: number }
+  /**
+   * Dấu căn: móc bên trái, vạch trùm lên trên toàn bộ ruột.
+   *
+   * Vẽ bằng **path**, không phóng to glyph `√`: glyph có tỉ lệ cố định nên phóng lên
+   * cho vừa một phân số hai tầng thì nét dày ra và cái móc thò xuống dưới đường chân.
+   * Vạch trùm cũng phải dài đúng bằng ruột — đó là thứ nói cho người đọc biết căn ăn
+   * tới đâu, và ăn sai một hạng tử là đọc ra một biểu thức khác.
+   */
+  | { t: 'radical'; inner: Box; index: number; size: number }
   /** Dịch đường chân xuống `dy` — chỉ số dưới. */
   | { t: 'shift'; dy: number; inner: Box }
   /** Bọc danh tính: không đổi hình học, chỉ nói "phần này là nút `id`". */
@@ -141,6 +153,16 @@ export function measure(box: Box): Metrics {
         below: -axis + gap + d.above + d.below,
       };
     }
+    case 'radical': {
+      const inner = measure(box.inner);
+      const hook = box.size * RAD_HOOK;
+      const idx = box.index === 2 ? 0 : textWidth(String(box.index), box.size * RAD_INDEX);
+      return {
+        w: hook + idx + inner.w + box.size * RAD_PAD,
+        above: inner.above + box.size * RAD_LIFT,
+        below: inner.below,
+      };
+    }
     case 'paren': {
       const inner = measure(box.inner);
       // Ngoặc cao theo ruột: một ngoặc cỡ chữ thường bên cạnh một phân số hai tầng
@@ -154,6 +176,13 @@ export function measure(box: Box): Metrics {
     }
   }
 }
+
+/** Bề ngang cái móc, độ nhô của vạch trùm, và hở phải. */
+const RAD_HOOK = 0.62;
+/** Cỡ chỉ số căn — nhỏ hơn số mũ, vì nó ngồi trong góc chứ không đứng riêng. */
+const RAD_INDEX = 0.52;
+const RAD_LIFT = 0.34;
+const RAD_PAD = 0.16;
 
 /** Ngoặc phải trùm ruột: tỉ lệ theo chiều cao thật, chặn dưới ở 1. */
 function parenScale(inner: Metrics, size: number): number {
@@ -192,9 +221,16 @@ export interface NodeBox {
   readonly height: number;
 }
 
+export interface PlacedPath {
+  readonly d: string;
+  readonly width: number;
+  readonly owner: TermId | null;
+}
+
 export interface Placed {
   readonly glyphs: readonly PlacedGlyph[];
   readonly rules: readonly PlacedRule[];
+  readonly paths: readonly PlacedPath[];
   readonly boxes: readonly NodeBox[];
   readonly metrics: Metrics;
 }
@@ -207,6 +243,7 @@ export interface Placed {
 export function place(box: Box, x: number, y: number): Placed {
   const glyphs: PlacedGlyph[] = [];
   const rules: PlacedRule[] = [];
+  const paths: PlacedPath[] = [];
   const boxes: NodeBox[] = [];
 
   const go = (b: Box, bx: number, by: number, owner: TermId | null): Metrics => {
@@ -256,6 +293,46 @@ export function place(box: Box, x: number, y: number): Placed {
         rules.push({ x1: bx, x2: bx + m.w, y: barY, width: b.size * 0.075, owner });
         return m;
       }
+      case 'radical': {
+        const m = measure(b);
+        const inner = measure(b.inner);
+        const hook = b.size * RAD_HOOK;
+        const idx = b.index === 2 ? 0 : textWidth(String(b.index), b.size * RAD_INDEX);
+        const top = by - m.above;
+        const bottom = by + inner.below;
+        const stroke = b.size * 0.075;
+
+        if (b.index !== 2) {
+          go(
+            { t: 'text', s: String(b.index), size: b.size * RAD_INDEX, italic: false },
+            bx,
+            top + b.size * RAD_INDEX * 0.9,
+            owner,
+          );
+        }
+
+        // Móc: đi từ giữa bên trái, chúc xuống đáy, rồi vọt lên đỉnh vạch trùm.
+        const x0 = bx + idx;
+        const mid = (top + bottom) / 2;
+        paths.push({
+          d:
+            `M${round(x0)} ${round(mid + (bottom - mid) * 0.45)}` +
+            `L${round(x0 + hook * 0.3)} ${round(mid + (bottom - mid) * 0.72)}` +
+            `L${round(x0 + hook * 0.62)} ${round(bottom)}` +
+            `L${round(x0 + hook)} ${round(top)}`,
+          width: stroke,
+          owner,
+        });
+        rules.push({
+          x1: round(x0 + hook),
+          x2: round(x0 + hook + inner.w + b.size * RAD_PAD),
+          y: round(top),
+          width: stroke,
+          owner,
+        });
+        go(b.inner, x0 + hook, by, owner);
+        return m;
+      }
       case 'paren': {
         const inner = measure(b.inner);
         const scale = parenScale(inner, b.size);
@@ -273,7 +350,7 @@ export function place(box: Box, x: number, y: number): Placed {
   };
 
   const metrics = go(box, x, y, null);
-  return { glyphs, rules, boxes, metrics };
+  return { glyphs, rules, paths, boxes, metrics };
 }
 
 /* ---------- cây → hộp ---------- */
@@ -285,6 +362,9 @@ const PREC: Readonly<Record<Expr['k'], number>> = {
   mul: 2,
   div: 2,
   pow: 3,
+  // Căn tự bọc ruột bằng vạch trùm nên nó **là** dấu gộp — không cần ngoặc quanh nó,
+  // và ruột của nó cũng không cần ngoặc dù là tổng.
+  root: 4,
   int: 4,
   rat: 4,
   var: 4,
@@ -413,8 +493,17 @@ export function toBox(e: Expr, size: number = FONT): Box {
     }
     case 'mul': {
       const items: Box[] = [];
-      e.args.forEach((arg, i) => {
-        if (i > 0 && needsDot(e.args[i - 1] as Expr, arg)) items.push(...binop('·', size, 0.06));
+      // Hệ số $1$ không viết ra khi còn thừa số khác — `1x` và `1√2` là thứ không ai
+      // viết tay. Chỉ bỏ ở tầng **hiển thị**: nút $1$ vẫn còn trong cây, vì bỏ nó đi
+      // là việc của luật `drop_unit`, có tên và có dòng riêng.
+      const shown = e.args.filter(
+        (a, i) => !(a.k === 'int' && a.v === 1 && e.args.length > 1 && i === 0),
+      );
+      shown.forEach((arg, i) => {
+        if (i > 0 && needsDot(shown[i - 1] as Expr, arg)) items.push(...binop('·', size, 0.06));
+        // Căn bậc $n$ có chỉ số ở góc trên trái; đứng sát một chữ số thì `3` của hệ số
+        // và `3` của chỉ số đọc thành `33`. Hở một chút là đủ tách chúng ra.
+        else if (i > 0 && arg.k === 'root' && arg.index !== 2) items.push(gap(size * 0.16));
         items.push(wrap(arg, toBox(arg, size)));
       });
       return tag({ t: 'row', items });
@@ -431,6 +520,8 @@ export function toBox(e: Expr, size: number = FONT): Box {
         exp: text(num(e.exp), size * SCRIPT),
       });
     }
+    case 'root':
+      return tag({ t: 'radical', inner: toBox(e.arg, size), index: e.index, size });
     case 'div':
       return tag({
         t: 'frac',

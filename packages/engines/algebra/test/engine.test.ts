@@ -38,7 +38,7 @@ describe('tầng 0 — parser và printer', () => {
   it('khứ hồi giữ **đúng cấu trúc** trên biểu thức sinh ngẫu nhiên', () => {
     // Chốt canh của tầng rủi ro nhất. Không kiểm chuỗi in ra giống nhau — kiểm cây
     // giống nhau, vì `unparse` cố ý in dư ngoặc.
-    const ATOMS = ['x', 'y', '2', '3', '-1', 'x^2', 'a_1'];
+    const ATOMS = ['x', 'y', '2', '3', '-1', 'x^2', 'a_1', 'sqrt(x)', 'sqrt(2)', 'root(3, y)'];
     let s = 987654321;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
     const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(rand() * xs.length)] as T;
@@ -76,7 +76,7 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
   it('mọi luật áp được đều **bảo toàn giá trị** trên quét ngẫu nhiên', () => {
     // Bản đại số của phép quét $A = BQ + R$ ở `longdiv`. Chốt canh này canh **engine**,
     // không canh tác giả: tác giả không gõ vế sau nên không sai kiểu đó được.
-    const ATOMS = ['x', 'y', '2', '3', '-1', 'x^2'];
+    const ATOMS = ['x', 'y', '2', '3', '-1', 'x^2', 'sqrt(x)', 'sqrt(6)'];
     let s = 4242;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
     const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(rand() * xs.length)] as T;
@@ -162,6 +162,65 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       'pow',
       'mul',
     ]);
+  });
+});
+
+describe('căn thức', () => {
+  it('bộ kiểm **đổi sân** khi có căn, và bắt được $\\sqrt{x^2} \\ne x$', () => {
+    // Đây là lỗ hổng nguy hiểm nhất của căn thức, và nó **lọt** ở bản đầu vì bộ lấy
+    // mẫu chỉ bốc số dương. $\sqrt{x^2} = |x|$, không phải $x$.
+    const verdict = sameValue(parse('sqrt(x^2)', new Minter()), parse('x', new Minter()));
+
+    expect(verdict.ok).toBe(false);
+    expect(verdict.message).toContain('x=-');
+  });
+
+  it('nhận ra đẳng thức căn **đúng**, không chỉ biết nói không', () => {
+    expect(sameValue(parse('sqrt(2)*sqrt(3)', new Minter()), parse('sqrt(6)', new Minter())).ok).toBe(true);
+    expect(sameValue(parse('sqrt(2)*sqrt(3)', new Minter()), parse('sqrt(5)', new Minter())).ok).toBe(false);
+  });
+
+  it('rút thừa số chính phương: $\\sqrt{48} = 4\\sqrt3$', () => {
+    const m = readAlgebra(scene('sqrt(48)', [{ rule: 'pull_square_out', at: '' }]));
+
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    expect(unparse(m.rows[1]!.expr)).toBe(unparse(parse('4*sqrt(3)', new Minter())));
+  });
+
+  it('**từ chối** rút biến ra khỏi căn bậc chẵn — thiếu ký hiệu, không thiếu giả thiết', () => {
+    // Một điều kiện "$x \ge 0$" ở đây làm người đọc tưởng đẳng thức đúng nếu chịu
+    // thêm giả thiết, trong khi thứ thiếu là dấu giá trị tuyệt đối.
+    const m = readAlgebra(scene('sqrt(x^2)', [{ rule: 'pull_square_out', at: '' }]));
+
+    expect(m.refusal).toContain('giá trị tuyệt đối');
+  });
+
+  it('trục căn thức ở mẫu, và hệ số $1$ không hiện ra', () => {
+    const one = scene('1/sqrt(2)', [{ rule: 'rationalize', at: '' }]);
+    const m = readAlgebra(one);
+
+    expect(m.unsound).toEqual([]);
+    // Dòng đầu **có** số $1$ (tử của $1/\sqrt2$); dòng sau thì không, dù nút $1$ vẫn
+    // còn trong cây — bỏ nó đi là việc của luật `drop_unit`, có tên và có dòng riêng.
+    expect(unparse(m.rows[1]!.expr)).toContain('1');
+    expect(renderer.toSvg(one, ctx).match(/>1</g) ?? []).toHaveLength(1);
+  });
+
+  it('dấu căn vẽ bằng path, và vạch trùm dài đúng bằng ruột', () => {
+    // Vạch trùm nói cho người đọc biết căn ăn tới đâu; ăn sai một hạng tử là đọc ra
+    // một biểu thức khác hẳn.
+    // Đo từ `layout`, không bới chuỗi SVG: bới chuỗi thì test đỏ vì đổi thứ tự thuộc
+    // tính, và xanh nhầm vì một regex không khớp lại trả về 0 ở cả hai vế.
+    const bar = (start: string): number => {
+      const line = layout(readAlgebra(scene(start))).lines[0]!;
+      const rule = line.rules[0];
+      expect(rule, `${start}: không có vạch trùm nào`).toBeDefined();
+      return (rule as { x1: number; x2: number }).x2 - (rule as { x1: number; x2: number }).x1;
+    };
+
+    expect(renderer.toSvg(scene('sqrt(x + 1)'), ctx)).toContain('<path');
+    expect(bar('sqrt(x + 1)')).toBeGreaterThan(bar('sqrt(x)'));
   });
 });
 
