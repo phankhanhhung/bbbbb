@@ -1,5 +1,5 @@
 import type { Scene } from '@combviz/schema';
-import { evalReal, sameSolutionSet, sameValue } from './check.js';
+import { evalReal, impliesSolutionSet, sameSolutionSet, sameValue } from './check.js';
 import {
   Minter,
   children,
@@ -8,6 +8,7 @@ import {
   nodeCount,
   normalize,
   replaceAt,
+  same,
   totalDegree,
   walk,
   withChildren,
@@ -57,6 +58,16 @@ export interface AlgebraModel {
    * với tới được. Gom ra đây để nó **nói ra** thay vì trôi qua như một bước đã kiểm.
    */
   readonly unchecked: readonly string[];
+  /**
+   * Bước nào **nới rộng** tập nghiệm ⇒ có thể sinh nghiệm ngoại lai.
+   *
+   * Không phải lỗi: bình phương hai vế là nước đi hợp lệ và thường xuyên. Nhưng nó để
+   * lại một **món nợ** — phải thử lại nghiệm — và engine không tự trả được, vì bước
+   * thử lại thường nằm ở một step khác trong cây lời giải mà một scene không nhìn thấy.
+   * Nên nó ghi món nợ **ra hình**, chữ đỏ vĩnh viễn cho người đọc. Cùng lý lẽ AL-08
+   * (M47c): chốt canh mạnh nhất không phải cảnh báo cho người soạn.
+   */
+  readonly extraneous: readonly string[];
   readonly refusal: string | null;
 }
 
@@ -130,6 +141,7 @@ export function readAlgebra(scene: Scene): AlgebraModel {
     conditions: [],
     unsound: [],
     unchecked: [],
+    extraneous: [],
     refusal: null,
   };
 
@@ -161,6 +173,7 @@ export function readAlgebra(scene: Scene): AlgebraModel {
   const conditions: string[] = [];
   const unsound: string[] = [];
   const unchecked: string[] = [];
+  const extraneous: string[] = [];
 
   const steps = config.steps ?? [];
   for (let i = 0; i < steps.length; i += 1) {
@@ -201,26 +214,58 @@ export function readAlgebra(scene: Scene): AlgebraModel {
       else if (verdict.verified === false) unchecked.push(`${where}: ${verdict.message}`);
     };
 
-    if (outcome.binding !== undefined) {
+    // `guard` nay do **luật tự khai**. Bản trước dựng nó bằng cách parse lại `step.arg`
+    // — đúng tình cờ cho `mul_both_sides`, nơi arg *là* thừa số, và sai với mọi luật
+    // khác. `abs_case` cần "$A \ge 0$", thứ không đọc ra được từ chuỗi tác giả gõ.
+    const guard = outcome.guard ?? null;
+
+    if (outcome.verify === 'instance') {
+      // Thế một giá trị cụ thể: không phải chuyện tập nghiệm mà là chuyện "có thế đúng
+      // không". Kiểm bằng **cấu trúc**, và vì thế nó có răng thật.
+      const binding = outcome.binding as NonNullable<typeof outcome.binding>;
+      const want = normalize(replaceVar(target, binding.name, binding.expr));
+      judge(
+        same(want, outcome.after)
+          ? { ok: true, verified: true, message: `thế ${binding.name} đúng ở mọi chỗ` }
+          : { ok: false, verified: true, message: 'kết quả không bằng phép thế trực tiếp' },
+      );
+    } else if (outcome.binding !== undefined) {
       // Đặt ẩn phụ: `after` viết bằng biến mới, nên so thẳng là so hai thứ khác biến.
       // Thế ngược lại rồi mới so — chính xác, và không cần đụng vào bộ kiểm.
       const back = replaceVar(outcome.after, outcome.binding.name, outcome.binding.expr);
-      judge(sameValue(target, back, 20260731 + i));
+      judge(sameValue(target, back, 20260731 + i, 8, guard));
     } else if (outcome.verify === 'root') {
       // Một nhánh nghiệm **hẹp hơn** tập nghiệm gốc, nên hỏi "cùng tập nghiệm" là hỏi
       // sai. Điều phải kiểm là nghiệm ấy **thoả** phương trình trước đó.
       judge(rootSatisfies(target, outcome.after));
+    } else if (outcome.verify === 'implies') {
+      // Bước **nới rộng**: chỉ hỏi được chiều "nghiệm cũ còn là nghiệm mới". Nghĩa vụ
+      // còn lại — thử lại để loại nghiệm ngoại lai — ghi ra hình, không tự làm.
+      const verdict = impliesSolutionSet(target, outcome.after, guard, 20260731 + i);
+      if (!verdict.ok) unsound.push(`bước ${i + 1} (${rule.label}): ${verdict.message}`);
+
+      // Món nợ ghi theo **hợp đồng**, không theo kết quả bốc điểm. Với phương trình,
+      // tập nghiệm có độ đo $0$ nên `widened` gần như không bao giờ chạm tới — treo
+      // dòng đỏ vào nó là để nó **không bao giờ hiện ra** ở đúng ca cần nó nhất. Chọn
+      // `verify: 'implies'` đã là lời khai "bước này một chiều"; `widened` chỉ xác nhận
+      // thêm khi may mắn bốc trúng (thường là ca bất đẳng thức).
+      //
+      // Và tình trạng kiểm được ghi **vào đây**, không vào `unchecked`: với phương
+      // trình thì "không bốc trúng nghiệm nào" là chuyện **cấu trúc**, xảy ra ở mọi
+      // bước bình phương, nên đẩy nó thành cảnh báo cho tác giả là dựng một vệt vàng
+      // thường trực mà tác giả không sửa được — đúng cái M45 dạy đừng làm.
+      extraneous.push(
+        `bước ${i + 1} (${rule.label}) nới rộng tập nghiệm` +
+          (verdict.widened
+            ? ' — đã bốc trúng điểm nghiệm mới'
+            : verdict.verified
+              ? ''
+              : ' (chiều kéo theo chưa bốc trúng điểm nào để kiểm)'),
+      );
     } else if (target.k === 'rel' && outcome.after.k === 'rel' && rule.id !== 'substitute') {
-      const guard =
-        outcome.condition === undefined || step.arg === undefined
-          ? null
-          : ((): Expr | null => {
-              const g = tryParse(step.arg, m);
-              return 'error' in g ? null : g.expr;
-            })();
       judge(sameSolutionSet(target, outcome.after, guard, 20260731 + i));
     } else if (!rule.onRelation && target.k !== 'rel' && outcome.after.k !== 'rel') {
-      judge(sameValue(target, outcome.after, 20260731 + i));
+      judge(sameValue(target, outcome.after, 20260731 + i, 8, guard));
     }
 
     if (outcome.condition !== undefined && !conditions.includes(outcome.condition)) {
@@ -269,5 +314,5 @@ export function readAlgebra(scene: Scene): AlgebraModel {
     if (big !== null) return { ...empty, rows, refusal: `sau bước ${i + 1} hình ${big}` };
   }
 
-  return { config, rows, conditions, unsound, unchecked, refusal: null };
+  return { config, rows, conditions, unsound, unchecked, extraneous, refusal: null };
 }

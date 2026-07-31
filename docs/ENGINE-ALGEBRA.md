@@ -249,7 +249,22 @@ RuleResult | Refusal`. Không luật nào đi ra ngoài cây con nó được g�
 | ★ `substitute` | bất kỳ | thay biến bằng biểu thức | `"x := 2*y"` |
 | `drop_unit` | `mul` có thừa số $1$, hoặc `add` có hạng tử $0$ | bỏ chúng đi | — |
 
-`associate` và `common_denominator` **chưa cài** — xem §20.
+Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn nó nhiều — **41 luật** tính
+đến M50 — và hai chỗ bảng này khai sai:
+
+- `associate` **không cài, và sẽ không cài**: dạng chuẩn tắc §3.1 làm phẳng `add`/`mul`
+  nên hai cách nhóm là *cùng một cây*. Xem §26.1.
+- `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
+  `split_fraction`.
+
+Xem §21–§26 để biết tập luật thật, xếp theo ba lớp:
+
+| lớp | luật |
+|---|---|
+| **lõi đại số** | `commute`, `distribute`, `factor`, `collect_like`, `eval_int`, `drop_unit`, `fold_coefficients`, `common_denominator`, `combine_fraction`, `split_fraction`, `cancel_common`, `factor_by_grouping` |
+| **hằng đẳng thức & đa thức** | `expand_square`, `expand_cube`, `multiply_out`, `expand_diff_squares`, `factor_diff_squares`, `factor_cubes`, `factor_quadratic`, `complete_square`, `factor_power_difference`, `factor_power_sum_odd` |
+| **căn & luỹ thừa** | `pow_add`, `pow_mul`, `root_pow`, `root_of_product`, `eval_root`, `pull_square_out`, `rationalize`, `multiply_by_conjugate`, `denest_radical`, `root_to_power`, `power_to_root` |
+| **phương trình có điều kiện (★)** | `add_both_sides`, `mul_both_sides`, `pow_both_sides`, `abs_case`, `evaluate_at`, `set_variable`, `substitute`, `quadratic_formula` |
 
 **Hai điều luật này cố ý không có:**
 
@@ -330,6 +345,32 @@ và cho phép quét $A = BQ+R$ của `longdiv`.
 Nhóm ★ kiểm khác: `add_both_sides` bảo toàn tập nghiệm **do cấu trúc** (cùng một cây
 cộng vào hai vế), `mul_both_sides` theo AL-08, `substitute` thì không phải đẳng thức
 nên không kiểm bằng cách này.
+
+> Câu trên **sai**, và nó đã che đúng một lỗi: nhân bất đẳng thức với số âm mà không
+> đổi chiều (§22.1). "Đúng do cấu trúc" là thứ phải chứng minh, không phải thứ để khai.
+> Đây là lần đầu trong ba lần cùng một bài học lặp lại — xem §25.4.
+
+### 6.1 Sáu hợp đồng kiểm (M50)
+
+Không có một câu hỏi chung. Mỗi bước khai **nó hứa gì**, và engine hỏi đúng câu ấy;
+trộn chúng lại là bỏ lọt.
+
+| hợp đồng | câu hỏi | ai dùng |
+|---|---|---|
+| mặc định (biểu thức) | hai vế **đồng nhất bằng nhau**? | mọi rewrite thuần |
+| mặc định (quan hệ) | hai quan hệ **cùng tập nghiệm**? | `add_both_sides`, `mul_both_sides`, `pow_both_sides` bậc lẻ |
+| `binding` | thế ngược ẩn phụ rồi mới hỏi câu thứ nhất | `set_variable` |
+| `verify: 'root'` | nghiệm ấy có **thoả** phương trình trước? | `quadratic_formula` |
+| `verify: 'implies'` | mọi nghiệm cũ còn là nghiệm mới? (một chiều) | `pow_both_sides` bậc chẵn |
+| `verify: 'instance'` | `after` có đúng bằng `before` sau khi thế? | `evaluate_at` |
+
+Kèm theo hai thứ mà kết quả kiểm phải phân biệt được:
+
+- **`verified`** — đã thật sự thử được chưa. `ok: true` một mình nhập nhằng giữa "đã
+  thử và khớp" với "không tìm được điểm nào để thử" (§25.4a).
+- **`guard`** — điều kiện bước tự khai, **máy đọc được**. Bộ kiểm bỏ những điểm vi
+  phạm nó. Trước M50 `model` dựng guard bằng cách parse lại `step.arg`: đúng tình cờ
+  cho `mul_both_sides`, nơi arg *là* thừa số, và sai với mọi luật khác.
 
 ---
 
@@ -517,6 +558,8 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
 - ~~**Luỹ thừa số mũ hữu tỉ**~~ — **đã làm** (M49). Nó là nội dung lớp 11–12; khai nó
   là "chưa có" trong khi engine nhắm toàn bộ đại số phổ thông là tự mâu thuẫn.
 - **Phần nguyên, logarit.** Chưa có.
+- ~~**Quy đồng, nhóm hạng tử, hoàn thành bình phương, bình phương hai vế**~~ — **đã
+  làm** (M50, theo góp ý ngoài). Xem §26.
 - **Căn bậc ký hiệu** ($\sqrt[n]{x}$ với $n$ là biến). `root.index` vẫn là số nguyên;
   ai cần thì viết $x^{1/n}$, nay đã có.
 - **Hệ phương trình.** Cần một nút chứa **nhiều** quan hệ; chưa có. Đây là mảng lớn
@@ -972,3 +1015,124 @@ SUP_CLEAR)`. `SUP_CLEAR = 0,22` chọn để số mũ là chữ số **không x�
 
 Cùng một hình dạng lỗi với `NEST` (M47) và `SUP_RISE` ở đây: **một hằng số hiệu chỉnh
 cho một hình dạng, rồi hình dạng ấy thôi độc quyền.**
+
+
+---
+
+## 26. Tập luật mở rộng (M50)
+
+Một danh sách góp ý từ ngoài đề nghị thêm ~20 luật. Soát bằng code thì **5 mục đã có
+sẵn** — `expand_binomial_n` chính là `multiply_out`, `factor_minus_one` là `factor`
+với `arg: "-1"`, `negate_sum` là `distribute`, `divide_by_linear_factor` là cả một
+engine (`longdiv`, M46), `substitute_pattern` là `set_variable` — **1 mục không biểu
+diễn được**, và danh sách **bỏ sót** chỗ đắt nhất. Kết quả: 32 → **41 luật**.
+
+### 26.1 `associate` là một phép toán rỗng ở đây
+
+Đề nghị xếp nó đầu bảng, và nó **không cài được**. Dạng chuẩn tắc §3.1 làm phẳng
+`add`/`mul`:
+
+```
+(a*b + a*c) + (b*d + c*d)   →   (a*b + a*c + b*d + c*d)     gốc có 4 con
+```
+
+Hai cách nhóm là *cùng một cây*, nên không có gì để đổi. Và bất biến ấy không bỏ được:
+bỏ nó là mở lại lỗi M47 #8 — `add` lồng `add` làm **mọi đường dẫn của bước sau trỏ
+lệch**, một triệu chứng cực khó đọc.
+
+Nhu cầu thì có thật, và chỗ giải quyết nằm ở tầng khác: `factor_by_grouping` nhảy
+thẳng từ $ab+ac+bd+cd$ tới $a(b+c)+d(b+c)$, còn việc cho người đọc **thấy** cách nhóm
+là `hold` một pha tô sáng hai nhóm trước khi đổi (CHO-11, M48). **Cách nhóm là hình
+học của lời giải, không phải cấu trúc của cây.**
+
+Cùng lý lẽ ấy áp cho `abs_to_cases`: chia nhánh là việc của cây lời giải
+(`edge_type: "case"`), nên `abs_case` chỉ làm **một** nhánh và nhận `arg` là `"+"`/`"-"`
+— y hệt `quadratic_formula` (§24.3).
+
+### 26.2 Nhân tử chung phải biết số mũ
+
+`factor_by_grouping` cần nhân tử chung của một nhóm. So thừa số bằng `same` thì $x^2$
+và $x$ là hai vật khác nhau, nên nhân tử chung của $2x^2+2x$ ra $2$ thay vì $2x$ — và
+$2(x^2+x) + 3(x+1)$ **không lộ ra** thừa số $(x+1)$ chung, tức hỏng đúng việc luật này
+sinh ra để làm. Nên `monomial()` tách mỗi hạng tử thành hệ số + bảng *cơ số → số mũ*
+(khoá là chuỗi `unparse`, tức so theo **cấu trúc** chứ không theo danh tính), rồi lấy
+số mũ nhỏ nhất trên mỗi cơ số.
+
+`complete_square` đi bằng `rat`, không bằng `number`: $2x^2+3x+1 = 2(x+\frac34)^2 -
+\frac18$, mà tính bằng số thực thì $-\frac18$ ra $-0{,}12499999999999997$ và **dòng
+hình sai**.
+
+### 26.3 Bình phương hai vế là chuyện **lõi kiểm**, không phải chuyện thêm luật
+
+Đây là chỗ danh sách góp ý viết nhẹ tay ("kèm điều kiện rõ"). Hợp đồng kiểm cho
+`rel → rel` là `sameSolutionSet`; bình phương hai vế **nới rộng** tập nghiệm, nên viết
+luật ấy dưới hợp đồng cũ thì engine báo `unsound` — và báo **đúng**. Phải thêm một câu
+hỏi khác (§6.1), không phải thêm một hàm.
+
+`pow_both_sides` có ba nhánh, và sự phân biệt ấy *là* nội dung đáng dạy:
+
+| $n$ | quan hệ | kết quả |
+|---|---|---|
+| lẻ | bất kỳ | $x \mapsto x^n$ song ánh **tăng** ⇒ bảo toàn tập nghiệm, không mắc nợ gì |
+| chẵn | `=`, `!=` | **nới rộng** ⇒ hợp đồng `implies`, ghi món nợ ra hình |
+| chẵn | bất đẳng thức | **từ chối** trừ khi hai vế chắc chắn không âm — $-5<3$ mà $25>9$ |
+
+Nhánh thứ ba bám tiền lệ `mul_both_sides` từ chối khi chưa biết dấu: ở trường người ta
+tách trường hợp, và một điều kiện lấp liếm ở đây sẽ giấu mất đúng cái phải tách.
+
+**Món nợ ghi theo hợp đồng, không theo kết quả bốc điểm.** Bản đầu treo dòng đỏ vào cờ
+`widened` — "đã tìm thấy điểm mà vế sau đúng còn vế trước sai". Với **phương trình**,
+tập nghiệm có độ đo $0$ nên cờ ấy gần như không bao giờ bật, tức dòng đỏ sẽ không hiện
+ra ở đúng ca cần nó nhất. Chọn `verify: 'implies'` đã là lời khai "bước này một
+chiều"; `widened` chỉ xác nhận thêm khi may mắn bốc trúng (thường là ca bất đẳng thức).
+
+Và tình trạng kiểm được ghi **vào dòng đỏ ấy**, không vào `unchecked`: với phương trình
+thì "không bốc trúng nghiệm nào" là chuyện **cấu trúc**, xảy ra ở mọi bước bình phương,
+nên đẩy nó thành cảnh báo cho tác giả là dựng một vệt vàng thường trực mà tác giả không
+sửa được — đúng cái M45 dạy đừng làm.
+
+Răng của `implies` nằm ở **bất đẳng thức**: $x<3 \to x^2<9$ sai tại $x=-5$, và bộ bốc
+điểm trúng nửa trục âm một nửa số lần. Chốt canh dựng thẳng cặp ấy để chứng minh phép
+kiểm có răng, chứ không chỉ tin vào cái chặn ở luật.
+
+Món nợ được trả bằng `evaluate_at` — thay nghiệm ứng viên vào phương trình **gốc**. Nó
+đi hợp đồng `'instance'`, kiểm bằng **cấu trúc**: `substitute` đang được miễn kiểm, và
+M47c dạy rằng chỗ miễn kiểm là chỗ lỗ hổng nằm, nên luật này không xin miễn.
+
+### 26.4 Chốt canh quét ngẫu nhiên đã **không** quét gì suốt bốn hạng mục
+
+Thêm một khẳng định độ phủ vào phép quét ngẫu nhiên của §6, và nó lộ ra ngay: **13
+luật chưa từng được áp một lần nào**, trong đó 6 luật có từ trước M50. Hai nguyên nhân,
+cả hai đều thuộc loại "test xanh mà không kiểm gì":
+
+1. **Bộ sinh không với tới.** Nó không bao giờ sinh một quan hệ, nên cả nhóm ★ vô
+   hình; không có `^` nên không bao giờ dựng $(A+B)^2$; không có số mũ hữu tỉ nên
+   `power_to_root` cũng thế.
+2. **Bốc một cặp (nút, luật) mỗi vòng.** Đo ra thì $40\,000$ vòng chỉ áp được $175$
+   lần và chạm $4$ luật — xác suất trúng cả *hình dạng nút đúng* lẫn *luật đúng* cùng
+   lúc là tích của hai số nhỏ.
+
+Sửa: quét **mọi luật tại mọi nút**, thêm nhánh sinh quan hệ, và gieo thẳng một danh
+sách hình dạng mà bộ sinh không với tới được. Cùng ngần ấy công, độ phủ 41/41.
+
+Bảng `arg` cũng đổi từ chuỗi `?:` ba tầng sang một **bảng tra**: chuỗi `?:` thì luật
+thứ tư lặng lẽ rơi vào nhánh mặc định, luôn bị từ chối, và không ai biết.
+
+Và khẳng định độ phủ vừa bật lên đã bắt thêm một lỗi thật trong chính chốt canh: nó
+kiểm `set_variable` bằng câu hỏi "hai vế bằng nhau" trong khi luật ấy trả về một
+`binding`. Nay bỏ theo **cấu trúc kết quả** (`out.guard`, `out.binding`) chứ không theo
+danh sách tên luật — danh sách tên thì luật thứ mười lại lọt.
+
+### 26.5 Hai lỗi dấu, cả hai chỉ thấy khi nhìn PNG
+
+Lượt nhìn bắt hai lỗi mà 2654 test không bắt, và cả hai đều sai **về toán**, không chỉ
+xấu:
+
+- $-(x-2)$ in ra `−x − 2`. Dấu trừ chỉ ăn hạng tử đầu, nên đó là một biểu thức **khác**.
+  Bảng ưu tiên không bắt được vì dấu trừ ấy không phải một nút — nó là thứ `stripSign`
+  vừa bóc ra, nên chỗ duy nhất biết nó tồn tại là chỗ bóc.
+- $(-1)\cdot(-2)$ in ra `−−2`. `isNegative` tìm *một* thừa số âm rồi tách, nên phần còn
+  lại vẫn âm. Dấu của một tích phải đọc từ **tích các hệ số**.
+
+Lỗi thứ hai có sẵn trong kho: bài `factoring-identities` in $-1 \cdot 3x \cdot -1$
+với dấu sai suốt từ M47c. Sửa xong thì 2 golden đổi, và cả hai là **sửa lỗi**.

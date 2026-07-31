@@ -18,10 +18,12 @@ export { RULES, ruleById, applicableRules, type Rule } from './rules.js';
 export {
   sameValue,
   sameSolutionSet,
+  impliesSolutionSet,
   evalRelation,
   definitelyNonZero,
   definitelyNonNegative,
   definiteSign,
+  type Guard,
 } from './check.js';
 export { layout, boxOf, drawnIds } from './layout.js';
 export { toBox, measure, place, textWidth, shrink, glyphBox, FONT, ROW } from './typeset.js';

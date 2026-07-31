@@ -502,10 +502,27 @@ function negCoefIndex(e: Expr): number {
   return e.args.findIndex((a) => (a.k === 'int' && a.v < 0) || (a.k === 'rat' && a.p < 0));
 }
 
+/**
+ * Dấu của một tích đọc từ **tích các hệ số**, không từ hệ số âm đầu tiên.
+ *
+ * `distribute` trên $-(x-2)$ cho ra `mul[−1, −2]`, giá trị $+2$. Bản đầu chỉ tìm *một*
+ * thừa số âm rồi tách nó ra, nên phần còn lại vẫn âm và hình in ra `−−2`. Hai dấu trừ
+ * liền nhau không sai về giá trị nhưng không ai viết thế, và người đọc dừng lại ở đó.
+ */
+function coefficientSign(e: Expr): number {
+  if (e.k === 'int') return Math.sign(e.v);
+  if (e.k === 'rat') return Math.sign(e.p);
+  if (e.k !== 'mul') return 1;
+  let sign = 1;
+  for (const a of e.args) {
+    if (a.k === 'int' && a.v < 0) sign = -sign;
+    else if (a.k === 'rat' && a.p < 0) sign = -sign;
+  }
+  return sign;
+}
+
 function isNegative(e: Expr): boolean {
-  if (e.k === 'int') return e.v < 0;
-  if (e.k === 'rat') return e.p < 0;
-  return negCoefIndex(e) !== -1;
+  return coefficientSign(e) < 0;
 }
 
 /**
@@ -518,19 +535,31 @@ function stripSign(e: Expr): Expr {
   if (e.k === 'int') return { ...e, v: Math.abs(e.v) };
   if (e.k === 'rat') return { ...e, p: Math.abs(e.p) };
   if (e.k !== 'mul') return e;
+  if (negCoefIndex(e) === -1) return e;
 
-  const at = negCoefIndex(e);
-  if (at === -1) return e;
-  const coef = e.args[at] as Expr;
-  const rest = e.args.filter((_, i) => i !== at);
-  // Hệ số $-1$ biến mất hẳn (không ai viết `1x`); hệ số khác thì chỉ bỏ dấu.
-  if (coef.k === 'int' && coef.v === -1) {
-    return rest.length === 1 ? (rest[0] as Expr) : { ...e, args: rest };
-  }
-  const positive: Expr =
-    coef.k === 'int' ? { ...coef, v: -coef.v } : { ...(coef as Extract<Expr, { k: 'rat' }>), p: -(coef as Extract<Expr, { k: 'rat' }>).p };
-  return { ...e, args: [positive, ...rest] };
+  // Bỏ dấu ở **mọi** hệ số, không riêng cái đầu: `mul[−1, −2]` phải còn lại `2`, không
+  // phải `−2`. Chỉ bỏ dấu, không nhân gộp — gộp hệ số là việc của `fold_coefficients`,
+  // một luật có tên và có dòng riêng trên hình.
+  const positive = e.args.map((a): Expr => {
+    if (a.k === 'int' && a.v < 0) return { ...a, v: -a.v };
+    if (a.k === 'rat' && a.p < 0) return { ...a, p: -a.p };
+    return a;
+  });
+  // Hệ số $1$ sinh ra do bỏ dấu thì biến mất hẳn — không ai viết `1x`.
+  const kept = positive.filter((a) => !(a.k === 'int' && a.v === 1));
+  if (kept.length === 0) return { k: 'int', v: 1, id: e.id };
+  if (kept.length === 1) return kept[0] as Expr;
+  return { ...e, args: kept };
 }
+
+/**
+ * Thân của một hạng tử **sau khi dấu trừ đã tách ra**, bọc ngoặc nếu cần.
+ *
+ * $-(x-2)$ mà in `−x − 2` là in ra một biểu thức **khác**: dấu trừ chỉ ăn hạng tử đầu.
+ * Bảng ưu tiên không bắt được vì dấu trừ ấy không phải một nút — nó là thứ `stripSign`
+ * vừa bóc ra, nên chỗ duy nhất biết nó tồn tại là đây.
+ */
+const needsGuardAfterSign = (e: Expr): boolean => e.k === 'add';
 
 export function toBox(e: Expr, size: number = FONT): Box {
   const tag = (inner: Box): Box => ({ t: 'tag', id: e.id, inner });
@@ -573,7 +602,10 @@ export function toBox(e: Expr, size: number = FONT): Box {
         if (i > 0) items.push(...binop(negative ? '−' : '+', size, 0.22));
         else if (negative) items.push(text('−', size));
         const shown = negative ? stripSign(arg) : arg;
-        items.push(wrap(shown, toBox(shown, size)));
+        const box = toBox(shown, size);
+        items.push(
+          negative && needsGuardAfterSign(shown) ? { t: 'paren', inner: box, size } : wrap(shown, box),
+        );
       });
       return tag({ t: 'row', items });
     }
@@ -584,9 +616,13 @@ export function toBox(e: Expr, size: number = FONT): Box {
       // vì trước đó tích âm luôn nằm trong một tổng.
       if (isNegative(e)) {
         const body = stripSign(e);
+        const inner = body.k === 'mul' ? bareMul(body, size) : toBox(body, size);
         return tag({
           t: 'row',
-          items: [text('−', size), body.k === 'mul' ? bareMul(body, size) : toBox(body, size)],
+          items: [
+            text('−', size),
+            needsGuardAfterSign(body) ? { t: 'paren', inner, size } : inner,
+          ],
         });
       }
       const items: Box[] = [];
@@ -601,7 +637,11 @@ export function toBox(e: Expr, size: number = FONT): Box {
         // Căn bậc $n$ có chỉ số ở góc trên trái; đứng sát một chữ số thì `3` của hệ số
         // và `3` của chỉ số đọc thành `33`. Hở một chút là đủ tách chúng ra.
         else if (i > 0 && arg.k === 'root' && arg.index !== 2) items.push(gap(size * 0.16));
-        items.push(wrap(arg, toBox(arg, size)));
+        // Thừa số âm **không đứng đầu** phải có ngoặc: `−1·−2` đọc ra hai phép toán
+        // liền nhau. `bareMul` đã làm đúng chỗ này từ M47c; nhánh chính thì quên, và
+        // nó chỉ lộ ra khi một tích *dương* chứa hai thừa số âm.
+        const bare = toBox(arg, size);
+        items.push(i > 0 && isNegative(arg) ? { t: 'paren', inner: bare, size } : wrap(arg, bare));
       });
       return tag({ t: 'row', items });
     }

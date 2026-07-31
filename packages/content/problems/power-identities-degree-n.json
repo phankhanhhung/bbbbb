@@ -1,0 +1,176 @@
+{
+  "schema_version": "0.3.0",
+  "id": "power-identities-degree-n",
+  "statement": {
+    "vi": "Hiệu hai bình phương ai cũng thuộc. Nhưng $a^n - b^n$ phân tích được với **mọi** $n$, còn $a^n + b^n$ thì chỉ khi $n$ lẻ. Xem ba trường hợp và chỗ ranh giới nằm ở đâu."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: luật không tự đặt trần cho $n$. Nhân tử thứ hai có đúng $n$ hạng tử nên nó tự đụng trần kích thước của hình — mà trần ấy đo chiều rộng vẽ ra thật, nên nó biết chính xác lúc nào công thức không còn vừa khung."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nhân tử thứ hai chạy hết các đơn thức bậc $n-1$ theo $a$ và $b$, tất cả mang dấu cộng. Nhân ngược lại thì mọi hạng tử giữa triệt tiêu từng đôi một và [[a1|chỉ còn]] $a^4$ với $-b^4$ — đó là lý do hằng đẳng thức này đúng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a^4 - b^4",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_power_difference"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: a mũ 4 trừ b mũ 4, rồi (a trừ b) nhân tổng bốn hạng tử."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Với **tổng** thì dấu trong nhân tử thứ hai đan xen, và điều đó chỉ khép kín được khi $n$ lẻ. [[a1|Bậc ba]] là trường hợp quen nhất: $a^3+b^3 = (a+b)(a^2-ab+b^2)$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a^3 + b^3",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_power_sum_odd"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: a lập phương cộng b lập phương, rồi (a cộng b) nhân (a bình trừ ab cộng b bình)."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cùng một luật lên bậc năm, dấu vẫn đan xen đều. [[a1|Nhân tử thứ hai]] có năm hạng tử — nhiều hơn bậc ba đúng hai, và đó là toàn bộ khác biệt."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a^5 + b^5",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_power_sum_odd"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: a mũ 5 cộng b mũ 5, rồi (a cộng b) nhân tổng đan dấu năm hạng tử."
+          },
+          "verified": true
+        },
+        {
+          "id": "end",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hiệu hai bình phương chỉ là trường hợp $n = 2$ của cùng một luật. Nhân tử thứ hai lúc ấy có đúng hai hạng tử và [[a1|thu về]] $(a-b)(a+b)$ — công thức quen thuộc, không phải một hằng đẳng thức riêng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a^2 - b^2",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_power_difference"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: a bình trừ b bình, rồi (a trừ b)(a cộng b)."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

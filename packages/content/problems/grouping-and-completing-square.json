@@ -1,0 +1,151 @@
+{
+  "schema_version": "0.3.0",
+  "id": "grouping-and-completing-square",
+  "statement": {
+    "vi": "Hai mẹo mà mắt phải nhìn ra chứ máy không tính ra được: **nhóm hạng tử** cho lộ nhân tử chung, và **hoàn thành bình phương** cho lộ giá trị nhỏ nhất. Cả hai đều không thêm phép tính nào — chúng chỉ đổi cách viết."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: tác giả khai cách nhóm, engine tính phần còn lại. Nhân tử chung của $2x^2+2x$ là $2x$ chứ không phải $2$ — và chính chỗ đó là thứ làm lộ ra thừa số $(x+1)$ chung với nhóm sau."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bốn hạng tử không có nhân tử chung nào. Nhưng nhóm hai cái đầu với nhau và hai cái sau với nhau thì mỗi nhóm có nhân tử riêng, và [[a1|cả hai nhóm]] cùng để lại $(x+1)$. Cách nhóm là mẹo của bài nên tác giả phải khai; phần còn lại engine tính."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2*x^2 + 2*x + 3*x + 3",
+              "steps": [
+                {
+                  "arg": "0,1|2,3",
+                  "at": "",
+                  "note": "nhóm (1,2) và (3,4)",
+                  "rule": "factor_by_grouping"
+                },
+                {
+                  "arg": "(x + 1)",
+                  "at": "",
+                  "rule": "factor"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: bốn hạng tử, rồi 2x nhân (x cộng 1) cộng 3 nhân (x cộng 1), rồi (x cộng 1)(2x cộng 3)."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hoàn thành bình phương viết tam thức thành một bình phương cộng một hằng số. [[a1|Dạng ấy]] đọc ra ngay giá trị nhỏ nhất: bình phương không âm nên $(x+3)^2 - 4 \\ge -4$, dấu bằng khi $x = -3$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x^2 + 6*x + 5",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "complete_square"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: x bình cộng 6x cộng 5, rồi (x cộng 3) tất cả bình phương trừ 4."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hệ số dẫn đầu khác $1$ thì hằng số sinh ra là **phân số**, và engine giữ nó chính xác chứ không làm tròn. [[a1|Ở đây]] phần dư là $-\\frac18$; tính bằng số thực thì nó ra $-0{,}12499999999999997$ và dòng hình sai."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2*x^2 + 3*x + 1",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "complete_square"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: 2x bình cộng 3x cộng 1, rồi 2 nhân (x cộng ba phần tư) bình phương trừ một phần tám."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

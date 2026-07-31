@@ -40,7 +40,8 @@ export interface PlacedLine {
 
 export interface Layout {
   readonly lines: readonly PlacedLine[];
-  readonly conditions: { readonly x: number; readonly y: number; readonly text: string } | null;
+  /** Dòng chữ đỏ dưới hình: điều kiện AL-08, rồi món nợ nghiệm ngoại lai. */
+  readonly notes: readonly { readonly x: number; readonly y: number; readonly text: string }[];
   readonly width: number;
   readonly height: number;
 }
@@ -105,21 +106,26 @@ export function layout(model: AlgebraModel): Layout {
     right,
   );
 
-  const conditions =
-    model.conditions.length === 0
-      ? null
-      : {
-          x: 0,
-          y: round(y + COND_SIZE * 0.8),
-          text: `với ${model.conditions.join(', ')}`,
-        };
-  if (conditions !== null) y += COND_SIZE * 1.6;
+  // Hai loại dòng đỏ, và chúng nói hai chuyện khác nhau:
+  //
+  //   - **điều kiện** (AL-08): bước chỉ đúng khi điều kiện đúng — một *giả thiết*;
+  //   - **nghiệm ngoại lai**: bước đúng nhưng nới rộng tập nghiệm — một *món nợ*,
+  //     phải trả bằng một lượt thử lại về sau.
+  //
+  // Gộp chúng vào một dòng là nói người đọc rằng chúng cùng loại. Không cùng.
+  const notes: Array<{ x: number; y: number; text: string }> = [];
+  const pushNote = (text: string): void => {
+    notes.push({ x: 0, y: round(y + COND_SIZE * 0.8), text });
+    y += COND_SIZE * 1.6;
+  };
+  if (model.conditions.length > 0) pushNote(`với ${model.conditions.join(', ')}`);
+  if (model.extraneous.length > 0) pushNote('nghiệm có thể ngoại lai — phải thử lại');
 
   return {
     lines: withLabels,
-    conditions,
+    notes,
     width: round(
-      Math.max(labelRight, conditions === null ? 0 : estimateTextWidth(conditions.text, COND_SIZE)),
+      Math.max(labelRight, ...notes.map((n) => estimateTextWidth(n.text, COND_SIZE))),
     ),
     height: round(y),
   };

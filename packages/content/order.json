@@ -90,9 +90,18 @@
     "radical-simplify",
     "factoring-identities",
     "conjugate-and-nested-radicals",
-    "quartic-by-substitution"
+    "quartic-by-substitution",
+    "absolute-value-two-cases",
+    "extraneous-root-by-squaring",
+    "fractions-common-denominator",
+    "grouping-and-completing-square",
+    "power-identities-degree-n"
   ],
   "newest": [
-    "quartic-by-substitution"
+    "absolute-value-two-cases",
+    "extraneous-root-by-squaring",
+    "fractions-common-denominator",
+    "grouping-and-completing-square",
+    "power-identities-degree-n"
   ]
 }
