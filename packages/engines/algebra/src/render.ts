@@ -170,6 +170,13 @@ export const algebraRenderer: EngineRenderer = {
               'font-family': ctx.theme.type.uiFamily,
               'font-size': round(RULE_SIZE),
               fill: ctx.theme.surface.guide,
+              // Nhãn luật **thuộc về dòng của nó**, và phải khai ra điều đó.
+              //
+              // Không khai thì nó không mang danh tính nào, và một pha `show` hiện
+              // dòng $k$ không chạm tới nó: khung đầu tiên bày sẵn tên bốn phép biến
+              // đổi trong khi chỉ mới có một dòng. Lỗi này không test nào bắt — nó
+              // hiện ra ở lượt nhìn khung 0 của timeline vừa sinh.
+              'data-el': line.box.id,
             },
             line.label.text,
           ),

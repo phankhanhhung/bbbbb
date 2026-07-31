@@ -455,6 +455,9 @@ quan hệ được **suy**, không được **khai**.
 Nhãn pha là **chữ trơn**, không LaTeX — nó đi thẳng vào `aria-valuetext`
 (`lint/label-not-plain`, M46). Tên luật tiếng Việt dùng luôn làm nhãn.
 
+> **Cài ở M51.** Bảng trên đúng về nguyên tắc và sai ở hai chỗ về phương tiện —
+> `move`/`morph` không dùng được, và danh tính phải mang tên theo dòng. Xem §27.
+
 ---
 
 ## 11. Mặt DSL
@@ -1136,3 +1139,86 @@ xấu:
 
 Lỗi thứ hai có sẵn trong kho: bài `factoring-identities` in $-1 \cdot 3x \cdot -1$
 với dấu sai suốt từ M47c. Sửa xong thì 2 golden đổi, và cả hai là **sửa lỗi**.
+
+
+---
+
+## 27. Choreography sinh tự động — cài thật (M51)
+
+§10 khai mục này từ đầu và nó **chưa từng được cài**. Số đo lúc bắt tay:
+
+```
+414 step có scene  →  20 step có choreography
+ 39 step engine algebra  →  0
+```
+
+Toàn bộ hình đại số trong kho là **ảnh tĩnh**: mọi dòng hiện cùng lúc, không nhịp,
+không mốc dừng. Cả bộ máy timeline, nhãn pha và `hold` dựng ở M48 chưa chạm tới engine
+mới nhất và lớn nhất.
+
+### 27.1 Danh tính phải mang tên **theo dòng**
+
+`TermId` bền qua các dòng — đó là cả thiết kế (DAT-11/12): $e_2$ ở dòng ba đúng là nút
+$e_2$ của dòng một. Nhưng choreography **địa chỉ hoá bằng tên**, nên một pha chạm `e2`
+chạm mọi dòng còn chứa nó. Đo trên SVG thật:
+
+```
+hàng 0: e1 e2 e3 e6 e7 e9 e10 e12 e13
+hàng 1: e2 … e14 e16 …          ← e2 có ở cả hai
+hàng 2: e14 e16 …
+```
+
+Với `focus` thì va chạm ấy lại **hay** — hạng tử sáng lên ở mọi chỗ nó còn sống, đúng
+nghĩa "vẫn là một vật ấy". Với `show` thì hỏng hẳn: không hiện được dòng $k$ mà giữ
+dòng $k-1$ nguyên. Nên mực mang tên `r{k}-{TermId}` (dấu `-` vì `ENTITY_ID_PATTERN`
+không nhận dấu hai chấm), còn `TermId` vẫn nguyên trong model để `trace` nói được ai là
+ai. Muốn hiệu ứng "sáng ở mọi dòng" thì pha khai nhiều đích — bộ sinh làm được vì nó
+biết hạng tử sống ở những dòng nào.
+
+Đổi được rẻ vì **không anchor nào trong kho trỏ vào tên hạng tử**: 39/39 step đại số chỉ
+neo vào `row0`…`row7`, mà tên dòng giữ nguyên.
+
+### 27.2 Vì sao **không** có `move`/`morph`
+
+Bảng §10 xếp `move`/`morph` làm phương tiện chính. Không dùng được, và lý do thuộc về
+cấu trúc chứ không phải công sức: trong một chuỗi biến đổi **mọi dòng đều ở lại trên màn
+hình**. `move` hiện có nghĩa "bay **tới**" một đích rồi đậu ở đó, nên muốn hạng tử dòng
+$k$ bay xuống dòng $k+1$ thì phải lấy bản của dòng $k$ đi — và dòng $k$ thủng một lỗ.
+
+Thứ cần là "bay **từ**", tức một trường `from` hoặc một `kind` mới trên
+`ChoreographyPhase` — lược đồ **dùng chung cho cả chín engine**. Không lén thêm ở đây.
+
+Nên "hạng tử này chính là hạng tử kia" được kể bằng `focus` **đồng thời ở cả hai dòng**.
+Nhờ `TermId` bền, bộ sinh biết chính xác cặp ấy — thứ mà một lớp animation suy từ chênh
+lệch hai ảnh (`interpolateNodes`, CHO-10) không bao giờ biết được.
+
+### 27.3 Nhịp suy từ **hình dạng kết quả**, không từ bảng tên luật
+
+Mỗi bước sinh tối đa bốn pha:
+
+| pha | đọc từ | kể gì |
+|---|---|---|
+| `focus` + **`hold`** | `row.at` | chỗ sắp đổi, ở dòng trên — và dừng lại đây |
+| `dim` | `trace[x] = []` | cái sắp biến mất, mờ đi trước khi dòng mới hiện |
+| `show` | mọi id của dòng $k$ | dòng mới hiện ra |
+| `focus` | `trace` ra nhiều bản / nhiều về một / `born` | nhân bản, gộp lại, hay phần mới |
+
+Một bảng `rule.id → kiểu chuyển động` sẽ quên luật thứ 42. Đọc cấu trúc thì luật mới có
+nhịp đúng ngay hôm nó ra đời — cùng bài học với `out.guard`/`out.binding` ở M50.
+
+`hold` đặt đúng ở pha "chỗ sắp đổi" chứ không rải đều: đó là khoảnh khắc người đọc cần
+để nhìn ra *vì sao* luật áp được. Và nó không bao giờ rơi vào pha cuối (luôn còn pha
+"hiện dòng" phía sau), nên bất biến của `lint/hold-at-end` được giữ — dù lint **không
+soi được** timeline sinh lúc chạy, nên chốt canh cho nó phải nằm trong test engine.
+
+Tác giả vẫn đè được: `step.choreography` luôn thắng. Engine chỉ lấp chỗ trống.
+
+### 27.4 Một lỗi nữa chỉ lượt nhìn bắt được
+
+Khung $0$ của timeline vừa sinh bày sẵn **tên cả bốn phép biến đổi** trong khi mới có
+một dòng: nhãn luật không mang danh tính nào, nên `show` không chạm tới nó.
+
+Và chốt canh đầu tiên tao viết cho nó **không có răng** — nó hỏi "danh tính này thuộc
+dòng nào", mà lỗi chính là nhãn *không có* danh tính, nên nó bỏ qua đúng cái phải bắt.
+Câu hỏi đúng: **"chữ nào còn mực ở khung 0"**, và mọi chữ ấy phải thuộc dòng một. Bản
+sửa được kiểm bằng cách bỏ lại dòng `data-el` và xem test đỏ — bắt đúng ba nhãn.

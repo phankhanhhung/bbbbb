@@ -46,6 +46,23 @@ export interface Layout {
   readonly height: number;
 }
 
+/**
+ * Danh tính của một hạng tử **trong một dòng cụ thể**.
+ *
+ * `TermId` bền qua các dòng — đó là cả thiết kế (DAT-11/12): $e_2$ ở dòng ba đúng là
+ * nút $e_2$ của dòng một. Nhưng nó khiến **cùng một tên** nằm trên nhiều nút DOM, và
+ * choreography địa chỉ hoá bằng tên: một pha chạm `e2` chạm mọi dòng còn chứa nó. Với
+ * `focus` thì đó lại hay — hạng tử sáng lên ở mọi chỗ nó còn sống. Với `show` thì
+ * hỏng: không hiện được dòng $k$ mà giữ dòng $k-1$ nguyên.
+ *
+ * Nên mực mang tên **theo dòng**, còn `TermId` vẫn nguyên trong model để `trace` nói
+ * được ai là ai. Muốn hiệu ứng "sáng ở mọi dòng" thì pha khai nhiều đích — bộ sinh
+ * làm được vì nó biết hạng tử sống ở những dòng nào.
+ *
+ * Dấu `-` chứ không phải `:`: `ENTITY_ID_PATTERN` không nhận dấu hai chấm.
+ */
+export const elementId = (rowIndex: number, term: string): string => `r${rowIndex}-${term}`;
+
 /** Bề ngang phần đứng **trước** dấu quan hệ — thứ mọi dòng phải gióng theo. */
 function leadWidth(row: AlgebraRow): number {
   return row.expr.k === 'rel' ? measure(toBox(row.expr.lhs)).w : 0;
@@ -59,19 +76,20 @@ export function layout(model: AlgebraModel): Layout {
   let y = 0;
   let right = 0;
 
-  for (const row of rows) {
+  for (const [k, row] of rows.entries()) {
     const box = toBox(row.expr);
     const m = measure(box);
     const x = maxLead - leadWidth(row);
     const baseline = y + m.above;
     const p = place(box, x, baseline);
+    const scope = (id: string | null): string | null => (id === null ? null : elementId(k, id));
 
     lines.push({
       row,
-      glyphs: p.glyphs,
-      rules: p.rules,
-      paths: p.paths,
-      boxes: p.boxes,
+      glyphs: p.glyphs.map((g) => ({ ...g, owner: scope(g.owner) })),
+      rules: p.rules.map((r) => ({ ...r, owner: scope(r.owner) })),
+      paths: p.paths.map((q) => ({ ...q, owner: scope(q.owner) })),
+      boxes: p.boxes.map((b) => ({ ...b, id: elementId(k, b.id) })),
       box: {
         id: row.id,
         x: round(x),

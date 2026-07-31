@@ -327,6 +327,36 @@ test.describe('Choreography (CHO-02, CHO-09)', () => {
     await expect(page.getByRole('button', { name: 'Pha sau' })).toBeVisible();
   });
 
+  test('AL-06 — bài đại số có timeline **do engine sinh**, không do tác giả gõ', async ({ page }) => {
+    // Trước M51: 39/39 step đại số không có một pha nào, tức mọi hình đại số trong
+    // kho là ảnh tĩnh và cả bộ máy timeline của M48 chưa chạm tới engine mới nhất.
+    // Không bài nào trong kho khai `choreography` cho engine này — nên thanh điều
+    // khiển hiện ra ở đây **chỉ có thể** đến từ bộ sinh.
+    await page.goto('/?p=grouping-and-completing-square&sol=sol&step=s0');
+    await reveal(page);
+
+    const scrub = page.getByLabel('Tua trong bước');
+    await expect(scrub).toBeVisible();
+    await expect(scrub).toHaveValue('0');
+
+    // Khung đầu chỉ có dòng một: mực của dòng sau bị `show` giữ ở độ hiện 0.
+    const inkAt = async (): Promise<number> =>
+      page.locator('.canvas svg text:not([opacity="0"])').count();
+    const first = await inkAt();
+    expect(first).toBeGreaterThan(0);
+
+    // Nhịp có mốc dừng: bộ sinh đặt `hold` ở đúng chỗ sắp đổi, nên bấm chạy thì nó
+    // dừng giữa chừng và nút đổi thành "Tiếp". Kiểm **trước** khi kéo thanh tua —
+    // kéo tới cuối rồi thì không còn pha nào phía sau để mà dừng.
+    const bar = page.locator('.timeline');
+    await bar.getByRole('button', { name: 'Chạy', exact: true }).click();
+    await expect(bar.getByRole('button', { name: 'Tiếp' })).toBeVisible({ timeout: 8000 });
+
+    // Kéo tới cuối thì mọi dòng đã hiện — nhiều chữ hơn hẳn khung đầu.
+    await scrub.fill(String(await scrub.getAttribute('max')));
+    await expect.poll(inkAt).toBeGreaterThan(first);
+  });
+
   test('CHO-11 — `hold` **dừng** phát lại giữa chừng, và nút đổi thành "Tiếp"', async ({ page }) => {
     // Không phải chuyện tốc độ: chỉnh chậm lại thì cả timeline chậm đều, mà thứ cần
     // là **nhịp không đều** — dừng đúng chỗ tác giả bảo dừng.

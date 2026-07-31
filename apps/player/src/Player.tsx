@@ -161,7 +161,22 @@ export function Player({
     return () => clearTimeout(timer);
   }, [playing, speed, goNext]);
 
-  const timeline = useChoreography(step.choreography, speed);
+  /**
+   * Timeline **hiệu lực**: tác giả viết tay thì dùng cái ấy, không thì hỏi engine.
+   *
+   * Thứ tự này là hợp đồng: `step.choreography` luôn thắng, nên một bài muốn nhịp
+   * riêng vẫn viết được. Engine chỉ lấp chỗ trống — mà chỗ trống ấy hiện là **39/39**
+   * step đại số, tức toàn bộ engine mới nhất đang là ảnh tĩnh.
+   */
+  const choreography = useMemo(() => {
+    if (step.choreography) return step.choreography;
+    if (!step.scene) return undefined;
+    const engine = engines?.get(step.scene.engine);
+    if (!engine?.choreography) return undefined;
+    return engine.choreography(step.scene, Object.keys(step.anchors ?? {})[0] ?? 'a1');
+  }, [step, engines]);
+
+  const timeline = useChoreography(choreography, speed);
 
   /**
    * CHO-07 — pha đang chạy sáng đúng câu nó giải thích.
@@ -213,8 +228,8 @@ export function Player({
 
     if (!renderer || !container || !baseNodes) return;
 
-    const next = step.choreography
-      ? applyChoreography(baseNodes, step.choreography, timeline.ms)
+    const next = choreography
+      ? applyChoreography(baseNodes, choreography, timeline.ms)
       : baseNodes;
 
     const isStepChange = previous.current.length > 0 && lastStepId.current !== step.id;
@@ -224,7 +239,7 @@ export function Player({
     // lên mỗi khung rAF sẽ làm mọi thứ trễ đúng một nhịp; còn `setDiff` mỗi
     // khung thì so một khung với khung liền trước — luôn khác nhau chút ít, và
     // dải "vừa đổi" ở lời giải sẽ nhấp nháy suốt timeline.
-    if (!isStepChange && step.choreography) {
+    if (!isStepChange && choreography) {
       patch(container, next);
       previous.current = next;
       return;
@@ -239,7 +254,7 @@ export function Player({
     previous.current = next;
     lastStepId.current = step.id;
     return () => handle.cancel();
-  }, [renderer, baseNodes, step, ctx, speed, timeline.ms]);
+  }, [renderer, baseNodes, step, choreography, ctx, speed, timeline.ms]);
 
   // NFR-A2: mọi điều khiển tới được bằng bàn phím.
   useEffect(() => {
@@ -363,7 +378,7 @@ export function Player({
           <BijectionPanes step={step} renderer={renderer} labels={atlas} />
         ) : (
           <div
-            class={step.choreography ? 'canvas canvas--choreo' : 'canvas'}
+            class={choreography ? 'canvas canvas--choreo' : 'canvas'}
             onPointerDown={(event: PointerEvent) => {
               swipeStart.current = event.clientX;
             }}
@@ -380,8 +395,8 @@ export function Player({
               role="img"
               aria-label={interpolate(step.alt_text?.vi ?? altFallback(step))}
             />
-            {revealed && step.choreography ? (
-              <Timeline spec={step.choreography} state={timeline} />
+            {revealed && choreography ? (
+              <Timeline spec={choreography} state={timeline} />
             ) : null}
           </div>
         )}

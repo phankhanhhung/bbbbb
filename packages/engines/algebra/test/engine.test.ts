@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { createContext, createRenderer } from '@combviz/render';
+import { applyChoreography, createContext, createRenderer } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
 import type { Scene } from '@combviz/schema';
+import type { SvgNode } from '@combviz/render';
 import {
   Minter,
   algebraHitTest,
   algebraRenderer,
   algebraSchemaFragment,
+  algebraChoreography,
   allPaths,
+  drawnIds,
+  elementId,
   impliesSolutionSet,
   layout,
   measure,
@@ -521,13 +525,16 @@ describe('danh tính', () => {
   });
 
   it('chạm vào một chỗ thì chọn trúng nút **sâu nhất**', () => {
-    const box = algebraRenderer.elementBoxes!(EXPAND, 'e1')[0]!;
+    // Danh tính mực mang tên **theo dòng** (`r0-e1`), vì `TermId` bền qua các dòng
+    // nên một tên trần chạm vào mọi dòng còn chứa nó — xem `elementId`.
+    const id = elementId(0, 'e1');
+    const box = algebraRenderer.elementBoxes!(EXPAND, id)[0]!;
     const hits = algebraHitTest(EXPAND, {
       x: box.x + box.width / 2,
       y: box.y + box.height / 2,
     });
 
-    expect(hits[0]).toBe('e1');
+    expect(hits[0]).toBe(id);
   });
 });
 
@@ -964,6 +971,164 @@ describe('hằng đẳng thức luỹ thừa bậc n', () => {
     const m = run('a^12 - b^12', [{ rule: 'factor_power_difference', at: '' }]);
     expect(m.refusal).not.toBeNull();
     expect(m.refusal).toMatch(/rộng|nút/);
+  });
+});
+
+describe('AL-06 — choreography sinh từ model', () => {
+  const spec = (start: string, steps: AlgebraStep[]): NonNullable<ReturnType<typeof algebraChoreography>> =>
+    algebraChoreography(scene(start, steps)) as never;
+
+  it('mọi đích của mọi pha đều là danh tính **có mực**', () => {
+    // Một pha nhắm vào tên không tồn tại là một pha im lặng không làm gì: chạy đủ
+    // thời lượng, màn hình đứng im. Vì choreography này sinh lúc chạy nên
+    // `structure.ts` không soi nó — chốt canh phải nằm ở đây.
+    let checked = 0;
+    for (const [start, steps] of [
+      ['(x + 1)^2 + 3*x', [{ rule: 'expand_square', at: '0' }, { rule: 'collect_like', at: '' }]],
+      ['1/x + 1/y', [{ rule: 'common_denominator', at: '' }]],
+      ['a*(a - b)', [{ rule: 'distribute', at: '' }]],
+      ['sqrt(x + 5) = x - 1', [{ rule: 'pow_both_sides', at: '', arg: '2' }]],
+      ['2*x^2 + 2*x + 3*x + 3', [{ rule: 'factor_by_grouping', at: '', arg: '0,1|2,3' }]],
+    ] as Array<[string, AlgebraStep[]]>) {
+      const s = scene(start, steps);
+      const drawn = drawnIds(layout(readAlgebra(s)));
+      const timeline = algebraChoreography(s);
+      expect(timeline, start).toBeDefined();
+
+      for (const phase of (timeline as NonNullable<typeof timeline>).phases) {
+        for (const id of phase.targets) {
+          checked += 1;
+          expect(drawn.has(id), `${start}: pha ${phase.id} nhắm "${id}" — không có mực`).toBe(true);
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(50);
+  });
+
+  it('`hold` đứng ở chỗ **sắp đổi**, và không bao giờ ở pha cuối', () => {
+    // Luật `lint/hold-at-end` (M48) không soi được timeline sinh lúc chạy, nên bất
+    // biến ấy phải tự giữ ở đây.
+    const timeline = spec('(x + 1)^2 + 3*x', [
+      { rule: 'expand_square', at: '0' },
+      { rule: 'drop_unit', at: '1' },
+      { rule: 'collect_like', at: '' },
+    ]);
+    const ordered = [...timeline.phases].sort((a, b) => a.at - b.at);
+    const holds = ordered.filter((p) => p.hold === true);
+
+    expect(holds.length).toBe(3);
+    expect(holds.every((p) => p.kind === 'focus')).toBe(true);
+    // Mỗi `hold` phải có nhãn — dừng lại mà không có gì đọc là kẹt, không phải nghỉ.
+    expect(holds.every((p) => (p.label?.vi ?? '').length > 0)).toBe(true);
+    expect(ordered.at(-1)?.hold).not.toBe(true);
+  });
+
+  it('nhãn pha là **chữ trơn**, không LaTeX', () => {
+    // Nhãn vào giao diện nguyên văn (aria-valuetext, bộ đếm pha). `$x^2$` ở đó hiện
+    // ra đúng bốn ký tự và trình đọc màn hình đọc "đô la x mũ hai đô la" — chính là
+    // luật `lint/label-not-plain` của M48, nay áp cho chữ engine tự sinh.
+    const timeline = spec('a*(a - b)', [{ rule: 'distribute', at: '' }]);
+    for (const p of timeline.phases) {
+      const text = p.label?.vi ?? '';
+      expect(text).not.toMatch(/\$.+\$/);
+      expect(text).not.toMatch(/\\[a-zA-Z]/);
+    }
+  });
+
+  it('kể đúng chuyện: nhân bản, gộp lại, phần mới', () => {
+    // Đọc từ **cấu trúc** `trace`, không từ tên luật — nên luật thứ 42 cũng có nhịp.
+    const label = (start: string, steps: AlgebraStep[]): string[] =>
+      spec(start, steps).phases.map((p) => p.label?.vi ?? '');
+
+    // `distribute` nhân bản một nhánh ⇒ `trace` có mục ra hai bản.
+    expect(label('a*(a - b)', [{ rule: 'distribute', at: '' }])).toContain('nhân bản');
+    // `collect_like` nhập hai hạng tử ⇒ nhiều mục cùng về một.
+    expect(
+      label('x + 2*x', [{ rule: 'collect_like', at: '' }]),
+    ).toContain('gộp lại');
+    // Nhãn của pha `focus` đầu là **tên luật**, hoặc `note` khi tác giả đè.
+    expect(label('sqrt(48)', [{ rule: 'pull_square_out', at: '', note: 'rút ra ngoài' }])).toContain(
+      'rút ra ngoài',
+    );
+  });
+
+  it('khung đầu chỉ có **dòng một** — kể cả nhãn luật', () => {
+    // Chốt canh cho một lỗi mà 78 test không bắt và lượt nhìn khung 0 bắt ngay: nhãn
+    // luật không mang danh tính nào, nên `show` không chạm tới nó và khung đầu bày
+    // sẵn tên cả bốn phép biến đổi trong khi mới có một dòng.
+    const s = scene('(x + 1)^2 + 3*x', [
+      { rule: 'expand_square', at: '0' },
+      { rule: 'drop_unit', at: '1' },
+      { rule: 'collect_like', at: '' },
+    ]);
+    const nodes = applyChoreography(
+      algebraRenderer.render(s, ctx),
+      algebraChoreography(s) as never,
+      0,
+    );
+
+    // Soi **mọi `<text>`**, không soi theo `data-el`. Đó là cả điểm: lỗi vừa sửa là
+    // nhãn **không có** `data-el`, nên một chốt canh hỏi "danh tính này thuộc dòng
+    // nào" sẽ bỏ qua đúng cái nó phải bắt. Câu hỏi đúng là "chữ nào còn mực ở khung
+    // 0", và mọi chữ ấy phải thuộc dòng một. (Scene này không có dòng điều kiện — mấy
+    // dòng đỏ ấy là tóm tắt cả chuỗi, không thuộc dòng nào.)
+    const leaked: string[] = [];
+    const visit = (list: readonly SvgNode[]): void => {
+      for (const n of list) {
+        if (n.tag === 'text' && Number(n.attrs['opacity'] ?? 1) > 0) {
+          const owner = n.attrs['data-el'];
+          if (typeof owner !== 'string' || !owner.startsWith('r0-')) {
+            leaked.push(`${String(n.children?.[0] ?? '?')} (${String(owner)})`);
+          }
+        }
+        if (n.children) visit(n.children as readonly SvgNode[]);
+      }
+    };
+    visit(nodes as readonly SvgNode[]);
+
+    expect(leaked, `lộ trước ở khung 0: ${leaked.join(' | ')}`).toEqual([]);
+  });
+
+  it('không có gì để kể thì **không** sinh timeline', () => {
+    // Một dòng thì không có bước nào, và một timeline rỗng chỉ tổ hiện thanh điều
+    // khiển trống.
+    expect(algebraChoreography(scene('x + 1', []))).toBeUndefined();
+    // Scene bị từ chối cũng thế — không có model thì không có nhịp.
+    expect(algebraChoreography(scene('2x +', []))).toBeUndefined();
+  });
+
+  it('pha xếp theo thời gian và không pha nào dài quá trần lược đồ', () => {
+    const timeline = spec('(x + 1)^2 + 3*x', [
+      { rule: 'expand_square', at: '0' },
+      { rule: 'drop_unit', at: '1' },
+      { rule: 'eval_int', at: '2' },
+      { rule: 'collect_like', at: '' },
+    ]);
+    for (const p of timeline.phases) {
+      expect(p.at).toBeGreaterThanOrEqual(0);
+      expect(p.at + p.duration).toBeLessThanOrEqual(60_000);
+      expect(p.targets.length).toBeGreaterThan(0);
+      expect(p.targets.length).toBeLessThanOrEqual(200);
+    }
+    // Mỗi bước sinh ít nhất hai pha: chỗ sắp đổi, rồi dòng mới.
+    expect(timeline.phases.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it('danh tính mực mang tên theo dòng, nên `show` dòng sau không đụng dòng trước', () => {
+    // Đây là lý do `elementId` tồn tại. `TermId` bền qua các dòng (DAT-11/12) nên một
+    // tên trần chạm mọi dòng còn chứa nó — hiện dòng 2 sẽ hiện luôn dòng 1.
+    const s = scene('(x + 1)^2 + 3*x', [{ rule: 'expand_square', at: '0' }]);
+    const box = layout(readAlgebra(s));
+    const row0 = new Set(box.lines[0]!.boxes.map((b) => b.id));
+    const row1 = new Set(box.lines[1]!.boxes.map((b) => b.id));
+
+    const shared = [...row0].filter((id) => row1.has(id));
+    expect(shared, `tên dùng chung giữa hai dòng: ${shared.join(', ')}`).toEqual([]);
+
+    // Và hạng tử **không đổi** vẫn nhận ra được là một vật, qua phần đuôi của tên.
+    const term = (id: string): string => id.slice(id.indexOf('-') + 1);
+    const carried = [...row0].map(term).filter((t) => [...row1].map(term).includes(t));
+    expect(carried.length).toBeGreaterThan(0);
   });
 });
 
