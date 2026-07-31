@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M47 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 90 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M47 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 91 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,32 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M47e — Đặt ẩn phụ và công thức nghiệm · [E] — **xong**
+
+Chính chủ đưa một dòng: $(x+1)(x+2)(x+3)(x+4)-8=0$. Thử bằng engine trước khi đoán,
+và nó vướng ở **ba** chỗ — cả ba đều là thiếu sót thật.
+
+**Nhân hai đa thức phải là một bước.** $(x+1)(x+4)$ tốn sáu bước vi mô, trong khi học
+sinh viết một dòng; sáu dòng cho một phép nhân làm chìm mất bước đáng nhìn của bài.
+`multiply_out` nhận cả **chỉ số các thừa số** cần nhân — cần vì `mul` làm phẳng, nên
+$(x+1)(x+2)(x+3)(x+4)$ là một tích bốn thừa số chứ không phải hai tích lồng nhau, mà
+nhóm cặp lại chính là mẹo của cả họ bài.
+
+**Ẩn phụ phải khớp một phần trong tổng.** $x^2+5x$ nằm trong $x^2+5x+4$ mà không phải
+một nút. Và phép kiểm phải biết ràng buộc: `binding` mang $t = x^2+5x$ về cho `model`,
+`model` **thế ngược lại** trước khi so — không thì nó thấy hai biểu thức khác biến rồi
+kết tội oan.
+
+**Hai nghiệm, mà không cần nút "hoặc".** Chỗ đúng để tách hai nghiệm là **cây lời
+giải** (`edge_type: "case"`) — vốn đã có, và vốn sinh ra để làm đúng việc ấy; thêm nút
+"hoặc" vào cây biểu thức là dựng lại cùng khái niệm ở tầng thứ hai. Kéo theo hợp đồng
+kiểm thứ ba: một nhánh nghiệm **hẹp hơn** tập nghiệm gốc, nên phải hỏi "nghiệm ấy có
+**thoả** phương trình trước không" chứ không hỏi "cùng tập nghiệm không".
+
+Nay ba hợp đồng kiểm được **khai tường minh** thay vì đoán theo dáng nút. Biệt thức âm
+thì từ chối, và lời từ chối ấy chính là câu trả lời — bài `quartic-by-substitution`
+(#91) dùng đúng nó làm nội dung nhánh thứ hai.
 
 ### M47d — Nhân liên hợp và căn lồng · [E] — **xong**
 

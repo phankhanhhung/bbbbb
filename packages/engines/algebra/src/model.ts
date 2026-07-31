@@ -1,7 +1,8 @@
 import type { Scene } from '@combviz/schema';
-import { sameSolutionSet, sameValue } from './check.js';
+import { evalReal, sameSolutionSet, sameValue } from './check.js';
 import {
   Minter,
+  children,
   depth,
   nodeAt,
   nodeCount,
@@ -9,6 +10,7 @@ import {
   replaceAt,
   totalDegree,
   walk,
+  withChildren,
   type Expr,
   type TermId,
 } from './expr.js';
@@ -45,6 +47,38 @@ export interface AlgebraModel {
   /** Bước nào không qua được phép kiểm §6 — **lỗi của engine**, không của tác giả. */
   readonly unsound: readonly string[];
   readonly refusal: string | null;
+}
+
+/** Thay mọi `var name` bằng `value` — dùng để thế ngược ẩn phụ khi kiểm. */
+function replaceVar(e: Expr, name: string, value: Expr): Expr {
+  if (e.k === 'var' && e.name === name) return value;
+  const kids = children(e).map((c) => replaceVar(c, name, value));
+  return kids.length === 0 ? e : withChildren(e, kids);
+}
+
+/**
+ * `after` có dạng $x = r$: thay $r$ vào phương trình `before` xem có thoả không.
+ *
+ * Sai số nới rộng hơn chỗ khác vì $r$ thường chứa căn, và một đa thức bậc hai khuếch
+ * đại sai số của căn lên bình phương.
+ */
+function rootSatisfies(before: Expr, after: Expr): { ok: boolean; message: string } {
+  if (after.k !== 'rel' || after.lhs.k !== 'var') {
+    return { ok: false, message: 'nhánh nghiệm phải có dạng x = …' };
+  }
+  if (before.k !== 'rel') return { ok: false, message: 'bước trước không phải phương trình' };
+
+  const value = evalReal(after.rhs, new Map());
+  if (value === null) return { ok: false, message: 'không tính được giá trị nghiệm' };
+  const env = new Map([[after.lhs.name, value]]);
+  const l = evalReal(before.lhs, env);
+  const r = evalReal(before.rhs, env);
+  if (l === null || r === null) return { ok: false, message: 'phương trình không xác định tại nghiệm' };
+
+  const scale = Math.max(1, Math.abs(l), Math.abs(r), Math.abs(value) ** 2);
+  return Math.abs(l - r) <= 1e-7 * scale
+    ? { ok: true, message: `nghiệm ${value} thoả phương trình` }
+    : { ok: false, message: `thay ${after.lhs.name} = ${value} vào thì ${l} ≠ ${r}` };
 }
 
 const idsOfExpr = (e: Expr): Set<string> => {
@@ -123,7 +157,18 @@ export function readAlgebra(scene: Scene): AlgebraModel {
     // nhất bằng nhau**không"; quan hệ thì hỏi "có **cùng tập nghiệm** không". Đặc tả
     // §6 nói nhóm ★ đúng "do cấu trúc" nên miễn kiểm — câu ấy sai, và nó che đúng
     // một lỗi: nhân bất đẳng thức với số âm mà không đổi chiều.
-    if (target.k === 'rel' && outcome.after.k === 'rel' && rule.id !== 'substitute') {
+    if (outcome.binding !== undefined) {
+      // Đặt ẩn phụ: `after` viết bằng biến mới, nên so thẳng là so hai thứ khác biến.
+      // Thế ngược lại rồi mới so — chính xác, và không cần đụng vào bộ kiểm.
+      const back = replaceVar(outcome.after, outcome.binding.name, outcome.binding.expr);
+      const verdict = sameValue(target, back, 20260731 + i);
+      if (!verdict.ok) unsound.push(`bước ${i + 1} (${rule.label}): ${verdict.message}`);
+    } else if (outcome.verify === 'root') {
+      // Một nhánh nghiệm **hẹp hơn** tập nghiệm gốc, nên hỏi "cùng tập nghiệm" là hỏi
+      // sai. Điều phải kiểm là nghiệm ấy **thoả** phương trình trước đó.
+      const verdict = rootSatisfies(target, outcome.after);
+      if (!verdict.ok) unsound.push(`bước ${i + 1} (${rule.label}): ${verdict.message}`);
+    } else if (target.k === 'rel' && outcome.after.k === 'rel' && rule.id !== 'substitute') {
       const guard =
         outcome.condition === undefined || step.arg === undefined
           ? null
