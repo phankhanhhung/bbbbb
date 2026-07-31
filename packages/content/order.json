@@ -86,9 +86,10 @@
     "erase-residue-classes-game",
     "polynomial-long-division",
     "polynomial-division-longform",
-    "equation-moves-that-lie"
+    "equation-moves-that-lie",
+    "radical-simplify"
   ],
   "newest": [
-    "equation-moves-that-lie"
+    "radical-simplify"
   ]
 }

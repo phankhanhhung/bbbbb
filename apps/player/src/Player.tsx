@@ -337,7 +337,14 @@ export function Player({
         <p class="source">
           {problem.source.contest}
           {problem.source.year ? ` ${problem.source.year}` : ''} · {problem.license}
-          {problem.source.note ? ` · ${problem.source.note.vi}` : ''}
+          {problem.source.note ? (
+            // `note` đi qua **cùng bộ sắp chữ với statement**. Trước đây nó bị nội suy
+            // thẳng vào chuỗi, nên `$R(3,3)=6$` hiện ra đúng mười ba ký tự và `**mọi**`
+            // hiện ra kèm bốn dấu sao — ở **21 bài** trong kho. Ghi chú nguồn là chỗ
+            // hay có công thức nhất sau narrative, nên sửa chỗ vẽ đúng hơn là bắt 21
+            // ghi chú viết lại thành chữ trơn.
+            <span dangerouslySetInnerHTML={{ __html: ` · ${renderMath(problem.source.note.vi)}` }} />
+          ) : null}
         </p>
       </header>
 

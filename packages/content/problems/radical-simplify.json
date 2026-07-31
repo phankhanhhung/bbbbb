@@ -1,0 +1,189 @@
+{
+  "schema_version": "0.3.0",
+  "id": "radical-simplify",
+  "statement": {
+    "vi": "Rút gọn một biểu thức chứa căn nghĩa là gì, và mỗi bước được phép làm gì? Đưa thừa số chính phương ra ngoài dấu căn, gộp hai căn cùng chỉ số, và trục căn thức ở mẫu — ba thao tác cơ bản, chạy trên cả căn bậc hai lẫn căn bậc ba."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: engine kiểm từng bước bằng cách thay **số thực** ngẫu nhiên, kể cả số âm. Đó là lý do nó từ chối rút $x$ ra khỏi $\\sqrt{x^2}$ — đẳng thức ấy sai với mọi $x < 0$."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Ba thao tác với căn thức"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Rút gọn căn thức là tìm thừa số **chính phương** trong biểu thức dưới dấu căn rồi đưa nó ra ngoài: $48 = 16 \\cdot 3$, mà $16 = 4^2$. [[a1|Dòng sau]] là $4\\sqrt3$, và nó bằng đúng $\\sqrt{48}$ chứ không phải xấp xỉ. Máy kiểm điều đó bằng cách thay số ngẫu nhiên vào hai vế — với căn thì thay số **thực**, không thay trên trường hữu hạn như với đa thức."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "sqrt(48)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "pull_square_out"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: căn bậc hai của 48, rồi 4 nhân căn bậc hai của 3."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hai căn cùng chỉ số **gộp được thành một**: $\\sqrt a\\,\\sqrt b = \\sqrt{ab}$. Ở đây $\\sqrt2\\,\\sqrt8$ gộp thành [[a1|$\\sqrt{16}$]], rồi ra $4$ tròn trĩnh. Vạch trùm trên dấu căn cho biết căn ăn tới đâu — đó là lý do nó phải dài đúng bằng biểu thức bên dưới."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "sqrt(2)*sqrt(8)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "root_of_product"
+                },
+                {
+                  "at": "0",
+                  "rule": "eval_int"
+                },
+                {
+                  "at": "",
+                  "rule": "eval_root"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: căn 2 nhân căn 8, gộp thành căn của 2 nhân 8, rồi bằng 4."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Căn ở **mẫu** thì trục đi: nhân cả tử lẫn mẫu với chính căn ấy, vì $\\sqrt3\\,\\sqrt3 = 3$. [[a1|Kết quả]] $2\\sqrt3$ không còn dấu căn dưới mẫu. Bước này là phép nhân với $\\sqrt3/\\sqrt3$, tức nhân với $1$ — nên nó không đổi giá trị, chỉ đổi cách viết."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "6/sqrt(3)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "rationalize"
+                },
+                {
+                  "arg": "3",
+                  "at": "",
+                  "rule": "cancel_common"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng trục căn thức: 6 trên căn 3, thành 6 căn 3 trên 3, rồi 2 căn 3."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cùng một luật chạy với căn bậc bất kỳ, chỉ đổi chỉ số: $54 = 27 \\cdot 2$ và $27 = 3^3$, nên [[a1|căn bậc ba của $54$]] rút thành $3\\sqrt[3]2$. Chỉ số nhỏ ở góc trên trái dấu căn, và nó phải hở khỏi hệ số đứng trước — nếu không thì $3$ với $3$ đọc thành $33$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "root(3, 54)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "pull_square_out"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: căn bậc ba của 54, rồi 3 nhân căn bậc ba của 2."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

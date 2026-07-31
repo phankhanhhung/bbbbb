@@ -1,4 +1,4 @@
-import { definitelyNonZero } from './check.js';
+import { definitelyNonNegative, definitelyNonZero } from './check.js';
 import {
   Minter,
   add,
@@ -7,6 +7,7 @@ import {
   mul,
   pow,
   rat,
+  root,
   same,
   variable,
   walk,
@@ -347,6 +348,142 @@ const dropUnit: Rule = {
   },
 };
 
+/**
+ * Điều kiện tồn tại của căn bậc chẵn, cùng họ với AL-08.
+ *
+ * $\sqrt{ab} = \sqrt a\,\sqrt b$ **sai** khi cả hai âm: $\sqrt{(-1)(-4)} = 2$ nhưng vế
+ * phải không xác định trên $\mathbb{R}$. Engine không chặn — nó ghi điều kiện ra hình,
+ * đúng cách nó xử `mul_both_sides`.
+ */
+/** $\sqrt{k^2 a} = k\sqrt a$ — rút thừa số chính phương ra ngoài dấu căn. */
+const pullSquareOut: Rule = {
+  id: 'pull_square_out',
+  label: 'rút thừa số ra ngoài căn',
+  run(m, node) {
+    if (node.k !== 'root') return no('cần một dấu căn');
+    const n = node.index;
+
+    const factors = node.arg.k === 'mul' ? [...node.arg.args] : [node.arg];
+    const outside: Expr[] = [];
+    const inside: Expr[] = [];
+
+    for (const f of factors) {
+      // Hệ số nguyên: tách phần luỹ thừa bậc `n` lớn nhất. $\sqrt{48} = 4\sqrt3$.
+      if (f.k === 'int' && f.v > 0) {
+        let k = 1;
+        let rest = f.v;
+        for (let d = 2; d * d <= rest || Math.pow(d, n) <= rest; d += 1) {
+          while (rest % Math.pow(d, n) === 0) {
+            rest /= Math.pow(d, n);
+            k *= d;
+          }
+        }
+        if (k > 1) {
+          outside.push(int(m, k));
+          if (rest !== 1) inside.push(int(m, rest));
+          continue;
+        }
+      }
+      // $\sqrt{x^4} = x^2$ khi số mũ chia hết cho chỉ số căn.
+      if (f.k === 'pow' && f.exp > 0 && f.exp % n === 0) {
+        outside.push(pow(m, f.base, f.exp / n));
+        continue;
+      }
+      inside.push(f);
+    }
+
+    if (outside.length === 0) return no('không có thừa số nào rút ra được');
+
+    // $\sqrt{x^2} = x$ **sai** với mọi $x < 0$; đúng phải là $|x|$, mà engine không có
+    // nút giá trị tuyệt đối. Từ chối, không ghi điều kiện: một điều kiện "$x \ge 0$"
+    // ở đây làm người đọc tưởng đẳng thức đúng nếu chịu thêm giả thiết, trong khi
+    // thứ thiếu là **một ký hiệu khác**, không phải một giả thiết.
+    if (n % 2 === 0 && outside.some((o) => !definitelyNonNegative(o))) {
+      return no('rút biến ra khỏi căn bậc chẵn cần dấu giá trị tuyệt đối — engine chưa có');
+    }
+
+    const left = inside.length === 0 ? [] : [root(m, n, mul(m, inside))];
+    return { after: mul(m, [...outside, ...left]) };
+  },
+};
+
+/** $\sqrt a\,\sqrt b = \sqrt{ab}$ và chiều ngược lại. */
+const rootOfProduct: Rule = {
+  id: 'root_of_product',
+  label: 'gộp hai căn',
+  run(m, node) {
+    if (node.k !== 'mul') return no('cần một tích');
+    const at = node.args.findIndex((a) => a.k === 'root');
+    const bt = node.args.findIndex((a, i) => i !== at && a.k === 'root');
+    if (at === -1 || bt === -1) return no('không có hai dấu căn nào');
+
+    const a = node.args[at] as Expr & { k: 'root' };
+    const b = node.args[bt] as Expr & { k: 'root' };
+    if (a.index !== b.index) return no('hai căn khác chỉ số');
+
+    const rest = node.args.filter((_, i) => i !== at && i !== bt);
+    const joined = root(m, a.index, mul(m, [a.arg, b.arg]));
+    return {
+      after: rest.length === 0 ? joined : mul(m, [...rest, joined]),
+      merged: [[[a.id, b.id], joined.id]],
+    };
+  },
+};
+
+/** $(\sqrt a)^n = a$ khi số mũ bằng chỉ số căn. */
+const rootPow: Rule = {
+  id: 'root_pow',
+  label: 'căn rồi luỹ thừa thì triệt tiêu',
+  run(m, node) {
+    if (node.k !== 'pow' || node.base.k !== 'root') return no('cần luỹ thừa của một căn');
+    if (node.exp !== node.base.index) return no('số mũ phải bằng chỉ số căn');
+    // Không cần điều kiện: nếu $\sqrt[n]a$ đã xác định thì $(\sqrt[n]a)^n = a$ đúng
+    // hệt. Điều kiện tồn tại nằm ở chính dấu căn của dòng trước, không ở bước này.
+    return { after: node.base.arg };
+  },
+};
+
+/** Trục căn thức ở mẫu: $\dfrac{a}{\sqrt b} = \dfrac{a\sqrt b}{b}$. */
+const rationalize: Rule = {
+  id: 'rationalize',
+  label: 'trục căn thức ở mẫu',
+  run(m, node) {
+    if (node.k !== 'div') return no('cần một phân số');
+    const den = node.den;
+    const r =
+      den.k === 'root'
+        ? den
+        : den.k === 'mul'
+          ? (den.args.find((a) => a.k === 'root') as (Expr & { k: 'root' }) | undefined)
+          : undefined;
+    if (r === undefined || r.k !== 'root') return no('mẫu không chứa căn');
+    if (r.index !== 2) return no('mới trục được căn bậc hai');
+
+    const { copy } = freshCopy(m, r);
+    const others = den.k === 'mul' ? den.args.filter((a) => a.id !== r.id) : [];
+    const newDen = mul(m, [...others, r.arg]);
+    return {
+      after: div(m, mul(m, [node.num, copy]), newDen),
+      condition: definitelyNonZero(r.arg) ? undefined : conditionText('mẫu'),
+    };
+  },
+};
+
+/** $\sqrt{16} = 4$ — chỉ khi ra số nguyên, không làm tròn. */
+const evalRoot: Rule = {
+  id: 'eval_root',
+  label: 'tính căn',
+  run(m, node) {
+    if (node.k !== 'root') return no('cần một dấu căn');
+    const v = exactValue(node.arg);
+    if (v === null) return no('trong căn còn chứa biến');
+    if (v.q !== 1 || v.p < 0) return no('chỉ tính được căn của số nguyên không âm');
+    const r = Math.round(Math.pow(v.p, 1 / node.index));
+    if (Math.pow(r, node.index) !== v.p) return no(`${v.p} không phải luỹ thừa bậc ${node.index}`);
+    return { after: int(m, r) };
+  },
+};
+
 const powAdd: Rule = {
   id: 'pow_add',
   label: 'cộng số mũ',
@@ -511,6 +648,11 @@ export const RULES: readonly Rule[] = [
   evalInt,
   expandSquare,
   dropUnit,
+  evalRoot,
+  pullSquareOut,
+  rootOfProduct,
+  rootPow,
+  rationalize,
   powAdd,
   powMul,
   cancelCommon,

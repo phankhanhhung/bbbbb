@@ -26,6 +26,15 @@ export type Expr =
   | ({ readonly k: 'mul'; readonly args: readonly Expr[] } & WithId)
   | ({ readonly k: 'pow'; readonly base: Expr; readonly exp: number } & WithId)
   | ({ readonly k: 'div'; readonly num: Expr; readonly den: Expr } & WithId)
+  /**
+   * Căn bậc `index` (≥ 2). Chỉ số là **số nguyên**, không phải `Expr` — cùng lý lẽ
+   * với `pow.exp`, và cũng vì căn bậc ký hiệu kéo theo cả một tầng suy luận về miền.
+   *
+   * Không mã hoá thành `pow(x, 1/2)`: số mũ ở đây là số nguyên theo thiết kế, và
+   * dấu căn là một **vật thể thị giác** có bố cục riêng (móc, vạch trùm) — hệt lý do
+   * `div` không bị chuẩn hoá thành `mul` với luỹ thừa âm.
+   */
+  | ({ readonly k: 'root'; readonly index: number; readonly arg: Expr } & WithId)
   | ({ readonly k: 'rel'; readonly op: RelOp; readonly lhs: Expr; readonly rhs: Expr } & WithId);
 
 /**
@@ -103,6 +112,13 @@ export const div = (m: Minter, num: Expr, den: Expr): Expr => ({
   id: m.next(),
 });
 
+export const root = (m: Minter, index: number, arg: Expr): Expr => ({
+  k: 'root',
+  index,
+  arg,
+  id: m.next(),
+});
+
 export const rel = (m: Minter, op: RelOp, lhs: Expr, rhs: Expr): Expr => ({
   k: 'rel',
   op,
@@ -129,6 +145,8 @@ export function children(e: Expr): readonly Expr[] {
       return [e.base];
     case 'div':
       return [e.num, e.den];
+    case 'root':
+      return [e.arg];
     case 'rel':
       return [e.lhs, e.rhs];
     default:
@@ -147,6 +165,8 @@ export function withChildren(e: Expr, kids: readonly Expr[]): Expr {
       return { ...e, base: kids[0] as Expr };
     case 'div':
       return { ...e, num: kids[0] as Expr, den: kids[1] as Expr };
+    case 'root':
+      return { ...e, arg: kids[0] as Expr };
     case 'rel':
       return { ...e, lhs: kids[0] as Expr, rhs: kids[1] as Expr };
     default:
@@ -182,6 +202,15 @@ export function varsOf(e: Expr): Set<string> {
 
 export const isConst = (e: Expr): boolean => varsOf(e).size === 0;
 
+/** Cây có chứa căn không — quyết định dùng bộ kiểm nào (`check.ts`). */
+export function hasRadical(e: Expr): boolean {
+  let found = false;
+  walk(e, (n) => {
+    if (n.k === 'root') found = true;
+  });
+  return found;
+}
+
 /** Bậc tổng — cận trên thô, đủ cho ràng buộc Schwartz–Zippel ở `check.ts`. */
 export function totalDegree(e: Expr): number {
   switch (e.k) {
@@ -198,6 +227,10 @@ export function totalDegree(e: Expr): number {
       return totalDegree(e.base) * Math.abs(e.exp);
     case 'div':
       return totalDegree(e.num) + totalDegree(e.den);
+    case 'root':
+      // Bậc **làm tròn lên**: nó chỉ dùng làm cận cho Schwartz–Zippel, mà biểu thức
+      // có căn thì không đi đường ấy nữa (xem `check.ts`). Ước dôi ở đây là an toàn.
+      return Math.ceil(totalDegree(e.arg) / e.index);
     case 'rel':
       return Math.max(totalDegree(e.lhs), totalDegree(e.rhs));
   }
@@ -302,6 +335,8 @@ export function same(a: Expr, b: Expr): boolean {
       return a.name === (b as typeof a).name;
     case 'pow':
       return a.exp === (b as typeof a).exp && same(a.base, (b as typeof a).base);
+    case 'root':
+      return a.index === (b as typeof a).index && same(a.arg, (b as typeof a).arg);
     case 'rel':
       return (
         a.op === (b as typeof a).op &&

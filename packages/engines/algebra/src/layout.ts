@@ -1,5 +1,15 @@
 import { estimateTextWidth } from '@combviz/render';
-import { FONT, ROW, measure, place, toBox, type NodeBox, type PlacedGlyph, type PlacedRule } from './typeset.js';
+import {
+  FONT,
+  ROW,
+  measure,
+  place,
+  toBox,
+  type NodeBox,
+  type PlacedGlyph,
+  type PlacedPath,
+  type PlacedRule,
+} from './typeset.js';
 import type { AlgebraModel, AlgebraRow } from './model.js';
 
 /**
@@ -20,6 +30,7 @@ export interface PlacedLine {
   readonly row: AlgebraRow;
   readonly glyphs: readonly PlacedGlyph[];
   readonly rules: readonly PlacedRule[];
+  readonly paths: readonly PlacedPath[];
   readonly boxes: readonly NodeBox[];
   /** Hộp bao cả dòng — chỗ neo `[[a1|dòng thứ hai]]`. */
   readonly box: NodeBox;
@@ -58,6 +69,7 @@ export function layout(model: AlgebraModel): Layout {
       row,
       glyphs: p.glyphs,
       rules: p.rules,
+      paths: p.paths,
       boxes: p.boxes,
       box: {
         id: row.id,

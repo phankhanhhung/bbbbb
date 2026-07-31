@@ -507,7 +507,10 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
   là dự án khác, không phải một phiên bản sau.
 - **Số mũ ký hiệu.** $x^n$ với $n$ là biến. Nó kéo theo luật luỹ thừa có điều kiện và
   kéo theo cả một tầng suy luận về miền — không đáng cho họ bài đang nhắm.
-- **Căn thức, giá trị tuyệt đối, phần nguyên.** Cùng lý do.
+- ~~**Căn thức**~~ — **đã làm** (M47b, theo yêu cầu chính chủ). Xem §21: nó không
+  phải "thêm một loại nút", nó **đổi bộ kiểm**.
+- **Giá trị tuyệt đối, phần nguyên.** Chưa có, và cái thiếu đầu tiên đã cắn: engine
+  phải **từ chối** rút $x$ ra khỏi $\sqrt{x^2}$ vì kết quả đúng là $|x|$.
 - **Bộ giải / gợi ý.** §4.
 - **`simplify` một phát.** §4.
 - **Đồ thị hàm số.** Miền khác, engine khác.
@@ -625,3 +628,68 @@ Ghi lại thay vì sửa lén cho khớp: một spec luôn đúng là một spec
 **Cái §18 lo nhất — printer — lại qua được ngay lượt đầu.** Rủi ro thật nằm ở những
 chỗ không ai liệt kê trước: bất biến dạng chuẩn tắc, danh tính hạng tử, và một cảnh
 báo đúng về nguyên tắc mà sai chỗ.
+
+
+---
+
+## 21. Căn thức (M47b) — và vì sao nó không phải "thêm một nút"
+
+§16 khai căn thức là cố ý không làm. Chính chủ bác, và bác đúng: đại số phổ thông
+thiếu căn thì hụt hẳn một mảng (rút gọn căn, trục căn thức ở mẫu, công thức nghiệm).
+
+**Nút mới `root`** với chỉ số nguyên $\ge 2$. Không mã hoá thành $x^{1/2}$: số mũ ở
+đây là số nguyên theo thiết kế, và dấu căn là một **vật thể thị giác** có bố cục
+riêng — hệt lý do `div` không bị chuẩn hoá thành `mul` với luỹ thừa âm.
+
+Cú pháp mặt: `sqrt(x)` và `root(3, x)`. Hai cái tên, không mở cửa cho hàm tuỳ ý.
+
+### 21.1 Nó **đổi bộ kiểm**, và đó là phần đắt nhất
+
+$\sqrt{\cdot}$ không phải hàm hữu tỉ, nên §6 không dùng được: trên $\mathbb{F}_p$ thì
+$\sqrt a$ chỉ tồn tại khi $a$ là thặng dư bậc hai, và khi tồn tại thì có **hai**
+nghiệm không có nhánh chính tắc. Biểu thức có căn chuyển sang **đánh giá trên
+$\mathbb{R}$** với sai số tương đối $10^{-9}$; biểu thức hữu tỉ vẫn đi đường
+$\mathbb{F}_p$ chính xác tuyệt đối. Hai sân, chọn theo `hasRadical`.
+
+**Và bộ lấy mẫu phải bốc cả số âm.** Bản đầu bốc trong $[0{,}3, 4)$ cho căn bậc chẵn
+luôn xác định — nhưng thế thì $\sqrt{x^2} = x$ **qua được**, dù nó sai với mọi
+$x < 0$. Một bộ kiểm chỉ nhìn nửa trục số là bộ kiểm mù đúng chỗ nguy hiểm nhất của
+căn thức. Nay nó bốc trong $[-4,-0{,}3] \cup [0{,}3,4]$ và bắt được:
+
+```
+sqrt(x^2) vs x → khác nhau tại x=-2.8593: 2.8593 ≠ -2.8593
+```
+
+### 21.2 Luật mới
+
+| Tên | Cho ra |
+|---|---|
+| `eval_root` | $\sqrt{16} \to 4$, chỉ khi ra số nguyên |
+| `pull_square_out` | $\sqrt{48} \to 4\sqrt3$, $\sqrt[3]{54} \to 3\sqrt[3]2$ |
+| `root_of_product` | $\sqrt a\,\sqrt b \to \sqrt{ab}$ |
+| `root_pow` | $(\sqrt[n]a)^n \to a$ |
+| `rationalize` | $\dfrac{a}{\sqrt b} \to \dfrac{a\sqrt b}{b}$ |
+
+**`pull_square_out` từ chối rút biến ra khỏi căn bậc chẵn.** $\sqrt{x^2} = |x|$, và
+engine không có nút giá trị tuyệt đối. Đây là chỗ **không** ghi điều kiện: một dòng
+"$x \ge 0$" làm người đọc tưởng đẳng thức đúng nếu chịu thêm giả thiết, trong khi thứ
+thiếu là **một ký hiệu khác**, không phải một giả thiết. Từ chối nói đúng sự thật ấy.
+
+### 21.3 Vẽ
+
+Dấu căn vẽ bằng **path**, không phóng to glyph `√`: glyph có tỉ lệ cố định nên phóng
+lên cho vừa một phân số hai tầng thì nét dày ra và cái móc thò xuống dưới đường chân.
+Vạch trùm dài đúng bằng ruột — nó là thứ nói cho người đọc biết căn ăn tới đâu, và ăn
+sai một hạng tử là đọc ra một biểu thức khác.
+
+Hai lỗi nữa lộ ra ở lượt nhìn PNG: hệ số $1$ hiện ra thành `1√2`, và chỉ số căn dính
+vào hệ số đứng trước nên $3\sqrt[3]2$ đọc thành `33√2`.
+
+### 21.4 Một lỗi ngoài engine, phát hiện nhờ nhìn Player
+
+`source.note` bị Player **nội suy thẳng vào chuỗi**, không qua bộ sắp chữ — nên
+`$R(3,3)=6$` hiện ra đúng mười ba ký tự và `**mọi**` hiện ra kèm bốn dấu sao, ở
+**21 bài** trong kho. Statement ngay phía trên thì sắp chữ đúng, nên lỗi nằm im rất
+lâu: nhìn lướt thì tưởng ghi chú vốn viết thế. Sửa ở chỗ vẽ (một dòng), không bắt 21
+ghi chú viết lại thành chữ trơn — ghi chú nguồn là chỗ hay có công thức nhất sau
+narrative. Kèm một khẳng định e2e khoá lại.

@@ -1,4 +1,4 @@
-import { totalDegree, varsOf, type Expr } from './expr.js';
+import { hasRadical, totalDegree, varsOf, type Expr } from './expr.js';
 
 /**
  * Kiểm một bước biến đổi có **đúng** không, bằng đánh giá ngẫu nhiên trên
@@ -91,8 +91,69 @@ export function evalAt(e: Expr, env: ReadonlyMap<string, bigint>): bigint | null
       const inv = modInverse(d);
       return inv === null ? null : (n * inv) % P;
     }
+    case 'root':
+      // Căn không sống trên $\mathbb{F}_p$: $\sqrt a$ chỉ tồn tại khi $a$ là thặng dư
+      // bậc hai, và khi tồn tại thì có **hai** nghiệm không có nhánh chính tắc. Biểu
+      // thức có căn đi đường `sameValueReal` thay vì đường này.
+      return null;
     case 'rel':
       // Quan hệ không có "giá trị" — nhóm ★ kiểm bằng cấu trúc, không bằng số.
+      return null;
+  }
+}
+
+/**
+ * Đánh giá trên $\mathbb{R}$, cho biểu thức **có căn**.
+ *
+ * `null` nghĩa là điểm này vô dụng: chia cho $0$, hoặc căn bậc chẵn của số âm. Không
+ * phải bằng chứng sai — bốc điểm khác.
+ */
+export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | null {
+  const ok = (v: number): number | null => (Number.isFinite(v) ? v : null);
+  switch (e.k) {
+    case 'int':
+      return e.v;
+    case 'rat':
+      return e.p / e.q;
+    case 'var':
+      return env.get(e.name) ?? null;
+    case 'add': {
+      let s = 0;
+      for (const a of e.args) {
+        const v = evalReal(a, env);
+        if (v === null) return null;
+        s += v;
+      }
+      return ok(s);
+    }
+    case 'mul': {
+      let s = 1;
+      for (const a of e.args) {
+        const v = evalReal(a, env);
+        if (v === null) return null;
+        s *= v;
+      }
+      return ok(s);
+    }
+    case 'pow': {
+      const b = evalReal(e.base, env);
+      if (b === null) return null;
+      if (b === 0 && e.exp < 0) return null;
+      return ok(Math.pow(b, e.exp));
+    }
+    case 'div': {
+      const n = evalReal(e.num, env);
+      const d = evalReal(e.den, env);
+      if (n === null || d === null || Math.abs(d) < 1e-9) return null;
+      return ok(n / d);
+    }
+    case 'root': {
+      const a = evalReal(e.arg, env);
+      if (a === null) return null;
+      if (a < 0) return e.index % 2 === 0 ? null : ok(-Math.pow(-a, 1 / e.index));
+      return ok(Math.pow(a, 1 / e.index));
+    }
+    case 'rel':
       return null;
   }
 }
@@ -109,6 +170,9 @@ export interface SoundnessResult {
  * và im lặng coi như đúng thì tệ hơn nói ra rằng không kiểm được.
  */
 export function sameValue(a: Expr, b: Expr, seed = 20260731, trials = 8): SoundnessResult {
+  // Có căn thì đổi sân: $\mathbb{F}_p$ không có khái niệm "căn bậc hai của $2$".
+  if (hasRadical(a) || hasRadical(b)) return sameValueReal(a, b, seed, trials);
+
   const d = Math.max(totalDegree(a), totalDegree(b));
   if (d > 4096) {
     return { ok: true, message: `bậc ${d} quá lớn — không kiểm được bằng điểm ngẫu nhiên` };
@@ -138,6 +202,48 @@ export function sameValue(a: Expr, b: Expr, seed = 20260731, trials = 8): Soundn
 }
 
 /**
+ * Bản thực của `sameValue`, cho biểu thức có căn.
+ *
+ * Đổi lại tính chính xác tuyệt đối lấy khả năng nói về $\sqrt 2$: so bằng sai số
+ * tương đối $10^{-9}$.
+ *
+ * **Bốc cả số âm**, và đó không phải chi tiết. Bản đầu chỉ bốc trong $[0{,}3, 4)$ cho
+ * căn bậc chẵn luôn xác định — nhưng thế thì $\sqrt{x^2} = x$ **qua được**, dù nó sai
+ * với mọi $x < 0$ (đúng phải là $|x|$). Một bộ kiểm chỉ nhìn nửa trục số là bộ kiểm
+ * mù đúng chỗ nguy hiểm nhất của căn thức. Điểm rơi vào miền không xác định thì bị bỏ
+ * qua, không bị kết tội — nên trần số lần thử phải rộng.
+ */
+export function sameValueReal(a: Expr, b: Expr, seed: number, trials: number): SoundnessResult {
+  const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
+  let s = (seed >>> 0) || 1;
+  const rand = (): number => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const u = s / 0x7fffffff;
+    // Trong $[-4, -0{,}3] \cup [0{,}3, 4]$: né lân cận $0$ để mẫu số không nổ.
+    return u < 0.5 ? -(0.3 + u * 7.4) : 0.3 + (u - 0.5) * 7.4;
+  };
+  let done = 0;
+
+  for (let attempt = 0; attempt < trials * 40 && done < trials; attempt += 1) {
+    const env = new Map<string, number>();
+    for (const n of names) env.set(n, rand());
+
+    const va = evalReal(a, env);
+    const vb = evalReal(b, env);
+    if (va === null || vb === null) continue;
+    done += 1;
+    const scale = Math.max(1, Math.abs(va), Math.abs(vb));
+    if (Math.abs(va - vb) > 1e-9 * scale) {
+      const at = names.map((n) => `${n}=${(env.get(n) as number).toFixed(4)}`).join(', ');
+      return { ok: false, message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}` };
+    }
+  }
+
+  if (done === 0) return { ok: true, message: 'không tìm được điểm nào xác định' };
+  return { ok: true, message: `khớp trên ${done} điểm thực` };
+}
+
+/**
  * Biểu thức này có **chắc chắn khác $0$** không (AL-08).
  *
  * Chỉ trả `true` khi nó là hằng khác $0$. Có biến ⇒ `false`, kể cả $x^2+1$ vốn không
@@ -147,6 +253,23 @@ export function sameValue(a: Expr, b: Expr, seed = 20260731, trials = 8): Soundn
  */
 export function definitelyNonZero(e: Expr): boolean {
   if (varsOf(e).size > 0) return false;
+  if (hasRadical(e)) {
+    const v = evalReal(e, new Map());
+    return v !== null && Math.abs(v) > 1e-12;
+  }
   const v = evalAt(e, new Map());
   return v !== null && v !== 0n;
+}
+
+/**
+ * Biểu thức này có **chắc chắn không âm** không — điều kiện tồn tại của căn bậc chẵn.
+ *
+ * Cùng tinh thần thận trọng với `definitelyNonZero`: chỉ trả `true` khi tính ra được
+ * một số không âm. Có biến ⇒ `false`, kể cả $x^2$ vốn luôn $\ge 0$ trên $\mathbb{R}$ —
+ * vì engine không biết miền của biến, và thà ghi điều kiện thừa còn hơn để lọt.
+ */
+export function definitelyNonNegative(e: Expr): boolean {
+  if (varsOf(e).size > 0) return false;
+  const v = evalReal(e, new Map());
+  return v !== null && v >= 0;
 }
