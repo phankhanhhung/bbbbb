@@ -1,0 +1,570 @@
+# CombViz — Algebra engine: đặc tả
+
+Trạng thái: **đặc tả cho code chưa viết** · Viết: 2026-07-31 (sau M46)
+Nguồn yêu cầu: chưa có trong `docs/SRS-v1.0.md` — họ ID mới `AL-*` (xem `ENGINE-BACKLOG.md` §0.4)
+Tiền lệ gần nhất: `packages/engines/longdiv/` (M46), `packages/engines/derivation/` (M18)
+
+> **Cách đọc tài liệu này — nó ngược với `ENGINE-BOARD.md`.**
+>
+> `ENGINE-BOARD.md` mô tả code **đang chạy**. Tài liệu này mô tả code **chưa tồn
+> tại**: nó là bản thiết kế, và mọi câu trong đây là một lời hứa chưa được máy nào
+> kiểm. Chỗ nào tao chưa chắc thì §18 nói ra, và §17 xếp thứ tự dựng sao cho phần
+> rủi ro nhất bị đâm thủng trước.
+>
+> **Engine này chưa được duyệt để làm.** `PRD-07` chặn mở engine mới trước khi
+> P0–P2 chứng minh giá trị học tập, và nợ lớn hơn là gate **G-C** (chính chủ soạn
+> tay 3–5 bài rồi đóng băng schema `1.0.0`). Viết spec ra để lúc mở thì không phải
+> nghĩ lại từ đầu, không phải để mở ngay.
+
+---
+
+## 1. Vì sao cần engine này, nói bằng bằng chứng
+
+Kho đã có `derivation` — engine xếp chỗ cho chuỗi biến đổi. Nó **không hiểu công
+thức**, và chính comment trong `packages/engines/derivation/src/validators.ts` khai
+điều đó. Đo bằng máy trên bài đang xuất bản:
+
+```
+geometric-sum-doubling · step s0 · hạng tử t1b
+  "1 + 2 + 4 + 8"  →  "1 + 2 + 4 + 9"
+
+lỗi     : []
+cảnh báo: []
+hasErrors: false
+```
+
+$S = 1+2+4+9$ qua sạch bộ kiểm. Không luật nào trong `check` đọc nội dung `tex`;
+nó là chuỗi mờ với toàn bộ hệ thống.
+
+Cùng phép đo còn lộ thứ hai: `t1b` chứa **cả vế phải** trong một element. Schema đặt
+`maxTexLength: 120` kèm chú thích *"để giữ hạng tử là hạng tử"*, nhưng không có gì
+ép, nên bài trong kho vi phạm đúng tiền đề mà engine sinh ra để phục vụ — danh tính
+từng hạng tử. Ở bài này nó không tồn tại.
+
+**Kết luận thiết kế:** khoảng trống không nằm ở bố cục. Nó nằm ở chỗ **ai giữ phép
+toán**. `derivation` để tác giả giữ; engine chỉ vẽ lại. Engine này lấy phép toán về
+cho máy — cùng đặt cược đã thắng ở `coloring_preset`, ở bảng Grundy, và ở `longdiv`
+(M46): *khi hình **là** kết quả phép tính, sinh nó ở một chỗ là cách duy nhất để hình
+không bao giờ lệch khỏi phép tính.*
+
+### 1.1 Ranh giới với `derivation` — cả hai đều sống
+
+Không khai tử `derivation`. Hai engine, hai loại chuỗi, và lẫn lộn chúng là hỏng cả
+hai:
+
+| | `derivation` | `algebra` |
+|---|---|---|
+| Một bước là | một **dòng tác giả viết ra** | một **luật máy áp vào cây** |
+| Lý do của bước | văn xuôi: "theo giả thiết", "đổi chỉ số" | tên luật: `distribute`, `collect_like` |
+| Máy kiểm được gì | hình thức (dòng rỗng, hạng tử biến mất không khai) | **tính đúng** của từng bước |
+| Hợp với | đếm hai chiều, song ánh, lập luận tổ hợp | biến đổi đại số cơ học |
+| Sai kiểu gì | tác giả gõ nhầm ⇒ hình nói sai, không ai biết | không gõ được kết quả ⇒ không sai kiểu đó được |
+
+Bước "vì mỗi tập con chứa $n$ tương ứng một tập con của $[n-1]$" **không phải** phép
+áp luật. Ép nó vào engine này là một kiểu nói dối khác — giả vờ rằng một lập luận
+tổ hợp là một phép rewrite.
+
+---
+
+## 2. Engine này là gì
+
+Vẽ **một chuỗi biến đổi biểu thức**, trong đó tác giả khai **biểu thức gốc** và
+**dãy luật cần áp**, còn engine tính ra mọi dòng còn lại.
+
+Tác giả **không bao giờ gõ vế sau**. Đó là toàn bộ ý:
+
+```jsonc
+{
+  "engine": "algebra",
+  "config": {
+    "start": "(x + 1)^2 = x^2 + 1",
+    "steps": [
+      { "rule": "expand_square", "at": "L" },
+      { "rule": "distribute",    "at": "L.0" }
+    ]
+  },
+  "elements": []
+}
+```
+
+`elements` rỗng và **phải rỗng** — như `longdiv`. Khai element là lỗi
+`bounds/algebra-no-elements`. Cả bảng suy từ `config`; khai tay là mở khe cho hình
+lệch phép tính.
+
+---
+
+## 3. Mô hình dữ liệu
+
+### 3.1 Cây biểu thức
+
+```ts
+export type Expr =
+  | { k: 'int'; v: number }                        // số nguyên
+  | { k: 'rat'; p: number; q: number }             // hữu tỉ tối giản, q > 1
+  | { k: 'var'; name: string }                     // một chữ cái, tuỳ chọn chỉ số dưới
+  | { k: 'add'; args: Expr[] }                     // n-ngôi, args.length ≥ 2
+  | { k: 'mul'; args: Expr[] }                     // n-ngôi, args.length ≥ 2
+  | { k: 'pow'; base: Expr; exp: number }          // số mũ **nguyên**, không phải Expr
+  | { k: 'div'; num: Expr; den: Expr }
+  | { k: 'rel'; op: '=' | '<' | '<=' | '!='; lhs: Expr; rhs: Expr };
+```
+
+Bốn quyết định, mỗi cái đánh đổi một thứ:
+
+- **Không có nút `neg`.** $-x$ là `mul[int(-1), x]`. Thêm một loại nút thì mọi luật
+  phải xử lý thêm một nhánh, và `neg` không mang thông tin gì mà `mul` không mang.
+  Giá phải trả: printer phải nhận ra mẫu hệ số $-1$ để in ra `−x` chứ không in
+  `(-1) \cdot x`. Đó là việc của printer, và đúng chỗ.
+- **Không có nút `sub`.** $a-b$ là `add[a, mul[int(-1), b]]`. Cùng lý do, và nó làm
+  `collect_like` thành một luật thay vì hai.
+- **`div` thì giữ.** Về mặt toán $a/b$ là `mul[a, pow(b,-1)]`, nhưng phân số là một
+  **vật thể thị giác** có bố cục riêng, và `cancel_common` là luật mà cả bài học
+  xoay quanh. Chuẩn hoá nó đi thì phải dựng lại lúc in — mất nhiều hơn được.
+- **`pow.exp` là số nguyên JS, không phải `Expr`.** $x^n$ với $n$ ký hiệu nằm ngoài
+  phạm vi (§16). Đổi lại, số mũ không có đường dẫn nên không neo được — chấp nhận.
+
+**Dạng chuẩn tắc** (bất biến của mọi `Expr` do engine sinh ra, có chốt canh):
+
+1. `add`/`mul` không lồng trực tiếp trong chính nó — `add[a, add[b,c]]` bị làm phẳng.
+2. `add`/`mul` có ≥ 2 args; một args thì thay bằng chính nó, không args thì thay
+   bằng `int(0)` / `int(1)`.
+3. `rat` tối giản, `q > 1`; `q == 1` thì là `int`.
+4. `pow(e, 1)` → `e`; `pow(e, 0)` → `int(1)`.
+5. **Không tự sắp xếp lại thứ tự args.** Đây là điều then chốt: `commute` là một
+   **luật người học phải áp tay**, không phải thứ engine lặng lẽ làm. Bảng chuẩn hoá
+   tự đổi chỗ hạng tử thì hình nhảy một cái mà không luật nào giải thích.
+
+### 3.2 `config` — `AlgebraConfig`
+
+```ts
+export const AlgebraConfig = Type.Object({
+  /** Biểu thức hoặc quan hệ gốc, viết bằng cú pháp mặt (§3.3). */
+  start: Type.String({ minLength: 1, maxLength: 200 }),
+  /** Dãy luật áp lần lượt. Rỗng ⇒ chỉ vẽ một dòng. */
+  steps: Type.Optional(Type.Array(AlgebraStep, { maxItems: 12 })),
+  /** Tên biến được phép — chặn gõ nhầm `n` thành `m` thành một biến mới. */
+  vars: Type.Optional(Type.Array(Type.String({ maxLength: 3 }), { maxItems: 6 })),
+  /** Hiện cột tên luật bên phải mỗi dòng. Mặc định bật. */
+  show_rules: Type.Optional(Type.Boolean({ default: true })),
+  caption: Type.Optional(Type.String({ maxLength: 48 })),
+});
+
+export const AlgebraStep = Type.Object({
+  rule: Type.String(),                    // tên trong §4
+  at: Type.String(),                      // đường dẫn, §3.4
+  /** Tham số của luật — chỉ vài luật cần (§4). */
+  arg: Type.Optional(Type.String({ maxLength: 40 })),
+  /** Ghi chú đè lên tên luật, khi tên luật chưa đủ nói. */
+  note: Type.Optional(Type.String({ maxLength: 32 })),
+});
+```
+
+### 3.3 Cú pháp mặt, và vì sao không gõ cây JSON
+
+`start` là **chuỗi**, không phải cây. Ba lý do:
+
+- **AUT-KPI.** Gõ `(x+1)^2 = x^2+1` mất ba giây; gõ cây JSON tương đương mất vài
+  phút và sai chính tả được ở mười chỗ.
+- **DAT-03.** File trong kho phải đọc được bằng mắt và diff được bằng git. Một cây
+  20 nút thành 60 dòng JSON, và đổi một hệ số thì diff không nói được đã đổi gì.
+- Parser **dù sao cũng phải có** cho sandbox (§13: người học gõ đích cần tới).
+
+Grammar, cố ý bé:
+
+```
+rel   := sum (('=' | '<' | '<=' | '!=') sum)?
+sum   := prod (('+' | '-') prod)*
+prod  := unary (('*' | '/') unary)*        // '*' bắt buộc, không có nhân ngầm
+unary := '-'? power
+power := atom ('^' int)?
+atom  := int | var | '(' rel ')'
+var   := letter ('_' digit)?
+```
+
+**Không có nhân ngầm.** `2x` là lỗi cú pháp, phải viết `2*x`. Nhân ngầm kéo theo
+`xy` là một biến hay hai biến nhân nhau — mơ hồ ngay ở ký tự thứ hai, và mơ hồ
+trong dữ liệu là thứ đắt nhất. `vars` khai ra rồi thì lỗi nói được tên biến gần đúng.
+
+Parse thất bại ⇒ **từ chối** (§15), không đoán.
+
+### 3.4 Đường dẫn, và danh tính — hai không gian khác nhau
+
+Đây là chỗ dễ nhầm nhất của cả thiết kế, nên nói rõ:
+
+**Đường dẫn (`Path`)** trả lời *"nó đang ở đâu"*. Chuỗi ngắn: `L` = vế trái,
+`R` = vế phải, rồi chỉ số con nối bằng dấu chấm. `L.0.1` = con thứ hai của con thứ
+nhất của vế trái. Với `div`: `0` = tử, `1` = mẫu. Với `pow`: `0` = cơ số.
+
+**Danh tính (`TermId`)** trả lời *"nó là ai"*. Chuỗi `e7`, cấp phát khi nút **ra
+đời** — lúc parse `start`, hoặc lúc một luật tạo nút mới — và **đi theo nút qua mọi
+bước**. Anchor và choreography dùng cái này.
+
+Vì sao phải tách: sau `commute`, hạng tử $x$ đổi từ `L.0` sang `L.1`. Nếu id là
+đường dẫn thì diff giữa hai bước thấy *"`L.0` đổi nội dung, `L.1` đổi nội dung"* —
+một cặp xoá-thêm, và animation là một cú nhấp nháy. Với id bền, diff thấy *"`e3` dịch
+từ chỗ này sang chỗ kia"*, và `DAT-11/12` cho ra **chuyển động**. Đây đúng thứ mà
+`derivation` đang bắt tác giả khai tay bằng `becomes` — và khai tay thì khai sai được.
+
+**Ánh xạ id không phải song ánh**, và điều đó phải nằm trong kiểu dữ liệu:
+
+```ts
+export interface RuleResult {
+  readonly after: Expr;
+  /** Nút cũ → các nút mới nó trở thành. Rỗng ⇒ nút biến mất. */
+  readonly trace: ReadonlyMap<TermId, readonly TermId[]>;
+  /** Nút mới không đến từ nút cũ nào (ví dụ số 2 sinh ra khi khai triển bình phương). */
+  readonly born: readonly TermId[];
+}
+```
+
+- `distribute` trên $a(b+c)$: nút $a$ **nhân đôi** — một id ra hai id. Choreography
+  vẽ thành một bản sao tách ra.
+- `collect_like` trên $3x + 5x$: hai id **nhập một**.
+- `cancel_common`: id **biến mất** (`trace` cho mảng rỗng) — và đó chính là chỗ
+  `derivation` cần cờ `cancelled` khai tay.
+
+---
+
+## 4. Tập luật (AL-01)
+
+Mỗi luật là **hàm toàn phần trên một cây con**: `(sub: Expr, arg?: string) →
+RuleResult | Refusal`. Không luật nào đi ra ngoài cây con nó được gọi vào, trừ nhóm
+`rel` (đánh dấu ★) vốn định nghĩa trên nút `rel`.
+
+| Tên | Áp được khi | Cho ra | Tham số |
+|---|---|---|---|
+| `commute` | `add`/`mul`, có `arg` là cặp chỉ số | đổi chỗ hai args | `"0,1"` |
+| `associate` | `add`/`mul` lồng nhau | làm phẳng / gom nhóm | nhóm |
+| `distribute` | `mul` có ít nhất một args là `add` | $a(b+c) \to ab+ac$ | — |
+| `factor` | `add` mà mọi args có thừa số chung | $ab+ac \to a(b+c)$ | thừa số |
+| `collect_like` | `add` có ≥ 2 hạng tử **đồng dạng** | gộp hệ số | — |
+| `expand_square` | `pow` với `exp == 2`, cơ số là `add` 2 args | $(a\pm b)^2$ | — |
+| `pow_add` | `mul` hai `pow` cùng cơ số | $x^m x^n \to x^{m+n}$ | — |
+| `pow_mul` | `pow` của `pow` | $(x^m)^n \to x^{mn}$ | — |
+| `eval_int` | cây con **không chứa biến** | tính ra `int`/`rat` | — |
+| `cancel_common` | `div` có thừa số chung tử–mẫu | rút gọn | thừa số |
+| `common_denominator` | `add` của các `div` | quy đồng | — |
+| `split_fraction` | `div` có tử là `add` | $\frac{a+b}{c} \to \frac ac+\frac bc$ | — |
+| ★ `add_both_sides` | `rel` | cộng `arg` vào hai vế | biểu thức |
+| ★ `mul_both_sides` | `rel` | nhân hai vế với `arg` | biểu thức |
+| ★ `substitute` | bất kỳ | thay biến bằng biểu thức | `"x := 2*y"` |
+
+**Hai điều luật này cố ý không có:**
+
+- **Không có `simplify`.** Một nút bấm nhảy năm bước là đúng thứ làm người học không
+  học được gì — nó biến engine dạy *cách biến đổi* thành máy trả lời. Mọi thay đổi
+  phải mang tên một luật.
+- **Không có bộ giải.** Engine **không** tự tìm dãy luật. Tác giả (hoặc người học ở
+  sandbox) chọn từng bước. Tự tìm đường là tính năng khác, và nó thuộc họ `EXP-*`.
+
+### 4.1 `mul_both_sides` và cái bẫy nổi tiếng nhất của đại số phổ thông (AL-08)
+
+Nhân hai vế với một biểu thức **có thể bằng $0$** không bảo toàn tập nghiệm — đó là
+đường đi của mọi "chứng minh $1 = 2$". Engine phải bắt:
+
+- `arg` là hằng khác $0$ ⇒ áp bình thường.
+- `arg` chứa biến ⇒ **cảnh báo** `algebra/multiplier-may-vanish`, và dòng kết quả
+  mang một dấu điều kiện đọc được: *"với $x \ne 1$"*.
+- Chia (nhân với nghịch đảo) mà mẫu có thể bằng $0$ ⇒ cùng luật.
+
+Đây không phải tính năng phụ. Nó là **thứ duy nhất trong toàn bộ spec mà một engine
+sắp chữ không thể có**, và nó là một trong những lỗi đại số hay gặp nhất. Nếu engine
+này chỉ làm được đúng một việc, thì nên là việc này.
+
+---
+
+## 5. Máy chạy
+
+```ts
+export function applyRule(before: Expr, at: Path, rule: string, arg?: string):
+  RuleResult | { refusal: string };
+
+export function readAlgebra(scene: Scene): AlgebraModel;
+```
+
+`readAlgebra` chạy `start` qua từng `steps[i]`, thu về:
+
+```ts
+export interface AlgebraModel {
+  readonly rows: readonly AlgebraRow[];   // dòng 0 là `start`
+  readonly refusal: string | null;
+  readonly conditions: readonly string[]; // điều kiện tích luỹ từ AL-08
+}
+export interface AlgebraRow {
+  readonly id: string;                    // 'row0', 'row1', …
+  readonly expr: Expr;
+  readonly rule: string | null;           // luật sinh ra dòng này
+  readonly note: string | null;
+  readonly trace: ReadonlyMap<TermId, readonly TermId[]>;
+  readonly born: readonly TermId[];
+}
+```
+
+Một luật không áp được ⇒ **cả model từ chối**, không vẽ nửa bảng. Cùng lý lẽ với
+`longdiv`: hỏng thì phải nhìn là thấy.
+
+---
+
+## 6. Kiểm tính đúng (AL-03) — và nó kiểm **engine**, không kiểm tác giả
+
+Vì tác giả không gõ kết quả, tác giả **không thể** làm ra một bước sai. Thứ có thể
+sai là **luật viết lỗi**. Nên phép kiểm này là chốt canh cho chính engine:
+
+Với mọi bước là rewrite thuần (không phải nhóm ★), `before` và `after` phải **đồng
+nhất bằng nhau như hàm hữu tỉ**. Kiểm bằng đánh giá ngẫu nhiên trên $\mathbb{F}_p$
+với $p = 2^{31}-1$:
+
+1. Gán mỗi biến một giá trị ngẫu nhiên trong $\mathbb{F}_p$.
+2. Tính hai vế. Mẫu số $\equiv 0$ ⇒ bốc lại, tối đa 8 lần.
+3. Khác nhau ⇒ **lỗi**.
+
+Theo Schwartz–Zippel, một đa thức khác không bậc tổng $d$ triệt tiêu tại điểm ngẫu
+nhiên với xác suất $\le d/p$. Với trần bậc $64$ (§14) thì một lần thử đã cho
+$\approx 3\times10^{-8}$; chạy $8$ lần là thừa an toàn.
+
+Không cần CAS, không cần đại số ký hiệu. Đây đúng phương pháp đã dùng cho bảng Grundy
+và cho phép quét $A = BQ+R$ của `longdiv`.
+
+Nhóm ★ kiểm khác: `add_both_sides` bảo toàn tập nghiệm **do cấu trúc** (cùng một cây
+cộng vào hai vế), `mul_both_sides` theo AL-08, `substitute` thì không phải đẳng thức
+nên không kiểm bằng cách này.
+
+---
+
+## 7. Sắp chữ (AL-04) — printer, không phải atlas
+
+**Engine tự in từ cây. Không dùng label atlas (D-07).** Lý do có số liệu: atlas là
+bảng tra phải dựng lại mỗi lần nội dung đổi, và quên dựng thì hình hiện chữ đỏ
+`⟨thiếu atlas: …⟩` — kho đã xuất bản một bài như thế suốt **bốn hạng mục** (M45).
+`longdiv` in $c\,x^k$ thẳng từ model và không bao giờ cũ được. Engine này in một
+ngữ pháp rộng hơn, nhưng vẫn là ngữ pháp **đóng và biết trước**.
+
+Quy tắc ngoặc theo độ ưu tiên: `rel` $<$ `add` $<$ `mul`/`div` $<$ `pow` $<$ nguyên
+tử. Con có ưu tiên thấp hơn cha thì bọc ngoặc. Ba ngoại lệ phải viết ra vì chúng là
+chỗ printer hay sai:
+
+- `mul` có args đầu là `int(-1)` ⇒ in `−` liền, không in `(-1)\cdot`.
+- Trong `add`, args dạng `mul[int(k), …]` với $k<0$ ⇒ in dấu `−` **thay cho** dấu `+`
+  của phép cộng, và in $|k|$.
+- Hệ số $1$ đứng trước biến thì không in — `1x` là thứ không ai viết tay.
+
+Bề rộng đo bằng mô hình per-alphabet của riêng engine, như `longdiv` đã làm:
+`estimateTextWidth` ước đều $0{,}55$ em cho mọi ký tự và cố ý ước dôi, nên số mũ
+trôi ra xa và `2x ²` đọc thành hai vật rời nhau.
+
+**Đây là phần rủi ro nhất của cả engine.** Phân số lồng phân số, luỹ thừa nhiều tầng,
+và ngoặc cao bằng phân số — mỗi thứ là một bài toán bố cục riêng. §17 đâm thủng chỗ
+này trước.
+
+---
+
+## 8. Bố cục (AL-05)
+
+Mỗi bước một dòng, xếp dọc, khoảng cách dòng theo `UNITS_PER_CELL` (G-10 — quy ước
+duy nhất mọi engine dùng chung).
+
+- Có `rel` ⇒ mọi dòng gióng theo **dấu quan hệ**, y như `derivation` `align:
+  'relation'`. Không phải thẩm mỹ: dấu $=$ thẳng cột thì mắt đọc theo cột để thấy vế
+  nào đứng yên.
+- Không có `rel` ⇒ gióng trái, và mỗi dòng bắt đầu bằng một dấu $=$ mờ.
+- `show_rules` bật ⇒ cột phải in tên luật (hoặc `note` nếu có). Tên luật là **tên
+  đã có trong bảng §4**, không phải chuỗi tự do — nên cột ghi chú cũng không nói dối
+  được.
+- Điều kiện tích luỹ từ AL-08 in dưới cùng, một dòng.
+
+---
+
+## 9. Renderer
+
+Theo đúng hợp đồng `EngineRenderer` mà bảy engine kia đã theo:
+
+- Mỗi nút lá được `keyed(termId, 'g', …)`, gồm chữ và một `rect` `fill: 'none'` làm
+  tay cầm halo — **không** đặt `stroke` lên chính glyph, vì `stroke` trên chữ vẽ viền
+  quanh từng nét và một hạng tử được nhấn thành vệt mực (bài học từ `longdiv`).
+- Mỗi dòng có node mang `key = row.id`, để `[[a1|dòng thứ hai]]` neo được vào cả dòng.
+- Nút trong (`add`, `mul`, `div`, `pow`) **cũng** có danh tính — neo vào $\,(x+1)^2$
+  như một khối là việc thường xuyên. Hộp của nó bao trọn các con.
+- `elementBoxes` đọc từ **cùng một `layout`** mà renderer dùng, không đo lại. Hai
+  phép đo song song là cách chắc chắn để một ngày nào đó chạm vào $x^2$ lại chọn
+  trúng $x^3$.
+- `implicitElementIds` đọc từ **`layout`**, không từ model — bài học M46: hai chỗ ấy
+  lệch nhau, và khai theo model thì vừa hứa chỗ neo không tồn tại vừa bỏ sót chỗ có
+  thật.
+
+---
+
+## 10. Choreography sinh tự động (AL-06)
+
+Engine biết `trace` và `born`, nên pha suy ra được thay vì khai tay:
+
+| Quan hệ | Pha |
+|---|---|
+| `id → [id]`, đổi chỗ | `move` |
+| `id → [id]`, đổi nội dung | `morph` |
+| `id → [a, b]` | `move` + một bản sao tách ra |
+| `[a, b] → id` | hai nút trượt vào nhau rồi hợp nhất |
+| `id → []` | `hide`, kèm gạch chéo trước khi biến mất |
+| `born` | `show` |
+
+Đây là `DV-02` của backlog (`becomes` thành chuyển động), nhưng làm đúng chiều:
+quan hệ được **suy**, không được **khai**.
+
+Nhãn pha là **chữ trơn**, không LaTeX — nó đi thẳng vào `aria-valuetext`
+(`lint/label-not-plain`, M46). Tên luật tiếng Việt dùng luôn làm nhãn.
+
+---
+
+## 11. Mặt DSL
+
+```
+expr_nodes    danh sách nút, mỗi nút { kind, degree, vars, id }
+rows          số dòng
+deg(e)        bậc tổng của cây con
+vars_of(e)    tập biến xuất hiện
+is_const(e)   không chứa biến
+```
+
+Ít, và cố ý ít: thứ đáng khai ra là **cấu trúc**, đủ cho invariant kiểu "bậc không
+tăng qua mỗi bước" nói được thành biểu thức.
+
+---
+
+## 12. Validator built-in
+
+| Id | Kiểm |
+|---|---|
+| `each-step-sound` | mọi bước rewrite qua được §6 |
+| `no-vanishing-divisor` | không bước nào nhân/chia bởi thứ có thể bằng $0$ mà không khai điều kiện |
+| `reaches:<expr>` | dòng cuối đồng nhất bằng `<expr>` |
+| `degree-drops` | bậc giảm ngặt qua mỗi bước |
+
+`reaches:` là validator của chế độ thử thách: *"biến vế trái thành vế phải"*.
+
+---
+
+## 13. Sandbox (AL-07) — và đây là chỗ engine này khác `longdiv`
+
+`longdiv` trả về đúng `SELECT_TOOL`: phép chia dọc không có nước đi để chọn. Engine
+này **có**, và nó là lý do engine đáng làm:
+
+1. Người học chạm vào một cây con.
+2. Bảng luật hiện ra, **đã lọc còn những luật áp được tại nút ấy**.
+3. Chọn một luật ⇒ engine áp, thêm một dòng.
+
+Bước 2 chính là phần dạy học: nó cho thấy **tập nước đi hợp lệ**, thứ mà học sinh
+mới học đại số không nhìn ra. Và vì mọi nước đi đều do engine áp, người học **không
+thể** viết ra một dòng sai — họ chỉ có thể đi đường vòng.
+
+Nút `Hoàn tác` bỏ dòng cuối. Không có nút "gợi ý bước tiếp theo" (§4: không có bộ
+giải).
+
+Kèm `reaches:` ⇒ bài khai được `kind: "both"`.
+
+---
+
+## 14. Bound (NFR-P4)
+
+```ts
+export const ALGEBRA_LIMITS = {
+  maxNodes: 120,        // mỗi biểu thức
+  maxDepth: 6,          // độ sâu cây; phân số lồng phân số ăn 2 tầng
+  maxSteps: 12,         // số dòng, khớp maxRows của derivation
+  maxVars: 6,
+  maxAbsInt: 9999,
+  maxDegree: 64,        // bậc tổng, cận cho Schwartz–Zippel ở §6
+  maxSourceLength: 200,
+} as const;
+```
+
+`maxDepth: 6` không phải để tiết kiệm bộ nhớ mà vì **printer**: mỗi tầng phân số
+lồng nhau làm cỡ chữ giảm và chiều cao dòng tăng, và quá sáu tầng thì không đọc được
+trên iPad — thiết bị đích của NFR-P1..P3.
+
+---
+
+## 15. Từ chối
+
+Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bảng nửa vời.
+
+| Mã | Khi nào | Mức |
+|---|---|---|
+| `bounds/algebra-no-elements` | `elements` không rỗng | lỗi |
+| `bounds/algebra-parse` | `start` sai cú pháp | lỗi |
+| `bounds/algebra-rule-refused` | luật không áp được tại `at` | lỗi |
+| `bounds/algebra-unknown-rule` | tên luật không có trong §4 | lỗi |
+| `bounds/algebra-path` | `at` trỏ ra ngoài cây | lỗi |
+| `bounds/algebra-unsound` | bước không qua §6 — **lỗi của engine** | lỗi |
+| `algebra/multiplier-may-vanish` | AL-08 | cảnh báo |
+| `algebra/no-steps` | `steps` rỗng, hình chỉ có một dòng | cảnh báo |
+
+---
+
+## 16. Cố ý **không** làm
+
+- **Hàm siêu việt.** Không $\sin$, không $\log$, không $e^x$. Lúc cần chúng thì đây
+  là dự án khác, không phải một phiên bản sau.
+- **Số mũ ký hiệu.** $x^n$ với $n$ là biến. Nó kéo theo luật luỹ thừa có điều kiện và
+  kéo theo cả một tầng suy luận về miền — không đáng cho họ bài đang nhắm.
+- **Căn thức, giá trị tuyệt đối, phần nguyên.** Cùng lý do.
+- **Bộ giải / gợi ý.** §4.
+- **`simplify` một phát.** §4.
+- **Đồ thị hàm số.** Miền khác, engine khác.
+
+---
+
+## 17. Kế hoạch dựng, xếp theo **rủi ro giảm dần**
+
+Nguyên tắc: đâm thủng chỗ dễ chết nhất trước, và mỗi tầng phải **nhìn được bằng
+mắt** trước khi sang tầng sau.
+
+**Tầng 0 — printer (rủi ro cao nhất).** Chỉ parser + printer + renderer, không luật
+nào. Chốt canh: `parse(print(parse(s))) ≡ parse(s)` trên một bộ ~200 chuỗi sinh ngẫu
+nhiên, cộng **render ra PNG rồi nhìn** cỡ 20 biểu thức xấu nhất nghĩ ra được (phân số
+lồng, mũ âm, ngoặc cao). Nếu tầng này không đẹp thì dừng — mọi thứ sau đều vô nghĩa.
+
+**Tầng 1 — máy luật + kiểm đúng.** Sáu luật: `distribute`, `factor`, `collect_like`,
+`eval_int`, `expand_square`, `commute`. Chốt canh: quét ngẫu nhiên `(biểu thức × luật
+× vị trí)` cỡ $10^4$ lượt, mỗi lượt áp được thì phải qua §6. Đây là bản đại số của
+phép quét $A = BQ+R$.
+
+**Tầng 2 — danh tính bền + choreography sinh.** `trace`/`born`, ánh xạ id, pha tự
+sinh. Chốt canh: ANC-01 toàn kho, `elementBoxes`, và **mở Player nhìn từng mốc
+timeline** — M46 vừa dạy lại rằng golden mù với thời gian.
+
+**Tầng 3 — nhóm ★ và AL-08.** Bài đầu tiên nên là *"chứng minh $1 = 2$ sai ở đâu"*,
+vì nó biến chốt canh thành nội dung.
+
+**Tầng 4 — sandbox.** Chỉ sau khi có ≥ 3 bài dùng engine ở chế độ đọc.
+
+---
+
+## 18. Rủi ro đã biết, chưa ai bác bỏ
+
+1. **Printer là thứ có thể giết cả engine.** Sắp chữ toán là một ngành. Tao đánh cược
+   rằng ngữ pháp bé + `maxDepth: 6` đủ để tự in; cược này chưa được kiểm. Kế hoạch
+   thoát: nếu tầng 0 xấu, quay về atlas cho **nguyên tử** (biến, số) và tự in phần
+   cấu trúc — mất tính "không bao giờ cũ", giữ được phần còn lại.
+2. **Chuẩn hoá không sắp lại thứ tự (§3.1 luật 5) có thể làm `collect_like` yếu.**
+   $3x + 2 + 5x$ có hai hạng tử đồng dạng không kề nhau. Hoặc luật phải gộp được nút
+   không kề, hoặc người học phải `commute` trước. Tao nghiêng về **gộp được**, và
+   choreography vẽ hai nút trượt lại gần nhau — nhưng chưa thử.
+3. **Trần 12 bước có thể chật** cho một biến đổi thật.
+4. **`substitute` phá bất biến danh tính**: thay $x$ bằng $2y$ thì mọi lần xuất hiện
+   của $x$ sinh ra một cây con mới. `trace` diễn đạt được (một id ra nhiều id), nhưng
+   animation của nó thì chưa nghĩ ra.
+5. **Chưa đo được nó có dạy được gì không.** Đây là rủi ro lớn nhất và không phải rủi
+   ro kỹ thuật. `PRD-07` chặn đúng vì lý do này.
+
+---
+
+## 19. Việc phải làm **trước** khi mở engine này
+
+Không phải mở màn — đây là hàng đợi thật:
+
+1. **G-C**: chính chủ soạn tay 3–5 bài, rồi đóng băng schema `1.0.0`. Kho có 86 bài,
+   **chưa bài nào do chính chủ soạn**, và người duyệt cũng là người soạn.
+2. **G-A**: đo NFR-P1..P3 trên iPad thật. Engine này in nhiều text node hơn mọi
+   engine hiện có — đo trước thì biết trần.
+3. **Bảng đo phủ cho miền đại số.** `VIZ-COVERAGE.md` đo phủ *tổ hợp*; `longdiv` và
+   engine này đều đóng góp $0$ vào đó. Không có bảng đo riêng thì không có cách nào
+   nói engine này đáng hay không đáng — chỉ có cảm giác.
