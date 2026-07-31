@@ -552,10 +552,15 @@ export function toBox(e: Expr, size: number = FONT): Box {
       // Bảng ưu tiên không bắt được chỗ này vì nguyên tử có ưu tiên cao nhất.
       const negLiteral =
         (e.base.k === 'int' && e.base.v < 0) || (e.base.k === 'rat' && e.base.p < 0);
+      // Căn làm cơ số **phải** có ngoặc: `√3²` đọc được thành $\sqrt{3^2}$, vì số mũ
+      // đứng ngay sau vạch trùm nên mắt không biết nó thuộc về căn hay về ruột căn.
+      // Bảng ưu tiên không bắt được — căn xếp ngang nguyên tử, và đúng là thế ở mọi
+      // chỗ khác.
+      const needsGuard = negLiteral || e.base.k === 'root';
       const inner = toBox(e.base, size);
       return tag({
         t: 'sup',
-        base: negLiteral ? { t: 'paren', inner, size } : wrap(e.base, inner, true),
+        base: needsGuard ? { t: 'paren', inner, size } : wrap(e.base, inner, true),
         exp: text(num(e.exp), size * SCRIPT),
       });
     }

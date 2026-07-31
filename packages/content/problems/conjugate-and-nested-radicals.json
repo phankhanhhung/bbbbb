@@ -1,0 +1,231 @@
+{
+  "schema_version": "0.3.0",
+  "id": "conjugate-and-nested-radicals",
+  "statement": {
+    "vi": "Trục căn thức ở mẫu khi mẫu là một **tổng** chứa căn: nhân cả tử lẫn mẫu với liên hợp, để hiệu hai bình phương xoá dấu căn đi. Rồi làm chuyện ngược lại — khử một căn nằm **trong** căn, bằng cách nhận ra biểu thức dưới căn là một bình phương."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chương trình đại số THCS. Chỗ đáng nhìn: hai đường hoàn toàn khác nhau — nhân liên hợp và khử căn lồng — cùng cho ra $2-\\sqrt3$, vì $(2-\\sqrt3)(2+\\sqrt3) = 1$ và $(2-\\sqrt3)^2 = 7-4\\sqrt3$."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Liên hợp đi ra, căn lồng đi vào"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mẫu có căn thì nhân cả tử lẫn mẫu với **liên hợp** của mẫu — đổi dấu giữa hai hạng tử. Lý do nằm ở hằng đẳng thức $(a-b)(a+b) = a^2-b^2$: căn bị bình phương nên biến mất, và [[a1|mẫu thành số nguyên]]. Ở đây $2/(\\sqrt5-1)$ ra tỉ số vàng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2/(sqrt(5) - 1)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "multiply_by_conjugate"
+                },
+                {
+                  "at": "1",
+                  "rule": "expand_diff_squares"
+                },
+                {
+                  "at": "1.0",
+                  "rule": "root_pow"
+                },
+                {
+                  "at": "1",
+                  "rule": "eval_int"
+                },
+                {
+                  "arg": "2",
+                  "at": "",
+                  "rule": "cancel_common"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Sáu dòng trục căn thức của 2 chia (căn 5 trừ 1), kết thúc ở (căn 5 cộng 1) chia 2."
+          },
+          "verified": true
+        },
+        {
+          "id": "c1",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: liên hợp cho mẫu bằng 1"
+          },
+          "narrative": {
+            "vi": "Khi $a^2-b^2$ ra đúng $1$ thì phân số biến mất hẳn: $(2+\\sqrt3)(2-\\sqrt3) = 4-3 = 1$. Nên [[a1|nghịch đảo của $2+\\sqrt3$]] chính là $2-\\sqrt3$ — hai số nhân nhau bằng $1$. Đây là chỗ nhân liên hợp cho kết quả gọn nhất có thể."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "1/(2 + sqrt(3))",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "multiply_by_conjugate"
+                },
+                {
+                  "at": "1",
+                  "rule": "expand_diff_squares"
+                },
+                {
+                  "at": "1.1.1",
+                  "rule": "root_pow"
+                },
+                {
+                  "at": "1",
+                  "rule": "eval_int"
+                },
+                {
+                  "arg": "1",
+                  "at": "",
+                  "rule": "cancel_common"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Sáu dòng: 1 chia (2 cộng căn 3), nhân liên hợp, mẫu thành 1, kết quả 2 trừ căn 3."
+          },
+          "verified": true
+        },
+        {
+          "id": "c2",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: căn lồng trong căn"
+          },
+          "narrative": {
+            "vi": "Căn lồng khử được khi biểu thức dưới căn **là một bình phương**: tìm $c, d$ với $c+d = a$ và $cd = b$ thì $\\sqrt{a \\pm 2\\sqrt b} = \\sqrt c \\pm \\sqrt d$. Với $7-4\\sqrt3$ thì $c=4$, $d=3$, nên [[a1|kết quả]] là $2-\\sqrt3$. Dấu trừ đòi $c \\ge d$, vì vế trái là căn bậc hai nên không âm."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "sqrt(7 - 4*sqrt(3))",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "denest_radical"
+                },
+                {
+                  "at": "0",
+                  "rule": "eval_root"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: căn của (7 trừ 4 căn 3), thành căn 4 trừ căn 3, rồi 2 trừ căn 3."
+          },
+          "verified": true
+        },
+        {
+          "id": "m1",
+          "parent": "c1",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "end",
+          "parent": "c2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hai đường khác hẳn nhau cùng ra $2-\\sqrt3$, và không phải trùng hợp: $(2-\\sqrt3)^2 = 7-4\\sqrt3$, đúng thứ nằm dưới dấu căn ở nhánh kia. [[a1|Cùng cách ấy]] cho $\\sqrt{3+2\\sqrt2} = 1+\\sqrt2$. Engine không hứa khử được mọi căn lồng — phần lớn căn lồng **không** viết lại được bằng căn bậc hai, và luật này từ chối khi không tìm ra cặp nguyên."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "sqrt(3 + 2*sqrt(2))",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "denest_radical"
+                },
+                {
+                  "at": "0",
+                  "rule": "eval_root"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: căn của (3 cộng 2 căn 2), thành căn 1 cộng căn 2, rồi 1 cộng căn 2."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "c2"
+  }
+}
