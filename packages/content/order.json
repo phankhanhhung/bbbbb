@@ -85,9 +85,10 @@
     "wheel-faces-two-colours",
     "erase-residue-classes-game",
     "polynomial-long-division",
-    "polynomial-division-longform"
+    "polynomial-division-longform",
+    "equation-moves-that-lie"
   ],
   "newest": [
-    "polynomial-division-longform"
+    "equation-moves-that-lie"
   ]
 }

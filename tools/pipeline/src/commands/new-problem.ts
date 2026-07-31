@@ -98,6 +98,16 @@ const STARTER_SCENES: Readonly<Record<string, Scene>> = {
     config: { rule: { type: 'subtract', min: 1, max: 3 } },
     elements: [{ id: 'p0', type: 'pile', count: 12 }],
   },
+  algebra: {
+    engine: 'algebra',
+    // Khai element là lỗi ở engine này: cả chuỗi biến đổi suy ra từ `start` và
+    // `steps`, nên chỗ duy nhất người soạn sửa là hai trường ấy.
+    config: {
+      start: '(x + 1)^2',
+      steps: [{ rule: 'expand_square', at: '' }],
+    },
+    elements: [],
+  },
   longdiv: {
     engine: 'longdiv',
     // Khai element là **lỗi** ở engine này (`bounds/longdiv-no-elements`): cả bảng
@@ -163,6 +173,7 @@ const STARTER_TAGS: Readonly<Record<string, StarterTags>> = {
   game: { topics: ['games'], techniques: ['parity'] },
   derivation: { topics: ['counting'], techniques: ['double-counting'] },
   longdiv: { topics: ['algebra'], techniques: ['construction'] },
+  algebra: { topics: ['algebra'], techniques: ['construction'] },
 };
 
 export function buildNewProblem(options: NewProblemOptions): Problem {
