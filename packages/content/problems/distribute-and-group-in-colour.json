@@ -1,0 +1,158 @@
+{
+  "schema_version": "0.3.0",
+  "id": "distribute-and-group-in-colour",
+  "statement": {
+    "vi": "Nhân phân phối và nhóm hạng tử là hai chiều của **một** thao tác. Nhìn chúng cạnh nhau thì thấy rõ: cái này rải một thừa số ra, cái kia gom nó lại."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: ngoặc nhọn dưới dòng là cách nhóm mà tác giả chọn — engine không tự chọn hộ. Nó chỉ tính phần còn lại, và nhân tử chung của mỗi nhóm là thứ nó tính, không phải thứ nó đoán."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thừa số ngoài ngoặc **nhân bản** theo số hạng tử bên trong. [[a1|Ba sợi]] chỉ đúng ba bản của nó, mỗi bản đi tới một hạng tử — đó là toàn bộ nội dung của phép nhân phân phối."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a*(x + y + z)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "distribute"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: a nhân (x cộng y cộng z), rồi ax cộng ay cộng az, có sợi nối từng bản của a."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bốn hạng tử không có nhân tử chung nào. Ngoặc nhọn dưới dòng đầu cho thấy **cách nhóm** đã chọn, và [[a1|dòng sau]] để lộ thừa số $(c+d)$ chung mà cách nhóm ấy sinh ra."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a*c + a*d + b*c + b*d",
+              "steps": [
+                {
+                  "arg": "0,1|2,3",
+                  "at": "",
+                  "note": "nhóm (1,2) và (3,4)",
+                  "rule": "factor_by_grouping"
+                },
+                {
+                  "arg": "(c + d)",
+                  "at": "",
+                  "rule": "factor"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: bốn hạng tử với hai ngoặc nhóm, rồi a(c cộng d) cộng b(c cộng d), rồi (c cộng d)(a cộng b)."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cùng bốn hạng tử ấy, nhóm **kiểu khác** thì ra thừa số chung khác. Cả hai đều đúng; chọn kiểu nào là mẹo của bài, nên [[a1|engine không chọn hộ]] — nó chỉ tính phần còn lại."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a*c + a*d + b*c + b*d",
+              "steps": [
+                {
+                  "arg": "0,2|1,3",
+                  "at": "",
+                  "note": "nhóm (1,3) và (2,4)",
+                  "rule": "factor_by_grouping"
+                },
+                {
+                  "arg": "(a + b)",
+                  "at": "",
+                  "rule": "factor"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng nhóm theo cách khác, kết thúc ở (a cộng b)(c cộng d)."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

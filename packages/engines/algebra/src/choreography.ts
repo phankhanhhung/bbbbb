@@ -41,6 +41,23 @@ function idsOfRow(box: Layout, rowIndex: number): string[] {
   return [...new Set(line.boxes.map((b) => b.id))];
 }
 
+/**
+ * Cùng danh sách ấy nhưng **theo thứ tự đọc** — trái sang phải.
+ *
+ * Để dòng tự viết ra thì thứ tự bật phải là thứ tự mắt đi. Sắp theo mép trái của hộp
+ * bao; nút cha bao trùm nút con nên nó bật trước, và thế là đúng: cái ngoặc hiện trước
+ * ruột của nó.
+ */
+function orderedIds(box: Layout, rowIndex: number): string[] {
+  const line = box.lines[rowIndex];
+  if (line === undefined) return [];
+  const seen = new Set<string>();
+  return [...line.boxes]
+    .sort((a, b) => a.x - b.x || b.width - a.width)
+    .filter((b) => (seen.has(b.id) ? false : (seen.add(b.id), true)))
+    .map((b) => b.id);
+}
+
 /** `TermId` của mọi nút trong một cây con. */
 function termsIn(e: Expr): Set<TermId> {
   const out = new Set<TermId>();
@@ -133,18 +150,80 @@ export function choreographyOf(
       });
     }
 
-    // 3. Dòng mới hiện ra — **kèm tên dòng**, vì nhãn luật đeo danh tính ấy. Thiếu nó
-    //    thì khung đầu bày sẵn tên mọi phép biến đổi trong khi mới có một dòng.
-    const arriving = [...idsOfRow(box, k), box.lines[k]?.box.id ?? `row${k}`];
-    if (arriving.length > 0) {
+    // 2a. **Mờ phần không đổi** của dòng trên. Mắt khỏi phải đi tìm: chỗ nào còn sáng
+    //     là chỗ luật đang chạm vào.
+    //
+    //     Chúng **ở lại mờ** — và đó là chủ ý, không phải thiếu sót. Không có `show`
+    //     để bật lại: một pha `show` ép độ hiện về $0$ ở mọi khung *trước* mốc của nó
+    //     (đó là cách `applyChoreography` làm cho "hiện ra" có nghĩa), nên dùng nó để
+    //     khôi phục sẽ xoá sạch dòng ấy khỏi khung đầu. Để nguyên thì các dòng đã xong
+    //     nhạt dần về phía trên, và sự chú ý đi xuống theo lời giải.
+    const changingSet = new Set(changing);
+    const goneSet = new Set(gone);
+    const settled = idsOfRow(box, k - 1).filter((id) => !changingSet.has(id) && !goneSet.has(id));
+    if (settled.length > 0 && changing.length > 0) {
       push({
-        id: `s${k}-line`,
-        kind: 'show',
-        targets: arriving.slice(0, 200),
-        at: t + FOCUS_MS + 180,
-        duration: REVEAL_MS,
+        id: `s${k}-rest`,
+        kind: 'dim',
+        targets: settled.slice(0, 200),
+        at: t,
+        duration: FOCUS_MS,
         anchor,
-        label: { vi: `dòng ${k + 1}` },
+      });
+    }
+
+    // 2b. **Ngoặc nhóm và gạch triệt tiêu** hiện cùng lúc với chỗ sắp đổi — chúng nói
+    //     về dòng trên, nên phải có mặt *trước* khi dòng dưới xuất hiện.
+    const marks = [
+      ...box.explain.braces.filter((g) => g.step === k).map((g) => g.id),
+      ...box.explain.strikes.filter((s) => s.step === k).map((s) => s.id),
+    ];
+    if (marks.length > 0) {
+      push({
+        id: `s${k}-mark`,
+        kind: 'show',
+        targets: marks.slice(0, 200),
+        at: t + FOCUS_MS * 0.5,
+        duration: 300,
+        anchor,
+      });
+    }
+
+    // 3. Dòng mới **tự viết ra**: chia thành nhiều pha lệch nhau theo thứ tự đọc thay
+    //    vì bật cả dòng một lượt. Không cần primitive mới — chỉ là mấy pha `show` so
+    //    le — mà cảm giác khác hẳn: mắt đi theo nét viết thay vì bị dội một mảng chữ.
+    //
+    //    **Kèm tên dòng** ở lô đầu, vì nhãn luật đeo danh tính ấy; thiếu nó thì khung
+    //    đầu bày sẵn tên mọi phép biến đổi trong khi mới có một dòng.
+    const arriving = orderedIds(box, k);
+    if (arriving.length > 0) {
+      const batches = Math.min(4, arriving.length);
+      const size = Math.ceil(arriving.length / batches);
+      for (let b = 0; b < batches; b += 1) {
+        const slice = arriving.slice(b * size, (b + 1) * size);
+        if (slice.length === 0) continue;
+        push({
+          id: `s${k}-line${b}`,
+          kind: 'show',
+          targets: (b === 0 ? [box.lines[k]?.box.id ?? `row${k}`, ...slice] : slice).slice(0, 200),
+          at: t + FOCUS_MS + 180 + b * 90,
+          duration: REVEAL_MS,
+          anchor,
+          ...(b === 0 ? { label: { vi: `dòng ${k + 1}` } } : {}),
+        });
+      }
+    }
+
+    // 3b. Sợi nối hiện **sau** dòng mới: chúng nối hai đầu, nên đầu kia phải có mặt đã.
+    const threads = box.explain.threads.filter((th) => th.step === k).map((th) => th.id);
+    if (threads.length > 0) {
+      push({
+        id: `s${k}-thread`,
+        kind: 'show',
+        targets: threads.slice(0, 200),
+        at: t + FOCUS_MS + 180 + REVEAL_MS,
+        duration: 320,
+        anchor,
       });
     }
 
@@ -186,6 +265,23 @@ export function choreographyOf(
         label: { vi: story },
       });
     }
+  }
+
+  // Sợi nối dòng điều kiện hiện **sau cùng**: nó nói về cả chuỗi, không về một bước.
+  // Trước M52 dòng đỏ ấy lơ lửng dưới hình không dính vào gì — người đọc phải tự đoán
+  // "$x - 1 \\ne 0$" đang ràng buộc cái mẫu số nào.
+  const links = box.explain.conditionLinks.map((c) => c.id);
+  if (links.length > 0 && phases.length > 0) {
+    const end = Math.max(...phases.map((p) => p.at + p.duration));
+    push({
+      id: 'cond-link',
+      kind: 'show',
+      targets: links,
+      at: end,
+      duration: 300,
+      anchor,
+      label: { vi: 'điều kiện của bước' },
+    });
   }
 
   return phases.length === 0 ? undefined : { phases };

@@ -83,7 +83,7 @@ export const algebraRenderer: EngineRenderer = {
               'font-family': ctx.theme.type.mathFamily,
               'font-size': round(g.size),
               ...(g.italic ? { 'font-style': 'italic' } : {}),
-              fill: ink,
+              fill: roleInk(ctx, box, g.owner) ?? ink,
               // Chủ sở hữu tra theo `data-el ?? key` (`patch.ts`) — glyph phải mang
               // danh tính của nút bao nó, nếu không một pha `dim` chỉ chạm cái hộp
               // vô hình và để nguyên con chữ. Đúng lỗi đã xuất bản ở board (M44).
@@ -186,6 +186,8 @@ export const algebraRenderer: EngineRenderer = {
       nodes.push(el('g', { class: 'cv-alg-row' }, children));
     }
 
+    if (ctx.explain) nodes.push(...explainNodes(box, ctx));
+
     for (const note of box.notes) {
       nodes.push(
         text(
@@ -239,4 +241,99 @@ function caption(value: string | undefined, box: Layout, ctx: RenderContext): Sv
 
 function round(value: number): number {
   return Math.round(value * 1000) / 1000 + 0;
+}
+
+/* ---------- mực giải thích (M52) ---------- */
+
+/**
+ * Bảng màu vai — Okabe-Ito, an toàn với mọi kiểu mù màu.
+ *
+ * Lấy đúng bộ mà `patterns` (NFR-A1) đã dùng, nên hai kênh dự phòng cho người mù màu
+ * nói cùng một thứ tiếng thay vì mỗi chỗ một bảng.
+ */
+const ROLE_INK = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#E69F00'] as const;
+
+/** Màu của một glyph theo vai nó đóng, hoặc `undefined` khi nó không có vai. */
+function roleInk(ctx: RenderContext, box: Layout, owner: string | null): string | undefined {
+  if (!ctx.explain || owner === null) return undefined;
+  const role = box.explain.roleOf.get(owner);
+  return role === undefined ? undefined : ROLE_INK[role % ROLE_INK.length];
+}
+
+/**
+ * Sợi nối, gạch triệt tiêu, ngoặc nhóm, và sợi nối dòng điều kiện.
+ *
+ * Mỗi vật mang một `key` riêng để choreography bật nó đúng lúc — và **chỉ** đúng lúc:
+ * hiện hết cùng dòng mới thì hình thành mạng nhện. Bộ sinh cho chúng một pha `show`
+ * ngay sau pha "chỗ sắp đổi" của bước tương ứng.
+ */
+function explainNodes(box: Layout, ctx: RenderContext): SvgNode[] {
+  const out: SvgNode[] = [];
+  const guide = ctx.theme.surface.guide;
+  const warn = ctx.theme.stroke.invalid;
+
+  for (const t of box.explain.threads) {
+    // Cung chứ không phải đoạn thẳng: hai hạng tử thẳng cột nhau thì đoạn thẳng nằm
+    // đè lên chính chúng và không đọc được là một mối nối.
+    const midY = round((t.y1 + t.y2) / 2);
+    const bend = t.kind === 'split' ? 1.4 : -1.4;
+    out.push(
+      keyed(t.id, 'path', {
+        d: `M${t.x1} ${t.y1}C${round(t.x1 + bend)} ${midY} ${round(t.x2 - bend)} ${midY} ${t.x2} ${t.y2}`,
+        fill: 'none',
+        stroke: ROLE_INK[0],
+        'stroke-width': 0.22,
+        'stroke-linecap': 'round',
+        opacity: 0.55,
+      }),
+    );
+  }
+
+  for (const s of box.explain.strikes) {
+    out.push(
+      keyed(s.id, 'line', {
+        x1: s.x1,
+        y1: s.y1,
+        x2: s.x2,
+        y2: s.y2,
+        stroke: warn,
+        'stroke-width': 0.3,
+        'stroke-linecap': 'round',
+      }),
+    );
+  }
+
+  for (const g of box.explain.braces) {
+    // Ngoặc nhọn vẽ bằng path: một nét ngang có hai đầu quặp xuống và một mũi ở giữa.
+    const mid = round((g.x1 + g.x2) / 2);
+    out.push(
+      keyed(g.id, 'path', {
+        d:
+          `M${g.x1} ${round(g.y)}` +
+          `L${g.x1} ${round(g.y + 0.7)}L${mid} ${round(g.y + 0.7)}` +
+          `L${mid} ${round(g.y + 1.4)}` +
+          `L${mid} ${round(g.y + 0.7)}L${g.x2} ${round(g.y + 0.7)}L${g.x2} ${round(g.y)}`,
+        fill: 'none',
+        stroke: guide,
+        'stroke-width': 0.24,
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+      }),
+    );
+  }
+
+  for (const c of box.explain.conditionLinks) {
+    out.push(
+      keyed(c.id, 'path', {
+        d: `M${c.x1} ${c.y1}C${c.x1} ${round((c.y1 + c.y2) / 2)} ${c.x2} ${round((c.y1 + c.y2) / 2)} ${c.x2} ${c.y2}`,
+        fill: 'none',
+        stroke: warn,
+        'stroke-width': 0.2,
+        'stroke-dasharray': '0.8 0.8',
+        opacity: 0.7,
+      }),
+    );
+  }
+
+  return out;
 }

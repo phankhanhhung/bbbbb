@@ -59,6 +59,19 @@ export interface RuleOutcome {
    */
   readonly guard?: Guard;
   /**
+   * Các **vai** trong hằng đẳng thức đang áp: nhóm $i$ được tô một màu.
+   *
+   * $(a+b)^2 = a^2+2ab+b^2$ — tô $a$ một màu, $b$ một màu, và vì `TermId` bền qua các
+   * dòng nên màu ấy **tự bắc cầu** giữa dòng nguồn và dòng kết quả. Mắt nối hai vế mà
+   * không cần một mũi tên nào. Đây là thứ rẻ nhất trong cả bộ công cụ thị giác và
+   * cũng là thứ nói được nhiều nhất, vì nó nói đúng cái mà một hằng đẳng thức *là*:
+   * một khuôn, và hai thứ điền vào khuôn.
+   *
+   * Khai bằng **danh sách id**, không bằng tên vai: engine không cần biết vai ấy tên
+   * $a$ hay $u$, nó chỉ cần biết "những nút này là một vai".
+   */
+  readonly roles?: ReadonlyArray<readonly TermId[]>;
+  /**
    * Biến phụ vừa đặt: `after` chỉ đúng **dưới ràng buộc** này.
    *
    * `model` kiểm bằng cách thế ngược lại rồi so — không có nó thì phép kiểm thấy hai
@@ -108,6 +121,13 @@ const no = (why: string): { refusal: string } => ({ refusal: why });
  * chữ, và `a - b` bên cạnh `a − b` đọc ra ngay là hai thứ khác nhau.
  */
 const conditionText = (arg: string): string => `${arg.replace(/-/g, '−')} ≠ 0`;
+
+/** Mọi id trong một cây con. */
+function subtreeIds(e: Expr): TermId[] {
+  const out: TermId[] = [];
+  walk(e, (n) => out.push(n.id));
+  return out;
+}
 
 /** Sao chép một cây con với id hoàn toàn mới — dùng khi luật nhân bản một nhánh. */
 function freshCopy(m: Minter, e: Expr): { copy: Expr; pairs: Array<readonly [TermId, TermId]> } {
@@ -241,6 +261,12 @@ const distribute: Rule = {
     // Thừa số ngoài ngoặc **nhân bản** theo số hạng tử trong ngoặc. Bản đầu giữ id
     // gốc, các bản sau mang id mới — nhờ vậy choreography vẽ được một bản tách ra
     // chứ không phải cả cụm nhấp nháy.
+    // Vai thứ nhất là **thừa số được rải ra** (kể cả mọi bản sao của nó); mỗi hạng tử
+    // trong ngoặc là một vai riêng. Tô thế thì nhìn một cái là thấy ai nhân với ai —
+    // đúng hình mà sách vẽ bằng những cung nối.
+    const spread: TermId[] = others.flatMap(subtreeIds);
+    const roles: TermId[][] = [spread];
+
     const terms = sum.args.map((term, i) => {
       const factors =
         i === 0
@@ -248,12 +274,14 @@ const distribute: Rule = {
           : others.map((o) => {
               const { copy, pairs } = freshCopy(m, o);
               dup.push(...pairs);
+              spread.push(...subtreeIds(copy));
               return copy;
             });
+      roles.push(subtreeIds(term));
       return mul(m, [...factors, term]);
     });
 
-    return { after: add(m, terms), dup };
+    return { after: add(m, terms), dup, roles };
   },
 };
 
@@ -363,20 +391,21 @@ const expandSquare: Rule = {
     }
     const [a, b] = node.base.args as [Expr, Expr];
     const dup: Array<readonly [TermId, TermId]> = [];
-    const twin = (e: Expr): Expr => {
+    const roleA = subtreeIds(a);
+    const roleB = subtreeIds(b);
+    const twin = (e: Expr, bucket: TermId[]): Expr => {
       const { copy, pairs } = freshCopy(m, e);
       dup.push(...pairs);
+      bucket.push(...subtreeIds(copy));
       return copy;
     };
     // $(a+b)^2 = a^2 + 2ab + b^2$. Mỗi vế xuất hiện ba lần nên hai bản sao mới.
-    return {
-      after: add(m, [
-        pow(m, a, 2),
-        mul(m, [int(m, 2), twin(a), twin(b)]),
-        pow(m, b, 2),
-      ]),
-      dup,
-    };
+    const after = add(m, [
+      pow(m, a, 2),
+      mul(m, [int(m, 2), twin(a, roleA), twin(b, roleB)]),
+      pow(m, b, 2),
+    ]);
+    return { after, dup, roles: [roleA, roleB] };
   },
 };
 
@@ -558,21 +587,22 @@ const expandCube: Rule = {
     }
     const [a, b] = node.base.args as [Expr, Expr];
     const dup: Array<readonly [TermId, TermId]> = [];
-    const twin = (e: Expr): Expr => {
+    const roleA = subtreeIds(a);
+    const roleB = subtreeIds(b);
+    const twin = (e: Expr, bucket: TermId[]): Expr => {
       const { copy, pairs } = freshCopy(m, e);
       dup.push(...pairs);
+      bucket.push(...subtreeIds(copy));
       return copy;
     };
     // $(a+b)^3 = a^3 + 3a^2b + 3ab^2 + b^3$.
-    return {
-      after: add(m, [
-        pow(m, a, 3),
-        mul(m, [int(m, 3), pow(m, twin(a), 2), twin(b)]),
-        mul(m, [int(m, 3), twin(a), pow(m, twin(b), 2)]),
-        pow(m, b, 3),
-      ]),
-      dup,
-    };
+    const after = add(m, [
+      pow(m, a, 3),
+      mul(m, [int(m, 3), pow(m, twin(a, roleA), 2), twin(b, roleB)]),
+      mul(m, [int(m, 3), twin(a, roleA), pow(m, twin(b, roleB), 2)]),
+      pow(m, b, 3),
+    ]);
+    return { after, dup, roles: [roleA, roleB] };
   },
 };
 
@@ -608,7 +638,13 @@ const factorDiffSquares: Rule = {
 
     const { copy: a2 } = freshCopy(m, a);
     const { copy: b2 } = freshCopy(m, b);
-    return { after: mul(m, [add(m, [a, negate(m, b)]), add(m, [a2, b2])]) };
+    return {
+      after: mul(m, [add(m, [a, negate(m, b)]), add(m, [a2, b2])]),
+      roles: [
+        [...subtreeIds(x), ...subtreeIds(a), ...subtreeIds(a2)],
+        [...subtreeIds(negY), ...subtreeIds(b), ...subtreeIds(b2)],
+      ],
+    };
   },
 };
 
@@ -643,16 +679,25 @@ const factorCubes: Rule = {
     const a = x.base;
     const b = y.base;
     const s = y.sign; // $+$ cho tổng, $-$ cho hiệu
-    const c = (e: Expr): Expr => freshCopy(m, e).copy;
+    const roleA: TermId[] = [...subtreeIds(node.args[0] as Expr), ...subtreeIds(a)];
+    const roleB: TermId[] = [...subtreeIds(node.args[1] as Expr), ...subtreeIds(b)];
+    const c = (e: Expr, bucket: TermId[]): Expr => {
+      const { copy } = freshCopy(m, e);
+      bucket.push(...subtreeIds(copy));
+      return copy;
+    };
     return {
       after: mul(m, [
         add(m, [a, s > 0 ? b : negate(m, b)]),
         add(m, [
-          pow(m, c(a), 2),
-          s > 0 ? negate(m, mul(m, [c(a), c(b)])) : mul(m, [c(a), c(b)]),
-          pow(m, c(b), 2),
+          pow(m, c(a, roleA), 2),
+          s > 0
+            ? negate(m, mul(m, [c(a, roleA), c(b, roleB)]))
+            : mul(m, [c(a, roleA), c(b, roleB)]),
+          pow(m, c(b, roleB), 2),
         ]),
       ]),
+      roles: [roleA, roleB],
     };
   },
 };
@@ -1460,6 +1505,7 @@ const factorByGrouping: Rule = {
     }
 
     const pieces: Expr[] = [];
+    const roles: TermId[][] = [];
     for (const [gi, g] of groups.entries()) {
       const terms = g.map((i) => node.args[i] as Expr);
       const common = commonFactorOf(m, terms);
@@ -1470,9 +1516,11 @@ const factorByGrouping: Rule = {
         if (rest === null) return no(`nhóm ${gi + 1}: không chia được hạng tử cho nhân tử chung`);
         rests.push(rest);
       }
+      // Mỗi **nhóm** là một vai: cách nhóm là mẹo của bài, nên nó phải nhìn thấy được.
+      roles.push([...terms.flatMap(subtreeIds), ...subtreeIds(common), ...rests.flatMap(subtreeIds)]);
       pieces.push(mul(m, [common, add(m, rests)]));
     }
-    return { after: add(m, pieces) };
+    return { after: add(m, pieces), roles };
   },
 };
 

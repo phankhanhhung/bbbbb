@@ -196,8 +196,12 @@ export function Player({
             : [],
         ),
         ...(atlas ? { labels: atlas } : {}),
+        // Mực giải thích chỉ có nghĩa ở chỗ có timeline. Player có; golden và OG card
+        // render **không qua** choreography nên ở đó nó sẽ hiện luôn và làm rối ảnh
+        // tĩnh của cả kho — vì thế nó là một sự thật về *nơi vẽ*, không phải về scene.
+        explain: choreography !== undefined,
       }),
-    [shownAnchor, step, atlas],
+    [shownAnchor, step, atlas, choreography],
   );
 
   /**

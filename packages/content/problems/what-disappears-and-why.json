@@ -1,0 +1,153 @@
+{
+  "schema_version": "0.3.0",
+  "id": "what-disappears-and-why",
+  "statement": {
+    "vi": "Trong một chuỗi biến đổi, thứ **biến mất** cũng đáng nhìn như thứ xuất hiện. Ba kiểu biến mất khác nhau — và một trong ba để lại điều kiện."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: gạch chéo chỉ mọc khi biểu thức bao quanh **đứng yên**. Cây con bị viết lại toàn bộ thì mọi thứ bên trong cũng \"biến mất\", nhưng gạch từng cái là gạch nát cả dòng — nên engine phân biệt hai chuyện ấy."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hệ số $1$ không đổi giá trị gì nên nó đi, và [[a1|gạch chéo]] nói rõ nó đi. Bỏ nó là một luật **có tên** chứ không phải dọn dẹp âm thầm — vì với người đang học, $1 \\cdot x$ và $x$ là hai dòng khác nhau."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "1*x + 2*x",
+              "steps": [
+                {
+                  "at": "0",
+                  "rule": "drop_unit"
+                },
+                {
+                  "at": "",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: 1x cộng 2x, bỏ hệ số 1, rồi gộp thành 3x."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Rút gọn thì thừa số chung biến mất khỏi **cả** tử lẫn mẫu. Nhưng nó chỉ đi được khi nó khác $0$ — nên [[a1|dòng đỏ]] hiện ra, và một sợi nối nó với chỗ nó đang ràng buộc."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(6*a)/(3*a)",
+              "steps": [
+                {
+                  "arg": "a",
+                  "at": "",
+                  "rule": "cancel_common"
+                },
+                {
+                  "at": "",
+                  "rule": "eval_int"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng rút gọn 6a trên 3a thành 2, kèm dòng điều kiện a khác 0."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Kiểu thứ ba: cả cây con bị **viết lại**. Không có gạch chéo nào ở đây dù mọi hạng tử cũ đều không còn — vì gạch từng cái là gạch nát cả dòng, mà chuyện thật sự xảy ra là [[a1|một dòng mới]] thay chỗ dòng cũ."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(x + 3)*(x + 3)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "multiply_out"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: (x cộng 3)(x cộng 3), rồi x bình cộng 6x cộng 9."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

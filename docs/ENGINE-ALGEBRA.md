@@ -1222,3 +1222,74 @@ Và chốt canh đầu tiên tao viết cho nó **không có răng** — nó h�
 dòng nào", mà lỗi chính là nhãn *không có* danh tính, nên nó bỏ qua đúng cái phải bắt.
 Câu hỏi đúng: **"chữ nào còn mực ở khung 0"**, và mọi chữ ấy phải thuộc dòng một. Bản
 sửa được kiểm bằng cách bỏ lại dòng `data-el` và xem test đỏ — bắt đúng ba nhãn.
+
+
+---
+
+## 28. Mực giải thích (M52)
+
+Không làm `move`/`morph` (§27.2) thì phải bù bằng thứ khác, và thứ khác ấy hoá ra
+mạnh hơn: **engine được phép vẽ mực không thuộc về biểu thức**, chỉ thuộc về lời giải
+thích cho một bước. Choreography chỉ bật/tắt.
+
+### 28.1 Cái chốt phải dựng trước: `ctx.explain`
+
+Golden và OG card render **không qua** choreography (`renderer.toSvg(scene, ctx)`
+trần), nên mực giải thích sẽ lọt vào ảnh tĩnh của cả kho.
+
+Và `opacity: 0` **không cứu được**: `applyChoreography` **nhân** vào độ mờ sẵn có
+(`base * progress`), nên mực khai $0$ thì nhân kiểu gì cũng ra $0$ — nó sẽ không bao
+giờ hiện, im lặng, không lỗi, không cảnh báo. Đây đúng là loại bẫy mà cả engine này
+sinh ra để bịt, nên nó phải được ghi ra.
+
+Cửa đúng nằm ở `RenderContext.explain`: nó nói "khung này có ai kể chuyện không", tức
+một sự thật về **nơi vẽ**, không phải về scene. Player bật; golden, OG, sandbox không.
+
+### 28.2 Sáu loại mực, tất cả suy từ cấu trúc
+
+| mực | đọc từ | nói gì |
+|---|---|---|
+| **màu vai** | `RuleOutcome.roles` | $(a+b)^2$: $a$ một màu, $b$ một màu, **bắc cầu qua hai dòng** vì `TermId` bền |
+| **sợi nối** | `trace` | "cái này thành cái kia" — nội dung ngữ nghĩa của `move`, không cần chuyển động |
+| **gạch triệt tiêu** | `trace[x] = []` | §10 hứa từ đầu, nay mới vẽ |
+| **ngoặc nhóm** | `roles` nằm gọn trong dòng nguồn | cách nhóm là mẹo của bài, nên nó phải nhìn thấy được |
+| **nối dòng điều kiện** | `conditions` | dòng đỏ thôi lơ lửng, nó chỉ vào chỗ nó ràng buộc |
+| **dòng tự viết ra** | thứ tự đọc của hộp bao | mấy pha `show` so le, không cần primitive mới |
+
+Màu vai là thứ rẻ nhất và nói được nhiều nhất, vì nó nói đúng cái mà một hằng đẳng
+thức *là*: một khuôn, và những thứ điền vào khuôn. Bảng màu lấy đúng bộ Okabe-Ito mà
+`patterns` (NFR-A1) đang dùng, nên hai kênh dự phòng cho người mù màu nói cùng một
+thứ tiếng.
+
+### 28.3 Hai tiêu chí lọc, cả hai tìm ra bằng cách nhìn
+
+Bản đầu vẽ đủ thứ và hình thành mạng nhện. Hai lỗi, cả hai chỉ lộ ở lượt nhìn PNG:
+
+**Sợi nối từ nút bao.** `freshCopy` khai cặp cho *mọi* nút trong cây con nó sao, kể cả
+nút bao. Nối hai nút bao thì sợi chạy từ giữa cả biểu thức tới giữa cả biểu thức —
+đúng về dữ liệu, vô nghĩa với mắt. Lọc: **chỉ mảnh sơ cấp** (nút không có con) mới có
+sợi. Nút không con là một vật người đọc chỉ tay vào được.
+
+**Gạch chéo qua cả dòng.** Nút được áp luật biến mất là chuyện *cấu trúc* — "chỗ này
+vừa được viết lại" — chứ không phải một phép triệt tiêu, và `focus` đã nói điều ấy
+rồi. `factor_by_grouping` dựng lại toàn bộ tổng, nên bản đầu gạch nát cả dòng. Lọc:
+gạch **chỉ khi nút được áp luật sống sót** sang dòng sau. Lúc ấy thứ mất đi thật sự là
+*bị triệt tiêu khỏi một biểu thức đang đứng yên* — đúng ca `drop_unit` bỏ thừa số $1$,
+`cancel_common` rút một nhân tử.
+
+### 28.4 Không phải đồ trang trí — đo trên cả kho
+
+```
+39 step algebra:  sợi 30 (9 step)   gạch 14 (5)   ngoặc 4 (3)
+                  nối điều kiện 6   glyph có vai 60 (6 step)
+```
+
+Chín luật sinh ra mực. Nếu con số nào về $0$ thì đó là tính năng chết, và bảng này là
+chỗ để phát hiện điều đó.
+
+### 28.5 Danh tính mực giải thích **không** neo được
+
+`explainIds` tách khỏi `drawnIds` có chủ ý: `drawnIds` là tập anchor
+(`implicitElementIds`), mà mực giải thích chỉ tồn tại khi `ctx.explain` — một anchor
+trỏ vào nó sẽ trỏ vào hư không ở golden và OG card. Choreography thì nhắm được, vì
+Player vẽ với `explain`.
