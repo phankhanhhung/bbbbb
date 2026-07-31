@@ -65,6 +65,30 @@ describe('golden SVG toàn kho', () => {
     expect(orphans, `golden không còn scene nào sinh ra: ${orphans.join(', ')}`).toEqual([]);
   });
 
+  /**
+   * **Không golden nào được chứa nhãn thiếu atlas.**
+   *
+   * `missingLabel` vẽ ra `⟨thiếu atlas: …⟩` bằng mực đỏ, cố ý ồn ào — nhưng ồn ào
+   * chỉ có tác dụng với người **nhìn** hình. Golden thì không nhìn: nó chụp đúng
+   * cái nó thấy, kể cả khi cái nó thấy là bốn dòng chữ báo lỗi chồng lên nhau.
+   *
+   * Đã sống thật, và sống lâu: `geometric-sum-doubling` xuất bản từ M40 với **8**
+   * node đỏ thay cho công thức, vì soạn xong mà quên `combviz labels --write`. CI
+   * có bắt (`pnpm labels` chạy ở đó), nhưng bộ kiểm chạy tay thì không — nên lỗi
+   * nằm im qua bốn hạng mục. Khẳng định này đưa nó về đúng chỗ: chỗ mà người soạn
+   * chạy trước khi commit.
+   */
+  it('không golden nào vẽ ra nhãn thiếu atlas (D-07)', () => {
+    const broken = readdirSync(GOLDEN)
+      .filter((name) => name.endsWith('.svg'))
+      .filter((name) => readFileSync(join(GOLDEN, name), 'utf8').includes('thiếu atlas'));
+
+    expect(
+      broken,
+      `atlas cũ so với nội dung — chạy \`pnpm labels --write\`: ${broken.join(', ')}`,
+    ).toEqual([]);
+  });
+
   for (const problem of problems) {
     const scenes = problem.solutions.flatMap((solution) =>
       solution.steps
