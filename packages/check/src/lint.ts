@@ -112,6 +112,42 @@ function checkGlossary(problem: Problem): ValidationIssue[] {
  */
 const CASE_LABEL = /^(Trường hợp \d+|[0-9]+[a-z]|[a-z]\))\s*[:.]\s*\S/;
 
+/**
+ * Nhãn ngắn là **chữ trơn**, không phải LaTeX.
+ *
+ * `case_label` và `label` của pha đi thẳng vào DOM dưới dạng text: Player in
+ * `child.case_label?.vi` nguyên văn ở breadcrumb và ở `TreeNavigator`, còn nhãn pha
+ * thành `aria-valuetext` của thanh tua. Không chỗ nào trong hai chỗ ấy chạy KaTeX,
+ * nên `$1$` hiện ra đúng bốn ký tự `$1$` — và với người dùng trình đọc màn hình thì
+ * nó được đọc thành "đô la một đô la".
+ *
+ * Chỉ narrative và statement mới qua bộ sắp chữ. Ranh giới ấy không đọc ra được từ
+ * schema (cả hai đều là `{ vi: string }`), nên nó phải nằm ở lint — cả hai lỗi này
+ * đều đã lọt vào kho một lần trước khi có luật.
+ */
+function checkPlainLabels(step: Step, path: string): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const flag = (value: string, at: string, what: string): void => {
+    if (!/\$[^$]*\$/.test(value)) return;
+    issues.push({
+      code: 'lint/label-not-plain',
+      severity: 'warning',
+      message: `${what} "${value}" chứa LaTeX mà chỗ hiện nó không sắp chữ`,
+      path: at,
+      hint: 'Viết bằng chữ trơn — nhãn này in nguyên văn vào giao diện và vào trình đọc màn hình',
+    });
+  };
+
+  if (step.case_label) flag(step.case_label.vi, `${path}/case_label/vi`, 'case_label');
+  step.choreography?.phases.forEach((phase, i) => {
+    if (phase.label) {
+      flag(phase.label.vi, `${path}/choreography/phases/${i}/label/vi`, `Nhãn pha "${phase.id}"`);
+    }
+  });
+
+  return issues;
+}
+
 function checkStep(step: Step, path: string, problem: Problem): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
@@ -124,6 +160,8 @@ function checkStep(step: Step, path: string, problem: Problem): ValidationIssue[
       hint: 'Mẫu: "Trường hợp 2: …" ở mức một, "2a: …" ở mức hai',
     });
   }
+
+  issues.push(...checkPlainLabels(step, path));
 
   if (step.narrative) {
     const spans = parseAnchorMarkup(step.narrative.vi);

@@ -26,12 +26,20 @@ Trạng thái: **ước lượng chuyên gia, không phải điều tra** · C�
 | ~~+ ghép cặp, tính phẳng, ma trận kề (M12)~~ | ~~76%~~ | ~~84%~~ |
 | ~~Hôm nay (6 engine + poset/Hasse)~~ | ~~83%~~ | ~~90%~~ |
 | ~~Hôm nay (7 engine — thêm derivation + label atlas)~~ | ~~≈85%~~ | ~~≈97%~~ |
-| **Hôm nay** (7 engine, sau M22–M36: tầng A của cả bảy **đã cạn**) | **~90%** | **~97%** |
+| **Hôm nay** (7 engine tổ hợp, sau M22–M36: tầng A của cả bảy **đã cạn**) | **~90%** | **~97%** |
+| Thêm `longdiv` (M46) | **~90%** | **~97%** | 
 | Hàng đợi §7 — **đã hết** | — | — |
 | Xong đúng roadmap Phase 2 của SRS | ~67% | ~75% |
 | Xong Phase 3 (game engine) | ~75% | ~82% |
 | Thêm 4 view ngoài roadmap (§4) | **~85%** | ~92% |
 | ~~Thêm "derivation engine" (§4.5)~~ ✅ M18 | ~85% | **~97%** |
+
+**`longdiv` không nhích con số nào, và đó là điều đúng để ghi.** Engine thứ tám
+(M46) dựng bảng chia đa thức có dư — một bố cục **đại số**, không thuộc họ bài nào
+trong bảng dưới. Tài liệu này đo phủ **tổ hợp**, nên một engine phục vụ miền khác
+đóng góp $0$ vào nó dù nó gánh trọn thứ nó sinh ra để gánh. Ghi bằng $0$ thay vì
+lặng lẽ cộng vào là cách giữ cho con số còn nghĩa; miền đại số cần bảng đo riêng,
+và bảng ấy chưa có.
 
 **100% không đạt được, và điều đó không phải vì thiếu công sức.** Xem §6.
 
@@ -46,7 +54,8 @@ mất đúng M4.
 ## 2. Phân bố họ bài, và engine hiện có phủ tới đâu
 
 Trọng số cột 2 là tỉ trọng ước lượng trong đề tổ hợp thi đấu (IMO Shortlist C và
-tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engine hiện có gánh nổi.
+tương đương). Cột 3 là tỉ lệ bài **trong họ đó** mà bảy engine tổ hợp gánh nổi —
+`longdiv` không có mặt ở đây vì không họ nào trong bảng thuộc miền của nó.
 
 | Họ bài | Tỉ trọng | Phủ hôm nay | Đóng góp | Còn thiếu gì |
 |---|---:|---:|---:|---|
@@ -449,7 +458,7 @@ tĩnh viết sẵn trong file. Ba hệ quả, nói ra để không ai trông đ�
   duy nhất. Hình học do engine khai (`EngineRenderer.elementBoxes`) chứ không
   suy ngược từ thuộc tính SVG nữa. Giảm chuyển động cho ra bộ đếm pha — bấm qua
   từng cặp.
-  **Cả bảy engine** đều cài `elementBoxes` từ M39, và có chốt canh khoá lại chỗ
+  **Mọi engine** đều cài `elementBoxes` từ M39, và có chốt canh khoá lại chỗ
   dừng ấy. Player **không hiện nút** khi quá một phần ba số cặp không đo được,
   **hoặc** khi không cặp nào thật sự dịch chỗ — hai pane cùng engine cùng view
   thì ảnh nằm đúng chỗ vật, và một animation đứng im tệ hơn hai hình cạnh nhau.

@@ -128,6 +128,18 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       needsLabels: true,
     };
   },
+
+  longdiv: async () => {
+    const module = await import('@combviz/engine-longdiv');
+    return {
+      renderer: module.longDivRenderer,
+      commands: {},
+      hitTest: module.longDivHitTest,
+      sandboxTools: module.longDivTools,
+      environment: module.longDivEnvironment,
+      resolveValidator: module.resolveLongDivValidator,
+    };
+  },
 };
 
 const cache = new Map<string, LoadedEngine>();

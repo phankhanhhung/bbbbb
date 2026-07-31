@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { formatProblem, type Problem } from '@combviz/schema';
+import { formatProblem, type Problem, type Step } from '@combviz/schema';
 import { lintProblem } from '../src/lint.js';
 
 /**
@@ -21,6 +21,20 @@ function loadExample(): Problem {
 
 const codes = (problem: Problem, raw?: string): string[] =>
   lintProblem(problem, raw).map((i) => i.code);
+
+/**
+ * Biến một step của bài mẫu thành nhánh `case`.
+ *
+ * Bài mẫu là một lời giải thẳng, không có nhánh nào — nên mọi khẳng định mở đầu
+ * bằng `find(edge_type === 'case')` rồi `return` khi không thấy đều **không chạy**.
+ * Lint không đụng tới cấu trúc cây (đó là việc của `structure`), nên gắn tay ở đây
+ * là đủ và an toàn.
+ */
+function caseStep(problem: Problem): Step {
+  const step = problem.solutions[0]!.steps[1]!;
+  step.edge_type = 'case';
+  return step;
+}
 
 describe('AUT-10 — lint biên tập', () => {
   it('bài mẫu không sinh cảnh báo nào', () => {
@@ -61,9 +75,11 @@ describe('AUT-10 — lint biên tập', () => {
   });
 
   it('bắt case_label sai mẫu và bỏ qua case_label đúng mẫu', () => {
+    // `find(edge_type === 'case')` là cách viết cũ, và bài mẫu **không có** nhánh
+    // case nào — nên `if (!step) return` làm cả khẳng định này im lặng trôi qua.
+    // Dựng thẳng cái cần kiểm thay vì đi tìm nó.
     const problem = loadExample();
-    const step = problem.solutions[0]!.steps.find((s) => s.edge_type === 'case');
-    if (!step) return;
+    const step = caseStep(problem);
 
     step.case_label = { vi: 'nếu nó chẵn' };
     expect(codes(problem)).toContain('lint/case-label-format');
@@ -73,6 +89,40 @@ describe('AUT-10 — lint biên tập', () => {
 
     step.case_label = { vi: '1a: nó chẵn' };
     expect(codes(problem)).not.toContain('lint/case-label-format');
+  });
+
+  it('bắt LaTeX trong nhãn ngắn — chỗ hiện chúng không sắp chữ', () => {
+    // Player in `case_label` nguyên văn vào breadcrumb và cây, còn nhãn pha thành
+    // `aria-valuetext`. Không chỗ nào chạy KaTeX, nên `$1$` hiện ra đúng bốn ký tự
+    // — và trình đọc màn hình đọc thành "đô la một đô la". Bốn bài trong kho đã
+    // mắc lỗi này trước khi có luật, kể cả bài viết ngay hôm trước.
+    const problem = loadExample();
+    const step = caseStep(problem);
+
+    step.case_label = { vi: 'Trường hợp 1: $N$ chẵn' };
+    expect(codes(problem)).toContain('lint/label-not-plain');
+
+    step.case_label = { vi: 'Trường hợp 1: N chẵn' };
+    expect(codes(problem)).not.toContain('lint/label-not-plain');
+
+    // Giá tiền không phải LaTeX: một dấu `$` lẻ không mở cặp nào.
+    step.case_label = { vi: 'Trường hợp 1: giá 5$ trở lên' };
+    expect(codes(problem)).not.toContain('lint/label-not-plain');
+  });
+
+  it('bắt LaTeX trong nhãn pha, không chỉ trong case_label', () => {
+    const problem = loadExample();
+    const step = problem.solutions[0]!.steps[0]!;
+    step.choreography = {
+      phases: [
+        { id: 'ph1', kind: 'show', targets: ['cell-0-0'], at: 0, duration: 400, label: { vi: 'gộp $x^2$ lại' } },
+      ],
+    } as Step['choreography'];
+
+    expect(codes(problem)).toContain('lint/label-not-plain');
+
+    step.choreography!.phases[0]!.label = { vi: 'gộp hai ô lại' };
+    expect(codes(problem)).not.toContain('lint/label-not-plain');
   });
 
   it('bắt step có hình mà narrative không neo vào gì', () => {
@@ -108,16 +158,15 @@ describe('AUT-10 — lint biên tập', () => {
     expect(codes(problem)).not.toContain('lint/missing-alt-text');
   });
 
-  it('bắt nhánh case chỉ có một anh em', () => {
+  it('bắt nhánh case chỉ có một anh em, im khi có đủ hai', () => {
+    // Cũng thuộc họ "đi tìm rồi `return` khi không thấy": bài mẫu không có nhánh
+    // nào nên bản cũ chưa từng chạy tới một khẳng định nào.
     const problem = loadExample();
-    const cases = problem.solutions[0]!.steps.filter((s) => s.edge_type === 'case');
-    if (cases.length < 2) return;
-
-    problem.solutions[0]!.steps = problem.solutions[0]!.steps.filter(
-      (s) => s.id !== cases[1]!.id,
-    );
-
+    const only = caseStep(problem);
     expect(codes(problem)).toContain('lint/lone-case');
+
+    problem.solutions[0]!.steps.push({ ...only, id: `${only.id}-b` });
+    expect(codes(problem)).not.toContain('lint/lone-case');
   });
 
   it('cổng publish: thiếu og_step_ref và sandbox chỉ tính khi published', () => {
