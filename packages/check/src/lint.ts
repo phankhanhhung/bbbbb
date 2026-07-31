@@ -139,6 +139,31 @@ function checkPlainLabels(step: Step, path: string): ValidationIssue[] {
   };
 
   if (step.case_label) flag(step.case_label.vi, `${path}/case_label/vi`, 'case_label');
+
+  step.choreography?.phases.forEach((phase, i) => {
+    // **Mỗi pha phải có chữ.** Nhãn nay hiện ở mọi chế độ, nên một pha không nhãn là
+    // một đoạn hình đổi mà không ai nói vì sao — đúng thứ làm timeline khó theo. Cả
+    // 87 pha trong kho đều đã có nhãn khi luật này ra đời, nên nó không đòi sửa gì;
+    // nó giữ cho pha thứ 88 không lọt.
+    if (!phase.label) {
+      issues.push({
+        code: 'lint/phase-no-label',
+        severity: 'warning',
+        message: `Pha "${phase.id}" không có nhãn — người xem thấy hình đổi mà không biết vì sao`,
+        path: `${path}/choreography/phases/${i}`,
+        hint: 'Nhãn hiện ngay dưới thanh tua, và là thứ duy nhất giải thích pha ấy',
+      });
+    }
+    if (phase.hold === true && !phase.label) {
+      issues.push({
+        code: 'lint/phase-hold-no-label',
+        severity: 'warning',
+        message: `Pha "${phase.id}" dừng lại mà không có gì để đọc`,
+        path: `${path}/choreography/phases/${i}/hold`,
+        hint: 'Dừng mà không có chữ là kẹt, không phải nghỉ',
+      });
+    }
+  });
   step.choreography?.phases.forEach((phase, i) => {
     if (phase.label) {
       flag(phase.label.vi, `${path}/choreography/phases/${i}/label/vi`, `Nhãn pha "${phase.id}"`);

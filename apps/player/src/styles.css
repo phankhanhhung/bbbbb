@@ -275,13 +275,16 @@ body {
    cột lời giải: nó điều khiển *hình*, và đặt xa thứ nó điều khiển thì mỗi lần
    tua mắt phải nhảy qua lại giữa hai cột. */
 .timeline {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   margin-top: 0.5rem;
 }
 
-.timeline button {
+.timeline nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timeline nav button {
   /* NFR-C2: hit target ≥ 44×44pt — cùng luật với `.controls`, không nới. */
   min-height: 44px;
   min-width: 44px;
@@ -293,12 +296,12 @@ body {
   cursor: pointer;
 }
 
-.timeline button:disabled {
+.timeline nav button:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-.timeline button:focus-visible {
+.timeline nav button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -312,12 +315,33 @@ body {
   accent-color: var(--accent);
 }
 
+/* Chữ của pha: **luôn** chiếm một dòng riêng, kể cả khi chưa pha nào chạy.
+   Không cho nó co giãn theo nội dung — chiều cao nhảy mỗi lần đổi pha thì cả khối
+   hình phía trên giật theo, và giật là thứ làm người ta mất chỗ đang đọc. */
 .timeline__phase {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-height: 2.4em;
+  margin: 0.35rem 0 0;
+  padding: 0.3rem 0.5rem;
+  background: var(--paper-soft, transparent);
+  border-left: 3px solid var(--accent);
   font-size: 0.85rem;
   color: var(--ink-soft);
+}
+
+/* Nút đổi chế độ: nhỏ hơn nút điều khiển, vì nó đổi *cách xem* chứ không phải
+   một nước đi. Vẫn giữ vùng chạm 44px theo NFR-C2. */
+.timeline__mode {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.timeline__mode--on {
+  background: var(--accent);
+  color: var(--paper);
+  border-color: var(--accent);
 }
 
 .timeline__count {
@@ -327,7 +351,6 @@ body {
 }
 
 .timeline__label {
-  display: block;
   color: var(--ink);
 }
 

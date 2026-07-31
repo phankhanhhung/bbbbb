@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M47 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 91 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M48 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 91 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,36 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M48 — Timeline có nhịp, và chữ hiện ra cho mọi người · [E] — **xong**
+
+Chính chủ: choreography chạy một mạch, nhanh quá, khó hiểu; mỗi bước nên có chữ
+minh hoạ. Đo trước khi sửa, và số liệu lật ngược vấn đề: **87/87 pha trong kho đã có
+nhãn**. Chữ đã được viết sẵn cho từng pha — chỉ là **không ai thấy**.
+
+Bốn chỗ hỏng, và ba trong bốn không phải chuyện nội dung:
+
+1. **Nhãn pha chỉ hiện ở chế độ giảm chuyển động.** Chế độ thường nhét nó vào
+   `aria-valuetext` rồi thôi. Người sáng mắt xem hình đổi mà không có một chữ nào —
+   trong khi người dùng trình đọc màn hình thì có. Ngược đời, và nó giải thích trọn
+   vẹn cảm giác "vù vù khó hiểu".
+2. **Timeline tự chạy khi vừa mở bước.** Hình bắt đầu đổi trước khi người xem kịp
+   đọc câu đầu của lời kể — mà lời kể mới là thứ nói cho họ biết phải nhìn cái gì.
+3. **Chỉ người bật `prefers-reduced-motion` mới đi được từng pha.** "Chạy một mạch
+   quá nhanh để hiểu" không phải vấn đề của riêng nhóm ấy.
+4. **Không có cách nào dừng giữa chừng.** Chỉnh chậm lại thì cả timeline chậm đều,
+   mà thứ cần là **nhịp không đều** — dừng đúng chỗ tác giả bảo dừng.
+
+Ba cái đầu sửa ở Player và có hiệu lực **ngay cho cả 9 bài có choreography**, không
+phải sửa một dòng nội dung nào. Cái thứ tư là trường schema mới `hold` (CHO-11), và
+`lint/phase-no-label` giữ cho pha thứ 88 không lọt — luật ra đời khi kho đã 100% có
+nhãn, nên nó không đòi sửa gì.
+
+**Và một lỗi quy trình, cùng họ M45.** `playwright.config.ts` đặt
+`reuseExistingServer: !process.env.CI`, nên ở máy cá nhân e2e **dùng lại** server
+`vite preview` đang chạy — phục vụ `dist` cũ, im lặng, không một dòng báo. Mất một
+vòng debug vì `hold` nằm trong JSON, nằm trong schema, mà bundle thì không có. Nay
+luôn build lại: bộ kiểm chạy tay mà khác bộ kiểm CI thì nó không phải bộ kiểm.
 
 ### M47e — Đặt ẩn phụ và công thức nghiệm · [E] — **xong**
 

@@ -50,7 +50,17 @@ export default defineConfig({
     command:
       'pnpm --filter @combviz/app-player build && pnpm --filter @combviz/app-player preview',
     url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI,
+    // **Luôn build lại**, kể cả ở máy cá nhân.
+    //
+    // Trước đây là `!process.env.CI`, tức ở local thì dùng lại server đang chạy. Một
+    // server `vite preview` bật từ trước phục vụ `dist` **cũ**, nên e2e chạy xanh
+    // trên bản build không có thay đổi vừa viết — và nó im lặng, không có dòng nào
+    // nói "đang dùng lại". Đã mất một vòng debug vì đúng chuyện đó: `hold` nằm trong
+    // JSON, nằm trong schema, mà bundle thì không có.
+    //
+    // Cùng bài học M45, khác chỗ: bộ kiểm chạy tay mà khác bộ kiểm CI thì nó không
+    // phải bộ kiểm. Đổi lại vài giây build mỗi lần chạy.
+    reuseExistingServer: false,
     timeout: 180_000,
     // Cho stdout của server chảy vào log. Không có nó, một server không lên chỉ
     // hiện ra sau ba phút im lặng rồi một dòng "Timed out" — đúng thứ đã xảy ra,
