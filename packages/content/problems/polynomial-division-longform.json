@@ -1,0 +1,821 @@
+{
+  "schema_version": "0.3.0",
+  "id": "polynomial-division-longform",
+  "statement": {
+    "vi": "Chia đa thức $A$ cho $B \\ne 0$ theo **cách viết dọc**: đặt số chia bên trái, số bị chia trong ngoặc, thương trên vạch, rồi lặp chia–nhân–trừ–hạ cho tới khi bậc phần còn lại nhỏ hơn $\\deg B$. Chạy thuật toán trên năm phép chia đủ các trường hợp hay gặp, và giải thích vì sao nó luôn dừng."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bố cục chia dọc quen thuộc. Chỗ đáng nhìn: mỗi nhịp **triệt tiêu đúng một hạng tử bậc cao nhất**, nên bậc phần còn lại giảm ngặt — thuật toán dừng vì lý do ấy, không vì lý do nào khác."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "longdiv"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-07-31",
+  "updated": "2026-07-31",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Chia dọc, từng nhịp một"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chia đa thức viết y như chia số: [[a1|số chia]] bên trái ngoặc, [[a2|số bị chia]] bên trong, [[a3|thương]] mọc dần trên vạch. Mỗi nhịp gồm ba việc — chia hai hạng tử dẫn đầu, nhân ngược lại, rồi trừ đi; phép trừ **triệt tiêu hạng tử bậc cao nhất** nên bậc phần còn lại giảm ngặt và thuật toán phải dừng. Sau mỗi lần trừ thì [[a4|hạ một hạng tử]] của số bị chia xuống. Dừng khi bậc còn lại nhỏ hơn bậc số chia."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "divisor"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "dividend"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "quotient"
+              ]
+            },
+            "a4": {
+              "ids": [
+                "arrow1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "longdiv",
+            "config": {
+              "dividend": [
+                1,
+                2,
+                -1,
+                6,
+                -2
+              ],
+              "divisor": [1, 0, -3]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Phép chia dọc: số chia x²−3 bên trái ngoặc, thương x²+2x+2 trên vạch, ba nhịp trừ, dư 12x+4."
+          },
+          "verified": true
+        },
+        {
+          "id": "e1",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: số chia khuyết hạng tử"
+          },
+          "narrative": {
+            "vi": "Số chia $x^2-3$ **khuyết hạng tử $x$**, nên [[a1|đa thức bị trừ]] ở mỗi nhịp cũng hở đúng ở cột ấy — nhìn khoảng trống là thấy ngay. Hạ từng hạng tử một: sau nhịp đầu còn $2x^3+2x^2$, [[a2|mũi tên]] kéo $6x$ xuống thành $2x^3+2x^2+6x$. Ba nhịp cho [[a3|thương $x^2+2x+2$]] và [[a4|dư $12x+4$]]. Dư bậc $1$, đã nhỏ hơn $\\deg B = 2$, nên dừng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "sub1"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "arrow1"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "quotient"
+              ]
+            },
+            "a4": {
+              "ids": [
+                "remainder"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "longdiv",
+            "config": {
+              "dividend": [
+                1,
+                2,
+                -1,
+                6,
+                -2
+              ],
+              "divisor": [1, 0, -3]
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a1",
+                "at": 0,
+                "duration": 700,
+                "id": "q0",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-2",
+                  "sub1",
+                  "sub1-4",
+                  "sub1-2",
+                  "rule1"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 900,
+                "duration": 700,
+                "id": "d0",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử bậc 1"
+                },
+                "targets": [
+                  "rest1-3",
+                  "rest1-2",
+                  "rest1-1",
+                  "arrow1"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 1800,
+                "duration": 700,
+                "id": "q1",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-1",
+                  "sub2",
+                  "sub2-3",
+                  "sub2-1",
+                  "rule2"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 2700,
+                "duration": 700,
+                "id": "d1",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử tự do"
+                },
+                "targets": [
+                  "rest2-2",
+                  "rest2-1",
+                  "rest2-0",
+                  "arrow2"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 3600,
+                "duration": 700,
+                "id": "q2",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-0",
+                  "sub3",
+                  "sub3-2",
+                  "sub3-0",
+                  "rule3"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 4500,
+                "duration": 700,
+                "id": "d2",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong — phần còn lại là dư"
+                },
+                "targets": [
+                  "remainder-1",
+                  "remainder-0"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Phép chia dọc: số chia x²−3 bên trái ngoặc, thương x²+2x+2 trên vạch, ba nhịp trừ, dư 12x+4."
+          },
+          "verified": true
+        },
+        {
+          "id": "m1",
+          "parent": "e1",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "e2",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: chia hết"
+          },
+          "narrative": {
+            "vi": "Nhịp cơ bản nhất. Lấy [[a1|hạng tử đầu $x^2$]] chia cho $x$ được $x$, nhân ngược ra $x^2+2x$ rồi trừ — hạng tử bậc cao nhất triệt tiêu, còn $3x$, và [[a2|mũi tên]] hạ $6$ xuống. Nhịp hai cho [[a3|thương $x+3$]] và [[a4|dư $0$]], nghĩa là $x^2+5x+6=(x+2)(x+3)$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "dividend-2"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "arrow1"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "quotient"
+              ]
+            },
+            "a4": {
+              "ids": [
+                "remainder"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "longdiv",
+            "config": {
+              "dividend": [1, 5, 6],
+              "divisor": [1, 2]
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a1",
+                "at": 0,
+                "duration": 700,
+                "id": "q0",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-1",
+                  "sub1",
+                  "sub1-2",
+                  "sub1-1",
+                  "rule1"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 900,
+                "duration": 700,
+                "id": "d0",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử tự do"
+                },
+                "targets": [
+                  "rest1-1",
+                  "rest1-0",
+                  "arrow1"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 1800,
+                "duration": 700,
+                "id": "q1",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-0",
+                  "sub2",
+                  "sub2-1",
+                  "sub2-0",
+                  "rule2"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 2700,
+                "duration": 700,
+                "id": "d1",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong — phần còn lại là dư"
+                },
+                "targets": [
+                  "remainder-0"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Phép chia dọc x²+5x+6 cho x+2, hai nhịp, dư bằng 0."
+          },
+          "verified": true
+        },
+        {
+          "id": "m2",
+          "parent": "e2",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "e3",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 3: số bị chia khuyết hạng tử"
+          },
+          "narrative": {
+            "vi": "Lần này **số bị chia** khuyết: $x^3-1$ không có $x^2$ cũng không có $x$. Bảng vẫn phải chừa đủ cột cho chúng, và [[a1|chỗ trống ở hàng trên]] chính là hai hệ số $0$ — bỏ cột đi thì mọi phép trừ sau đó lệch bậc. Ba nhịp cho [[a2|thương $x^2+x+1$]] và [[a3|dư $0$]], tức hằng đẳng thức quen thuộc."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "dividend"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "quotient"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "remainder"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "longdiv",
+            "config": {
+              "dividend": [1, 0, 0, -1],
+              "divisor": [1, -1]
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a1",
+                "at": 0,
+                "duration": 700,
+                "id": "q0",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-2",
+                  "sub1",
+                  "sub1-3",
+                  "sub1-2",
+                  "rule1"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 900,
+                "duration": 700,
+                "id": "d0",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử bậc 1"
+                },
+                "targets": [
+                  "rest1-2",
+                  "arrow1"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 1800,
+                "duration": 700,
+                "id": "q1",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-1",
+                  "sub2",
+                  "sub2-2",
+                  "sub2-1",
+                  "rule2"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 2700,
+                "duration": 700,
+                "id": "d1",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử tự do"
+                },
+                "targets": [
+                  "rest2-1",
+                  "rest2-0",
+                  "arrow2"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 3600,
+                "duration": 700,
+                "id": "q2",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-0",
+                  "sub3",
+                  "sub3-1",
+                  "sub3-0",
+                  "rule3"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 4500,
+                "duration": 700,
+                "id": "d2",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong — phần còn lại là dư"
+                },
+                "targets": [
+                  "remainder-0"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Phép chia dọc x³−1 cho x−1; hàng số bị chia hở hai cột, thương x²+x+1, dư 0."
+          },
+          "verified": true
+        },
+        {
+          "id": "m3",
+          "parent": "e3",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "e4",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 4: hệ số dẫn đầu khác 1"
+          },
+          "narrative": {
+            "vi": "Hệ số dẫn đầu của số chia là $3$, nên mỗi nhịp phải **chia** cho $3$ chứ không nhìn ra được. [[a1|Hạng tử đầu $6x^3$]] chia $3x$ ra $2x^2$; nhân ngược rồi trừ như cũ. Ở đây mọi phép chia đều ra số nguyên nên [[a2|thương $2x^2+x-1$]] đẹp, và [[a3|dư bằng $0$]]."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "dividend-3"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "quotient"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "remainder"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "longdiv",
+            "config": {
+              "dividend": [6, -1, -5, 2],
+              "divisor": [3, -2]
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a1",
+                "at": 0,
+                "duration": 700,
+                "id": "q0",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-2",
+                  "sub1",
+                  "sub1-3",
+                  "sub1-2",
+                  "rule1"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 900,
+                "duration": 700,
+                "id": "d0",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử bậc 1"
+                },
+                "targets": [
+                  "rest1-2",
+                  "rest1-1",
+                  "arrow1"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 1800,
+                "duration": 700,
+                "id": "q1",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-1",
+                  "sub2",
+                  "sub2-2",
+                  "sub2-1",
+                  "rule2"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 2700,
+                "duration": 700,
+                "id": "d1",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử tự do"
+                },
+                "targets": [
+                  "rest2-1",
+                  "rest2-0",
+                  "arrow2"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 3600,
+                "duration": 700,
+                "id": "q2",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-0",
+                  "sub3",
+                  "sub3-1",
+                  "sub3-0",
+                  "rule3"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 4500,
+                "duration": 700,
+                "id": "d2",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong — phần còn lại là dư"
+                },
+                "targets": [
+                  "remainder-0"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Phép chia dọc 6x³−x²−5x+2 cho 3x−2, ba nhịp, thương 2x²+x−1, dư 0."
+          },
+          "verified": true
+        },
+        {
+          "id": "m4",
+          "parent": "e4",
+          "edge_type": "merge_ref",
+          "merge_target": "end",
+          "verified": true
+        },
+        {
+          "id": "e5",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 5: dư đạt bậc lớn nhất có thể"
+          },
+          "narrative": {
+            "vi": "Thuật toán dừng khi bậc phần còn lại **nhỏ hơn** $\\deg B$, không phải khi nó bằng $0$. Ở đây $\\deg B = 2$ nên [[a1|dư]] được phép có bậc tới $1$ — và nó dừng ở $2$, một hằng số. [[a2|Thương $x^2-1$]] cùng dư $2$ cho $x^4+1=(x^2+1)(x^2-1)+2$, kiểm lại được bằng cách nhân ra."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "remainder"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "quotient"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "longdiv",
+            "config": {
+              "dividend": [
+                1,
+                0,
+                0,
+                0,
+                1
+              ],
+              "divisor": [1, 0, 1]
+            },
+            "elements": []
+          },
+          "choreography": {
+            "phases": [
+              {
+                "anchor": "a1",
+                "at": 0,
+                "duration": 700,
+                "id": "q0",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-2",
+                  "sub1",
+                  "sub1-4",
+                  "sub1-2",
+                  "rule1"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 900,
+                "duration": 700,
+                "id": "d0",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử bậc 1"
+                },
+                "targets": [
+                  "rest1-2",
+                  "arrow1"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 2700,
+                "duration": 700,
+                "id": "d1",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử tự do"
+                },
+                "targets": [
+                  "rest2-2",
+                  "rest2-0",
+                  "arrow2"
+                ]
+              },
+              {
+                "anchor": "a1",
+                "at": 3600,
+                "duration": 700,
+                "id": "q2",
+                "kind": "show",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                },
+                "targets": [
+                  "quotient-0",
+                  "sub3",
+                  "sub3-2",
+                  "sub3-0",
+                  "rule3"
+                ]
+              },
+              {
+                "anchor": "a2",
+                "at": 4500,
+                "duration": 700,
+                "id": "d2",
+                "kind": "show",
+                "label": {
+                  "vi": "trừ xong — phần còn lại là dư"
+                },
+                "targets": [
+                  "remainder-0"
+                ]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Phép chia dọc x⁴+1 cho x²+1, hai nhịp, thương x²−1, dư 2."
+          },
+          "verified": true
+        },
+        {
+          "id": "end",
+          "parent": "e5",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Năm phép chia, một định lý: với $B \\ne 0$ luôn tồn tại **duy nhất** cặp $Q, R$ sao cho $A = B \\cdot Q + R$ và $\\deg R < \\deg B$. Thuật toán ở trên chính là chứng minh phần tồn tại — nó dựng ra $Q$ và $R$, và nó dừng vì bậc [[a1|phần còn lại]] giảm ngặt sau mỗi nhịp. Ví dụ cuối này là chỗ điều kiện dừng lộ rõ nhất: [[a2|dư $2$]] không bằng $0$, nhưng bậc $0$ đã nhỏ hơn $\\deg B = 2$ nên không chia tiếp được nữa."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "rest1"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "remainder-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "longdiv",
+            "config": {
+              "dividend": [
+                1,
+                0,
+                0,
+                0,
+                1
+              ],
+              "divisor": [1, 0, 1]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Phép chia dọc x⁴+1 cho x²+1, hai nhịp, thương x²−1, dư 2."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "e1"
+  }
+}

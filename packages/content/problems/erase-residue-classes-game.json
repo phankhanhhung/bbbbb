@@ -600,7 +600,7 @@
           "parent": "s2",
           "edge_type": "case",
           "case_label": {
-            "vi": "Trường hợp 1: $N = 1$"
+            "vi": "Trường hợp 1: N = 1"
           },
           "narrative": {
             "vi": "Bảng chỉ có [[a1|số $1$]]. Nước nào cũng xoá nó, nên Geoff quét sạch bảng ngay lượt đầu và **thua**."
@@ -660,7 +660,7 @@
           "parent": "s2",
           "edge_type": "case",
           "case_label": {
-            "vi": "Trường hợp 2: $N$ lẻ, $N \\ge 3$"
+            "vi": "Trường hợp 2: N lẻ, N ≥ 3"
           },
           "narrative": {
             "vi": "[[a1|Hàng lẻ]] có $\\frac{N+1}{2}$ số còn hàng chẵn có $\\frac{N-1}{2}$, lệch đúng một ô; đặt $A = T_{(N-1)/2}$. Nếu $A$ **thua** thì Geoff xoá trọn hàng lẻ và để lại đúng thế thua ấy. Nếu $A$ **thắng** thì Geoff [[a2|xoá đúng số $N$]], còn lại $1, \\ldots, N-1$ với hai nửa cùng hình $A$ — thế thua theo bổ đề. Hai khả năng, hai nước đi, nên **mọi $N$ lẻ $\\ge 3$ đều là Geoff thắng**."
@@ -753,7 +753,7 @@
           "parent": "s2",
           "edge_type": "case",
           "case_label": {
-            "vi": "Trường hợp 3: $N$ chẵn"
+            "vi": "Trường hợp 3: N chẵn"
           },
           "narrative": {
             "vi": "Hai nửa đều có $N/2$ số nên bảng đúng là thế $(A, A)$ với $A = T_{N/2}$, và bổ đề trả lời ngay: **Geoff thắng ở $N$ khi và chỉ khi Geoff thua ở $N/2$**. Hàng trên là kết quả ở [[a1|$N/2$]] và hàng dưới ở [[a2|$N$]], lục là Geoff thắng còn cam là Ceri thắng — [[a3|hai hàng ngược nhau ở mọi cột]]."

@@ -262,7 +262,7 @@
           "parent": "s1",
           "edge_type": "case",
           "case_label": {
-            "vi": "Trường hợp 1: $\\Delta = 4$"
+            "vi": "Trường hợp 1: bậc lớn nhất bằng 4"
           },
           "narrative": {
             "vi": "$v$ kề [[a3|cả bốn đỉnh còn lại]]. Hai đỉnh nào trong bốn đỉnh đó mà kề nhau sẽ cùng $v$ tạo tam giác, nên giữa chúng không có cạnh nào. Đồ thị chỉ còn đúng $4$ cạnh."
@@ -365,7 +365,7 @@
           "parent": "s1",
           "edge_type": "case",
           "case_label": {
-            "vi": "Trường hợp 2: $\\Delta = 3$"
+            "vi": "Trường hợp 2: bậc lớn nhất bằng 3"
           },
           "narrative": {
             "vi": "$v$ kề đúng ba đỉnh $a, b, c$; gọi $w$ là đỉnh còn lại. [[a4|Ba đỉnh $a, b, c$]] đôi một không kề nhau, nếu không sẽ có tam giác với $v$."
@@ -573,7 +573,7 @@
           "parent": "s1",
           "edge_type": "case",
           "case_label": {
-            "vi": "Trường hợp 3: $\\Delta \\le 2$"
+            "vi": "Trường hợp 3: bậc lớn nhất tối đa 2"
           },
           "narrative": {
             "vi": "Mọi đỉnh có bậc $\\le 2$ nên tổng bậc $\\le 10$, tức [[a6|số cạnh]] $\\le 5$."

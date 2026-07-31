@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { compile, tryEvaluate } from '@combviz/dsl';
+import { compile, tryEvaluate, DETERMINISTIC_BUDGET } from '@combviz/dsl';
 import type { Problem, Scene } from '@combviz/schema';
 import { boardEnvironment, piecesAttack } from '../src/dsl.js';
 import { resolveBoardValidator } from '../src/validators.js';
@@ -16,8 +16,18 @@ const problem = JSON.parse(
 ) as Problem;
 
 const steps = problem.solutions[0]!.steps;
+/**
+ * Chạy bằng ngân sách **không đồng hồ**, đúng cái mà `validate` và CI dùng.
+ *
+ * `DEFAULT_BUDGET` chặn ở 50ms (DSL-02) — hợp lý khi biểu thức chạy trong lúc
+ * người ta đang chờ giao diện, sai chỗ này. Khẳng định `count(cells, a => count(
+ * cells, b => adjacent(a, b)) == 2)` gọi lambda $64 \times 64$ lần và mất cỡ vài
+ * chục mili giây, nên nó xanh khi máy rỗi và **đỏ khi runner đang chạy song
+ * song** — đúng lỗi mà `DETERMINISTIC_BUDGET` được đặt ra để dẹp, chỉ là chỗ này
+ * chưa dùng tới. Đã đỏ một lần trong `pnpm check` và xanh lại ngay khi chạy riêng.
+ */
 const evalOn = (source: string, scene: Scene): unknown =>
-  compile(source).run(boardEnvironment(scene));
+  compile(source).run(boardEnvironment(scene), DETERMINISTIC_BUDGET);
 
 describe('invariant của bài mẫu thật sự bất biến', () => {
   const invariant = problem.invariants![0]!.expr;

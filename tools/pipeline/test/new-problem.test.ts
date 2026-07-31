@@ -41,9 +41,9 @@ const make = (engine: string) =>
   });
 
 describe('combviz new', () => {
-  it('có khung cho **cả bảy** engine, không thiếu cái nào', () => {
+  it('có khung cho **cả tám** engine, không thiếu cái nào', () => {
     expect([...STARTER_ENGINES].sort()).toEqual(
-      ['board', 'derivation', 'game', 'graph', 'point', 'sequence', 'set'].sort(),
+      ['board', 'derivation', 'game', 'graph', 'longdiv', 'point', 'sequence', 'set'].sort(),
     );
   });
 

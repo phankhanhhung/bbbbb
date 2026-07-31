@@ -1,6 +1,6 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M45 xong (7 engine đều tự khai hình học; mọi element trong kho neo được; kho có sổ thứ tự bài; board gạch được ô); schema `0.3.0`; kho 85 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M46 xong (8 engine — `longdiv` dựng cả bảng chia dọc từ hai dãy hệ số; mọi element trong kho neo được; kho có sổ thứ tự bài); schema `0.3.0`; kho 86 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -298,6 +298,63 @@ Ba việc rút ra, đã áp dụng:
 1. Cổng và host khai trong `apps/player/vite.config.ts`, không truyền qua cờ dòng lệnh — cấu hình trong file thì chạy ở đâu cũng ra một kết quả.
 2. `stdout`/`stderr` của webServer nối vào log. Một server không lên phải **nói** ra điều đó, không phải im ba phút rồi để lại một dòng "Timed out".
 3. Khi một job chỉ đỏ ở CI, kiểm tra trước tiên xem **đường chạy ở local có thật sự là đường CI đi không** — trước khi đi tìm lỗi trong code.
+
+### M46 — Engine thứ tám `longdiv`, và nhãn ngắn không phải chỗ để viết LaTeX · [E] — **xong**
+
+Chính chủ đưa ảnh chụp một phép chia dọc viết tay và bảo: muốn chùm bài minh hoạ
+**đúng kiểu ấy**. Bài #85 của M44 dùng `board` vẽ bảng hệ số tách rời — đúng phép
+tính, sai bố cục: nó không có ngoặc chia, không có dòng hạ hạng tử, không giống thứ
+người ta viết ra giấy. Chính chủ chọn **engine mới, đúng ảnh** và **một bài nhiều
+nhánh**.
+
+`longdiv` là engine đầu tiên **không có loại element nào**. Tác giả khai đúng hai
+dãy hệ số; engine chạy thuật toán và dựng cả bảng — thương, từng dòng bị trừ, từng
+vạch, từng dòng hiệu, mũi tên hạ hạng tử. Cùng lối với `coloring_preset` và bảng
+Grundy: khi hình **là** kết quả phép tính, sinh nó ở một chỗ là cách duy nhất để
+hình không bao giờ lệch khỏi phép tính. Bù lại, `implicitElementIds` trở thành toàn
+bộ hợp đồng "cái gì neo được", nên nó đọc từ **`layout`** chứ không từ model — hai
+chỗ ấy lệch nhau đúng hai trường hợp, và bài này có cả hai (hệ số $0$ có trong dãy
+mà không được vẽ; số $0$ của dòng dư rỗng thì được vẽ mà không có trong model).
+
+Bài `polynomial-division-longform` (#86) chạy năm phép chia trên một cây `case`:
+số chia khuyết hạng tử (đúng ảnh chụp), chia hết, số bị chia khuyết hạng tử, hệ số
+dẫn đầu $\ne 1$, và dư đạt bậc lớn nhất có thể.
+
+Bốn thứ chỉ lộ ra khi **mở Player nhìn**, không thứ nào làm test đỏ:
+
+1. **Vạch ngang kẻ sẵn từ khung $0$.** Choreography mở bảng dần theo nhịp, nhưng
+   vạch không có danh tính nên nằm ngoài mọi pha — mấy đoạn kẻ lơ lửng giữa chỗ
+   trống trước cả dòng chúng gạch dưới. Cho vạch mượn danh tính của dòng bị trừ thì
+   chốt canh `elementBoxes` đỏ, và nó đúng: mực của một đoạn thẳng ngang cao đúng
+   $0$, không hộp chữ nào có tâm nằm trên đó. Vạch phải có id riêng, như mũi tên.
+2. **Dư bằng $0$ vẽ ra khoảng trắng.** Ba trong năm ví dụ chia hết, và cả ba kết
+   thúc bằng một vạch ngang không có gì bên dưới — trong khi lời kể nói "dư $0$".
+   Viết ra số $0$, ở tầng bố cục, vì về mặt toán đa thức không **không có** hạng tử.
+3. **Anchor sinh theo công thức chung thì trỏ sai.** Bản đầu gán máy móc `a1` =
+   hạng tử đầu của dòng bị trừ cho cả năm nhánh; đọc trong Player thì "chỗ trống ở
+   hàng trên" sáng lên ở dòng **dưới**, và "dư" sáng ở dòng đầu. Anchor là lời hứa
+   "chữ này trỏ vào chỗ kia" (ANC-01); hứa sai thì thà đừng có. Nay mỗi ví dụ khai
+   tay, và script tự khẳng định id ấy **có thật trong hình**.
+4. **`case_label` chứa `$1$` hiện ra đúng bốn ký tự `$1$`.** Player in `case_label`
+   nguyên văn vào breadcrumb và cây; nhãn pha thì thành `aria-valuetext`. Không chỗ
+   nào chạy KaTeX. Luật mới `lint/label-not-plain` tìm được **10 chỗ** như thế trong
+   kho, ở bốn bài — kể cả bài viết ngay hôm trước.
+
+Hai thứ khác, không thuộc bài này nhưng cùng đường:
+
+- **Ba khẳng định trong `packages/check/test/lint.test.ts` chưa từng chạy.** Cả ba
+  mở đầu bằng `find(edge_type === 'case')` rồi `if (!step) return`, mà bài mẫu là
+  một lời giải thẳng không có nhánh nào. Test xanh vì nó không kiểm gì.
+- **`packages/engines/board/test/dsl.test.ts` chạy bằng đồng hồ $50$ms.**
+  `DEFAULT_BUDGET` hợp lý khi biểu thức chạy lúc người ta đang chờ giao diện, sai ở
+  chỗ này: khẳng định gọi lambda $64 \times 64$ lần, nên nó xanh khi máy rỗi và
+  **đỏ khi runner chạy song song** — đã đỏ đúng một lần trong `pnpm check` rồi xanh
+  lại ngay khi chạy riêng. `DETERMINISTIC_BUDGET` sinh ra để dẹp đúng chuyện đó,
+  chỗ này chỉ là chưa dùng tới.
+
+Bài học lặp lại từ M37/M38/M44, lần này ở engine mới toanh: **golden mù với thời
+gian** (chụp ở $t = \infty$) **và mù với ý nghĩa** (nó không biết `a1` lẽ ra trỏ
+vào đâu). Không có phép nhìn tận mắt thì cả bốn lỗi trên đều xuất bản được.
 
 ### M45 — CI đỏ 18 lần liên tiếp, và một bài xuất bản toàn chữ đỏ · [E] — **xong**
 
@@ -1986,7 +2043,7 @@ Hai gate này chặn theo hai hướng khác nhau: G-A chặn *niềm tin vào n
 5. ⬜ Pilot ≥10 học sinh + 2 GV (DoD §15.5).
 6. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
 
-**Về việc mở engine mới:** xem `docs/VIZ-COVERAGE.md`. Tóm tắt: bảy engine hiện có
+**Về việc mở engine mới:** xem `docs/VIZ-COVERAGE.md`. Tóm tắt: bảy engine tổ hợp
 phủ khoảng **85%** đề tổ hợp thi đấu (board + graph một mình là ~45%). Hàng đợi §7
 **đã cạn** — không còn hạng mục nào. Trần thật khoảng **85%**, không phải 100%: khoảng 10–12% đề có lập luận **không mang nội dung không
 gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái hình đẹp không gánh

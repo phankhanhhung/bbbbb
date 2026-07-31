@@ -1,6 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { SCHEMA_VERSION, formatProblem, type Problem, type Scene } from '@combviz/schema';
+import { ENGINE_FRAGMENTS } from '../engines.js';
 
 /**
  * `combviz new` — dựng khung một bài **soạn tay** (AUT-01, và trực tiếp phục vụ G-C).
@@ -97,6 +98,13 @@ const STARTER_SCENES: Readonly<Record<string, Scene>> = {
     config: { rule: { type: 'subtract', min: 1, max: 3 } },
     elements: [{ id: 'p0', type: 'pile', count: 12 }],
   },
+  longdiv: {
+    engine: 'longdiv',
+    // Khai element là **lỗi** ở engine này (`bounds/longdiv-no-elements`): cả bảng
+    // suy ra từ hai dãy hệ số, nên chỗ duy nhất người soạn sửa là chúng.
+    config: { dividend: [1, 5, 6], divisor: [1, 2] },
+    elements: [],
+  },
   derivation: {
     engine: 'derivation',
     config: { align: 'relation' },
@@ -154,6 +162,7 @@ const STARTER_TAGS: Readonly<Record<string, StarterTags>> = {
   point: { topics: ['counting'], techniques: ['extremal'] },
   game: { topics: ['games'], techniques: ['parity'] },
   derivation: { topics: ['counting'], techniques: ['double-counting'] },
+  longdiv: { topics: ['algebra'], techniques: ['construction'] },
 };
 
 export function buildNewProblem(options: NewProblemOptions): Problem {
@@ -218,13 +227,22 @@ export function buildNewProblem(options: NewProblemOptions): Problem {
 /**
  * Id để neo thử.
  *
- * Bàn cờ không khai element nào nhưng có ô **ngầm định** `cell-0-0` (D-16), nên
- * neo vào đó vẫn hợp lệ — và nó cho người soạn thấy ngay rằng anchor trỏ được
- * vào ô lưới, thứ không đọc ra từ schema.
+ * Có engine không khai element nào mà vẫn neo được, vì id của nó **ngầm định**
+ * (D-16): bàn cờ có `cell-0-0`, chia dọc có `quotient`, `dividend`, từng hạng tử.
+ * Nên chỗ này hỏi thẳng fragment thay vì gõ sẵn một id — gõ sẵn `cell-0-0` là
+ * đúng cho bàn cờ và là `structure/unknown-element` cho mọi engine khác cùng dạng.
  */
 function firstAnchorId(scene: Scene): string {
   const element = scene.elements.find((e) => e.type !== 'row');
-  return element?.id ?? 'cell-0-0';
+  if (element !== undefined) return element.id;
+
+  const fragment = ENGINE_FRAGMENTS.find((f) => f.id === scene.engine);
+  const implicit = fragment?.implicitElementIds?.(scene);
+  const first = implicit === undefined ? undefined : [...implicit][0];
+  if (first === undefined) {
+    throw new Error(`Engine "${scene.engine}": khung mẫu không có id nào để neo`);
+  }
+  return first;
 }
 
 export async function runNewProblem(

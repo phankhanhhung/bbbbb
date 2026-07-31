@@ -117,7 +117,7 @@
           "parent": "s0",
           "edge_type": "case",
           "case_label": {
-            "vi": "Trường hợp 1: chia hết, dư $0$"
+            "vi": "Trường hợp 1: chia hết, dư 0"
           },
           "narrative": {
             "vi": "Nhịp cơ bản, và $B$ chia hết $A$. Lấy $x^2$ chia $x$ được $x$, nhân ngược rồi trừ; [[a1|hạng tử bậc cao nhất]] triệt tiêu, nên hai ô ấy bị gạch. Lặp thêm một nhịp nữa thì [[a3|phần còn lại bằng $0$]], tức $A = B \\cdot Q$ và [[a2|thương]] là $x + 3$."
@@ -304,7 +304,7 @@
           "parent": "s0",
           "edge_type": "case",
           "case_label": {
-            "vi": "Trường hợp 2: dư là hằng khác $0$"
+            "vi": "Trường hợp 2: dư là hằng khác 0"
           },
           "narrative": {
             "vi": "Cùng nhịp ấy trên [[a1|$A = x^2+3x+5$]], nhưng lần này [[a3|phần còn lại là $3$]] — bậc $0$, đã nhỏ hơn $\\deg B = 1$, nên thuật toán dừng và $3$ chính là dư. Đọc lại thành đẳng thức: $x^2+3x+5 = (x+1)([[a2|x+2]]) + 3$. Dư khác $0$ không phải là hỏng, nó là trường hợp thường gặp hơn."
@@ -491,7 +491,7 @@
           "parent": "s0",
           "edge_type": "case",
           "case_label": {
-            "vi": "Trường hợp 3: $A$ khuyết hạng tử"
+            "vi": "Trường hợp 3: A khuyết hạng tử"
           },
           "narrative": {
             "vi": "$A = x^3 - 1$ **khuyết** hạng tử $x^2$ và hạng tử $x$. Bảng đòi mỗi cột một hệ số, nên [[a1|hàng $A$]] phải viết $1, 0, 0, -1$ — bỏ trống là lệch cột và mọi phép trừ sau đó sai theo. Ba nhịp cho [[a2|thương $x^2+x+1$]] và [[a3|dư $0$]], tức hằng đẳng thức quen thuộc."
@@ -1040,7 +1040,7 @@
           "parent": "s0",
           "edge_type": "case",
           "case_label": {
-            "vi": "Trường hợp 5: hệ số dẫn đầu khác $1$"
+            "vi": "Trường hợp 5: hệ số dẫn đầu khác 1"
           },
           "narrative": {
             "vi": "Hệ số dẫn đầu của $B$ là $3$, không phải $1$, nên mỗi nhịp phải **chia** cho $3$ chứ không chỉ nhìn ra. [[a1|Hạng tử đầu]] $6x^3$ chia $3x$ được $2x^2$, và cứ thế. Ở đây mọi phép chia đều ra số nguyên nên [[a2|thương]] đẹp, còn [[a3|dư bằng $0$]]."

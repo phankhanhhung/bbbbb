@@ -84,9 +84,10 @@
     "tree-leaf-stripping",
     "wheel-faces-two-colours",
     "erase-residue-classes-game",
-    "polynomial-long-division"
+    "polynomial-long-division",
+    "polynomial-division-longform"
   ],
   "newest": [
-    "polynomial-long-division"
+    "polynomial-division-longform"
   ]
 }
