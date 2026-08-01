@@ -1,6 +1,12 @@
 import {
+  Minter,
+  add,
   children,
   hasInfinity,
+  int,
+  mul,
+  pow,
+  variable,
   hasUninterpreted,
   intExp,
   needsRealEval,
@@ -428,6 +434,122 @@ function abstractUninterpreted(...trees: readonly Expr[]): Expr[] {
   return trees.map(go);
 }
 
+/* ---------- ký hiệu hàm không diễn giải: diễn giải (AL-18, M71) ---------- */
+
+/**
+ * Có `ufn` nào mà đối số dùng **chỉ số bị ràng buộc** bởi một $\sum$/$\prod$ bao
+ * ngoài không — cửa quyết định lối kiểm.
+ *
+ * Đây là chỗ trừu tượng hoá (M73) **hỏng**, và hỏng im lặng. $a_{k+1}$ dưới dấu
+ * $\sum_k$ là một giá trị *khác nhau ở mỗi $k$*; trừu tượng hoá gán cho nó **một**
+ * nguyên tử duy nhất, nên $\sum_{k=1}^{n}(a_{k+1} - a_k)$ biến thành
+ * $n\,(\#_0 - \#_1)$ và mọi bước triệt tiêu dây chuyền bị kết tội oan. Không phải
+ * "chưa kiểm được" — mà **đỏ**, và đỏ sai là thứ tệ nhất bộ kiểm có thể làm.
+ */
+export function hasBoundUninterpreted(e: Expr): boolean {
+  const go = (n: Expr, bound: ReadonlySet<string>): boolean => {
+    if (n.k === 'ufn' && n.args.some((a) => [...varsOf(a)].some((v) => bound.has(v)))) return true;
+    if (n.k === 'big') {
+      const inner = new Set(bound).add(n.v);
+      return go(n.from, bound) || go(n.to, bound) || go(n.body, inner);
+    }
+    return children(n).some((c) => go(c, bound));
+  };
+  return go(e, new Set());
+}
+
+/** Bậc của họ đa thức thay cho một ký hiệu hàm. */
+const INTERP_DEGREE = 3;
+
+/**
+ * Thay mỗi ký hiệu hàm **một biến** bằng một đa thức bậc ≤ 3 với hệ số là **biến
+ * mới**.
+ *
+ * Không phải một sân thứ năm: sau phép thay này cây không còn `ufn` nào, nên nó rơi
+ * vào đúng ba sân bốc điểm cũ như mọi biểu thức khác. Đây là **cửa thứ hai** của cùng
+ * chỗ định tuyến mà M73 mở — chuyển câu hỏi sang dạng trả lời được, rồi hỏi lại.
+ *
+ * Lý lẽ là Schwartz–Zippel một tầng cao hơn thường lệ. Một đẳng thức đúng với *mọi*
+ * dãy thì riêng đúng với dãy $a_k = c_0 + c_1 k + c_2 k^2 + c_3 k^3$; còn một đẳng
+ * thức sai thì, xem như đa thức theo bốn hệ số $c_i$ và các biến tự do, khác không —
+ * nên nó triệt tiêu tại một điểm ngẫu nhiên với xác suất nhỏ. Đúng mẹo cũ, chỉ khác
+ * chỗ **hệ số cũng là biến được bốc**: nhờ vậy tám lượt bốc là tám dãy khác nhau,
+ * không phải một dãy bốc tám lần.
+ *
+ * Vì sao đa thức chứ không phải một dãy tuỳ ý: hệ số phải là thứ bộ bốc điểm hiện có
+ * bốc được, và tên `#a.0` đi thẳng vào `varsOf` rồi vào `env` mà không một dòng nào
+ * của vòng bốc điểm phải biết chuyện gì vừa xảy ra. Bậc 3 vì mọi bài dãy số phổ
+ * thông đều so những biểu thức bậc ≤ 2 theo chỉ số; bậc 3 để dư một tầng.
+ *
+ * **Yếu hơn** trừu tượng hoá và phải nói ra: trừu tượng hoá trả lời *"đúng với mọi
+ * $f$"*, còn đây trả lời *"đúng với một đa thức ngẫu nhiên"*. Nên nó chỉ được gọi khi
+ * lối kia không nhìn thấy gì — tức khi `hasBoundUninterpreted`.
+ *
+ * `null` khi có ký hiệu **nhiều đối số** dưới dấu $\sum$: một họ đa thức nhiều biến
+ * cần hạng tử chéo, và một họ *không* có hạng tử chéo lại đúng $f(x+y) = f(x)+f(y)$
+ * — tức nó sẽ gật đầu cho phương trình Cauchy như thể đó là đồng nhất thức. Trả
+ * `null` rồi khai "không kiểm được" thì trung thực; bịa một họ thì nói dối.
+ */
+/** Cây y hệt, `id` mới ở mọi nút — `freshCopy` của `rules.ts` không xuất ra ngoài. */
+function reid(m: Minter, e: Expr): Expr {
+  const kids = children(e).map((c) => reid(m, c));
+  const rebuilt = kids.length === 0 ? e : withChildren(e, kids);
+  return { ...rebuilt, id: m.next() } as Expr;
+}
+
+function interpretUninterpreted(...trees: readonly Expr[]): Expr[] | null {
+  const m = new Minter();
+  let bad = false;
+
+  const go = (e: Expr): Expr => {
+    if (e.k === 'ufn') {
+      if (e.args.length !== 1) {
+        bad = true;
+        return e;
+      }
+      const t = go(e.args[0] as Expr);
+      const terms: Expr[] = [];
+      for (let d = 0; d <= INTERP_DEGREE; d += 1) {
+        const c = variable(m, `#${e.name}.${d}`);
+        terms.push(d === 0 ? c : mul(m, [c, pow(m, reid(m, t), int(m, d))]));
+      }
+      // Giữ `id` của nút gốc cho hạng tử đầu là **không** làm: cây này chỉ đi vào bộ
+      // bốc điểm, và một `id` trùng ở đây là cái bẫy gài cho walker tương lai.
+      return add(m, terms);
+    }
+    const kids = children(e);
+    return kids.length === 0 ? e : withChildren(e, kids.map(go));
+  };
+
+  const out = trees.map(go);
+  return bad ? null : out;
+}
+
+/**
+ * Cửa chung cho cả ba hợp đồng: chọn **diễn giải** hay **trừu tượng hoá**, hay khai
+ * thẳng là không kiểm được.
+ *
+ * Một chỗ duy nhất, vì ba hợp đồng mà chọn sân theo ba đoạn mã chép tay thì đoạn thứ
+ * ba sẽ khác hai đoạn kia ở đúng chỗ không ai nhìn — bài học đã trả tiền ở
+ * `sampleCompare`.
+ */
+function groundUninterpreted(
+  a: Expr,
+  b: Expr,
+): { readonly pair: [Expr, Expr] } | { readonly refusal: string } {
+  if (hasBoundUninterpreted(a) || hasBoundUninterpreted(b)) {
+    const got = interpretUninterpreted(a, b);
+    if (got === null) {
+      return {
+        refusal:
+          'ký hiệu hàm nhiều đối số nằm dưới dấu Σ/Π — không có họ hàm nào thay được mà không tự bịa ra một tính chất',
+      };
+    }
+    return { pair: got as [Expr, Expr] };
+  }
+  return { pair: abstractUninterpreted(a, b) as [Expr, Expr] };
+}
+
 /** Hình dạng cây, bỏ danh tính — hai cây `same` nhau cho cùng chuỗi. */
 function shapeKey(e: Expr): string {
   switch (e.k) {
@@ -469,11 +591,12 @@ export function sameValue(
   // thì trả lời **chính xác tuyệt đối** bằng hệ số — không xác suất, không sai số.
   if (hasInfinity(a) || hasInfinity(b)) return sameValueSeries(a, b);
 
-  // Ký hiệu hàm không diễn giải: trừu tượng hoá rồi hỏi **lại chính hàm này**, nên
-  // cả 73 luật chạy được trên biểu thức có $f$ mà không luật nào phải biết về nó.
+  // Ký hiệu hàm không diễn giải: đưa về đất bằng rồi hỏi **lại chính hàm này**, nên
+  // cả 75 luật chạy được trên biểu thức có $f$ mà không luật nào phải biết về nó.
   if (hasUninterpreted(a) || hasUninterpreted(b)) {
-    const [pa, pb] = abstractUninterpreted(a, b) as [Expr, Expr];
-    return sameValue(pa, pb, seed, trials, guard);
+    const g = groundUninterpreted(a, b);
+    if ('refusal' in g) return { ok: true, verified: false, message: g.refusal };
+    return sameValue(g.pair[0], g.pair[1], seed, trials, guard);
   }
 
   //
@@ -764,8 +887,9 @@ export function sameSolutionSet(
   if (hasInfinity(a) || hasInfinity(b)) return sameRelationSeries(a, b);
 
   if (hasUninterpreted(a) || hasUninterpreted(b)) {
-    const [pa, pb] = abstractUninterpreted(a, b) as [Expr, Expr];
-    return sameSolutionSet(pa, pb, guard, seed, trials);
+    const g = groundUninterpreted(a, b);
+    if ('refusal' in g) return { ok: true, verified: false, message: g.refusal };
+    return sameSolutionSet(g.pair[0], g.pair[1], guard, seed, trials);
   }
 
   const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
@@ -845,8 +969,9 @@ export function impliesSolutionSet(
   if (hasInfinity(before) || hasInfinity(after)) return impliesRelationSeries(before, after);
 
   if (hasUninterpreted(before) || hasUninterpreted(after)) {
-    const [pb, pa] = abstractUninterpreted(before, after) as [Expr, Expr];
-    return impliesSolutionSet(pb, pa, guard, seed, trials);
+    const g = groundUninterpreted(before, after);
+    if ('refusal' in g) return { ok: true, verified: false, message: g.refusal, widened: false };
+    return impliesSolutionSet(g.pair[0], g.pair[1], guard, seed, trials);
   }
 
   const names = [...new Set([...varsOf(before), ...varsOf(after)])].sort();

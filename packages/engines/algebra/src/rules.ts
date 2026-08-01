@@ -3109,12 +3109,26 @@ const substituteFrom: Rule = {
     // Nguồn phải **đã cô lập một ẩn**. Đây là chỗ có răng nhất của luật: thế một thứ
     // không phải ràng buộc là cách nhanh nhất làm hỏng một hệ, và cửa này chặn nó bằng
     // cấu trúc chứ không bằng lời hứa.
-    if (source.op !== '=' || source.lhs.k !== 'var') {
-      return no(`hàng ${parts[0]} phải có dạng "x = …" thì mới thế được`);
+    //
+    // "Một ẩn" gồm cả **một số hạng dãy có chỉ số cụ thể** (M71): $a_1 = 3$ ràng buộc
+    // đúng một giá trị, y hệt $x = 3$, và bài dãy số nào cũng bắt đầu bằng một dòng
+    // như thế. Chỉ số phải **đóng** — $a_k = 3$ với $k$ tự do là một câu về *mọi* $k$,
+    // một phát biểu khác hẳn, và thế nó đi như một ẩn là đọc sai giả thiết.
+    const lhs = source.lhs;
+    const isSeq = lhs.k === 'ufn' && lhs.notation === 'sub' && varsOf(lhs).size === 0;
+    if (source.op !== '=' || !(lhs.k === 'var' || isSeq)) {
+      return no(`hàng ${parts[0]} phải có dạng "x = …" hoặc "a_1 = …" thì mới thế được`);
     }
-    const name = source.lhs.name;
-    if (varsOf(source.rhs).has(name)) return no(`vế phải vẫn còn ${name}`);
-    if (!varsOf(target).has(name)) return no(`hàng ${parts[1]} không chứa ${name}`);
+    const name = lhs.k === 'var' ? lhs.name : toPlain(lhs);
+    const holds = (e: Expr): boolean => {
+      let found = false;
+      walk(e, (n) => {
+        if (same(n, lhs)) found = true;
+      });
+      return found;
+    };
+    if (holds(source.rhs)) return no(`vế phải vẫn còn ${name}`);
+    if (!holds(target)) return no(`hàng ${parts[1]} không chứa ${name}`);
 
     /**
      * Một bản sao mới cho **từng** lần xuất hiện, không phải một bản dùng chung:
@@ -3127,12 +3141,14 @@ const substituteFrom: Rule = {
     const dup: Array<readonly [TermId, TermId]> = [];
     const put = (side: Expr, record: boolean): Expr => {
       const go = (e: Expr): Expr => {
-        if (e.k === 'var' && e.name === name) {
+        if (same(e, lhs)) {
           const { copy, pairs } = freshCopy(m, source.rhs);
           if (record) dup.push(...pairs);
           return copy;
         }
-        if (e.k === 'big' && e.v === name) {
+        // Tên bị một $\sum$ bên trong che: chỉ có nghĩa khi ẩn là một **biến trần**.
+        // Một số hạng dãy không bao giờ bị che — nó không phải một tên để ràng buộc.
+        if (lhs.k === 'var' && e.k === 'big' && e.v === name) {
           return { ...e, from: go(e.from), to: go(e.to) };
         }
         const kids = children(e).map(go);
@@ -3436,6 +3452,70 @@ const prodTelescope: Rule = {
 };
 
 /**
+ * $\sum_{k=a}^{b} \bigl(f(k+1) - f(k)\bigr) = f(b+1) - f(a)$ — tổng triệt tiêu dây
+ * chuyền (M71, AL-18).
+ *
+ * Anh em còn thiếu của `prod_telescope`, và mãi tới đây mới làm được vì trước M71 vế
+ * phải **không viết ra được**: $a_{n+1}$ cần chỉ số là một `Expr`.
+ *
+ * Nhận dạng bằng **cấu trúc** như `prod_telescope`: thân phải là một hiệu hai hạng
+ * tử, và số bị trừ phải đúng bằng số trừ sau khi thay $k \to k+1$. Không đoán, không
+ * khớp mẫu chuỗi — nên không có ca nào nó "gần đúng".
+ *
+ * Chiều **ngược** không có. $f(b+1) - f(a)$ nhìn thấy được ở mọi cặp biểu thức, và
+ * dựng ra một tổng từ đó là bịa cho người học một bước họ không nghĩ ra.
+ */
+const sumTelescope: Rule = {
+  id: 'sum_telescope',
+  label: 'tổng triệt tiêu dây chuyền',
+  run(m, node) {
+    if (node.k !== 'big' || node.op !== 'sum') return no('cần một tổng');
+    if (node.from.k === 'inf' || node.to.k === 'inf') {
+      return no('khoảng vô hạn không triệt tiêu về hai đầu — không có "số hạng cuối"');
+    }
+    if (node.body.k !== 'add' || node.body.args.length !== 2) {
+      return no('thân phải là một hiệu hai hạng tử');
+    }
+    // Hạng tử nào mang dấu trừ: `a - b` là `add[a, mul[-1, b]]`, nên số trừ là hạng
+    // tử **có** dạng ấy. Thử cả hai vị trí — `-f(k) + f(k+1)` cũng là cùng một hiệu.
+    const [p, q] = node.body.args as [Expr, Expr];
+    const split = (plus: Expr, minus: Expr): readonly [Expr, Expr] | null => {
+      if (minus.k !== 'mul' || minus.args.length !== 2) return null;
+      const [c, inner] = minus.args as [Expr, Expr];
+      if (!(c.k === 'int' && c.v === -1)) return null;
+      return [plus, inner] as const;
+    };
+    const pair = split(p, q) ?? split(q, p);
+    if (pair === null) return no('thân phải là một hiệu hai hạng tử');
+    const [ahead, behind] = pair;
+
+    const probe = new Minter();
+    const shifted = replaceIndex(
+      probe,
+      behind,
+      node.v,
+      add(probe, [variable(probe, node.v), int(probe, 1)]),
+    );
+    if (!same(ahead, shifted)) return no('số bị trừ không phải số trừ với chỉ số tiến một bậc');
+
+    return {
+      after: add(m, [
+        replaceIndex(
+          m,
+          freshCopy(m, behind).copy,
+          node.v,
+          add(m, [freshCopy(m, node.to).copy, int(m, 1)]),
+        ),
+        negate(
+          m,
+          replaceIndex(m, freshCopy(m, behind).copy, node.v, freshCopy(m, node.from).copy),
+        ),
+      ]),
+    };
+  },
+};
+
+/**
  * $\sum_{k=0}^{\infty} x^k = \dfrac{1}{1-x}$ — **hai chiều** (M68, AL-16).
  *
  * Luật duy nhất của mục này, và nó cố ý hẹp: cơ số phải là **một biến trần**, cận dưới
@@ -3544,6 +3624,7 @@ export const RULES: readonly Rule[] = [
   sumSplit,
   sumShift,
   sumExpand,
+  sumTelescope,
   prodTelescope,
   powSplit,
   addEquations,

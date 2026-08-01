@@ -104,8 +104,20 @@ export type Expr =
    * Tên là chữ tác giả gõ chứ không phải một tập đóng: bài này dùng $f$, bài kia
    * dùng $f$ và $g$ cùng lúc. Ràng buộc duy nhất là **một chữ cái**, để $f(x)$
    * không đọc nhầm thành tích $f \cdot (x)$.
+   *
+   * `notation` phân biệt $f(x)$ với $a_n$ — và đó là **toàn bộ** chỗ khác nhau
+   * giữa một hàm và một dãy (AL-18, M71). Một dãy *là* một hàm trên chỉ số; mọi
+   * thứ bộ kiểm làm với $f(x)$ nó phải làm y hệt với $a_n$. Dựng thêm một kiểu
+   * nút `seq` thì mỗi luật tương lai có **hai** chỗ phải nhớ, và quên một chỗ là
+   * một lỗ im lặng — nên chỗ khác nhau duy nhất nằm đúng ở nơi nó thật sự khác:
+   * cách viết. `sub` chỉ nhận **một** đối số (chỉ số), và parser ép điều đó.
    */
-  | ({ readonly k: 'ufn'; readonly name: string; readonly args: readonly Expr[] } & WithId)
+  | ({
+      readonly k: 'ufn';
+      readonly name: string;
+      readonly notation: 'call' | 'sub';
+      readonly args: readonly Expr[];
+    } & WithId)
   /**
    * Tổng $\sum$ và tích $\prod$ — **construct ràng buộc biến đầu tiên** của engine.
    *
@@ -289,12 +301,22 @@ export const fn = (m: Minter, name: FnName, args: readonly Expr[]): Expr => ({
 });
 
 /** Áp dụng một ký hiệu hàm không diễn giải (AL-17). */
-export const ufn = (m: Minter, name: string, args: readonly Expr[]): Expr => ({
+export const ufn = (
+  m: Minter,
+  name: string,
+  args: readonly Expr[],
+  notation: 'call' | 'sub' = 'call',
+): Expr => ({
   k: 'ufn',
   name,
+  notation,
   args,
   id: m.next(),
 });
+
+/** Một số hạng của dãy: $a_n$, $a_{k+1}$ (AL-18). */
+export const seqTerm = (m: Minter, name: string, index: Expr): Expr =>
+  ufn(m, name, [index], 'sub');
 
 export const big = (
   m: Minter,
@@ -676,11 +698,21 @@ export function same(a: Expr, b: Expr): boolean {
       return a.index === (b as typeof a).index && same(a.arg, (b as typeof a).arg);
     case 'abs':
       return same(a.arg, (b as typeof a).arg);
-    case 'ufn':
     case 'fn': {
       const o = b as typeof a;
       return (
         a.name === o.name &&
+        a.args.length === o.args.length &&
+        a.args.every((c, i) => same(c, o.args[i] as Expr))
+      );
+    }
+    case 'ufn': {
+      const o = b as typeof a;
+      // So cả `notation`: $f(1)$ và $f_1$ in ra hai thứ khác nhau trên hình, nên coi
+      // chúng bằng nhau là để một bước đổi cách viết trôi qua mà không ai thấy.
+      return (
+        a.name === o.name &&
+        a.notation === o.notation &&
         a.args.length === o.args.length &&
         a.args.every((c, i) => same(c, o.args[i] as Expr))
       );

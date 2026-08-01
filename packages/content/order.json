@@ -114,9 +114,11 @@
     "pascal-two-proofs",
     "sign-line-two-ways",
     "geometric-series-gf",
-    "functional-equation-cauchy"
+    "functional-equation-cauchy",
+    "arithmetic-sequence-by-telescoping"
   ],
   "newest": [
+    "arithmetic-sequence-by-telescoping",
     "functional-equation-cauchy"
   ]
 }

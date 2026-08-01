@@ -43,8 +43,8 @@ import {
   sameValueSeries,
   seriesOf,
 } from '../src/series.js';
-import { evalReal } from '../src/check.js';
-import { walk as walkExpr } from '../src/expr.js';
+import { evalReal, hasBoundUninterpreted } from '../src/check.js';
+import { walk as walkExpr, same } from '../src/expr.js';
 import { toPlain } from '../src/parse.js';
 
 /**
@@ -956,8 +956,11 @@ describe('M73 — ký hiệu hàm không diễn giải', () => {
       expect(unparse(P('h(x) + h(y)'))).toBe('(h(x) + h(y))');
     });
 
-    it('từ chối tên có chỉ số dưới: `a_1(x)` gần như luôn là dãy viết nhầm', () => {
-      expect(() => P('a_1(x)')).toThrow(/một chữ cái/);
+    it('một số hạng dãy **không** gọi được như hàm: `a_1(x)` là lỗi cú pháp', () => {
+      // Từ M71 `a_1` đọc thành một số hạng dãy, nên `(x)` đứng sau nó là thừa. Lời
+      // từ chối đổi chỗ chứ không mất: trước là "phải là một chữ cái", nay là
+      // "thừa ký tự" — cả hai đều chặn cùng một cái viết nhầm.
+      expect(() => P('a_1(x)')).toThrow(/thừa ký tự/);
     });
   });
 
@@ -1051,6 +1054,159 @@ describe('M73 — ký hiệu hàm không diễn giải', () => {
     ]);
     expect(m.refusal).toBeNull();
     expect(unparse(m.rows.at(-1)!.expr)).toBe('(0 = f(0))');
+    expect(m.unsound).toEqual([]);
+    expect(m.unchecked).toEqual([]);
+  });
+});
+
+/**
+ * Dãy số: $a_n$, tổng triệt tiêu dây chuyền, và cửa định tuyến thứ hai (M71, AL-18).
+ *
+ * Mục này không thêm một kiểu nút nào, cũng không thêm một sân bốc điểm nào — nó thêm
+ * một *cách viết* cho kiểu nút M73 vừa dựng, và một cách đưa nó **về đất bằng** cho
+ * đúng chỗ mà cách cũ mù.
+ */
+describe('M71 — dãy số', () => {
+  const P = (src: string) => parse(src, new Minter());
+  const run = (start: string, steps: AlgebraStep[]) => readAlgebra(scene(start, steps));
+
+  describe('đọc và in', () => {
+    it('`a_n`, `a_1`, `a_{k+1}` — chỉ số là một `Expr` đầy đủ', () => {
+      expect(toPlain(P('a_n'))).toBe('a_n');
+      expect(toPlain(P('a_1'))).toBe('a_1');
+      expect(toPlain(P('a_{k + 1}'))).toBe('a_{k + 1}');
+      expect(unparse(P('a_{k+1}'))).toBe('a_{(k + 1)}');
+    });
+
+    it('chỉ số không ngoặc đọc đúng **một** nguyên tử: `a_n+1` là $a_n + 1$', () => {
+      // Đoán hộ ở đây thì cái sai đi suốt cả bài mà không ai báo — nên `a_{n+1}`
+      // phải gõ ngoặc, và hai cây dưới đây khác nhau thật.
+      expect(same(P('a_n + 1'), P('a_{n+1}'))).toBe(false);
+      expect(unparse(P('a_n+1'))).toBe(unparse(P('a_n + 1')));
+    });
+
+    it('`_` trống là lỗi cú pháp, không phải một tên', () => {
+      expect(() => P('a_')).toThrow(/cần một chỉ số/);
+      expect(() => P('a_{n')).toThrow(/thiếu dấu "}"/);
+    });
+
+    it('$a_1$ và $f(1)$ **không** bằng nhau: cách viết là một phần danh tính', () => {
+      // In ra hai thứ khác nhau trên hình, nên coi chúng bằng nhau là để một bước
+      // đổi cách viết trôi qua mà không ai thấy.
+      expect(same(P('a_1'), P('a(1)'))).toBe(false);
+    });
+  });
+
+  /**
+   * Cửa định tuyến. Trừu tượng hoá (M73) trả lời *"đúng với **mọi** $f$"* và mạnh hơn
+   * — nhưng nó **mù** khi đối số dùng chỉ số bị ràng buộc, và mù kiểu tệ nhất: nó kết
+   * tội thay vì im.
+   */
+  describe('chọn sân: trừu tượng hoá hay diễn giải', () => {
+    it('nhận ra chỗ trừu tượng hoá mù', () => {
+      expect(hasBoundUninterpreted(P('sum(k, 1, n, a_{k+1} - a_k)'))).toBe(true);
+      // Chỉ số **tự do** thì trừu tượng hoá vẫn nhìn thấy — không đổi sân.
+      expect(hasBoundUninterpreted(P('a_{n+1} - a_1'))).toBe(false);
+      expect(hasBoundUninterpreted(P('f(x + y) = f(x) + f(y)'))).toBe(false);
+      // Cận của Σ đọc **ngoài** phạm vi ràng buộc, nên $a_k$ ở cận là $k$ tự do.
+      expect(hasBoundUninterpreted(P('sum(j, 1, a_k, j)'))).toBe(false);
+    });
+
+    it('đẳng thức triệt tiêu dây chuyền **được kiểm**, không bị kết tội oan', () => {
+      const r = sameValue(P('sum(k, 1, n, a_{k+1} - a_k)'), P('a_{n+1} - a_1'));
+      expect(r.ok).toBe(true);
+      expect(r.verified).toBe(true);
+    });
+
+    it('bẻ răng: hai vế **sai** ở hai đầu đều bị bắt', () => {
+      const lhs = 'sum(k, 1, n, a_{k+1} - a_k)';
+      expect(sameValue(P(lhs), P('a_n - a_1')).ok).toBe(false);
+      expect(sameValue(P(lhs), P('a_{n+1} - a_0')).ok).toBe(false);
+      expect(sameValue(P('sum(k, 1, n, a_k)'), P('n * a_n')).ok).toBe(false);
+    });
+
+    it('bẻ răng: họ đa thức phải **đủ giàu** — một dãy hằng thì mọi hiệu đều là 0', () => {
+      // Nếu bậc của họ thay thế tụt về 0 thì khẳng định dưới đây xanh, và cả sân
+      // này thành một cỗ máy gật đầu.
+      expect(sameValue(P('sum(k, 1, n, a_{k+1} - a_k)'), P('0')).ok).toBe(false);
+    });
+
+    it('ký hiệu **nhiều đối số** dưới dấu Σ: khai không kiểm được, không bịa', () => {
+      // Một họ đa thức nhiều biến không có hạng tử chéo lại đúng $f(x+y) = f(x)+f(y)$
+      // — tức nó gật đầu cho phương trình Cauchy như thể đó là đồng nhất thức.
+      const r = sameValue(P('sum(k, 1, n, g(k, 1))'), P('n * g(1, 1)'));
+      expect(r.ok).toBe(true);
+      expect(r.verified).toBe(false);
+      expect(r.message).toContain('nhiều đối số');
+    });
+  });
+
+  describe('`sum_telescope`', () => {
+    it('$\\sum (a_{k+1} - a_k) = a_{n+1} - a_1$', () => {
+      const m = run('sum(k, 1, n, a_{k+1} - a_k)', [{ rule: 'sum_telescope', at: '' }]);
+      expect(m.refusal).toBeNull();
+      expect(unparse(m.rows[1]!.expr)).toBe(unparse(P('a_{n+1} - a_1')));
+      expect(m.unsound).toEqual([]);
+      expect(m.unchecked).toEqual([]);
+    });
+
+    it('thân **không** phải hiệu shift-một-bậc thì từ chối có lời', () => {
+      expect(run('sum(k, 1, n, a_{k+2} - a_k)', [{ rule: 'sum_telescope', at: '' }]).refusal)
+        .toContain('tiến một bậc');
+      expect(run('sum(k, 1, n, a_{k+1} + a_k)', [{ rule: 'sum_telescope', at: '' }]).refusal)
+        .toContain('hiệu hai hạng tử');
+      expect(run('prod(k, 1, n, a_{k+1} - a_k)', [{ rule: 'sum_telescope', at: '' }]).refusal)
+        .toContain('cần một tổng');
+    });
+
+    it('khoảng vô hạn: từ chối, và lời từ chối là nội dung', () => {
+      expect(run('sum(k, 1, inf, a_{k+1} - a_k)', [{ rule: 'sum_telescope', at: '' }]).refusal)
+        .toContain('số hạng cuối');
+    });
+
+    it('không phải chỉ dãy: thân nào cũng được, miễn khớp cấu trúc', () => {
+      const m = run('sum(k, 1, n, 1/k - 1/(k + 1))', [{ rule: 'sum_telescope', at: '' }]);
+      // Hiệu ở đây là $f(k) - f(k+1)$, tức **lùi** một bậc — luật đòi tiến, nên nó
+      // từ chối, đúng như khai. Đảo dấu thì áp được.
+      expect(m.refusal).toContain('tiến một bậc');
+      const ok = run('sum(k, 1, n, 1/(k + 1) - 1/k)', [{ rule: 'sum_telescope', at: '' }]);
+      expect(ok.refusal).toBeNull();
+      expect(ok.unsound).toEqual([]);
+    });
+  });
+
+  describe('`substitute_from` nhận một số hạng dãy làm ẩn', () => {
+    it('$a_1 = 3$ ràng buộc đúng một giá trị, y hệt $x = 3$', () => {
+      const m = run('a_1 = 3; a_{n+1} - a_1 = 5*n', [
+        { rule: 'substitute_from', at: '', arg: '0,1' },
+      ]);
+      expect(m.refusal).toBeNull();
+      // `−1·3` chứ không phải `−3`: phép thế **không** kiêm rút gọn, và mỗi phép rút
+      // gọn là một bước có tên, hiện ra trên hình.
+      expect(toPlain(m.rows[1]!.expr)).toBe('a_1 = 3; a_{n + 1} − 3 = 5n');
+      expect(m.unsound).toEqual([]);
+    });
+
+    it('chỉ số **tự do** thì từ chối: $a_k = 3$ là câu về mọi $k$', () => {
+      expect(
+        run('a_k = 3; a_{n+1} - a_1 = 5*n', [{ rule: 'substitute_from', at: '', arg: '0,1' }])
+          .refusal,
+      ).toContain('mới thế được');
+    });
+  });
+
+  it('chuỗi đầy đủ: từ $a_{k+1} - a_k = 5$ tới $a_{n+1} = 5n + 3$', () => {
+    const m = run('a_1 = 3; sum(k, 1, n, a_{k+1} - a_k) = sum(k, 1, n, 5)', [
+      { rule: 'sum_telescope', at: '1.L' },
+      { rule: 'sum_const', at: '1.R' },
+      { rule: 'collect_like', at: '1.R.0' },
+      { rule: 'substitute_from', at: '', arg: '0,1' },
+      { rule: 'add_both_sides', at: '1', arg: '3' },
+      { rule: 'collect_like', at: '1.L' },
+      { rule: 'commute', at: '1.R.0', arg: '0,1' },
+    ]);
+    expect(m.refusal).toBeNull();
+    expect(unparse(m.rows.at(-1)!.expr)).toBe(unparse(P('a_1 = 3; a_{n+1} = 5*n + 3')));
     expect(m.unsound).toEqual([]);
     expect(m.unchecked).toEqual([]);
   });

@@ -1,5 +1,6 @@
 import {
   ufn,
+  seqTerm,
   infinity,
   Minter,
   add,
@@ -235,18 +236,13 @@ class Parser {
     }
   }
 
-  /** Một tên biến: chữ cái, kèm chỉ số dưới một chữ số. `null` khi không có. */
+  /** Một tên biến: **một chữ cái**. `null` khi không có. */
   private name(): string | null {
     this.ws();
     const ch = this.src[this.i];
     if (ch === undefined || !/[a-zA-Z]/.test(ch)) return null;
     this.i += 1;
-    let out = ch;
-    if (this.src[this.i] === '_' && /[0-9]/.test(this.src[this.i + 1] ?? '')) {
-      out += `_${this.src[this.i + 1] as string}`;
-      this.i += 2;
-    }
-    return out;
+    return ch;
   }
 
   private digits(): number | null {
@@ -335,7 +331,6 @@ class Parser {
       return infinity(this.m);
     }
 
-    // Chỉ số dưới một chữ số: `a_1`. Đủ cho dãy, không mở cửa cho tên nhiều chữ.
     const name = this.name();
     if (name === null) throw new ParseError('cần một số hoặc một tên', this.i);
 
@@ -345,15 +340,8 @@ class Parser {
      * Đọc được vì engine **cấm nhân ngầm** (§3.3) — cùng cổ tức mà `C(n,k)` đã ăn
      * ngay trên: một biến không bao giờ đứng sát `(`, nên `f(` chỉ có thể là một
      * lời gọi. Không cần khai trước tên nào là hàm; chỗ nó đứng đã nói.
-     *
-     * Chỉ nhận **một chữ cái không có chỉ số dưới**: `a_1(x)` gần như chắc chắn là
-     * người viết nhầm một dãy thành một hàm, và đoán hộ họ ở đây thì cái sai sẽ đi
-     * suốt cả bài mà không ai báo.
      */
     if (this.src[this.i] === '(') {
-      if (name.length !== 1) {
-        throw new ParseError(`"${name}" có chỉ số dưới — ký hiệu hàm phải là một chữ cái`, this.i);
-      }
       this.i += 1;
       const args: Expr[] = [this.sum()];
       while (this.eat(',')) args.push(this.sum());
@@ -362,6 +350,34 @@ class Parser {
         throw new ParseError(`ký hiệu hàm nhận nhiều nhất ${UFN_MAX_ARITY} đối số`, this.i);
       }
       return ufn(this.m, name, args);
+    }
+
+    /**
+     * **Số hạng của dãy** (AL-18): một tên đứng sát dấu gạch dưới.
+     *
+     * `a_n`, `a_1`, `a_{k+1}` — chỉ số là một `Expr` đầy đủ, và đó là cả điểm của
+     * mục này: bản trước chỉ đọc được **một chữ số** và cất kết quả vào *tên biến*
+     * `"a_1"`, nghĩa là $a_{n+1}$ không viết ra được và $a_1$ với $a_2$ là hai ẩn
+     * rời nhau chứ không phải hai số hạng của một dãy.
+     *
+     * Chỉ số **không ngoặc** thì đọc đúng **một nguyên tử** — `a_n+1` là
+     * $a_n + 1$, đúng như người ta viết tay. Muốn $a_{n+1}$ thì phải gõ ngoặc
+     * nhọn, và đòi hỏi ấy rẻ hơn nhiều so với đoán hộ.
+     */
+    if (this.src[this.i] === '_') {
+      this.i += 1;
+      if (this.eat('{')) {
+        const idx = this.sum();
+        if (!this.eat('}')) throw new ParseError('thiếu dấu "}"', this.i);
+        return seqTerm(this.m, name, idx);
+      }
+      const ch = this.src[this.i];
+      if (ch === undefined || !/[0-9a-zA-Z]/.test(ch)) {
+        throw new ParseError('sau "_" cần một chỉ số, ví dụ `a_1` hoặc `a_{k+1}`', this.i);
+      }
+      const idx = /[0-9]/.test(ch) ? int(this.m, this.digits() as number) : variable(this.m, ch);
+      if (idx.k === 'var') this.i += 1;
+      return seqTerm(this.m, name, idx);
     }
 
     return variable(this.m, name);
@@ -489,8 +505,15 @@ export function toPlain(e: Expr): string {
       const body = PLAIN_PREC[e.body.k] <= PLAIN_PREC['big'] ? `(${toPlain(e.body)})` : toPlain(e.body);
       return `${sign}(${e.v}=${toPlain(e.from)}..${toPlain(e.to)}) ${body}`;
     }
-    case 'ufn':
-      return `${e.name}(${e.args.map(toPlain).join(', ')})`;
+    case 'ufn': {
+      if (e.notation !== 'sub') return `${e.name}(${e.args.map(toPlain).join(', ')})`;
+      // Ngoặc nhọn chỉ khi chỉ số **không** là một nguyên tử: `a_1`, `a_n` đọc lên
+      // thành "a một", "a n"; còn `a_{n+1}` thì cần ngoặc để người đọc màn hình
+      // không đọc ra "a n cộng một".
+      const idx = e.args[0] as Expr;
+      const atom = idx.k === 'int' || idx.k === 'var';
+      return atom ? `${e.name}_${toPlain(idx)}` : `${e.name}_{${toPlain(idx)}}`;
+    }
     case 'fn':
       // Giai thừa của một thứ không phải nguyên tử phải có ngoặc: `x + 1!` đọc ra
       // $x + (1!)$, khác hẳn $(x+1)!$. Bảng ưu tiên không bắt được vì `fn` xếp ngang
@@ -563,7 +586,11 @@ export function unparse(e: Expr): string {
     case 'big':
       return `${e.op}(${e.v}, ${unparse(e.from)}, ${unparse(e.to)}, ${unparse(e.body)})`;
     case 'ufn':
-      return `${e.name}(${e.args.map(unparse).join(', ')})`;
+      // Chỉ số **luôn** trong ngoặc nhọn khi khứ hồi: `a_n+1` đọc lại thành
+      // $a_n + 1$, và một dạng in không đọc lại được là một dạng in sai.
+      return e.notation === 'sub'
+        ? `${e.name}_{${unparse(e.args[0] as Expr)}}`
+        : `${e.name}(${e.args.map(unparse).join(', ')})`;
     case 'fn':
       // Luôn in dạng **lời gọi**, kể cả giai thừa: `fact(n)` khứ hồi được ở mọi vị trí,
       // còn `n!` thì không — `2^n!` đọc lại thành $2^{n!}$ chứ không phải $(2^n)!$.

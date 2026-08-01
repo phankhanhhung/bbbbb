@@ -115,6 +115,9 @@ describe('tầng 0 — parser và printer', () => {
       // tầng rủi ro nhất — im lặng bỏ qua đúng thứ vừa thêm.
       'n!', 'C(n, k)', 'A(n, 2)', '(x + 1)!',
       'sum(k, 1, n, k)', 'prod(k, 1, 3, k + 1)', 'ln(x)', 'log(2, x)', 'sin(x)', 'tan(x)',
+      // Cách viết chỉ số dưới (M71) và một thân **triệt tiêu được** — thiếu nguyên tử
+      // thứ hai thì `sum_telescope` không bao giờ áp được lần nào trong phép quét.
+      'a_n', 'a_{k+1}', 'sum(k, 1, n, a_{k+1} - a_k)',
     ];
     let s = 987654321;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
@@ -210,6 +213,12 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       // **không nên** có: một cận vô hạn bốc ngẫu nhiên sẽ rơi vào mọi tổng và làm cả
       // phép quét mất nghĩa. Gieo tay đúng hai hình dạng mà luật nhận.
       'sum(k, 0, inf, x^k)', '1/(1 - x)',
+      // M71: dãy số. Gieo tay vì bộ sinh không dựng chỉ số dưới, và cũng không nên —
+      // một $a_{k}$ rơi ngẫu nhiên vào mọi biểu thức thì cả phép quét chuyển sang sân
+      // diễn giải và mất nghĩa. Ba hình dạng: thân triệt tiêu được, thân **không**
+      // triệt tiêu được, và một hệ có giá trị đầu để `substitute_from` chạm tới.
+      'sum(k, 1, n, a_{k+1} - a_k)', 'sum(k, 1, n, a_k)',
+      'a_1 = 3; a_{n+1} - a_1 = 5*n',
     ];
 
     const bad: string[] = [];

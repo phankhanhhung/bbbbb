@@ -913,6 +913,27 @@ export function toBox(e: Expr, size: number = FONT): Box {
     }
     case 'ufn':
       /**
+       * $a_n$ — tên nghiêng rồi **chỉ số dưới**, cỡ script, hạ xuống.
+       *
+       * Chép đúng cách $\log_b$ dựng cơ số ngay dưới đây: một `row` với một `shift`,
+       * không phải một hộp mới. Chỉ số **không bọc ngoặc**: $a_{n+1}$ là cách mọi
+       * sách viết, và cỡ chữ nhỏ hơn cùng đường nền hạ xuống đã đủ tách nó khỏi
+       * $a_n + 1$ — thứ mà mắt phân biệt được ngay ở lượt nhìn PNG.
+       */
+      if (e.notation === 'sub') {
+        return tag({
+          t: 'row',
+          items: [
+            text(e.name, size, true),
+            {
+              t: 'shift',
+              dy: size * 0.2,
+              inner: toBox(e.args[0] as Expr, shrink(size, SCRIPT)),
+            },
+          ],
+        });
+      }
+      /**
        * $f(x)$ — tên **nghiêng** rồi ngoặc.
        *
        * Ngược hẳn `sin`/`ln` ở ngay dưới, và ngược có lý do: `sin` đứng thẳng vì

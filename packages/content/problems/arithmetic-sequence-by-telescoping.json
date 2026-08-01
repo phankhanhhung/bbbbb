@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.0.0",
+  "id": "arithmetic-sequence-by-telescoping",
+  "statement": {
+    "vi": "Dãy $(a_n)$ có $a_1 = 3$ và $a_{k+1} - a_k = 5$ với mọi $k \\ge 1$. Tìm $a_{n+1}$ — không dùng công thức cấp số cộng, chỉ dùng **cộng dồn**."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Công thức $a_n = a_1 + (n-1)d$ là thứ ai cũng thuộc và ít ai biết vì sao. Chỗ đáng nhìn ở đây là *vì sao*: cộng tất cả các hiệu liên tiếp lại thì mọi hạng tử ở giữa xuất hiện đúng hai lần với hai dấu ngược nhau, và cả dãy dài sập lại còn hai đầu. Cùng một mẹo giải được cả những bài mà hiệu **không** phải hằng số."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Cộng dồn các hiệu"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giả thiết cho **một** hiệu; cộng $n$ hiệu đầu tiên lại thì hai vế vẫn bằng nhau. Dòng đầu chỉ là chép lại giả thiết dưới dấu $\\Sigma$.\nBước đầu là [[a1|chỗ dây chuyền sập]]: trong $a_2 - a_1 + a_3 - a_2 + \\dots$ mọi hạng tử giữa triệt tiêu, còn đúng đầu cuối trừ đầu đầu."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "cộng n hiệu liên tiếp",
+              "start": "a_1 = 3; sum(k, 1, n, a_{k+1} - a_k) = sum(k, 1, n, 5)",
+              "steps": [
+                {
+                  "at": "1.L",
+                  "rule": "sum_telescope"
+                },
+                {
+                  "at": "1.R",
+                  "rule": "sum_const"
+                },
+                {
+                  "at": "1.R.0",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bốn dòng. Trên: a một bằng ba. Dưới: tổng từ k bằng một tới n của a k cộng một trừ a k, bằng tổng của năm; sau đó vế trái sập còn a n cộng một trừ a một, vế phải rút về n nhân năm."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn lại là đại số thường. [[a1|Hàng đầu]] cho $a_1 = 3$ nên thế được vào hàng dưới, rồi chuyển sang vế phải.\nKết quả $a_{n+1} = 5n + 3$ — đúng công thức cấp số cộng, nhưng lần này ta thấy nó từ đâu ra."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "thay giá trị đầu rồi chuyển vế",
+              "start": "a_1 = 3; a_{n+1} - a_1 = 5*n",
+              "steps": [
+                {
+                  "arg": "0,1",
+                  "at": "",
+                  "rule": "substitute_from"
+                },
+                {
+                  "arg": "3",
+                  "at": "1",
+                  "rule": "add_both_sides"
+                },
+                {
+                  "at": "1.L",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bốn dòng: thế a một bằng ba vào hàng dưới, cộng ba vào hai vế, rút gọn còn a n cộng một bằng năm n cộng ba."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

@@ -218,7 +218,7 @@ export function algebraEnvironment(scene: Scene): DslEnvironment {
  * **Thanh công cụ không phải chỗ nước đi sống.** `SandboxTool` là một danh sách *cố
  * định theo scene*: bàn cờ có "tô màu", "đặt tile", và chúng đúng ở mọi ô. Nước đi đại
  * số thì phụ thuộc **nút đang chọn** — $(x+1)^2$ khai triển được, $x + 1$ thì không —
- * nên nhét 73 luật vào thanh công cụ là bày ra 71 nút bấm vào không làm gì.
+ * nên nhét 75 luật vào thanh công cụ là bày ra 73 nút bấm vào không làm gì.
  *
  * Nên chúng sống ở `movesAtElement` (`commands.ts`) và hiện thành một bảng **cạnh chỗ
  * chạm**: chạm một cây con thì thấy đúng những luật áp được tại đó. Chính chỗ lọc ấy là

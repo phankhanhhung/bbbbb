@@ -257,7 +257,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§37 để biết tập luật thật — **73 luật** (kể `geometric_series` của §44), xếp theo mười một lớp:
+Xem §21–§37 để biết tập luật thật — **75 luật** (kể `specialize` của §45 và `sum_telescope` của §46), xếp theo mười một lớp:
 
 | lớp | luật |
 |---|---|
@@ -2888,3 +2888,129 @@ không**"* — và đó là hợp đồng `'instance'`, kiểm bằng cấu trú
 2. **Phép quét ngẫu nhiên tự tố cáo.** Thêm luật mà quên một dòng trong bảng
    `ARGS` thì luật ấy luôn từ chối và trôi qua phép quét. Chốt canh độ phủ bắt
    ngay ở lần chạy đầu — đúng như chú thích của nó hứa từ M56.
+
+## §46 — Dãy số: `a_n`, tổng triệt tiêu dây chuyền, và chỗ M73 mù (M71, AL-18)
+
+### 46.1 Một dãy là một hàm, nên nó **không** là một kiểu nút mới
+
+$a_n$ và $f(n)$ là cùng một vật: một giá trị phụ thuộc một đối số mà engine không
+biết công thức. Chỗ chúng khác nhau là **cách viết** — chỉ số dưới thay cho ngoặc
+— nên đó là chỗ duy nhất được phép khác nhau trong dữ liệu:
+
+```ts
+| ({ k: 'ufn'; name: string; notation: 'call' | 'sub'; args: readonly Expr[] } & WithId)
+```
+
+Cám dỗ là dựng một kiểu nút `seq` riêng, và §16 có sẵn lý lẽ để chiều nó: mỗi kiểu
+nút mới ép **mọi** `switch` trong kho phải khai mình xử lý ra sao, và cái giá ấy
+chính là thứ giữ cho không có lỗ im lặng. Nhưng ở đây nó **đẻ** ra lỗ im lặng chứ
+không bịt: mọi câu trả lời cho `seq` sẽ là "y như `ufn`", nên mỗi luật tương lai có
+hai chỗ phải nhớ, và quên một chỗ thì không ai báo. Cái giá đáng trả khi hai vật
+**khác nhau**; ở đây chúng là một.
+
+Điều này trả cổ tức ngay: cả 75 luật, `abstractUninterpreted`, `specialize`,
+`substitute_from` đều chạy trên $a_n$ mà không dòng nào phải sửa vì dãy số.
+
+Cú pháp mặt: `a_n`, `a_1`, `a_{k+1}`. Chỉ số không ngoặc đọc đúng **một** nguyên
+tử, nên `a_n+1` là $a_n + 1$ — đúng như người ta viết tay. Bản trước chỉ đọc được
+một chữ số và cất kết quả vào *tên biến* `"a_1"`, tức $a_{n+1}$ không viết ra được
+và $a_1$ với $a_2$ là hai ẩn rời nhau thay vì hai số hạng của một dãy. Không bài
+nào đã xuất bản dùng cách viết cũ, nên đổi không tốn một byte golden.
+
+### 46.2 Chỗ M73 mù — và mù kiểu tệ nhất
+
+Phép trừu tượng hoá của M73 thay mỗi $f(t)$ cực đại bằng một nguyên tử, khoá theo
+hình dạng của $t$. Đặt nó trước tổng triệt tiêu dây chuyền:
+
+$$\sum_{k=1}^{n}\bigl(a_{k+1} - a_k\bigr) \;=\; a_{n+1} - a_1$$
+
+$a_{k+1}$ nhận **một** nguyên tử $\#_0$, $a_k$ nhận $\#_1$, nên vế trái hoá
+$n(\#_0 - \#_1)$ còn vế phải hoá $\#_2 - \#_3$. Bộ kiểm bốc điểm và báo **đỏ**.
+
+Đó là kiểu hỏng tệ nhất trong ba kiểu. "Không kiểm được" thì người đọc biết mình
+đang đứng ở đâu; "đỏ sai" thì hoặc tác giả tin nó và bỏ một bước đúng, hoặc tác
+giả thôi tin nó — và thôi tin cả những lần nó đỏ thật. Cùng cái giá mà vệt vàng
+thường trực phải trả ở M45, nhân với dấu trừ.
+
+Lý do hỏng nói ra được bằng một câu: **trừu tượng hoá quên mất chỗ ràng buộc.**
+$a_{k+1}$ dưới dấu $\sum_k$ không phải *một* giá trị mà là một giá trị **khác nhau
+ở mỗi $k$**, và một nguyên tử thì chỉ có một giá trị.
+
+### 46.3 Cửa thứ hai: diễn giải bằng đa thức ngẫu nhiên
+
+Thay mỗi ký hiệu hàm **một biến** bằng
+
+$$a_t \;\rightsquigarrow\; c_0 + c_1 t + c_2 t^2 + c_3 t^3$$
+
+trong đó $c_0,\dots,c_3$ là **biến mới** (tên `#a.0`…`#a.3`, tiền tố `#` mà cú pháp
+mặt không sinh ra được — cùng mẹo M73). Sau phép thay, cây không còn `ufn` nào nên
+nó rơi vào đúng ba sân bốc điểm cũ, và mọi $k$ trong thân $\sum$ được đánh giá
+riêng từng giá trị. Không có sân thứ năm ở đây: đây là **cửa thứ hai** của cùng chỗ
+định tuyến M73 mở, chuyển câu hỏi sang dạng trả lời được rồi hỏi lại.
+
+Hệ số là *biến được bốc* chứ không phải hằng chọn sẵn, và chỗ ấy quan trọng: tám
+lượt bốc là **tám dãy khác nhau**, không phải một dãy bốc tám lần. Nó cũng có nghĩa
+là không một dòng nào của vòng bốc điểm phải biết chuyện vừa xảy ra — `varsOf` thấy
+bốn tên mới và làm đúng việc nó vẫn làm.
+
+Lý lẽ là Schwartz–Zippel một tầng cao hơn thường lệ: một đẳng thức đúng với *mọi*
+dãy thì riêng đúng với họ đa thức bậc $\le 3$; một đẳng thức sai thì, xem như đa
+thức theo $c_i$ và các biến tự do, khác không, nên nó triệt tiêu tại điểm ngẫu
+nhiên với xác suất nhỏ.
+
+**Nó yếu hơn trừu tượng hoá, và phải nói ra.** Trừu tượng hoá trả lời *"đúng với
+mọi $f$"*; diễn giải trả lời *"đúng với một đa thức ngẫu nhiên"*. Nên cửa chọn
+đường là một câu hỏi về cấu trúc, không phải một sở thích:
+
+> có `ufn` nào mà đối số dùng chỉ số bị **ràng buộc** bởi một $\sum$/$\prod$ bao
+> ngoài không?
+
+Có thì diễn giải (lối kia mù); không thì trừu tượng hoá (lối này mạnh hơn). Một
+hàm `groundUninterpreted` cho cả ba hợp đồng, vì ba đoạn chép tay thì đoạn thứ ba
+sẽ khác hai đoạn kia ở đúng chỗ không ai nhìn — hoá đơn đã trả ở `sampleCompare`.
+
+**Ký hiệu nhiều đối số dưới dấu $\sum$ thì từ chối, không bịa.** Một họ đa thức
+nhiều biến *không có hạng tử chéo* lại thoả đúng $f(x{+}y) = f(x) + f(y)$ — tức nó
+sẽ gật đầu cho phương trình Cauchy như thể đó là đồng nhất thức. Trả `verified:
+false` kèm lời khai thì trung thực; dựng đại một họ thì nói dối bằng số.
+
+### 46.4 `sum_telescope`, và vì sao chỉ một chiều
+
+Anh em còn thiếu của `prod_telescope` từ M57, và mãi tới đây mới làm được vì trước
+M71 vế phải **không viết ra được**: $a_{n+1}$ cần chỉ số là một `Expr`.
+
+Nhận dạng bằng **cấu trúc** như người anh: thân phải là một hiệu hai hạng tử, và số
+bị trừ phải đúng bằng số trừ sau khi thay $k \to k+1$. Không khớp mẫu chuỗi, nên
+không có ca nào nó "gần đúng". Thân không cần chứa dãy nào cả — $\sum
+\bigl(\frac{1}{k+1} - \frac1k\bigr)$ đi qua cùng một cửa.
+
+Chiều **ngược** không có, và đó là lựa chọn: $f(b{+}1) - f(a)$ nhìn thấy được ở mọi
+cặp biểu thức, nên một luật dựng tổng từ đó là bịa cho người học một bước họ không
+nghĩ ra. Cùng kỷ luật đã từ chối `simplify_all`.
+
+### 46.5 Giá trị đầu là một ẩn: `substitute_from` nhận $a_1 = 3$
+
+Bài dãy số nào cũng bắt đầu bằng một dòng như thế, và $a_1 = 3$ ràng buộc **đúng
+một** giá trị y hệt $x = 3$. Nên cửa "hàng nguồn phải đã cô lập một ẩn" nới ra vừa
+đúng ngần ấy: vế trái là một biến trần **hoặc** một số hạng dãy có chỉ số **đóng**,
+và phép thế khớp bằng `same` thay vì bằng tên.
+
+Chỉ số phải đóng, và đó là răng chứ không phải thủ tục: $a_k = 3$ với $k$ tự do là
+một câu về *mọi* $k$ — một phát biểu khác hẳn — và thế nó đi như một ẩn là đọc sai
+giả thiết ngay ở dòng đầu.
+
+### 46.6 Cái đã sai trước khi đúng
+
+1. **`a_1(x)` đổi lời từ chối mà không ai để ý.** M73 từ chối nó bằng câu "ký hiệu
+   hàm phải là một chữ cái"; từ M71 `a_1` là một số hạng dãy nên `(x)` đứng sau
+   thành ký tự thừa. Cả hai đều chặn cùng một cái viết nhầm, nhưng test cũ khớp
+   **nguyên văn** lời từ chối cũ — và một test khớp nguyên văn là một test sẽ đỏ
+   đúng lúc nó nên đỏ. Nó đỏ, và câu chuyện được chép lại vào chính test ấy.
+2. **Hai bảng nguyên tử, sửa nhầm bảng.** Tệp test có `ATOMS` của chốt canh khứ hồi
+   *và* `SEEDS` của phép quét ngẫu nhiên. Gieo `sum(k,1,n,a_{k+1}-a_k)` vào bảng
+   thứ nhất thì khứ hồi xanh, còn `sum_telescope` vẫn **chưa từng áp được lần
+   nào** — chốt canh độ phủ báo đúng tên luật, lần thứ hai trong hai mục liên
+   tiếp. Cơ chế ấy đang trả tiền cho chính nó.
+3. **Phép thế không kiêm rút gọn.** `substitute_from` cho $a_{n+1} + (-1)\cdot3$
+   chứ không phải $a_{n+1} - 3$, và đó là đúng: mỗi phép rút gọn là một bước có
+   tên, hiện ra trên hình. Test viết theo trực giác "phải ra $-3$" đã đỏ trước.

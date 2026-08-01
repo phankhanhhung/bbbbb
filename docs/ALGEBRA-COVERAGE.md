@@ -73,7 +73,7 @@ chuyên/ôn thi — hai cột lệch nhau rất mạnh, và đó chính là lý 
 | **Đa thức** | 15% | 12% | **45%** | 6.75 | Vieta như một quan hệ có tên, đa thức đối xứng, đếm nghiệm theo bậc, bất khả quy |
 | **Dãy số và truy hồi** | 15% | 10% | **20%** | 3.0 | $a_n$ với chỉ số là `Expr`, `sum_telescope`, quan hệ truy hồi như nội dung — **M71** |
 | **Hàm sinh / chuỗi** | 5% | 1% | **55%** | 2.75 | tích chập, toán tử $[x^n]$ — **M72** |
-| **Biến đổi / rút gọn / căn thức** | 4% | 25% | **95%** | 3.8 | — (tầng này gần cạn: 40/73 luật sống ở đây) |
+| **Biến đổi / rút gọn / căn thức** | 4% | 25% | **95%** | 3.8 | — (tầng này gần cạn: 40/75 luật sống ở đây) |
 | **Hệ phương trình** | 3% | 12% | **85%** | 2.55 | hệ phi tuyến nhiều hơn hai ẩn; trần `maxRelations: 4` |
 | **Log / mũ / lượng giác** | 2% | 15% | **90%** | 1.8 | — (M61 + M56 đã phủ; `double_angle`, `sum_to_product` chưa có bài) |
 | **Bất phương trình một biến, tập nghiệm** | 1% | 10% | **90%** | 0.9 | — (M60 + M67, có trục số) |
