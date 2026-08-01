@@ -2,6 +2,7 @@ import {
   definiteSign,
   definitelyNonNegative,
   definitelyNonZero,
+  evalReal,
   type Guard,
 } from './check.js';
 import { intExp, needsRealEval } from './expr.js';
@@ -10,6 +11,7 @@ import {
   abs,
   add,
   div,
+  fn,
   int,
   children,
   mul,
@@ -2060,6 +2062,167 @@ function stripNegative(m: Minter, e: Expr): Expr | null {
   return tail.length === 1 ? (tail[0] as Expr) : mul(m, tail);
 }
 
+
+/* ---------- hàm tổ hợp (M56) ---------- */
+
+/**
+ * Năm luật cho $n!$, $C_n^k$, $A_n^k$ — **đồng nhất thức**, đi hợp đồng `sameValue`.
+ *
+ * Hợp đồng thì cũ, nhưng **sân kiểm** thì mới: `sameValue` nay lái mọi biểu thức có hàm
+ * tổ hợp sang bộ bốc điểm **số nguyên** (`check.ts`). Không có bộ ấy thì cả năm luật này
+ * đi qua im lặng như "không kiểm được" — vệt vàng thường trực, đúng thất bại M45.
+ *
+ * Chú ý danh tính: $n$ và $k$ xuất hiện **nhiều lần** ở vế sau của bốn trong năm luật,
+ * nên mỗi lần thêm là một `freshCopy` có khai `dup`. Dùng lại chính nút cũ thì một nút có
+ * hai chỗ đứng trên hình, và choreography sẽ kéo nó về một chỗ (bài học M47).
+ */
+
+/**
+ * Điều kiện in ra hình — **`undefined` khi nó hiển nhiên đúng**.
+ *
+ * $C_5^2$ khai điều kiện "$0 \le 2 \le 5$" thì đó là một dòng đỏ nói một chuyện ai cũng
+ * thấy. Kho đã học ở M45 rằng chữ đỏ thường trực và vô ích là cách nhanh nhất để người
+ * ta ngừng đọc *mọi* chữ đỏ, kể cả dòng thật. Tiền lệ có sẵn: `rationalize` bỏ điều kiện
+ * khi mẫu `definitelyNonZero`.
+ *
+ * Chỉ bỏ khi **tính ra được và thoả** — có biến thì luôn in, vì engine không biết miền.
+ */
+const atLeast = (e: Expr, bound: number): string | undefined => {
+  const v = varsOf(e).size === 0 ? evalReal(e, new Map()) : null;
+  return v !== null && v >= bound ? undefined : `${toPlain(e)} ≥ ${bound}`;
+};
+
+/** $0 \le k \le n$, cùng lối: im khi cả hai là hằng và bất đẳng thức đã đúng. */
+const between = (k: Expr, n: Expr): string | undefined => {
+  const kv = varsOf(k).size === 0 ? evalReal(k, new Map()) : null;
+  const nv = varsOf(n).size === 0 ? evalReal(n, new Map()) : null;
+  if (kv !== null && nv !== null && kv >= 0 && kv <= nv) return undefined;
+  return `0 ≤ ${toPlain(k)} ≤ ${toPlain(n)}`;
+};
+
+/** $n! = n\,(n-1)!$ — bước đệ quy, và là cầu nối duy nhất từ $n!$ về số học thường. */
+const factorialStep: Rule = {
+  id: 'factorial_step',
+  label: 'tách một thừa số khỏi giai thừa',
+  run(m, node) {
+    if (node.k !== 'fn' || node.name !== 'fact') return no('cần một dấu giai thừa');
+    const n = node.args[0] as Expr;
+    const { copy, pairs } = freshCopy(m, n);
+    return {
+      after: mul(m, [n, fn(m, 'fact', [add(m, [copy, int(m, -1)])])]),
+      dup: pairs,
+      // $0! = 1$ nhưng $0 \cdot (-1)!$ vô nghĩa, nên bước này cần $n \ge 1$ thật sự.
+      condition: atLeast(n, 1),
+      guard: { expr: add(m, [freshCopy(m, n).copy, int(m, -1)]), sign: '>=0' },
+    };
+  },
+};
+
+/** $C_n^k = \dfrac{n!}{k!\,(n-k)!}$ — định nghĩa, và cửa ra khỏi ký hiệu tổ hợp. */
+const binomToFactorial: Rule = {
+  id: 'binom_to_factorial',
+  label: 'viết tổ hợp bằng giai thừa',
+  run(m, node) {
+    if (node.k !== 'fn' || node.name !== 'binom') return no('cần một ký hiệu tổ hợp');
+    const [n, k] = node.args as [Expr, Expr];
+    const nCopy = freshCopy(m, n);
+    const kCopy = freshCopy(m, k);
+    return {
+      after: div(
+        m,
+        fn(m, 'fact', [n]),
+        mul(m, [
+          fn(m, 'fact', [k]),
+          fn(m, 'fact', [add(m, [nCopy.copy, negate(m, kCopy.copy)])]),
+        ]),
+      ),
+      dup: [...nCopy.pairs, ...kCopy.pairs],
+      // Không khai `guard`: điểm vi phạm tự loại: $(n-k)!$ với $n < k$ cho `null`, và
+      // bộ kiểm bỏ điểm ấy như bỏ căn bậc chẵn của số âm. Điều kiện vẫn **in ra hình**
+      // vì nó là một phần của đồng nhất thức, và người đọc cần biết.
+      condition: between(k, n),
+    };
+  },
+};
+
+/** $C_n^k = C_n^{\,n-k}$ — chọn $k$ thứ để lấy cũng là chọn $n-k$ thứ để bỏ. */
+const binomSymmetry: Rule = {
+  id: 'binom_symmetry',
+  label: 'đối xứng của tổ hợp',
+  run(m, node) {
+    if (node.k !== 'fn' || node.name !== 'binom') return no('cần một ký hiệu tổ hợp');
+    const [n, k] = node.args as [Expr, Expr];
+    const nCopy = freshCopy(m, n);
+    return {
+      after: fn(m, 'binom', [n, add(m, [nCopy.copy, negate(m, k)])]),
+      dup: nCopy.pairs,
+      // Đúng ở **mọi** $k$ nguyên nhờ quy ước $C_n^k = 0$ ngoài $[0,n]$ — cả hai vế
+      // cùng bằng $0$ ở đó. Nên không có điều kiện nào để in.
+    };
+  },
+};
+
+/** $C_n^k = C_{n-1}^{\,k-1} + C_{n-1}^{\,k}$ — hai ô trên trong tam giác Pascal. */
+const pascal: Rule = {
+  id: 'pascal',
+  label: 'công thức Pascal',
+  run(m, node) {
+    if (node.k !== 'fn' || node.name !== 'binom') return no('cần một ký hiệu tổ hợp');
+    const [n, k] = node.args as [Expr, Expr];
+    const nCopy = freshCopy(m, n);
+    const kCopy = freshCopy(m, k);
+    const below = (x: Expr): Expr => add(m, [x, int(m, -1)]);
+    return {
+      after: add(m, [
+        fn(m, 'binom', [below(n), below(k)]),
+        fn(m, 'binom', [below(nCopy.copy), kCopy.copy]),
+      ]),
+      dup: [...nCopy.pairs, ...kCopy.pairs],
+      condition: atLeast(n, 1),
+      guard: { expr: add(m, [freshCopy(m, n).copy, int(m, -1)]), sign: '>=0' },
+      // Hai vai: $n$ một màu, $k$ một màu. Mắt thấy ngay cả hai đều **lùi một bậc**,
+      // và chỉ một trong hai vế lùi thêm ở $k$ — đó chính là nội dung của công thức.
+      roles: [
+        [n.id, ...nCopy.pairs.map(([, to]) => to)],
+        [k.id, ...kCopy.pairs.map(([, to]) => to)],
+      ],
+    };
+  },
+};
+
+/** $k\,C_n^k = n\,C_{n-1}^{\,k-1}$ — "hút" hệ số vào trong, mẹo chủ lực của tổng tổ hợp. */
+const binomAbsorb: Rule = {
+  id: 'binom_absorb',
+  label: 'hút hệ số vào tổ hợp',
+  run(m, node) {
+    if (node.k !== 'mul') return no('cần một tích');
+    const at = node.args.findIndex((a) => a.k === 'fn' && a.name === 'binom');
+    if (at === -1) return no('trong tích không có ký hiệu tổ hợp');
+    const b = node.args[at] as Expr & { k: 'fn' };
+    const [n, k] = b.args as [Expr, Expr];
+
+    // Thừa số phải **đúng bằng** $k$ — so bằng cấu trúc, không bằng tên.
+    const ki = node.args.findIndex((a, i) => i !== at && same(a, k));
+    if (ki === -1) return no(`trong tích không có thừa số bằng ${toPlain(k)}`);
+
+    const rest = node.args.filter((_, i) => i !== at && i !== ki);
+    const nCopy = freshCopy(m, n);
+    const absorbed = mul(m, [
+      nCopy.copy,
+      fn(m, 'binom', [add(m, [n, int(m, -1)]), add(m, [k, int(m, -1)])]),
+    ]);
+    return {
+      after: rest.length === 0 ? absorbed : mul(m, [...rest, absorbed]),
+      dup: nCopy.pairs,
+      // Thừa số $k$ **biến mất** khỏi tích và hoá thành $n$ đứng ngoài. Khai `merged`
+      // để hình kể đúng chuyện ấy thay vì một cặp xoá–thêm.
+      merged: [[[(node.args[ki] as Expr).id], nCopy.copy.id]],
+      condition: atLeast(n, 1),
+      guard: { expr: add(m, [freshCopy(m, n).copy, int(m, -1)]), sign: '>=0' },
+    };
+  },
+};
+
 export const RULES: readonly Rule[] = [
   commute,
   distribute,
@@ -2097,6 +2260,11 @@ export const RULES: readonly Rule[] = [
   factorPowerDifference,
   factorPowerSumOdd,
   divideByLinearFactor,
+  factorialStep,
+  binomToFactorial,
+  binomSymmetry,
+  pascal,
+  binomAbsorb,
   addBothSides,
   mulBothSides,
   powBothSides,

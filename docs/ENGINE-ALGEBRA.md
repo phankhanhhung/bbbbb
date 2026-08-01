@@ -257,7 +257,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§26 để biết tập luật thật, xếp theo ba lớp:
+Xem §21–§32 để biết tập luật thật — **47 luật**, xếp theo sáu lớp:
 
 | lớp | luật |
 |---|---|
@@ -265,6 +265,8 @@ Xem §21–§26 để biết tập luật thật, xếp theo ba lớp:
 | **hằng đẳng thức & đa thức** | `expand_square`, `expand_cube`, `multiply_out`, `expand_diff_squares`, `factor_diff_squares`, `factor_cubes`, `factor_quadratic`, `complete_square`, `factor_power_difference`, `factor_power_sum_odd` |
 | **căn & luỹ thừa** | `pow_add`, `pow_mul`, `root_pow`, `root_of_product`, `eval_root`, `pull_square_out`, `rationalize`, `multiply_by_conjugate`, `denest_radical`, `root_to_power`, `power_to_root` |
 | **phương trình có điều kiện (★)** | `add_both_sides`, `mul_both_sides`, `pow_both_sides`, `abs_case`, `evaluate_at`, `set_variable`, `substitute`, `quadratic_formula` |
+| **chia đa thức** | `divide_by_linear_factor` |
+| **tổ hợp** (M56, §32) | `factorial_step`, `binom_to_factorial`, `binom_symmetry`, `pascal`, `binom_absorb` |
 
 **Hai điều luật này cố ý không có:**
 
@@ -574,9 +576,9 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
   ai cần thì viết $x^{1/n}$, nay đã có.
 - **Hệ phương trình.** Cần một nút chứa **nhiều** quan hệ; chưa có. Đây là mảng lớn
   nhất còn thiếu của chương trình phổ thông. (Kế hoạch: M59.)
-- **Hàm tổ hợp** $n!$, $C_n^k$, $A_n^k$ — chưa có, và với một nền tảng nhắm Olympiad
-  Combinatorics thì đây là lỗ **to hơn** $\log$: chúng là ký hiệu nền của cả môn.
-  (Kế hoạch: M56.)
+- ~~**Hàm tổ hợp** $n!$, $C_n^k$, $A_n^k$~~ — **đã làm** (M56). Với một nền tảng nhắm
+  Olympiad Combinatorics thì đây là lỗ **to hơn** $\log$: chúng là ký hiệu nền của cả
+  môn. Xem §32 — nó không phải "thêm một nút", nó **thêm một bộ bốc điểm**.
 - **Ký hiệu $\Sigma$, $\Pi$.** Cần một construct **ràng buộc biến** — thứ engine chưa
   từng có. (Kế hoạch: M57.)
 - **Tập nghiệm / khoảng.** $x^2-3x+2>0$ phân tích ra $(x-2)(x-1)>0$ rồi **dừng**: không
@@ -1414,6 +1416,7 @@ trả chuỗi khi từ chối để phía gọi tự gói vào ngữ cảnh củ
 ### 30.4 Còn lại gì
 
 `associate` **sẽ không có** (§26.1). Ngoài nó, tập luật 42 phủ hết danh sách rà soát.
+(M56 nâng lên **47** với năm luật tổ hợp — xem §32.)
 
 ---
 
@@ -1513,3 +1516,128 @@ thứ tự cấp danh tính. Mẫu **nhị thức** chứa căn thì từ chối
 14 chốt canh mới. Rồi bẻ từng chỗ đã sửa và xem test có đỏ không — cả 7 chỗ đều bị bắt.
 Đây không phải nghi thức: M48 đã dạy rằng một test không với tới được nhánh nó nhắm là
 một test xanh vô nghĩa, và cách duy nhất biết được là **thử làm hỏng**.
+
+---
+
+## 32. Hàm tổ hợp, và bộ bốc điểm thứ ba (M56)
+
+Engine nhắm Olympiad Combinatorics mà `n!` chết ở parser. Đây là hạng mục đầu tiên của
+loạt mở ngữ pháp (M56–M61), và nó dựng hai thứ mà mọi hạng mục sau đứng lên: **một biến
+thể nút cho cả họ hàm**, và **một bộ bốc điểm mới**.
+
+### 32.1 Một biến thể, một bảng — vì kiểu nút mới đắt
+
+Mỗi kiểu nút mới phải đi qua đúng sáu chỗ: `expr` (biến thể, `children`, `withChildren`,
+`same`, `totalDegree`, `varsOf`, `needsRealEval`), `parse` (nhánh `atom`, `PLAIN_PREC`,
+`toPlain`, `unparse`), `typeset` (biến thể `Box`, `measure`, `place`, `toBox`, `PREC`),
+`check` (`evalAt`, `evalReal`), `rules`, và bảng ưu tiên. `layout` với `choreography` thì
+**miễn phí** — chúng làm việc trên hộp và `TermId`, không trên `Expr['k']`.
+
+Dựng `fact`, `binom`, `perm`, rồi sau này `log`, `sin`, `exp` thành sáu biến thể là trả
+cái giá ấy sáu lần. Nên trả **một lần**:
+
+```ts
+| ({ readonly k: 'fn'; readonly name: FnName; readonly args: readonly Expr[] } & WithId)
+```
+
+`FnName` là union **đóng**, còn mọi thứ riêng của từng hàm — arity, cú pháp mặt, cách in
+chữ trơn, cách tính — nằm ở bảng trong `functions.ts`. Hàm thứ bảy là **một dòng bảng**.
+Đây là lý do M56 đứng trước M61 dù M61 mới là thứ được gọi tên.
+
+Cách **vẽ** thì cố ý không ở bảng: nó cần kiểu `Box` của `typeset.ts`, mà `typeset` đã
+import từ `expr` — để cách vẽ vào bảng là dựng một vòng import.
+
+### 32.2 `C(` không mơ hồ, và lý do là một quyết định cũ
+
+`C` và `A` cũng là tên biến hợp lệ. Không mơ hồ, vì engine **cấm nhân ngầm** từ §3.3:
+một biến không bao giờ đứng sát dấu ngoặc mở, nên `C(` chỉ có thể là lời gọi hàm. Một
+ràng buộc đặt ra vì lý do khác hẳn, trả cổ tức ở đây.
+
+Chỗ **thật sự** mơ hồ là dấu `!`, vì `!=` là toán tử quan hệ. Quy tắc: `!` chỉ là giai
+thừa khi ký tự ngay sau **không** phải `=`, và không bỏ qua khoảng trắng trước nó. Hệ quả
+phải nói ra: `n!=3` đọc thành $n \ne 3$; muốn "$n! = 3$" thì viết dấu cách.
+
+### 32.3 Bộ bốc điểm thứ ba — và vì sao nó là chốt canh, không phải tiện nghi
+
+Hai bộ kiểm cũ **đều chết** với giai thừa:
+
+- $\mathbb{F}_p$: $n!$ với $n$ là một thặng dư ngẫu nhiên cỡ $10^9$ là câu vô nghĩa.
+- Thực: bốc trong $[-4,-0{,}3]\cup[0{,}3,4]$, toàn số **không nguyên** ⇒ `fact` trả
+  `null` ở **mọi** điểm.
+
+Đo bằng cách tắt bộ nguyên đi rồi chạy lại cả năm luật:
+
+```
+factorial_step       unchecked=1  không tìm được điểm nào xác định
+binom_to_factorial   unchecked=1  không tìm được điểm nào xác định
+pascal               unchecked=1  không tìm được điểm nào xác định
+binom_absorb         unchecked=1  không tìm được điểm nào xác định
+```
+
+Tức **vàng thường trực trên mọi bài tổ hợp** — đúng thất bại M45, và là cách nhanh nhất
+để người ta ngừng đọc mọi cảnh báo. Bộ kiểm phải **kiểm được**, không chỉ phải trung
+thực; trung thực một mình là chưa đủ.
+
+Nên `sameValueInteger` bốc số nguyên trong $[0, 12]$: đủ nhỏ để $12!$ còn chính xác từng
+đơn vị (quá $18!$ thì `number` làm tròn, và lúc ấy phép so sẽ báo "khớp" cho hai thứ
+không bằng nhau), đủ rộng để hai đa thức khác nhau bậc $\le 12$ không trùng nhau ở mọi
+điểm. Vẫn tính bằng `evalReal` chứ không bằng một bộ đánh giá song song — điểm thì nguyên
+nhưng biểu thức quanh nó vẫn có thể có căn và phân số, và hai bộ đánh giá là hai chỗ để
+lệch nhau.
+
+`sameValue` nay hỏi **ba** sân, và thứ tự hỏi quan trọng: số nguyên → thực → $\mathbb{F}_p$.
+$C_n^k$ *có* tính được trên $\mathbb{F}_p$ khi $n$ là hằng, nhưng đường ấy im lặng đúng ở
+chỗ nguy hiểm nhất — $n$ ký hiệu.
+
+Nó có răng thật, và răng nói bằng số cụ thể:
+
+```
+pascal (bẻ thành C(n−1,k−1) + C(n−1,k+1)):
+  khác nhau tại k=6, n=12: 924 ≠ 792
+```
+
+**Không có hợp đồng kiểm thứ bảy.** Sáu hợp đồng của §6.1 giữ nguyên; thứ thêm vào là một
+*sân*, không phải một *câu hỏi*. Phân biệt ấy đáng giữ, vì cùng bộ bốc điểm này sẽ phục
+vụ $\Sigma$ (M57) và số mũ ký hiệu (M58) mà không phải khai thêm gì.
+
+### 32.4 Chỗ quét bỏ qua `guard` là một lỗ im lặng
+
+Phép quét ngẫu nhiên trước M56 **bỏ nguyên bước** khi luật khai `guard`, với lý lẽ "luật
+chỉ hứa đúng trong điều kiện của nó". Lý lẽ đúng, kết luận sai: `sameValue` **nhận được**
+`guard` và tự bỏ những điểm vi phạm. Bốn trong năm luật M56 đều có `guard`, nên chúng sẽ
+được đếm là "đã quét" trong khi giá trị chưa ai kiểm.
+
+Sửa thành truyền `guard` vào bộ kiểm. Thử răng bằng cách bẻ `factorial_step`: phép quét
+bắt được, và bắt ở cả những biểu thức sinh ngẫu nhiên sâu năm tầng. Chỗ bỏ qua là chỗ lỗ
+hổng nằm (M47c).
+
+### 32.5 Sắp chữ: $C_n^k$ phải **chồng cột**
+
+Lối Việt Nam: chỉ số dưới $n$, số mũ trên $k$. Không ghép được từ `sup` và `shift` sẵn có
+— hai tầng ấy phải chồng cột với nhau, tức bề ngang của cả cụm là `max` chứ không phải
+tổng. Ghép hai hộp cũ cho ra $C_n{}^k$, đọc ra một thứ khác. Nên có hộp `subsup`.
+
+Ba lỗi hiển thị, và cả ba chỉ lộ ở **lượt đo và lượt nhìn**, không ở test:
+
+1. **Hai tầng đụng nhau ở sàn cỡ chữ.** `supRise` và `subDrop` mỗi cái chỉ nhìn *một*
+   tầng nên không biết tầng kia ở đâu. Ở cỡ thường thì thừa chỗ; $C_n^k$ lồng trong chỉ số
+   dưới của một $C_n^k$ khác đẩy cả hai xuống `SIZE_FLOOR` và chúng chồng $0{,}07$ đơn vị.
+   Phải có một chỗ nhìn **cả hai** rồi đẩy đều ra hai phía.
+2. **Dấu `!` không có trong bảng bề ngang** nên rơi vào $0{,}5$ em, dôi $0{,}22$ — đủ để
+   $n!^2$ vẽ ra số mũ trôi khỏi dấu `!`, đọc thành hai vật rời nhau.
+3. **Chữ hoa rộng hơn chữ thường**, mà bảng ước đều $0{,}5$ em cho mọi chữ cái. $C$ trong
+   KaTeX_Main rộng $0{,}722$ em: ước thiếu đẩy cả hai tầng chỉ số lùi vào trong, và trên
+   trang thì số mũ **đè lên** chữ $C$. Suốt bốn hạng mục không ai thấy, vì mọi biến của
+   kho đều là chữ thường — lỗi ngủ cho tới khi một chữ hoa làm **gốc** của một cụm.
+
+Không golden nào đổi vì cả kho chưa có biểu thức nào chứa biến viết hoa.
+
+### 32.6 Điều kiện hiển nhiên đúng thì **im**
+
+$C_5^2$ khai "$0 \le 2 \le 5$" là một dòng đỏ nói một chuyện ai cũng thấy. Bỏ khi tính ra
+được và thoả; có biến thì luôn in, vì engine không biết miền. Tiền lệ có sẵn ở
+`rationalize`, và lý lẽ là M45: chữ đỏ thường trực vô ích giết chữ đỏ thật.
+
+Ngược lại, `binom_symmetry` **không** khai điều kiện nào — nó đúng ở mọi $k$ nguyên nhờ
+quy ước $C_n^k = 0$ ngoài $[0,n]$, vì ở đó cả hai vế cùng bằng $0$. Quy ước ấy cũng là
+thứ làm `pascal` đúng tại $k = 0$.

@@ -2,6 +2,7 @@ import {
   Minter,
   add,
   div,
+  fn,
   int,
   mul,
   negate,
@@ -11,8 +12,10 @@ import {
   root,
   variable,
   type Expr,
+  type FnName,
   type RelOp,
 } from './expr.js';
+import { FUNCTIONS } from './functions.js';
 
 /**
  * Parser cho cú pháp mặt (§3.3).
@@ -37,6 +40,18 @@ export class ParseError extends Error {
 
 // Dài trước ngắn: `<=` phải thử trước `<`, nếu không `<` nuốt mất dấu bằng.
 const RELS: readonly RelOp[] = ['<=', '>=', '!=', '=', '<', '>'];
+
+/**
+ * Cú pháp mặt của các hàm, **dài trước ngắn**.
+ *
+ * `fact` phải đứng trước bất cứ tên một chữ nào bắt đầu bằng `f` nếu sau này có; giữ
+ * thứ tự này làm quy ước để chỗ thêm hàm mới không phải nghĩ lại.
+ */
+const NAMED_FNS: ReadonlyArray<readonly [string, FnName]> = [
+  ['fact', 'fact'],
+  ['C', 'binom'],
+  ['A', 'perm'],
+];
 
 class Parser {
   private i = 0;
@@ -110,20 +125,41 @@ class Parser {
   }
 
   /**
-   * `power := atom ('^' unary)?` — **kết hợp phải**, như mọi ký pháp toán: $x$^$2$^$3$
-   * là $x^{(2^3)}$.
+   * `power := atom '!'* ('^' unary)?` — **kết hợp phải**, như mọi ký pháp toán:
+   * $x$^$2$^$3$ là $x^{(2^3)}$.
    *
    * Số mũ đi qua `unary` chứ không qua `sum`: `x^2 + 1` phải là $x^2+1$, không phải
    * $x^{2+1}$. Muốn tổng trong số mũ thì viết ngoặc — `x^(n+1)` — và ngoặc ấy chính là
    * thứ mắt người cũng cần.
+   *
+   * Giai thừa là **hậu tố** và ăn trước dấu mũ, nên `n!^2` là $(n!)^2$ còn `2^n!` là
+   * $2^{n!}$ — đúng thứ tự đọc của mắt.
    */
   private power(): Expr {
-    const base = this.atom();
+    let base = this.atom();
+    while (this.bang()) base = fn(this.m, 'fact', [base]);
     this.ws();
     if (!this.eat('^')) return base;
     const exp = this.unary();
     if (exp.k === 'rel') throw new ParseError('số mũ không thể là một quan hệ', this.i);
     return pow(this.m, base, exp);
+  }
+
+  /**
+   * Dấu giai thừa — và chỗ **không** được nuốt nhầm.
+   *
+   * `!=` là một toán tử quan hệ, nên `n != 3` phải đọc là "$n \ne 3$" chứ không phải
+   * "$n!$ rồi lỗi cú pháp". Kiểm ký tự ngay sau, và **không bỏ qua khoảng trắng** trước
+   * dấu `!`: giai thừa dính liền vào đối số của nó ở mọi cách viết tay, nên `n ! = 3`
+   * không phải thứ cần đọc được.
+   *
+   * Hệ quả có thật và phải nói ra: `n!=3` đọc thành $n \ne 3$. Muốn "$n! = 3$" thì viết
+   * dấu cách — `n! = 3`.
+   */
+  private bang(): boolean {
+    if (this.src[this.i] !== '!' || this.src[this.i + 1] === '=') return false;
+    this.i += 1;
+    return true;
   }
 
   private digits(): number | null {
@@ -177,6 +213,23 @@ class Parser {
       return root(this.m, n, inner);
     }
 
+    // Hàm tổ hợp. `C` và `A` cũng là **tên biến hợp lệ**, và chuyện ấy không mơ hồ —
+    // engine **cấm nhân ngầm** (§3.3), nên một biến không bao giờ đứng sát dấu ngoặc
+    // mở. `C(` chỉ có thể là lời gọi hàm. Một ràng buộc cũ trả cổ tức ở đây.
+    for (const [head, name] of NAMED_FNS) {
+      if (!this.src.startsWith(head, this.i)) continue;
+      if (this.src[this.i + head.length] !== '(') continue;
+      this.i += head.length + 1;
+      const spec = FUNCTIONS[name];
+      const args: Expr[] = [this.sum()];
+      while (args.length < spec.arity) {
+        if (!this.eat(',')) throw new ParseError(`${head} cần ${spec.arity} đối số`, this.i);
+        args.push(this.sum());
+      }
+      if (!this.eat(')')) throw new ParseError('thiếu dấu ")"', this.i);
+      return fn(this.m, name, args);
+    }
+
     if (/[a-zA-Z]/.test(ch)) {
       this.i += 1;
       let name = ch;
@@ -220,6 +273,7 @@ const PLAIN_PREC: Readonly<Record<Expr['k'], number>> = {
   pow: 3,
   root: 4,
   abs: 4,
+  fn: 4,
   int: 4,
   rat: 4,
   var: 4,
@@ -296,6 +350,15 @@ export function toPlain(e: Expr): string {
       return e.index === 2 ? `√(${toPlain(e.arg)})` : `căn bậc ${e.index} của (${toPlain(e.arg)})`;
     case 'abs':
       return `|${toPlain(e.arg)}|`;
+    case 'fn':
+      // Giai thừa của một thứ không phải nguyên tử phải có ngoặc: `x + 1!` đọc ra
+      // $x + (1!)$, khác hẳn $(x+1)!$. Bảng ưu tiên không bắt được vì `fn` xếp ngang
+      // nguyên tử — và đúng là thế với `C(n,k)`, chỉ riêng hậu tố `!` là không.
+      return FUNCTIONS[e.name].plain(
+        e.args.map((a) =>
+          e.name === 'fact' && PLAIN_PREC[a.k] < PLAIN_PREC['fn'] ? `(${toPlain(a)})` : toPlain(a),
+        ),
+      );
     case 'rel':
       return `${wrap(e.lhs)} ${PLAIN_REL[e.op] as string} ${wrap(e.rhs)}`;
   }
@@ -352,6 +415,10 @@ export function unparse(e: Expr): string {
       return `abs(${unparse(e.arg)})`;
     case 'root':
       return e.index === 2 ? `sqrt(${unparse(e.arg)})` : `root(${e.index}, ${unparse(e.arg)})`;
+    case 'fn':
+      // Luôn in dạng **lời gọi**, kể cả giai thừa: `fact(n)` khứ hồi được ở mọi vị trí,
+      // còn `n!` thì không — `2^n!` đọc lại thành $2^{n!}$ chứ không phải $(2^n)!$.
+      return `${FUNCTIONS[e.name].source}(${e.args.map(unparse).join(', ')})`;
     case 'rel':
       return `(${unparse(e.lhs)} ${e.op} ${unparse(e.rhs)})`;
   }

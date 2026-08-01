@@ -58,7 +58,28 @@ export type Expr =
    * chối một phép biến đổi có trong mọi sách giáo khoa là lỗ hổng nhìn thấy được.
    */
   | ({ readonly k: 'abs'; readonly arg: Expr } & WithId)
+  /**
+   * Lời gọi hàm — **một** biến thể cho cả họ, không một biến thể mỗi hàm.
+   *
+   * Mỗi kiểu nút mới phải đi qua sáu chỗ (`expr`, `parse`, `typeset`, `check`, `rules`,
+   * và bảng ưu tiên), nên dựng `fact`, `binom`, `log`, `sin` thành bốn biến thể là trả
+   * giá ấy bốn lần. Ở đây trả một lần: tên thuộc một union **đóng**, còn mọi thứ riêng
+   * của từng hàm — arity, cách in, cách tính, miền xác định — nằm trong bảng ở
+   * `functions.ts`. Hàm thứ bảy sau này là *một dòng bảng*.
+   *
+   * Union phải **đóng**: ngữ pháp mở thì printer không biết trước mình phải in những gì,
+   * và đó là lý do parser không nhận hàm tuỳ ý ngay từ §3.3.
+   */
+  | ({ readonly k: 'fn'; readonly name: FnName; readonly args: readonly Expr[] } & WithId)
   | ({ readonly k: 'rel'; readonly op: RelOp; readonly lhs: Expr; readonly rhs: Expr } & WithId);
+
+/**
+ * Tên hàm engine biết — **đóng**, và mở rộng bằng cách thêm một dòng ở `functions.ts`.
+ *
+ * M56 đăng ký ba hàm tổ hợp. Với một nền tảng nhắm Olympiad Combinatorics thì $n!$ và
+ * $C_n^k$ không phải món mở rộng — chúng là ký hiệu nền của cả môn.
+ */
+export type FnName = 'fact' | 'binom' | 'perm';
 
 /**
  * Cấp phát danh tính.
@@ -161,6 +182,13 @@ export const root = (m: Minter, index: number, arg: Expr): Expr => ({
   id: m.next(),
 });
 
+export const fn = (m: Minter, name: FnName, args: readonly Expr[]): Expr => ({
+  k: 'fn',
+  name,
+  args,
+  id: m.next(),
+});
+
 export const rel = (m: Minter, op: RelOp, lhs: Expr, rhs: Expr): Expr => ({
   k: 'rel',
   op,
@@ -192,6 +220,8 @@ export function children(e: Expr): readonly Expr[] {
     case 'root':
     case 'abs':
       return [e.arg];
+    case 'fn':
+      return e.args;
     case 'rel':
       return [e.lhs, e.rhs];
     default:
@@ -213,6 +243,8 @@ export function withChildren(e: Expr, kids: readonly Expr[]): Expr {
     case 'root':
     case 'abs':
       return { ...e, arg: kids[0] as Expr };
+    case 'fn':
+      return { ...e, args: kids };
     case 'rel':
       return { ...e, lhs: kids[0] as Expr, rhs: kids[1] as Expr };
     default:
@@ -258,6 +290,12 @@ export function needsRealEval(e: Expr): boolean {
   let found = false;
   walk(e, (n) => {
     if (n.k === 'root' || n.k === 'abs') found = true;
+    // Giai thừa và tổ hợp cũng không: chúng chỉ có nghĩa ở **số nguyên**, và trên
+    // $\mathbb{F}_p$ thì $n!$ với $n$ là một thặng dư ngẫu nhiên là câu vô nghĩa.
+    // Đường đi thật của chúng là bộ bốc điểm **số nguyên** (`needsIntegerEval`); nhánh
+    // này là lớp chắn thứ hai, để nếu lối lái ấy hỏng thì kết quả là "không kiểm được"
+    // chứ không phải một số bịa ra.
+    if (n.k === 'fn') found = true;
     // Số mũ không nguyên cũng không sống ở đó: $x^{1/2}$ cần chọn một trong hai căn,
     // $x^{\sqrt 2}$ thì không có nghĩa gì trên trường hữu hạn. `walk` chui cả vào số
     // mũ (nó là con `.1`), nên căn **nằm trong** số mũ cũng bị bắt ở nhánh trên.
@@ -292,6 +330,10 @@ export function totalDegree(e: Expr): number {
       return totalDegree(e.num) + totalDegree(e.den);
     case 'abs':
       return totalDegree(e.arg);
+    case 'fn':
+      // $n!$ và $C_n^k$ **không phải hàm hữu tỉ** của $n$, nên "bậc" của chúng vô
+      // nghĩa — trả `Infinity`, cùng lối với $x^n$. Hằng số thì bậc $0$ như mọi hằng.
+      return isConst(e) ? 0 : Infinity;
     case 'root':
       // Bậc **làm tròn lên**: nó chỉ dùng làm cận cho Schwartz–Zippel, mà biểu thức
       // có căn thì không đi đường ấy nữa (xem `check.ts`). Ước dôi ở đây là an toàn.
@@ -404,6 +446,14 @@ export function same(a: Expr, b: Expr): boolean {
       return a.index === (b as typeof a).index && same(a.arg, (b as typeof a).arg);
     case 'abs':
       return same(a.arg, (b as typeof a).arg);
+    case 'fn': {
+      const o = b as typeof a;
+      return (
+        a.name === o.name &&
+        a.args.length === o.args.length &&
+        a.args.every((c, i) => same(c, o.args[i] as Expr))
+      );
+    }
     case 'rel':
       return (
         a.op === (b as typeof a).op &&

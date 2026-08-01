@@ -25,15 +25,19 @@ import {
   RULES,
   sameSolutionSet,
   sameValue,
+  sameValueReal,
   same,
   glyphBox,
   shrink,
+  textWidth,
   toBox,
   unparse,
   FONT,
   ALGEBRA_LIMITS,
   type AlgebraStep,
+  type Expr,
 } from '../src/index.js';
+import { toPlain } from '../src/parse.js';
 
 const renderer = createRenderer([algebraRenderer]);
 const ctx = createContext(defaultTheme);
@@ -88,7 +92,12 @@ describe('tầng 0 — parser và printer', () => {
   it('khứ hồi giữ **đúng cấu trúc** trên biểu thức sinh ngẫu nhiên', () => {
     // Chốt canh của tầng rủi ro nhất. Không kiểm chuỗi in ra giống nhau — kiểm cây
     // giống nhau, vì `unparse` cố ý in dư ngoặc.
-    const ATOMS = ['x', 'y', '2', '3', '-1', 'x^2', 'a_1', 'sqrt(x)', 'sqrt(2)', 'root(3, y)'];
+    const ATOMS = [
+      'x', 'y', '2', '3', '-1', 'x^2', 'a_1', 'sqrt(x)', 'sqrt(2)', 'root(3, y)',
+      // Mỗi kiểu nút mới phải có mặt ở đây, nếu không chốt canh tầng 0 — chốt canh của
+      // tầng rủi ro nhất — im lặng bỏ qua đúng thứ vừa thêm.
+      'n!', 'C(n, k)', 'A(n, 2)', '(x + 1)!',
+    ];
     let s = 987654321;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
     const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(rand() * xs.length)] as T;
@@ -134,6 +143,7 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
     const ATOMS = [
       'x', 'y', '2', '3', '-1', 'x^2', 'y^2', 'x^3', 'y^3',
       'sqrt(x)', 'sqrt(6)', 'abs(x)', 'x^(1/2)', '1/x', '2/y',
+      'n!', 'C(n, k)', 'A(n, 3)',
     ];
     let s = 4242;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
@@ -157,6 +167,9 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       'x^2 + 5*x + 4', '(x^2 + 5*x) + 4 = 0', '1/x + 1/y', 'x/6 + y/6',
       'a*b + a*c + b*d + c*d', '2*x^2 + 2*x + 3*x + 3', 'a^4 - b^4', 'a^3 + b^3',
       'sqrt(x + 5) = x - 1', 'abs(x - 2) = 3*x', 'x^2 + 6*x + 5',
+      // M56: `binom_absorb` cần đúng hình dạng $k\,C_n^k$, một thứ bộ sinh ngẫu nhiên
+      // gần như không bao giờ dựng trúng — cùng lý do đã phải gieo $\sqrt{48}$.
+      'k*C(n, k)', 'C(n, k)', 'n!', '3*k*C(n, k)', 'C(n, k) + C(n, k + 1)',
     ];
 
     const bad: string[] = [];
@@ -191,13 +204,17 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
           // có `guard` thì chỉ hứa đúng **trong** điều kiện của nó. Kiểm chúng bằng
           // điểm ngẫu nhiên không điều kiện là hỏi sai câu hỏi.
           if (rule.onRelation || rule.id === 'substitute' || rule.id === 'evaluate_at') continue;
-          // Bỏ theo **cấu trúc kết quả**, không theo danh sách tên: `guard` nghĩa là
-          // "chỉ hứa đúng trong điều kiện này", `binding` nghĩa là "viết bằng biến mới,
-          // phải thế ngược lại rồi mới so". Danh sách tên thì luật thứ mười lại lọt.
-          if (out.guard !== undefined || out.binding !== undefined) continue;
+          // `binding` nghĩa là "viết bằng biến mới, phải thế ngược lại rồi mới so" —
+          // hỏi thẳng bằng điểm ngẫu nhiên là hỏi sai câu hỏi. Bỏ theo **cấu trúc kết
+          // quả**, không theo danh sách tên: danh sách tên thì luật thứ mười lại lọt.
+          if (out.binding !== undefined) continue;
           if (node.k === 'rel' || out.after.k === 'rel') continue;
 
-          const verdict = sameValue(node, out.after, 777 + i);
+          // `guard` thì **không** bỏ qua nữa: bộ kiểm nhận được nó và tự bỏ những điểm
+          // vi phạm. Bản cũ bỏ nguyên bước, và đó là một lỗ im lặng — bốn trong năm
+          // luật tổ hợp của M56 đều có `guard`, nên chúng sẽ được đếm là "đã quét" mà
+          // giá trị thì chưa ai kiểm. Chỗ bỏ qua là chỗ lỗ hổng nằm (M47c).
+          const verdict = sameValue(node, out.after, 777 + i, 8, out.guard ?? null);
           if (!verdict.ok) bad.push(`${rule.id} tại "${at}" của ${src}: ${verdict.message}`);
         }
       }
@@ -1542,6 +1559,164 @@ describe('M55 — dọn nhà', () => {
 
       expect(px(ALGEBRA_LIMITS.maxWidthCells)).toBeGreaterThan(12);
       expect(px(ALGEBRA_LIMITS.maxWidthCells + 1)).toBeLessThan(12);
+    });
+  });
+});
+
+describe('M56 — hàm tổ hợp và bộ bốc điểm số nguyên', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const last = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return unparse(m.rows.at(-1)!.expr);
+  };
+  const tree = (s: string): Expr => parse(s, new Minter());
+
+  describe('cú pháp', () => {
+    it('`n!` và `n != 3` là **hai** thứ khác nhau', () => {
+      // `!=` là toán tử quan hệ. Nuốt nhầm dấu `!` làm giai thừa thì `n != 3` thành
+      // lỗi cú pháp — và lỗi ấy sẽ chỉ lộ ra ở bài đầu tiên dùng dấu khác.
+      expect(unparse(tree('n != 3'))).toBe('(n != 3)');
+      expect(unparse(tree('n! = 3'))).toBe('(fact(n) = 3)');
+    });
+
+    it('`C` vừa là tên biến vừa là tên hàm, và không mơ hồ', () => {
+      // Vì engine **cấm nhân ngầm** (§3.3): một biến không bao giờ đứng sát `(`.
+      expect(unparse(tree('C + 1'))).toBe('(C + 1)');
+      expect(unparse(tree('C(n, k)'))).toBe('C(n, k)');
+      expect(() => parse('C(n, k)', new Minter())).not.toThrow();
+    });
+
+    it('giai thừa là **hậu tố** và ăn trước dấu mũ', () => {
+      expect(unparse(tree('n!^2'))).toBe('(fact(n))^(2)');
+      expect(unparse(tree('2^n!'))).toBe('(2)^(fact(n))');
+    });
+
+    it('chữ trơn bọc ngoặc khi đối số không phải nguyên tử', () => {
+      // `x + 1!` đọc ra $x + (1!)$ — một biểu thức khác hẳn $(x+1)!$.
+      expect(toPlain(tree('(x + 1)!'))).toBe('(x + 1)!');
+      expect(toPlain(tree('n!'))).toBe('n!');
+      expect(toPlain(tree('C(n, k)'))).toBe('C(n,k)');
+    });
+  });
+
+  describe('bộ bốc điểm số nguyên — phần đắt nhất', () => {
+    it('bộ **thực** không kiểm được giai thừa, bộ **nguyên** thì được', () => {
+      // Đây là cả lý lẽ của M56 gói trong một khẳng định. `sameValueReal` bốc trong
+      // $[-4,-0{,}3] \cup [0{,}3,4]$, toàn số không nguyên ⇒ `fact` trả `null` ở **mọi**
+      // điểm ⇒ `verified: false`. Không có bộ nguyên thì mọi bước tổ hợp thành
+      // `unchecked`, tức vàng thường trực trên mọi bài — đúng thất bại M45.
+      const a = tree('n!');
+      const b = tree('n * (n - 1)!');
+
+      expect(sameValueReal(a, b, 1, 8).verified).toBe(false);
+      const withInteger = sameValue(a, b);
+      expect(withInteger.verified).toBe(true);
+      expect(withInteger.ok).toBe(true);
+    });
+
+    it('và nó **bắt** được đồng nhất thức sai', () => {
+      expect(sameValue(tree('n!'), tree('n * (n - 2)!')).ok).toBe(false);
+      expect(sameValue(tree('C(n, k)'), tree('C(n, k + 1)')).ok).toBe(false);
+      expect(sameValue(tree('C(n, k)'), tree('C(n, n - k)')).ok).toBe(true);
+    });
+
+    it('điểm ngoài miền bị **bỏ**, không bị kết tội', () => {
+      // $(n-k)!$ với $k > n$ không xác định. Bộ kiểm phải bỏ điểm ấy như bỏ căn bậc
+      // chẵn của số âm — nếu nó kết tội thì `binom_to_factorial` đỏ oan.
+      const v = sameValue(tree('C(n, k)'), tree('n! / (k! * (n - k)!)'));
+      expect(v.ok).toBe(true);
+      expect(v.verified).toBe(true);
+    });
+  });
+
+  describe('năm luật', () => {
+    it('cho ra đúng vế sau', () => {
+      expect(last('n!', [{ rule: 'factorial_step', at: '' }])).toBe('(n * fact((n + (-1))))');
+      expect(last('C(n, k)', [{ rule: 'binom_symmetry', at: '' }])).toBe('C(n, (n + ((-1) * k)))');
+      expect(last('C(n, k)', [{ rule: 'pascal', at: '' }])).toBe(
+        '(C((n + (-1)), (k + (-1))) + C((n + (-1)), k))',
+      );
+      expect(last('k*C(n, k)', [{ rule: 'binom_absorb', at: '' }])).toBe(
+        '(n * C((n + (-1)), (k + (-1))))',
+      );
+      expect(last('C(n, k)', [{ rule: 'binom_to_factorial', at: '' }])).toBe(
+        '(fact(n) / (fact(k) * fact((n + ((-1) * k)))))',
+      );
+    });
+
+    it('cả năm đều **kiểm được** — không luật nào rơi vào `unchecked`', () => {
+      const cases: Array<[string, string]> = [
+        ['n!', 'factorial_step'],
+        ['C(n, k)', 'binom_to_factorial'],
+        ['C(n, k)', 'binom_symmetry'],
+        ['C(n, k)', 'pascal'],
+        ['k*C(n, k)', 'binom_absorb'],
+      ];
+      for (const [start, rule] of cases) {
+        const m = run(start, [{ rule, at: '' }]);
+        expect(m.refusal, `${rule}: ${m.refusal}`).toBeNull();
+        expect(m.unsound, rule).toEqual([]);
+        expect(m.unchecked, rule).toEqual([]);
+      }
+    });
+
+    it('`binom_absorb` so thừa số bằng **cấu trúc**, không bằng tên', () => {
+      expect(last('3*k*C(n, k)', [{ rule: 'binom_absorb', at: '' }])).toBe(
+        '(3 * n * C((n + (-1)), (k + (-1))))',
+      );
+      expect(run('3*C(n, k)', [{ rule: 'binom_absorb', at: '' }]).refusal).toContain(
+        'không có thừa số bằng k',
+      );
+    });
+
+    it('điều kiện in ra khi có biến, **im** khi hiển nhiên đúng', () => {
+      // Chữ đỏ thường trực và vô ích là cách nhanh nhất để người ta ngừng đọc mọi chữ
+      // đỏ, kể cả dòng thật (M45). "$0 \\le 2 \\le 5$" là một dòng như thế.
+      expect(run('C(n, k)', [{ rule: 'pascal', at: '' }]).conditions).toEqual(['n ≥ 1']);
+      expect(run('C(5, 2)', [{ rule: 'binom_to_factorial', at: '' }]).conditions).toEqual([]);
+      expect(run('C(n, k)', [{ rule: 'binom_to_factorial', at: '' }]).conditions).toEqual([
+        '0 ≤ k ≤ n',
+      ]);
+      // Đối xứng đúng ở **mọi** $k$ nguyên nhờ quy ước $C_n^k = 0$ ngoài $[0,n]$.
+      expect(run('C(n, k)', [{ rule: 'binom_symmetry', at: '' }]).conditions).toEqual([]);
+    });
+  });
+
+  describe('sắp chữ', () => {
+    it('$C_n^k$ **chồng cột** — bề ngang là `max`, không phải tổng', () => {
+      // Ghép `sup` với `shift` cho ra $C_n{}^k$ — chỉ số dưới rồi mới tới số mũ, đọc ra
+      // một thứ khác. Đây là lý do `subsup` phải là một hộp riêng.
+      const wide = measure(toBox(tree('C(n, k)')));
+      const base = measure(toBox(tree('C')));
+      const sub = measure(toBox(tree('n'), shrink(FONT, 0.68)));
+      expect(wide.w).toBeLessThan(base.w + sub.w * 2);
+    });
+
+    it('không glyph nào chồng lên nhau, kể cả khi lồng tới sàn cỡ chữ', () => {
+      // $C_n^k$ lồng trong chỉ số dưới của một $C_n^k$ khác đẩy cả hai tầng xuống sàn
+      // `SIZE_FLOOR`, và ở đó `supRise`/`subDrop` — mỗi cái chỉ nhìn *một* tầng —
+      // không còn tách được chúng. Lượt quét này là thứ bắt được, ở $0{,}07$ đơn vị.
+      for (const src of ['C(n, k)', 'C(C(n, k), 2)', 'n!^2', 'C(n, k) = n! / (k! * (n - k)!)']) {
+        const p = place(toBox(tree(src), FONT), 0, 0);
+        const hits: string[] = [];
+        for (let i = 0; i < p.glyphs.length; i += 1) {
+          for (let j = i + 1; j < p.glyphs.length; j += 1) {
+            const a = glyphBox(p.glyphs[i]!);
+            const b = glyphBox(p.glyphs[j]!);
+            const ox = Math.min(a.x2, b.x2) - Math.max(a.x1, b.x1);
+            const oy = Math.min(a.y2, b.y2) - Math.max(a.y1, b.y1);
+            if (ox > 0.05 && oy > 0.05) hits.push(`"${p.glyphs[i]!.s}"×"${p.glyphs[j]!.s}"`);
+          }
+        }
+        expect(hits, `${src}: ${hits.join(', ')}`).toEqual([]);
+      }
+    });
+
+    it('dấu `!` được đo riêng — không thì số mũ trôi khỏi nó', () => {
+      // `estimateTextWidth` ước đều $0{,}5$ em, dôi $0{,}22$ em cho một nét đứng. Đủ để
+      // $n!^2$ vẽ ra hai vật rời nhau. Cùng lớp lỗi với bảng `EM` sinh ra để dẹp.
+      expect(textWidth('!', FONT)).toBeLessThan(textWidth('x', FONT));
     });
   });
 });

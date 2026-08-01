@@ -1,0 +1,149 @@
+{
+  "schema_version": "0.3.0",
+  "id": "pascal-triangle-identity",
+  "statement": {
+    "vi": "Mỗi ô trong tam giác Pascal bằng tổng hai ô ngay trên nó. Viết thành công thức thì đó là $C_n^k = C_{n-1}^{k-1} + C_{n-1}^k$. Xem nó **là** cái gì, và vì sao nó đúng khi nhìn qua giai thừa."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: engine kiểm bước Pascal bằng cách thay $n, k$ bằng **số nguyên nhỏ** rồi so hai vế. Nó không tin lời tác giả, và nó cũng không giả vờ đã kiểm khi chưa kiểm được."
+    }
+  },
+  "topics": [
+    "counting",
+    "algebra"
+  ],
+  "techniques": [
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Tách ô thành hai ô trên"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bắt đầu từ một ô bất kỳ. Công thức Pascal [[a1|tách nó thành hai ô]] — cả hai đều ở hàng $n-1$, một cái lùi thêm một cột. Hai màu cho thấy $n$ và $k$ đi đâu: **cả hai** ô đều lùi một hàng, còn cột thì chỉ một ô lùi."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "C(n, k)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "pascal"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: C chỉ số dưới n trên k, rồi tổng của C n trừ 1 trên k trừ 1 và C n trừ 1 trên k."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vì sao nó đúng? Viết ký hiệu tổ hợp bằng giai thừa thì [[a1|mọi thứ thành số học thường]]. Dòng đỏ ghi điều kiện $0 \\le k \\le n$ — ngoài khoảng ấy vế phải không xác định, còn vế trái vẫn có nghĩa và bằng $0$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "C(n, k)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "binom_to_factorial"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: C n trên k, rồi phân số n giai thừa trên k giai thừa nhân n trừ k giai thừa."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Và với số cụ thể thì chuỗi chạy tới tận số. $C_5^2$ [[a1|mở ra thành giai thừa]] rồi tách dần — không có dòng đỏ nào ở đây, vì điều kiện $0 \\le 2 \\le 5$ hiển nhiên đúng nên engine không in nó ra."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "C(5, 2)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "binom_to_factorial"
+                },
+                {
+                  "at": "@fact(5)",
+                  "rule": "factorial_step"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: C 5 trên 2, thành phân số giai thừa, rồi tách một thừa số 5 ra khỏi 5 giai thừa."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

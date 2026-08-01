@@ -99,9 +99,12 @@
     "distribute-and-group-in-colour",
     "identity-roles-in-colour",
     "what-disappears-and-why",
-    "cubic-by-known-root"
+    "cubic-by-known-root",
+    "binomial-absorption",
+    "pascal-triangle-identity"
   ],
   "newest": [
-    "cubic-by-known-root"
+    "binomial-absorption",
+    "pascal-triangle-identity"
   ]
 }
