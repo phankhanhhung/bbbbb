@@ -436,7 +436,7 @@ export function Player({
 
       <div class="player__body">
         {step.bijection && renderer ? (
-          <BijectionPanes step={step} renderer={renderer} labels={atlas} />
+          <BijectionPanes step={step} renderer={renderer} labels={atlas} anchor={shownAnchor} />
         ) : (
           <div
             class={choreography ? 'canvas canvas--choreo' : 'canvas'}

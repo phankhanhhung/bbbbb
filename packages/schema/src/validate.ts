@@ -71,9 +71,27 @@ export function createValidator(
 
     problem.solutions.forEach((solution, si) => {
       solution.steps.forEach((step, i) => {
-        if (!step.scene) return;
-        const path = `/solutions/${si}/steps/${i}/scene`;
-        issues.push(...validateScene(step.scene, path));
+        const at = `/solutions/${si}/steps/${i}`;
+        if (step.scene) issues.push(...validateScene(step.scene, `${at}/scene`));
+        /**
+         * Pane **phải** của song ánh cũng là một Scene thật (M66).
+         *
+         * Bản trước chỉ đi qua `step.scene`, nên scene bên phải chưa từng chạm JSON
+         * Schema của engine nó: `checkSceneBounds` có soi nó, nhưng đó là trần kích
+         * thước, không phải hình dạng. Hậu quả đo được — một `config` sai kiểu
+         * (`lattice: {shape: "square"}` thay vì `lattice: "square"`) đi lọt qua cả
+         * lượt validate, và chỉ lộ ra ở **lượt nhìn**: bàn cờ vẽ thành lưới tam giác.
+         *
+         * Nặng hơn: `DAT-20` (brand-lock, cấm trường style tự do) và trần
+         * `color_class` cũng sống ở lượt này. Tức là **cửa sau của brand-lock** nằm
+         * ở nửa phải của mọi bài song ánh suốt từ M37.
+         *
+         * Cùng họ với lỗ anchor mà mục này sửa: pane phải là công dân hạng hai ở mọi
+         * lớp kiểm, vì mỗi lớp được viết khi nghĩ về "scene của step" số ít.
+         */
+        if (step.bijection) {
+          issues.push(...validateScene(step.bijection.scene, `${at}/bijection/scene`));
+        }
       });
     });
 

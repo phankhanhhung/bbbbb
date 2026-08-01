@@ -594,11 +594,32 @@ function checkAnchors(
   const spans = step.narrative ? parseAnchorMarkup(step.narrative.vi) : [];
   const usedKeys = new Set(spans.map((s) => s.key));
 
+  /**
+   * Id tra được gồm **cả hai pane** (ANC-05, M66).
+   *
+   * Bản trước chỉ soi `step.scene`, nên một anchor trỏ vào element của pane phải bị
+   * báo `anchor/unknown-element` — sai, vì element ấy **có thật và đang ở trên màn
+   * hình**. Hậu quả: bài song ánh không neo được vào nửa bên phải, tức là mất đúng
+   * nửa mà song ánh sinh ra để nói.
+   *
+   * `checkChoreography` ngay trên đã union hai pane từ M37 với đúng lý lẽ ấy. Hai lớp
+   * kiểm cạnh nhau nhìn hai thứ khác nhau về cùng một step là một chỗ lệch nội bộ,
+   * không phải một quyết định.
+   */
   const known = knownIds(scene, engines);
+  if (step.bijection) {
+    for (const id of knownIds(step.bijection.scene, engines)) known.add(id);
+  }
+
   // Element mà view hiện tại **cố ý** không vẽ. Id có thật nên `known` chứa nó và
   // ANC-02 cho qua — nhưng rê chuột vào thì không sáng gì, và người đọc kết luận
   // rằng thứ ấy không tồn tại. Đây là biến thể của anchor rot mà lớp kiểm cũ mù.
+  //
+  // Tính **theo từng scene**, không union: "pane trái không vẽ thứ này" vẫn là một
+  // lỗi thật kể cả khi pane phải có vẽ một element trùng tên. Nên chỉ bỏ qua khi id
+  // ấy thuộc về pane kia.
   const undrawn = engines.get(scene.engine)?.undrawnElementIds?.(scene) ?? new Set<string>();
+  const otherPane = step.bijection ? knownIds(step.bijection.scene, engines) : new Set<string>();
 
   for (const span of spans) {
     if (!(span.key in anchors)) {
@@ -632,7 +653,7 @@ function checkAnchors(
         });
         return;
       }
-      if (undrawn.has(id)) {
+      if (undrawn.has(id) && !otherPane.has(id)) {
         issues.push({
           code: 'anchor/undrawn-element',
           severity: 'error',

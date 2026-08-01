@@ -81,6 +81,44 @@ describe('ANC-02 — anchor rot', () => {
     expect(codes(problem)).not.toContain('anchor/unknown-element');
   });
 
+  /**
+   * ANC-05 (M66) — anchor của một step song ánh trỏ vào **cả hai** pane.
+   *
+   * Cặp test này phải đi cùng nhau. Nới ra mà không có cái thứ hai thì "union hai
+   * pane" dễ trượt thành "thôi không kiểm nữa", và anchor rot — đúng thứ ANC-02 sinh
+   * ra để bắt — lặng lẽ được cho qua ở mọi bài song ánh.
+   */
+  it('cho phép anchor trỏ tới element của **pane phải**', () => {
+    const problem = JSON.parse(
+      readFileSync(
+        fileURLToPath(
+          new URL('../../../packages/content/problems/pascal-two-proofs.json', import.meta.url),
+        ),
+        'utf8',
+      ),
+    ) as Problem;
+    const step = problem.solutions[0]!.steps[0]!;
+
+    // `target` là một region của scene bên phải, không có trong scene bên trái.
+    expect(step.anchors!['a1']!.ids).toContain('target');
+    expect(step.scene!.elements.some((e) => e.id === 'target')).toBe(false);
+    expect(codes(problem)).not.toContain('anchor/unknown-element');
+  });
+
+  it('...nhưng id **không có ở pane nào** thì vẫn rớt', () => {
+    const problem = JSON.parse(
+      readFileSync(
+        fileURLToPath(
+          new URL('../../../packages/content/problems/pascal-two-proofs.json', import.meta.url),
+        ),
+        'utf8',
+      ),
+    ) as Problem;
+    problem.solutions[0]!.steps[0]!.anchors!['a1']!.ids = ['khong-co-o-dau-ca'];
+
+    expect(codes(problem)).toContain('anchor/unknown-element');
+  });
+
   it('bắt narrative dùng khoá anchor chưa khai', () => {
     const problem = loadExample();
     problem.solutions[0]!.steps[0]!.narrative!.vi = 'Còn [[a9|sáu mươi hai]] ô.';

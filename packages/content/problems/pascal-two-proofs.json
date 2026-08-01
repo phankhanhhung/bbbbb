@@ -1,0 +1,301 @@
+{
+  "schema_version": "0.3.0",
+  "id": "pascal-two-proofs",
+  "statement": {
+    "vi": "Chứng minh $C_5^2 = C_4^1 + C_4^2$ bằng **hai** con đường: biến đổi ký hiệu, và đếm trên tam giác Pascal."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: **một** đồng nhất thức, hai cách nhìn, và anchor neo vào **cả hai** pane cùng lúc — rê vào một câu thì hạng tử bên trái và ô bên phải sáng lên cùng nhau."
+    }
+  },
+  "topics": [
+    "counting",
+    "algebra"
+  ],
+  "techniques": [
+    "bijection",
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra",
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Hai chứng minh cạnh nhau"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bên trái, engine chạy công thức Pascal và **tự kiểm** từng bước: [[a1|$C_5^2$]] tách thành [[a2|$C_4^1$]] cộng [[a3|$C_4^2$]].\nBên phải là chính đồng nhất thức ấy trên tam giác Pascal: ô [[a1|$C_5^2 = 10$]] bằng tổng **hai ô ngay trên nó**, [[a2|$C_4^1 = 4$]] và [[a3|$C_4^2 = 6$]].\nKhông phải hai bài — là một đồng nhất thức nhìn từ hai phía. Rê vào một cụm chữ thì cả hai phía cùng sáng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "r0-e3",
+                "target"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "r4-e10",
+                "above-left"
+              ]
+            },
+            "a3": {
+              "ids": [
+                "r4-e13",
+                "above-right"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "công thức Pascal, viết ra",
+              "start": "C(5, 2)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "pascal"
+                },
+                {
+                  "at": "0.0",
+                  "rule": "eval_int"
+                },
+                {
+                  "at": "0.1",
+                  "rule": "eval_int"
+                },
+                {
+                  "at": "1.0",
+                  "rule": "eval_int"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Biến đổi ký hiệu"
+            },
+            "label_right": {
+              "vi": "Tam giác Pascal"
+            },
+            "pairs": [
+              [
+                "r4-e10",
+                "above-left"
+              ],
+              [
+                "r4-e13",
+                "above-right"
+              ]
+            ],
+            "scene": {
+              "config": {
+                "cols": 6,
+                "rows": 6
+              },
+              "elements": [
+                {
+                  "glyph": "1",
+                  "id": "p0-0",
+                  "kind": "custom",
+                  "pos": [0, 0],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "1",
+                  "id": "p1-0",
+                  "kind": "custom",
+                  "pos": [1, 0],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "1",
+                  "id": "p1-1",
+                  "kind": "custom",
+                  "pos": [1, 1],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "1",
+                  "id": "p2-0",
+                  "kind": "custom",
+                  "pos": [2, 0],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "2",
+                  "id": "p2-1",
+                  "kind": "custom",
+                  "pos": [2, 1],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "1",
+                  "id": "p2-2",
+                  "kind": "custom",
+                  "pos": [2, 2],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "1",
+                  "id": "p3-0",
+                  "kind": "custom",
+                  "pos": [3, 0],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "3",
+                  "id": "p3-1",
+                  "kind": "custom",
+                  "pos": [3, 1],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "3",
+                  "id": "p3-2",
+                  "kind": "custom",
+                  "pos": [3, 2],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "1",
+                  "id": "p3-3",
+                  "kind": "custom",
+                  "pos": [3, 3],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "1",
+                  "id": "p4-0",
+                  "kind": "custom",
+                  "pos": [4, 0],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "4",
+                  "id": "p4-1",
+                  "kind": "custom",
+                  "pos": [4, 1],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "6",
+                  "id": "p4-2",
+                  "kind": "custom",
+                  "pos": [4, 2],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "4",
+                  "id": "p4-3",
+                  "kind": "custom",
+                  "pos": [4, 3],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "1",
+                  "id": "p4-4",
+                  "kind": "custom",
+                  "pos": [4, 4],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "1",
+                  "id": "p5-0",
+                  "kind": "custom",
+                  "pos": [5, 0],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "5",
+                  "id": "p5-1",
+                  "kind": "custom",
+                  "pos": [5, 1],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "10",
+                  "id": "p5-2",
+                  "kind": "custom",
+                  "pos": [5, 2],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "10",
+                  "id": "p5-3",
+                  "kind": "custom",
+                  "pos": [5, 3],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "5",
+                  "id": "p5-4",
+                  "kind": "custom",
+                  "pos": [5, 4],
+                  "type": "piece"
+                },
+                {
+                  "glyph": "1",
+                  "id": "p5-5",
+                  "kind": "custom",
+                  "pos": [5, 5],
+                  "type": "piece"
+                },
+                {
+                  "cells": [[4, 1]],
+                  "id": "above-left",
+                  "label": "C(4,1)",
+                  "type": "region"
+                },
+                {
+                  "cells": [[4, 2]],
+                  "id": "above-right",
+                  "label": "C(4,2)",
+                  "type": "region"
+                },
+                {
+                  "cells": [[5, 2]],
+                  "id": "target",
+                  "label": "C(5,2)",
+                  "type": "region"
+                }
+              ],
+              "engine": "board"
+            }
+          },
+          "alt_text": {
+            "vi": "Bên trái: chuỗi biến đổi từ C(5,2) thành C(4,1) + C(4,2). Bên phải: tam giác Pascal trên lưới 6×6, ô C(5,2) = 10 được khoanh cùng hai ô ngay trên nó là 4 và 6."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

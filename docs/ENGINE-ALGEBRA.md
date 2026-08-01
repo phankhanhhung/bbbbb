@@ -2527,3 +2527,74 @@ Lần thứ ba trong đợt này một chốt canh hỏi nhầm chỗ; lần nà
 là một tín hiệu, không phải một sự im lặng.
 
 2988 test xanh, 90 e2e xanh, 111 bài validate sạch, golden không đổi.
+
+---
+
+## 42. Anchor xuyên pane, và hai lớp kiểm mù nửa phải (M66, ANC-05)
+
+Bài song ánh có **hai** scene trên màn hình. Mọi lớp kiểm của repo được viết khi nghĩ về
+"scene của step" — số ít — nên nửa phải là công dân hạng hai ở khắp nơi. Mục này tìm ra
+hai chỗ, và chỗ thứ hai nặng hơn chỗ đầu.
+
+### 42.1 Anchor không neo được vào pane phải
+
+`checkAnchors` chỉ soi `step.scene`, nên một anchor trỏ vào element của pane phải bị báo
+`anchor/unknown-element` — sai, vì element ấy **có thật và đang ở trên màn hình**. Hậu
+quả: bài song ánh không neo được vào nửa bên phải, tức là mất đúng nửa mà song ánh sinh
+ra để nói.
+
+`checkChoreography` ngay bên trên đã union hai pane từ M37 với đúng lý lẽ ấy (CHO-05 morph
+một element sang ảnh của nó, và ảnh ấy nằm ở scene bên phải theo định nghĩa). Hai lớp kiểm
+cạnh nhau nhìn hai thứ khác nhau về cùng một step là một chỗ **lệch nội bộ**, không phải
+một quyết định — và đó là dấu hiệu đáng tin nhất rằng một trong hai sai.
+
+`undrawn` thì vẫn tính **theo từng scene**, không union: *"pane trái không vẽ thứ này"*
+vẫn là một lỗi thật kể cả khi pane phải có vẽ một element trùng tên. Chỉ bỏ qua khi id ấy
+thuộc về pane kia.
+
+### 42.2 ...và pane phải **chưa từng chạm JSON Schema**
+
+Chỗ này lộ ra vì một lỗi gõ tay: tao viết `lattice: {shape: "square"}` thay vì
+`lattice: "square"`. Validate **cho qua** — 112 bài, 0 lỗi, 0 cảnh báo — rồi lượt nhìn
+cho thấy bàn cờ vẽ thành một lưới tam giác xiên.
+
+Đọc `validateScenes` mới ra: nó duyệt `step.scene` và chỉ `step.scene`. Scene bên phải đi
+qua `checkSceneBounds` (trần kích thước) và `checkBijection` (id của các cặp), nhưng
+**không** qua `configSchema`/`elementSchemas` của engine nó. Nghĩa là suốt từ M37:
+
+- `config` sai kiểu đi lọt (đo được: chính bài này);
+- element kiểu lạ đi lọt;
+- và **DAT-20 — brand-lock, cấm trường style tự do — có một cửa sau** ở nửa phải của mọi
+  bài song ánh. Cùng chỗ ấy còn trần `color_class`.
+
+Một dòng chữa. Điều đáng ghi không phải dòng chữa mà là **cách nó lộ ra**: không lớp kiểm
+nào bắt được, không test nào đỏ; nó lộ vì hình vẽ ra trông sai. Lượt nhìn PNG lại là lớp
+lưới cuối cùng, lần thứ tư trong đợt này.
+
+### 42.3 Hợp, không phải tranh nhau
+
+Trong Player ba nguồn highlight **loại nhau** (`activeAnchor` › `tapped` › timeline) vì cả
+ba đều trả lời cùng một câu: *"nhìn dòng nào"*. Ở hai pane thì khác: rê chuột nói về **một
+cặp**, anchor nói về **một câu** — hai câu hỏi khác nhau, cùng đúng cùng lúc. Ép chúng loại
+nhau thì rê vào một ô sẽ tắt mất chỗ mà lời kể đang chỉ. Nên ở đây là **hợp**.
+
+### 42.4 `pascal-two-proofs`
+
+Trái: engine đại số chạy `pascal` trên $C_5^2$ rồi `eval_int` ba lần — năm dòng, mỗi dòng
+tự kiểm. Phải: tam giác Pascal trên lưới $6\times6$, ba region đánh dấu $C_4^1$, $C_4^2$ và
+$C_5^2$. Anchor trỏ **cả hai** pane cùng lúc, và `bijection.pairs` nối hai hạng tử với hai
+ô. Morph xuyên engine chạy sẵn từ M37 — không viết một dòng code morph nào.
+
+Chốt canh đi **thành cặp**: anchor trỏ pane phải phải đậu, *và* id không có ở pane nào vẫn
+phải rớt. Nới một lớp kiểm mà không có vế thứ hai thì "union hai pane" dễ trượt thành
+"thôi không kiểm nữa", và anchor rot — đúng thứ ANC-02 sinh ra để bắt — lặng lẽ được cho
+qua ở mọi bài song ánh.
+
+### 42.5 Chốt canh e2e lại hỏi sai lần nữa
+
+Bản đầu mở bằng `expect(lit).toEqual([])`. Nó đỏ ngay: engine đại số **tự sinh timeline**
+cho pane trái, pha đầu bắt đầu tại `ms = 0`, nên `a1` đã sáng sẵn ở cả hai pane trước khi
+ai rê vào đâu. Giống hệt baseline mà M63 và M64 đã gặp — lần thứ ba cùng một giả định sai
+*"chưa chạm thì tối om"*. Nay so với **nền**.
+
+2997 test xanh, 98 e2e xanh, 112 bài validate sạch.

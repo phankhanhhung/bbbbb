@@ -25,6 +25,15 @@ interface Props {
   readonly renderer: SceneRenderer;
   /** D-07 — bảng nhãn LaTeX; `null` khi bài không có công thức trong canvas. */
   readonly labels?: LabelAtlas | null;
+  /**
+   * Khoá anchor đang được nói tới (ANC-05, M66) — rê trên lời kể, hoặc pha đang chạy.
+   *
+   * Cần vì anchor của một step song ánh trỏ vào **cả hai** pane: một câu như *"$C_4^1$
+   * ứng với các đường đi qua ô trái"* nói về một hạng tử bên trái **và** một vùng bên
+   * phải cùng lúc. Trước M66 view này không nhận anchor nào, nên rê vào câu ấy chỉ
+   * sáng được nửa mà Player vẽ — tức là mất đúng nửa mà song ánh sinh ra để nói.
+   */
+  readonly anchor?: string | null;
 }
 
 /**
@@ -106,7 +115,12 @@ export function unionBox(a: Box, b: Box): Box {
  * cặp mà bài đếm song ánh hay dùng. Hình học thì mỗi engine một kiểu, còn cái
  * key thì renderer nào cũng gắn.
  */
-export function BijectionPanes({ step, renderer, labels }: Props): preact.JSX.Element | null {
+export function BijectionPanes({
+  step,
+  renderer,
+  labels,
+  anchor = null,
+}: Props): preact.JSX.Element | null {
   const [active, setActive] = useState<string | null>(null);
   // PRN-04 — có đang ở chế độ biến hình không. Tiến độ thì `useChoreography` giữ.
   const [morphing, setMorphing] = useState(false);
@@ -134,10 +148,30 @@ export function BijectionPanes({ step, renderer, labels }: Props): preact.JSX.El
 
   // Cả phần tử đang trỏ **và** ảnh của nó đều được nhấn. Chỉ nhấn một bên thì
   // người đọc mất dấu chính thứ mình đang chỉ vào.
+  /**
+   * Hợp của hai nguồn, không phải một cái thắng cái kia.
+   *
+   * Khác chỗ ưu tiên của Player (`activeAnchor` › `tapped` › timeline) vì ở đó ba
+   * nguồn **cạnh tranh cùng một chỗ**: cả ba đều nói "nhìn dòng nào". Ở đây rê chuột
+   * nói về *một cặp*, còn anchor nói về *một câu* — hai câu khác nhau, và cùng đúng.
+   * Ép chúng loại nhau thì rê vào một ô sẽ tắt mất chỗ mà lời kể đang chỉ.
+   */
+  const anchored = useMemo(
+    () =>
+      anchor !== null && step.anchors && Object.hasOwn(step.anchors, anchor)
+        ? (step.anchors[anchor]?.ids ?? [])
+        : [],
+    [anchor, step],
+  );
+
   const highlight = useMemo(() => {
-    if (active === null) return new Set<string>();
-    return new Set([active, ...(partners.get(active) ?? [])]);
-  }, [active, partners]);
+    const out = new Set<string>(anchored);
+    if (active !== null) {
+      out.add(active);
+      for (const partner of partners.get(active) ?? []) out.add(partner);
+    }
+    return out;
+  }, [active, partners, anchored]);
 
   const ctx = useMemo(
     () => createContext(defaultTheme, { highlight, ...(labels ? { labels } : {}) }),

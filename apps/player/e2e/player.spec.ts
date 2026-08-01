@@ -924,3 +924,73 @@ test.describe('Sandbox đại số: bảng nước đi (SBX-01, M65)', () => {
     expect((await refusal.innerText()).length).toBeGreaterThan(10);
   });
 });
+
+test.describe('Anchor xuyên pane (ANC-05, M66)', () => {
+  const TWO = '/?p=pascal-two-proofs';
+
+  /** Danh tính đang đeo halo, gộp cả hai pane. */
+  const lit = (page: Page): Promise<string[]> =>
+    page.evaluate(() =>
+      [
+        ...new Set(
+          [...document.querySelectorAll('.bijection svg [stroke]')]
+            .filter((n) => (n.getAttribute('stroke') ?? '').toUpperCase() === '#E8B004')
+            .map((n) => n.closest('[data-k]')?.getAttribute('data-k') ?? '')
+            .filter(Boolean),
+        ),
+      ].sort(),
+    );
+
+  test('anchor mặc định đã sáng **cả hai** pane ngay khi mở', async ({ page }) => {
+    await page.goto(TWO);
+    await reveal(page);
+
+    // Engine đại số tự sinh timeline cho pane trái, và pha đầu bắt đầu ngay tại
+    // `ms = 0`, nên `a1` đã sáng sẵn — giống hệt baseline mà M63/M64 gặp. So với nền
+    // chứ không so với rỗng.
+    const on = await lit(page);
+    expect(on).toContain('r0-e3'); // hạng tử $C_5^2$, pane trái
+    expect(on).toContain('target'); // ô $C_5^2 = 10$, pane phải
+  });
+
+  test('rê vào một anchor khác thì cả hai pane theo nó', async ({ page }) => {
+    await page.goto(TWO);
+    await reveal(page);
+    const before = await lit(page);
+
+    // Anchor `a2` — "$C_4^1$" — trỏ vào một hạng tử bên trái **và** một region bên phải.
+    await page.locator('.anchor').nth(1).hover();
+    await expect.poll(() => lit(page)).not.toEqual(before);
+
+    const on = await lit(page);
+    expect(on).toContain('r4-e10'); // hạng tử, pane trái
+    expect(on).toContain('above-left'); // region, pane phải
+  });
+
+  test('rời chuột thì cả hai về nền', async ({ page }) => {
+    await page.goto(TWO);
+    await reveal(page);
+    const before = await lit(page);
+
+    await page.locator('.anchor').nth(1).hover();
+    await expect.poll(() => lit(page)).not.toEqual(before);
+
+    await page.locator('.player__head h1').hover();
+    await expect.poll(() => lit(page)).toEqual(before);
+  });
+
+  test('nút Biến hình chạy được xuyên engine', async ({ page }) => {
+    await page.goto(TWO);
+    await reveal(page);
+
+    await expect(page.locator('.bijection__pane')).toHaveCount(2);
+    await page.getByRole('button', { name: /Biến hình/ }).click();
+
+    // Chế độ biến hình gộp hai pane thành **một** canvas, và canvas ấy phải có mực —
+    // morph xuyên engine đi đường toạ độ scene (`boxOf`), không đường sao chép thuộc
+    // tính, nên một khung trống ở đây nghĩa là đường ấy đứt.
+    const pane = page.locator('.bijection__pane');
+    await expect(pane).toHaveCount(1);
+    expect(await pane.locator('svg *').count()).toBeGreaterThan(0);
+  });
+});
