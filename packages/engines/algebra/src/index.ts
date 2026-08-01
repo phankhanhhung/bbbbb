@@ -15,7 +15,7 @@ export * from './schema.js';
 export { FUNCTIONS, isIntegerOnly, type FnSpec } from './functions.js';
 export { parse, tryParse, unparse, ParseError } from './parse.js';
 export { readAlgebra, type AlgebraModel, type AlgebraRow, type Condition } from './model.js';
-export { RULES, ruleById, applicableRules, type Rule } from './rules.js';
+export { RULES, ruleById, applicableRules, ARG_RULE_PREDICATES, type Rule } from './rules.js';
 export {
   sameValue,
   sameValueReal,
@@ -37,6 +37,16 @@ export { layout, boxOf, drawnIds, explainIds, elementId, parseElementId } from '
 export { algebraChoreography, choreographyOf, choreographyTargets } from './choreography.js';
 export { algebraLineage, lineageOf } from './provenance.js';
 export { algebraIncident, violationOf } from './incident.js';
+export {
+  algebraCommands,
+  APPLY_RULE,
+  applyRule,
+  moveRefusal,
+  movesAtElement,
+  pathOfElement,
+  type ApplyRuleParams,
+  type Move,
+} from './commands.js';
 export { toBox, measure, place, textWidth, shrink, glyphBox, FONT, ROW } from './typeset.js';
 export { algebraRenderer } from './render.js';
 
@@ -202,10 +212,17 @@ export function algebraEnvironment(scene: Scene): DslEnvironment {
  * Sandbox (AL-07) — và đây là chỗ engine này khác `longdiv`.
  *
  * `longdiv` trả về đúng `SELECT_TOOL`: phép chia dọc không có nước đi để chọn. Ở đây
- * người học chạm một cây con rồi chọn luật, và bảng luật **đã lọc còn những luật áp
- * được tại nút ấy** — chính chỗ lọc đó là phần dạy học, vì nó cho thấy tập nước đi
- * hợp lệ. Vì mọi nước đi đều do engine áp, người học không **viết** ra được một dòng
- * sai; họ chỉ có thể đi đường vòng.
+ * cũng chỉ có `SELECT_TOOL` — nhưng vì lý do ngược lại, và chỗ khác biệt ấy đáng ghi.
+ *
+ * **Thanh công cụ không phải chỗ nước đi sống.** `SandboxTool` là một danh sách *cố
+ * định theo scene*: bàn cờ có "tô màu", "đặt tile", và chúng đúng ở mọi ô. Nước đi đại
+ * số thì phụ thuộc **nút đang chọn** — $(x+1)^2$ khai triển được, $x + 1$ thì không —
+ * nên nhét 72 luật vào thanh công cụ là bày ra 70 nút bấm vào không làm gì.
+ *
+ * Nên chúng sống ở `movesAtElement` (`commands.ts`) và hiện thành một bảng **cạnh chỗ
+ * chạm**: chạm một cây con thì thấy đúng những luật áp được tại đó. Chính chỗ lọc ấy là
+ * phần dạy học, vì nó cho thấy tập nước đi hợp lệ. Và vì mọi nước đi đều do engine áp,
+ * người học không **viết** ra được một dòng sai; họ chỉ có thể đi đường vòng.
  *
  * Không có nút "gợi ý bước tiếp theo": engine không có bộ giải, và đó là quyết định.
  */
@@ -215,7 +232,13 @@ export function algebraTools(scene: Scene): readonly SandboxTool[] {
   return [SELECT_TOOL];
 }
 
-/** Nước đi hợp lệ tại một nút — dùng cho bảng luật của sandbox. */
+/**
+ * Nước đi hợp lệ tại một **đường dẫn**.
+ *
+ * Bản theo đường dẫn; sandbox dùng `movesAtElement` (theo danh tính vẽ ra) vì hit-test
+ * chỉ có id dưới ngón tay. Giữ cả hai vì hai câu hỏi khác nhau — soạn bài thì nghĩ bằng
+ * đường dẫn, người học thì chỉ tay.
+ */
 export function movesAt(scene: Scene, path: string): readonly { id: string; label: string }[] {
   const model = readAlgebra(scene);
   const last = model.rows.at(-1);

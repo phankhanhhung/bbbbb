@@ -1,16 +1,26 @@
 import { describe, expect, it } from 'vitest';
 import type { Scene } from '@combviz/schema';
 import {
+  algebraCommands,
   algebraIncident,
+  ARG_RULE_PREDICATES,
   algebraLineage,
   drawnIds,
   explainIds,
   layout,
+  ALGEBRA_LIMITS,
+  allPaths,
+  APPLY_RULE,
+  applyRule,
+  elementId,
   lineageOf,
   Minter,
+  moveRefusal,
+  movesAtElement,
   parse,
   parseElementId,
   readAlgebra,
+  RULES,
   sameValue,
   unparse,
   violationOf,
@@ -272,5 +282,120 @@ describe('chấm chứng cứ chỉ sống ở chế độ giải thích', () =>
       expect(ids.has(d.id)).toBe(true);
       expect(drawn.has(d.id)).toBe(false);
     }
+  });
+});
+
+/**
+ * Sandbox đại số (M65, SBX-01) — trả món nợ của một chú thích.
+ *
+ * `index.ts` mô tả bảng nước đi đã lọc từ M46 như thể nó đã có; `movesAt` được viết
+ * cùng câu ấy và **không có một call site nào** suốt sáu mốc.
+ */
+describe('nước đi tại một nút', () => {
+  const start = scene('(x + 1)^2 + 3*x');
+
+  it('`movesAt` hết mồ côi: có người gọi, và gọi bằng danh tính vẽ ra', () => {
+    // Nút gốc của dòng cuối là một tổng.
+    const moves = movesAtElement(start, elementId(0, readAlgebra(start).rows[0]!.expr.id));
+    expect(moves.length).toBeGreaterThan(0);
+  });
+
+  it('bảng **đã lọc**: chỉ luật áp được tại đúng nút ấy', () => {
+    const m = readAlgebra(start);
+    const square = allPaths(m.rows[0]!.expr).get('0')!;
+    const ids = movesAtElement(start, elementId(0, square.id)).map((x) => x.id);
+
+    expect(ids).toContain('expand_square');
+    // Nút này là $(x+1)^2$, không phải một phương trình bậc hai.
+    expect(ids).not.toContain('quadratic_formula');
+    expect(ids).not.toContain('add_both_sides');
+  });
+
+  it('luật cần tham số được đánh dấu, để giao diện mở ô nhập', () => {
+    const m = readAlgebra(start);
+    const moves = movesAtElement(start, elementId(0, m.rows[0]!.expr.id));
+    const factor = moves.find((x) => x.id === 'factor');
+    expect(factor?.needsArg).toBe(true);
+    expect(moves.find((x) => x.id === 'complete_square')?.needsArg).toBe(false);
+  });
+
+  it('chạm dòng **không phải dòng cuối** thì không có nước đi nào', () => {
+    // Chuỗi ba dòng: chỉ đáy mới đi tiếp được, vì áp luật vào giữa là viết lại lịch sử.
+    const m = readAlgebra(CHAIN);
+    expect(movesAtElement(CHAIN, elementId(0, m.rows[0]!.expr.id))).toEqual([]);
+    expect(movesAtElement(CHAIN, elementId(2, m.rows[2]!.expr.id)).length).toBeGreaterThan(0);
+  });
+
+  it('id không phải hạng tử → rỗng, không nổ', () => {
+    for (const id of ['row0', 'note0', 'cell-0-0', '']) {
+      expect(movesAtElement(start, id)).toEqual([]);
+    }
+  });
+
+  it('**mọi** luật cần tham số phải khai chỗ nó áp được', () => {
+    // Luật không cần tham số thì thử thẳng là biết. Luật cần tham số thì không, nên
+    // nó phải tự khai — hoặc bằng `accepts` (kiểu nút), hoặc bằng một vị từ trong
+    // `ARG_RULE_PREDICATES`. Thiếu cả hai thì mặc định là **giấu**, và chốt canh này
+    // là thứ duy nhất biến "giấu im lặng" thành "đỏ ngay".
+    const missing = RULES.filter(
+      (r) => r.needsArg === true && r.accepts === undefined && !(r.id in ARG_RULE_PREDICATES),
+    ).map((r) => r.id);
+    expect(missing).toEqual([]);
+  });
+
+  it('bảng nước đi không bày luật của một họ nút khác', () => {
+    // Đo được ở M65 trước khi sửa: gốc của $(x+1)^2 + 3x$ bày ra 15 nút, 9 trong đó
+    // là luật của hệ phương trình, của $\Sigma$, của trị tuyệt đối.
+    const m = readAlgebra(start);
+    const ids = movesAtElement(start, elementId(0, m.rows[0]!.expr.id)).map((x) => x.id);
+    for (const alien of ['add_equations', 'scale_equation', 'sum_split', 'sum_shift', 'abs_case']) {
+      expect(ids).not.toContain(alien);
+    }
+  });
+});
+
+describe('lệnh áp luật', () => {
+  const start = scene('(x + 1)^2 + 3*x');
+
+  it('áp được thì scene mới có thêm **đúng một** bước', () => {
+    const next = applyRule(start, { at: '0', rule: 'expand_square' });
+    expect('refusal' in next).toBe(false);
+    const config = (next as Scene).config as { steps?: unknown[] };
+    expect(config.steps).toHaveLength(1);
+    expect(readAlgebra(next as Scene).rows).toHaveLength(2);
+  });
+
+  it('không áp được thì trả **nguyên văn** lời từ chối của engine', () => {
+    const why = moveRefusal(start, { at: '1', rule: 'expand_square' });
+    expect(why).toContain('luỹ thừa bậc 2');
+  });
+
+  it('tham số hỏng cũng ra nguyên văn, không ra một dấu ✗', () => {
+    const why = moveRefusal(start, { at: '', rule: 'factor', arg: 'z' });
+    expect(why).not.toBeNull();
+    expect(why!.length).toBeGreaterThan(10);
+  });
+
+  it('lệnh và `moveRefusal` **không thể lệch nhau** — cùng một hàm thuần', () => {
+    const params = { at: '1', rule: 'expand_square' };
+    expect(moveRefusal(start, params)).not.toBeNull();
+    expect(algebraCommands[APPLY_RULE]!.apply(start, params)).toBeNull();
+  });
+
+  it('trần `maxSteps` canh luôn đường vào mới — răng M55.2 làm việc ở đây', () => {
+    // Chồng đủ bước cho tới khi model từ chối. Không phải một trần riêng của sandbox:
+    // `applyRule` chỉ nối bước rồi để `readAlgebra` chạy lại, nên mọi hàng rào của
+    // model canh sẵn đường này.
+    let current: Scene = scene('x + 0');
+    let refusal: string | null = null;
+    for (let i = 0; i < ALGEBRA_LIMITS.maxSteps + 2; i += 1) {
+      const out = applyRule(current, { at: '', rule: 'commute', arg: '0,1' });
+      if ('refusal' in out) {
+        refusal = out.refusal;
+        break;
+      }
+      current = out;
+    }
+    expect(refusal).toContain(`${ALGEBRA_LIMITS.maxSteps}`);
   });
 });

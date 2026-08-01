@@ -2437,3 +2437,93 @@ nghiệm** (24 lượt) — và ở đó test khẳng định luôn cả điều
 24 lần, dải chỉ giữ 8*.
 
 2976 test xanh, 82 e2e xanh, 111 bài validate sạch.
+
+---
+
+## 41. Sandbox đại số — trả nợ một chú thích (M65, SBX-01)
+
+`index.ts` mô tả sandbox này từ M46 như thể nó đã có:
+
+> người học chạm một cây con rồi chọn luật, và bảng luật **đã lọc còn những luật áp
+> được tại nút ấy** — chính chỗ lọc đó là phần dạy học.
+
+Chưa có. `movesAt` được viết ra cùng câu ấy và **không có một call site nào** suốt sáu
+mốc; engine khai `commands: {}`. Một chú thích hứa một UX không tồn tại là một khoản nợ
+có tên.
+
+### 41.1 Một lệnh, không phải mười
+
+Bàn cờ có `paint-cells`, `place-tile`, `remove`… vì thao tác *là* nội dung của nó. Ở đây
+nội dung là **tập luật**, và tập luật đã có sẵn 72 phần tử được kiểm từng cái. Nên
+sandbox này chỉ cần **một** lệnh: *áp luật `R` tại nút `at`*. Thêm một lệnh thứ hai
+(chẳng hạn "sửa dòng cuối") là mở đúng cái khe mà engine sinh ra để bịt — người học sẽ
+**viết** được một dòng sai thay vì chỉ đi được đường vòng.
+
+`applyRule` không tự kiểm gì: nó nối một bước vào `config.steps` rồi để `readAlgebra`
+chạy lại cả chuỗi. Nhờ thế mọi hàng rào của model — trần `maxSteps`, trần số nút, phép
+kiểm từng bước — canh luôn đường vào mới mà không phải khai lại một dòng nào. Đó đúng là
+lý do M55 ép `maxSteps` xuống tầng model thay vì để nó ở schema, và đây là lần đầu quyết
+định ấy trả cổ tức.
+
+Chỉ **dòng cuối** đi tiếp được: một chuỗi biến đổi lớn lên ở đáy, và cho áp luật vào giữa
+chuỗi là viết lại lịch sử — mọi bước sau đó nói về một cây không còn tồn tại.
+
+### 41.2 Lời từ chối **là nội dung**
+
+`CommandDef.apply` trả `null` khi lệnh không áp được, và `null` không mang chữ. Với bàn
+cờ thế là đủ: kéo quân ra ngoài bàn thì không có gì để nói. Ở đây thì ngược lại — *"cần
+luỹ thừa bậc 2"*, *"cần tham số dạng `t := x^2 + 5*x`"* chính là thứ dạy học nhiều nhất
+trong cả sandbox.
+
+Nên có **hai cửa vào cùng một hàm thuần**: lệnh (đường duy nhất được sửa scene, ENG-01)
+trả `Scene | null`, và `moveRefusal` trả chữ cho giao diện. Hai cửa không lệch nhau được
+vì chúng gọi cùng một `applyRule`.
+
+### 41.3 Bảng nước đi **chưa từng được lọc**, và nối nó vào UI là cách biết
+
+`applicableRules` thử thẳng những luật không cần tham số — chính xác. Luật **cần** tham
+số thì không thử được khi chưa có tham số, nên `couldTakeArg` có bốn nhánh đặc biệt rồi
+`return true` cho mọi luật còn lại.
+
+Điều đó không hại ai suốt sáu mốc vì hàm ấy **không có người gọi**. Nối vào sandbox là đo
+được ngay:
+
+| nút | trước | sau |
+|---|---:|---:|
+| gốc của $(x+1)^2 + 3x$ | 15 nước | 8 |
+| $(x+1)^2$ | 15 | 7 |
+| $\lvert x-2 \rvert$ | 15 | 4 |
+
+Bảy trong số bị cắt là luật của hệ phương trình, của $\Sigma$, của trị tuyệt đối — bấm
+vào không làm gì. Đúng thứ mà chính chú thích `algebraTools` viết ra để chống.
+
+Chữa bằng **cấu trúc, không bằng bảng tên ở chỗ khác**: `Rule.accepts` khai kiểu nút, và
+nó chép đúng dòng `if (node.k !== 'sys')` ở đầu thân luật — một sự thật đặt cạnh chính
+nó. Ba luật không quy về kiểu nút được (`set_variable`, `evaluate_at`,
+`divide_by_linear_factor` nhận *bất kỳ* cây nào có biến, hoặc bất kỳ đa thức nào) đi qua
+`ARG_RULE_PREDICATES`.
+
+Và mặc định lật từ `true` sang **`false`**. Trước đây một luật mới tự động hiện ở **mọi**
+nút — sai theo hướng ồn ào, không ai canh. Nay nó bị **giấu** cho tới khi ai đó khai, và
+chốt canh *"mọi luật cần tham số phải khai chỗ nó áp được"* biến chuyện đó thành đỏ ngay.
+Sai im lặng có người canh đổi lấy sai ồn ào không ai canh.
+
+### 41.4 Không thêm một cử chỉ nào
+
+Bảng dựng trên chính cơ chế **chọn** sẵn có của sandbox: bấm một cây con là đã có bảng.
+Undo/redo miễn phí qua command stack. Engine không khai `moves` thì panel không mọc ra —
+sandbox bàn cờ không đổi một pixel.
+
+### 41.5 Bẻ răng
+
+| bẻ | kết quả |
+|---|---|
+| `accepts` không lọc theo kiểu nút | 1 đỏ |
+| áp luật được vào giữa chuỗi | 1 đỏ |
+| lời từ chối bị nuốt thành `null` | 3 đỏ |
+
+Chốt canh e2e bản đầu chạm **dòng $0$** và bảng rỗng — engine trả lời đúng, test hỏi sai.
+Lần thứ ba trong đợt này một chốt canh hỏi nhầm chỗ; lần này nó tự lộ ngay vì bảng rỗng
+là một tín hiệu, không phải một sự im lặng.
+
+2988 test xanh, 90 e2e xanh, 111 bài validate sạch, golden không đổi.

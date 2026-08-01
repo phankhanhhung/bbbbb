@@ -369,6 +369,69 @@ body {
   color: var(--ink);
 }
 
+/* SBX-01 — bảng nước đi tại nút đang chọn (M65). Cùng khung với `.constraints` vì
+   nó cùng là một mục của cột phải; khác ở chỗ nó **đổi theo chỗ chạm**. */
+.moves {
+  margin-bottom: 1rem;
+}
+
+.moves h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.moves__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.moves__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.moves__item {
+  /* NFR-C2: vùng chạm ≥ 44px, cùng luật với mọi nút khác — không nới. */
+  min-height: 44px;
+  width: 100%;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.moves__arg {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.moves__arg input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.moves__arg button {
+  min-height: 44px;
+}
+
+/* Lời từ chối của engine, **nguyên văn**. Đây là phần dạy học nhiều nhất của
+   sandbox này, nên nó không được rút gọn thành một dấu ✗. */
+.moves__refusal {
+  margin: 0.4rem 0 0;
+  padding: 0.3rem 0.5rem;
+  border-left: 3px solid var(--warn);
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+
 .counter {
   font-variant-numeric: tabular-nums;
   font-size: 0.85rem;

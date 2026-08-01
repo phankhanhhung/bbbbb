@@ -819,3 +819,108 @@ test.describe('Chạm vào điều kiện (AL-14)', () => {
     await expect(page.locator('.incident')).toHaveCount(0);
   });
 });
+
+test.describe('Sandbox đại số: bảng nước đi (SBX-01, M65)', () => {
+  /** `x^2 − 9` phân tích thành `(x−3)(x+3)` — dòng cuối là một tích nhân lại được. */
+  const ALG = '/?p=factoring-identities&sol=sol&step=s0';
+
+  const openSandbox = async (page: Page): Promise<void> => {
+    await page.goto(ALG);
+    await reveal(page);
+    await page.getByRole('button', { name: 'Thử từ đây' }).click();
+    await expect(page.locator('.sandbox')).toBeVisible();
+  };
+
+  /**
+   * Bấm vào giữa hộp một hạng tử ở **dòng cuối**.
+   *
+   * Dòng cuối chứ không phải dòng đầu, và đó không phải chi tiết: chuỗi biến đổi lớn
+   * lên ở đáy, nên chỉ dòng cuối mới có nước đi. Bản đầu của chốt canh này chạm dòng
+   * $0$ và bảng rỗng — engine trả lời **đúng**, test hỏi sai.
+   */
+  const tapLastRowTerm = async (page: Page, index = 0): Promise<void> => {
+    const box = await page
+      .locator('.sandbox .canvas svg .cv-alg-row')
+      .last()
+      .locator('[data-k]')
+      .nth(index)
+      .locator('rect')
+      .boundingBox();
+    await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  };
+
+  /**
+   * Chạm lần lượt từng hạng tử của dòng cuối tới khi gặp một nút có nước đi **không
+   * cần tham số**.
+   *
+   * Không đoán trước nút nào có: hit-test chọn hộp nhỏ nhất chứa điểm bấm, và hộp nào
+   * nhỏ nhất thì phụ thuộc bố cục. Dò thì chốt canh nói đúng điều nó muốn nói — *"có
+   * một chỗ bấm được là chạy ngay"* — thay vì khoá cứng vào một toạ độ.
+   */
+  const tapUntilPlainMove = async (page: Page): Promise<void> => {
+    const count = await page
+      .locator('.sandbox .canvas svg .cv-alg-row')
+      .last()
+      .locator('[data-k]')
+      .count();
+    for (let i = 0; i < count; i += 1) {
+      await tapLastRowTerm(page, i);
+      if ((await page.locator('.moves__item').filter({ hasNotText: '…' }).count()) > 0) return;
+    }
+    throw new Error('không hạng tử nào của dòng cuối có nước đi không cần tham số');
+  };
+
+  test('chưa chọn gì thì panel mời chạm, chọn rồi thì liệt kê luật', async ({ page }) => {
+    await openSandbox(page);
+
+    const panel = page.locator('.moves');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText('Chạm một phần của dòng cuối');
+
+    await tapLastRowTerm(page);
+    await expect(panel.locator('.moves__item').first()).toBeVisible();
+  });
+
+  test('bảng **đã lọc**: không bày luật của họ nút khác', async ({ page }) => {
+    await openSandbox(page);
+    await tapLastRowTerm(page);
+
+    const labels = await page.locator('.moves__item').allInnerTexts();
+    // Nút đại số thường: không có luật của hệ phương trình hay của tổng $\Sigma$.
+    expect(labels.join(' ')).not.toContain('hệ phương trình');
+    expect(labels.join(' ')).not.toContain('tách tổng');
+  });
+
+  test('bấm một luật thì chuỗi dài thêm một dòng, và hoàn tác được', async ({ page }) => {
+    await openSandbox(page);
+
+    const rows = page.locator('.sandbox .canvas svg .cv-alg-row');
+    const before = await rows.count();
+
+    await tapUntilPlainMove(page);
+    // Luật **không** cần tham số (không có dấu …): bấm là chạy ngay.
+    await page.locator('.moves__item').filter({ hasNotText: '…' }).first().click();
+    await expect(rows).toHaveCount(before + 1);
+
+    await page.getByRole('button', { name: /Hoàn tác/ }).click();
+    await expect(rows).toHaveCount(before);
+  });
+
+  test('tham số hỏng → **nguyên văn** lời từ chối của engine, không phải một dấu ✗', async ({
+    page,
+  }) => {
+    await openSandbox(page);
+    await tapLastRowTerm(page);
+
+    // Luật cần tham số mở một ô nhập ngay dưới nó.
+    const needsArg = page.locator('.moves__item', { hasText: '…' }).first();
+    await needsArg.click();
+    await page.locator('.moves__arg input').fill('zzz');
+    await page.locator('.moves__arg button').click();
+
+    const refusal = page.locator('.moves__refusal');
+    await expect(refusal).toBeVisible();
+    // Câu đầy đủ, không phải một ký tự.
+    expect((await refusal.innerText()).length).toBeGreaterThan(10);
+  });
+});

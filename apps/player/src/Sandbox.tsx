@@ -313,6 +313,54 @@ export function Sandbox({
     );
   }, [action, sandbox]);
 
+  /**
+   * SBX-01 — **bảng nước đi tại chỗ đang chọn** (M65).
+   *
+   * Không phải một công cụ trên thanh: thanh công cụ là danh sách *cố định theo scene*,
+   * còn nước đi đại số phụ thuộc **nút đang chọn** — $(x+1)^2$ khai triển được, $x+1$
+   * thì không. Nhét 72 luật lên thanh là bày 70 nút bấm vào không làm gì.
+   *
+   * Dựng trên chính cơ chế **chọn** sẵn có, nên không thêm một cử chỉ nào: bấm một cây
+   * con là đã có bảng. Engine không khai `moves` thì panel không mọc ra.
+   */
+  const selectedId = state.selection.size === 1 ? ([...state.selection][0] as string) : null;
+  const moves = useMemo(
+    () => (engine.moves && selectedId !== null ? engine.moves(state.scene, selectedId) : []),
+    [engine, state.scene, selectedId],
+  );
+  /** Luật đang chờ tham số, và chữ người học đang gõ. */
+  const [argFor, setArgFor] = useState<string | null>(null);
+  const [argText, setArgText] = useState('');
+  /** Lời từ chối **nguyên văn** của lần thử gần nhất. */
+  const [refusal, setRefusal] = useState<string | null>(null);
+
+  // Đổi chỗ chọn thì bỏ cả ô nhập lẫn lời từ chối: chúng nói về nút cũ.
+  useEffect(() => {
+    setArgFor(null);
+    setArgText('');
+    setRefusal(null);
+  }, [selectedId, state.scene]);
+
+  const runMove = useCallback(
+    (rule: string, arg?: string) => {
+      const at = selectedId === null ? null : (engine.pathOf?.(state.scene, selectedId) ?? null);
+      if (at === null || !engine.moveCommand) return;
+      const params = { at, rule, ...(arg !== undefined && arg !== '' ? { arg } : {}) };
+
+      // Hỏi **trước** rồi mới chạy: `CommandDef.apply` trả `null` khi hỏng và `null`
+      // không mang chữ, mà chữ ở đây chính là phần dạy học. Hai đường cùng gọi một hàm
+      // thuần trong engine nên không lệch nhau được.
+      const why = engine.moveRefusal?.(state.scene, params) ?? null;
+      setRefusal(why);
+      if (why !== null) return;
+
+      setArgFor(null);
+      setArgText('');
+      sandbox.run(command(engine.moveCommand, params));
+    },
+    [engine, sandbox, selectedId, state.scene],
+  );
+
   /** Lệnh xoá của engine này, đọc từ công cụ nó khai — không đoán tên `board/*`. */
   const removeCommand = useMemo(() => {
     for (const item of tools) {
@@ -448,6 +496,59 @@ export function Sandbox({
             <p class={`badge ${state.goalReached ? 'badge--done' : 'badge--todo'}`}>
               {state.goalReached ? '✓ Đạt mục tiêu' : 'Chưa đạt mục tiêu'}
             </p>
+          ) : null}
+
+          {engine.moves ? (
+            <section class="moves">
+              <h3>Nước đi tại đây</h3>
+              {selectedId === null ? (
+                <p class="moves__hint">Chạm một phần của dòng cuối để xem áp được luật nào.</p>
+              ) : moves.length === 0 ? (
+                <p class="moves__hint">Không luật nào áp được ở đây.</p>
+              ) : (
+                <ul class="moves__list">
+                  {moves.map((move) => (
+                    <li key={move.id}>
+                      <button
+                        class="moves__item"
+                        onClick={() => {
+                          if (move.needsArg) {
+                            setArgFor(argFor === move.id ? null : move.id);
+                            setArgText('');
+                            setRefusal(null);
+                          } else {
+                            runMove(move.id);
+                          }
+                        }}
+                      >
+                        {move.label}
+                        {move.needsArg ? ' …' : ''}
+                      </button>
+                      {argFor === move.id ? (
+                        <form
+                          class="moves__arg"
+                          onSubmit={(event: Event) => {
+                            event.preventDefault();
+                            runMove(move.id, argText);
+                          }}
+                        >
+                          <input
+                            autoFocus
+                            value={argText}
+                            aria-label={`Tham số cho ${move.label}`}
+                            onInput={(event: Event) =>
+                              setArgText((event.target as HTMLInputElement).value)
+                            }
+                          />
+                          <button type="submit">Chạy</button>
+                        </form>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {refusal !== null ? <p class="moves__refusal">{refusal}</p> : null}
+            </section>
           ) : null}
 
           {/* SBX-02: ràng buộc đang áp, bật/tắt được để "nới luật" khi thí nghiệm. */}

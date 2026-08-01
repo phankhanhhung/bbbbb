@@ -136,6 +136,27 @@ export interface Rule {
   /** Luật này chỉ áp được trên nút `rel` (nhóm ★). */
   readonly onRelation?: boolean;
   readonly needsArg?: boolean;
+  /**
+   * Kiểu nút mà luật này áp được — **chỉ bắt buộc với luật cần tham số** (M65).
+   *
+   * Luật không cần tham số thì thử thẳng là biết: `applicableRules` chạy nó và đọc lời
+   * từ chối. Luật **cần** tham số thì không thử được khi chưa có tham số, nên trước M65
+   * chúng được cho qua hết — và điều đó không hại ai vì `applicableRules` **chưa từng
+   * có call site**.
+   *
+   * Nối bảng nước đi vào sandbox làm nó thành giao diện, và đo ngay được cái giá: gốc
+   * của $(x+1)^2 + 3x$ bày ra 15 nút, trong đó 9 nút là luật của hệ phương trình, của
+   * $\Sigma$, của trị tuyệt đối — bấm vào không làm gì. Đúng thứ chú thích của
+   * `algebraTools` vừa viết ra để chống.
+   *
+   * Khai bằng **kiểu nút** chứ không bằng một bảng tên ở chỗ khác: điều kiện thật nằm
+   * ở dòng `if (node.k !== 'sys')` đầu thân luật, nên chép nó lên đây là chép một sự
+   * thật cạnh chính nó. Ba luật không quy về kiểu nút được (`set_variable`,
+   * `evaluate_at`, `divide_by_linear_factor` — chúng nhận *bất kỳ* cây nào có biến,
+   * hoặc bất kỳ đa thức nào) đi qua `couldTakeArg`, và chốt canh ép **mọi** luật cần
+   * tham số phải có mặt ở một trong hai chỗ.
+   */
+  readonly accepts?: readonly Expr['k'][];
   run: RuleRun;
 }
 
@@ -282,6 +303,7 @@ const commute: Rule = {
   id: 'commute',
   label: 'đổi chỗ',
   needsArg: true,
+  accepts: ['add', 'mul'],
   run(m, node, arg) {
     if (node.k !== 'add' && node.k !== 'mul') return no('chỉ đổi chỗ được trong tổng hoặc tích');
     const [a, b] = (arg ?? '').split(',').map((s) => Number(s.trim()));
@@ -340,6 +362,7 @@ const factor: Rule = {
   id: 'factor',
   label: 'đặt nhân tử chung',
   needsArg: true,
+  accepts: ['add'],
   run(m, node, arg) {
     if (node.k !== 'add') return no('đặt nhân tử chung cần một tổng');
     if (arg === undefined) return no('cần nói đặt nhân tử nào ra ngoài');
@@ -1229,6 +1252,7 @@ const quadraticFormula: Rule = {
   id: 'quadratic_formula',
   label: 'công thức nghiệm',
   needsArg: true,
+  accepts: ['rel'],
   onRelation: true,
   run(m, node, arg) {
     if (node.k !== 'rel' || node.op !== '=') return no('cần một phương trình');
@@ -1570,6 +1594,7 @@ const factorByGrouping: Rule = {
   id: 'factor_by_grouping',
   label: 'nhóm hạng tử',
   needsArg: true,
+  accepts: ['add'],
   run(m, node, arg) {
     if (node.k !== 'add') return no('nhóm hạng tử cần một tổng');
     if (arg === undefined) return no('cần nói nhóm thế nào, ví dụ "0,1|2,3"');
@@ -1683,6 +1708,7 @@ const cancelCommon: Rule = {
   id: 'cancel_common',
   label: 'rút gọn',
   needsArg: true,
+  accepts: ['div'],
   run(m, node, arg) {
     if (node.k !== 'div') return no('rút gọn cần một phân số');
     if (arg === undefined) return no('cần nói rút gọn thừa số nào');
@@ -1730,6 +1756,7 @@ const addBothSides: Rule = {
   label: 'cộng vào hai vế',
   onRelation: true,
   needsArg: true,
+  accepts: ['rel'],
   run(m, node, arg) {
     if (node.k !== 'rel') return no('cần một đẳng thức hoặc bất đẳng thức');
     if (arg === undefined) return no('cần nói cộng thêm gì');
@@ -1744,6 +1771,7 @@ const mulBothSides: Rule = {
   label: 'nhân hai vế',
   onRelation: true,
   needsArg: true,
+  accepts: ['rel'],
   run(m, node, arg) {
     if (node.k !== 'rel') return no('cần một đẳng thức hoặc bất đẳng thức');
     if (arg === undefined) return no('cần nói nhân với gì');
@@ -1932,6 +1960,7 @@ const powBothSides: Rule = {
   label: 'nâng luỹ thừa hai vế',
   onRelation: true,
   needsArg: true,
+  accepts: ['rel'],
   run(m, node, arg) {
     if (node.k !== 'rel') return no('cần một đẳng thức hoặc bất đẳng thức');
     const n = Number((arg ?? '2').trim());
@@ -1969,6 +1998,7 @@ const absCase: Rule = {
   id: 'abs_case',
   label: 'bỏ dấu giá trị tuyệt đối',
   needsArg: true,
+  accepts: ['abs'],
   run(m, node, arg) {
     if (node.k !== 'abs') return no('cần một dấu giá trị tuyệt đối');
     const sign = (arg ?? '+').trim();
@@ -2888,6 +2918,7 @@ const addEquations: Rule = {
   id: 'add_equations',
   label: 'cộng hai phương trình',
   needsArg: true,
+  accepts: ['sys'],
   run(m, node, arg) {
     if (node.k !== 'sys' || node.join !== 'and') return no('cần một hệ phương trình');
     const parts = argParts(arg);
@@ -2934,6 +2965,7 @@ const scaleEquation: Rule = {
   id: 'scale_equation',
   label: 'nhân một phương trình',
   needsArg: true,
+  accepts: ['sys'],
   run(m, node, arg) {
     if (node.k !== 'sys' || node.join !== 'and') return no('cần một hệ phương trình');
     const parts = argParts(arg);
@@ -2974,6 +3006,7 @@ const substituteFrom: Rule = {
   id: 'substitute_from',
   label: 'thế từ một phương trình',
   needsArg: true,
+  accepts: ['sys'],
   run(m, node, arg) {
     if (node.k !== 'sys' || node.join !== 'and') return no('cần một hệ phương trình');
     const parts = argParts(arg);
@@ -3015,6 +3048,7 @@ const dropEquation: Rule = {
   id: 'drop_equation',
   label: 'bỏ phương trình thừa',
   needsArg: true,
+  accepts: ['sys'],
   run(m, node, arg) {
     if (node.k !== 'sys') return no('cần một hệ phương trình');
     if (node.rels.length <= 2) return no('hệ chỉ còn hai dòng — bỏ nữa thì không còn là hệ');
@@ -3154,6 +3188,7 @@ const sumSplit: Rule = {
   id: 'sum_split',
   label: 'tách tổng tại một chỉ số',
   needsArg: true,
+  accepts: ['big'],
   run(m, node, arg) {
     if (node.k !== 'big') return no('cần một tổng hoặc một tích');
     if (arg === undefined) return no('cần chỗ cắt, ví dụ "3"');
@@ -3198,6 +3233,7 @@ const sumShift: Rule = {
   id: 'sum_shift',
   label: 'đổi biến chỉ số',
   needsArg: true,
+  accepts: ['big'],
   run(m, node, arg) {
     if (node.k !== 'big') return no('cần một tổng hoặc một tích');
     if (arg === undefined) return no('cần lượng dịch, ví dụ "1"');
@@ -3359,18 +3395,38 @@ export function applicableRules(node: Expr): readonly Rule[] {
   });
 }
 
+/**
+ * Luật cần tham số có **thể** áp được ở đây không — cho ba luật không quy về kiểu nút.
+ *
+ * Mặc định `false`, không phải `true`. Trước M65 nó là `true`, và một luật mới thêm
+ * vào sẽ tự động hiện trên bảng nước đi ở **mọi** nút — sai theo hướng ồn ào. Nay một
+ * luật mới bị **giấu** cho tới khi ai đó khai, và chốt canh
+ * `mọi luật cần tham số phải khai chỗ nó áp được` bắt ngay chuyện đó. Sai theo hướng
+ * im lặng nhưng có người canh, đổi lấy sai theo hướng ồn ào mà không ai canh.
+ */
+export const ARG_RULE_PREDICATES: Readonly<Record<string, (node: Expr) => boolean>> = {
+  // Đặt ẩn phụ và thay giá trị: cần **có biến** để mà thay.
+  set_variable: hasVariable,
+  evaluate_at: hasVariable,
+  substitute: hasVariable,
+  // Chia đa thức: cần chính nó là một đa thức một biến bậc ≥ 1.
+  divide_by_linear_factor: (node) => {
+    const poly = univariate(node);
+    return typeof poly !== 'string' && Math.max(...[...poly.coefs.keys()]) >= 1;
+  },
+};
+
+function hasVariable(node: Expr): boolean {
+  let has = false;
+  walk(node, (n) => {
+    if (n.k === 'var') has = true;
+  });
+  return has;
+}
+
 function couldTakeArg(r: Rule, node: Expr): boolean {
-  if (r.id === 'commute') return node.k === 'add' || node.k === 'mul';
-  if (r.id === 'factor') return node.k === 'add';
-  if (r.id === 'cancel_common') return node.k === 'div';
-  if (r.id === 'substitute') {
-    let has = false;
-    walk(node, (n) => {
-      if (n.k === 'var') has = true;
-    });
-    return has;
-  }
-  return true;
+  if (r.accepts !== undefined) return r.accepts.includes(node.k);
+  return ARG_RULE_PREDICATES[r.id]?.(node) ?? false;
 }
 
 /** Chỉ để test đọc được: dựng một biến nhanh. */

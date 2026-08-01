@@ -267,6 +267,7 @@ Triết lý: nguyên lý **sống bên trong problem player và sandbox**, khôn
 ## 8. FR nhóm SBX — Sandbox & Validation
 
 - **SBX-01 [P1] MUST** — Hai cửa vào: sandbox độc lập per engine (không cần problem, từ menu chính) và sandbox theo problem (khởi tạo từ scene đề bài, nạp sẵn validator + invariant của bài; cửa thứ ba là PLY-05).
+  - **Bảng nước đi tại chỗ chọn (M65)** — engine nào có khái niệm "nước đi tại một phần tử" thì sandbox hiện danh sách ấy cạnh chỗ chạm, **đã lọc** còn những nước áp được tại đúng nút đó; nước cần tham số mở một ô nhập; không áp được thì hiện **nguyên văn** lời từ chối của engine. Thực hiện đầu tiên: `algebra` (72 luật, một lệnh `apply_rule`). Không có nút "gợi ý bước tiếp theo" — engine không có bộ giải (NG-03).
 - **SBX-02 [P1] MUST** — Validator live: vi phạm hiển thị tức thời (element vi phạm đánh dấu đỏ + message cụ thể); danh sách constraint đang áp dụng, bật/tắt từng cái để "nới luật" khi thí nghiệm.
 - **SBX-03 [P2] SHOULD** — **Challenge mode**: problem có thể yêu cầu người học *xây* cấu hình (một cách phủ, một cách tô, một phản ví dụ); hệ thống chấm bằng validator + `goal_expr`; attempt lưu client-side (LOC-02). Khai báo rõ trong metadata: problem thuộc loại minh họa / challenge / cả hai.
 - **SBX-04 [P2] SHOULD** — Chia sẻ trạng thái sandbox bằng URL (state nén trong fragment, không cần backend); người nhận mở ra đúng cấu hình để tranh luận phản ví dụ với nhau.

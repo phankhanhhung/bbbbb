@@ -57,6 +57,33 @@ export interface LoadedEngine {
    * lặng ở đó là câu trả lời đúng chứ không phải một thiếu sót.
    */
   readonly incident?: (scene: Scene, elementId: string) => { text: string } | null;
+  /**
+   * Nước đi áp được tại phần tử đang chọn (SBX-01) — bảng luật của sandbox đại số.
+   *
+   * Khác `sandboxTools` ở chỗ **phụ thuộc chỗ chạm**: thanh công cụ là danh sách cố
+   * định theo scene, còn ở đây $(x+1)^2$ khai triển được mà $x+1$ thì không. Engine
+   * nào có khái niệm "nước đi tại một chỗ" mới khai; engine khác để trống và sandbox
+   * của nó không mọc thêm panel nào.
+   */
+  readonly moves?: (
+    scene: Scene,
+    elementId: string,
+  ) => readonly { id: string; label: string; needsArg: boolean }[];
+  /**
+   * Lời từ chối nếu chạy nước đi ấy — **chữ**, không phải một `null` câm.
+   *
+   * `CommandDef.apply` trả `null` khi lệnh không áp được, và `null` không mang chữ.
+   * Với bàn cờ thế là đủ. Với đại số thì *"cần luỹ thừa bậc 2"* chính là thứ dạy học
+   * nhiều nhất trong cả sandbox, nên nó phải có đường ra giao diện.
+   */
+  readonly moveRefusal?: (
+    scene: Scene,
+    params: { at: string; rule: string; arg?: string },
+  ) => string | null;
+  /** Đường dẫn tới cây con mang danh tính ấy — `null` khi nước đi không bắt đầu được. */
+  readonly pathOf?: (scene: Scene, elementId: string) => string | null;
+  /** Tên lệnh chạy một nước đi. Engine khai, giao diện **không đoán** (tiền lệ `removeCommand`). */
+  readonly moveCommand?: string;
   /** BD-06 — đếm ô theo color_class. Chỉ engine dạng lưới có. */
   colorSummary?(scene: Scene): Map<number, number>;
   /** BD-03 — độ phủ. Chỉ engine dạng lưới có. */
@@ -175,7 +202,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
     const module = await import('@combviz/engine-algebra');
     return {
       renderer: module.algebraRenderer,
-      commands: {},
+      commands: module.algebraCommands,
       hitTest: module.algebraHitTest,
       sandboxTools: module.algebraTools,
       environment: module.algebraEnvironment,
@@ -183,6 +210,10 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       choreography: (scene, anchor) => module.algebraChoreography(scene, { anchor }),
       lineage: module.algebraLineage,
       incident: module.algebraIncident,
+      moves: module.movesAtElement,
+      moveRefusal: module.moveRefusal,
+      pathOf: module.pathOfElement,
+      moveCommand: module.APPLY_RULE,
     };
   },
 };
