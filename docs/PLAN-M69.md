@@ -67,7 +67,7 @@ Các phát hiện thật, hoãn vì "không chặn freeze" — chứ không ph�
 
 Không đổi schema. Quy mô: vừa. Cắt được: món 4 (đẩy xuống M74 cùng board).
 
-## M70 — Bảng đo phủ miền đại số (nợ §19.3 của ENGINE-ALGEBRA)
+## M70 — Bảng đo phủ miền đại số (nợ §19.3 của ENGINE-ALGEBRA) — ✅ **XONG 2026-08-01**
 
 `VIZ-COVERAGE.md` đo phủ *tổ hợp*; `algebra`/`longdiv` đóng góp 0 vào đó, nên
 mọi câu "engine đại số đáng hay không đáng mở rộng tiếp" đến giờ đều trả lời bằng
@@ -78,6 +78,22 @@ quyết định M71–M73 cái nào đáng làm trước — **đo rồi mới x
 giữ suốt từ VIZ-COVERAGE.
 
 Không code. Quy mô: nhỏ-vừa. Không cắt — nó rẻ và nó lái các mục sau.
+
+> **Kết quả: `docs/ALGEBRA-COVERAGE.md`.** Hai con số, cách nhau bốn lần —
+> **~88%** cho miền phổ thông → chuyên, **~22%** cho olympiad thuần — nên câu
+> "engine này đáng mở rộng tới đâu" trước hết là câu *engine phục vụ ai*, và đó
+> là câu của chính chủ chứ không phải của bảng đo.
+>
+> Bảng **lái lại thứ tự M71–M73**: M73 (phương trình hàm) lên trước — 20% đề,
+> phủ đúng $0$, mở được bằng một khái niệm duy nhất. M71 (dãy số) giữ chỗ — 15%
+> đề, phủ 20%. M72 (tích chập) tụt xuống — 5% đề, đã phủ 55%, mua thêm ít nhất
+> trong ba mục.
+>
+> Hai thứ ngoài dự kiến: **bất đẳng thức là họ lớn nhất của đại số olympiad
+> (35%) mà engine phủ 5%** — chưa milestone nào nhắm tới, và §4.1 ghi lại vì sao
+> phần *luật có tên* (AM–GM, Cauchy) vừa khuôn kiến trúc hiện có còn phần
+> *"không mất tổng quát"* thì không. Và **bốn luật lượng giác** đã dựng mà chưa
+> bài nào dùng — năng lực đã trả tiền, chỉ thiếu nội dung.
 
 ## M71 — Dãy số: chỉ số là `Expr` (`a_n`), `sum_telescope`, truy hồi
 

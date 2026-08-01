@@ -659,10 +659,12 @@ Không phải mở màn — đây là hàng đợi thật. Hai mục đầu **đ
 2. ✅ **G-A** — đóng trên số proxy: NFR-P1 p95 17.5ms @×4 (trần 18 — chỉ số mỏng
    nhất, và engine này in nhiều text node nhất kho nên nó là chỗ nhìn đầu tiên
    nếu có thiết bị thật), NFR-P2 18.6ms, NFR-P3 289.4KB + TTI 534ms.
-3. ⬜ **Bảng đo phủ cho miền đại số** — còn nợ, chuyển vào kế hoạch M69+.
-   `VIZ-COVERAGE.md` đo phủ *tổ hợp*; `longdiv` và engine này đều đóng góp $0$
-   vào đó. Không có bảng đo riêng thì không có cách nào nói engine này đáng hay
-   không đáng — chỉ có cảm giác.
+3. ✅ **Bảng đo phủ cho miền đại số** — `docs/ALGEBRA-COVERAGE.md` (M70).
+   `VIZ-COVERAGE.md` đo phủ *tổ hợp* và ghi thẳng rằng engine này đóng góp $0$
+   vào đó. Bảng riêng cho **hai** con số, và chúng cách nhau bốn lần: **~88%**
+   cho miền phổ thông → chuyên, **~22%** cho olympiad thuần. Ba chỗ hụt lớn nhất
+   của cột thứ hai — bất đẳng thức (35% đề, phủ 5%), phương trình hàm (20%, phủ
+   $0$), dãy số truy hồi (15%, phủ 20%) — nay có số để bàn thay vì có cảm giác.
 
 
 ---
