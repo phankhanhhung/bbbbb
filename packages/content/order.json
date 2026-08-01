@@ -108,10 +108,12 @@
     "system-by-elimination",
     "system-by-substitution",
     "absolute-value-interval",
-    "quadratic-inequality-sign"
+    "quadratic-inequality-sign",
+    "exponential-equation",
+    "log-equation-basics"
   ],
   "newest": [
-    "absolute-value-interval",
-    "quadratic-inequality-sign"
+    "exponential-equation",
+    "log-equation-basics"
   ]
 }

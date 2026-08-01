@@ -2,6 +2,7 @@ import {
   definiteSign,
   definitelyNonNegative,
   definitelyNonZero,
+  definitelyPositive,
   evalReal,
   type Guards,
 } from './check.js';
@@ -30,6 +31,7 @@ import {
   walk,
   withChildren,
   type Expr,
+  type FnName,
   type RelOp,
   type TermId,
 } from './expr.js';
@@ -2345,6 +2347,280 @@ const powSplit: Rule = {
 
 
 
+
+/* ---------- hàm siêu việt (M61) ---------- */
+
+/**
+ * Mười một luật, và **tập ấy đóng**.
+ *
+ * Không có "rút gọn biểu thức lượng giác": không gian đồng nhất thức lượng giác vô hạn,
+ * và một nút bấm nhảy năm bước là đúng thứ làm người học không học được gì (§4). Mười
+ * một luật này là những đồng nhất thức có tên trong sách, không phải một bộ giải.
+ *
+ * Miền xác định **không** cần `Guard`: `evalReal` của $\ln$ trả `null` ngay khi đối số
+ * $\le 0$, nên bộ bốc điểm đã tự bỏ mọi điểm ngoài miền. Cái còn thiếu là **nói cho
+ * người đọc**, và đó là `domainText` ở bảng hàm.
+ */
+
+/** Một lời gọi hàm một đối số, đúng tên. */
+const callOf = (e: Expr, name: FnName): Expr | null =>
+  e.k === 'fn' && e.name === name && e.args.length === 1 ? (e.args[0] as Expr) : null;
+
+/** Logarit bất kỳ: trả `[cơ số | null, đối số]`. `null` cơ số nghĩa là $\ln$. */
+function asLog(e: Expr): { base: Expr | null; arg: Expr } | null {
+  if (e.k !== 'fn') return null;
+  if (e.name === 'ln' && e.args.length === 1) return { base: null, arg: e.args[0] as Expr };
+  if (e.name === 'log' && e.args.length === 2) {
+    return { base: e.args[0] as Expr, arg: e.args[1] as Expr };
+  }
+  return null;
+}
+
+/** Dựng lại một logarit cùng loại với cái đã tháo ra. */
+const rebuildLog = (m: Minter, base: Expr | null, arg: Expr): Expr =>
+  base === null ? fn(m, 'ln', [arg]) : fn(m, 'log', [base, arg]);
+
+/** Điều kiện xác định của một logarit, chữ để in ra hình. */
+const logCondition = (arg: Expr): string | undefined =>
+  definitelyPositive(arg) ? undefined : `${toPlain(arg)} > 0`;
+
+/** $\log(ab) = \log a + \log b$. */
+const logProduct: Rule = {
+  id: 'log_product',
+  label: 'logarit của một tích',
+  run(m, node) {
+    const L = asLog(node);
+    if (L === null) return no('cần một logarit');
+    if (L.arg.k !== 'mul') return no('đối số phải là một tích');
+    const parts = L.arg.args;
+    const terms = parts.map((a, i) =>
+      rebuildLog(m, i === 0 ? L.base : L.base === null ? null : freshCopy(m, L.base).copy, a),
+    );
+    const bad = parts.filter((a) => !definitelyPositive(a));
+    return {
+      after: add(m, terms),
+      condition: bad.length === 0 ? undefined : bad.map((a) => `${toPlain(a)} > 0`).join(', '),
+    };
+  },
+};
+
+/** $\log\frac ab = \log a - \log b$. */
+const logQuotient: Rule = {
+  id: 'log_quotient',
+  label: 'logarit của một thương',
+  run(m, node) {
+    const L = asLog(node);
+    if (L === null) return no('cần một logarit');
+    if (L.arg.k !== 'div') return no('đối số phải là một phân số');
+    const { num, den } = L.arg;
+    const other = L.base === null ? null : freshCopy(m, L.base).copy;
+    const bad = [num, den].filter((a) => !definitelyPositive(a));
+    return {
+      after: add(m, [rebuildLog(m, L.base, num), negate(m, rebuildLog(m, other, den))]),
+      condition: bad.length === 0 ? undefined : bad.map((a) => `${toPlain(a)} > 0`).join(', '),
+    };
+  },
+};
+
+/** $\log(a^n) = n\log a$ — cửa chính của mọi phương trình mũ. */
+const logPower: Rule = {
+  id: 'log_power',
+  label: 'số mũ ra trước logarit',
+  run(m, node) {
+    const L = asLog(node);
+    if (L === null) return no('cần một logarit');
+    if (L.arg.k !== 'pow') return no('đối số phải là một luỹ thừa');
+    return {
+      after: mul(m, [L.arg.exp, rebuildLog(m, L.base, L.arg.base)]),
+      condition: logCondition(L.arg.base),
+    };
+  },
+};
+
+/** $\log_b a = \dfrac{\ln a}{\ln b}$ — đổi cơ số về $\ln$. */
+const logChangeBase: Rule = {
+  id: 'log_change_base',
+  label: 'đổi cơ số logarit',
+  run(m, node) {
+    if (node.k !== 'fn' || node.name !== 'log' || node.args.length !== 2) {
+      return no('cần một logarit có cơ số');
+    }
+    const [base, arg] = node.args as [Expr, Expr];
+    return {
+      after: div(m, fn(m, 'ln', [arg]), fn(m, 'ln', [base])),
+      condition: definitelyPositive(base) ? undefined : `${toPlain(base)} > 0, ${toPlain(base)} ≠ 1`,
+    };
+  },
+};
+
+/** $e^{\ln a} = a$ — hai hàm ngược nhau triệt tiêu. */
+const expLog: Rule = {
+  id: 'exp_log',
+  label: 'mũ rồi logarit thì triệt tiêu',
+  run(m, node) {
+    const inner = callOf(node, 'exp');
+    if (inner === null) return no('cần một luỹ thừa cơ số e');
+    const arg = callOf(inner, 'ln');
+    if (arg === null) return no('bên trong phải là một logarit tự nhiên');
+    // Không cần điều kiện: nếu $\ln a$ đã xác định thì $a > 0$ sẵn rồi. Điều kiện nằm ở
+    // chính dấu $\ln$ của dòng trước, không ở bước này — đúng lý lẽ `root_pow`.
+    return { after: arg };
+  },
+};
+
+/** $\ln(e^a) = a$ — chiều còn lại, và nó **không** cần điều kiện nào. */
+const logExp: Rule = {
+  id: 'log_exp',
+  label: 'logarit của luỹ thừa cơ số e',
+  run(m, node) {
+    const inner = callOf(node, 'ln');
+    if (inner === null) return no('cần một logarit tự nhiên');
+    const arg = callOf(inner, 'exp');
+    if (arg === null) return no('bên trong phải là một luỹ thừa cơ số e');
+    return { after: arg };
+  },
+};
+
+/** $\sin^2 x + \cos^2 x = 1$. */
+const pythagoreanIdentity: Rule = {
+  id: 'pythagorean_identity',
+  label: 'hằng đẳng thức lượng giác cơ bản',
+  run(m, node) {
+    if (node.k !== 'add') return no('cần một tổng');
+    const squareOf = (e: Expr, name: FnName): Expr | null =>
+      e.k === 'pow' && intExp(e) === 2 ? callOf(e.base, name) : null;
+
+    for (let i = 0; i < node.args.length; i += 1) {
+      for (let j = 0; j < node.args.length; j += 1) {
+        if (i === j) continue;
+        const s = squareOf(node.args[i] as Expr, 'sin');
+        const c = squareOf(node.args[j] as Expr, 'cos');
+        if (s === null || c === null || !same(s, c)) continue;
+        const rest = node.args.filter((_, k) => k !== i && k !== j);
+        return {
+          after: add(m, [...rest, int(m, 1)]),
+          merged: [[[(node.args[i] as Expr).id, (node.args[j] as Expr).id], (node.args[i] as Expr).id]],
+        };
+      }
+    }
+    return no('không thấy sin² và cos² của cùng một góc');
+  },
+};
+
+/** $\sin 2x = 2\sin x\cos x$ và $\cos 2x = \cos^2 x - \sin^2 x$. */
+const doubleAngle: Rule = {
+  id: 'double_angle',
+  label: 'công thức góc nhân đôi',
+  run(m, node) {
+    if (node.k !== 'fn' || (node.name !== 'sin' && node.name !== 'cos')) {
+      return no('cần sin hoặc cos');
+    }
+    const arg = node.args[0] as Expr;
+    // Góc phải có dạng $2\cdot\theta$ — nhận bằng cấu trúc, không bằng số học.
+    if (arg.k !== 'mul') return no('góc phải là một tích');
+    const at = arg.args.findIndex((a) => a.k === 'int' && a.v === 2);
+    if (at === -1) return no('góc phải có thừa số 2');
+    const rest = arg.args.filter((_, i) => i !== at);
+    const half = rest.length === 1 ? (rest[0] as Expr) : mul(m, rest);
+    const copy = freshCopy(m, half);
+
+    if (node.name === 'sin') {
+      return {
+        after: mul(m, [int(m, 2), fn(m, 'sin', [half]), fn(m, 'cos', [copy.copy])]),
+        dup: copy.pairs,
+      };
+    }
+    return {
+      after: add(m, [
+        pow(m, fn(m, 'cos', [half]), 2),
+        negate(m, pow(m, fn(m, 'sin', [copy.copy]), 2)),
+      ]),
+      dup: copy.pairs,
+    };
+  },
+};
+
+/** $\sin A + \sin B = 2\sin\frac{A+B}2\cos\frac{A-B}2$ (và bản $\cos$). */
+const sumToProduct: Rule = {
+  id: 'sum_to_product',
+  label: 'tổng thành tích',
+  run(m, node) {
+    if (node.k !== 'add' || node.args.length !== 2) return no('cần một tổng hai hạng tử');
+    const [x, y] = node.args as [Expr, Expr];
+    for (const name of ['sin', 'cos'] as const) {
+      const a = callOf(x, name);
+      const b = callOf(y, name);
+      if (a === null || b === null) continue;
+      const half = (u: Expr, v: Expr): Expr => div(m, add(m, [u, v]), int(m, 2));
+      const a2 = freshCopy(m, a);
+      const b2 = freshCopy(m, b);
+      const sum = half(a, b);
+      const diff = half(a2.copy, negate(m, b2.copy));
+      return {
+        after:
+          name === 'sin'
+            ? mul(m, [int(m, 2), fn(m, 'sin', [sum]), fn(m, 'cos', [diff])])
+            : mul(m, [int(m, 2), fn(m, 'cos', [sum]), fn(m, 'cos', [diff])]),
+        dup: [...a2.pairs, ...b2.pairs],
+      };
+    }
+    return no('cần sin + sin hoặc cos + cos');
+  },
+};
+
+/** $\sin A\cos B = \tfrac12\left(\sin(A+B) + \sin(A-B)\right)$. */
+const productToSum: Rule = {
+  id: 'product_to_sum',
+  label: 'tích thành tổng',
+  run(m, node) {
+    if (node.k !== 'mul') return no('cần một tích');
+    const si = node.args.findIndex((a) => callOf(a, 'sin') !== null);
+    const ci = node.args.findIndex((a) => callOf(a, 'cos') !== null);
+    if (si === -1 || ci === -1) return no('cần một thừa số sin và một thừa số cos');
+    const a = callOf(node.args[si] as Expr, 'sin') as Expr;
+    const b = callOf(node.args[ci] as Expr, 'cos') as Expr;
+    const rest = node.args.filter((_, i) => i !== si && i !== ci);
+    const a2 = freshCopy(m, a);
+    const b2 = freshCopy(m, b);
+    const body = div(
+      m,
+      add(m, [
+        fn(m, 'sin', [add(m, [a, b])]),
+        fn(m, 'sin', [add(m, [a2.copy, negate(m, b2.copy)])]),
+      ]),
+      int(m, 2),
+    );
+    return {
+      after: rest.length === 0 ? body : mul(m, [...rest, body]),
+      dup: [...a2.pairs, ...b2.pairs],
+    };
+  },
+};
+
+/**
+ * Lấy logarit hai vế — nhóm ★, và nó **bảo toàn** tập nghiệm.
+ *
+ * $\ln$ tăng ngặt trên $(0,\infty)$, nên $A = B \iff \ln A = \ln B$ **khi cả hai dương**.
+ * Điều kiện ấy đi theo đúng cơ chế AL-08: ghi ra hình, không từ chối. Từ chối thì luật
+ * này gần như không bao giờ áp được, vì hai vế thường chứa biến.
+ */
+const logBothSides: Rule = {
+  id: 'log_both_sides',
+  label: 'lấy logarit hai vế',
+  onRelation: true,
+  run(m, node) {
+    if (node.k !== 'rel') return no('cần một quan hệ');
+    if (node.op !== '=' && node.op !== '<' && node.op !== '>') {
+      return no('mới làm được với =, < và >');
+    }
+    const bad = [node.lhs, node.rhs].filter((e) => !definitelyPositive(e));
+    return {
+      after: { ...node, lhs: fn(m, 'ln', [node.lhs]), rhs: fn(m, 'ln', [node.rhs]) },
+      condition: bad.length === 0 ? undefined : bad.map((e) => `${toPlain(e)} > 0`).join(', '),
+    };
+  },
+};
+
 /* ---------- tập nghiệm và khoảng (M60) ---------- */
 
 /**
@@ -2984,6 +3260,17 @@ export const RULES: readonly Rule[] = [
   absToInterval,
   intervalFromFactors,
   mergeIntervals,
+  logProduct,
+  logQuotient,
+  logPower,
+  logChangeBase,
+  expLog,
+  logExp,
+  pythagoreanIdentity,
+  doubleAngle,
+  sumToProduct,
+  productToSum,
+  logBothSides,
   addBothSides,
   mulBothSides,
   powBothSides,

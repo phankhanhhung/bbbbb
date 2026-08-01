@@ -36,6 +36,7 @@ import {
   unparse,
   FONT,
   ALGEBRA_LIMITS,
+  FUNCTIONS,
   type AlgebraStep,
   type Expr,
 } from '../src/index.js';
@@ -110,7 +111,7 @@ describe('tầng 0 — parser và printer', () => {
       // Mỗi kiểu nút mới phải có mặt ở đây, nếu không chốt canh tầng 0 — chốt canh của
       // tầng rủi ro nhất — im lặng bỏ qua đúng thứ vừa thêm.
       'n!', 'C(n, k)', 'A(n, 2)', '(x + 1)!',
-      'sum(k, 1, n, k)', 'prod(k, 1, 3, k + 1)',
+      'sum(k, 1, n, k)', 'prod(k, 1, 3, k + 1)', 'ln(x)', 'log(2, x)', 'sin(x)', 'tan(x)',
     ];
     let s = 987654321;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
@@ -157,7 +158,7 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
     const ATOMS = [
       'x', 'y', '2', '3', '-1', 'x^2', 'y^2', 'x^3', 'y^3',
       'sqrt(x)', 'sqrt(6)', 'abs(x)', 'x^(1/2)', '1/x', '2/y',
-      'n!', 'C(n, k)', 'A(n, 3)', 'sum(k, 1, n, k)',
+      'n!', 'C(n, k)', 'A(n, 3)', 'sum(k, 1, n, k)', 'ln(x)', 'sin(x)', 'exp(x)',
     ];
     let s = 4242;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
@@ -198,6 +199,10 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       // M60: bất phương trình có trị tuyệt đối và dạng tích — bộ sinh không dựng trúng.
       'abs(x - 1) < 3', 'abs(x) > 2', '(x - 1)*(x - 2) > 0', '(x - 1)*(x - 2) < 0',
       'x > 1; x > 2', 'x < 5; x < 9',
+      // M61: hàm siêu việt — bộ sinh không có tên hàm nào trong bảng nguyên tử.
+      'ln(x*y)', 'ln(x/y)', 'ln(x^3)', 'log(2, x)', 'exp(ln(x))', 'ln(exp(x))',
+      'sin(x)^2 + cos(x)^2', 'sin(2*x)', 'cos(2*x)', 'sin(a) + sin(b)', 'sin(a)*cos(b)',
+      '2^x = 8',
     ];
 
     const bad: string[] = [];
@@ -2242,5 +2247,124 @@ describe('M60 — tập nghiệm và khoảng', () => {
     // Nhánh tuyển vẫn là **một** con của hội, không bị nuốt vào.
     expect(root.rels).toHaveLength(2);
     expect((root.rels[0] as Expr & { k: 'sys' }).join).toBe('or');
+  });
+});
+
+describe('M61 — hàm siêu việt', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const plain = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return toPlain(m.rows.at(-1)!.expr);
+  };
+  const tree = (s: string): Expr => parse(s, new Minter());
+
+  it('sáu hàm mới là sáu **dòng bảng** — không kiểu nút nào thêm', () => {
+    // Cổ tức của M56: `fn` là *một* biến thể cho cả họ. Nếu mỗi hàm là một biến thể thì
+    // M61 phải sửa sáu tệp sáu lần.
+    for (const name of ['ln', 'log', 'exp', 'sin', 'cos', 'tan'] as const) {
+      expect(FUNCTIONS[name].arity).toBeGreaterThan(0);
+      expect(FUNCTIONS[name].source).toBe(name);
+    }
+    expect(tree('ln(x)').k).toBe('fn');
+  });
+
+  it('parse và khứ hồi, kể cả `log` có cơ số', () => {
+    for (const src of ['ln(x)', 'log(2, x)', 'exp(x)', 'sin(x) + cos(x)', 'tan(2*x)']) {
+      const u = unparse(tree(src));
+      expect(unparse(tree(u)), src).toBe(u);
+    }
+    // `cos(` không bị `C(` nuốt mất: tên dài thử trước.
+    expect(toPlain(tree('cos(x)'))).toBe('cos(x)');
+    expect(toPlain(tree('C(n, k)'))).toBe('C(n,k)');
+  });
+
+  describe('logarit', () => {
+    it('bốn luật tách và một cặp triệt tiêu', () => {
+      expect(plain('ln(x*y)', [{ rule: 'log_product', at: '' }])).toBe('ln(x) + ln(y)');
+      expect(plain('ln(x/y)', [{ rule: 'log_quotient', at: '' }])).toBe('ln(x) − ln(y)');
+      expect(plain('ln(x^3)', [{ rule: 'log_power', at: '' }])).toBe('3ln(x)');
+      expect(plain('log(2, x)', [{ rule: 'log_change_base', at: '' }])).toBe('ln(x)/ln(2)');
+      expect(plain('exp(ln(x))', [{ rule: 'exp_log', at: '' }])).toBe('x');
+      expect(plain('ln(exp(x))', [{ rule: 'log_exp', at: '' }])).toBe('x');
+    });
+
+    it('điều kiện xác định **in ra hình**, và im khi hiển nhiên', () => {
+      expect(run('ln(x*y)', [{ rule: 'log_product', at: '' }]).conditions).toEqual(['x > 0, y > 0']);
+      // Hằng dương thì không cần dòng đỏ nào.
+      expect(run('ln(2*3)', [{ rule: 'log_product', at: '' }]).conditions).toEqual([]);
+      // `exp_log` **không** cần điều kiện: nếu $\\ln a$ đã xác định thì $a > 0$ sẵn rồi.
+      // Điều kiện nằm ở dấu $\\ln$ của dòng trước, không ở bước này (lý lẽ `root_pow`).
+      expect(run('exp(ln(x))', [{ rule: 'exp_log', at: '' }]).conditions).toEqual([]);
+    });
+
+    it('lấy logarit hai vế **bảo toàn** tập nghiệm, và ghi điều kiện', () => {
+      // $\\ln$ tăng ngặt, nên $A = B \\iff \\ln A = \\ln B$ khi cả hai dương. Từ chối thì
+      // luật này gần như không bao giờ áp được — ghi điều kiện là đúng cơ chế AL-08.
+      const m = run('2^x = 8', [{ rule: 'log_both_sides', at: '' }]);
+      expect(m.unsound).toEqual([]);
+      expect(m.conditions).toEqual(['2^x > 0']);
+    });
+  });
+
+  describe('lượng giác', () => {
+    it('bốn đồng nhất thức có tên', () => {
+      expect(plain('sin(x)^2 + cos(x)^2', [{ rule: 'pythagorean_identity', at: '' }])).toBe('1');
+      expect(plain('sin(2*x)', [{ rule: 'double_angle', at: '' }])).toBe('2sin(x)cos(x)');
+      expect(plain('cos(2*x)', [{ rule: 'double_angle', at: '' }])).toBe('cos(x)^2 − sin(x)^2');
+      expect(plain('sin(a) + sin(b)', [{ rule: 'sum_to_product', at: '' }])).toBe(
+        '2sin((a + b)/2)cos((a − b)/2)',
+      );
+      expect(plain('sin(a)*cos(b)', [{ rule: 'product_to_sum', at: '' }])).toBe(
+        '(sin(a + b) + sin(a − b))/2',
+      );
+    });
+
+    it('nhận dạng bằng **cấu trúc**, nên góc phải khớp thật', () => {
+      expect(
+        run('sin(x)^2 + cos(y)^2', [{ rule: 'pythagorean_identity', at: '' }]).refusal,
+      ).toContain('cùng một góc');
+      expect(run('sin(x)', [{ rule: 'double_angle', at: '' }]).refusal).toContain('một tích');
+    });
+  });
+
+  it('cả mười một luật **kiểm được** — không luật nào rơi vào `unchecked`', () => {
+    const cases: Array<[string, string]> = [
+      ['ln(x*y)', 'log_product'],
+      ['ln(x/y)', 'log_quotient'],
+      ['ln(x^3)', 'log_power'],
+      ['log(2, x)', 'log_change_base'],
+      ['exp(ln(x))', 'exp_log'],
+      ['ln(exp(x))', 'log_exp'],
+      ['sin(x)^2 + cos(x)^2', 'pythagorean_identity'],
+      ['sin(2*x)', 'double_angle'],
+      ['sin(a) + sin(b)', 'sum_to_product'],
+      ['sin(a)*cos(b)', 'product_to_sum'],
+      ['2^x = 8', 'log_both_sides'],
+    ];
+    for (const [start, rule] of cases) {
+      const m = run(start, [{ rule, at: '' }]);
+      expect(m.refusal, `${rule}: ${m.refusal}`).toBeNull();
+      expect(m.unsound, rule).toEqual([]);
+      expect(m.unchecked, rule).toEqual([]);
+    }
+  });
+
+  it('bộ kiểm bắt được đồng nhất thức lượng giác **sai**', () => {
+    // Bộ bốc điểm thực chạy thẳng ở đây — sin/cos xác định ở mọi điểm, nên không có ca
+    // nào bị bỏ và phép kiểm dùng hết số lần thử.
+    expect(sameValue(tree('sin(2*x)'), tree('2*sin(x)*cos(x)')).ok).toBe(true);
+    expect(sameValue(tree('sin(2*x)'), tree('2*sin(x)*sin(x)')).ok).toBe(false);
+    expect(sameValue(tree('cos(2*x)'), tree('cos(x)^2 - sin(x)^2')).ok).toBe(true);
+    expect(sameValue(tree('cos(2*x)'), tree('cos(x)^2 + sin(x)^2')).ok).toBe(false);
+  });
+
+  it('tên hàm vẽ **đứng thẳng**, biến vẫn nghiêng', () => {
+    // Chữ nghiêng dành cho biến; `sin` nghiêng đọc ra $s\\cdot i\\cdot n$ — quy ước từ Euler.
+    const p = place(toBox(tree('sin(x)')), 0, 0);
+    const names = p.glyphs.filter((g) => 'sin'.includes(g.s) && g.s !== 'x');
+    expect(names.length).toBeGreaterThan(0);
+    expect(names.every((g) => !g.italic)).toBe(true);
+    expect(p.glyphs.find((g) => g.s === 'x')!.italic).toBe(true);
   });
 });

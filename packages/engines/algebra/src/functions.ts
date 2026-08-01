@@ -26,6 +26,19 @@ export interface FnSpec {
    * số nguyên nhưng một biểu thức lồng có thể sinh ra $n/2$ ở giữa chừng.
    */
   readonly evalNum: (args: readonly number[]) => number | null;
+  /**
+   * Điều kiện xác định, **dạng chữ để in ra hình**.
+   *
+   * M56 khai trường này là `(args) => Guard | null` với chú thích "dùng ở M61". Hình
+   * dạng ấy **sai**, và M61 là chỗ phát hiện: `evalReal` của $\ln$ trả `null` ngay khi
+   * đối số $\le 0$ (`Math.log` cho `-Infinity`/`NaN`), nên bộ bốc điểm **đã** tự bỏ mọi
+   * điểm ngoài miền — một `Guard` ở đây không thêm răng nào, nó chỉ trùng lặp.
+   *
+   * Việc còn thiếu là **nói cho người đọc**: $\log(ab) = \log a + \log b$ đúng khi
+   * $a > 0$ và $b > 0$, và dòng đỏ ấy là nội dung chứ không phải thủ tục. Nên trường
+   * này trả chữ.
+   */
+  readonly domainText?: (args: readonly string[]) => string;
 }
 
 /**
@@ -74,6 +87,15 @@ function permutation(n: number, k: number): number | null {
   return Number.isSafeInteger(r) ? r : null;
 }
 
+/** $\log_b a$ — cơ số trước, đối số sau. `null` khi ra ngoài miền. */
+const logarithm = (b: number, a: number): number | null => {
+  if (!(b > 0) || b === 1 || !(a > 0)) return null;
+  return Math.log(a) / Math.log(b);
+};
+
+/** Chỉ nhận giá trị **hữu hạn**; `tan` ở gần $\pi/2$ nổ và điểm ấy vô dụng. */
+const finite = (v: number): number | null => (Number.isFinite(v) ? v : null);
+
 export const FUNCTIONS: Readonly<Record<FnName, FnSpec>> = {
   fact: {
     arity: 1,
@@ -92,6 +114,52 @@ export const FUNCTIONS: Readonly<Record<FnName, FnSpec>> = {
     source: 'A',
     plain: (a) => `A(${a[0] as string},${a[1] as string})`,
     evalNum: (a) => permutation(a[0] as number, a[1] as number),
+  },
+
+  /* ---------- hàm siêu việt (M61) — mỗi hàm **một dòng bảng** ---------- */
+
+  ln: {
+    arity: 1,
+    source: 'ln',
+    plain: (a) => `ln(${a[0] as string})`,
+    evalNum: (a) => logarithm(Math.E, a[0] as number),
+    domainText: (a) => `${a[0] as string} > 0`,
+  },
+  log: {
+    arity: 2,
+    source: 'log',
+    plain: (a) => `log_${a[0] as string}(${a[1] as string})`,
+    evalNum: (a) => logarithm(a[0] as number, a[1] as number),
+    domainText: (a) => `${a[1] as string} > 0, ${a[0] as string} > 0, ${a[0] as string} ≠ 1`,
+  },
+  exp: {
+    arity: 1,
+    source: 'exp',
+    plain: (a) => `exp(${a[0] as string})`,
+    evalNum: (a) => finite(Math.exp(a[0] as number)),
+  },
+  sin: {
+    arity: 1,
+    source: 'sin',
+    plain: (a) => `sin(${a[0] as string})`,
+    evalNum: (a) => finite(Math.sin(a[0] as number)),
+  },
+  cos: {
+    arity: 1,
+    source: 'cos',
+    plain: (a) => `cos(${a[0] as string})`,
+    evalNum: (a) => finite(Math.cos(a[0] as number)),
+  },
+  tan: {
+    arity: 1,
+    source: 'tan',
+    plain: (a) => `tan(${a[0] as string})`,
+    // $\tan$ nổ ở $\pi/2$ và mọi bội lẻ của nó. Bộ bốc điểm thực gần như không bao giờ
+    // trúng đúng chỗ ấy, nhưng một biểu thức lồng thì có — trả `null` cho chắc.
+    evalNum: (a) => {
+      const v = Math.tan(a[0] as number);
+      return Number.isFinite(v) && Math.abs(v) < 1e12 ? v : null;
+    },
   },
 };
 

@@ -257,7 +257,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§36 để biết tập luật thật — **61 luật**, xếp theo mười lớp:
+Xem §21–§37 để biết tập luật thật — **72 luật**, xếp theo mười một lớp:
 
 | lớp | luật |
 |---|---|
@@ -271,6 +271,7 @@ Xem §21–§36 để biết tập luật thật — **61 luật**, xếp theo m
 | **số mũ ký hiệu** (M58, §34) | `pow_split` (và `pow_add`/`pow_mul` vốn đã chạy từ M49) |
 | **hệ phương trình** (M59, §35) | `add_equations`, `scale_equation`, `substitute_from`, `drop_equation` |
 | **tập nghiệm** (M60, §36) | `abs_to_interval`, `interval_from_factors`, `merge_intervals` |
+| **hàm siêu việt** (M61, §37) | `log_product`, `log_quotient`, `log_power`, `log_change_base`, `exp_log`, `log_exp`, `log_both_sides`, `pythagorean_identity`, `double_angle`, `sum_to_product`, `product_to_sum` |
 
 **Hai điều luật này cố ý không có:**
 
@@ -558,10 +559,10 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
 
 ## 16. Cố ý **không** làm
 
-- **Hàm siêu việt.** Không $\sin$, không $\log$. Lúc cần chúng thì đây là dự án khác,
-  không phải một phiên bản sau. ($2^x$ **vẽ** được từ M49 vì số mũ là `Expr`, nhưng
-  không có **luật** nào biến đổi nó — muốn có thì phải có logarit. Biểu diễn được
-  không đồng nghĩa biến đổi được, và ranh giới ấy là cố ý.)
+- ~~**Hàm siêu việt**~~ — **đã làm** (M61). Lời khai cũ nói "lúc cần chúng thì đây là dự
+  án khác"; hoá ra không, vì M56 đã trả trước cái giá đắt: mỗi hàm là **một dòng bảng**.
+  Nhận xét kèm theo thì vẫn đúng và nay được thanh toán — $2^x$ vẽ được từ M49 mà không
+  luật nào biến đổi nó, và muốn có thì phải có logarit. Xem §37.
 - ~~**Số mũ ký hiệu**~~ — **đã làm** (M49). Lời khai cũ nói $x^n$ "kéo theo cả một
   tầng suy luận về miền — không đáng". Nửa đầu đúng, nửa sau sai: $x^n$ có mặt từ lớp
   8, và tầng suy luận về miền ấy hoá ra gói gọn được trong hai chỗ, không hơn — xem
@@ -573,7 +574,7 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
 - ~~**Giá trị tuyệt đối**~~ — **đã làm** (M47c), chính vì cái thiếu ấy đã cắn.
 - ~~**Luỹ thừa số mũ hữu tỉ**~~ — **đã làm** (M49). Nó là nội dung lớp 11–12; khai nó
   là "chưa có" trong khi engine nhắm toàn bộ đại số phổ thông là tự mâu thuẫn.
-- **Phần nguyên, logarit.** Chưa có.
+- **Phần nguyên.** Chưa có. (Logarit đã có từ M61.)
 - ~~**Quy đồng, nhóm hạng tử, hoàn thành bình phương, bình phương hai vế**~~ — **đã
   làm** (M50, theo góp ý ngoài). Xem §26.
 - **Căn bậc ký hiệu** ($\sqrt[n]{x}$ với $n$ là biến). `root.index` vẫn là số nguyên;
@@ -1985,3 +1986,78 @@ $(A \wedge B) \wedge C$ và $A \wedge B \wedge C$ là một, nên `normalize` l�
 cùng chỗ đứng và cùng lý lẽ với `add`/`mul`. Nhưng $(A \vee B) \wedge C$ làm phẳng là đổi
 hẳn nghĩa, nên phép nối phải khớp mới gộp. Một dòng điều kiện, và thiếu nó thì
 `abs_to_interval` áp bên trong một hệ sẽ lặng lẽ biến một tuyển thành một hội.
+
+---
+
+## 37. Hàm siêu việt — sáu dòng bảng (M61)
+
+### 37.1 Cái giá đã trả từ M56
+
+Đặc tả §16 từng khai: *"Không $\sin$, không $\log$. Lúc cần chúng thì đây là dự án khác,
+không phải một phiên bản sau."* Lời ấy đúng với kiến trúc lúc viết — khi mỗi hàm là một
+kiểu nút thì sáu hàm là sáu vòng sửa sáu tệp.
+
+M56 đổi kiến trúc ấy: **một** biến thể `fn` cho cả họ, mọi thứ riêng của từng hàm ở bảng
+`functions.ts`. Nên M61 là sáu dòng bảng, hết. Không kiểu nút mới, không sửa `expr.ts`
+ngoài việc nới union tên, không đụng `check.ts`.
+
+Đó là toàn bộ lý do M56 đứng trước M61 trong kế hoạch dù M61 mới là thứ được gọi tên.
+
+### 37.2 Trường `domain` khai ở M56 có **hình dạng sai** — và M61 là chỗ phát hiện
+
+M56 khai `domain?: (args) => Guard | null` với chú thích *"dùng ở M61"*. Đến lúc dùng thì
+nó thừa: `evalReal` của $\ln$ trả `null` ngay khi đối số $\le 0$ (`Math.log` cho
+`-Infinity`/`NaN`), nên bộ bốc điểm **đã** tự bỏ mọi điểm ngoài miền. Một `Guard` ở đó
+không thêm răng nào, nó chỉ trùng lặp.
+
+Việc còn thiếu là **nói cho người đọc**: $\log(ab) = \log a + \log b$ đúng khi $a>0$ và
+$b>0$, và dòng đỏ ấy là nội dung chứ không phải thủ tục. Nên trường đổi thành
+`domainText`, trả chữ.
+
+Bài học: một trường khai trước cho một hạng mục chưa tới thì đoán được **có cần**, không
+đoán được **hình dạng nào**. Ghi lại chỗ đoán sai thay vì lặng lẽ đổi kiểu.
+
+### 37.3 Điều kiện: chỗ nào cần, chỗ nào **không**
+
+| bước | dòng đỏ |
+|---|---|
+| $\log(xy) \to \log x + \log y$ | $x>0,\ y>0$ |
+| $\log(x^3) \to 3\log x$ | $x>0$ |
+| $\log(2\cdot 3) \to \log 2 + \log 3$ | **không** — hằng dương, hiển nhiên |
+| $e^{\ln x} \to x$ | **không** |
+
+Dòng cuối nghe lạ vì $\ln x$ rõ ràng đòi $x>0$. Nhưng nếu $\ln x$ đã **viết ra được** thì
+điều kiện ấy đã thoả từ dòng trước; điều kiện nằm ở chính dấu $\ln$, không ở bước triệt
+tiêu. Đúng lý lẽ `root_pow` từ M47b, và đây là lần thứ hai nó được dùng.
+
+`log_both_sides` **không từ chối** khi hai vế chưa chắc dương — nó ghi điều kiện, đúng cơ
+chế AL-08. Từ chối thì luật này gần như không bao giờ áp được, vì hai vế thường chứa biến.
+Và nó đi hợp đồng `sameSolutionSet` chứ không phải `implies`: $\ln$ **tăng ngặt**, nên nó
+bảo toàn tập nghiệm chứ không nới rộng như bình phương.
+
+### 37.4 Tập luật **đóng**, mười một dòng
+
+Sáu luật logarit, bốn đồng nhất thức lượng giác có tên, một luật nhóm ★. Hết.
+
+**Không** có "rút gọn biểu thức lượng giác": không gian đồng nhất thức lượng giác vô hạn,
+và một nút bấm nhảy năm bước là đúng thứ làm người học không học được gì (§4). Mười một
+luật này là những đồng nhất thức có tên trong sách, không phải một bộ giải.
+
+Nhận dạng bằng **cấu trúc**: `double_angle` đòi góc có dạng $2\cdot\theta$ như một *tích*,
+`pythagorean_identity` đòi $\sin^2$ và $\cos^2$ của **cùng một góc** so bằng `same`. Không
+có ca nào chúng "gần đúng".
+
+Bộ kiểm ở đây chạy đường **thực**, và nó thoải mái nhất trong cả ba sân: $\sin$ và $\cos$
+xác định ở mọi điểm nên không điểm nào bị bỏ. Đo được: $\sin 2x$ so với $2\sin x\cos x$
+qua, so với $2\sin x\sin x$ đỏ.
+
+### 37.5 Lỗi bề ngang lần thứ ba
+
+`ln` cộng từng chữ ra $1{,}0$ em, glyph thật rộng $0{,}778$ — chữ `l` hẹp bằng nửa chữ
+`n`. Trên trang thấy một khe hở giữa `ln` và dấu ngoặc, đọc thành hai vật rời nhau.
+
+Cùng lớp lỗi với dấu `!` (M56) và chữ hoa ở $C_n^k$ (M56), nhưng cách chữa khác: đo theo
+**cả tên**, không theo từng chữ cái. Chữa từng chữ thì `t`, `r`, `s`, `n`, `e`, `p` đều
+đổi bề ngang, mà chúng có mặt làm **biến** trong golden của kho — hình không đổi một nét
+mà 400 golden phải soát lại. Tên hàm là chuỗi nhiều ký tự **duy nhất** engine này in ra,
+nên một bảng theo tên vừa đủ và không chạm gì khác.

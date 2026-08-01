@@ -57,6 +57,14 @@ const BIG_OPS: ReadonlyArray<readonly [string, 'sum' | 'prod']> = [
 
 const NAMED_FNS: ReadonlyArray<readonly [string, FnName]> = [
   ['fact', 'fact'],
+  ['log', 'log'],
+  ['ln', 'ln'],
+  ['exp', 'exp'],
+  ['sin', 'sin'],
+  ['cos', 'cos'],
+  ['tan', 'tan'],
+  // Một chữ **sau cùng**: `C` và `A` chỉ là hàm khi đứng sát `(`, mà `cos(` cũng bắt
+  // đầu bằng `c` — thứ tự này giữ cho tên dài luôn được thử trước.
   ['C', 'binom'],
   ['A', 'perm'],
 ];

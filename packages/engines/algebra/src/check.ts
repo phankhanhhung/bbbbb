@@ -693,6 +693,17 @@ export function definiteSign(e: Expr): 1 | -1 | 0 {
   return v > 0 ? 1 : -1;
 }
 
+/**
+ * Biểu thức này có **chắc chắn dương** không — điều kiện lấy logarit.
+ *
+ * Cùng tinh thần thận trọng với `definitelyNonZero`: có biến ⇒ `false`, kể cả $x^2+1$.
+ */
+export function definitelyPositive(e: Expr): boolean {
+  if (varsOf(e).size > 0) return false;
+  const v = evalReal(e, new Map());
+  return v !== null && v > 0;
+}
+
 export function definitelyNonNegative(e: Expr): boolean {
   if (varsOf(e).size > 0) return false;
   const v = evalReal(e, new Map());

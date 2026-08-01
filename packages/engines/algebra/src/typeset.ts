@@ -169,10 +169,35 @@ const UPPER_EM: Readonly<Record<string, number>> = {
   V: 0.75, W: 1.028, X: 0.75, Y: 0.75, Z: 0.611,
 };
 
+/**
+ * Bề ngang **cả tên hàm**, không cộng từng chữ.
+ *
+ * `ln` cộng từng chữ ra $1{,}0$ em, còn glyph thật chỉ rộng $0{,}778$ — chữ `l` hẹp bằng
+ * nửa chữ `n`. Dôi $0{,}22$ em đủ để trên trang thấy một khe hở giữa `ln` và dấu ngoặc,
+ * đọc thành hai vật rời nhau. Cùng lớp lỗi với dấu `!` ở M56 và chữ hoa ở $C_n^k$.
+ *
+ * Chữa theo **cả tên** thay vì theo từng chữ cái: chữa từng chữ thì `t`, `r`, `s`, `n`,
+ * `e`, `p` đều đổi bề ngang, mà chúng có mặt làm **biến** trong golden của kho — hình
+ * không đổi một nét mà 400 golden phải soát lại. Tên hàm là chuỗi nhiều ký tự duy nhất
+ * engine này in ra, nên bảng theo tên vừa đủ và không chạm gì khác.
+ *
+ * Số lấy từ metric KaTeX_Main.
+ */
+const WORD_EM: Readonly<Record<string, number>> = {
+  ln: 0.778,
+  log: 1.278,
+  exp: 1.444,
+  sin: 1.172,
+  cos: 1.338,
+  tan: 1.389,
+};
+
 /** Làm tròn toạ độ để lệnh path không dài lê thê vì sai số dấu phẩy động. */
 const round = (v: number): number => Math.round(v * 1000) / 1000 + 0;
 
 export function textWidth(value: string, size: number): number {
+  const word = WORD_EM[value];
+  if (word !== undefined) return word * size;
   let em = 0;
   for (const ch of value) {
     em += EM[ch] ?? UPPER_EM[ch] ?? (ch >= '0' && ch <= '9' ? DIGIT_EM : LETTER_EM);
@@ -881,6 +906,23 @@ export function toBox(e: Expr, size: number = FONT): Box {
           items: [atomic ? inner : { t: 'paren', inner, size }, text('!', size)],
         });
       }
+      // Hàm siêu việt in tên **đứng thẳng** rồi ngoặc: $\sin(x)$, $\ln(x)$. Chữ nghiêng
+      // dành cho biến, nên `sin` nghiêng đọc ra $s\cdot i\cdot n$ — quy ước có từ Euler.
+      if (e.name !== 'binom' && e.name !== 'perm') {
+        const items: Box[] = [text(spec.source, size)];
+        // $\log_b$ — cơ số là chỉ số dưới, không phải đối số thứ nhất trong ngoặc.
+        const shown = e.name === 'log' ? (e.args.slice(1) as Expr[]) : (e.args as Expr[]);
+        if (e.name === 'log') {
+          items.push({
+            t: 'shift',
+            dy: size * 0.2,
+            inner: toBox(e.args[0] as Expr, shrink(size, SCRIPT)),
+          });
+        }
+        items.push({ t: 'paren', inner: toBox(shown[0] as Expr, size), size });
+        return tag({ t: 'row', items });
+      }
+
       // $C_n^k$, $A_n^k$ — chỉ số dưới là $n$, số mũ trên là $k$.
       const [lower, upper] = e.args as [Expr, Expr];
       return tag({

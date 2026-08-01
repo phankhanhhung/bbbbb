@@ -111,7 +111,18 @@ export type Expr =
  * M56 đăng ký ba hàm tổ hợp. Với một nền tảng nhắm Olympiad Combinatorics thì $n!$ và
  * $C_n^k$ không phải món mở rộng — chúng là ký hiệu nền của cả môn.
  */
-export type FnName = 'fact' | 'binom' | 'perm';
+export type FnName =
+  | 'fact'
+  | 'binom'
+  | 'perm'
+  // M61 — và cả sáu chỉ tốn **một dòng bảng** mỗi cái ở `functions.ts`. Đó là cổ tức
+  // của việc M56 dựng *một* biến thể `fn` cho cả họ thay vì một biến thể mỗi hàm.
+  | 'ln'
+  | 'log'
+  | 'exp'
+  | 'sin'
+  | 'cos'
+  | 'tan';
 
 /**
  * Cấp phát danh tính.
