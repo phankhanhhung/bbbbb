@@ -225,66 +225,66 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a2",
-                "at": 0,
-                "duration": 700,
                 "id": "b0",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 1: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-1",
                   "cell-2-0",
                   "cell-2-1",
                   "strike-1-0",
                   "strike-2-0"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a1",
-                "at": 900,
-                "duration": 700,
-                "hold": true,
                 "id": "d0",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong, còn lại sau nhịp 1"
-                },
                 "targets": [
                   "cell-3-1",
                   "cell-3-2"
-                ]
+                ],
+                "at": 900,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 1"
+                },
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 1800,
-                "duration": 700,
                 "id": "b1",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 2: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-2",
                   "cell-4-1",
                   "cell-4-2",
                   "strike-3-1",
                   "strike-4-1"
-                ]
+                ],
+                "at": 1800,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a3",
-                "at": 2700,
-                "duration": 700,
                 "id": "d1",
                 "kind": "show",
-                "label": {
-                  "vi": "phần còn lại chính là dư R"
-                },
                 "targets": [
                   "cell-5-2"
-                ]
+                ],
+                "at": 2700,
+                "duration": 700,
+                "anchor": "a3",
+                "label": {
+                  "vi": "phần còn lại chính là dư R"
+                }
               }
             ]
           },
@@ -413,66 +413,66 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a2",
-                "at": 0,
-                "duration": 700,
                 "id": "b0",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 1: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-1",
                   "cell-2-0",
                   "cell-2-1",
                   "strike-1-0",
                   "strike-2-0"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a1",
-                "at": 900,
-                "duration": 700,
-                "hold": true,
                 "id": "d0",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong, còn lại sau nhịp 1"
-                },
                 "targets": [
                   "cell-3-1",
                   "cell-3-2"
-                ]
+                ],
+                "at": 900,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 1"
+                },
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 1800,
-                "duration": 700,
                 "id": "b1",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 2: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-2",
                   "cell-4-1",
                   "cell-4-2",
                   "strike-3-1",
                   "strike-4-1"
-                ]
+                ],
+                "at": 1800,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a3",
-                "at": 2700,
-                "duration": 700,
                 "id": "d1",
                 "kind": "show",
-                "label": {
-                  "vi": "phần còn lại chính là dư R"
-                },
                 "targets": [
                   "cell-5-2"
-                ]
+                ],
+                "at": 2700,
+                "duration": 700,
+                "anchor": "a3",
+                "label": {
+                  "vi": "phần còn lại chính là dư R"
+                }
               }
             ]
           },
@@ -639,99 +639,99 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a2",
-                "at": 0,
-                "duration": 700,
                 "id": "b0",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 1: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-1",
                   "cell-2-0",
                   "cell-2-1",
                   "strike-1-0",
                   "strike-2-0"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a1",
-                "at": 900,
-                "duration": 700,
-                "hold": true,
                 "id": "d0",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong, còn lại sau nhịp 1"
-                },
                 "targets": [
                   "cell-3-1",
                   "cell-3-2",
                   "cell-3-3"
-                ]
+                ],
+                "at": 900,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 1"
+                },
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 1800,
-                "duration": 700,
                 "id": "b1",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 2: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-2",
                   "cell-4-1",
                   "cell-4-2",
                   "strike-3-1",
                   "strike-4-1"
-                ]
+                ],
+                "at": 1800,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a1",
-                "at": 2700,
-                "duration": 700,
-                "hold": true,
                 "id": "d1",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong, còn lại sau nhịp 2"
-                },
                 "targets": [
                   "cell-5-2",
                   "cell-5-3"
-                ]
+                ],
+                "at": 2700,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 2"
+                },
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 3600,
-                "duration": 700,
                 "id": "b2",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 3: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-3",
                   "cell-6-2",
                   "cell-6-3",
                   "strike-5-2",
                   "strike-6-2"
-                ]
+                ],
+                "at": 3600,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a3",
-                "at": 4500,
-                "duration": 700,
                 "id": "d2",
                 "kind": "show",
-                "label": {
-                  "vi": "phần còn lại chính là dư R"
-                },
                 "targets": [
                   "cell-7-3"
-                ]
+                ],
+                "at": 4500,
+                "duration": 700,
+                "anchor": "a3",
+                "label": {
+                  "vi": "phần còn lại chính là dư R"
+                }
               }
             ]
           },
@@ -927,14 +927,8 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a2",
-                "at": 0,
-                "duration": 700,
                 "id": "b0",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 1: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-2",
                   "cell-2-0",
@@ -942,34 +936,34 @@
                   "cell-2-2",
                   "strike-1-0",
                   "strike-2-0"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a1",
-                "at": 900,
-                "duration": 700,
-                "hold": true,
                 "id": "d0",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong, còn lại sau nhịp 1"
-                },
                 "targets": [
                   "cell-3-1",
                   "cell-3-2",
                   "cell-3-3",
                   "cell-3-4"
-                ]
+                ],
+                "at": 900,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 1"
+                },
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 1800,
-                "duration": 700,
                 "id": "b1",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 2: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-3",
                   "cell-4-1",
@@ -977,33 +971,33 @@
                   "cell-4-3",
                   "strike-3-1",
                   "strike-4-1"
-                ]
+                ],
+                "at": 1800,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a1",
-                "at": 2700,
-                "duration": 700,
-                "hold": true,
                 "id": "d1",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong, còn lại sau nhịp 2"
-                },
                 "targets": [
                   "cell-5-2",
                   "cell-5-3",
                   "cell-5-4"
-                ]
+                ],
+                "at": 2700,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 2"
+                },
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 3600,
-                "duration": 700,
                 "id": "b2",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 3: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-4",
                   "cell-6-2",
@@ -1011,21 +1005,27 @@
                   "cell-6-4",
                   "strike-5-2",
                   "strike-6-2"
-                ]
+                ],
+                "at": 3600,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a3",
-                "at": 4500,
-                "duration": 700,
                 "id": "d2",
                 "kind": "show",
-                "label": {
-                  "vi": "phần còn lại chính là dư R"
-                },
                 "targets": [
                   "cell-7-3",
                   "cell-7-4"
-                ]
+                ],
+                "at": 4500,
+                "duration": 700,
+                "anchor": "a3",
+                "label": {
+                  "vi": "phần còn lại chính là dư R"
+                }
               }
             ]
           },
@@ -1192,99 +1192,99 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a2",
-                "at": 0,
-                "duration": 700,
                 "id": "b0",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 1: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-1",
                   "cell-2-0",
                   "cell-2-1",
                   "strike-1-0",
                   "strike-2-0"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a1",
-                "at": 900,
-                "duration": 700,
-                "hold": true,
                 "id": "d0",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong, còn lại sau nhịp 1"
-                },
                 "targets": [
                   "cell-3-1",
                   "cell-3-2",
                   "cell-3-3"
-                ]
+                ],
+                "at": 900,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 1"
+                },
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 1800,
-                "duration": 700,
                 "id": "b1",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 2: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-2",
                   "cell-4-1",
                   "cell-4-2",
                   "strike-3-1",
                   "strike-4-1"
-                ]
+                ],
+                "at": 1800,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a1",
-                "at": 2700,
-                "duration": 700,
-                "hold": true,
                 "id": "d1",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong, còn lại sau nhịp 2"
-                },
                 "targets": [
                   "cell-5-2",
                   "cell-5-3"
-                ]
+                ],
+                "at": 2700,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "trừ xong, còn lại sau nhịp 2"
+                },
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 3600,
-                "duration": 700,
                 "id": "b2",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 3: chia rồi nhân ngược"
-                },
                 "targets": [
                   "cell-0-3",
                   "cell-6-2",
                   "cell-6-3",
                   "strike-5-2",
                   "strike-6-2"
-                ]
+                ],
+                "at": 3600,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a3",
-                "at": 4500,
-                "duration": 700,
                 "id": "d2",
                 "kind": "show",
-                "label": {
-                  "vi": "phần còn lại chính là dư R"
-                },
                 "targets": [
                   "cell-7-3"
-                ]
+                ],
+                "at": 4500,
+                "duration": 700,
+                "anchor": "a3",
+                "label": {
+                  "vi": "phần còn lại chính là dư R"
+                }
               }
             ]
           },

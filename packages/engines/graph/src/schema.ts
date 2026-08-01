@@ -121,10 +121,16 @@ export const GraphConfig = Type.Object(
      * đồ thì "biển" cũng là một vùng phải tô.
      */
     face_colors: Type.Optional(
-      Type.Record(Type.String({ pattern: '^face-(\\d+|outer)$' }), Type.Integer({
-        minimum: 1,
-        maximum: MAX_COLOR_CLASS,
-      })),
+      Type.Record(
+        Type.String({ pattern: '^face-(\\d+|outer)$' }),
+        Type.Integer({
+          minimum: 1,
+          maximum: MAX_COLOR_CLASS,
+        }),
+        // Cùng lý do với `cell_overrides` của board: không có dòng này thì khoá
+        // lệch pattern (`"face-x"`, `"Face-1"`) đi lọt cùng giá trị tuỳ ý.
+        { additionalProperties: false },
+      ),
     ),
   },
   { additionalProperties: false },

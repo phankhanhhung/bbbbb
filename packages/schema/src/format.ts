@@ -36,7 +36,6 @@ const KEY_ORDER: Readonly<Record<string, readonly string[]>> = {
     'invariants',
     'solutions',
     'sandbox',
-    'assets',
     'og_step_ref',
   ],
   solution: ['id', 'label', 'steps'],
@@ -55,7 +54,6 @@ const KEY_ORDER: Readonly<Record<string, readonly string[]>> = {
     // `verified`, tức là xa nhất khỏi thứ chúng nói về.
     'bijection',
     'choreography',
-    'widget_state',
     'alt_text',
     'author_notes',
     'claims',
@@ -64,6 +62,18 @@ const KEY_ORDER: Readonly<Record<string, readonly string[]>> = {
   ],
   scene: ['engine', 'config', 'elements', 'viewport'],
   element: ['id', 'type', 'color_class', 'emphasis', 'layer', 'locked'],
+  // Giữ đúng thứ tự alphabet mà các file song ánh hiện có — bảng này tồn tại
+  // không phải để đổi thứ tự bốn khoá ngoài, mà để `nestedShape` có một cái tên
+  // dẫn xuống `scene` bên trong. Không có tên thì pane phải rơi vào shape null
+  // và toàn bộ ruột của nó (engine/config/elements + từng element) bị xếp
+  // alphabet — pane phải thành công dân hạng hai của cả *bộ định dạng*, cùng
+  // căn bệnh mà M66 chữa ở lớp kiểm.
+  bijection: ['label_left', 'label_right', 'pairs', 'scene'],
+  choreography: ['phases'],
+  // Thứ tự đọc của một pha: nó là gì, tác động lên ai, đi đâu/từ đâu, lúc nào,
+  // rồi mới tới phần trang trí. Trước đây phase rơi vào shape null → `anchor`
+  // đứng đầu và `kind` chìm giữa danh sách alphabet.
+  phase: ['id', 'kind', 'targets', 'to', 'from', 'at', 'duration', 'easing', 'anchor', 'label', 'hold'],
 };
 
 export function formatProblem(problem: unknown): string {
@@ -102,6 +112,10 @@ function nestedShape(
   if (shape === 'problem' && key === 'solutions') return 'solution';
   if (shape === 'solution' && key === 'steps') return 'step';
   if (shape === 'step' && key === 'scene') return 'scene';
+  if (shape === 'step' && key === 'bijection') return 'bijection';
+  if (shape === 'bijection' && key === 'scene') return 'scene';
+  if (shape === 'step' && key === 'choreography') return 'choreography';
+  if (shape === 'choreography' && key === 'phases') return 'phase';
   if (shape === 'scene' && key === 'elements') return 'element';
   return null;
 }

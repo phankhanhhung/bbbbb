@@ -166,6 +166,7 @@
               ]
             ],
             "scene": {
+              "engine": "graph",
               "config": {
                 "show_labels": true,
                 "show_sums": true,
@@ -174,27 +175,27 @@
               "elements": [
                 {
                   "id": "v1",
+                  "type": "vertex",
                   "label": "1",
-                  "pos": [0, -12],
-                  "type": "vertex"
+                  "pos": [0, -12]
                 },
                 {
                   "id": "v2",
+                  "type": "vertex",
                   "label": "2",
-                  "pos": [12, 0],
-                  "type": "vertex"
+                  "pos": [12, 0]
                 },
                 {
                   "id": "v3",
+                  "type": "vertex",
                   "label": "3",
-                  "pos": [0, 12],
-                  "type": "vertex"
+                  "pos": [0, 12]
                 },
                 {
                   "id": "v4",
+                  "type": "vertex",
                   "label": "4",
-                  "pos": [-12, 0],
-                  "type": "vertex"
+                  "pos": [-12, 0]
                 },
                 {
                   "id": "ev1v2",
@@ -226,8 +227,7 @@
                   "u": "v1",
                   "v": "v3"
                 }
-              ],
-              "engine": "graph"
+              ]
             }
           },
           "alt_text": {
@@ -345,6 +345,7 @@
               ]
             ],
             "scene": {
+              "engine": "graph",
               "config": {
                 "show_labels": true,
                 "show_sums": true,
@@ -353,27 +354,27 @@
               "elements": [
                 {
                   "id": "v1",
+                  "type": "vertex",
                   "label": "1",
-                  "pos": [0, -12],
-                  "type": "vertex"
+                  "pos": [0, -12]
                 },
                 {
                   "id": "v2",
+                  "type": "vertex",
                   "label": "2",
-                  "pos": [12, 0],
-                  "type": "vertex"
+                  "pos": [12, 0]
                 },
                 {
                   "id": "v3",
+                  "type": "vertex",
                   "label": "3",
-                  "pos": [0, 12],
-                  "type": "vertex"
+                  "pos": [0, 12]
                 },
                 {
                   "id": "v4",
+                  "type": "vertex",
                   "label": "4",
-                  "pos": [-12, 0],
-                  "type": "vertex"
+                  "pos": [-12, 0]
                 },
                 {
                   "id": "ev1v2",
@@ -400,15 +401,14 @@
                   "v": "v1"
                 },
                 {
-                  "color_class": 3,
-                  "emphasis": "focus",
                   "id": "ev1v3",
                   "type": "edge",
+                  "color_class": 3,
+                  "emphasis": "focus",
                   "u": "v1",
                   "v": "v3"
                 }
-              ],
-              "engine": "graph"
+              ]
             }
           },
           "alt_text": {
@@ -527,6 +527,7 @@
               ]
             ],
             "scene": {
+              "engine": "graph",
               "config": {
                 "show_labels": true,
                 "show_sums": true,
@@ -534,30 +535,30 @@
               },
               "elements": [
                 {
+                  "id": "v1",
+                  "type": "vertex",
                   "color_class": 3,
                   "emphasis": "focus",
-                  "id": "v1",
                   "label": "1",
-                  "pos": [0, -12],
-                  "type": "vertex"
+                  "pos": [0, -12]
                 },
                 {
                   "id": "v2",
+                  "type": "vertex",
                   "label": "2",
-                  "pos": [12, 0],
-                  "type": "vertex"
+                  "pos": [12, 0]
                 },
                 {
                   "id": "v3",
+                  "type": "vertex",
                   "label": "3",
-                  "pos": [0, 12],
-                  "type": "vertex"
+                  "pos": [0, 12]
                 },
                 {
                   "id": "v4",
+                  "type": "vertex",
                   "label": "4",
-                  "pos": [-12, 0],
-                  "type": "vertex"
+                  "pos": [-12, 0]
                 },
                 {
                   "id": "ev1v2",
@@ -589,8 +590,7 @@
                   "u": "v1",
                   "v": "v3"
                 }
-              ],
-              "engine": "graph"
+              ]
             }
           },
           "alt_text": {
@@ -711,6 +711,7 @@
               ]
             ],
             "scene": {
+              "engine": "graph",
               "config": {
                 "show_labels": true,
                 "show_sums": true,
@@ -719,27 +720,27 @@
               "elements": [
                 {
                   "id": "v1",
+                  "type": "vertex",
                   "label": "1",
-                  "pos": [0, -12],
-                  "type": "vertex"
+                  "pos": [0, -12]
                 },
                 {
                   "id": "v2",
+                  "type": "vertex",
                   "label": "2",
-                  "pos": [12, 0],
-                  "type": "vertex"
+                  "pos": [12, 0]
                 },
                 {
                   "id": "v3",
+                  "type": "vertex",
                   "label": "3",
-                  "pos": [0, 12],
-                  "type": "vertex"
+                  "pos": [0, 12]
                 },
                 {
                   "id": "v4",
+                  "type": "vertex",
                   "label": "4",
-                  "pos": [-12, 0],
-                  "type": "vertex"
+                  "pos": [-12, 0]
                 },
                 {
                   "id": "ev1v2",
@@ -771,8 +772,7 @@
                   "u": "v1",
                   "v": "v3"
                 }
-              ],
-              "engine": "graph"
+              ]
             }
           },
           "alt_text": {

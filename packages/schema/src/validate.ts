@@ -3,6 +3,8 @@ import addFormats from 'ajv-formats';
 
 import { Problem as ProblemSchema } from './problem.js';
 import { FORBIDDEN_STYLE_KEYS } from './element.js';
+import { isReadableVersion } from './migrate.js';
+import { SCHEMA_VERSION } from './version.js';
 import { checkStructure } from './structure.js';
 import { createEngineRegistry, type EngineSchemaFragment } from './engine-registry.js';
 import { GLOBAL_BOUNDS } from './bounds.js';
@@ -59,6 +61,23 @@ export function createValidator(
     }
 
     const problem = data as Problem;
+
+    /**
+     * DAT-02 — con dấu phiên bản phải nằm trong cửa sổ đọc được (major hiện tại,
+     * minor n hoặc n−1). Trước đây `isReadableVersion` tồn tại mà **không ai
+     * gọi**: SEMVER_PATTERN chỉ kiểm *hình dạng* con dấu, nên một file `9.9.9`
+     * đậu validate rồi mới vỡ ở Player — đúng nơi ít được trang bị nhất để nói
+     * chuyện phiên bản. Cửa kiểm là chỗ của câu trả lời này.
+     */
+    if (!isReadableVersion(problem.schema_version)) {
+      issues.push({
+        code: 'version/unreadable',
+        severity: 'error',
+        message: `schema_version "${problem.schema_version}" nằm ngoài cửa sổ đọc được của ${SCHEMA_VERSION}`,
+        path: '/schema_version',
+        hint: 'File cũ: chạy `combviz migrate --write`. File mới hơn tool: nâng cấp tool, không hạ file',
+      });
+    }
 
     issues.push(...validateScenes(problem));
     issues.push(...checkStructure(problem, engines));

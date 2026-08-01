@@ -135,103 +135,103 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a1",
-                "at": 0,
-                "duration": 700,
                 "id": "q0",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 1: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-2",
                   "sub1",
                   "sub1-4",
                   "sub1-2",
                   "rule1"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 900,
-                "duration": 700,
-                "hold": true,
                 "id": "d0",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ, rồi hạ hạng tử bậc 1"
-                },
                 "targets": [
                   "rest1-3",
                   "rest1-2",
                   "rest1-1",
                   "arrow1"
-                ]
+                ],
+                "at": 900,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử bậc 1"
+                },
+                "hold": true
               },
               {
-                "anchor": "a1",
-                "at": 1800,
-                "duration": 700,
                 "id": "q1",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 2: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-1",
                   "sub2",
                   "sub2-3",
                   "sub2-1",
                   "rule2"
-                ]
+                ],
+                "at": 1800,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 2700,
-                "duration": 700,
-                "hold": true,
                 "id": "d1",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ, rồi hạ hạng tử tự do"
-                },
                 "targets": [
                   "rest2-2",
                   "rest2-1",
                   "rest2-0",
                   "arrow2"
-                ]
+                ],
+                "at": 2700,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử tự do"
+                },
+                "hold": true
               },
               {
-                "anchor": "a1",
-                "at": 3600,
-                "duration": 700,
                 "id": "q2",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 3: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-0",
                   "sub3",
                   "sub3-2",
                   "sub3-0",
                   "rule3"
-                ]
+                ],
+                "at": 3600,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 4500,
-                "duration": 700,
                 "id": "d2",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong — phần còn lại là dư"
-                },
                 "targets": [
                   "remainder-1",
                   "remainder-0"
-                ]
+                ],
+                "at": 4500,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ xong — phần còn lại là dư"
+                }
               }
             ]
           },
@@ -290,67 +290,67 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a1",
-                "at": 0,
-                "duration": 700,
                 "id": "q0",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 1: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-1",
                   "sub1",
                   "sub1-2",
                   "sub1-1",
                   "rule1"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 900,
-                "duration": 700,
-                "hold": true,
                 "id": "d0",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ, rồi hạ hạng tử tự do"
-                },
                 "targets": [
                   "rest1-1",
                   "rest1-0",
                   "arrow1"
-                ]
+                ],
+                "at": 900,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử tự do"
+                },
+                "hold": true
               },
               {
-                "anchor": "a1",
-                "at": 1800,
-                "duration": 700,
                 "id": "q1",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 2: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-0",
                   "sub2",
                   "sub2-1",
                   "sub2-0",
                   "rule2"
-                ]
+                ],
+                "at": 1800,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 2700,
-                "duration": 700,
                 "id": "d1",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong — phần còn lại là dư"
-                },
                 "targets": [
                   "remainder-0"
-                ]
+                ],
+                "at": 2700,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ xong — phần còn lại là dư"
+                }
               }
             ]
           },
@@ -404,99 +404,99 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a1",
-                "at": 0,
-                "duration": 700,
                 "id": "q0",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 1: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-2",
                   "sub1",
                   "sub1-3",
                   "sub1-2",
                   "rule1"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 900,
-                "duration": 700,
-                "hold": true,
                 "id": "d0",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ, rồi hạ hạng tử bậc 1"
-                },
                 "targets": [
                   "rest1-2",
                   "arrow1"
-                ]
+                ],
+                "at": 900,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử bậc 1"
+                },
+                "hold": true
               },
               {
-                "anchor": "a1",
-                "at": 1800,
-                "duration": 700,
                 "id": "q1",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 2: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-1",
                   "sub2",
                   "sub2-2",
                   "sub2-1",
                   "rule2"
-                ]
+                ],
+                "at": 1800,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 2700,
-                "duration": 700,
-                "hold": true,
                 "id": "d1",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ, rồi hạ hạng tử tự do"
-                },
                 "targets": [
                   "rest2-1",
                   "rest2-0",
                   "arrow2"
-                ]
+                ],
+                "at": 2700,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử tự do"
+                },
+                "hold": true
               },
               {
-                "anchor": "a1",
-                "at": 3600,
-                "duration": 700,
                 "id": "q2",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 3: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-0",
                   "sub3",
                   "sub3-1",
                   "sub3-0",
                   "rule3"
-                ]
+                ],
+                "at": 3600,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 4500,
-                "duration": 700,
                 "id": "d2",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong — phần còn lại là dư"
-                },
                 "targets": [
                   "remainder-0"
-                ]
+                ],
+                "at": 4500,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ xong — phần còn lại là dư"
+                }
               }
             ]
           },
@@ -550,100 +550,100 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a1",
-                "at": 0,
-                "duration": 700,
                 "id": "q0",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 1: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-2",
                   "sub1",
                   "sub1-3",
                   "sub1-2",
                   "rule1"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 900,
-                "duration": 700,
-                "hold": true,
                 "id": "d0",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ, rồi hạ hạng tử bậc 1"
-                },
                 "targets": [
                   "rest1-2",
                   "rest1-1",
                   "arrow1"
-                ]
+                ],
+                "at": 900,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử bậc 1"
+                },
+                "hold": true
               },
               {
-                "anchor": "a1",
-                "at": 1800,
-                "duration": 700,
                 "id": "q1",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 2: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-1",
                   "sub2",
                   "sub2-2",
                   "sub2-1",
                   "rule2"
-                ]
+                ],
+                "at": 1800,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 2: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 2700,
-                "duration": 700,
-                "hold": true,
                 "id": "d1",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ, rồi hạ hạng tử tự do"
-                },
                 "targets": [
                   "rest2-1",
                   "rest2-0",
                   "arrow2"
-                ]
+                ],
+                "at": 2700,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử tự do"
+                },
+                "hold": true
               },
               {
-                "anchor": "a1",
-                "at": 3600,
-                "duration": 700,
                 "id": "q2",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 3: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-0",
                   "sub3",
                   "sub3-1",
                   "sub3-0",
                   "rule3"
-                ]
+                ],
+                "at": 3600,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 4500,
-                "duration": 700,
                 "id": "d2",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong — phần còn lại là dư"
-                },
                 "targets": [
                   "remainder-0"
-                ]
+                ],
+                "at": 4500,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ xong — phần còn lại là dư"
+                }
               }
             ]
           },
@@ -698,82 +698,82 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a1",
-                "at": 0,
-                "duration": 700,
                 "id": "q0",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 1: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-2",
                   "sub1",
                   "sub1-4",
                   "sub1-2",
                   "rule1"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 1: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 900,
-                "duration": 700,
-                "hold": true,
                 "id": "d0",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ, rồi hạ hạng tử bậc 1"
-                },
                 "targets": [
                   "rest1-2",
                   "arrow1"
-                ]
+                ],
+                "at": 900,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử bậc 1"
+                },
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 2700,
-                "duration": 700,
-                "hold": true,
                 "id": "d1",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ, rồi hạ hạng tử tự do"
-                },
                 "targets": [
                   "rest2-2",
                   "rest2-0",
                   "arrow2"
-                ]
+                ],
+                "at": 2700,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ, rồi hạ hạng tử tự do"
+                },
+                "hold": true
               },
               {
-                "anchor": "a1",
-                "at": 3600,
-                "duration": 700,
                 "id": "q2",
                 "kind": "show",
-                "label": {
-                  "vi": "nhịp 3: chia rồi nhân ngược"
-                },
                 "targets": [
                   "quotient-0",
                   "sub3",
                   "sub3-2",
                   "sub3-0",
                   "rule3"
-                ]
+                ],
+                "at": 3600,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "nhịp 3: chia rồi nhân ngược"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 4500,
-                "duration": 700,
                 "id": "d2",
                 "kind": "show",
-                "label": {
-                  "vi": "trừ xong — phần còn lại là dư"
-                },
                 "targets": [
                   "remainder-0"
-                ]
+                ],
+                "at": 4500,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "trừ xong — phần còn lại là dư"
+                }
               }
             ]
           },

@@ -124,46 +124,46 @@
               ]
             ],
             "scene": {
+              "engine": "set",
               "config": {
                 "view": "matrix"
               },
               "elements": [
                 {
                   "id": "T",
+                  "type": "set",
                   "label": "T",
-                  "order": 0,
-                  "type": "set"
+                  "order": 0
                 },
                 {
                   "id": "t1",
+                  "type": "token",
                   "label": "1",
-                  "sets": [],
-                  "type": "token"
+                  "sets": []
                 },
                 {
                   "id": "t2",
+                  "type": "token",
                   "label": "2",
                   "sets": [
                     "T"
-                  ],
-                  "type": "token"
+                  ]
                 },
                 {
                   "id": "t3",
+                  "type": "token",
                   "label": "3",
-                  "sets": [],
-                  "type": "token"
+                  "sets": []
                 },
                 {
                   "id": "t4",
+                  "type": "token",
                   "label": "4",
                   "sets": [
                     "T"
-                  ],
-                  "type": "token"
+                  ]
                 }
-              ],
-              "engine": "set"
+              ]
             }
           },
           "alt_text": {
@@ -254,46 +254,46 @@
               ]
             ],
             "scene": {
+              "engine": "set",
               "config": {
                 "view": "matrix"
               },
               "elements": [
                 {
                   "id": "T",
+                  "type": "set",
                   "label": "T",
-                  "order": 0,
-                  "type": "set"
+                  "order": 0
                 },
                 {
                   "id": "t1",
+                  "type": "token",
                   "label": "1",
                   "sets": [
                     "T"
-                  ],
-                  "type": "token"
+                  ]
                 },
                 {
                   "id": "t2",
+                  "type": "token",
                   "label": "2",
                   "sets": [
                     "T"
-                  ],
-                  "type": "token"
+                  ]
                 },
                 {
                   "id": "t3",
+                  "type": "token",
                   "label": "3",
-                  "sets": [],
-                  "type": "token"
+                  "sets": []
                 },
                 {
                   "id": "t4",
+                  "type": "token",
                   "label": "4",
-                  "sets": [],
-                  "type": "token"
+                  "sets": []
                 }
-              ],
-              "engine": "set"
+              ]
             }
           },
           "alt_text": {
@@ -386,46 +386,46 @@
               ]
             ],
             "scene": {
+              "engine": "set",
               "config": {
                 "view": "matrix"
               },
               "elements": [
                 {
                   "id": "T",
+                  "type": "set",
                   "label": "T",
-                  "order": 0,
-                  "type": "set"
+                  "order": 0
                 },
                 {
                   "id": "t1",
+                  "type": "token",
                   "label": "1",
-                  "sets": [],
-                  "type": "token"
+                  "sets": []
                 },
                 {
                   "id": "t2",
+                  "type": "token",
                   "label": "2",
                   "sets": [
                     "T"
-                  ],
-                  "type": "token"
+                  ]
                 },
                 {
                   "id": "t3",
+                  "type": "token",
                   "label": "3",
-                  "sets": [],
-                  "type": "token"
+                  "sets": []
                 },
                 {
                   "id": "t4",
+                  "type": "token",
                   "label": "4",
                   "sets": [
                     "T"
-                  ],
-                  "type": "token"
+                  ]
                 }
-              ],
-              "engine": "set"
+              ]
             }
           },
           "alt_text": {

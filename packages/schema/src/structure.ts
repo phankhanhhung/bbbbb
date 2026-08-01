@@ -168,8 +168,11 @@ function checkSolutionTree(
     checkParentLink(step, path, byId, issues);
     checkEdgeTypeRules(step, path, byId, childCount, issues);
     checkNarrative(step, path, issues);
+    // `checkAnchors` chạy cho **mọi** step, kể cả step không scene: một merge_ref
+    // mang bảng anchors là lời hứa highlight không bao giờ thực hiện được, và
+    // trước đây nó thoát kiểm chỉ vì đứng nhầm trong nhánh `if (step.scene)`.
+    checkAnchors(step, step.scene, path, engines, issues);
     if (step.scene) {
-      checkAnchors(step, step.scene, path, engines, issues);
       checkSceneBounds(step.scene, `${path}/scene`, engines, issues);
     }
     checkBijection(step, path, engines, issues);
@@ -516,12 +519,23 @@ function checkChoreography(
       }
     });
 
+    /**
+     * Hợp đồng đích của `move`/`morph` — chép từ tầng render, không phỏng đoán:
+     * renderer đọc `from` **thay** `to` khi cả hai có mặt (`comesFrom` thắng,
+     * `towards` bị lờ). Nên "có đích" nghĩa là *ít nhất một trong hai*, và khai
+     * cả hai là một trường chết trỏ lạc hướng người đọc file.
+     *
+     * `from` trước đây không được kiểm **một đường nào** trong khi `to` được kiểm
+     * bốn đường — cùng một chỗ lệch nội bộ như anchor hai pane (M66): trường sinh
+     * sau (CHO-12) chưa từng được lớp kiểm sinh trước nhìn thấy. `from` trỏ id ma
+     * thì render thành no-op im lặng — đúng họ anchor rot.
+     */
     const needsTarget = phase.kind === 'move' || phase.kind === 'morph';
-    if (needsTarget && phase.to === undefined) {
+    if (needsTarget && phase.to === undefined && phase.from === undefined) {
       issues.push({
         code: 'structure/phase-missing-to',
         severity: 'error',
-        message: `Phase "${phase.id}" kiểu "${phase.kind}" nhưng không khai \`to\`: không biết đi đâu`,
+        message: `Phase "${phase.id}" kiểu "${phase.kind}" không khai \`to\` lẫn \`from\`: không biết đi đâu hay tới từ đâu`,
         path: `${at}/to`,
       });
     } else if (!needsTarget && phase.to !== undefined) {
@@ -531,6 +545,24 @@ function checkChoreography(
         message: `Phase "${phase.id}" kiểu "${phase.kind}" khai \`to\` nhưng kiểu này không dùng tới`,
         path: `${at}/to`,
         hint: 'Có lẽ định dùng "move" hoặc "morph"',
+      });
+    }
+
+    if (!needsTarget && phase.from !== undefined) {
+      issues.push({
+        code: 'structure/phase-stray-from',
+        severity: 'warning',
+        message: `Phase "${phase.id}" kiểu "${phase.kind}" khai \`from\` nhưng kiểu này không dùng tới`,
+        path: `${at}/from`,
+        hint: 'Có lẽ định dùng "move" hoặc "morph"',
+      });
+    } else if (needsTarget && phase.to !== undefined && phase.from !== undefined) {
+      issues.push({
+        code: 'structure/phase-dead-to',
+        severity: 'warning',
+        message: `Phase "${phase.id}" khai cả \`to\` lẫn \`from\` — renderer dùng \`from\`, \`to\` là dữ liệu chết`,
+        path: `${at}/to`,
+        hint: 'CHO-12: `to` là "vật này rời chỗ", `from` là "vật này đến" — chọn đúng một câu chuyện',
       });
     }
 
@@ -548,6 +580,26 @@ function checkChoreography(
           severity: 'warning',
           message: `Phase "${phase.id}" đưa "${phase.to}" về chính chỗ nó đang đứng`,
           path: `${at}/to`,
+          hint: 'Pha chạy đủ thời lượng mà không có gì chuyển động — thời gian chết',
+        });
+      }
+    }
+
+    if (phase.from !== undefined) {
+      if (!known.has(phase.from)) {
+        issues.push({
+          code: 'structure/phase-unknown-element',
+          severity: 'error',
+          message: `Phase "${phase.id}" bay tới từ element "${phase.from}" không có trong scene`,
+          path: `${at}/from`,
+          hint: 'Render sẽ thành no-op im lặng: không có hộp xuất phát thì không có gì bay',
+        });
+      } else if (phase.targets.includes(phase.from)) {
+        issues.push({
+          code: 'structure/phase-self-target',
+          severity: 'warning',
+          message: `Phase "${phase.id}" cho "${phase.from}" bay tới từ chính chỗ nó đang đứng`,
+          path: `${at}/from`,
           hint: 'Pha chạy đủ thời lượng mà không có gì chuyển động — thời gian chết',
         });
       }
@@ -585,7 +637,7 @@ function checkChoreography(
  */
 function checkAnchors(
   step: Step,
-  scene: Scene,
+  scene: Scene | undefined,
   path: string,
   engines: EngineRegistry,
   issues: ValidationIssue[],
@@ -593,6 +645,39 @@ function checkAnchors(
   const anchors = step.anchors ?? {};
   const spans = step.narrative ? parseAnchorMarkup(step.narrative.vi) : [];
   const usedKeys = new Set(spans.map((s) => s.key));
+
+  // Chiều narrative → bảng không cần scene: [[key]] trỏ vào bảng anchors, không
+  // trỏ vào element. Nó phải chạy trước early-return bên dưới, không thì một
+  // merge_ref có markup lạc trong narrative thoát kiểm.
+  for (const span of spans) {
+    if (!(span.key in anchors)) {
+      issues.push({
+        code: 'anchor/undeclared-key',
+        severity: 'error',
+        message: `Narrative dùng [[${span.key}|…]] nhưng bảng anchors không có khoá này`,
+        path: `${path}/anchors`,
+      });
+    }
+  }
+
+  /**
+   * Step không scene (merge_ref) mà khai anchors: không có element nào để trỏ
+   * tới, mọi id trong bảng đều là lời hứa suông. Báo **một** lỗi cho cả bảng
+   * thay vì một lỗi mỗi id — chẩn đoán đúng là "bảng này không được phép ở
+   * đây", không phải "id này gõ sai".
+   */
+  if (!scene) {
+    if (Object.keys(anchors).length > 0) {
+      issues.push({
+        code: 'anchor/without-scene',
+        severity: 'error',
+        message: `Step "${step.id}" không có scene nhưng khai ${Object.keys(anchors).length} anchor`,
+        path: `${path}/anchors`,
+        hint: 'merge_ref là con trỏ thuần — narrative của nó không neo được vào hình nào',
+      });
+    }
+    return;
+  }
 
   /**
    * Id tra được gồm **cả hai pane** (ANC-05, M66).
@@ -620,17 +705,6 @@ function checkAnchors(
   // ấy thuộc về pane kia.
   const undrawn = engines.get(scene.engine)?.undrawnElementIds?.(scene) ?? new Set<string>();
   const otherPane = step.bijection ? knownIds(step.bijection.scene, engines) : new Set<string>();
-
-  for (const span of spans) {
-    if (!(span.key in anchors)) {
-      issues.push({
-        code: 'anchor/undeclared-key',
-        severity: 'error',
-        message: `Narrative dùng [[${span.key}|…]] nhưng bảng anchors không có khoá này`,
-        path: `${path}/anchors`,
-      });
-    }
-  }
 
   for (const [key, anchor] of Object.entries(anchors)) {
     if (!usedKeys.has(key)) {

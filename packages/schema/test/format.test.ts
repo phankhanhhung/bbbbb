@@ -52,3 +52,49 @@ describe('DAT-03 — thứ tự khoá ổn định', () => {
     expect(out.indexOf('schema_version')).toBeLessThan(out.indexOf('zz_custom'));
   });
 });
+
+/**
+ * Hai chỗ `nestedShape` từng bỏ quên — cùng căn bệnh công dân hạng hai mà M66
+ * chữa ở lớp kiểm, lần này ở bộ định dạng: cấu trúc lồng không có tên trong bảng
+ * thì toàn bộ ruột của nó rơi về alphabet, và diff của đúng phần đó thành khó đọc.
+ */
+describe('DAT-03 — shape lồng không rơi về alphabet', () => {
+  interface LooseStep {
+    bijection?: { scene: { elements: Record<string, unknown>[] } & Record<string, unknown> };
+    choreography?: { phases: Record<string, unknown>[] };
+  }
+  const stepsOf = (formatted: string): LooseStep[] =>
+    (JSON.parse(formatted) as { solutions: { steps: LooseStep[] }[] }).solutions[0]!.steps;
+
+  it('ruột pane phải của bijection xếp theo shape scene, không theo alphabet', () => {
+    const step = stepsOf(formatProblem(load('rooks-permutation-bijection'))).find(
+      (s) => s.bijection,
+    )!;
+    const keys = Object.keys(step.bijection!.scene);
+
+    // Alphabet sẽ cho config < elements < engine; shape scene đòi engine đứng đầu.
+    expect(keys.indexOf('engine')).toBeLessThan(keys.indexOf('config'));
+    expect(keys.indexOf('config')).toBeLessThan(keys.indexOf('elements'));
+    expect(Object.keys(step.bijection!.scene.elements[0]!)[0]).toBe('id');
+  });
+
+  it('phase xếp id/kind/targets trước — không phải anchor đứng đầu theo alphabet', () => {
+    const phase = stepsOf(formatProblem(load('erase-residue-classes-game'))).flatMap(
+      (s) => s.choreography?.phases ?? [],
+    )[0]!;
+    const keys = Object.keys(phase);
+
+    expect(keys.indexOf('id')).toBeLessThan(keys.indexOf('anchor'));
+    expect(keys.indexOf('kind')).toBeLessThan(keys.indexOf('at'));
+  });
+
+  it('round-trip vẫn đứng vững trên bài có bijection lẫn choreography', () => {
+    for (const name of ['rooks-permutation-bijection', 'erase-residue-classes-game']) {
+      const problem = load(name);
+      const once = formatProblem(problem);
+
+      expect(formatProblem(JSON.parse(once))).toBe(once);
+      expect(JSON.parse(once)).toEqual(problem);
+    }
+  });
+});

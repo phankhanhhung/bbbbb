@@ -268,59 +268,59 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a2",
-                "at": 0,
-                "duration": 600,
-                "hold": true,
                 "id": "f0",
                 "kind": "focus",
+                "targets": [
+                  "face-0"
+                ],
+                "at": 0,
+                "duration": 600,
+                "anchor": "a2",
                 "label": {
                   "vi": "mặt thứ 1"
                 },
-                "targets": [
-                  "face-0"
-                ]
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 700,
-                "duration": 600,
-                "hold": true,
                 "id": "f1",
                 "kind": "focus",
+                "targets": [
+                  "face-1"
+                ],
+                "at": 700,
+                "duration": 600,
+                "anchor": "a2",
                 "label": {
                   "vi": "mặt thứ 2"
                 },
-                "targets": [
-                  "face-1"
-                ]
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 1400,
-                "duration": 600,
-                "hold": true,
                 "id": "f2",
                 "kind": "focus",
+                "targets": [
+                  "face-2"
+                ],
+                "at": 1400,
+                "duration": 600,
+                "anchor": "a2",
                 "label": {
                   "vi": "mặt thứ 3"
                 },
-                "targets": [
-                  "face-2"
-                ]
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 2100,
-                "duration": 600,
                 "id": "f3",
                 "kind": "focus",
-                "label": {
-                  "vi": "mặt thứ 4"
-                },
                 "targets": [
                   "face-3"
-                ]
+                ],
+                "at": 2100,
+                "duration": 600,
+                "anchor": "a2",
+                "label": {
+                  "vi": "mặt thứ 4"
+                }
               }
             ]
           },

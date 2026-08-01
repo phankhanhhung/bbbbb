@@ -294,103 +294,103 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a2",
-                "at": 0,
-                "duration": 600,
-                "hold": true,
                 "id": "cut00",
                 "kind": "hide",
-                "label": {
-                  "vi": "bóc đỉnh 4"
-                },
                 "targets": [
                   "v4",
                   "ev2v4"
-                ]
+                ],
+                "at": 0,
+                "duration": 600,
+                "anchor": "a2",
+                "label": {
+                  "vi": "bóc đỉnh 4"
+                },
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 700,
-                "duration": 600,
                 "id": "cut01",
                 "kind": "hide",
-                "label": {
-                  "vi": "bóc đỉnh 5"
-                },
                 "targets": [
                   "v5",
                   "ev2v5"
-                ]
+                ],
+                "at": 700,
+                "duration": 600,
+                "anchor": "a2",
+                "label": {
+                  "vi": "bóc đỉnh 5"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 1400,
-                "duration": 600,
                 "id": "cut02",
                 "kind": "hide",
-                "label": {
-                  "vi": "bóc đỉnh 2"
-                },
                 "targets": [
                   "v2",
                   "ev1v2"
-                ]
+                ],
+                "at": 1400,
+                "duration": 600,
+                "anchor": "a2",
+                "label": {
+                  "vi": "bóc đỉnh 2"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 2100,
-                "duration": 600,
                 "id": "cut03",
                 "kind": "hide",
-                "label": {
-                  "vi": "bóc đỉnh 1"
-                },
                 "targets": [
                   "v1",
                   "ev1v3"
-                ]
+                ],
+                "at": 2100,
+                "duration": 600,
+                "anchor": "a2",
+                "label": {
+                  "vi": "bóc đỉnh 1"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 2800,
-                "duration": 600,
                 "id": "cut04",
                 "kind": "hide",
-                "label": {
-                  "vi": "bóc đỉnh 7"
-                },
                 "targets": [
                   "v7",
                   "ev3v7"
-                ]
+                ],
+                "at": 2800,
+                "duration": 600,
+                "anchor": "a2",
+                "label": {
+                  "vi": "bóc đỉnh 7"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 3500,
-                "duration": 600,
                 "id": "cut05",
                 "kind": "hide",
-                "label": {
-                  "vi": "bóc đỉnh 3"
-                },
                 "targets": [
                   "v3",
                   "ev3v6"
-                ]
+                ],
+                "at": 3500,
+                "duration": 600,
+                "anchor": "a2",
+                "label": {
+                  "vi": "bóc đỉnh 3"
+                }
               },
               {
-                "anchor": "a2",
-                "at": 4200,
-                "duration": 600,
                 "id": "cut06",
                 "kind": "hide",
-                "label": {
-                  "vi": "bóc đỉnh 6"
-                },
                 "targets": [
                   "v6",
                   "ev6v8"
-                ]
+                ],
+                "at": 4200,
+                "duration": 600,
+                "anchor": "a2",
+                "label": {
+                  "vi": "bóc đỉnh 6"
+                }
               }
             ]
           },

@@ -112,178 +112,178 @@
               ]
             ],
             "scene": {
+              "engine": "board",
               "config": {
                 "cols": 6,
                 "rows": 6
               },
               "elements": [
                 {
-                  "glyph": "1",
                   "id": "p0-0",
+                  "type": "piece",
+                  "glyph": "1",
                   "kind": "custom",
-                  "pos": [0, 0],
-                  "type": "piece"
+                  "pos": [0, 0]
                 },
                 {
-                  "glyph": "1",
                   "id": "p1-0",
+                  "type": "piece",
+                  "glyph": "1",
                   "kind": "custom",
-                  "pos": [1, 0],
-                  "type": "piece"
+                  "pos": [1, 0]
                 },
                 {
-                  "glyph": "1",
                   "id": "p1-1",
+                  "type": "piece",
+                  "glyph": "1",
                   "kind": "custom",
-                  "pos": [1, 1],
-                  "type": "piece"
+                  "pos": [1, 1]
                 },
                 {
-                  "glyph": "1",
                   "id": "p2-0",
+                  "type": "piece",
+                  "glyph": "1",
                   "kind": "custom",
-                  "pos": [2, 0],
-                  "type": "piece"
+                  "pos": [2, 0]
                 },
                 {
-                  "glyph": "2",
                   "id": "p2-1",
+                  "type": "piece",
+                  "glyph": "2",
                   "kind": "custom",
-                  "pos": [2, 1],
-                  "type": "piece"
+                  "pos": [2, 1]
                 },
                 {
-                  "glyph": "1",
                   "id": "p2-2",
+                  "type": "piece",
+                  "glyph": "1",
                   "kind": "custom",
-                  "pos": [2, 2],
-                  "type": "piece"
+                  "pos": [2, 2]
                 },
                 {
-                  "glyph": "1",
                   "id": "p3-0",
+                  "type": "piece",
+                  "glyph": "1",
                   "kind": "custom",
-                  "pos": [3, 0],
-                  "type": "piece"
+                  "pos": [3, 0]
                 },
                 {
-                  "glyph": "3",
                   "id": "p3-1",
-                  "kind": "custom",
-                  "pos": [3, 1],
-                  "type": "piece"
-                },
-                {
+                  "type": "piece",
                   "glyph": "3",
+                  "kind": "custom",
+                  "pos": [3, 1]
+                },
+                {
                   "id": "p3-2",
+                  "type": "piece",
+                  "glyph": "3",
                   "kind": "custom",
-                  "pos": [3, 2],
-                  "type": "piece"
+                  "pos": [3, 2]
                 },
                 {
-                  "glyph": "1",
                   "id": "p3-3",
+                  "type": "piece",
+                  "glyph": "1",
                   "kind": "custom",
-                  "pos": [3, 3],
-                  "type": "piece"
+                  "pos": [3, 3]
                 },
                 {
-                  "glyph": "1",
                   "id": "p4-0",
+                  "type": "piece",
+                  "glyph": "1",
                   "kind": "custom",
-                  "pos": [4, 0],
-                  "type": "piece"
+                  "pos": [4, 0]
                 },
                 {
-                  "glyph": "4",
                   "id": "p4-1",
-                  "kind": "custom",
-                  "pos": [4, 1],
-                  "type": "piece"
-                },
-                {
-                  "glyph": "6",
-                  "id": "p4-2",
-                  "kind": "custom",
-                  "pos": [4, 2],
-                  "type": "piece"
-                },
-                {
+                  "type": "piece",
                   "glyph": "4",
+                  "kind": "custom",
+                  "pos": [4, 1]
+                },
+                {
+                  "id": "p4-2",
+                  "type": "piece",
+                  "glyph": "6",
+                  "kind": "custom",
+                  "pos": [4, 2]
+                },
+                {
                   "id": "p4-3",
+                  "type": "piece",
+                  "glyph": "4",
                   "kind": "custom",
-                  "pos": [4, 3],
-                  "type": "piece"
+                  "pos": [4, 3]
                 },
                 {
-                  "glyph": "1",
                   "id": "p4-4",
+                  "type": "piece",
+                  "glyph": "1",
                   "kind": "custom",
-                  "pos": [4, 4],
-                  "type": "piece"
+                  "pos": [4, 4]
                 },
                 {
-                  "glyph": "1",
                   "id": "p5-0",
-                  "kind": "custom",
-                  "pos": [5, 0],
-                  "type": "piece"
-                },
-                {
-                  "glyph": "5",
-                  "id": "p5-1",
-                  "kind": "custom",
-                  "pos": [5, 1],
-                  "type": "piece"
-                },
-                {
-                  "glyph": "10",
-                  "id": "p5-2",
-                  "kind": "custom",
-                  "pos": [5, 2],
-                  "type": "piece"
-                },
-                {
-                  "glyph": "10",
-                  "id": "p5-3",
-                  "kind": "custom",
-                  "pos": [5, 3],
-                  "type": "piece"
-                },
-                {
-                  "glyph": "5",
-                  "id": "p5-4",
-                  "kind": "custom",
-                  "pos": [5, 4],
-                  "type": "piece"
-                },
-                {
+                  "type": "piece",
                   "glyph": "1",
-                  "id": "p5-5",
                   "kind": "custom",
-                  "pos": [5, 5],
-                  "type": "piece"
+                  "pos": [5, 0]
                 },
                 {
-                  "cells": [[4, 1]],
+                  "id": "p5-1",
+                  "type": "piece",
+                  "glyph": "5",
+                  "kind": "custom",
+                  "pos": [5, 1]
+                },
+                {
+                  "id": "p5-2",
+                  "type": "piece",
+                  "glyph": "10",
+                  "kind": "custom",
+                  "pos": [5, 2]
+                },
+                {
+                  "id": "p5-3",
+                  "type": "piece",
+                  "glyph": "10",
+                  "kind": "custom",
+                  "pos": [5, 3]
+                },
+                {
+                  "id": "p5-4",
+                  "type": "piece",
+                  "glyph": "5",
+                  "kind": "custom",
+                  "pos": [5, 4]
+                },
+                {
+                  "id": "p5-5",
+                  "type": "piece",
+                  "glyph": "1",
+                  "kind": "custom",
+                  "pos": [5, 5]
+                },
+                {
                   "id": "above-left",
-                  "label": "C(4,1)",
-                  "type": "region"
+                  "type": "region",
+                  "cells": [[4, 1]],
+                  "label": "C(4,1)"
                 },
                 {
-                  "cells": [[4, 2]],
                   "id": "above-right",
-                  "label": "C(4,2)",
-                  "type": "region"
+                  "type": "region",
+                  "cells": [[4, 2]],
+                  "label": "C(4,2)"
                 },
                 {
-                  "cells": [[5, 2]],
                   "id": "target",
-                  "label": "C(5,2)",
-                  "type": "region"
+                  "type": "region",
+                  "cells": [[5, 2]],
+                  "label": "C(5,2)"
                 }
-              ],
-              "engine": "board"
+              ]
             }
           },
           "alt_text": {

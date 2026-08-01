@@ -31,7 +31,12 @@ export const Invariant = Type.Object(
 
 export const SandboxConfig = Type.Object(
   {
-    validators: Type.Array(Type.String({ minLength: 1 }), { default: [] }),
+    /**
+     * `Optional` thật thay vì `default: []`: Ajv của kho không bật `useDefaults`,
+     * nên cái default kia chưa từng chạy — nó chỉ làm trường *trông* như tuỳ chọn
+     * trong khi validate đòi có mặt. Mọi chỗ đọc đã `?? []` sẵn.
+     */
+    validators: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
     /** SBX-03: điều kiện "đã xong" cho challenge mode. */
     goal_expr: Type.Optional(Type.String({ minLength: 1 })),
   },
@@ -115,18 +120,6 @@ export const Problem = Type.Object(
       maxItems: GLOBAL_BOUNDS.maxSolutionsPerProblem,
     }),
     sandbox: Type.Optional(SandboxConfig),
-    assets: Type.Optional(
-      Type.Array(
-        Type.Object(
-          {
-            id: Slug,
-            path: Type.String({ minLength: 1 }),
-            alt: Type.Optional(LangString),
-          },
-          { additionalProperties: false },
-        ),
-      ),
-    ),
 
     /**
      * REN-02: step được chọn làm ảnh đại diện khi build OG card.
@@ -186,7 +179,6 @@ export interface Problem {
   updated?: string;
   invariants?: Invariant[];
   solutions: Solution[];
-  sandbox?: { validators: string[]; goal_expr?: string };
-  assets?: { id: string; path: string; alt?: LangString }[];
+  sandbox?: { validators?: string[]; goal_expr?: string };
   og_step_ref?: { sol_id: string; step_id: string };
 }

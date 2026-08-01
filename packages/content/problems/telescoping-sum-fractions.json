@@ -508,69 +508,69 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a5",
-                "at": 0,
-                "duration": 500,
-                "hold": true,
                 "id": "p1",
                 "kind": "hide",
-                "label": {
-                  "vi": "cặp thứ nhất"
-                },
                 "targets": [
                   "e1m",
                   "e2",
                   "e2p",
                   "e3"
-                ]
+                ],
+                "at": 0,
+                "duration": 500,
+                "anchor": "a5",
+                "label": {
+                  "vi": "cặp thứ nhất"
+                },
+                "hold": true
               },
               {
-                "anchor": "a5",
-                "at": 600,
-                "duration": 500,
-                "hold": true,
                 "id": "p2",
                 "kind": "hide",
-                "label": {
-                  "vi": "cặp thứ hai"
-                },
                 "targets": [
                   "e3m",
                   "e4",
                   "e4p",
                   "e5"
-                ]
+                ],
+                "at": 600,
+                "duration": 500,
+                "anchor": "a5",
+                "label": {
+                  "vi": "cặp thứ hai"
+                },
+                "hold": true
               },
               {
-                "anchor": "a5",
-                "at": 1200,
-                "duration": 500,
-                "hold": true,
                 "id": "p3",
                 "kind": "hide",
-                "label": {
-                  "vi": "cặp thứ ba"
-                },
                 "targets": [
                   "e5m",
                   "e6",
                   "e6p",
                   "e7"
-                ]
+                ],
+                "at": 1200,
+                "duration": 500,
+                "anchor": "a5",
+                "label": {
+                  "vi": "cặp thứ ba"
+                },
+                "hold": true
               },
               {
-                "anchor": "a6",
-                "at": 1800,
-                "duration": 400,
                 "id": "p4",
                 "kind": "focus",
-                "label": {
-                  "vi": "hai đầu mút sống sót"
-                },
                 "targets": [
                   "e1",
                   "e8"
-                ]
+                ],
+                "at": 1800,
+                "duration": 400,
+                "anchor": "a6",
+                "label": {
+                  "vi": "hai đầu mút sống sót"
+                }
               }
             ]
           },

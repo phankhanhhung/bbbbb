@@ -149,6 +149,7 @@
               ]
             ],
             "scene": {
+              "engine": "sequence",
               "config": {
                 "caption": "Xâu $RRRUUU$ hoán vị",
                 "mode": "sequence",
@@ -156,55 +157,54 @@
               },
               "elements": [
                 {
-                  "color_class": 1,
                   "id": "w0",
+                  "type": "item",
+                  "color_class": 1,
                   "label": "R",
                   "pos": 0,
-                  "type": "item",
                   "value": 1
                 },
                 {
-                  "color_class": 1,
                   "id": "w1",
+                  "type": "item",
+                  "color_class": 1,
                   "label": "R",
                   "pos": 1,
-                  "type": "item",
                   "value": 1
                 },
                 {
-                  "color_class": 4,
                   "id": "w2",
+                  "type": "item",
+                  "color_class": 4,
                   "label": "U",
                   "pos": 2,
-                  "type": "item",
                   "value": 0
                 },
                 {
-                  "color_class": 1,
                   "id": "w3",
+                  "type": "item",
+                  "color_class": 1,
                   "label": "R",
                   "pos": 3,
-                  "type": "item",
                   "value": 1
                 },
                 {
-                  "color_class": 4,
                   "id": "w4",
+                  "type": "item",
+                  "color_class": 4,
                   "label": "U",
                   "pos": 4,
-                  "type": "item",
                   "value": 0
                 },
                 {
-                  "color_class": 4,
                   "id": "w5",
+                  "type": "item",
+                  "color_class": 4,
                   "label": "U",
                   "pos": 5,
-                  "type": "item",
                   "value": 0
                 }
-              ],
-              "engine": "sequence"
+              ]
             }
           },
           "alt_text": {
@@ -318,6 +318,7 @@
               ]
             ],
             "scene": {
+              "engine": "sequence",
               "config": {
                 "caption": "Xâu $RRRUUU$ hoán vị",
                 "mode": "sequence",
@@ -325,55 +326,54 @@
               },
               "elements": [
                 {
-                  "color_class": 1,
                   "id": "w0",
+                  "type": "item",
+                  "color_class": 1,
                   "label": "R",
                   "pos": 0,
-                  "type": "item",
                   "value": 1
                 },
                 {
-                  "color_class": 4,
                   "id": "w1",
+                  "type": "item",
+                  "color_class": 4,
                   "label": "U",
                   "pos": 1,
-                  "type": "item",
                   "value": 0
                 },
                 {
-                  "color_class": 1,
                   "id": "w2",
+                  "type": "item",
+                  "color_class": 1,
                   "label": "R",
                   "pos": 2,
-                  "type": "item",
                   "value": 1
                 },
                 {
-                  "color_class": 1,
                   "id": "w3",
+                  "type": "item",
+                  "color_class": 1,
                   "label": "R",
                   "pos": 3,
-                  "type": "item",
                   "value": 1
                 },
                 {
-                  "color_class": 4,
                   "id": "w4",
+                  "type": "item",
+                  "color_class": 4,
                   "label": "U",
                   "pos": 4,
-                  "type": "item",
                   "value": 0
                 },
                 {
-                  "color_class": 4,
                   "id": "w5",
+                  "type": "item",
+                  "color_class": 4,
                   "label": "U",
                   "pos": 5,
-                  "type": "item",
                   "value": 0
                 }
-              ],
-              "engine": "sequence"
+              ]
             }
           },
           "alt_text": {
@@ -491,6 +491,7 @@
               ]
             ],
             "scene": {
+              "engine": "sequence",
               "config": {
                 "caption": "Xâu $RRRUUU$ hoán vị",
                 "mode": "sequence",
@@ -498,55 +499,54 @@
               },
               "elements": [
                 {
-                  "color_class": 1,
                   "id": "w0",
+                  "type": "item",
+                  "color_class": 1,
                   "label": "R",
                   "pos": 0,
-                  "type": "item",
                   "value": 1
                 },
                 {
-                  "color_class": 1,
                   "id": "w1",
+                  "type": "item",
+                  "color_class": 1,
                   "label": "R",
                   "pos": 1,
-                  "type": "item",
                   "value": 1
                 },
                 {
-                  "color_class": 4,
                   "id": "w2",
+                  "type": "item",
+                  "color_class": 4,
                   "label": "U",
                   "pos": 2,
-                  "type": "item",
                   "value": 0
                 },
                 {
-                  "color_class": 1,
                   "id": "w3",
+                  "type": "item",
+                  "color_class": 1,
                   "label": "R",
                   "pos": 3,
-                  "type": "item",
                   "value": 1
                 },
                 {
-                  "color_class": 4,
                   "id": "w4",
+                  "type": "item",
+                  "color_class": 4,
                   "label": "U",
                   "pos": 4,
-                  "type": "item",
                   "value": 0
                 },
                 {
-                  "color_class": 4,
                   "id": "w5",
+                  "type": "item",
+                  "color_class": 4,
                   "label": "U",
                   "pos": 5,
-                  "type": "item",
                   "value": 0
                 }
-              ],
-              "engine": "sequence"
+              ]
             }
           },
           "alt_text": {

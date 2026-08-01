@@ -788,15 +788,8 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a1",
-                "at": 0,
-                "duration": 800,
-                "hold": true,
                 "id": "p0",
                 "kind": "show",
-                "label": {
-                  "vi": "bội của 2"
-                },
                 "targets": [
                   "strike-0-3",
                   "strike-0-5",
@@ -847,18 +840,18 @@
                   "strike-9-5",
                   "strike-9-7",
                   "strike-9-9"
-                ]
+                ],
+                "at": 0,
+                "duration": 800,
+                "anchor": "a1",
+                "label": {
+                  "vi": "bội của 2"
+                },
+                "hold": true
               },
               {
-                "anchor": "a2",
-                "at": 900,
-                "duration": 800,
-                "hold": true,
                 "id": "p1",
                 "kind": "show",
-                "label": {
-                  "vi": "bội của 3"
-                },
                 "targets": [
                   "strike-0-8",
                   "strike-1-4",
@@ -876,18 +869,18 @@
                   "strike-8-6",
                   "strike-9-2",
                   "strike-9-8"
-                ]
+                ],
+                "at": 900,
+                "duration": 800,
+                "anchor": "a2",
+                "label": {
+                  "vi": "bội của 3"
+                },
+                "hold": true
               },
               {
-                "anchor": "a3",
-                "at": 1800,
-                "duration": 800,
-                "hold": true,
                 "id": "p2",
                 "kind": "show",
-                "label": {
-                  "vi": "bội của 5"
-                },
                 "targets": [
                   "strike-2-4",
                   "strike-3-4",
@@ -895,22 +888,29 @@
                   "strike-6-4",
                   "strike-8-4",
                   "strike-9-4"
-                ]
+                ],
+                "at": 1800,
+                "duration": 800,
+                "anchor": "a3",
+                "label": {
+                  "vi": "bội của 5"
+                },
+                "hold": true
               },
               {
-                "anchor": "a4",
-                "at": 2700,
-                "duration": 800,
                 "id": "p3",
                 "kind": "show",
-                "label": {
-                  "vi": "bội của 7"
-                },
                 "targets": [
                   "strike-4-8",
                   "strike-7-6",
                   "strike-9-0"
-                ]
+                ],
+                "at": 2700,
+                "duration": 800,
+                "anchor": "a4",
+                "label": {
+                  "vi": "bội của 7"
+                }
               }
             ]
           },

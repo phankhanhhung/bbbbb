@@ -83,7 +83,7 @@ function checkSandbox(problem: Problem, engines: DslRegistry): ValidationIssue[]
   const engineId = rootScene?.engine;
   const dsl = engineId ? engines[engineId] : undefined;
 
-  sandbox.validators.forEach((id, i) => {
+  (sandbox.validators ?? []).forEach((id, i) => {
     const fragment = engineId ? dsl?.fragment : undefined;
     if (!fragment) return;
 

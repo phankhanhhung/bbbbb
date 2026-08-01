@@ -142,7 +142,7 @@ export function measure(
         // Ép sandbox lên mọi bài chỉ đẻ ra đồ chơi vô nghĩa cho đủ chỉ tiêu, mà
         // một sandbox không ai muốn nghịch còn tệ hơn không có sandbox.
         (p.kind ?? 'illustration') === 'illustration' ||
-        (p.sandbox?.validators.length ?? 0) > 0 ||
+        (p.sandbox?.validators?.length ?? 0) > 0 ||
         p.sandbox?.goal_expr !== undefined,
       true,
     ),

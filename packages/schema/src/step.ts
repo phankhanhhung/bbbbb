@@ -184,8 +184,17 @@ export const Step = Type.Object(
     merge_target: Type.Optional(EntityId),
 
     narrative: Type.Optional(LangString),
+    /**
+     * `additionalProperties: false` trên Record khoá-pattern là **bắt buộc**, không
+     * phải trang trí: JSON Schema chỉ kiểm các khoá *khớp* pattern, khoá lệch
+     * pattern mặc định được thả qua cùng giá trị tuỳ ý của nó. Thiếu dòng này,
+     * `anchors: {"BAD-KEY": 42}` đậu validate rồi nổ `TypeError` ở tầng structure —
+     * cửa whitelist (DAT-20) hở đúng một khe.
+     */
     anchors: Type.Optional(
-      Type.Record(Type.String({ pattern: ANCHOR_KEY_PATTERN }), Anchor),
+      Type.Record(Type.String({ pattern: ANCHOR_KEY_PATTERN }), Anchor, {
+        additionalProperties: false,
+      }),
     ),
 
     /** Vắng mặt chỉ hợp lệ với `merge_ref` (node con trỏ, không có hình riêng). */
@@ -199,9 +208,6 @@ export const Step = Type.Object(
      * thật, pha không tràn) kiểm ở tầng structure.
      */
     choreography: Type.Optional(Choreography),
-
-    /** Trạng thái panel nguyên lý gắn với step (invariant strip, partition view...). */
-    widget_state: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
 
     /** NFR-A3. Vắng mặt thì Player sinh fallback tóm tắt đếm element theo loại. */
     alt_text: Type.Optional(LangString),
@@ -279,7 +285,6 @@ export interface Step {
     label_left?: { vi: string; en?: string };
     label_right?: { vi: string; en?: string };
   };
-  widget_state?: Record<string, unknown>;
   alt_text?: { vi: string; en?: string };
   author_notes?: string;
   expects_violation?: string[];

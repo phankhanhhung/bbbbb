@@ -226,59 +226,59 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "b1",
-                "at": 0,
-                "duration": 700,
-                "hold": true,
                 "id": "d0",
                 "kind": "focus",
+                "targets": [
+                  "r1"
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "b1",
                 "label": {
                   "vi": "viết tổng"
                 },
-                "targets": [
-                  "r1"
-                ]
+                "hold": true
               },
               {
-                "anchor": "b2",
-                "at": 800,
-                "duration": 700,
-                "hold": true,
                 "id": "d1",
                 "kind": "focus",
+                "targets": [
+                  "r2"
+                ],
+                "at": 800,
+                "duration": 700,
+                "anchor": "b2",
                 "label": {
                   "vi": "nhân đôi"
                 },
-                "targets": [
-                  "r2"
-                ]
+                "hold": true
               },
               {
-                "anchor": "b3",
-                "at": 1600,
-                "duration": 700,
-                "hold": true,
                 "id": "d2",
                 "kind": "focus",
+                "targets": [
+                  "r3"
+                ],
+                "at": 1600,
+                "duration": 700,
+                "anchor": "b3",
                 "label": {
                   "vi": "trừ theo vế"
                 },
-                "targets": [
-                  "r3"
-                ]
+                "hold": true
               },
               {
-                "anchor": "b4",
-                "at": 2400,
-                "duration": 700,
                 "id": "d3",
                 "kind": "focus",
-                "label": {
-                  "vi": "kết luận"
-                },
                 "targets": [
                   "r4"
-                ]
+                ],
+                "at": 2400,
+                "duration": 700,
+                "anchor": "b4",
+                "label": {
+                  "vi": "kết luận"
+                }
               }
             ]
           },

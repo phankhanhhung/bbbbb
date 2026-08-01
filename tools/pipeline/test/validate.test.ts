@@ -154,6 +154,90 @@ describe('ANC-02 — anchor rot', () => {
   });
 });
 
+/**
+ * Lượt rà trước freeze G-C: các lỗ đóng ở đây đều rẻ trước 1.0.0 và tốn một
+ * major sau nó. Mỗi test dưới đây từng là một đường đi thật cho dữ liệu rác.
+ */
+describe('G-C — schema đóng kín trước freeze', () => {
+  it('khoá anchors lệch pattern bị chặn ở cửa schema, không nổ ở tầng structure', () => {
+    const problem = loadExample();
+    (problem.solutions[0]!.steps[0]!.anchors as Record<string, unknown>)['BAD-KEY'] = 42;
+
+    // Trước fix: JSON Schema chỉ kiểm khoá *khớp* pattern nên cặp này đậu
+    // validate, rồi `anchor.ids.forEach` nổ TypeError ở checkAnchors — một
+    // crash thay vì một lỗi có địa chỉ.
+    expect(codes(problem)).toContain('schema/unknown-field');
+  });
+
+  it('cell_overrides với khoá không phải id ô cũng bị chặn', () => {
+    const problem = loadExample();
+    problem.solutions[0]!.steps[0]!.scene!.config = {
+      rows: 8,
+      cols: 8,
+      cell_overrides: { 'cell-1-x': { color_class: 1 } },
+    };
+
+    expect(codes(problem)).toContain('schema/unknown-field');
+  });
+
+  it('face_colors của graph: khoá lệch pattern bị chặn', () => {
+    const problem = JSON.parse(
+      readFileSync(
+        fileURLToPath(
+          new URL('../../../packages/content/problems/ramsey-3-3-six.json', import.meta.url),
+        ),
+        'utf8',
+      ),
+    ) as Problem;
+    const scene = problem.solutions[0]!.steps[0]!.scene!;
+    (scene.config as Record<string, unknown>)['face_colors'] = { 'Face-1': 2 };
+
+    expect(codes(problem)).toContain('schema/unknown-field');
+  });
+
+  it('widget_state đã gỡ — 0 người dùng, thêm lại là một minor rẻ', () => {
+    const problem = loadExample();
+    (problem.solutions[0]!.steps[0]! as unknown as Record<string, unknown>)['widget_state'] = {
+      foo: 1,
+    };
+
+    expect(codes(problem)).toContain('schema/unknown-field');
+  });
+
+  it('assets đã gỡ — 0 người dùng, và NFR-S1 không có chỗ cho file ngoài', () => {
+    const problem = loadExample();
+    (problem as unknown as Record<string, unknown>)['assets'] = [{ id: 'x', path: 'a.png' }];
+
+    expect(codes(problem)).toContain('schema/unknown-field');
+  });
+
+  it('sandbox không khai validators vẫn hợp lệ — Optional thật thay cho default chết', () => {
+    const problem = loadExample();
+    // Ajv của kho không bật useDefaults, nên `default: []` cũ chưa từng chạy:
+    // trường "có mặc định" mà vắng mặt là lỗi. Đó là một lời hứa sai trong schema.
+    problem.sandbox = {} as Problem['sandbox'];
+
+    expect(validator.validateProblem(problem).issues).toEqual([]);
+  });
+});
+
+describe('DAT-02 — cửa sổ phiên bản có người gác', () => {
+  it('con dấu ngoài cửa sổ đọc được là lỗi ở cửa validate, kèm lời khuyên', () => {
+    const problem = loadExample();
+    problem.schema_version = '9.9.9';
+
+    // Trước fix, `isReadableVersion` tồn tại mà không ai gọi: SEMVER_PATTERN chỉ
+    // kiểm *hình dạng* con dấu, nên file "từ tương lai" đậu validate rồi mới vỡ
+    // ở Player.
+    const issue = validator
+      .validateProblem(problem)
+      .issues.find((i) => i.code === 'version/unreadable');
+
+    expect(issue).toBeDefined();
+    expect(issue!.hint).toContain('migrate');
+  });
+});
+
 describe('DAT-10 — cấu trúc cây', () => {
   it('bắt parent không tồn tại', () => {
     const problem = loadExample();
@@ -239,6 +323,32 @@ describe('merge_ref', () => {
     delete step.narrative;
 
     expect(validator.validateProblem(problem).ok).toBe(true);
+  });
+
+  it('merge_ref mang bảng anchors là lỗi — lời hứa highlight không thực hiện được', () => {
+    const problem = loadExample();
+    const step = problem.solutions[0]!.steps[2]!;
+    step.edge_type = 'merge_ref';
+    step.merge_target = 's0';
+    delete step.scene;
+    // Giữ nguyên anchors: trước fix, checkAnchors đứng trong nhánh `if (step.scene)`
+    // nên bảng này thoát kiểm hoàn toàn — kho hiện 0 bài mắc, siết khi còn rẻ.
+
+    expect(codes(problem)).toContain('anchor/without-scene');
+  });
+
+  it('narrative của merge_ref dùng [[key]] không khai vẫn bị bắt', () => {
+    const problem = loadExample();
+    const step = problem.solutions[0]!.steps[2]!;
+    step.edge_type = 'merge_ref';
+    step.merge_target = 's0';
+    delete step.scene;
+    delete step.anchors;
+    step.narrative = { vi: 'Xem [[k1|bước đầu]].' };
+
+    // Chiều narrative → bảng không cần scene, nên nó không được phép nấp sau
+    // early-return của bước "không scene thì thôi".
+    expect(codes(problem)).toContain('anchor/undeclared-key');
   });
 });
 
@@ -497,6 +607,50 @@ describe('PRN-04 — view song ánh', () => {
         .validateProblem(withPhases(morph({ kind: 'focus' })))
         .issues.find((i) => i.code === 'structure/phase-stray-to');
       expect(stray?.severity).toBe('warning');
+    });
+
+    /**
+     * CHO-12 — `from` được kiểm **cùng bốn đường** với `to`.
+     *
+     * Trước lượt này `to` có bốn lớp kiểm còn `from` có đúng không lớp nào —
+     * trường sinh sau chưa từng được lớp kiểm sinh trước nhìn thấy, cùng căn
+     * bệnh công dân hạng hai mà M66 chữa cho pane phải.
+     */
+    it('CHO-12 — morph chỉ có `from` là hợp lệ: renderer đọc `from` thay `to`', () => {
+      const fromOnly = morph({ from: 'b1' });
+      delete fromOnly['to'];
+
+      expect(validator.validateProblem(withPhases(fromOnly)).issues).toEqual([]);
+    });
+
+    it('`from` trỏ id ma là lỗi — render sẽ thành no-op im lặng', () => {
+      const ghost = morph({ from: 'khong-ton-tai' });
+      delete ghost['to'];
+
+      expect(codes(withPhases(ghost))).toContain('structure/phase-unknown-element');
+    });
+
+    it('khai cả `to` lẫn `from` là cảnh báo: renderer lờ `to`, nó thành dữ liệu chết', () => {
+      const both = validator
+        .validateProblem(withPhases(morph({ from: 'b1' })))
+        .issues.find((i) => i.code === 'structure/phase-dead-to');
+
+      expect(both?.severity).toBe('warning');
+    });
+
+    it('kiểu không dùng `from` mà khai là cảnh báo lạc chỗ', () => {
+      const stray = validator
+        .validateProblem(withPhases(morph({ kind: 'focus', from: 'b1' })))
+        .issues.find((i) => i.code === 'structure/phase-stray-from');
+
+      expect(stray?.severity).toBe('warning');
+    });
+
+    it('`from` là chính target — không có gì bay, thời gian chết', () => {
+      const self = morph({ from: 'x1' });
+      delete self['to'];
+
+      expect(codes(withPhases(self))).toContain('structure/phase-self-target');
     });
 
     it('bắt id pha trùng nhau', () => {

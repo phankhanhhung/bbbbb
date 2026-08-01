@@ -154,6 +154,10 @@ export const BoardConfig = Type.Object(
           },
           { additionalProperties: false },
         ),
+        // Khoá lệch pattern phải bị CHẶN chứ không phải thả qua: JSON Schema chỉ
+        // kiểm khoá khớp `patternProperties`, nên thiếu dòng này thì
+        // `"cell-1-x": "rác"` đậu validate và trôi thẳng xuống renderer.
+        { additionalProperties: false },
       ),
     ),
   },

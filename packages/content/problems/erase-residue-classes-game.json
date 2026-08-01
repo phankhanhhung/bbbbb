@@ -114,19 +114,19 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a1",
-                "at": 0,
-                "duration": 700,
                 "id": "p0",
                 "kind": "show",
-                "label": {
-                  "vi": "xoá lớp thặng dư 3 mod 4"
-                },
                 "targets": [
                   "strike-0-2",
                   "strike-0-6",
                   "strike-0-10"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "xoá lớp thặng dư 3 mod 4"
+                }
               }
             ]
           },
@@ -547,48 +547,48 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a2",
-                "at": 0,
-                "duration": 700,
-                "hold": true,
                 "id": "p0",
                 "kind": "show",
-                "label": {
-                  "vi": "Geoff chặt bên trong nửa lẻ"
-                },
                 "targets": [
                   "strike-0-0",
                   "strike-0-1"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "Geoff chặt bên trong nửa lẻ"
+                },
+                "hold": true
               },
               {
-                "anchor": "a1",
-                "at": 900,
-                "duration": 700,
-                "hold": true,
                 "id": "p1",
                 "kind": "show",
-                "label": {
-                  "vi": "còn lại một lá — Ceri xoá trọn nửa kia"
-                },
                 "targets": [
                   "strike-1-0",
                   "strike-1-1",
                   "strike-1-2"
-                ]
+                ],
+                "at": 900,
+                "duration": 700,
+                "anchor": "a1",
+                "label": {
+                  "vi": "còn lại một lá — Ceri xoá trọn nửa kia"
+                },
+                "hold": true
               },
               {
-                "anchor": "a3",
-                "at": 1800,
-                "duration": 700,
                 "id": "p2",
                 "kind": "show",
-                "label": {
-                  "vi": "Geoff buộc phải xoá số 3 — và thua"
-                },
                 "targets": [
                   "strike-0-2"
-                ]
+                ],
+                "at": 1800,
+                "duration": 700,
+                "anchor": "a3",
+                "label": {
+                  "vi": "Geoff buộc phải xoá số 3 — và thua"
+                }
               }
             ]
           },
@@ -631,17 +631,17 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a1",
-                "at": 0,
-                "duration": 600,
                 "id": "p0",
                 "kind": "show",
-                "label": {
-                  "vi": "Geoff buộc phải xoá số 1"
-                },
                 "targets": [
                   "strike-0-0"
-                ]
+                ],
+                "at": 0,
+                "duration": 600,
+                "anchor": "a1",
+                "label": {
+                  "vi": "Geoff buộc phải xoá số 1"
+                }
               }
             ]
           },
@@ -724,17 +724,17 @@
           "choreography": {
             "phases": [
               {
-                "anchor": "a2",
-                "at": 0,
-                "duration": 700,
                 "id": "p0",
                 "kind": "show",
-                "label": {
-                  "vi": "N = 7: Geoff xoá đúng số 7"
-                },
                 "targets": [
                   "strike-0-3"
-                ]
+                ],
+                "at": 0,
+                "duration": 700,
+                "anchor": "a2",
+                "label": {
+                  "vi": "N = 7: Geoff xoá đúng số 7"
+                }
               }
             ]
           },
