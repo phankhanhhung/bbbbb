@@ -48,6 +48,15 @@ export interface LoadedEngine {
    * mọi thứ cần từ M46 — mục này chỉ là chỗ đem nó ra dùng.
    */
   readonly lineage?: (scene: Scene, elementId: string) => ReadonlySet<string> | null;
+  /**
+   * Chạm vào một lời cảnh báo → **điểm cụ thể** làm nó gãy (AL-14).
+   *
+   * Anh em của `lineage` và cùng đi qua một chỗ chạm: `lineage` trả lời *"cái này từ
+   * đâu ra"*, `incident` trả lời *"thì sao nếu vi phạm"*. `null` là "không có gì để
+   * kể ở đây" — kể cả khi điều kiện **không thể** bị vi phạm (như $2^x > 0$), và im
+   * lặng ở đó là câu trả lời đúng chứ không phải một thiếu sót.
+   */
+  readonly incident?: (scene: Scene, elementId: string) => { text: string } | null;
   /** BD-06 — đếm ô theo color_class. Chỉ engine dạng lưới có. */
   colorSummary?(scene: Scene): Map<number, number>;
   /** BD-03 — độ phủ. Chỉ engine dạng lưới có. */
@@ -173,6 +182,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       resolveValidator: module.resolveAlgebraValidator,
       choreography: (scene, anchor) => module.algebraChoreography(scene, { anchor }),
       lineage: module.algebraLineage,
+      incident: module.algebraIncident,
     };
   },
 };

@@ -14,7 +14,7 @@ export * from './expr.js';
 export * from './schema.js';
 export { FUNCTIONS, isIntegerOnly, type FnSpec } from './functions.js';
 export { parse, tryParse, unparse, ParseError } from './parse.js';
-export { readAlgebra, type AlgebraModel, type AlgebraRow } from './model.js';
+export { readAlgebra, type AlgebraModel, type AlgebraRow, type Condition } from './model.js';
 export { RULES, ruleById, applicableRules, type Rule } from './rules.js';
 export {
   sameValue,
@@ -27,11 +27,16 @@ export {
   definitelyNonZero,
   definitelyNonNegative,
   definiteSign,
+  guardList,
+  WITNESS_MAX,
   type Guard,
+  type SoundnessResult,
+  type Witness,
 } from './check.js';
 export { layout, boxOf, drawnIds, explainIds, elementId, parseElementId } from './layout.js';
 export { algebraChoreography, choreographyOf, choreographyTargets } from './choreography.js';
 export { algebraLineage, lineageOf } from './provenance.js';
+export { algebraIncident, violationOf } from './incident.js';
 export { toBox, measure, place, textWidth, shrink, glyphBox, FONT, ROW } from './typeset.js';
 export { algebraRenderer } from './render.js';
 
@@ -252,7 +257,7 @@ export function resolveAlgebraValidator(id: string): SceneValidator | null {
           message:
             model.conditions.length === 0
               ? 'Không bước nào cần điều kiện'
-              : `Cần điều kiện: ${model.conditions.join(', ')}`,
+              : `Cần điều kiện: ${model.conditions.map((c) => c.text).join(', ')}`,
         };
       },
     };

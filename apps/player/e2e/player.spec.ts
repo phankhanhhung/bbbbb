@@ -760,3 +760,62 @@ test.describe('Tiểu sử hạng tử (AL-13)', () => {
     await expect(page).toHaveURL(/step=s0/);
   });
 });
+
+test.describe('Chạm vào điều kiện (AL-14)', () => {
+  /** `6a/3a` rút gọn bởi $a$ — dòng đỏ "với $a \ne 0$" nằm dưới hình. */
+  const COND = '/?p=what-disappears-and-why&sol=sol&step=s1';
+
+  /**
+   * Tua timeline tới cuối trước khi chạm.
+   *
+   * Ở khung $0$ dòng đỏ **chưa hiện** (choreography giữ nó lại — đọc kết luận trước
+   * khi nghe kể là mất cả bước lập luận). Playwright vẫn bấm được một node `opacity:
+   * 0`, nên bỏ bước này thì test xanh trên một trạng thái người dùng không với tới —
+   * đúng loại chốt canh rỗng mà M63 vừa dính.
+   */
+  const toEnd = async (page: Page): Promise<void> => {
+    await page.locator('.timeline__scrub').evaluate((el) => {
+      const input = el as HTMLInputElement;
+      input.value = input.max;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.locator('.canvas svg [data-k="note0"]')).toHaveAttribute('opacity', '1');
+  };
+
+  test('chạm dòng đỏ → hiện đúng điểm làm điều kiện gãy', async ({ page }) => {
+    await page.goto(COND);
+    await reveal(page);
+
+    await expect(page.locator('.incident')).toHaveCount(0);
+
+    // Dòng đỏ mang danh tính `note0` — `key`, không phải `data-el` (`render.ts`).
+    await toEnd(page);
+    await page.locator('.canvas svg [data-k="note0"]').click();
+
+    const incident = page.locator('.incident');
+    await expect(incident).toBeVisible();
+    await expect(incident).toContainText('a = 0');
+    await expect(incident).toContainText('chia cho không');
+  });
+
+  test('đổi step thì lời giải thích biến mất — nó nói về step cũ', async ({ page }) => {
+    await page.goto(COND);
+    await reveal(page);
+
+    await toEnd(page);
+    await page.locator('.canvas svg [data-k="note0"]').click();
+    await expect(page.locator('.incident')).toBeVisible();
+
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.incident')).toHaveCount(0);
+  });
+
+  test('bài không có điều kiện thì chạm chỗ nào cũng không ra dòng ấy', async ({ page }) => {
+    await page.goto('/?p=factoring-identities&sol=sol&step=s0');
+    await reveal(page);
+
+    const box = (await page.locator('.canvas').boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page.locator('.incident')).toHaveCount(0);
+  });
+});

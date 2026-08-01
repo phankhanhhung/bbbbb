@@ -384,7 +384,7 @@ describe('bất đẳng thức', () => {
   it('với đẳng thức thì vẫn là chuyện điều kiện, không phải chuyện chiều', () => {
     const m = readAlgebra(scene('a = b', [{ rule: 'mul_both_sides', at: '', arg: 'a - b' }]));
 
-    expect(m.conditions).toEqual(['a − b ≠ 0']);
+    expect(m.conditions.map((c) => c.text)).toEqual(['a − b ≠ 0']);
     expect(m.unsound).toEqual([]);
   });
 });
@@ -505,7 +505,7 @@ describe('AL-08 — cái bẫy nhân hai vế', () => {
     // ấy vẫn hợp lệ khi điều kiện đúng, và vì chỗ này chính là nội dung đáng dạy.
     const m = readAlgebra(scene('a = b', [{ rule: 'mul_both_sides', at: '', arg: 'a - b' }]));
 
-    expect(m.conditions).toEqual(['a − b ≠ 0']);
+    expect(m.conditions.map((c) => c.text)).toEqual(['a − b ≠ 0']);
     expect(renderer.toSvg(scene('a = b', [{ rule: 'mul_both_sides', at: '', arg: 'a - b' }]), ctx)).toContain(
       'a − b ≠ 0',
     );
@@ -514,7 +514,7 @@ describe('AL-08 — cái bẫy nhân hai vế', () => {
   it('nhân với hằng khác 0 thì **không** phiền ai', () => {
     const m = readAlgebra(scene('a = b', [{ rule: 'mul_both_sides', at: '', arg: '3' }]));
 
-    expect(m.conditions).toEqual([]);
+    expect(m.conditions.map((c) => c.text)).toEqual([]);
   });
 
   it('validator nói ra chuyện ấy', () => {
@@ -836,7 +836,7 @@ describe('tập luật mở rộng — quy đồng, nhóm, hoàn thành bình ph
     expect(m.unchecked).toEqual([]);
     // Miền không đổi ⇒ **không** sinh điều kiện. Khác hẳn `cancel_common`, vốn bỏ đi
     // một mẫu và vì thế phải khai.
-    expect(m.conditions).toEqual([]);
+    expect(m.conditions.map((c) => c.text)).toEqual([]);
     expect(sameValue(m.rows[1]!.expr, tree('1/x + 1/y')).ok).toBe(true);
   });
 
@@ -964,8 +964,8 @@ describe('nghiệm ngoại lai và các bước có điều kiện', () => {
     expect(plus.unsound).toEqual([]);
     expect(minus.unsound).toEqual([]);
     // Điều kiện in ra hình phải là **chữ trơn đọc được**, không phải `unparse` dư ngoặc.
-    expect(plus.conditions).toEqual(['x − 2 ≥ 0']);
-    expect(minus.conditions).toEqual(['x − 2 ≤ 0']);
+    expect(plus.conditions.map((c) => c.text)).toEqual(['x − 2 ≥ 0']);
+    expect(minus.conditions.map((c) => c.text)).toEqual(['x − 2 ≤ 0']);
 
     // Chốt canh của chính `guard`: bỏ nó đi thì $|x-2| = x-2$ sai ở mọi điểm $x<2$.
     expect(sameValue(parse('abs(x - 2)', new Minter()), parse('x - 2', new Minter())).ok).toBe(false);
@@ -1706,13 +1706,13 @@ describe('M56 — hàm tổ hợp và bộ bốc điểm số nguyên', () => {
     it('điều kiện in ra khi có biến, **im** khi hiển nhiên đúng', () => {
       // Chữ đỏ thường trực và vô ích là cách nhanh nhất để người ta ngừng đọc mọi chữ
       // đỏ, kể cả dòng thật (M45). "$0 \\le 2 \\le 5$" là một dòng như thế.
-      expect(run('C(n, k)', [{ rule: 'pascal', at: '' }]).conditions).toEqual(['n ≥ 1']);
-      expect(run('C(5, 2)', [{ rule: 'binom_to_factorial', at: '' }]).conditions).toEqual([]);
-      expect(run('C(n, k)', [{ rule: 'binom_to_factorial', at: '' }]).conditions).toEqual([
+      expect(run('C(n, k)', [{ rule: 'pascal', at: '' }]).conditions.map((c) => c.text)).toEqual(['n ≥ 1']);
+      expect(run('C(5, 2)', [{ rule: 'binom_to_factorial', at: '' }]).conditions.map((c) => c.text)).toEqual([]);
+      expect(run('C(n, k)', [{ rule: 'binom_to_factorial', at: '' }]).conditions.map((c) => c.text)).toEqual([
         '0 ≤ k ≤ n',
       ]);
       // Đối xứng đúng ở **mọi** $k$ nguyên nhờ quy ước $C_n^k = 0$ ngoài $[0,n]$.
-      expect(run('C(n, k)', [{ rule: 'binom_symmetry', at: '' }]).conditions).toEqual([]);
+      expect(run('C(n, k)', [{ rule: 'binom_symmetry', at: '' }]).conditions.map((c) => c.text)).toEqual([]);
     });
   });
 
@@ -1894,7 +1894,7 @@ describe('M57 — tổng và tích', () => {
     it('luật tự khai đủ hai điều kiện, và in ra hình', () => {
       const m = run('sum(k, 1, n, k)', [{ rule: 'sum_split', at: '', arg: '3' }]);
       expect(m.unsound).toEqual([]);
-      expect(m.conditions).toEqual(['1 − 1 ≤ 3 ≤ n']);
+      expect(m.conditions.map((c) => c.text)).toEqual(['1 − 1 ≤ 3 ≤ n']);
     });
   });
 
@@ -2290,12 +2290,12 @@ describe('M61 — hàm siêu việt', () => {
     });
 
     it('điều kiện xác định **in ra hình**, và im khi hiển nhiên', () => {
-      expect(run('ln(x*y)', [{ rule: 'log_product', at: '' }]).conditions).toEqual(['x > 0, y > 0']);
+      expect(run('ln(x*y)', [{ rule: 'log_product', at: '' }]).conditions.map((c) => c.text)).toEqual(['x > 0, y > 0']);
       // Hằng dương thì không cần dòng đỏ nào.
-      expect(run('ln(2*3)', [{ rule: 'log_product', at: '' }]).conditions).toEqual([]);
+      expect(run('ln(2*3)', [{ rule: 'log_product', at: '' }]).conditions.map((c) => c.text)).toEqual([]);
       // `exp_log` **không** cần điều kiện: nếu $\\ln a$ đã xác định thì $a > 0$ sẵn rồi.
       // Điều kiện nằm ở dấu $\\ln$ của dòng trước, không ở bước này (lý lẽ `root_pow`).
-      expect(run('exp(ln(x))', [{ rule: 'exp_log', at: '' }]).conditions).toEqual([]);
+      expect(run('exp(ln(x))', [{ rule: 'exp_log', at: '' }]).conditions.map((c) => c.text)).toEqual([]);
     });
 
     it('lấy logarit hai vế **bảo toàn** tập nghiệm, và ghi điều kiện', () => {
@@ -2303,7 +2303,7 @@ describe('M61 — hàm siêu việt', () => {
       // luật này gần như không bao giờ áp được — ghi điều kiện là đúng cơ chế AL-08.
       const m = run('2^x = 8', [{ rule: 'log_both_sides', at: '' }]);
       expect(m.unsound).toEqual([]);
-      expect(m.conditions).toEqual(['2^x > 0']);
+      expect(m.conditions.map((c) => c.text)).toEqual(['2^x > 0']);
     });
   });
 

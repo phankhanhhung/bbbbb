@@ -1,5 +1,13 @@
 import type { Scene } from '@combviz/schema';
-import { evalReal, impliesSolutionSet, sameSolutionSet, sameValue } from './check.js';
+import {
+  evalReal,
+  impliesSolutionSet,
+  sameSolutionSet,
+  sameValue,
+  type Guards,
+  type SoundnessResult,
+  type Witness,
+} from './check.js';
 import {
   Minter,
   allPaths,
@@ -42,6 +50,15 @@ export interface AlgebraRow {
   /** Cây con được áp luật, để tô sáng chỗ đang biến đổi. */
   readonly at: string;
   /**
+   * Kết quả phép kiểm của **chính bước này** (AL-14). `null` khi không hợp đồng nào
+   * chạy — chẳng hạn luật nhóm ★ trên một dòng mà cả hai vế đều không phải vị từ.
+   *
+   * Khác `model.unsound`/`unchecked`: hai danh sách ấy là của cả scene và chỉ nói khi
+   * có chuyện. Dòng nào đã kiểm và **qua** thì trước M64 không để lại dấu vết nào — mà
+   * đó chính là thứ đáng cho người đọc thấy.
+   */
+  readonly evidence: SoundnessResult | null;
+  /**
    * Các **vai** trong hằng đẳng thức của bước này — nhóm $i$ một màu.
    *
    * `TermId` bền qua các dòng, nên cùng một danh sách id tô được **cả** dòng nguồn lẫn
@@ -50,10 +67,22 @@ export interface AlgebraRow {
   readonly roles: ReadonlyArray<readonly TermId[]>;
 }
 
+/**
+ * Một điều kiện tích luỹ (AL-08) — **chữ đi kèm `guard`**.
+ *
+ * Trước M64 đây chỉ là một chuỗi. Chuỗi in ra được nhưng không **hỏi** được: câu
+ * *"với $x \ne 1$"* hiện trên màn hình, còn câu người học thật sự muốn hỏi là *"thì
+ * sao nếu $x = 1$"*, và chỉ `guard` trả lời được.
+ */
+export interface Condition {
+  readonly text: string;
+  readonly guard: Guards | null;
+}
+
 export interface AlgebraModel {
   readonly config: AlgebraConfig;
   readonly rows: readonly AlgebraRow[];
-  readonly conditions: readonly string[];
+  readonly conditions: readonly Condition[];
   /** Bước nào không qua được phép kiểm §6 — **lỗi của engine**, không của tác giả. */
   readonly unsound: readonly string[];
   /**
@@ -244,12 +273,13 @@ export function readAlgebra(scene: Scene): AlgebraModel {
       ruleLabel: null,
       note: null,
       trace: new Map(),
+      evidence: null,
       born: [],
       at: '',
       roles: [],
     },
   ];
-  const conditions: string[] = [];
+  const conditions: Condition[] = [];
   const unsound: string[] = [];
   const unchecked: string[] = [];
   const extraneous: string[] = [];
@@ -295,7 +325,18 @@ export function readAlgebra(scene: Scene): AlgebraModel {
     // nhất bằng nhau**không"; quan hệ thì hỏi "có **cùng tập nghiệm** không". Đặc tả
     // §6 nói nhóm ★ đúng "do cấu trúc" nên miễn kiểm — câu ấy sai, và nó che đúng
     // một lỗi: nhân bất đẳng thức với số âm mà không đổi chiều.
-    const judge = (verdict: { ok: boolean; message: string; verified?: boolean }): void => {
+    let evidence: SoundnessResult | null = null;
+    const judge = (verdict: {
+      ok: boolean;
+      message: string;
+      verified?: boolean;
+      witnesses?: readonly Witness[];
+    }): void => {
+      // Giữ **kết quả kiểm nguyên vẹn** cạnh dòng, không chỉ giữ lời than khi hỏng
+      // (M64). `unsound`/`unchecked` là hai danh sách của cả scene và chúng chỉ nói khi
+      // có chuyện; dòng nào **đã được kiểm và qua** thì trước đây không để lại dấu vết
+      // nào. Mà "đã kiểm, qua trên 8 điểm" chính là thứ đáng cho người đọc thấy.
+      evidence = { ok: verdict.ok, message: verdict.message, verified: verdict.verified ?? true, ...(verdict.witnesses ? { witnesses: verdict.witnesses } : {}) };
       const where = `bước ${i + 1} (${rule.label})`;
       if (!verdict.ok) unsound.push(`${where}: ${verdict.message}`);
       else if (verdict.verified === false) unchecked.push(`${where}: ${verdict.message}`);
@@ -334,6 +375,17 @@ export function readAlgebra(scene: Scene): AlgebraModel {
       // còn lại — thử lại để loại nghiệm ngoại lai — ghi ra hình, không tự làm.
       const verdict = impliesSolutionSet(target, outcome.after, guard, 20260731 + i);
       if (!verdict.ok) unsound.push(`bước ${i + 1} (${rule.label}): ${verdict.message}`);
+      // Chứng cứ ghi ở đây **bằng tay** chứ không qua `judge` — nhánh này cố ý không
+      // đi qua `judge` vì `verified: false` ở đây có nghĩa khác hẳn (xem dưới). Nhưng
+      // phép kiểm **đã chạy** và đã bốc điểm, nên bỏ nó đi là giấu đúng thứ mục này
+      // sinh ra để bày. Lỗ ấy do chốt canh `mọi đích của mọi pha` bắt được: pha hiện
+      // dòng nhắm vào một chấm chứng cứ không tồn tại.
+      evidence = {
+        ok: verdict.ok,
+        verified: verdict.verified,
+        message: verdict.message,
+        ...(verdict.witnesses ? { witnesses: verdict.witnesses } : {}),
+      };
 
       // Món nợ ghi theo **hợp đồng**, không theo kết quả bốc điểm. Với phương trình,
       // tập nghiệm có độ đo $0$ nên `widened` gần như không bao giờ chạm tới — treo
@@ -359,8 +411,12 @@ export function readAlgebra(scene: Scene): AlgebraModel {
       judge(sameValue(target, outcome.after, 20260731 + i, 8, guard));
     }
 
-    if (outcome.condition !== undefined && !conditions.includes(outcome.condition)) {
-      conditions.push(outcome.condition);
+    if (outcome.condition !== undefined && !conditions.some((c) => c.text === outcome.condition)) {
+      // Giữ **cả `guard`** cạnh dòng chữ, không chỉ dòng chữ (M64). Chữ nói *"với
+      // $x \ne 1$"*; `guard` là thứ duy nhất trả lời được *"thì sao nếu $x = 1$"* —
+      // và câu thứ hai mới là câu người học hỏi. Không có nó thì chỗ chạm vào điều
+      // kiện chỉ đọc lại đúng dòng chữ đang hiện trên màn hình.
+      conditions.push({ text: outcome.condition, guard });
     }
 
     const after = idsOfExpr(next);
@@ -390,6 +446,7 @@ export function readAlgebra(scene: Scene): AlgebraModel {
       // đưa nó thẳng vào `nodeAt` để tìm cây con vừa đổi, mà `nodeAt` không hiểu `"@..."`.
       at,
       roles: outcome.roles ?? [],
+      evidence,
     });
     current = next;
 

@@ -2313,3 +2313,127 @@ hai nhánh cử chỉ** cho nhánh chạm đứng trước nhánh vuốt → tes
 Cái thứ ba là cái đáng lo nhất của mục này và nó có người canh.
 
 76 e2e xanh trên cả desktop lẫn iPad, 2962 unit test xanh, golden không đổi.
+
+---
+
+## 40. Bằng chứng nhìn được (M64, AL-14)
+
+Bộ kiểm bốc hàng chục điểm cho mỗi bước rồi tóm tắt tất cả vào một câu chữ: *"khớp trên
+8 điểm ngẫu nhiên"*. Con số $8$ ấy là **toàn bộ** những gì sống sót — bản thân các điểm,
+thứ đắt nhất trong cả phép kiểm, biến mất ngay khi vòng lặp kết thúc.
+
+### 40.1 Giữ lại thứ đã tính — không tốn thêm một phép tính nào
+
+`SoundnessResult.witnesses` giữ tối đa tám điểm đồng thuận cộng điểm phản chứng. `env`
+đã nằm sẵn trong tay tại chỗ so, nên đây thuần tuý là **ngừng vứt đi**.
+
+Điểm phản chứng đứng **cuối** và không bị trần chặn: nó là điểm duy nhất trong cả danh
+sách thật sự nói lên điều gì khi bước sai. Và chỉ điểm **thoả quan hệ trước** mới vào sổ
+ở `impliesSolutionSet` — điểm mà `before` sai không nói gì về một mệnh đề kéo theo, đếm
+nó vào là thổi phồng số chứng cứ bằng những điểm chưa từng được hỏi.
+
+Một cảnh báo ghi vào chính chỗ khai kiểu: ở sân $\mathbb{F}_p$, `env` là phần tử của một
+trường cỡ $2^{31}$, nên `x = 1483920571` là chứng cứ **thật** mà **vô nghĩa với người
+đọc**. Dải chấm chỉ đếm chúng; đừng in giá trị của sân ấy ra màn hình.
+
+`AlgebraRow.evidence` gắn kết quả ấy vào **từng dòng**. Khác `model.unsound`/`unchecked`:
+hai danh sách kia là của cả scene và chỉ nói khi có chuyện, nên dòng nào đã kiểm và
+**qua** thì trước M64 không để lại dấu vết nào — mà đó chính là thứ đáng cho người đọc
+thấy.
+
+### 40.2 Dải tám chấm **không đọc được**, và cách biết điều đó
+
+Kế hoạch vẽ một dải: mỗi chấm một điểm đã bốc. Ở 720px hay 1800px thì tám chấm đếm được
+rõ ràng. Ở **đúng mật độ Player hiển thị** — $4{,}4$px mỗi đơn vị scene, G-10, tức bài
+này rộng $408$px chứ không phải $1800$ — thì:
+
+| bán kính (đơn vị) | bước nhảy | tám chấm trông ra sao |
+|---|---|---|
+| $0{,}375$ | $1{,}1$ | một nét gạch chân chấm chấm |
+| $0{,}5$ | $1{,}7$ | vẫn là một nét gạch chân |
+
+Nới rộng thêm thì dải vượt quá bề ngang nhãn luật — mà bề ngang scene **không** tính dải
+này (tính vào thì `layout` phải biết `ctx.explain`, và mọi golden đổi), nên nó sẽ bị cắt
+cụt ở mép phải. Đường cùng.
+
+Nên đổi thứ được vẽ: **một** chấm mỗi dòng mang *kết luận* (đã kiểm / chưa kiểm được /
+sai), còn *số điểm* đi vào chỗ chạm. Một chấm $5{,}7$px đọc được ở mọi cỡ, và nó nằm
+trong **máng** giữa cột công thức và cột nhãn luật nên không đè ai và không đổi bề ngang
+một đơn vị nào. Đặt trước nhãn chứ không dưới nhãn: một chấm lẻ dưới một dòng chữ đọc
+thành dấu chấm câu lạc lõng, còn đứng trước thì nó đọc thành *dấu đầu dòng*.
+
+Bài học M45 nguyên văn: một dấu hiệu thường trực mà không ai giải mã được thì tệ hơn là
+không có. Cách duy nhất biết là **nhìn ở kích thước thật** — nhìn ảnh to gấp ba lần thực
+tế thì mọi thứ nhỏ đều trông ổn.
+
+### 40.3 Điều kiện **hỏi được**, và một quyết định M61 được xem lại
+
+Dòng đỏ *"với $x - 1 \ne 0$"* có từ M50 và nó đúng, nhưng nó nói bằng thứ tiếng của
+người đã hiểu. Câu tiếp theo của người học là *chuyện gì xảy ra ở chỗ bị cấm*, và một
+chuỗi ký tự không trả lời được. Nay `Condition` mang **cả `Guard`**, và `algebraIncident`
+quét một lưới hữu tỉ nhỏ (mẫu $\le 4$, trị $\le 6$) tìm điểm đầu tiên làm nó gãy.
+
+Thứ tự quét là một quyết định sư phạm: **mẫu số nhỏ trước, rồi tới trị tuyệt đối nhỏ**.
+Nhờ vậy câu trả lời là *"tại $x = 1$"* chứ không phải *"tại $x = -23/4$"* — cùng một sự
+thật, một cái dạy được và một cái thì không.
+
+Đo trên cả kho: **11 trong 13** chỗ khai `condition` không kèm `guard` nào. Sáu trong số
+đó thuộc M61, và M61 đã **cân nhắc đúng chuyện này** (§37.2): `evalReal` của $\ln$ trả
+`null` ngay khi đối số $\le 0$, nên bộ bốc điểm đã tự bỏ mọi điểm ngoài miền và một
+`Guard` không thêm gì.
+
+Kết luận ấy đúng — với **người tiêu thụ duy nhất tồn tại lúc đó**. M64 thêm người thứ
+hai, và với người ấy thì `Guard` là toàn bộ câu trả lời. Nên đây không phải lật lại một
+quyết định sai, mà là cùng một quyết định trong một thế giới có thêm một người dùng.
+Sau khi bù đủ: **14/15** dòng điều kiện trong kho trả về một điểm cụ thể. Cái còn lại là
+$2^x > 0$ — đúng ở mọi $x$ thực, nên **im lặng là câu trả lời đúng**, không phải một
+thiếu sót.
+
+### 40.4 `Guard` không được ngốn không gian danh tính
+
+Thêm `guard` cho một luật làm bốn golden đổi — toạ độ **giống hệt từng chữ số**, chỉ khác
+`data-el`. Nguyên do: guard dựng bằng `freshCopy(m, …)` với `m` là `Minter` của chính
+scene, nên mỗi điều kiện mới đẩy mọi `TermId` sinh sau nó dịch đi một số. Đúng loại nhiễu
+đã cắn ở M55, và nó sẽ cắn lại mỗi lần ai đó thêm một điều kiện.
+
+Mà biểu thức điều kiện **không bao giờ được vẽ**: nó chỉ đi qua `evalReal`, `varsOf`, và
+từ M64 là `toPlain`. Không chỗ nào nhìn tới `TermId`. Nên `freshCopy` ở đó vừa thừa (bản
+sao chỉ tốn bộ nhớ) vừa có hại (ngốn id).
+
+`guardOf(sign, build)` dựng bằng một `Minter` **mới mỗi lần** và dùng thẳng cây con,
+không sao chép. Một lần đổi hết tám chỗ khai guard: bốn golden churn — đã soát bằng máy,
+bỏ `data-el`/`key` ra thì hai bên **giống nhau từng byte** — và từ nay thêm điều kiện cho
+luật thứ 73 sẽ không đụng một golden nào.
+
+### 40.5 Hai lỗ do chốt canh cũ bắt, một lỗ do lượt nhìn
+
+- **Chấm chứng cứ lộ ở khung $0$.** Ảnh chụp Player cho thấy hai chấm mờ nổi giữa khoảng
+  trống, trong khi dòng và nhãn luật của chúng còn chưa hiện. Cùng hình dạng với lỗi
+  nhãn-hiện-sớm của M51, lần thứ hai. Chữa: lô đầu của pha "dòng tự viết ra" kéo theo
+  `evidenceId(k)`.
+- **Hợp đồng `implies` chưa từng ghi chứng cứ.** Nhánh ấy cố ý không đi qua `judge` (vì
+  `verified: false` ở đó mang nghĩa khác), và hệ quả là `pow_both_sides` được kiểm mà
+  không để lại dấu vết nào. Lộ ra vì chốt canh *"mọi đích của mọi pha đều là danh tính có
+  mực"* (M51) đỏ: pha hiện dòng nhắm vào một chấm không tồn tại. Một chốt canh cũ bắt một
+  lỗ mới — đúng thứ nó được dựng ra để làm.
+- **Chốt canh e2e chạm vào thứ người dùng không nhìn thấy.** Bản đầu bấm `note0` ngay ở
+  khung $0$, nơi dòng đỏ còn `opacity: 0` — Playwright bấm được, người dùng thì không.
+  Nay tua timeline tới cuối trước. Lần thứ hai trong đợt này một chốt canh xanh trên một
+  trạng thái không với tới được.
+
+### 40.6 Bẻ răng
+
+| bẻ | kết quả |
+|---|---|
+| điểm phản chứng không đứng cuối | 1 đỏ |
+| bỏ trần `WITNESS_MAX` | **xanh** → test không với tới nhánh |
+| lưới quét theo thứ tự ngược | 2 đỏ |
+| chấm vẽ đè lên nhãn luật | 1 đỏ |
+| `incident` không được thử ở chỗ chạm | 2 e2e đỏ |
+
+Dòng thứ hai là bài học M48 **lần thứ ba trong đợt này**: chuỗi dùng làm giá đỡ đi sân so
+**giá trị** (8 lượt), nên trần tám không bao giờ chạm tới ở đó. Phải hỏi ở sân so **tập
+nghiệm** (24 lượt) — và ở đó test khẳng định luôn cả điều đáng nói nhất: *phép kiểm chạy
+24 lần, dải chỉ giữ 8*.
+
+2976 test xanh, 82 e2e xanh, 111 bài validate sạch.

@@ -331,6 +331,25 @@ function explainNodes(box: Layout, ctx: RenderContext): SvgNode[] {
     );
   }
 
+  // Dải chứng cứ (AL-14). Chấm đồng thuận **mờ** — nó là nền, không phải tin tức;
+  // chấm phản chứng đỏ và đặc, và nó chỉ xuất hiện khi engine hỏng, nên bản thân sự
+  // có mặt của nó đã là báo động. Chấm rỗng viền là "chưa kiểm được" — cùng màu cảnh
+  // báo nhưng không tô, để phân biệt với "đã kiểm và sai".
+  for (const d of box.explain.evidence) {
+    out.push(
+      keyed(d.id, 'circle', {
+        cx: d.cx,
+        cy: d.cy,
+        r: d.r,
+        ...(d.verdict === 'agree'
+          ? { fill: guide, opacity: 0.5 }
+          : d.verdict === 'refute'
+            ? { fill: warn }
+            : { fill: 'none', stroke: warn, 'stroke-width': round(d.r * 0.6) }),
+      }),
+    );
+  }
+
   for (const c of box.explain.conditionLinks) {
     out.push(
       keyed(c.id, 'path', {

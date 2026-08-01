@@ -267,9 +267,72 @@ function guardHolds(guard: Guards | null, env: ReadonlyMap<string, number>): boo
 export const guardList = (g: Guards | null): readonly Guard[] =>
   g === null ? [] : Array.isArray(g) ? g : [g as Guard];
 
+/**
+ * Một **điểm đã bốc**, giữ lại thay vì vứt đi (AL-14).
+ *
+ * Bộ kiểm bốc hàng chục điểm cho mỗi bước rồi tóm tắt tất cả vào một câu chữ:
+ * *"khớp trên 8 điểm ngẫu nhiên"*. Con số $8$ ấy là **toàn bộ** những gì sống sót — bản
+ * thân các điểm, thứ đắt nhất trong cả phép kiểm, biến mất ngay khi vòng lặp kết thúc.
+ *
+ * Giữ chúng lại không tốn thêm một phép tính nào: env đã nằm sẵn trong tay tại chỗ so.
+ * Và nó biến một câu khẳng định thành một thứ **đếm được và chỉ ra được** — dải chấm
+ * dưới nhãn luật là tám điểm này, không phải một hình trang trí có tám ô.
+ *
+ * `values` chỉ có ở sân so **giá trị**; sân so tập nghiệm thì hai bên là đúng/sai, và
+ * nhét chúng vào một cặp số là bịa ra một phép đo không tồn tại.
+ *
+ * **Cảnh báo về sân $\mathbb{F}_p$:** ở đó `env` là phần tử của một trường hữu hạn cỡ
+ * $2^{31}$, nên `x = 1483920571` là một chứng cứ **thật** mà **vô nghĩa với người đọc**.
+ * Dải chấm chỉ đếm chúng; đừng in giá trị của sân ấy ra màn hình.
+ */
+export interface Witness {
+  readonly env: Readonly<Record<string, number>>;
+  readonly verdict: 'agree' | 'refute';
+  /** Hai vế ra bao nhiêu tại điểm ấy. Vắng ở sân so tập nghiệm. */
+  readonly values?: readonly [number, number];
+}
+
+/** Trần số điểm giữ lại — dải chấm rộng hơn tám thì đọc thành một vệt, không thành số. */
+export const WITNESS_MAX = 8;
+
+/**
+ * Sổ ghi điểm dùng chung cho cả bốn vòng bốc.
+ *
+ * Bốn bản chép tay thì bản thứ tư sẽ khác ba bản kia ở đúng chỗ không ai nhìn — cùng lý
+ * do `sampleCompare` được tách ra ở M56.
+ */
+function witnessLog(): {
+  agree: (env: ReadonlyMap<string, number | bigint>, values?: readonly [number, number]) => void;
+  refute: (
+    env: ReadonlyMap<string, number | bigint>,
+    values?: readonly [number, number],
+  ) => readonly Witness[];
+  kept: () => readonly Witness[];
+} {
+  const kept: Witness[] = [];
+  const plain = (env: ReadonlyMap<string, number | bigint>): Record<string, number> =>
+    Object.fromEntries([...env].map(([k, v]) => [k, Number(v)]));
+  return {
+    agree: (env, values) => {
+      if (kept.length < WITNESS_MAX) {
+        kept.push({ env: plain(env), verdict: 'agree', ...(values ? { values } : {}) });
+      }
+    },
+    // Điểm phản chứng đứng **cuối** và không bị trần chặn: nó là điểm duy nhất trong cả
+    // danh sách thật sự nói lên điều gì khi bước sai.
+    refute: (env, values) => [
+      ...kept,
+      { env: plain(env), verdict: 'refute' as const, ...(values ? { values } : {}) },
+    ],
+    kept: () => kept,
+  };
+}
+
 export interface SoundnessResult {
   readonly ok: boolean;
   readonly message: string;
+  /** Các điểm đã bốc (AL-14). Vắng khi phép kiểm không bốc điểm nào — bậc quá lớn... */
+  readonly witnesses?: readonly Witness[];
   /**
    * Đã thật sự kiểm được chưa.
    *
@@ -325,6 +388,7 @@ export function sameValue(
 
   const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
   const rand = lcg(seed);
+  const log = witnessLog();
   let done = 0;
 
   for (let attempt = 0; attempt < trials * 8 && done < trials; attempt += 1) {
@@ -347,14 +411,25 @@ export function sameValue(
     done += 1;
     if (va !== vb) {
       const at = names.map((n) => `${n}=${env.get(n)}`).join(', ');
-      return { ok: false, verified: true, message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}` };
+      return {
+        ok: false,
+        verified: true,
+        message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}`,
+        witnesses: log.refute(env, [Number(va), Number(vb)]),
+      };
     }
+    log.agree(env, [Number(va), Number(vb)]);
   }
 
   if (done === 0) {
     return { ok: true, verified: false, message: 'không tìm được điểm nào mẫu khác 0' };
   }
-  return { ok: true, verified: true, message: `khớp trên ${done} điểm ngẫu nhiên` };
+  return {
+    ok: true,
+    verified: true,
+    message: `khớp trên ${done} điểm ngẫu nhiên`,
+    witnesses: log.kept(),
+  };
 }
 
 /**
@@ -481,6 +556,7 @@ function sampleCompare(
   label: string,
 ): SoundnessResult {
   const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
+  const log = witnessLog();
   let done = 0;
 
   for (let attempt = 0; attempt < trials * attemptsPerTrial && done < trials; attempt += 1) {
@@ -495,14 +571,20 @@ function sampleCompare(
     const scale = Math.max(1, Math.abs(va), Math.abs(vb));
     if (Math.abs(va - vb) > 1e-9 * scale) {
       const at = names.map((n) => `${n}=${(env.get(n) as number).toFixed(4)}`).join(', ');
-      return { ok: false, verified: true, message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}` };
+      return {
+        ok: false,
+        verified: true,
+        message: `khác nhau tại ${at || 'điểm hằng'}: ${va} ≠ ${vb}`,
+        witnesses: log.refute(env, [va, vb]),
+      };
     }
+    log.agree(env, [va, vb]);
   }
 
   if (done === 0) {
     return { ok: true, verified: false, message: 'không tìm được điểm nào xác định' };
   }
-  return { ok: true, verified: true, message: `khớp trên ${done} ${label}` };
+  return { ok: true, verified: true, message: `khớp trên ${done} ${label}`, witnesses: log.kept() };
 }
 
 /**
@@ -564,6 +646,7 @@ export function sameSolutionSet(
 ): SoundnessResult {
   const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
   const rand = relationSampler(seed, needsIntegerEval(a) || needsIntegerEval(b));
+  const log = witnessLog();
   let done = 0;
   let agree = 0;
 
@@ -575,17 +658,29 @@ export function sameSolutionSet(
     const vb = evalRelation(b, env);
     if (va === null || vb === null) continue;
     done += 1;
-    if (va === vb) agree += 1;
-    else {
+    if (va === vb) {
+      agree += 1;
+      log.agree(env);
+    } else {
       const at = names.map((n) => `${n}=${(env.get(n) as number).toFixed(4)}`).join(', ');
-      return { ok: false, verified: true, message: `tập nghiệm khác nhau tại ${at || 'điểm hằng'}` };
+      return {
+        ok: false,
+        verified: true,
+        message: `tập nghiệm khác nhau tại ${at || 'điểm hằng'}`,
+        witnesses: log.refute(env),
+      };
     }
   }
 
   if (done === 0) {
     return { ok: true, verified: false, message: 'không tìm được điểm nào xác định' };
   }
-  return { ok: true, verified: true, message: `cùng chân lý trên ${agree} điểm` };
+  return {
+    ok: true,
+    verified: true,
+    message: `cùng chân lý trên ${agree} điểm`,
+    witnesses: log.kept(),
+  };
 }
 
 export interface ImplicationResult extends SoundnessResult {
@@ -624,6 +719,7 @@ export function impliesSolutionSet(
 ): ImplicationResult {
   const names = [...new Set([...varsOf(before), ...varsOf(after)])].sort();
   const rand = relationSampler(seed, needsIntegerEval(before) || needsIntegerEval(after));
+  const log = witnessLog();
   let held = 0;
   let widened = false;
 
@@ -643,9 +739,16 @@ export function impliesSolutionSet(
         verified: true,
         widened,
         message: `kéo theo sai tại ${at || 'điểm hằng'}: vế trước đúng mà vế sau sai`,
+        witnesses: log.refute(env),
       };
     }
-    if (vb) held += 1;
+    // Chỉ điểm **thoả quan hệ trước** mới là chứng cứ: điểm mà `before` sai không nói
+    // gì về một mệnh đề kéo theo, và đếm nó vào là thổi phồng số chứng cứ bằng những
+    // điểm chưa từng được hỏi.
+    if (vb) {
+      held += 1;
+      log.agree(env);
+    }
     if (va && !vb) widened = true;
   }
 
@@ -657,7 +760,13 @@ export function impliesSolutionSet(
       message: 'không bốc trúng điểm nào thoả quan hệ trước — chưa kiểm được chiều kéo theo',
     };
   }
-  return { ok: true, verified: true, widened, message: `kéo theo đúng trên ${held} điểm` };
+  return {
+    ok: true,
+    verified: true,
+    widened,
+    message: `kéo theo đúng trên ${held} điểm`,
+    witnesses: log.kept(),
+  };
 }
 
 /**

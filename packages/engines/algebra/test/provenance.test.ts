@@ -1,11 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import type { Scene } from '@combviz/schema';
 import {
+  algebraIncident,
   algebraLineage,
+  drawnIds,
+  explainIds,
+  layout,
   lineageOf,
+  Minter,
+  parse,
   parseElementId,
   readAlgebra,
+  sameValue,
   unparse,
+  violationOf,
+  WITNESS_MAX,
   type AlgebraStep,
 } from '../src/index.js';
 
@@ -138,5 +147,130 @@ describe('danh tính vẽ ra', () => {
   it('phả hệ chạm **nhiều hơn một dòng** — đó là cả điểm của tính năng', () => {
     const rows = new Set([...algebraLineage(CHAIN, 'r2-e15')!].map((id) => id.slice(0, 2)));
     expect(rows.size).toBeGreaterThanOrEqual(2);
+  });
+});
+
+/**
+ * Bằng chứng nhìn được (M64, AL-14).
+ *
+ * Hai câu hỏi khác nhau, và chúng cần hai loại dữ liệu khác nhau:
+ *
+ * - *"bước này có được kiểm không, bao nhiêu lần?"* → `row.evidence.witnesses`;
+ * - *"thì sao nếu vi phạm điều kiện?"* → `Condition.guard` + `algebraIncident`.
+ */
+describe('witness — điểm đã bốc, giữ lại thay vì vứt đi', () => {
+  it('bước qua được để lại **các điểm đồng thuận**, không chỉ một con số', () => {
+    const row = model.rows[1]!;
+    expect(row.evidence?.ok).toBe(true);
+    expect(row.evidence?.verified).toBe(true);
+    const w = row.evidence?.witnesses ?? [];
+    expect(w.length).toBeGreaterThan(0);
+    expect(w.every((x) => x.verdict === 'agree')).toBe(true);
+    // Env **thật**, không phải một object rỗng cho có.
+    expect(Object.keys(w[0]!.env)).toContain('x');
+  });
+
+  it('không quá `WITNESS_MAX`, **kể cả** khi phép kiểm chạy nhiều lần hơn', () => {
+    // Chuỗi trên đi sân so **giá trị** (8 lượt), nên trần không bao giờ chạm tới ở đó —
+    // bỏ hẳn trần đi mà test vẫn xanh. Phải hỏi ở sân so **tập nghiệm**: 24 lượt, và
+    // đó là chỗ trần thật sự làm việc. (Bài học M48, lần thứ ba trong đợt này.)
+    const rel = readAlgebra(
+      scene('2 - 3*x < 8', [{ rule: 'add_both_sides', at: '', arg: '-2' }]),
+    );
+    const e = rel.rows[1]!.evidence!;
+    expect(e.message).toMatch(/24 điểm/);
+    expect(e.witnesses).toHaveLength(WITNESS_MAX);
+
+    for (const row of [...model.rows, ...rel.rows]) {
+      expect((row.evidence?.witnesses ?? []).length).toBeLessThanOrEqual(WITNESS_MAX);
+    }
+  });
+
+  it('dòng đầu **không** có evidence: không bước nào sinh ra nó', () => {
+    expect(model.rows[0]!.evidence).toBeNull();
+  });
+
+  it('bước **sai** để lại điểm phản chứng ở cuối, kèm hai giá trị lệch nhau', () => {
+    // Một luật hỏng thật thì không dựng được từ nội dung, nên gọi thẳng bộ kiểm với
+    // hai biểu thức khác nhau — đúng thứ mà một luật viết lỗi sẽ trả về.
+    const bad = sameValue(parse('(x + 1)^2', new Minter()), parse('x^2 + 1', new Minter()));
+    expect(bad.ok).toBe(false);
+    const w = bad.witnesses ?? [];
+    const last = w.at(-1)!;
+    expect(last.verdict).toBe('refute');
+    expect(w.slice(0, -1).every((x) => x.verdict === 'agree')).toBe(true);
+    // **Số**, không chỉ chữ: hai vế thật sự khác nhau tại điểm ấy.
+    const [va, vb] = last.values!;
+    expect(va).not.toBe(vb);
+  });
+
+  it('bốc điểm là **tất định**: hai lần gọi cho cùng bộ witness', () => {
+    const once = readAlgebra(CHAIN).rows[1]!.evidence?.witnesses;
+    expect(JSON.stringify(once)).toBe(JSON.stringify(model.rows[1]!.evidence?.witnesses));
+  });
+});
+
+describe('điều kiện hỏi được', () => {
+  const cancel = scene('6*a / (3*a)', [{ rule: 'cancel_common', at: '', arg: 'a' }]);
+
+  it('điều kiện mang theo `guard`, không chỉ mang chữ', () => {
+    const m = readAlgebra(cancel);
+    expect(m.conditions.map((c) => c.text)).toEqual(['a ≠ 0']);
+    expect(m.conditions[0]!.guard).not.toBeNull();
+  });
+
+  it('chạm dòng đỏ → **điểm cụ thể** làm nó gãy', () => {
+    expect(algebraIncident(cancel, 'note0')?.text).toBe('tại a = 0: a = 0 — chia cho không');
+  });
+
+  it('điều kiện có dấu thì nói rõ nó lệch về bên nào', () => {
+    const abs = scene('abs(x - 2)', [{ rule: 'abs_case', at: '', arg: '+' }]);
+    expect(algebraIncident(abs, 'note0')?.text).toBe('tại x = 0: x − 2 = −2 < 0');
+  });
+
+  it('điều kiện **không thể** vi phạm thì im — không bịa một điểm', () => {
+    // $2^x > 0$ đúng ở mọi $x$ thực. Không tìm được điểm nào là câu trả lời **đúng**.
+    const exp = scene('2^x = 8', [{ rule: 'log_both_sides', at: '' }]);
+    expect(readAlgebra(exp).conditions.map((c) => c.text)).toEqual(['2^x > 0']);
+    expect(algebraIncident(exp, 'note0')).toBeNull();
+  });
+
+  it('id không phải dòng đỏ, hoặc bài không có điều kiện → `null`', () => {
+    expect(algebraIncident(cancel, 'r0-e1')).toBeNull();
+    expect(algebraIncident(cancel, 'note1')).toBeNull();
+    expect(algebraIncident(CHAIN, 'note0')).toBeNull();
+  });
+
+  it('điểm tìm được ưu tiên **số đẹp**: mẫu nhỏ trước, rồi tới trị nhỏ', () => {
+    const found = violationOf([{ expr: parse('x - 3', new Minter()), sign: '>=0' }])!;
+    expect(found.env.get('x')).toBe(0);
+  });
+});
+
+describe('chấm chứng cứ chỉ sống ở chế độ giải thích', () => {
+  it('mỗi dòng có evidence được **một** chấm, không phải một dải', () => {
+    const box = layout(model);
+    const dots = box.explain.evidence;
+    expect(dots).toHaveLength(model.rows.filter((r) => r.evidence !== null).length);
+    expect(new Set(dots.map((d) => d.id)).size).toBe(dots.length);
+  });
+
+  it('chấm nằm trong **máng** giữa công thức và nhãn luật, không đè ai', () => {
+    const box = layout(model);
+    for (const d of box.explain.evidence) {
+      const line = box.lines[d.step]!;
+      expect(d.cx).toBeGreaterThan(line.box.x + line.box.width);
+      expect(d.cx).toBeLessThan(line.label!.x);
+    }
+  });
+
+  it('danh tính chấm nằm trong `explainIds` — neo được, mà không vào `drawnIds`', () => {
+    const box = layout(model);
+    const ids = explainIds(box);
+    const drawn = drawnIds(box);
+    for (const d of box.explain.evidence) {
+      expect(ids.has(d.id)).toBe(true);
+      expect(drawn.has(d.id)).toBe(false);
+    }
   });
 });

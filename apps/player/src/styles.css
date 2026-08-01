@@ -13,6 +13,8 @@
   --line: #e2e2dc;
   --accent: #0072b2;
   --halo: #e8b004;
+  /* Cùng `theme.stroke.invalid` mà canvas vẽ dòng đỏ — hai chỗ nói một chuyện. */
+  --warn: #c5221f;
   color-scheme: light;
 }
 
@@ -351,6 +353,19 @@ body {
 }
 
 .timeline__label {
+  color: var(--ink);
+}
+
+/* AL-14 — câu trả lời cho một dòng điều kiện vừa được chạm.
+   Mượn khung của `.timeline__phase` vì nó cùng vai: một dòng chữ giải thích thứ đang
+   ở trên canvas. Khác ở màu vạch — đây là chỗ *cấm*, không phải chỗ *đang kể*, và hai
+   thứ ấy không được trông giống nhau. */
+.incident {
+  margin: 0.35rem 0 0;
+  padding: 0.3rem 0.5rem;
+  background: var(--paper-soft, transparent);
+  border-left: 3px solid var(--warn);
+  font-size: 0.85rem;
   color: var(--ink);
 }
 

@@ -26,6 +26,33 @@ const LINE_GAP = ROW * 0.28;
 const RULE_GAP = FONT * 2.2;
 export const RULE_SIZE = FONT * 0.62;
 const COND_SIZE = FONT * 0.6;
+/**
+ * Chấm chứng cứ: bán kính, và khoảng lùi vào **máng giữa** hai cột.
+ *
+ * Kế hoạch M64 vẽ một **dải tám chấm** — mỗi chấm một điểm bộ kiểm đã bốc. Đo ở đúng
+ * mật độ Player hiển thị ($4{,}4$px mỗi đơn vị scene, G-10) thì nó không đọc được:
+ *
+ * | bán kính | bước nhảy | tám chấm ở 408px |
+ * |---|---|---|
+ * | $0{,}375$ | $1{,}1$ | một nét gạch chân chấm chấm |
+ * | $0{,}5$ | $1{,}7$ | vẫn là một nét gạch chân |
+ *
+ * Ở 720px hay 1800px thì tám chấm đếm được rõ ràng — và đó chính là cái bẫy: nhìn ảnh
+ * to gấp ba lần thực tế thì mọi thứ nhỏ đều trông ổn. Ở kích thước thật, tám vật cách
+ * nhau $7{,}5$px là một **hoa văn**, không phải một con số.
+ *
+ * Nới rộng thêm thì dải vượt quá bề ngang nhãn luật, mà bề ngang scene lại **không**
+ * tính dải này (tính vào thì mọi golden đổi, vì `layout` không biết `ctx.explain`) —
+ * nên nó sẽ bị cắt cụt ở mép phải. Đường cùng.
+ *
+ * Nên đổi thứ được vẽ: **một** chấm cho mỗi dòng, mang *kết luận* (đã kiểm / chưa kiểm
+ * được / sai), còn *số điểm* đi vào chỗ chạm. Một chấm $5{,}7$px thì đọc được ở mọi cỡ,
+ * và nó nằm trong máng giữa cột công thức và cột nhãn luật nên không bao giờ đè ai.
+ * Bài học M45 nguyên văn: một dấu hiệu thường trực mà không ai giải mã được thì tệ hơn
+ * là không có.
+ */
+const DOT_R = FONT * 0.13;
+const DOT_INSET = FONT * 0.75;
 
 export interface PlacedLine {
   readonly row: AlgebraRow;
@@ -89,6 +116,23 @@ export interface ExplainInk {
     readonly x2: number;
     readonly y2: number;
   }[];
+  /**
+   * **Dải chứng cứ** (AL-14) — mỗi chấm là một điểm bộ kiểm đã bốc cho bước ấy.
+   *
+   * Không phải hình trang trí có tám ô: nếu bộ kiểm chỉ bốc được ba điểm thì có ba
+   * chấm, và nếu nó không kiểm được thì có một chấm rỗng. Đó là chỗ dải này khác một
+   * huy hiệu ✓ — huy hiệu nói *"đã kiểm"*, dải nói *"đã kiểm **bao nhiêu**"*, và số
+   * lượng mới là thứ phân biệt một bước được thử tám lần với một bước trôi qua vì
+   * không tìm được điểm nào để thử.
+   */
+  readonly evidence: readonly {
+    readonly id: string;
+    readonly step: number;
+    readonly cx: number;
+    readonly cy: number;
+    readonly r: number;
+    readonly verdict: 'agree' | 'refute' | 'unchecked';
+  }[];
   /** Danh tính mực → chỉ số vai, để tô màu. */
   readonly roleOf: ReadonlyMap<string, number>;
 }
@@ -134,6 +178,9 @@ export function parseElementId(id: string): { row: number; term: string } | null
 
 /** Danh tính của dòng chữ đỏ thứ `i` — choreography nhắm được, anchor thì không. */
 export const noteId = (index: number): string => `note${index}`;
+
+/** Danh tính dải chứng cứ của dòng `k` (AL-14). Cả dải mang **một** tên, như ngoặc nhọn. */
+export const evidenceId = (rowIndex: number): string => `ev${rowIndex}`;
 
 /** Bề ngang phần đứng **trước** dấu quan hệ — thứ mọi dòng phải gióng theo. */
 function leadWidth(row: AlgebraRow): number {
@@ -208,7 +255,7 @@ export function layout(model: AlgebraModel): Layout {
     notes.push({ x: 0, y: round(y + COND_SIZE * 0.8), text });
     y += COND_SIZE * 1.6;
   };
-  if (model.conditions.length > 0) pushNote(`với ${model.conditions.join(', ')}`);
+  if (model.conditions.length > 0) pushNote(`với ${model.conditions.map((c) => c.text).join(', ')}`);
   if (model.extraneous.length > 0) pushNote('nghiệm có thể ngoại lai — phải thử lại');
 
   return {
@@ -238,6 +285,7 @@ function explainInk(
   const strikes: ExplainInk['strikes'][number][] = [];
   const braces: ExplainInk['braces'][number][] = [];
   const conditionLinks: ExplainInk['conditionLinks'][number][] = [];
+  const evidence: ExplainInk['evidence'][number][] = [];
   const roleOf = new Map<string, number>();
 
   const boxAt = (rowIndex: number, term: string): NodeBox | undefined =>
@@ -353,7 +401,27 @@ function explainInk(
     }
   }
 
-  return { threads, strikes, braces, conditionLinks, roleOf };
+  // Chấm chứng cứ: một chấm cho mỗi dòng, đặt trong **máng** giữa cột công thức và
+  // cột nhãn luật (`RULE_GAP` rộng $2{,}2$ cỡ chữ, nên $0{,}75$ là lùi vào giữa máng).
+  //
+  // Máng chứ không phải dưới nhãn: một chấm lẻ nằm dưới một dòng chữ đọc thành một
+  // dấu chấm câu lạc lõng, còn đứng trước dòng chữ thì nó đọc thành *dấu đầu dòng của
+  // dòng ấy* — đúng nghĩa nó mang. Và vì nó nằm trong khoảng trống sẵn có, bề ngang
+  // scene không đổi một đơn vị nào.
+  for (const [k, line] of lines.entries()) {
+    const result = line.row.evidence;
+    if (result === null || line.label === null) continue;
+    evidence.push({
+      id: evidenceId(k),
+      step: k,
+      cx: round(line.label.x - DOT_INSET),
+      cy: round(line.label.y - RULE_SIZE * 0.28),
+      r: round(DOT_R),
+      verdict: !result.ok ? 'refute' : result.verified ? 'agree' : 'unchecked',
+    });
+  }
+
+  return { threads, strikes, braces, conditionLinks, evidence, roleOf };
 }
 
 /** Hộp của một danh tính — dùng chung cho `elementBoxes` và hit-test. */
@@ -376,6 +444,7 @@ export function explainIds(box: Layout): Set<string> {
   const e = box.explain;
   return new Set([
     ...box.notes.map((_, i) => noteId(i)),
+    ...e.evidence.map((d) => d.id),
     ...e.threads.map((t) => t.id),
     ...e.strikes.map((s) => s.id),
     ...e.braces.map((g) => g.id),

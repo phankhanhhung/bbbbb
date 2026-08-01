@@ -62,6 +62,8 @@ export function Player({
   const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
   /** AL-13 — phả hệ của hạng tử vừa chạm; `null` là chưa chạm gì. */
   const [tapped, setTapped] = useState<ReadonlySet<string> | null>(null);
+  /** AL-14 — điểm vi phạm của điều kiện vừa chạm. */
+  const [incident, setIncident] = useState<string | null>(null);
   const [forkedScene, setForkedScene] = useState<Scene | null>(null);
   // CMS-03: lời giải **che mặc định**. Trang bài mở ra là đề bài và sandbox —
   // người học nên có cơ hội tự nghĩ trước khi thấy lời giải, và một cú bấm là
@@ -151,6 +153,7 @@ export function Player({
     // Phả hệ nói về **hạng tử của step này**. Mang nó sang step sau thì nó trỏ vào
     // những id không còn tồn tại — một vệt sáng trống, im lặng và vô nghĩa.
     setTapped(null);
+    setIncident(null);
   }, []);
 
   const goNext = useCallback(() => {
@@ -306,6 +309,7 @@ export function Player({
       } else if (event.key === 'Escape') {
         setPlaying(false);
         setTapped(null);
+        setIncident(null);
       }
     };
     addEventListener('keydown', onKey);
@@ -338,7 +342,12 @@ export function Player({
     if (dx > 48) return goPrev();
     if (Math.abs(dx) >= 8 || Math.abs(dy) >= 8) return;
 
-    setTapped(lineageAt(event.target, step.scene, engines));
+    // Hai câu hỏi, **một** chỗ chạm, và thứ tự là chuyện của cái nào hẹp hơn: phả hệ
+    // hỏi về một hạng tử, sự cố hỏi về một dòng cảnh báo, và hai loại danh tính ấy
+    // không giao nhau — nên thử lần lượt là đủ, không cần ai phân xử.
+    const found = probeAt(event.target, step.scene, engines);
+    setTapped(found?.lineage ?? null);
+    setIncident(found?.incident ?? null);
   };
 
   const viewport = renderer && step.scene ? renderer.viewportOf(step.scene, ctx) : null;
@@ -450,6 +459,11 @@ export function Player({
             {revealed && choreography ? (
               <Timeline spec={choreography} state={timeline} />
             ) : null}
+            {incident ? (
+              <p class="incident" aria-live="polite">
+                {incident}
+              </p>
+            ) : null}
           </div>
         )}
 
@@ -559,7 +573,7 @@ export function Player({
 
 /** DAT-14: mở đúng step, đúng nhánh từ URL. */
 /**
- * Từ node DOM dưới ngón tay ngược về phả hệ của hạng tử ấy.
+ * Từ node DOM dưới ngón tay ngược về **thứ engine có để kể** ở chỗ ấy.
  *
  * Đi ngược DOM theo đúng mẫu `BijectionPanes.onPoint`: leo hết chuỗi tổ tiên, `data-el`
  * **trước** `data-k`. Thứ tự ấy không phải tuỳ tiện — một element được vẽ thành nhiều
@@ -573,22 +587,23 @@ export function Player({
  * ngón không phải một hạng tử (nhãn luật, hộp dòng). Ba trường hợp ấy đều là "chạm
  * hụt", và chạm hụt thì **xoá** vệt đang sáng — đó là cách người ta bỏ chọn.
  */
-function lineageAt(
+function probeAt(
   target: EventTarget | null,
   scene: Scene | undefined,
   engines: ReadonlyMap<string, LoadedEngine> | null,
-): ReadonlySet<string> | null {
-  const lineage = scene ? engines?.get(scene.engine)?.lineage : undefined;
-  if (!lineage || !scene) return null;
+): { lineage?: ReadonlySet<string>; incident?: string } | null {
+  const engine = scene ? engines?.get(scene.engine) : undefined;
+  if (!engine || !scene) return null;
 
   let node = target as Element | null;
   while (node) {
     for (const attr of [ELEMENT_ATTR, KEY_ATTR]) {
       const id = node.getAttribute?.(attr);
-      if (id !== null && id !== undefined) {
-        const found = lineage(scene, id);
-        if (found !== null) return found;
-      }
+      if (id === null || id === undefined) continue;
+      const lineage = engine.lineage?.(scene, id);
+      if (lineage) return { lineage };
+      const incident = engine.incident?.(scene, id);
+      if (incident) return { incident: incident.text };
     }
     node = node.parentElement;
   }

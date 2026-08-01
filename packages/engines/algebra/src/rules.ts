@@ -4,6 +4,7 @@ import {
   definitelyNonZero,
   definitelyPositive,
   evalReal,
+  type Guard,
   type Guards,
 } from './check.js';
 import { intExp, needsRealEval } from './expr.js';
@@ -146,6 +147,30 @@ const no = (why: string): { refusal: string } => ({ refusal: why });
  * Đổi gạch nối ASCII thành dấu trừ toán học: chuỗi này nằm cạnh công thức đã sắp
  * chữ, và `a - b` bên cạnh `a − b` đọc ra ngay là hai thứ khác nhau.
  */
+/**
+ * Dựng một điều kiện — bằng `Minter` **riêng**, và **không sao chép** cây con.
+ *
+ * Hai chuyện, cùng một lý do: biểu thức điều kiện **không bao giờ được vẽ**. Nó chỉ đi
+ * qua `evalReal` (bỏ điểm vi phạm), `varsOf`, và từ M64 là `toPlain` (in ra chỗ chạm).
+ * Không chỗ nào trong ba chỗ ấy nhìn tới `TermId`.
+ *
+ * Bản trước mint bằng `m` — `Minter` của chính scene — và trả giá hai lần:
+ *
+ * 1. **Ngốn không gian danh tính.** Thêm một `guard` vào một luật làm mọi `TermId` sinh
+ *    sau đó dịch đi một số, nên bốn golden đổi với toạ độ **giống hệt từng chữ số** và
+ *    chỉ khác `data-el`. Đúng loại nhiễu đã cắn ở M55, và lần này nó sẽ cắn lại mỗi lần
+ *    ai đó thêm một điều kiện.
+ * 2. **Sao chép thừa.** `freshCopy` có để hai chỗ trong *cùng một cây vẽ ra* không mang
+ *    trùng danh tính. Điều kiện không nằm trong cây ấy, nên bản sao chỉ tốn bộ nhớ.
+ *
+ * Nay: `Minter` mới mỗi lần (tất định, không trạng thái dùng chung), cây con dùng thẳng.
+ * Thêm điều kiện cho luật thứ 73 sẽ **không** đụng một golden nào.
+ */
+const guardOf = (sign: Guard['sign'], build: (g: Minter) => Expr): Guard => ({
+  expr: build(new Minter()),
+  sign,
+});
+
 const conditionText = (arg: string): string => `${arg.replace(/-/g, '−')} ≠ 0`;
 
 /** Mọi id trong một cây con. */
@@ -1668,9 +1693,16 @@ const cancelCommon: Rule = {
     if (num === null || den === null) return no(`"${arg}" không phải thừa số chung của tử và mẫu`);
 
     // Rút gọn bởi thứ **có thể bằng 0** là chỗ mất nghiệm. Cùng họ với AL-08.
-    const condition = definitelyNonZero(common) ? undefined : conditionText(arg);
+    const safe = definitelyNonZero(common);
     const after = same(den, int(m, 1)) ? num : div(m, num, den);
-    return { after, condition };
+    return {
+      after,
+      condition: safe ? undefined : conditionText(arg),
+      // `guard` đi kèm chữ (M64). Không có nó thì dòng đỏ "$x + 2 \ne 0$" là một lời
+      // dặn không hỏi được — mà đây đúng là luật mà câu *"thì sao nếu bằng 0"* có câu
+      // trả lời sắc nhất: chỗ ấy là nghiệm vừa bị đánh mất.
+      ...(safe ? {} : { guard: guardOf('!=0', () => common) }),
+    };
   },
 };
 
@@ -1747,7 +1779,7 @@ const mulBothSides: Rule = {
     return {
       after: { ...node, lhs: mul(m, [node.lhs, term]), rhs: mul(m, [node.rhs, copy]) },
       condition: safe ? undefined : conditionText(arg),
-      guard: safe ? undefined : { expr: freshCopy(m, term).copy, sign: '!=0' },
+      guard: safe ? undefined : guardOf('!=0', () => term),
     };
   },
 };
@@ -1947,7 +1979,7 @@ const absCase: Rule = {
     return {
       after: sign === '+' ? inner : negate(m, freshCopy(m, inner).copy),
       condition: `${text} ${sign === '+' ? '≥' : '≤'} 0`,
-      guard: { expr: freshCopy(m, inner).copy, sign: sign === '+' ? '>=0' : '<=0' },
+      guard: guardOf(sign === '+' ? '>=0' : '<=0', () => inner),
     };
   },
 };
@@ -2185,7 +2217,7 @@ const factorialStep: Rule = {
       dup: pairs,
       // $0! = 1$ nhưng $0 \cdot (-1)!$ vô nghĩa, nên bước này cần $n \ge 1$ thật sự.
       condition: atLeast(n, 1),
-      guard: { expr: add(m, [freshCopy(m, n).copy, int(m, -1)]), sign: '>=0' },
+      guard: guardOf('>=0', (g) => add(g, [n, int(g, -1)])),
     };
   },
 };
@@ -2209,10 +2241,15 @@ const binomToFactorial: Rule = {
         ]),
       ),
       dup: [...nCopy.pairs, ...kCopy.pairs],
-      // Không khai `guard`: điểm vi phạm tự loại: $(n-k)!$ với $n < k$ cho `null`, và
-      // bộ kiểm bỏ điểm ấy như bỏ căn bậc chẵn của số âm. Điều kiện vẫn **in ra hình**
-      // vì nó là một phần của đồng nhất thức, và người đọc cần biết.
+      // `guard` ở đây **không** để loại điểm — điểm vi phạm tự loại rồi: $(n-k)!$ với
+      // $n < k$ cho `null`, và bộ kiểm bỏ nó như bỏ căn bậc chẵn của số âm. Nó có mặt
+      // để dòng điều kiện **hỏi được** (M64): không có nó thì "$0 \le k \le n$" là một
+      // dòng chữ mà chạm vào không ra gì.
       condition: between(k, n),
+      guard: [
+        guardOf('>=0', () => k),
+        guardOf('>=0', (g) => add(g, [n, negate(g, k)])),
+      ],
     };
   },
 };
@@ -2251,7 +2288,7 @@ const pascal: Rule = {
       ]),
       dup: [...nCopy.pairs, ...kCopy.pairs],
       condition: atLeast(n, 1),
-      guard: { expr: add(m, [freshCopy(m, n).copy, int(m, -1)]), sign: '>=0' },
+      guard: guardOf('>=0', (g) => add(g, [n, int(g, -1)])),
       // Hai vai: $n$ một màu, $k$ một màu. Mắt thấy ngay cả hai đều **lùi một bậc**,
       // và chỉ một trong hai vế lùi thêm ở $k$ — đó chính là nội dung của công thức.
       roles: [
@@ -2290,7 +2327,7 @@ const binomAbsorb: Rule = {
       // để hình kể đúng chuyện ấy thay vì một cặp xoá–thêm.
       merged: [[[(node.args[ki] as Expr).id], nCopy.copy.id]],
       condition: atLeast(n, 1),
-      guard: { expr: add(m, [freshCopy(m, n).copy, int(m, -1)]), sign: '>=0' },
+      guard: guardOf('>=0', (g) => add(g, [n, int(g, -1)])),
     };
   },
 };
@@ -2384,6 +2421,28 @@ const rebuildLog = (m: Minter, base: Expr | null, arg: Expr): Expr =>
 const logCondition = (arg: Expr): string | undefined =>
   definitelyPositive(arg) ? undefined : `${toPlain(arg)} > 0`;
 
+/**
+ * ...và **cùng điều kiện ấy dưới dạng máy đọc được** (M64).
+ *
+ * M61 (§37.2) đã cân nhắc chuyện này và kết luận `Guard` ở đây *thừa*: `evalReal` của
+ * $\ln$ trả `null` ngay khi đối số $\le 0$, nên bộ bốc điểm **đã** tự bỏ mọi điểm
+ * ngoài miền và một `Guard` không thêm gì. Kết luận ấy đúng — với **người tiêu thụ duy
+ * nhất tồn tại lúc đó**.
+ *
+ * M64 thêm người tiêu thụ thứ hai: chỗ chạm vào dòng điều kiện (`incident.ts`) hỏi
+ * *"thì sao nếu vi phạm"*, và câu ấy chỉ trả lời được bằng `Guard`. Không có nó thì
+ * năm luật logarit in ra một dòng đỏ **không hỏi được** — đúng thứ M64 sinh ra để sửa.
+ *
+ * Nên đây không phải lật lại một quyết định sai, mà là cùng một quyết định trong một
+ * thế giới có thêm một người dùng. Chi phí kiểm vẫn bằng không: điểm mà guard loại đã
+ * là điểm mà `evalReal` loại.
+ *
+ * Dùng `>=0` cho một điều kiện thật ra là `> 0`: `Guard` không có dấu ngặt, và chỗ
+ * lệch duy nhất là điểm $0$ — nơi $\ln$ vốn đã không xác định nên bị bỏ dù thế nào.
+ */
+const logGuards = (args: readonly Expr[]): Guard[] =>
+  args.filter((a) => !definitelyPositive(a)).map((a) => guardOf('>=0', () => a));
+
 /** $\log(ab) = \log a + \log b$. */
 const logProduct: Rule = {
   id: 'log_product',
@@ -2400,6 +2459,7 @@ const logProduct: Rule = {
     return {
       after: add(m, terms),
       condition: bad.length === 0 ? undefined : bad.map((a) => `${toPlain(a)} > 0`).join(', '),
+      ...(bad.length === 0 ? {} : { guard: logGuards(parts) }),
     };
   },
 };
@@ -2418,6 +2478,7 @@ const logQuotient: Rule = {
     return {
       after: add(m, [rebuildLog(m, L.base, num), negate(m, rebuildLog(m, other, den))]),
       condition: bad.length === 0 ? undefined : bad.map((a) => `${toPlain(a)} > 0`).join(', '),
+      ...(bad.length === 0 ? {} : { guard: logGuards([num, den]) }),
     };
   },
 };
@@ -2430,9 +2491,11 @@ const logPower: Rule = {
     const L = asLog(node);
     if (L === null) return no('cần một logarit');
     if (L.arg.k !== 'pow') return no('đối số phải là một luỹ thừa');
+    const guard = logGuards([L.arg.base]);
     return {
       after: mul(m, [L.arg.exp, rebuildLog(m, L.base, L.arg.base)]),
       condition: logCondition(L.arg.base),
+      ...(guard.length === 0 ? {} : { guard }),
     };
   },
 };
@@ -2449,6 +2512,16 @@ const logChangeBase: Rule = {
     return {
       after: div(m, fn(m, 'ln', [arg]), fn(m, 'ln', [base])),
       condition: definitelyPositive(base) ? undefined : `${toPlain(base)} > 0, ${toPlain(base)} ≠ 1`,
+      // Cơ số $1$ là chỗ **mẫu số nổ** ($\ln 1 = 0$), khác hẳn cơ số âm là chỗ hàm
+      // không xác định — hai điều kiện, hai `Guard`.
+      ...(definitelyPositive(base)
+        ? {}
+        : {
+            guard: [
+              ...logGuards([base]),
+              guardOf('!=0', (g) => add(g, [base, int(g, -1)])),
+            ],
+          }),
     };
   },
 };
@@ -2617,6 +2690,7 @@ const logBothSides: Rule = {
     return {
       after: { ...node, lhs: fn(m, 'ln', [node.lhs]), rhs: fn(m, 'ln', [node.rhs]) },
       condition: bad.length === 0 ? undefined : bad.map((e) => `${toPlain(e)} > 0`).join(', '),
+      ...(bad.length === 0 ? {} : { guard: logGuards([node.lhs, node.rhs]) }),
     };
   },
 };
@@ -2890,7 +2964,7 @@ const scaleEquation: Rule = {
       condition: definitelyNonZero(coef.expr) ? undefined : conditionText(parts[1] as string),
       guard: definitelyNonZero(coef.expr)
         ? undefined
-        : { expr: freshCopy(m, coef.expr).copy, sign: '!=0' },
+        : guardOf('!=0', () => coef.expr),
     };
   },
 };
@@ -3091,15 +3165,8 @@ const sumSplit: Rule = {
     // chỗ cắt $3$ nằm ngoài khoảng $[1, 1]$ — nửa sau thành khoảng rỗng ($0$ với tổng)
     // trong khi nửa đầu đã ăn quá tay. Đây chính là ca buộc `guard` phải nhận số nhiều.
     const guard: Guards = [
-      { expr: add(m, [freshCopy(m, node.to).copy, negate(m, freshCopy(m, cut.expr).copy)]), sign: '>=0' },
-      {
-        expr: add(m, [
-          freshCopy(m, cut.expr).copy,
-          negate(m, freshCopy(m, node.from).copy),
-          int(m, 1),
-        ]),
-        sign: '>=0',
-      },
+      guardOf('>=0', (g) => add(g, [node.to, negate(g, cut.expr)])),
+      guardOf('>=0', (g) => add(g, [cut.expr, negate(g, node.from), int(g, 1)])),
     ];
     const second = freshCopy(m, cut.expr);
     return {

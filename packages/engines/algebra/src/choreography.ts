@@ -1,6 +1,6 @@
 import type { Choreography, Scene } from '@combviz/schema';
 import { nodeAt, walk, type Expr, type TermId } from './expr.js';
-import { elementId, layout, noteId, type Layout } from './layout.js';
+import { elementId, evidenceId, layout, noteId, type Layout } from './layout.js';
 import { readAlgebra, type AlgebraModel } from './model.js';
 
 /**
@@ -213,7 +213,21 @@ export function choreographyOf(
         push({
           id: `s${k}-line${b}`,
           kind: 'show',
-          targets: (b === 0 ? [box.lines[k]?.box.id ?? `row${k}`, ...slice] : slice).slice(0, 200),
+          // Lô đầu kéo theo **tên dòng** (nhãn luật đeo danh tính ấy) và **chấm chứng
+          // cứ** (M64). Thiếu một trong hai thì khung đầu bày sẵn thứ thuộc về một
+          // dòng chưa tồn tại — lỗi đã xảy ra hai lần, cùng một hình dạng, và cả hai
+          // lần chỉ lộ ở lượt nhìn khung 0 chứ không ở test nào.
+          targets: (b === 0
+            ? [
+                box.lines[k]?.box.id ?? `row${k}`,
+                // Chỉ khi chấm ấy **thật sự được vẽ**: dòng không có nhãn luật, hoặc
+                // bước không hợp đồng kiểm nào chạy, thì không có chấm nào — và một
+                // pha nhắm vào tên không tồn tại là một pha im lặng không làm gì.
+                ...(box.explain.evidence.some((d) => d.step === k) ? [evidenceId(k)] : []),
+                ...slice,
+              ]
+            : slice
+          ).slice(0, 200),
           at: t + FOCUS_MS + 180 + b * 90,
           duration: REVEAL_MS,
           anchor,
