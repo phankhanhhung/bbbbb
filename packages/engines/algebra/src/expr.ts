@@ -528,6 +528,27 @@ export function nodeAt(root: Expr, path: string): Expr | null {
   return cur;
 }
 
+/**
+ * Các tên chỉ số bị ràng buộc **trên đường đi** từ gốc tới `path` — những tên mà
+ * cây con tại `path` nằm trong *thân* của một $\Sigma/\Pi$ mang tên ấy.
+ *
+ * Tồn tại vì luật là hàm toàn phần trên một cây con: gọi `evaluate_at "k := 3"`
+ * **vào giữa thân** $\sum_k$ thì luật chỉ thấy một `var k` trần — nhánh che tên
+ * trong luật không cứu được, vì cái Σ đứng ngoài cây con nó được đưa. Chỉ model
+ * biết đường dẫn, nên model phải hỏi câu này trước khi tin hợp đồng `instance`.
+ */
+export function boundAlong(root: Expr, path: string): Set<string> {
+  const out = new Set<string>();
+  let cur: Expr = root;
+  for (const i of segmentsOf(path)) {
+    if (cur.k === 'big' && i === 2) out.add(cur.v);
+    const next = children(cur)[i];
+    if (next === undefined) return out;
+    cur = next;
+  }
+  return out;
+}
+
 /** Thay cây con tại `path`, giữ nguyên id của mọi nút trên đường đi. */
 export function replaceAt(root: Expr, path: string, next: Expr): Expr | null {
   const segs = segmentsOf(path);

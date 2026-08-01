@@ -13,7 +13,6 @@ import {
   abs,
   add,
   big,
-  substituteVar,
   sys,
   div,
   fn,
@@ -202,25 +201,25 @@ function subtreeIds(e: Expr): TermId[] {
   return out;
 }
 
-/** Sao chép một cây con với id hoàn toàn mới — dùng khi luật nhân bản một nhánh. */
+/**
+ * Sao chép một cây con với id hoàn toàn mới — dùng khi luật nhân bản một nhánh.
+ *
+ * Đi bằng `children`/`withChildren`, **không** bằng một `switch` viết tay — đúng
+ * bài học đã ghi tại `substitute`: bản switch cũ liệt kê add/mul/pow/div/rel rồi
+ * `default: return { ...n, id }`, tức là cấp id mới cho nút cha mà **giữ nguyên
+ * id con** của root/abs/fn/big/sys. Hậu quả đo được: add_both_sides "sqrt(2)"
+ * cho hai nút `2` cùng danh tính ở hai vế; sum_expand cho ba nút `n` trong ba
+ * hạng tử cùng một id — id trùng trong cùng một cây vẽ ra, thứ mà mọi walker
+ * (trace, hit-test, choreography) đều giả định không tồn tại.
+ */
 function freshCopy(m: Minter, e: Expr): { copy: Expr; pairs: Array<readonly [TermId, TermId]> } {
   const pairs: Array<readonly [TermId, TermId]> = [];
   const go = (n: Expr): Expr => {
     const id = m.next();
     pairs.push([n.id, id]);
-    switch (n.k) {
-      case 'add':
-      case 'mul':
-        return { ...n, id, args: n.args.map(go) };
-      case 'pow':
-        return { ...n, id, base: go(n.base), exp: go(n.exp) };
-      case 'div':
-        return { ...n, id, num: go(n.num), den: go(n.den) };
-      case 'rel':
-        return { ...n, id, lhs: go(n.lhs), rhs: go(n.rhs) };
-      default:
-        return { ...n, id };
-    }
+    const kids = children(n);
+    const renamed = kids.length === 0 ? n : withChildren(n, kids.map(go));
+    return { ...renamed, id };
   };
   return { copy: go(e), pairs };
 }
@@ -1824,6 +1823,7 @@ const substitute: Rule = {
     const value = parse((parts[1] as string).trim(), m);
 
     let found = false;
+    let shadowed = false;
     const dup: Array<readonly [TermId, TermId]> = [];
     let first = true;
     // Đi bằng `children`/`withChildren`, **không** bằng một `switch` viết tay.
@@ -1847,6 +1847,7 @@ const substitute: Rule = {
       }
       // Tên bị **che** bởi một tổng bên trong: chỉ đi vào hai cận, không vào thân.
       if (e.k === 'big' && e.v === name) {
+        shadowed = true;
         return { ...e, from: go(e.from), to: go(e.to) };
       }
       const kids = children(e).map(go);
@@ -1854,7 +1855,13 @@ const substitute: Rule = {
     };
 
     const after = go(node);
-    if (!found) return no(`không thấy biến "${name}" trong cây con này`);
+    if (!found) {
+      return no(
+        shadowed
+          ? `"${name}" ở đây là chỉ số bị ràng buộc — thế được vào cận, không thế được vào thân`
+          : `không thấy biến "${name}" trong cây con này`,
+      );
+    }
     return { after, dup };
   },
 };
@@ -2039,16 +2046,34 @@ const evaluateAt: Rule = {
     if (varsOf(value).size > 0) return no('giá trị thay vào phải là hằng');
 
     let found = false;
+    let shadowed = false;
     const go = (e: Expr): Expr => {
       if (e.k === 'var' && e.name === name) {
         found = true;
         return freshCopy(m, value).copy;
       }
+      // Tên bị **che** bởi một tổng bên trong: chỉ đi vào hai cận, không vào thân —
+      // cùng nhánh phạm vi mà `substitute` đã có. Thiếu nó, "k := 3" trên
+      // $\sum_k k$ thay cả biến chỉ số bị ràng buộc, ra $\sum_k 3$ — một phép
+      // biến đổi sai trắng; và hợp đồng `instance` không bắt được vì `replaceVar`
+      // của model từng mù phạm vi theo đúng cùng một cách.
+      if (e.k === 'big' && e.v === name) {
+        shadowed = true;
+        return { ...e, from: go(e.from), to: go(e.to) };
+      }
       const kids = children(e);
       return kids.length === 0 ? e : withChildren(e, kids.map(go));
     };
     const after = go(node);
-    if (!found) return no(`không thấy biến "${name}" trong cây con này`);
+    if (!found) {
+      // Lời từ chối là nội dung: "không thấy biến k" trong khi $k$ nằm ngay đó
+      // (nhưng bị ràng buộc) là một lời từ chối nói dối.
+      return no(
+        shadowed
+          ? `"${name}" ở đây là chỉ số bị ràng buộc — thay được vào cận, không thay được vào thân`
+          : `không thấy biến "${name}" trong cây con này`,
+      );
+    }
     return { after, verify: 'instance', binding: { name, expr: value } };
   },
 };
@@ -3029,16 +3054,41 @@ const substituteFrom: Rule = {
     if (varsOf(source.rhs).has(name)) return no(`vế phải vẫn còn ${name}`);
     if (!varsOf(target).has(name)) return no(`hàng ${parts[1]} không chứa ${name}`);
 
-    const put = (side: Expr): Expr =>
-      substituteVar(side, name, freshCopy(m, source.rhs).copy);
-    const nextRel: Expr = { ...target, lhs: put(target.lhs), rhs: put(target.rhs) };
+    /**
+     * Một bản sao mới cho **từng** lần xuất hiện, không phải một bản dùng chung:
+     * `substituteVar` trả về *cùng một object* tại mọi chỗ khớp, nên phương trình
+     * đích chứa ẩn hai lần ($x^2 + x$) sẽ có nguyên cả cây thế nhân đôi danh
+     * tính — đường sinh id trùng thứ hai, độc lập với lỗi default-case cũ của
+     * `freshCopy`. Luật `substitute` đã làm đúng từ đầu; đây là chép lại kỷ luật
+     * ấy, kèm ghi `dup` để trace nối phả hệ từng bản sao về nguồn.
+     */
+    const dup: Array<readonly [TermId, TermId]> = [];
+    const put = (side: Expr, record: boolean): Expr => {
+      const go = (e: Expr): Expr => {
+        if (e.k === 'var' && e.name === name) {
+          const { copy, pairs } = freshCopy(m, source.rhs);
+          if (record) dup.push(...pairs);
+          return copy;
+        }
+        if (e.k === 'big' && e.v === name) {
+          return { ...e, from: go(e.from), to: go(e.to) };
+        }
+        const kids = children(e).map(go);
+        return kids.length === 0 ? e : withChildren(e, kids);
+      };
+      return go(side);
+    };
+    const nextRel: Expr = { ...target, lhs: put(target.lhs, true), rhs: put(target.rhs, true) };
     const j = Number(parts[1]);
 
     return {
       after: { ...node, rels: node.rels.map((r, k) => (k === j ? nextRel : r)) },
+      dup,
       claim: {
         left: sideDiff(m, nextRel as Expr & { k: 'rel' }),
-        right: substituteVar(sideDiff(m, target), name, freshCopy(m, source.rhs).copy),
+        // Cây claim không vẽ ra, nhưng nó vẫn là một cây — id trùng trong đó là
+        // một cái bẫy gài sẵn cho walker tương lai, nên cũng sao chép từng lần.
+        right: put(sideDiff(m, target), false),
       },
     };
   },
@@ -3129,6 +3179,13 @@ const sumConst: Rule = {
   label: 'thân không phụ thuộc chỉ số',
   run(m, node) {
     if (node.k !== 'big') return no('cần một tổng hoặc một tích');
+    // Cùng nguyên tắc ∞ đã tuyên bố ở `sum_shift`/`sum_expand`: `spanOf` dựng
+    // $b - a + 1$, và với $b = \infty$ nó vẽ ra nguyên văn "(inf + 0 + 1)·c" —
+    // số học với ∞ mà M68 cấm. Đây từng là entry bị bỏ sót trong cùng bảng.
+    // Lời từ chối là nội dung: vô hạn bản sao của một hằng khác 0 không có tổng.
+    if (node.from.k === 'inf' || node.to.k === 'inf') {
+      return no('khoảng vô hạn không có "số hạng tử" — không rút gọn kiểu (b − a + 1)·c được');
+    }
     if (usesIndex(node)) return no(`thân còn chứa chỉ số ${node.v}`);
     const span = spanOf(m, node.from, node.to);
     return {

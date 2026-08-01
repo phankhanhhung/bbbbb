@@ -37,6 +37,7 @@ import {
 } from '../src/index.js';
 import { sameValueSeries, seriesOf, fracText } from '../src/series.js';
 import { evalReal } from '../src/check.js';
+import { walk as walkExpr } from '../src/expr.js';
 import { toPlain } from '../src/parse.js';
 
 /**
@@ -689,5 +690,157 @@ describe('luật chuỗi hình học', () => {
     expect(after.to.k).toBe('inf');
     // Và bước ấy **kiểm được** trên sân chuỗi, không rơi vào "chưa kiểm".
     expect(m.unchecked).toEqual([]);
+  });
+});
+
+/**
+ * Lượt rà toàn hệ trước freeze (G-C) — răng cho sáu lỗ đã vá trong engine đại số.
+ *
+ * Mỗi test dưới đây tái hiện đúng một đường đi thật của dữ liệu sai: tổng phân kỳ
+ * được "kiểm xanh", id trùng trong cây vẽ ra, biến ràng buộc bị thế mất, một nước
+ * đi hợp lệ bị kết tội oan. Chúng đứng cạnh nhau vì cùng một mẫu bệnh: chỗ nào
+ * một lớp *tưởng* lớp kia đã lo, chỗ đó là lỗ.
+ */
+describe('lượt rà trước freeze — engine đại số', () => {
+  const P = (src: string) => parse(src, new Minter());
+  const run = (start: string, steps: AlgebraStep[]) => readAlgebra(scene(start, steps));
+  const idsOf = (e: Expr): string[] => {
+    const out: string[] = [];
+    walkExpr(e, (n) => out.push(n.id));
+    return out;
+  };
+
+  describe('bigSeries — chứng cứ cắt được thay cho lời hứa', () => {
+    it('tổng phân kỳ **không** khai được thành chuỗi: thân không tăng bậc theo k', () => {
+      // Trước fix: seriesOf trả [0, 13, 0, …] — tức 13x — cho một tổng không
+      // phải chuỗi luỹ thừa, và sum_shift trên nó được kiểm XANH "chính xác
+      // tuyệt đối". Một chốt canh xanh bịa còn tệ hơn không có chốt canh.
+      expect(seriesOf(P('sum(k, 0, inf, x)'), 'x', 12)).toBeNull();
+
+      const r = sameValueSeries(P('sum(k, 0, inf, x)'), P('13*x'));
+      expect(r.verified).toBe(false);
+    });
+
+    it('thân có phần không phụ thuộc chỉ số cũng chết ngay trong cửa sổ', () => {
+      expect(seriesOf(P('sum(k, 0, inf, x^k + 1)'), 'x', 12)).toBeNull();
+    });
+
+    /**
+     * Hai cửa sổ là hai lớp chắn cho hai hướng chết khác nhau — ca `x` trần ở
+     * trên bị CẢ HAI bắt, nên cặp test dưới đây mới là răng riêng của từng lớp:
+     * bậc quay đầu *sớm* chỉ cửa sổ cộng thấy, quay đầu *muộn* chỉ cửa sổ đuôi.
+     */
+    it('bậc quay đầu SỚM — cửa sổ cộng bắt: $x^{(k-3)^2}$ có bậc 9, 4, 1 giảm dần', () => {
+      expect(seriesOf(P('sum(k, 0, inf, x^((k - 3)^2))'), 'x', 12)).toBeNull();
+    });
+
+    it('bậc quay đầu MUỘN — cửa sổ đuôi bắt: $x^{k(24-k)}$ sạch suốt 13 hạng tử đầu', () => {
+      expect(seriesOf(P('sum(k, 0, inf, x^(k * (24 - k)))'), 'x', 12)).toBeNull();
+    });
+
+    it('…nhưng $\\sum k\\,x^k$ vẫn tính được — minDeg tăng theo $k$ là đủ, không đòi đơn thức', () => {
+      const s = seriesOf(P('sum(k, 0, inf, k * x^k)'), 'x', 4);
+      expect(s?.map(fracText)).toEqual(['0', '1', '2', '3', '4']);
+    });
+
+    it('chuỗi hình học chuẩn vẫn qua nguyên vẹn sau khi siết', () => {
+      const r = sameValueSeries(P('sum(k, 0, inf, x^k)'), P('1/(1 - x)'));
+      expect(r.ok).toBe(true);
+      expect(r.verified).toBe(true);
+    });
+  });
+
+  describe('freshCopy — đệ quy vào MỌI kiểu nút', () => {
+    it('add_both_sides "sqrt(2)": hai bản của √2 mang hai bộ id khác nhau', () => {
+      // Trước fix: switch viết tay bỏ quên root/abs/fn/big/sys ở nhánh default —
+      // nút `2` trong sqrt bên trái và "bản sao" bên phải là CÙNG một danh tính.
+      const m = run('x = 3', [{ rule: 'add_both_sides', at: '', arg: 'sqrt(2)' }]);
+      expect(m.refusal).toBeNull();
+      const ids = idsOf(m.rows[1]!.expr);
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it('sum_expand: ba bản khai của thân mang ba bộ id khác nhau', () => {
+      const m = run('sum(j, 1, 3, C(n, j))', [{ rule: 'sum_expand', at: '' }]);
+      expect(m.refusal).toBeNull();
+      const ids = idsOf(m.rows[1]!.expr);
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+  });
+
+  describe('evaluate_at — phạm vi của biến ràng buộc', () => {
+    it('không thế vào chỉ số bị Σ ràng buộc, và lời từ chối nói thật', () => {
+      // Trước fix: "k := 3" trên sum(k,1,n,k) ra sum(k,1,n,3) — n(n+1)/2 thành
+      // 3n — và hợp đồng instance kiểm XANH vì replaceVar của model mù phạm vi
+      // theo đúng cùng một cách.
+      const m = run('sum(k, 1, n, k)', [{ rule: 'evaluate_at', at: '', arg: 'k := 3' }]);
+      expect(m.refusal).toContain('chỉ số bị ràng buộc');
+    });
+
+    it('thế vào **cận** thì được, và hợp đồng instance kiểm xanh', () => {
+      const m = run('sum(k, 1, n, k)', [{ rule: 'evaluate_at', at: '', arg: 'n := 3' }]);
+      expect(m.refusal).toBeNull();
+      const after = m.rows[1]!.expr as Expr & { k: 'big' };
+      expect(after.to).toMatchObject({ k: 'int', v: 3 });
+      expect(m.unsound).toEqual([]);
+    });
+
+    it('tên vừa TỰ DO ngoài Σ vừa ràng buộc trong: thế đúng bản tự do, hợp đồng đồng ý', () => {
+      // Test này cắn riêng `replaceVar` của model: luật (đã sửa) chỉ thay bản k
+      // tự do, và nếu replaceVar còn mù phạm vi thì `want` thay cả bản ràng buộc
+      // trong thân — hai phía lệch nhau và một bước ĐÚNG bị kết tội unsound.
+      const m = run('k + sum(k, 1, n, k)', [{ rule: 'evaluate_at', at: '', arg: 'k := 3' }]);
+      expect(m.refusal).toBeNull();
+      expect(m.unsound).toEqual([]);
+    });
+
+    it('gọi thẳng vào GIỮA thân qua đường dẫn cũng bị model chặn', () => {
+      // Luật không cứu được ca này: tại đường dẫn "2" nó chỉ thấy một `var k`
+      // trần, cái Σ ràng buộc đứng ngoài cây con nó được đưa. Chỉ model biết
+      // đường dẫn — nên model phải hỏi.
+      const m = run('sum(k, 1, n, k)', [{ rule: 'evaluate_at', at: '2', arg: 'k := 3' }]);
+      expect(m.refusal).toContain('ràng buộc');
+    });
+  });
+
+  describe('substitute — đổi hệ quy chiếu, nói ra thay vì kết tội oan', () => {
+    it('tại một cây con biểu thức: không còn unsound oan', () => {
+      // Trước fix: nhánh loại trừ chỉ che sameSolutionSet, nên thế tại "L" rơi
+      // vào sameValue và engine tự nhận "lỗi của engine" cho một nước đi hợp lệ.
+      const m = run('x + 1 = 5', [{ rule: 'substitute', at: 'L', arg: 'x := 2*y' }]);
+      expect(m.refusal).toBeNull();
+      expect(m.unsound).toEqual([]);
+      expect(m.unchecked).toEqual([]);
+      expect(m.rows[1]!.evidence?.verified).toBe(false);
+      expect(m.rows[1]!.evidence?.message).toContain('hệ quy chiếu');
+    });
+
+    it('tại cả quan hệ: evidence nói "không hợp đồng nào áp được", không im lặng null', () => {
+      const m = run('x + 1 = 5', [{ rule: 'substitute', at: '', arg: 'x := 2*y' }]);
+      expect(m.refusal).toBeNull();
+      expect(m.unsound).toEqual([]);
+      expect(m.rows[1]!.evidence).not.toBeNull();
+      expect(m.rows[1]!.evidence?.verified).toBe(false);
+    });
+  });
+
+  describe('substitute_from — một bản sao id riêng cho từng lần xuất hiện', () => {
+    it('phương trình đích chứa ẩn hai lần: không id nào trùng trong dòng vẽ ra', () => {
+      const m = run('x = 2*y + 1; x^2 + x = 5', [
+        { rule: 'substitute_from', at: '', arg: '0,1' },
+      ]);
+      expect(m.refusal).toBeNull();
+      const ids = idsOf(m.rows[1]!.expr);
+      expect(new Set(ids).size).toBe(ids.length);
+      // Và phả hệ được ghi: bản sao nối về nguồn qua trace, không mồ côi.
+      expect(m.rows[1]!.trace.size).toBeGreaterThan(0);
+    });
+  });
+
+  describe('sum_const — entry ∞ từng bị bỏ sót trong bảng', () => {
+    it('từ chối cận vô hạn có lời, thay vì vẽ ra "(inf + 0 + 1)·c"', () => {
+      const m = run('sum(k, 0, inf, y)', [{ rule: 'sum_const', at: '' }]);
+      expect(m.refusal).toContain('vô hạn');
+    });
   });
 });

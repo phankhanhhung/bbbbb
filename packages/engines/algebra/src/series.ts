@@ -162,16 +162,32 @@ export function seriesOf(e: Expr, name: string, N: number): Series | null {
   }
 }
 
+/** Bậc nhỏ nhất mang hệ số khác $0$; `Infinity` cho chuỗi $0$ (không chạm bậc nào). */
+function minDeg(s: Series): number {
+  const at = s.findIndex((c) => !isZero(c));
+  return at === -1 ? Infinity : at;
+}
+
 /**
  * $\sum$ và $\prod$ — cả cận hữu hạn lẫn cận vô hạn.
  *
  * Cận hữu hạn thì khai ra rồi cộng: đó là **định nghĩa**, không phải một mẹo.
  *
- * Cận vô hạn thì chỉ nhận đúng một hình: $\sum_{k=a}^{\infty} f(k)$ trong đó mỗi hạng tử
- * đóng góp vào **một bậc duy nhất** và bậc ấy tăng theo $k$. Ta không giải tích gì cả —
- * chỉ cộng những hạng tử có bậc $\le N$, và vì bậc tăng ngặt nên phần đuôi **không thể**
- * chạm vào $N$ bậc đầu. Đó là toàn bộ lý do chuỗi hình thức cắt được: cái vô hạn nằm ở
- * chỗ ta chứng minh được là nó không với tới.
+ * Cận vô hạn thì cần một **chứng cứ cắt được**, và chứng cứ ấy phải nằm trong thân
+ * hàm chứ không trong lời hứa — phiên bản đầu của chú thích này hứa "chặn cứng ở
+ * $N$ vòng, bậc chưa vượt thì từ chối" trong khi thân chỉ cộng $N{+}1$ hạng tử
+ * không kiểm gì, nên $\sum_{k=0}^{\infty} x$ trả về $13x$ và `sum_shift` trên nó
+ * được kiểm **xanh**. Bất biến thật sự cần là: *hạng tử thứ $k$ không chạm bậc
+ * nào dưới $k - a$* (`minDeg ≥ k − a`; hạng tử $0$ có `minDeg = ∞` nên qua).
+ * Khi đó $N{+}1$ hạng tử đầu là toàn bộ những gì với tới các bậc $0..N$.
+ *
+ * Kiểm trên **hai cửa sổ**: cửa sổ cộng $[a, a{+}N]$ đòi `minDeg ≥ k − a` từng
+ * hạng tử, và cửa sổ đuôi $(a{+}N, a{+}2N{+}2]$ đòi hạng tử **không chạm** bậc
+ * $\le N$. Đuôi xa hơn nữa là ngoại suy từ nhịp tăng bậc đã đo — một thân cố tình
+ * quay đầu bậc sau $2N{+}2$ hạng tử cần một đa thức số mũ bậc rất cao được dựng
+ * chủ ý, ngoài mô hình đe doạ của một kho nội dung có duyệt; còn mọi nhầm lẫn
+ * thật (thân có phần không phụ thuộc $k$, số mũ giảm dần…) chết ngay trong hai
+ * cửa sổ này.
  */
 function bigSeries(e: Expr & { k: 'big' }, name: string, N: number): Series | null {
   if (e.op !== 'sum') return null;
@@ -180,14 +196,16 @@ function bigSeries(e: Expr & { k: 'big' }, name: string, N: number): Series | nu
   if (from === null) return null;
 
   if (e.to.k === 'inf') {
-    // Cộng tới khi hạng tử vượt bậc $N$. Chặn cứng ở $N$ vòng: nếu sau ngần ấy vòng mà
-    // bậc chưa vượt thì hạng tử **không** tăng bậc, và tổng vô hạn ấy không phải một
-    // chuỗi luỹ thừa — từ chối thay vì lặp mãi.
     let acc = zeros(N);
     for (let k = from; k <= from + N; k += 1) {
       const term = seriesOf(substituteIndex(e.body, e.v, k), name, N);
       if (term === null) return null;
+      if (minDeg(term) < k - from) return null;
       acc = sAdd(acc, term);
+    }
+    for (let k = from + N + 1; k <= from + 2 * N + 2; k += 1) {
+      const term = seriesOf(substituteIndex(e.body, e.v, k), name, N);
+      if (term === null || minDeg(term) <= N) return null;
     }
     return acc;
   }

@@ -11,16 +11,16 @@ import {
 import {
   Minter,
   allPaths,
-  children,
+  boundAlong,
   depth,
   nodeAt,
   nodeCount,
   normalize,
   replaceAt,
   same,
+  substituteVar,
   totalDegree,
   walk,
-  withChildren,
   type Expr,
   type TermId,
 } from './expr.js';
@@ -108,12 +108,17 @@ export interface AlgebraModel {
   readonly refusal: string | null;
 }
 
-/** Thay mọi `var name` bằng `value` — dùng để thế ngược ẩn phụ khi kiểm. */
-function replaceVar(e: Expr, name: string, value: Expr): Expr {
-  if (e.k === 'var' && e.name === name) return value;
-  const kids = children(e).map((c) => replaceVar(c, name, value));
-  return kids.length === 0 ? e : withChildren(e, kids);
-}
+/**
+ * Thay mọi `var name` **tự do** bằng `value` — dùng để thế ngược ẩn phụ khi kiểm.
+ *
+ * Uỷ quyền cho `substituteVar` của `expr.ts` thay vì tự đi cây: bản chép tay ở
+ * đây từng **mù phạm vi** — thay cả biến chỉ số bị $\Sigma$ ràng buộc — trong khi
+ * chú thích của `substituteVar` nói thẳng "cả rules lẫn model đều cần". Hai bản
+ * chép tay thì bản thứ hai quên đúng dòng phạm vi; và vì hợp đồng `instance` so
+ * `after` với kết quả của chính hàm này, cái mù ấy làm một bước thế sai — thế
+ * vào cả $k$ trong $\sum_k$ — được kiểm **XANH**.
+ */
+const replaceVar = substituteVar;
 
 /**
  * `after` có dạng $x = r$: thay $r$ vào phương trình `before` xem có thoả không.
@@ -355,6 +360,18 @@ export function readAlgebra(scene: Scene): AlgebraModel {
       // Thế một giá trị cụ thể: không phải chuyện tập nghiệm mà là chuyện "có thế đúng
       // không". Kiểm bằng **cấu trúc**, và vì thế nó có răng thật.
       const binding = outcome.binding as NonNullable<typeof outcome.binding>;
+      // Nhưng trước khi tin hợp đồng, hỏi **đường dẫn**: cây con tại `at` có nằm
+      // trong thân một Σ/Π đang ràng buộc chính tên này không? Luật không hỏi
+      // được — nó chỉ thấy một `var` trần — và nếu bỏ qua thì "k := 3" gọi vào
+      // giữa thân $\sum_k$ thay một biến ràng buộc mà hợp đồng vẫn kiểm XANH,
+      // vì cả hai phía cùng mù một kiểu.
+      if (boundAlong(current, at).has(binding.name)) {
+        return {
+          ...empty,
+          rows,
+          refusal: `bước ${i + 1} (${rule.label} tại "${at}"): "${binding.name}" là chỉ số bị ràng buộc quanh chỗ này — thay nó là đổi nghĩa của Σ/Π bên ngoài`,
+        };
+      }
       const want = normalize(replaceVar(target, binding.name, binding.expr));
       judge(
         same(want, outcome.after)
@@ -405,7 +422,27 @@ export function readAlgebra(scene: Scene): AlgebraModel {
               ? ''
               : ' (chiều kéo theo chưa bốc trúng điểm nào để kiểm)'),
       );
-    } else if (isPredicate(target) && isPredicate(outcome.after) && rule.id !== 'substitute') {
+    } else if (rule.id === 'substitute') {
+      /**
+       * Thế biến là bước **đổi hệ quy chiếu**: sau "$x := 2y$" thì $x$ và $y$ là
+       * hai hệ toạ độ khác nhau, nên cả hai hợp đồng đều hỏi sai câu — sameValue
+       * kết tội unsound oan (hai vế khác *biến*, dĩ nhiên khác *giá trị*), còn
+       * sameSolutionSet so hai tập nghiệm sống trong hai không gian tên.
+       *
+       * Trước đây nhánh loại trừ chỉ che sameSolutionSet: thế tại một cây con
+       * biểu thức vẫn rơi vào sameValue và engine tự nhận "lỗi của engine" cho
+       * một nước đi hợp lệ; thế tại cả quan hệ thì evidence null — không kiểm mà
+       * không ai nói gì. Tình trạng "không hợp đồng nào áp được" phải thành
+       * **chứng cứ đọc được**; và nó ghi vào evidence chứ không vào `unchecked`,
+       * cùng phân công với nhánh `implies` ngay trên: chuyện *cấu trúc* mà tác
+       * giả không sửa được thì đừng dựng thành vệt vàng thường trực (M45).
+       */
+      evidence = {
+        ok: true,
+        verified: false,
+        message: 'thế biến đổi hệ quy chiếu — bước khai báo, không có hợp đồng giá trị/tập nghiệm nào áp được',
+      };
+    } else if (isPredicate(target) && isPredicate(outcome.after)) {
       judge(sameSolutionSet(target, outcome.after, guard, 20260731 + i));
     } else if (!rule.onRelation && !isPredicate(target) && !isPredicate(outcome.after)) {
       judge(sameValue(target, outcome.after, 20260731 + i, 8, guard));
