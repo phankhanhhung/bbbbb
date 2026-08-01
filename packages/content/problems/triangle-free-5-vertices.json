@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "1.0.0",
   "id": "triangle-free-5-vertices",
   "statement": {
     "vi": "Một đồ thị $5$ đỉnh không chứa tam giác nào thì có nhiều nhất $6$ cạnh. Chứng minh, và chỉ ra một đồ thị đạt đúng $6$ cạnh."

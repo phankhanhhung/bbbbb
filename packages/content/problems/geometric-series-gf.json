@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "1.0.0",
   "id": "geometric-series-gf",
   "statement": {
     "vi": "Chứng minh $\\sum_{k=0}^{\\infty} x^k = \\dfrac{1}{1-x}$, và dùng nó theo chiều ngược lại: từ $\\dfrac{1}{1-x}$ **đọc ra** dãy hệ số $1, 1, 1, \\dots$"

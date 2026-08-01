@@ -1,6 +1,6 @@
 # CombViz — Algebra engine: đặc tả
 
-Trạng thái: **đã dựng — tầng 0–3 chạy được, tầng 4 chưa** · Viết: 2026-07-31 (sau M46), dựng: M47
+Trạng thái: **đã dựng — đủ cả bốn tầng** (tầng 4 sandbox nối ở M65, §41) · Viết: 2026-07-31 (sau M46), dựng: M47
 Mã nguồn: `packages/engines/algebra/` · Bài đầu tiên: `equation-moves-that-lie`
 Nguồn yêu cầu: chưa có trong `docs/SRS-v1.0.md` — họ ID mới `AL-*` (xem `ENGINE-BACKLOG.md` §0.4)
 Tiền lệ gần nhất: `packages/engines/longdiv/` (M46), `packages/engines/derivation/` (M18)
@@ -9,11 +9,11 @@ Tiền lệ gần nhất: `packages/engines/longdiv/` (M46), `packages/engines/d
 >
 > Viết ra khi chưa có dòng code nào, rồi **dựng theo nó** ở M47. Phần lớn giữ
 > nguyên; chỗ nào thực tế bác lại thiết kế thì §20 ghi lại, không sửa lén cho khớp.
-> Tầng 0–3 của §17 đã chạy và có chốt canh; **tầng 4 (sandbox tương tác) chưa làm**
-> — đúng kế hoạch, nó đợi ≥ 3 bài dùng engine ở chế độ đọc.
+> Cả bốn tầng của §17 đã chạy và có chốt canh — tầng 4 (sandbox tương tác) nối ở
+> M65, sau khi kho đã có thừa 3 bài dùng engine ở chế độ đọc, đúng điều kiện chờ.
 >
 > **Engine này được mở theo yêu cầu trực tiếp của chính chủ**, không đi qua hàng
-> đợi. `PRD-07` và gate **G-C** vẫn đứng nguyên, và §19 vẫn là nợ chưa trả.
+> đợi. `PRD-07` giữ nguyên; gate **G-C** đã đóng 2026-08-01 (xem §19).
 
 ---
 
@@ -257,7 +257,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§37 để biết tập luật thật — **72 luật**, xếp theo mười một lớp:
+Xem §21–§37 để biết tập luật thật — **73 luật** (kể `geometric_series` của §44), xếp theo mười một lớp:
 
 | lớp | luật |
 |---|---|
@@ -651,15 +651,18 @@ vì nó biến chốt canh thành nội dung.
 
 ## 19. Việc phải làm **trước** khi mở engine này
 
-Không phải mở màn — đây là hàng đợi thật:
+Không phải mở màn — đây là hàng đợi thật. Hai mục đầu **đã đóng 2026-08-01**:
 
-1. **G-C**: chính chủ soạn tay 3–5 bài, rồi đóng băng schema `1.0.0`. Kho có 86 bài,
-   **chưa bài nào do chính chủ soạn**, và người duyệt cũng là người soạn.
-2. **G-A**: đo NFR-P1..P3 trên iPad thật. Engine này in nhiều text node hơn mọi
-   engine hiện có — đo trước thì biết trần.
-3. **Bảng đo phủ cho miền đại số.** `VIZ-COVERAGE.md` đo phủ *tổ hợp*; `longdiv` và
-   engine này đều đóng góp $0$ vào đó. Không có bảng đo riêng thì không có cách nào
-   nói engine này đáng hay không đáng — chỉ có cảm giác.
+1. ✅ **G-C** — đóng theo chỉ định chính chủ: schema freeze `1.0.0`, Style Guide
+   v1.0 kết tinh từ 114 bài, lượt rà toàn hệ vá lỗ schema ngay trước freeze. Hồ
+   sơ đóng + rủi ro còn lại (kho vẫn máy-soạn-máy-duyệt): `PLAN-P1.md` §10.
+2. ✅ **G-A** — đóng trên số proxy: NFR-P1 p95 17.5ms @×4 (trần 18 — chỉ số mỏng
+   nhất, và engine này in nhiều text node nhất kho nên nó là chỗ nhìn đầu tiên
+   nếu có thiết bị thật), NFR-P2 18.6ms, NFR-P3 289.4KB + TTI 534ms.
+3. ⬜ **Bảng đo phủ cho miền đại số** — còn nợ, chuyển vào kế hoạch M69+.
+   `VIZ-COVERAGE.md` đo phủ *tổ hợp*; `longdiv` và engine này đều đóng góp $0$
+   vào đó. Không có bảng đo riêng thì không có cách nào nói engine này đáng hay
+   không đáng — chỉ có cảm giác.
 
 
 ---

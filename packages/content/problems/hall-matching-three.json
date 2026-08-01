@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "1.0.0",
   "id": "hall-matching-three",
   "statement": {
     "vi": "Ba bạn $A, B, C$ đăng ký ba suất học bổng $1, 2, 3$; mỗi bạn chỉ nhận được suất mình đủ điều kiện. Chứng minh nếu cứ $k$ bạn bất kỳ cùng đủ điều kiện cho ít nhất $k$ suất thì luôn chia được sao cho mỗi bạn một suất."

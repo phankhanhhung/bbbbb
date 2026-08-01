@@ -1,19 +1,19 @@
 /**
  * Phiên bản schema hiện tại.
  *
- * **Vẫn ở `0.x` và đó là chủ đích.** Gate G-C của kế hoạch buộc freeze lên
- * `1.0.0` *sau* khi 5 bài đầu được soạn tay — vì chỉ khi soạn thật mới lộ ra
- * schema thiếu gì. Chưa bài nào do chính chủ soạn tay, nên freeze bây giờ là hứa
- * tương thích cho một hợp đồng chưa được thử.
+ * **`1.0.0` — G-C đã đóng, 2026-08-01, theo chỉ định của chính chủ.** Điều kiện
+ * gốc của gate ("soạn tay 3–5 bài rồi mới freeze") được thay bằng một điều kiện
+ * mạnh hơn về cùng một rủi ro: chuẩn nội dung **kết tinh từ 114 bài đã xuất
+ * bản** (Style Guide v1.0 đo trên corpus, không phải viết trước), cộng một lượt
+ * rà toàn hệ ngay trước freeze — mọi lỗ schema tìm được (Record khoá-pattern hở,
+ * `from` không kiểm, trường chết `widget_state`/`assets`) đã vá *trước* khi con
+ * dấu này đổi, vì sau nó mỗi thay đổi tốn một migration.
  *
- * `0.2.0` thêm `Step.choreography` (CHO-01..10) — trường **optional**, không bài
- * cũ nào phải sửa gì, nên đúng nghĩa một minor bump. Nó cũng là lần đầu bộ máy
- * migrate (DAT-02) thật sự chạy: trước đó `MIGRATIONS` rỗng, và một cơ chế chưa
- * bao giờ chạy thì chưa phải một cơ chế.
+ * Lịch sử 0.x, giữ làm bằng chứng: `0.2.0` thêm `Step.choreography` (lần đầu bộ
+ * máy migrate thật sự chạy); `0.3.0` thêm `cell_overrides[...].strike` (BD-10).
  *
- * `0.3.0` thêm `cell_overrides[...].strike` của board (BD-10) — cũng optional,
- * cũng không bài cũ nào phải sửa. Bump vì `cell_overrides` khai
- * `additionalProperties: false`: một file dùng `strike` mà vẫn đóng dấu `0.2.0`
- * sẽ bị chính schema `0.2.0` từ chối, tức con dấu nói sai về file.
+ * Từ đây: thêm trường optional = minor + migration đồng nhất; đổi/gỡ = major.
+ * Cửa sổ đọc của Player là minor hiện tại và n−1 (`isReadableVersion`), và
+ * validate đứng gác ở cửa (`version/unreadable`).
  */
-export const SCHEMA_VERSION = '0.3.0';
+export const SCHEMA_VERSION = '1.0.0';

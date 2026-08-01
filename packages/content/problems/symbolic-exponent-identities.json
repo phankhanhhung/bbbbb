@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "1.0.0",
   "id": "symbolic-exponent-identities",
   "statement": {
     "vi": "$a^n - b^n$ chia hết cho $a - b$ với **mọi** $n$ nguyên dương. Thương thì sách viết bằng dấu ba chấm — $a^{n-1} + a^{n-2}b + \\dots + b^{n-1}$ — mà dấu ba chấm không phải một đối tượng toán học. Viết lại nó thành một thứ máy đọc được."

@@ -2142,7 +2142,7 @@ lớn thứ hai sau đồ thị — **không có engine nào trong cả ba phase
 - ✅ **Ngân sách perf đo bằng script** (§13.1). Số thật, CPU bóp ×2–×4: chuyển step p95 **20.8ms** (ngân sách 150ms), frame khi tô quét p95 **17.4ms** ở ×2 (ngân sách 18ms), bundle **229.6KB** gzip (ngân sách 300KB), TTI 4G mô phỏng **~550ms** (ngân sách 3s).
 - ✅ `combviz coverage` — bảng điểm sprint theo DoD §15.1, đo được từ ngày đầu. Kho chết vì phân bố lệch thì chết lúc soạn xong bài 25, và lúc đó sửa nghĩa là soạn lại.
 - ✅ `combviz eval` — chạy biểu thức DSL trên từng step. Sinh ra từ chính việc soạn bài: câu hỏi hay gặp nhất không phải "file có hợp lệ không" mà "**hình có đúng thứ narrative vừa nói không**".
-- ⬜ Đo trên iPad Gen 9 thật (G-A). Script ở trên là **nửa script, không phải nửa thiết bị** — Chromium desktop bóp CPU không thay được Safari/A13.
+- ✅ ~~Đo trên iPad Gen 9 thật (G-A)~~ — **gate đóng 2026-08-01 theo chỉ định chính chủ, trên số proxy** (xem §10 mục 1: số cuối + rủi ro Safari/A13 còn lại ghi ở đó).
 - ⬜ Pilot ≥10 học sinh + 2 GV, SUS ≥ 75. Không phải việc máy làm được.
 
 **Content — 6/20, và chúng là draft:**
@@ -2230,12 +2230,10 @@ Quyết định trước, để lúc gấp không phải quyết trong hoảng l
 
 ## 10. Việc tiếp theo
 
-**Hai việc chặn, cả hai là việc của chính chủ — máy không làm hộ được:**
+**Hai gate — cả hai ĐÃ ĐÓNG ngày 2026-08-01, theo chỉ định trực tiếp của chính chủ.** Ghi lại đủ cả điều-kiện-thay-thế lẫn rủi-ro-còn-lại, vì một gate đóng mà không ghi mình đóng bằng gì thì không phân biệt được với một gate bị bỏ qua:
 
-1. ⬜ **G-A — đo perf trên iPad Gen 9 thật.** Mở từ tuần 3. Đã có script đo (§9) và số trên Chromium bóp CPU đều nằm trong ngân sách, nhưng đó là **nửa script, không phải nửa thiết bị**: Safari/A13 không mô phỏng được. Một buổi chiều với một cái iPad đóng được gate này.
-2. ⬜ **G-C — soạn tay 3–5 bài, rồi mới freeze schema `1.0.0`.** Kho có 8 bài: 2 fixture kỹ thuật và 6 draft máy. **Không bài nào do chính chủ soạn.** §16 nói thẳng: Style Guide viết trước khi soạn bài nào là Style Guide bịa — nên `docs/STYLE-GUIDE.md` vẫn cố ý để trống phần biên tập. Sáu bài draft ở M7 là bằng chứng pipeline chạy được, **không** phải bằng chứng chuẩn biên tập đã có.
-
-Hai gate này chặn theo hai hướng khác nhau: G-A chặn *niềm tin vào nền*, G-C chặn *chuẩn của nội dung*. Soạn nốt 17 bài khi G-C còn mở nghĩa là làm 17 bài theo một chuẩn chưa ai kiểm chứng — và sửa chuẩn sau đó tốn đúng bằng soạn lại.
+1. ✅ **G-A — đóng trên số đo proxy, rủi ro thiết bị thật ghi thành chữ.** Số cuối trước freeze (Chromium headless, CPU bóp): NFR-P1 chuyển step p95 **17.1ms @×2, 17.5ms @×4** (trần 18ms — **sát trần ở ×4**, đây là chỉ số mỏng nhất); NFR-P2 frame tô quét p95 **18.6ms** (trần 100ms); NFR-P3 bundle trang bài **289.4KB** gzip (trần 300KB), TTI 4G mô phỏng **534ms** (trần 3000ms). **Rủi ro còn lại, không được quên:** Safari/A13 chưa từng đo thật — script là nửa script, không phải nửa thiết bị; nếu iPad Gen 9 thật xuất hiện, một buổi chiều đo lại vẫn là việc đáng làm, và NFR-P1 là chỗ nhìn đầu tiên.
+2. ✅ **G-C — schema freeze `1.0.0`, điều kiện gốc thay bằng điều kiện mạnh hơn về cùng rủi ro.** Điều kiện gốc ("soạn tay 3–5 bài rồi mới freeze") sinh ra để chuẩn nội dung được kiểm chứng trước khi hoá đá. Thay thế đã dùng: **Style Guide v1.0 kết tinh từ số đo 114 bài đã xuất bản** (462 step — trung vị 166 ký tự/step, 2 câu, anchor trung vị 1, sâu ≤ 5), cộng một **lượt rà toàn hệ ngay trước freeze** vá mọi lỗ schema tìm được (Record khoá-pattern hở, `from` không kiểm, `isReadableVersion` 0 caller, trường chết `widget_state`/`assets` gỡ hẳn, formatProblem quên pane phải). Migration `0.3.0 → 1.0.0` đồng nhất, 114/114 bài đóng dấu lại. **Rủi ro còn lại:** kho vẫn 100% máy-soạn-máy-duyệt — AUT-09 chưa từng chạy đúng vai; bài tay đầu tiên của chính chủ vẫn là phép thử thật đầu tiên của chuẩn biên tập, chỉ là giờ nó không còn chặn schema nữa.
 
 **Việc kỹ thuật còn nợ, xếp theo mức đau:**
 

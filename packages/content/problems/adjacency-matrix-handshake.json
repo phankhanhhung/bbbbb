@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "1.0.0",
   "id": "adjacency-matrix-handshake",
   "statement": {
     "vi": "Viết đồ thị thành ma trận kề. Đọc được gì từ tổng theo hàng, và từ tổng cả bảng?"

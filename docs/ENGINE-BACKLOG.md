@@ -6,6 +6,12 @@
 
 ### 0.1 Nó không được chạy trước G-C
 
+> **G-C đã đóng 2026-08-01** (schema 1.0.0, theo chỉ định chính chủ — hồ sơ đóng
+> và rủi ro còn lại ở `PLAN-P1.md` §10). Điều kiện chặn của mục này vì thế đã
+> hết hiệu lực: danh sách dưới đây từ nay là hàng đợi **mở**, lấy theo thứ tự
+> đề xuất §1 hoặc theo chỉ định. `PRD-07` vẫn nguyên: không thêm engine chỉ để
+> tăng coverage, và mỗi hạng mục vẫn phải đi kèm nội dung.
+
 `PRODUCT-REQUIREMENTS.md` §9 xếp P0 trước, và `R-13` nói thẳng: xây thêm năng lực
 trong khi chưa có bài nào do chính chủ soạn là **R-1** (content bottleneck) ở dạng
 mới. `PRD-07` cấm thêm engine chỉ để tăng coverage. Tài liệu này là **danh sách

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "1.0.0",
   "id": "sum-odd-numbers-gnomon",
   "statement": {
     "vi": "Chứng minh rằng tổng $n$ số lẻ đầu tiên bằng $n^2$, bằng cách xếp hình."

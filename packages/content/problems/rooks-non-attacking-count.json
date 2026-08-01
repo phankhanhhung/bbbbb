@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "1.0.0",
   "id": "rooks-non-attacking-count",
   "statement": {
     "vi": "Trên bàn $4\\times4$, có bao nhiêu cách đặt $4$ quân xe sao cho không quân nào ăn quân nào?"

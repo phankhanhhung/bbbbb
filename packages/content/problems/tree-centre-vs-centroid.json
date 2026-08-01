@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "1.0.0",
   "id": "tree-centre-vs-centroid",
   "statement": {
     "vi": "Với một cây, có hai cách hiểu chữ \"giữa\": **tâm** là đỉnh mà khoảng cách tới đỉnh xa nhất là nhỏ nhất; **trọng tâm** là đỉnh mà bỏ nó đi thì mảnh lớn nhất còn lại là nhỏ nhất. Chứng tỏ hai đỉnh ấy có thể khác nhau, và chỉ ra chúng trên một cây cụ thể."

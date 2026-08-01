@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "1.0.0",
   "id": "log-equation-basics",
   "statement": {
     "vi": "Luật tích và luật luỹ thừa của logarit — cả hai **cần điều kiện** — còn cặp $e^{\\ln x}$ thì không, dù trông như cũng phải cần. Xem engine ghi đúng chỗ nào cần dòng đỏ."

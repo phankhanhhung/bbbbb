@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { SCHEMA_VERSION } from '@combviz/schema';
 import { runImportDraft } from '../src/commands/import-draft.js';
 
 /**
@@ -32,7 +33,7 @@ describe('cổng import-draft', () => {
     // `solutions: 42` — quarantine cũ đi thẳng vào `.solutions.map` và nổ.
     await writeFile(
       file,
-      JSON.stringify({ schema_version: '0.3.0', id: 'evil-draft', solutions: 42 }),
+      JSON.stringify({ schema_version: SCHEMA_VERSION, id: 'evil-draft', solutions: 42 }),
       'utf8',
     );
 

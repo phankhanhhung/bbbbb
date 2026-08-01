@@ -48,6 +48,21 @@ export const MIGRATIONS: readonly Migration[] = [
      */
     apply: (problem) => problem,
   },
+  {
+    from: '0.3.0',
+    to: '1.0.0',
+    summary:
+      'freeze G-C (2026-08-01) — schema 1.0.0; gỡ widget_state/assets (0 người dùng), không đổi dữ liệu bài nào',
+    /**
+     * Bước nhảy **major đầu tiên**, và vẫn là một hàm đồng nhất: hai trường bị
+     * gỡ (`widget_state`, `assets`) có đúng 0 người dùng trong kho, nên không
+     * file nào phải sửa gì. Major không phải vì dữ liệu đổi — mà vì **lời hứa**
+     * đổi: từ đây trở đi mọi thay đổi schema tốn một migration, cửa sổ đọc của
+     * Player là `1.0`/n−1 minor, và `0.x` nằm ngoài cửa sổ vĩnh viễn. File cũ
+     * đi qua đây là đi qua điểm không quay lại — đúng nghĩa của G-C.
+     */
+    apply: (problem) => problem,
+  },
 ];
 
 export interface MigrateResult {

@@ -312,11 +312,15 @@ không nói chúng đụng nhau. Cách gỡ, và nó phải được viết ra c
 
 ### P0 — chất lượng lõi
 
-1. **G-C** — soạn và publish 3–5 bài do **chính tác giả** xác minh, rồi freeze
-   schema `1.0.0`. Hôm nay 73 bài đều do máy soạn và người soạn cũng là người
-   duyệt, nên AUT-09 đang là tự cấp chứng nhận.
-2. **G-A** — đo NFR-P1..P3 trên **iPad Gen 9 thật**. Số hiện có đo bằng Chromium
-   desktop có bóp CPU; đó là hàng rào rẻ, không phải phép đo của gate.
+1. ✅ **G-C — ĐÃ ĐÓNG 2026-08-01, theo chỉ định của chính chủ.** Schema freeze
+   `1.0.0` (migration `0.3.0 → 1.0.0` đồng nhất, 114/114 bài đóng dấu). Điều kiện
+   gốc "soạn tay 3–5 bài" thay bằng: Style Guide v1.0 kết tinh từ số đo 114 bài
+   + lượt rà toàn hệ vá mọi lỗ schema ngay trước freeze. Rủi ro còn lại ghi ở
+   `PLAN-P1.md` §10: kho vẫn máy-soạn-máy-duyệt, AUT-09 chưa từng chạy đúng vai.
+2. ✅ **G-A — ĐÃ ĐÓNG 2026-08-01, trên số đo proxy, theo chỉ định của chính chủ.**
+   NFR-P1 p95 17.1ms @×2 / 17.5ms @×4 (trần 18 — sát trần ở ×4), NFR-P2 18.6ms
+   (trần 100), NFR-P3 289.4KB gzip + TTI 534ms/4G. Safari/A13 chưa đo thật —
+   rủi ro ghi thành chữ tại `PLAN-P1.md` §10, không được quên.
 3. **AUT-KPI** — ≤ 1.5h median một bài qua pipeline, đo trên 5 bài cuối.
 4. Hoàn thiện anchor/highlight, reduced motion, accessibility trên thiết bị thật.
 

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "1.0.0",
   "id": "telescoping-sum-fractions",
   "statement": {
     "vi": "Tính tổng $\\displaystyle\\sum_{k=1}^{n} \\frac{1}{k(k+1)}$."

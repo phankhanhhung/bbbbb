@@ -1011,6 +1011,17 @@ test.describe('Lượt rà: cử chỉ trên canvas không lái nhầm chỗ', (
     await page.goto('/?p=factoring-identities&sol=sol&step=s0');
     // KHÔNG reveal — phả hệ và sự cố là công cụ đọc lời giải, trước "Xem lời
     // giải" thì trả lời là rò rỉ nội dung đang che.
+    //
+    // So TRƯỚC/SAU chứ không đòi 0 tuyệt đối: khung 0 của choreography sinh máy
+    // vốn đã tô sáng anchor của pha đầu, và halo ấy không phải thứ test này canh.
+    // Điều phải giữ là cú chạm KHÔNG THÊM vệt nào. Mốc "trước" chỉ được chụp sau
+    // khi canvas render xong — engine nạp async, chụp sớm thì đếm được 0 rồi đổ
+    // oan cho cú chạm cái halo vốn thuộc về khung 0.
+    await expect(page.locator('.canvas svg .cv-alg-row').first()).toBeVisible();
+    await page.waitForTimeout(250);
+    const halos = page.locator(HALO);
+    const before = await halos.count();
+
     const term = page
       .locator('.canvas svg .cv-alg-row')
       .last()
@@ -1018,8 +1029,9 @@ test.describe('Lượt rà: cử chỉ trên canvas không lái nhầm chỗ', (
       .first();
     const box = (await term.boundingBox())!;
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await page.waitForTimeout(120);
 
-    await expect(page.locator(HALO)).toHaveCount(0);
+    await expect(halos).toHaveCount(before);
     await expect(page.locator('.incident')).toHaveCount(0);
   });
 });

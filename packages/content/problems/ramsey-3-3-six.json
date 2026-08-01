@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "1.0.0",
   "id": "ramsey-3-3-six",
   "statement": {
     "vi": "Trong $6$ người bất kỳ, luôn tìm được $3$ người đôi một quen nhau, hoặc $3$ người đôi một không quen nhau."
