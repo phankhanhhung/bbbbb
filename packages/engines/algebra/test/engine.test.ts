@@ -203,6 +203,10 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       'ln(x*y)', 'ln(x/y)', 'ln(x^3)', 'log(2, x)', 'exp(ln(x))', 'ln(exp(x))',
       'sin(x)^2 + cos(x)^2', 'sin(2*x)', 'cos(2*x)', 'sin(a) + sin(b)', 'sin(a)*cos(b)',
       '2^x = 8',
+      // M68: $\infty$ và chuỗi hình học — bộ sinh không có nguyên tử `inf`, và cũng
+      // **không nên** có: một cận vô hạn bốc ngẫu nhiên sẽ rơi vào mọi tổng và làm cả
+      // phép quét mất nghĩa. Gieo tay đúng hai hình dạng mà luật nhận.
+      'sum(k, 0, inf, x^k)', '1/(1 - x)',
     ];
 
     const bad: string[] = [];

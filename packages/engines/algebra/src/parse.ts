@@ -1,4 +1,5 @@
 import {
+  infinity,
   Minter,
   add,
   big,
@@ -314,6 +315,15 @@ class Parser {
       return fn(this.m, name, args);
     }
 
+    // `inf` **trước** khi đọc tên biến: không có nhân ngầm nên `inf` không thể là ba
+    // biến đứng cạnh nhau, và `i`, `n`, `f` vẫn dùng làm tên biến bình thường ở chỗ
+    // khác. Đòi ký tự sau nó **không phải chữ cái** để `info` vẫn là một tên (nếu ngày
+    // nào đó tên nhiều chữ được mở).
+    if (this.src.startsWith('inf', this.i) && !/[a-zA-Z]/.test(this.src[this.i + 3] ?? '')) {
+      this.i += 3;
+      return infinity(this.m);
+    }
+
     // Chỉ số dưới một chữ số: `a_1`. Đủ cho dãy, không mở cửa cho tên nhiều chữ.
     const name = this.name();
     if (name !== null) return variable(this.m, name);
@@ -343,6 +353,7 @@ export function tryParse(
 /* ---------- chữ trơn, cho dòng điều kiện ---------- */
 
 const PLAIN_PREC: Readonly<Record<Expr['k'], number>> = {
+  inf: 6,
   sys: 0,
   rel: 0,
   add: 1,
@@ -400,6 +411,8 @@ export function toPlain(e: Expr): string {
       return `${String(e.p).replace('-', '−')}/${e.q}`;
     case 'var':
       return e.name;
+    case 'inf':
+      return '∞';
     case 'add':
       return e.args
         .map((a, i) => {
@@ -489,6 +502,8 @@ export function unparse(e: Expr): string {
       return `(${e.p} / ${e.q})`;
     case 'var':
       return e.name;
+    case 'inf':
+      return 'inf';
     case 'add':
       return `(${e.args.map(unparse).join(' + ')})`;
     case 'mul':

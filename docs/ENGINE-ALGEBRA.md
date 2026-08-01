@@ -575,6 +575,14 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
 - ~~**Luỹ thừa số mũ hữu tỉ**~~ — **đã làm** (M49). Nó là nội dung lớp 11–12; khai nó
   là "chưa có" trong khi engine nhắm toàn bộ đại số phổ thông là tự mâu thuẫn.
 - **Phần nguyên.** Chưa có. (Logarit đã có từ M61.)
+- ~~**Chuỗi và hàm sinh**~~ — **đã làm ở mức v1** (M68). Xem §44. Nó không phải "thêm
+  một nút", nó **thêm một sân kiểm**: ba sân cũ đều bốc điểm, mà bốc điểm cho một tổng
+  vô hạn là hỏi sai câu hỏi.
+- **Tích chập hai chuỗi vô hạn.** Chưa có. `seriesOf` nhân được hai chuỗi, nhưng
+  *choreography đan hệ số* — thứ làm phép nhân ấy **dạy được** — là một mục riêng.
+- **Khai triển chuỗi của $\exp$ và $\log$.** Chưa có, cố ý: chúng cần giai thừa ở mẫu
+  và một câu chuyện hội tụ riêng, và mở chúng là bắt đầu viết một CAS.
+- **Hệ số như một toán tử trích xuất** ($[x^n] F(x)$). Chưa có ký hiệu.
 - ~~**Quy đồng, nhóm hạng tử, hoàn thành bình phương, bình phương hai vế**~~ — **đã
   làm** (M50, theo góp ý ngoài). Xem §26.
 - **Căn bậc ký hiệu** ($\sqrt[n]{x}$ với $n$ là biến). `root.index` vẫn là số nguyên;
@@ -2682,3 +2690,109 @@ Bài mới: `sign-line-two-ways` — cùng hai nghiệm $1$ và $2$, hai chiều
 ngược nhau, và chỗ khác nhau hiện ra ở chỗ tô chứ không ở chữ.
 
 3018 test xanh, 113 bài validate sạch.
+
+---
+
+## 44. Sân kiểm thứ tư — chuỗi luỹ thừa hình thức (M68, AL-16)
+
+Ba sân cũ — $\mathbb{F}_p$, thực, nguyên — đều **bốc điểm**. Chúng trả lời câu *"hai biểu
+thức có bằng nhau tại điểm này không"*, và câu ấy **không có nghĩa** với
+$\sum_{k=0}^{\infty} x^k$: chuỗi ấy không hội tụ ở mọi $x$, và ngay ở chỗ nó hội tụ thì
+một điểm cũng chỉ nói về một điểm.
+
+Câu đúng phải hỏi là *"hai chuỗi có **cùng hệ số** không"*.
+
+### 44.1 $\infty$ là một **nguyên tử**, không phải một biến
+
+Kiểu nút thứ **15**, và cái giá của nó là sáu chỗ — TypeScript liệt kê đủ sáu ngay khi
+union được nới, không sót chỗ nào:
+
+| chỗ | quyết định |
+|---|---|
+| `evalAt` (F_p) | `null` |
+| `evalReal` | `null` |
+| `totalDegree` | `Infinity` — *"không có bậc"*, không phải *"bậc lớn"* |
+| `PLAIN_PREC` / `PREC` | nguyên tử, không bao giờ cần ngoặc |
+| `toPlain` / `unparse` | `∞` / `inf` |
+| `toBox` | glyph `∞`, **không nghiêng** (nó là ký hiệu, không phải biến) |
+
+Không làm nó thành một `var` tên `"inf"`, và đó là quyết định chính của mục này: một
+biến thì **bốc điểm được**, và bốc một điểm cho $\infty$ là chỗ mọi thứ bắt đầu nói dối.
+Kiểu nút riêng buộc mọi `switch` trong repo phải khai nó xử lý ra sao — đó chính là cái
+giá đáng trả.
+
+Hệ quả trực tiếp: mọi biểu thức chứa $\infty$ **rơi khỏi** ba sân cũ và chúng nói ra
+(`verified: false`), thay vì trả `ok: true` vì không bốc trúng điểm nào. Máy móc
+`unchecked` của M49 đứng sẵn ở đó từ lâu.
+
+### 44.2 Chính xác **tuyệt đối**, không xác suất
+
+Sân này không có $d/p$, không có sai số $10^{-9}$, không có "không bốc trúng điểm nào".
+Nó hoặc so được từng hệ số, hoặc nói thẳng là không khai được thành chuỗi.
+
+`bigint` chứ không `number`: hệ số của $\frac{1}{(1-x)^3}$ mọc theo $\binom{k+2}{2}$, của
+$\frac{1}{1-2x}$ theo $2^k$, và phép chia chuỗi cộng dồn tích của các hệ số trước. Một
+`number` sẽ mất chính xác **im lặng** — đúng loại sai mà cả sân này sinh ra để tránh.
+
+Lời nhắn khi lệch là chỗ nó dạy được nhiều nhất:
+
+> `hệ số của x^1 lệch: 1 ≠ 2`
+
+Một câu người học kiểm lại được bằng tay trong mười giây.
+
+**Cái vô hạn cắt được ở đâu.** $\sum_{k=a}^{\infty}$ khai ra $N+1$ hạng tử rồi dừng —
+không phải một xấp xỉ, mà vì mỗi hạng tử đóng góp vào một bậc tăng ngặt theo $k$, nên
+phần đuôi **không thể** chạm vào $N$ bậc đầu. Vòng lặp chặn cứng ở $N$: nếu sau ngần ấy
+vòng mà bậc chưa vượt thì hạng tử không tăng bậc, tổng ấy không phải một chuỗi luỹ thừa,
+và từ chối là câu trả lời đúng.
+
+`sDiv` từ chối khi mẫu có hệ số tự do $0$: $\frac1x$ **không phải** một chuỗi luỹ thừa,
+và trả về một xấp xỉ nào đó ở chỗ ấy là bịa.
+
+### 44.3 Một luật, cố ý hẹp
+
+`geometric_series` đi **hai chiều** và chỉ nhận đúng một hình: cơ số là biến trần, cận
+dưới là $0$, số mũ là chính chỉ số. Không nhận $\sum(2x)^k$, không nhận
+$\sum_{k=1}^{\infty}$, không nhận $\sum a r^k$.
+
+Hẹp vì mỗi lần nới là một lần phải kể lại chuyện hội tụ: $\sum_{k\ge1} x^k$ bằng
+$\frac{x}{1-x}$, $\sum(2x)^k$ bằng $\frac{1}{1-2x}$ với $|x|<\frac12$ — mỗi biến thể một
+điều kiện khác, và một luật nhận cả họ sẽ in ra một điều kiện đúng cho ca này và **sai
+cho ca kia**. Ai cần biến thể thì đi qua `sum_shift` và `sum_linear`, và mỗi bước ấy hiện
+ra trên hình.
+
+Điều kiện $|x| < 1$ là **chữ**, không phải `Guard` — và chỗ khác biệt ấy chính là phần
+dạy học: nó nói về khi nào đẳng thức **số học** có nghĩa, trong khi thứ engine vừa kiểm
+là đẳng thức **hình thức**. Hai chuyện khác nhau, và bài `geometric-series-gf` nói thẳng
+điều đó ra.
+
+Hai luật cũ học số học với $\infty$:
+
+- `sum_expand` **từ chối**, có lời: *"không viết hết được vô hạn hạng tử"*. Lời từ chối
+  là nội dung — người học vừa gặp $\infty$ lần đầu, và câu trả lời đúng cho *"viết hết ra
+  xem nào"* chính là *không viết hết được*.
+- `sum_shift` giữ nguyên cận vô hạn: $\infty + c = \infty$. Không phải một phép cộng —
+  `add` sẽ dựng ra nút $\infty + 1$ và in ra hình đúng như thế, một câu vô nghĩa.
+
+### 44.4 Hai chỗ "hằng" bị hiểu quá hẹp
+
+`sum_shift` dịch cận $0$ đi $1$ và để lại nút $0 + 1$ — `normalize` **không** gộp hằng
+(gộp là việc của `eval_int`, một luật *có tên* hiện trên hình). Bản đầu của `bigSeries`
+đòi `e.k === 'int'`, nên mọi tổng vừa dịch chỉ số rơi vào *"không khai được thành chuỗi"*
+và engine nói *"chưa kiểm được"* cho một bước nó thừa sức kiểm. Cùng lỗi ở số mũ:
+`intExp` chỉ nhận chữ số, mà sau khi thay chỉ số thì số mũ là $1 + (-1)$.
+
+Cả hai chữa bằng `constInt` — gọi thẳng `evalReal` chứ không viết một bộ đánh giá hằng
+thứ hai. Hai bộ song song là hai chỗ để lệch nhau.
+
+### 44.5 Chốt canh độ phủ bắt luật mới ngay
+
+`geometric_series` vừa vào `RULES` là phép quét ngẫu nhiên đỏ: *"luật chưa từng áp được
+lần nào"*. Bộ sinh không có nguyên tử `inf` — và **không nên** có: một cận vô hạn bốc
+ngẫu nhiên sẽ rơi vào mọi tổng và làm cả phép quét mất nghĩa. Gieo tay đúng hai hình dạng
+mà luật nhận, đúng như M56–M61 đã làm cho từng họ nút mới.
+
+Bẻ răng bốn lần, bốn lần đỏ: hệ số lệch một bậc; mẫu hệ số tự do $0$ vẫn chia bừa; không
+định tuyến sang sân chuỗi; `sum_expand` chấp nhận vô hạn.
+
+3040 test xanh, 98 e2e xanh, 114 bài validate sạch.

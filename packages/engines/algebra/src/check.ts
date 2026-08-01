@@ -1,4 +1,5 @@
-import { intExp, needsRealEval, totalDegree, varsOf, walk, type Expr } from './expr.js';
+import { hasInfinity, intExp, needsRealEval, totalDegree, varsOf, walk, type Expr } from './expr.js';
+import { sameValueSeries } from './series.js';
 import { FUNCTIONS, isIntegerOnly } from './functions.js';
 
 /**
@@ -62,6 +63,11 @@ export function evalAt(e: Expr, env: ReadonlyMap<string, bigint>): bigint | null
     }
     case 'var':
       return env.get(e.name) ?? null;
+    case 'inf':
+      // $\infty$ không phải phần tử của $\mathbb{F}_p$ — cũng không phải của
+      // $\mathbb{R}$. Trả `null` là nói "điểm này vô dụng", và vì nút này **luôn**
+      // trả `null`, mọi biểu thức chứa nó rơi vào `verified: false` ở cả ba sân cũ.
+      return null;
     case 'add': {
       let s = 0n;
       for (const a of e.args) {
@@ -132,6 +138,8 @@ export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | nu
       return e.p / e.q;
     case 'var':
       return env.get(e.name) ?? null;
+    case 'inf':
+      return null;
     case 'add': {
       let s = 0;
       for (const a of e.args) {
@@ -362,7 +370,13 @@ export function sameValue(
   trials = 8,
   guard: Guards | null = null,
 ): SoundnessResult {
-  // Ba sân, và thứ tự hỏi **quan trọng**.
+  // **Bốn** sân, và thứ tự hỏi quan trọng.
+  //
+  // $\infty$ hỏi trước hết: nó làm mọi phép bốc điểm vô nghĩa (`evalAt`/`evalReal` trả
+  // `null` ở nút ấy, nên ba sân kia chỉ có thể trả "không tìm được điểm nào"). Sân chuỗi
+  // thì trả lời **chính xác tuyệt đối** bằng hệ số — không xác suất, không sai số.
+  if (hasInfinity(a) || hasInfinity(b)) return sameValueSeries(a, b);
+
   //
   // Giai thừa và tổ hợp hỏi trước hết: $C_n^k$ *có* tính được trên $\mathbb{F}_p$ khi
   // $n$ là hằng, nhưng đường ấy im lặng đúng ở chỗ nguy hiểm nhất — $n$ ký hiệu — nên

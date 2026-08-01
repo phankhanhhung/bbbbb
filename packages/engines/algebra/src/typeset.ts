@@ -131,6 +131,8 @@ const MED = 0.3;
  */
 const EM: Readonly<Record<string, number>> = {
   ' ': 0.26,
+  // ∞ rộng hơn mọi chữ cái — đo từ KaTeX_Main: 1 em chẵn.
+  '∞': 1.0,
   '+': 0.62,
   '−': 0.62,
   '=': 0.66,
@@ -663,6 +665,7 @@ export function place(box: Box, x: number, y: number): Placed {
 
 /** Độ ưu tiên, để biết khi nào phải bọc ngoặc. */
 const PREC: Readonly<Record<Expr['k'], number>> = {
+  inf: 6,
   sys: 0,
   rel: 0,
   add: 1,
@@ -808,6 +811,10 @@ export function toBox(e: Expr, size: number = FONT): Box {
         den: text(num(e.q), shrink(size, NEST)),
         size,
       });
+    case 'inf':
+      // Không nghiêng: $\infty$ là một **ký hiệu**, không phải một biến. Cùng lối với
+      // dấu $=$ và tên hàm.
+      return tag(text('∞', size, false));
     case 'var': {
       const [head, sub] = e.name.split('_');
       const body = text(head as string, size, true);

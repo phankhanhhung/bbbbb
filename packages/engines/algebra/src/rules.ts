@@ -23,6 +23,7 @@ import {
   negate,
   pow,
   flipOp,
+  infinity,
   rat,
   rel,
   root,
@@ -3242,13 +3243,18 @@ const sumShift: Rule = {
     if (varsOf(shift.expr).has(node.v)) return no(`lượng dịch không được chứa chỉ số ${node.v}`);
 
     const back = add(m, [variable(m, node.v), negate(m, freshCopy(m, shift.expr).copy)]);
+    // $\infty + c = \infty$ (M68). Không phải một phép cộng — `add` với một nút `inf`
+    // sẽ dựng ra $\infty + 1$ và in ra hình đúng như thế, một câu vô nghĩa. Cận vô hạn
+    // **giữ nguyên**, và đó là toàn bộ số học với $\infty$ mà engine này có.
+    const move = (bound: Expr): Expr =>
+      bound.k === 'inf' ? bound : add(m, [bound, freshCopy(m, shift.expr).copy]);
     return {
       after: big(
         m,
         node.op,
         node.v,
-        add(m, [node.from, freshCopy(m, shift.expr).copy]),
-        add(m, [node.to, freshCopy(m, shift.expr).copy]),
+        move(node.from),
+        move(node.to),
         replaceIndex(m, node.body, node.v, back),
       ),
     };
@@ -3267,6 +3273,9 @@ const sumExpand: Rule = {
   label: 'viết hết các hạng tử',
   run(m, node) {
     if (node.k !== 'big') return no('cần một tổng hoặc một tích');
+    // Lời từ chối **là nội dung**: người học vừa gặp $\infty$ lần đầu, và câu trả lời
+    // đúng cho "viết hết ra xem nào" chính là *không viết hết được*.
+    if (node.to.k === 'inf') return no('không viết hết được vô hạn hạng tử — dùng luật chuỗi hình học');
     if (node.from.k !== 'int' || node.to.k !== 'int') return no('hai cận phải là số nguyên');
     const count = node.to.v - node.from.v + 1;
     if (count <= 0) return no('khoảng rỗng — không có hạng tử nào');
@@ -3307,7 +3316,68 @@ const prodTelescope: Rule = {
   },
 };
 
+/**
+ * $\sum_{k=0}^{\infty} x^k = \dfrac{1}{1-x}$ — **hai chiều** (M68, AL-16).
+ *
+ * Luật duy nhất của mục này, và nó cố ý hẹp: cơ số phải là **một biến trần**, cận dưới
+ * phải là $0$, số mũ phải là **chính chỉ số**. Không nhận $\sum (2x)^k$, không nhận
+ * $\sum_{k=1}^{\infty}$, không nhận $\sum a r^k$.
+ *
+ * Hẹp vì mỗi lần nới là một lần phải kể lại chuyện hội tụ. $\sum_{k=1}^{\infty} x^k$
+ * bằng $\dfrac{x}{1-x}$, $\sum (2x)^k$ bằng $\dfrac{1}{1-2x}$ với $|x| < \frac12$ —
+ * mỗi biến thể một điều kiện khác, và một luật nhận cả họ sẽ in ra một điều kiện đúng
+ * cho ca này và sai cho ca kia. Người học cần biến thể khác thì đi qua `sum_shift` và
+ * `sum_linear`, và mỗi bước ấy **hiện ra trên hình**.
+ *
+ * Điều kiện $|x| < 1$ là **chữ**, không phải `Guard`: sân chuỗi không bốc điểm nào nên
+ * không có điểm nào để loại. Nó là một phát biểu về *khi nào đẳng thức số học có nghĩa*,
+ * trong khi thứ engine vừa kiểm là đẳng thức **hình thức** — hai chuyện khác nhau, và
+ * nói rõ chỗ khác nhau ấy chính là phần dạy học.
+ */
+const geometricSeries: Rule = {
+  id: 'geometric_series',
+  label: 'chuỗi hình học',
+  run(m, node) {
+    // Chiều xuôi: $\sum_{k=0}^{\infty} x^k \to \dfrac{1}{1-x}$.
+    if (node.k === 'big') {
+      if (node.op !== 'sum') return no('cần một tổng, không phải một tích');
+      if (node.to.k !== 'inf') return no('cận trên phải là ∞');
+      if (!(node.from.k === 'int' && node.from.v === 0)) return no('cận dưới phải là 0');
+      if (node.body.k !== 'pow') return no('thân phải là một luỹ thừa');
+      if (node.body.base.k !== 'var') return no('cơ số phải là một biến');
+      if (!(node.body.exp.k === 'var' && node.body.exp.name === node.v)) {
+        return no(`số mũ phải là chính chỉ số ${node.v}`);
+      }
+      const x = node.body.base;
+      return {
+        after: div(m, int(m, 1), add(m, [int(m, 1), negate(m, x)])),
+        condition: `|${toPlain(x)}| < 1`,
+      };
+    }
+
+    // Chiều ngược: $\dfrac{1}{1-x} \to \sum_{k=0}^{\infty} x^k$.
+    if (node.k !== 'div') return no('cần một tổng vô hạn hoặc một phân số');
+    if (!(node.num.k === 'int' && node.num.v === 1)) return no('tử phải là 1');
+    const den = node.den;
+    if (den.k !== 'add' || den.args.length !== 2) return no('mẫu phải có dạng 1 − x');
+    const [one, rest] = den.args as [Expr, Expr];
+    if (!(one.k === 'int' && one.v === 1)) return no('mẫu phải bắt đầu bằng 1');
+    if (!(rest.k === 'mul' && rest.args.length === 2)) return no('mẫu phải có dạng 1 − x');
+    const [neg, x] = rest.args as [Expr, Expr];
+    if (!(neg.k === 'int' && neg.v === -1)) return no('mẫu phải có dạng 1 − x');
+    if (x.k !== 'var') return no('phải là 1 − (một biến)');
+
+    // Chỉ số mới: một tên chưa dùng, để không che biến nào (bài học M57).
+    const k = freshIndex(x);
+    return {
+      after: big(m, 'sum', k, int(m, 0), infinity(m), pow(m, x, variable(m, k))),
+      condition: `|${toPlain(x)}| < 1`,
+    };
+  },
+};
+
 export const RULES: readonly Rule[] = [
+  geometricSeries,
   commute,
   distribute,
   factor,

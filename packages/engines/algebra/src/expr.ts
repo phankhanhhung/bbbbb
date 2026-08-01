@@ -26,6 +26,22 @@ export type Expr =
   | ({ readonly k: 'int'; readonly v: number } & WithId)
   | ({ readonly k: 'rat'; readonly p: number; readonly q: number } & WithId)
   | ({ readonly k: 'var'; readonly name: string } & WithId)
+  /**
+   * Vô cực — **nguyên tử**, không phải một số (M68, AL-16).
+   *
+   * Có vì hàm sinh cần cận vô hạn: $\sum_{k=0}^{\infty} x^k$ là câu mở đầu của cả
+   * chuyên đề, và viết nó bằng một cận hữu hạn lớn là nói dối về thứ đang được nói.
+   *
+   * **Nó không có giá trị.** `evalAt` và `evalReal` trả `null`, `totalDegree` trả
+   * `Infinity`. Nghĩa là mọi biểu thức chứa nó **không kiểm được** trên ba sân cũ —
+   * và chúng nói ra điều đó (`verified: false`) thay vì giả vờ xanh. Chỉ sân thứ tư
+   * (`series.ts`) mới trả lời được, và nó trả lời bằng **hệ số**, không bằng điểm.
+   *
+   * Không phải một `var` tên `"inf"`: một biến thì bốc điểm được, và bốc một điểm cho
+   * $\infty$ là chỗ mọi thứ bắt đầu nói dối. Kiểu nút riêng thì mọi `switch` trong
+   * repo phải khai nó xử lý ra sao — và đó chính là cái giá đáng trả.
+   */
+  | ({ readonly k: 'inf' } & WithId)
   | ({ readonly k: 'add'; readonly args: readonly Expr[] } & WithId)
   | ({ readonly k: 'mul'; readonly args: readonly Expr[] } & WithId)
   /**
@@ -156,6 +172,18 @@ export function rat(m: Minter, p: number, q: number): Expr {
 }
 
 export const variable = (m: Minter, name: string): Expr => ({ k: 'var', name, id: m.next() });
+
+/** $\infty$ — nguyên tử, không phải biến (M68). */
+export const infinity = (m: Minter): Expr => ({ k: 'inf', id: m.next() });
+
+/** Cây này có chứa $\infty$ không — cửa định tuyến sang sân chuỗi. */
+export function hasInfinity(e: Expr): boolean {
+  let found = false;
+  walk(e, (n) => {
+    if (n.k === 'inf') found = true;
+  });
+  return found;
+}
 
 /**
  * Tổng đã làm phẳng.
@@ -427,6 +455,11 @@ export function totalDegree(e: Expr): number {
   switch (e.k) {
     case 'var':
       return 1;
+    case 'inf':
+      // Không phải "bậc rất lớn" mà là **không có bậc**. `sameValue` đọc con số này để
+      // quyết cận Schwartz–Zippel, và `Infinity` đẩy nó vào nhánh "không kiểm được" —
+      // đúng chỗ nó phải đứng, vì ba sân cũ không nói được gì về $\infty$.
+      return Infinity;
     case 'int':
     case 'rat':
       return 0;

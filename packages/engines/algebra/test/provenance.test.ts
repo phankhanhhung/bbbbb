@@ -16,10 +16,12 @@ import {
   elementId,
   lineageOf,
   Minter,
+  totalDegree,
+  varsOf,
   moveRefusal,
   movesAtElement,
-  parse,
   parseElementId,
+  parse,
   readAlgebra,
   ROW,
   RULES,
@@ -31,7 +33,11 @@ import {
   violationOf,
   WITNESS_MAX,
   type AlgebraStep,
+  type Expr,
 } from '../src/index.js';
+import { sameValueSeries, seriesOf, fracText } from '../src/series.js';
+import { evalReal } from '../src/check.js';
+import { toPlain } from '../src/parse.js';
 
 /**
  * Tiểu sử hạng tử (M63, AL-13).
@@ -569,5 +575,119 @@ describe('trục số và các trần', () => {
     expect(layout(readAlgebra(chain(true))).width).toBe(
       layout(readAlgebra(chain(false))).width,
     );
+  });
+});
+
+/**
+ * Sân kiểm thứ tư — chuỗi luỹ thừa hình thức (M68, AL-16).
+ *
+ * Ba sân cũ bốc điểm và trả lời "bằng nhau tại điểm này chứ?". Câu ấy **không có
+ * nghĩa** với một tổng vô hạn. Sân này hỏi câu khác — "cùng hệ số chứ?" — và trả lời
+ * **chính xác tuyệt đối**.
+ */
+describe('nguyên tử ∞', () => {
+  const P = (src: string) => parse(src, new Minter());
+
+  it('đọc, in ra, và **khứ hồi** đúng', () => {
+    expect(toPlain(P('inf'))).toBe('∞');
+    expect(unparse(P('sum(k, 0, inf, x^k)'))).toBe(unparse(P(unparse(P('sum(k, 0, inf, x^k)')))));
+  });
+
+  it('không phải một biến — `varsOf` không thấy nó', () => {
+    expect([...varsOf(P('sum(k, 0, inf, x^k)'))]).toEqual(['x']);
+  });
+
+  it('**không có giá trị**: ba sân bốc điểm đều câm', () => {
+    expect(evalReal(P('inf'), new Map())).toBeNull();
+    // Và vì thế `totalDegree` là vô cùng, tức "không có bậc" chứ không phải "bậc lớn".
+    expect(totalDegree(P('inf'))).toBe(Infinity);
+  });
+});
+
+describe('so bằng hệ số', () => {
+  const P = (src: string) => parse(src, new Minter());
+  const cmp = (a: string, b: string) => sameValueSeries(P(a), P(b));
+
+  it('$\\sum x^k$ **bằng** $1/(1-x)$, chính xác tuyệt đối', () => {
+    const r = cmp('sum(k, 0, inf, x^k)', '1/(1 - x)');
+    expect(r.ok).toBe(true);
+    expect(r.verified).toBe(true);
+    expect(r.message).toContain('chính xác tuyệt đối');
+  });
+
+  it('...và **không** bằng $1/(1-2x)$ — nói rõ lệch ở hệ số nào', () => {
+    const r = cmp('sum(k, 0, inf, x^k)', '1/(1 - 2*x)');
+    expect(r.ok).toBe(false);
+    // Con số, không chỉ một lời than: hệ số của $x^1$ là $1$ bên này, $2$ bên kia.
+    expect(r.message).toBe('hệ số của x^1 lệch: 1 ≠ 2');
+  });
+
+  it('hệ số **hữu tỉ** không mất chính xác — đó là lý do dùng `bigint`', () => {
+    const s = seriesOf(P('1/(2 - x)'), 'x', 4)!;
+    expect(s.map(fracText)).toEqual(['1/2', '1/4', '1/8', '1/16', '1/32']);
+  });
+
+  it('mẫu có hệ số tự do $0$ thì **không phải** một chuỗi luỹ thừa', () => {
+    expect(seriesOf(P('1/x'), 'x', 4)).toBeNull();
+    expect(cmp('1/x', '1/x').verified).toBe(false);
+  });
+
+  it('hai biến thì **không đoán** biến chuỗi nào', () => {
+    const r = cmp('sum(k, 0, inf, (x*y)^k)', '1/(1 - x*y)');
+    expect(r.verified).toBe(false);
+    expect(r.message).toContain('biến chuỗi duy nhất');
+  });
+
+  it('$\\exp$, căn, trị tuyệt đối → không khai được, và nói ra', () => {
+    for (const src of ['exp(x)', 'sqrt(1 - x)', 'abs(x)']) {
+      expect(seriesOf(P(src), 'x', 4), src).toBeNull();
+    }
+  });
+});
+
+describe('luật chuỗi hình học', () => {
+  const run = (start: string, steps: AlgebraStep[]) => readAlgebra(scene(start, steps));
+
+  it('gấp lại: $\\sum_{k\\ge0} x^k \\to 1/(1-x)$, kèm điều kiện hội tụ', () => {
+    const m = run('sum(k, 0, inf, x^k)', [{ rule: 'geometric_series', at: '' }]);
+    expect(m.refusal).toBeNull();
+    expect(unparse(m.rows[1]!.expr)).toBe('(1 / (1 + ((-1) * x)))');
+    expect(m.conditions.map((c) => c.text)).toEqual(['|x| < 1']);
+    expect(m.unsound).toEqual([]);
+    expect(m.unchecked).toEqual([]);
+  });
+
+  it('mở ra: $1/(1-x) \\to \\sum_{k\\ge0} x^k$ — **hai chiều**', () => {
+    const m = run('1/(1 - x)', [{ rule: 'geometric_series', at: '' }]);
+    expect(m.refusal).toBeNull();
+    expect(m.rows[1]!.expr.k).toBe('big');
+    expect(m.unsound).toEqual([]);
+  });
+
+  it('cố ý **hẹp**: từ chối mọi biến thể, có lời', () => {
+    for (const [src, why] of [
+      ['sum(k, 1, inf, x^k)', 'cận dưới phải là 0'],
+      ['sum(k, 0, inf, (2*x)^k)', 'cơ số phải là một biến'],
+      ['sum(k, 0, inf, x^(2*k))', 'số mũ phải là chính chỉ số'],
+      ['sum(k, 0, 5, x^k)', 'cận trên phải là ∞'],
+      ['2/(1 - x)', 'tử phải là 1'],
+      ['1/(1 - 2*x)', 'mẫu phải có dạng 1 − x'],
+    ] as [string, string][]) {
+      expect(run(src, [{ rule: 'geometric_series', at: '' }]).refusal, src).toContain(why);
+    }
+  });
+
+  it('`sum_expand` **từ chối** vô hạn, và lời từ chối là nội dung', () => {
+    const m = run('sum(k, 0, inf, x^k)', [{ rule: 'sum_expand', at: '' }]);
+    expect(m.refusal).toContain('không viết hết được vô hạn hạng tử');
+  });
+
+  it('`sum_shift` giữ cận vô hạn: $\\infty + c = \\infty$', () => {
+    const m = run('sum(k, 0, inf, x^k)', [{ rule: 'sum_shift', at: '', arg: '1' }]);
+    expect(m.refusal).toBeNull();
+    const after = m.rows[1]!.expr as Expr & { k: 'big' };
+    expect(after.to.k).toBe('inf');
+    // Và bước ấy **kiểm được** trên sân chuỗi, không rơi vào "chưa kiểm".
+    expect(m.unchecked).toEqual([]);
   });
 });

@@ -1,0 +1,115 @@
+{
+  "schema_version": "0.3.0",
+  "id": "geometric-series-gf",
+  "statement": {
+    "vi": "Chứng minh $\\sum_{k=0}^{\\infty} x^k = \\dfrac{1}{1-x}$, và dùng nó theo chiều ngược lại: từ $\\dfrac{1}{1-x}$ **đọc ra** dãy hệ số $1, 1, 1, \\dots$"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: ba sân bốc điểm cũ **không nói được gì** về một tổng vô hạn — chúng chỉ trả lời \"không tìm được điểm nào\". Sân thứ tư so **hệ số**, chính xác tuyệt đối, và khi lệch thì nó nói lệch ở hệ số của $x^k$ nào."
+    }
+  },
+  "topics": [
+    "counting",
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Hai chiều của một đồng nhất thức"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a1|Tổng vô hạn]] $\\sum_{k=0}^{\\infty} x^k$ gấp lại thành một phân thức. Engine kiểm được bước này — nhưng **không** bằng cách bốc điểm: ba sân cũ đều trả lời \"không tìm được điểm nào\", vì $\\infty$ không có giá trị.\nSân thứ tư so **hệ số**: hai bên đều là $1, 1, 1, \\dots$, khớp $13$ hệ số đầu, chính xác tuyệt đối."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "gấp tổng vô hạn thành phân thức",
+              "start": "sum(k, 0, inf, x^k)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "geometric_series"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: tổng vô hạn của x mũ k từ k bằng 0, rồi phân thức 1 chia cho 1 trừ x, kèm điều kiện trị tuyệt đối của x nhỏ hơn 1."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chiều ngược: từ [[a1|một phân thức]] **đọc ra** dãy hệ số — toàn bộ ý tưởng hàm sinh gói trong một dòng.\nDòng đỏ là điều kiện hội tụ: nó nói về đẳng thức **số học**, còn thứ engine vừa kiểm là đẳng thức **hình thức**."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "đọc dãy hệ số ra khỏi phân thức",
+              "start": "1/(1 - x)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "geometric_series"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: phân thức 1 chia cho 1 trừ x, rồi tổng vô hạn của x mũ k từ k bằng 0."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}
