@@ -257,7 +257,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§37 để biết tập luật thật — **75 luật** (kể `specialize` của §45 và `sum_telescope` của §46), xếp theo mười một lớp:
+Xem §21–§37 để biết tập luật thật — **79 luật** (kể bốn luật trích hệ số của §47), xếp theo mười một lớp:
 
 | lớp | luật |
 |---|---|
@@ -2908,7 +2908,7 @@ không bịt: mọi câu trả lời cho `seq` sẽ là "y như `ufn`", nên m�
 hai chỗ phải nhớ, và quên một chỗ thì không ai báo. Cái giá đáng trả khi hai vật
 **khác nhau**; ở đây chúng là một.
 
-Điều này trả cổ tức ngay: cả 75 luật, `abstractUninterpreted`, `specialize`,
+Điều này trả cổ tức ngay: cả tập luật, `abstractUninterpreted`, `specialize`,
 `substitute_from` đều chạy trên $a_n$ mà không dòng nào phải sửa vì dãy số.
 
 Cú pháp mặt: `a_n`, `a_1`, `a_{k+1}`. Chỉ số không ngoặc đọc đúng **một** nguyên
@@ -3014,3 +3014,106 @@ giả thiết ngay ở dòng đầu.
 3. **Phép thế không kiêm rút gọn.** `substitute_from` cho $a_{n+1} + (-1)\cdot3$
    chứ không phải $a_{n+1} - 3$, và đó là đúng: mỗi phép rút gọn là một bước có
    tên, hiện ra trên hình. Test viết theo trực giác "phải ra $-3$" đã đỏ trước.
+
+## §47 — Trích hệ số: hàm sinh tầng hai (M72, AL-19)
+
+### 47.1 Cái còn thiếu sau M68
+
+M68 dựng được **chuỗi**: $\sum_{k\ge0} x^k = \frac{1}{1-x}$ kiểm được chính xác tuyệt
+đối bằng hệ số. Nhưng cả chuyên đề hàm sinh chỉ có **một** câu hỏi, và M68 không viết
+ra được vế thứ hai của nó:
+
+> dựng một chuỗi, rồi **đọc lấy hệ số thứ $n$**.
+
+Engine dựng được $\frac{1}{(1-x)^3}$ mà không nói được $\binom{n+2}{2}$ là hệ số của
+nó — tức nó có công cụ nhưng không có câu trả lời. Kiểu nút thứ 16 lấp đúng chỗ ấy:
+
+```ts
+| ({ k: 'coeff'; v: string; at: Expr; of: Expr } & WithId)
+```
+
+`v` **ràng buộc** (biến chuỗi), `at` thì **không** — và bất đối xứng ấy là cả điểm:
+$[x^n]$ với $n$ tự do là thứ mục này sinh ra để viết. Cùng luật phạm vi mà `big` đã
+đặt ở M57, cùng cái bẫy: quên trừ `v` khỏi `varsOf` thì bộ kiểm bốc một giá trị cho
+$x$ và mọi thứ sai im lặng.
+
+### 47.2 Chỗ đắt nhất hoá ra không tốn gì: một nút **biết tự tính**
+
+Phản xạ đầu tiên là dựng một sân kiểm thứ năm cho hệ số ký hiệu. Không cần. Một nút
+`coeff` **có giá trị số** ngay khi bậc của nó là một số nguyên — khai `of` thành chuỗi
+tới đúng bậc ấy rồi đọc. Và bộ bốc điểm **nguyên** của M56 bốc trong $[0,12]$, tức
+$n$ nó đưa vào *luôn* là một số nguyên nhỏ.
+
+Nên cả AL-19 gói lại trong một nhánh của `evalReal`, và cổ tức thì lớn hơn hẳn phần
+bỏ ra: mọi đồng nhất thức hàm sinh với $n$ ký hiệu trở thành một câu hỏi mà máy móc
+sẵn có trả lời được.
+
+$$[x^n]\frac{1}{(1-x)^3} = \binom{n+2}{2}, \qquad [x^k](1+x)^n = \binom{n}{k}$$
+
+Cả hai **được kiểm**, trên tám điểm nguyên, không một dòng mã nào riêng cho "hằng đẳng
+thức đã biết". Dòng thứ hai là nhị thức Newton.
+
+Một chi tiết quyết định chuyện ấy chạy: `of` được **đóng băng** theo `env` trước khi
+khai chuỗi — mọi biến tự do khác thay bằng giá trị vừa bốc. Không có bước ấy thì
+$[x^k](1+x)^n$ mãi mãi "chưa khai được thành chuỗi", vì `seriesOf` chỉ biết biến chuỗi
+và hằng. Giá trị **không nguyên** thì trả `null`: hệ số hữu tỉ chính xác trên `bigint`
+không sống chung với `0.4`.
+
+Ba cửa `null`, và cả ba đều là câu trả lời chứ không phải thất bại: bậc không nguyên
+hoặc âm, biến tự do chưa bốc, chuỗi không khai được. $[x^2]\frac1x$ không có nghĩa, và
+trả một xấp xỉ ở đó là bịa.
+
+### 47.3 Bốn luật, và cái ở giữa
+
+- **`coeff_of_product`** — tích chập Cauchy:
+  $[x^n](F G) = \sum_{i=0}^{n}\bigl([x^i]F\bigr)\bigl([x^{n-i}]G\bigr)$. Đây là chỗ hai
+  thế giới gặp nhau: **nhân** hai hàm sinh là một phép đại số, **cộng theo mọi cách chia
+  $n$ thành hai phần** là một phép đếm, và dòng này nói chúng là một. Mọi bài "có bao
+  nhiêu cách…" giải bằng hàm sinh đều đi qua đúng đây.
+- **`coeff_linear`** — $[x^n](F+G)$ tách đôi, hằng rời khỏi ngoặc vuông. "Hằng" nghĩa là
+  *không chứa biến chuỗi*; $n$ được phép có mặt, và điều đó đúng vì $n$ đứng ngoài phạm
+  vi ràng buộc.
+- **`coeff_shift`** — $[x^n](x^d F) = [x^{n-d}]F$, với điều kiện **$n \ge d$** khai bằng
+  `guard` chứ không chỉ bằng chữ. Dưới ngưỡng ấy vế trái bằng $0$ còn vế phải là một bậc
+  âm, thứ không tồn tại — nên bộ kiểm phải **bỏ** đúng những điểm ấy, không phải lặng lẽ
+  trượt qua chúng.
+- **`coeff_repeated_geometric`** — $[x^n]\frac{1}{(1-x)^m} = \binom{n+m-1}{m-1}$: bài
+  chia kẹo viết bằng hàm sinh. $m$ phải là **hằng nguyên** $\ge 1$; với $m$ ký hiệu thì
+  không khai chuỗi được ở bất kỳ bậc nào, và dựng một dòng mà bộ kiểm chỉ biết nói "chưa
+  kiểm được" là dựng một vệt vàng.
+
+Chỉ số chạy của `coeff_of_product` phải khác **cả biến chuỗi**, và chỗ ấy suýt sai:
+`varsOf` không kể biến bị ràng buộc, nên `freshIndex` trên một nút $[k^n]\dots$ vui vẻ
+trả về `k` — đúng cái tên đang bị che. Một dòng `new Set([node.v])` truyền thêm vào, và
+một test gọi luật trên $[k^n]$ để giữ nó ở đó.
+
+### 47.4 Cái đã sai trước khi đúng
+
+1. **`x^21/(1 − x)`.** Bản plain của phép nhân nối các thừa số **kề nhau** — đúng với
+   $2x$ và $xy$, sai chết người khi hai chữ số dính vào nhau: $x^2 \cdot \frac{1}{1-x}$
+   in ra `x^21/(1 − x)` và đọc lên thành "x mũ hai mươi mốt". Sửa bằng cách hỏi **chuỗi
+   đã in** chứ không hỏi kiểu nút: kiểu nút không biết mình bắt đầu bằng chữ số nào. Đây
+   là chuỗi đi vào `alt_text` và điều kiện in trên hình, nên nó là lỗi thật, không phải
+   chuyện thẩm mỹ.
+2. **`[x^n − k]`.** Bậc không bọc ngoặc thì đọc thành "$[x^n]$ trừ $k$" — cùng lớp lỗi,
+   phát hiện trong cùng một lượt nhìn.
+3. **`edge_type: "alt"` không tồn tại.** Lời giải thứ hai của một bài là một **`solution`
+   khác**, không phải một cạnh khác trong cùng cây — schema nói thế từ đầu và validate
+   bắt ngay. Đường phân nhánh trong một lời giải là `case`/`contradiction`, hai thứ có
+   nghĩa lô-gic; "cách làm khác" thì không nằm trong cây ấy.
+4. **Chốt canh độ phủ, lần thứ ba trong ba mục liên tiếp.** Bốn luật mới, không luật nào
+   được quét lần nào cho tới khi gieo bốn hình dạng vào `SEEDS` — rồi vẫn thiếu một, vì
+   `coeff_repeated_geometric` cần một `coeff` có thân là **đúng** $\frac{1}{(1-x)^m}$
+   chứ không phải một thừa số nằm trong tích. Cơ chế ấy đã trả tiền cho chính nó nhiều
+   lần hơn bất kỳ chốt canh nào khác của engine.
+
+### 47.5 Không làm
+
+Tích chập của hai chuỗi **ký hiệu** ($\sum a_i x^i \cdot \sum b_j x^j$) không có ở đây.
+Nó viết ra được từ M71, nhưng kiểm thì không: sân chuỗi cần hệ số **số**, mà diễn giải
+$a$ bằng một đa thức lại đưa hệ số thành *biến*. Hai cơ chế không ghép được ở dạng hiện
+tại, và dựng một dòng chỉ để nó mang vệt vàng vĩnh viễn là đúng thứ M45 cấm.
+
+Cũng không có: hằng đẳng thức "gậy khúc côn cầu" ($\sum_k \binom{k+r}{r} =
+\binom{n+r+1}{r+1}$), khai triển chuỗi của $\exp$/$\log$, hàm sinh mũ. Bài flagship
+**dừng lại** đúng chỗ ấy và nói ra vì sao — dừng có lời rẻ hơn một luật không tên.

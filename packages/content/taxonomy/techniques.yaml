@@ -40,3 +40,6 @@ techniques:
   - id: construction
     label:
       vi: Dựng hình
+  - id: generating-function
+    label:
+      vi: Hàm sinh

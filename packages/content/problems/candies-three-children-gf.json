@@ -1,0 +1,163 @@
+{
+  "schema_version": "1.0.0",
+  "id": "candies-three-children-gf",
+  "statement": {
+    "vi": "Chia $n$ cái kẹo **giống nhau** cho $3$ đứa trẻ, ai nhận bao nhiêu cũng được (kể cả không nhận). Có bao nhiêu cách? Giải bằng **hàm sinh**."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bài này ai cũng biết đáp số $\\binom{n+2}{2}$. Chỗ đáng nhìn là **cỗ máy**: mỗi đứa trẻ thành một thừa số $1 + x + x^2 + \\dots$, nhân ba thừa số lại là *nhân hai đa thức*, và hệ số của $x^n$ trong tích ấy đếm đúng những bộ ba cộng lại bằng $n$. Phép nhân đại số và phép đếm là **một** — đó là toàn bộ ý tưởng hàm sinh, và ở đây nó hiện ra thành hai dòng."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "generating-function"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Nhân ba thừa số, đọc một hệ số"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một đứa trẻ nhận $k$ cái kẹo, $k$ chạy từ $0$ tới vô cùng. Ghi mỗi khả năng thành một số mũ thì cả đứa trẻ ấy gói lại thành [[a1|một tổng vô hạn]] — và tổng ấy có dạng đóng.\nĐiều kiện $|x| < 1$ in ở đây là chuyện *hội tụ số học*; thứ vừa được kiểm là đẳng thức **hình thức** giữa hai chuỗi hệ số. Hai chuyện khác nhau, và biết chỗ khác nhau ấy là một phần của bài."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "một đứa trẻ, một thừa số",
+              "start": "sum(k, 0, inf, x^k)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "geometric_series"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: tổng từ k bằng 0 tới vô cùng của x mũ k, bằng một trên một trừ x."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ba đứa trẻ là ba thừa số, nên hàm sinh của cả bài là $\\dfrac{1}{(1-x)^3}$, và câu hỏi *\"bao nhiêu cách chia $n$ kẹo\"* trở thành [[a1|đọc lấy hệ số của $x^n$]].\nMột dòng, và dòng ấy chính là công thức chia kẹo quen thuộc."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "đọc hệ số của x mũ n",
+              "start": "coeff(x, n, 1/(1 - x)^3)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "coeff_repeated_geometric"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: hệ số của x mũ n trong một trên một trừ x tất cả mũ ba, bằng C của n cộng hai chọn hai."
+          },
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "alt",
+      "label": {
+        "vi": "Cách khác: tích chập"
+      },
+      "steps": [
+        {
+          "id": "t0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cùng đáp số, đi bằng [[a1|tích chập]] — cỗ máy tổng quát, dùng được cả khi hai thừa số **khác nhau**.\nTách $\\dfrac{1}{(1-x)^3}$ thành một đứa và hai đứa: hệ số của $x^n$ trong tích là tổng theo mọi cách chia $n$ thành hai phần. Cộng chuỗi ấy lại đúng bằng $\\binom{n+2}{2}$ — nhưng đó là hằng đẳng thức \"gậy khúc côn cầu\", engine chưa có luật cho nó nên ta dừng ở đây."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "tích chập: chia n thành hai phần",
+              "start": "coeff(x, n, (1/(1 - x)) * (1/(1 - x)^2))",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "coeff_of_product"
+                },
+                {
+                  "at": "2.0",
+                  "rule": "coeff_repeated_geometric"
+                },
+                {
+                  "at": "2.1",
+                  "rule": "coeff_repeated_geometric"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bốn dòng: hệ số của x mũ n trong tích hai hàm sinh, thành tổng theo i từ 0 tới n của hai hệ số nhân nhau, rồi mỗi hệ số thay bằng một tổ hợp."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

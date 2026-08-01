@@ -1211,3 +1211,151 @@ describe('M71 — dãy số', () => {
     expect(m.unchecked).toEqual([]);
   });
 });
+
+/**
+ * Hàm sinh tầng hai: trích hệ số và tích chập (M72, AL-19).
+ *
+ * M68 dựng được **chuỗi**; mục này dựng chỗ *đọc lấy một hệ số* — và nhờ đó mọi đồng
+ * nhất thức hàm sinh với $n$ ký hiệu thành một câu hỏi mà bộ bốc điểm **nguyên** sẵn
+ * có trả lời được.
+ */
+describe('M72 — trích hệ số và tích chập', () => {
+  const P = (src: string) => parse(src, new Minter());
+  const run = (start: string, steps: AlgebraStep[]) => readAlgebra(scene(start, steps));
+
+  describe('đọc, in, và phạm vi', () => {
+    it('khứ hồi qua `unparse`, in ra dạng $[x^n]F$', () => {
+      expect(unparse(P('coeff(x, n, 1/(1 - x))'))).toBe('coeff(x, n, (1 / (1 + ((-1) * x))))');
+      expect(toPlain(P('coeff(x, n, 1/(1 - x)^3)'))).toBe('[x^n] 1/(1 − x)^3');
+    });
+
+    it('bậc **bọc ngoặc** khi nó không phải nguyên tử', () => {
+      // `[x^n − k]` đọc thành "$[x^n]$ trừ $k$", một biểu thức khác hẳn.
+      expect(toPlain(P('coeff(x, n - k, 1/(1 - x))'))).toBe('[x^(n − k)] 1/(1 − x)');
+    });
+
+    it('biến chuỗi **bị ràng buộc**; bậc thì không', () => {
+      // Quên chỗ này thì bộ kiểm bốc một giá trị cho $x$ và mọi thứ sai im lặng.
+      expect([...varsOf(P('coeff(x, n, 1/(1 - x))'))]).toEqual(['n']);
+    });
+
+    it('trùng tên với một dấu bao ngoài: từ chối ngay ở tầng ngữ pháp', () => {
+      expect(() => P('sum(x, 0, 3, coeff(x, 1, 1/(1 - x)))')).toThrow(/đã bị một dấu bao ngoài/);
+    });
+
+    it('dấu nhân hiện ra đúng chỗ thiếu nó thì đọc sai', () => {
+      // `x^21/(1 − x)` đọc thành "x mũ hai mươi mốt" — hai chữ số dính vào nhau.
+      expect(toPlain(P('coeff(x, n, x^2 * (1/(1 - x)))'))).toBe('[x^n] x^2·1/(1 − x)');
+      // Còn chỗ không thiếu thì vẫn kề nhau, như người ta viết tay.
+      expect(toPlain(P('2*x'))).toBe('2x');
+    });
+  });
+
+  describe('nút biết tự tính — và đó là cả AL-19', () => {
+    it('bậc hằng: khai chuỗi rồi đọc lấy', () => {
+      expect(evalReal(P('coeff(x, 3, 1/(1 - x))'), new Map())).toBe(1);
+      // $\dbinom{6}{2} = 15$ — số cách chia 4 kẹo cho 3 đứa.
+      expect(evalReal(P('coeff(x, 4, 1/(1 - x)^3)'), new Map())).toBe(15);
+    });
+
+    it('bậc chưa bốc, bậc âm, bậc không nguyên: `null`, không đoán', () => {
+      expect(evalReal(P('coeff(x, n, 1/(1 - x))'), new Map())).toBeNull();
+      expect(evalReal(P('coeff(x, 0 - 1, 1/(1 - x))'), new Map())).toBeNull();
+      expect(evalReal(P('coeff(x, 1/2, 1/(1 - x))'), new Map())).toBeNull();
+    });
+
+    it('chuỗi không khai được thì `null` — không có chỗ nào bịa', () => {
+      // $\frac1x$ không phải chuỗi luỹ thừa; $f$ thì không có gì để khai.
+      expect(evalReal(P('coeff(x, 2, 1/x)'), new Map())).toBeNull();
+      expect(evalReal(P('coeff(x, 2, f(x))'), new Map())).toBeNull();
+    });
+
+    it('biến tự do khác được **đóng băng** vào cây trước khi khai chuỗi', () => {
+      // Nhờ đó nhị thức Newton kiểm được: $[x^k](1+x)^n = \dbinom{n}{k}$.
+      const r = sameValue(P('coeff(x, k, (1 + x)^n)'), P('C(n, k)'));
+      expect(r.ok).toBe(true);
+      expect(r.verified).toBe(true);
+    });
+
+    it('bẻ răng: hai vế lệch một bậc thì bị bắt', () => {
+      expect(sameValue(P('coeff(x, n, 1/(1 - x)^3)'), P('C(n + 2, 2)')).ok).toBe(true);
+      expect(sameValue(P('coeff(x, n, 1/(1 - x)^3)'), P('C(n + 3, 2)')).ok).toBe(false);
+      expect(sameValue(P('coeff(x, k, (1 + x)^n)'), P('C(n, k + 1)')).ok).toBe(false);
+    });
+  });
+
+  describe('bốn luật', () => {
+    it('tích chập Cauchy: $[x^n](FG) = \\sum_i ([x^i]F)([x^{n-i}]G)$', () => {
+      const m = run('coeff(x, n, (1/(1 - x)) * (1/(1 - x)^2))', [
+        { rule: 'coeff_of_product', at: '' },
+      ]);
+      expect(m.refusal).toBeNull();
+      expect(toPlain(m.rows[1]!.expr)).toBe(
+        'Σ(k=0..n) ([x^k] 1/(1 − x))([x^(n − k)] 1/(1 − x)^2)',
+      );
+      expect(m.unsound).toEqual([]);
+      expect(m.unchecked).toEqual([]);
+    });
+
+    it('chỉ số chạy khác **cả** biến chuỗi', () => {
+      // `varsOf` không kể biến bị ràng buộc, nên dùng lại đúng tên ấy là bắt một
+      // biến đang bị che — bộ kiểm sẽ không thấy gì và cả dòng sai im lặng.
+      const m = run('coeff(k, n, (1/(1 - k)) * (1/(1 - k)^2))', [
+        { rule: 'coeff_of_product', at: '' },
+      ]);
+      expect(m.refusal).toBeNull();
+      expect(toPlain(m.rows[1]!.expr)).toContain('Σ(i=0..n)');
+      expect(m.unsound).toEqual([]);
+    });
+
+    it('tuyến tính: tổng tách ra, hằng rời khỏi ngoặc vuông', () => {
+      const sum = run('coeff(x, n, 1/(1 - x) + 1/(1 - x)^2)', [{ rule: 'coeff_linear', at: '' }]);
+      expect(sum.refusal).toBeNull();
+      expect(sum.unsound).toEqual([]);
+      const konst = run('coeff(x, n, 5 * (1/(1 - x)))', [{ rule: 'coeff_linear', at: '' }]);
+      expect(toPlain(konst.rows[1]!.expr)).toBe('5([x^n] 1/(1 − x))');
+      expect(konst.unsound).toEqual([]);
+    });
+
+    it('dịch bậc, và điều kiện $n \\ge d$ **là một `guard`**, không chỉ là chữ', () => {
+      const m = run('coeff(x, n, x^2 * (1/(1 - x)))', [{ rule: 'coeff_shift', at: '' }]);
+      expect(m.refusal).toBeNull();
+      expect(toPlain(m.rows[1]!.expr)).toBe('[x^(n − 2)] 1/(1 − x)');
+      expect(m.conditions.map((c) => c.text)).toEqual(['n ≥ 2']);
+      // `guard` thật, không chỉ là chữ: nó có cây kèm theo để bộ kiểm bỏ đúng những
+      // điểm $n < 2$ thay vì lặng lẽ trượt qua chúng.
+      expect(m.conditions[0]!.guard).not.toBeNull();
+      expect(m.unsound).toEqual([]);
+    });
+
+    it('chia kẹo: $[x^n]\\frac{1}{(1-x)^m} = \\dbinom{n+m-1}{m-1}$', () => {
+      const m = run('coeff(x, n, 1/(1 - x)^3)', [{ rule: 'coeff_repeated_geometric', at: '' }]);
+      expect(m.refusal).toBeNull();
+      expect(toPlain(m.rows[1]!.expr)).toBe('C(n + 2,2)');
+      expect(m.unsound).toEqual([]);
+      expect(m.unchecked).toEqual([]);
+      // $m = 1$ thì không ai viết `+ 0`.
+      expect(
+        toPlain(
+          run('coeff(x, n, 1/(1 - x))', [{ rule: 'coeff_repeated_geometric', at: '' }]).rows[1]!
+            .expr,
+        ),
+      ).toBe('C(n,0)');
+    });
+
+    it('mỗi luật từ chối có lời khi hình dạng không khớp', () => {
+      expect(run('coeff(x, n, 1/(1 - x))', [{ rule: 'coeff_of_product', at: '' }]).refusal).toContain(
+        'một tích',
+      );
+      expect(run('coeff(x, n, 1/(1 - x))', [{ rule: 'coeff_shift', at: '' }]).refusal).toContain(
+        'một tích',
+      );
+      // $m$ ký hiệu: không khai chuỗi được ở bậc nào, nên từ chối thay vì dựng một
+      // dòng mà bộ kiểm chỉ biết nói "chưa kiểm được".
+      expect(
+        run('coeff(x, n, 1/(1 - x)^m)', [{ rule: 'coeff_repeated_geometric', at: '' }]).refusal,
+      ).toContain('m nguyên ≥ 1');
+      expect(run('1 + x', [{ rule: 'coeff_linear', at: '' }]).refusal).toContain('trích hệ số');
+    });
+  });
+});

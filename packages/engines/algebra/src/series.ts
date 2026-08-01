@@ -1,4 +1,4 @@
-import { intExp, varsOf, type Expr } from './expr.js';
+import { children, intExp, varsOf, withChildren, type Expr } from './expr.js';
 import { evalReal, type SoundnessResult } from './check.js';
 
 /**
@@ -156,6 +156,15 @@ export function seriesOf(e: Expr, name: string, N: number): Series | null {
     }
     case 'big':
       return bigSeries(e, name, N);
+    case 'coeff': {
+      // Một hệ số **là một số**, nên nó là chuỗi hằng — miễn đọc được ra số. Không
+      // đọc được (bậc ký hiệu, chuỗi không khai được) thì `null`, như mọi chỗ khác.
+      const c = coeffFrac(e, new Map());
+      if (c === null) return null;
+      const out = zeros(N);
+      out[0] = c;
+      return out;
+    }
     default:
       // `fn`, `root`, `abs`, `rel`, `sys`, `inf` trần — xem chú thích đầu tệp.
       return null;
@@ -221,6 +230,57 @@ function bigSeries(e: Expr & { k: 'big' }, name: string, N: number): Series | nu
   return acc;
 }
 
+/** Trần bậc trích được. Bộ bốc điểm nguyên bốc trong $[0,12]$, nên đây là dư gấp năm. */
+const COEFF_MAX = 64;
+
+/**
+ * Giá trị của $[v^{at}]\,of$ — **cách duy nhất** một nút `coeff` biến thành một số.
+ *
+ * Ba cửa, và cả ba đều trả `null` chứ không đoán:
+ *
+ * 1. Bậc phải là **số nguyên không âm** đọc được từ `env`. $[x^{-1}]$ và
+ *    $[x^{1{,}5}]$ không có nghĩa với chuỗi luỹ thừa; $[x^n]$ với $n$ chưa bốc thì
+ *    chưa tính được, không phải sai.
+ * 2. Mọi biến **tự do khác** trong `of` phải có giá trị **nguyên** trong `env`, và
+ *    được đóng băng vào cây trước khi khai chuỗi. Nhờ đó $[x^n](1+x)^n$ kiểm được:
+ *    ở mỗi điểm bốc, $n$ là một số, và cây còn lại chỉ có biến chuỗi. Giá trị không
+ *    nguyên thì `null` — hệ số hữu tỉ chính xác không sống chung với `0.4`.
+ * 3. `of` phải khai được thành chuỗi tới bậc ấy.
+ *
+ * Đây là chỗ cả AL-19 đứng: nó biến một đồng nhất thức hàm sinh với $n$ **ký hiệu**
+ * thành một câu hỏi mà bộ bốc điểm **nguyên** sẵn có trả lời được, không cần một sân
+ * thứ năm nào.
+ */
+export function coeffFrac(
+  e: Expr & { k: 'coeff' },
+  env: ReadonlyMap<string, number>,
+): Frac | null {
+  const at = evalReal(e.at, env);
+  if (at === null || !Number.isInteger(at) || at < 0 || at > COEFF_MAX) return null;
+
+  let bad = false;
+  const freeze = (n: Expr): Expr => {
+    if (n.k === 'var') {
+      if (n.name === e.v) return n;
+      const v = env.get(n.name);
+      if (v === undefined || !Number.isInteger(v)) {
+        bad = true;
+        return n;
+      }
+      return { k: 'int', v, id: n.id };
+    }
+    // Tên bị che bởi một $\sum$/$[\cdot]$ bên trong: dừng đúng như `varsOf` dừng.
+    if ((n.k === 'big' || n.k === 'coeff') && n.v === e.v) return n;
+    const kids = children(n).map(freeze);
+    return kids.length === 0 ? n : withChildren(n, kids);
+  };
+  const frozen = freeze(e.of);
+  if (bad) return null;
+
+  const s = seriesOf(frozen, e.v, at);
+  return s === null ? null : (s[at] as Frac);
+}
+
 /**
  * Cận phải là một **số nguyên**, nhưng không nhất thiết là một *chữ số*.
  *
@@ -245,7 +305,12 @@ function substituteIndex(e: Expr, name: string, value: number): Expr {
     case 'add':
     case 'mul':
     case 'fn':
+    case 'ufn':
       return { ...e, args: e.args.map((a) => substituteIndex(a, name, value)) };
+    case 'coeff':
+      return e.v === name
+        ? { ...e, at: substituteIndex(e.at, name, value) }
+        : { ...e, at: substituteIndex(e.at, name, value), of: substituteIndex(e.of, name, value) };
     case 'pow':
       return {
         ...e,

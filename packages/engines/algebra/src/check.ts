@@ -16,7 +16,12 @@ import {
   withChildren,
   type Expr,
 } from './expr.js';
-import { impliesRelationSeries, sameRelationSeries, sameValueSeries } from './series.js';
+import {
+  coeffFrac,
+  impliesRelationSeries,
+  sameRelationSeries,
+  sameValueSeries,
+} from './series.js';
 import { FUNCTIONS, isIntegerOnly } from './functions.js';
 
 /**
@@ -129,9 +134,11 @@ export function evalAt(e: Expr, env: ReadonlyMap<string, bigint>): bigint | null
       return null;
     case 'fn':
     case 'big':
+    case 'coeff':
       // $n!$ trên $\mathbb{F}_p$ với $n$ là một thặng dư ngẫu nhiên cỡ $10^9$ là câu
-      // vô nghĩa, không phải câu khó tính. $\sum_{k=1}^{n}$ với cận như thế cũng vậy.
-      // Biểu thức có hàm hoặc tổng đi đường **số nguyên**.
+      // vô nghĩa, không phải câu khó tính. $\sum_{k=1}^{n}$ với cận như thế cũng vậy,
+      // và $[x^n]$ thì lại càng — khai một chuỗi tới bậc $10^9$ là không có nghĩa.
+      // Biểu thức có hàm, tổng hoặc trích hệ số đi đường **số nguyên**.
       return null;
     case 'root':
       // Căn không sống trên $\mathbb{F}_p$: $\sqrt a$ chỉ tồn tại khi $a$ là thặng dư
@@ -210,6 +217,16 @@ export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | nu
     }
     case 'ufn':
       return null;
+    case 'coeff': {
+      // Cả AL-19 đi qua đây: khai `of` thành chuỗi tới đúng bậc đã bốc rồi đọc lấy
+      // hệ số. Hữu tỉ chính xác trên `bigint` bên trong, `number` chỉ ở cửa ra —
+      // và cửa ra từ chối khi số đã ra khỏi vùng nguyên chính xác.
+      const c = coeffFrac(e, env);
+      if (c === null) return null;
+      const n = Number(c.n);
+      const d = Number(c.d);
+      return Number.isSafeInteger(n) && Number.isSafeInteger(d) ? ok(n / d) : null;
+    }
     case 'fn': {
       const spec = FUNCTIONS[e.name];
       if (e.args.length !== spec.arity) return null;
@@ -453,6 +470,9 @@ export function hasBoundUninterpreted(e: Expr): boolean {
       const inner = new Set(bound).add(n.v);
       return go(n.from, bound) || go(n.to, bound) || go(n.body, inner);
     }
+    if (n.k === 'coeff') {
+      return go(n.at, bound) || go(n.of, new Set(bound).add(n.v));
+    }
     return children(n).some((c) => go(c, bound));
   };
   return go(e, new Set());
@@ -572,6 +592,8 @@ function shapeKey(e: Expr): string {
       return `sys${e.join}(${e.rels.map(shapeKey).join(',')})`;
     case 'big':
       return `big${e.op}:${e.v}(${children(e).map(shapeKey).join(',')})`;
+    case 'coeff':
+      return `coeff:${e.v}(${children(e).map(shapeKey).join(',')})`;
     default:
       return `${e.k}(${children(e).map(shapeKey).join(',')})`;
   }
@@ -592,7 +614,7 @@ export function sameValue(
   if (hasInfinity(a) || hasInfinity(b)) return sameValueSeries(a, b);
 
   // Ký hiệu hàm không diễn giải: đưa về đất bằng rồi hỏi **lại chính hàm này**, nên
-  // cả 75 luật chạy được trên biểu thức có $f$ mà không luật nào phải biết về nó.
+  // cả 79 luật chạy được trên biểu thức có $f$ mà không luật nào phải biết về nó.
   if (hasUninterpreted(a) || hasUninterpreted(b)) {
     const g = groundUninterpreted(a, b);
     if ('refusal' in g) return { ok: true, verified: false, message: g.refusal };
@@ -703,6 +725,8 @@ export function needsIntegerEval(e: Expr): boolean {
     // $\sum$ chỉ khai được ở cận **nguyên**, nên nó dùng chung bộ bốc điểm với hàm tổ
     // hợp. Đây chính là chỗ M56 trả cổ tức: không phải dựng thêm bộ nào.
     if (n.k === 'big') found = true;
+    // $[x^n]F$ chỉ đọc được ở bậc **nguyên không âm** — cùng họ, cùng đường.
+    if (n.k === 'coeff') found = true;
   });
   return found;
 }

@@ -115,10 +115,11 @@
     "sign-line-two-ways",
     "geometric-series-gf",
     "functional-equation-cauchy",
-    "arithmetic-sequence-by-telescoping"
+    "arithmetic-sequence-by-telescoping",
+    "candies-three-children-gf"
   ],
   "newest": [
-    "arithmetic-sequence-by-telescoping",
-    "functional-equation-cauchy"
+    "candies-three-children-gf",
+    "arithmetic-sequence-by-telescoping"
   ]
 }

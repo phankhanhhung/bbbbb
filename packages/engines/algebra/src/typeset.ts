@@ -144,6 +144,9 @@ const EM: Readonly<Record<string, number>> = {
   '·': 0.3,
   '(': 0.32,
   ')': 0.32,
+  // Ngoặc vuông của $[x^n]$ — đo từ KaTeX_Main, hẹp hơn ngoặc tròn một chút.
+  '[': 0.28,
+  ']': 0.28,
   '_': 0.4,
   // Dấu giai thừa là một nét đứng, hẹp gần bằng dấu ngoặc. Không khai thì nó rơi vào
   // `LETTER_EM = 0.5` và ước dôi $0{,}22$ em — đủ để $n!^2$ vẽ ra số mũ trôi khỏi dấu
@@ -675,6 +678,8 @@ function commaRow(args: readonly Expr[], size: number): Box {
 
 /** Độ ưu tiên, để biết khi nào phải bọc ngoặc. */
 const PREC: Readonly<Record<Expr['k'], number>> = {
+  // $[x^n]F$ ăn tới hết cái đứng sau nó, hệt $\Sigma$ — chỗ bọc ngoặc nằm ở `toBox`.
+  coeff: 0,
   inf: 6,
   // Lời gọi hàm xếp ngang nguyên tử: `f(x)` đã tự có ngoặc, không cần thêm.
   ufn: 6,
@@ -987,6 +992,34 @@ export function toBox(e: Expr, size: number = FONT): Box {
         sub: toBox(lower, shrink(size, SCRIPT)),
         sup: toBox(upper, shrink(size, SCRIPT)),
         size,
+      });
+    }
+    case 'coeff': {
+      /**
+       * $[x^n]F$ — ngoặc vuông **không giãn**.
+       *
+       * Ruột của nó là $x^n$, luôn cao đúng một dòng có số mũ, nên một `paren` co
+       * giãn ở đây chỉ thêm một tham số để sai. Hai glyph `[` `]` cỡ chữ là đủ, và
+       * đó cũng là cách mọi sách in nó.
+       *
+       * Thân bọc ngoặc theo cùng luật của $\Sigma$: $[x^n](F + G)$ và $[x^n]F + G$
+       * là hai biểu thức khác nhau mà ký hiệu không phân biệt.
+       */
+      const script = shrink(size, SCRIPT);
+      const inner = toBox(e.of, size);
+      const body =
+        PREC[e.of.k] <= PREC['coeff'] || e.of.k === 'add'
+          ? { t: 'paren' as const, inner, size }
+          : inner;
+      return tag({
+        t: 'row',
+        items: [
+          text('[', size),
+          { t: 'sup', base: text(e.v, size, true), exp: toBox(e.at, script) },
+          text(']', size),
+          { t: 'gap', w: size * 0.12 },
+          body,
+        ],
       });
     }
     case 'big': {

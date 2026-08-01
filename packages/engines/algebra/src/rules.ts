@@ -2477,8 +2477,8 @@ function symbolicPowers(
  * `k` là tên ai cũng viết, nhưng nếu $k$ đã có mặt (chẳng hạn $a^k - b^k$) thì dùng lại
  * nó là bắt một biến tự do — đúng lỗi phạm vi mà M57 dựng cả một hàm `varsOf` để tránh.
  */
-function freshIndex(e: Expr): string {
-  const used = varsOf(e);
+function freshIndex(e: Expr, also: ReadonlySet<string> = new Set()): string {
+  const used = new Set([...varsOf(e), ...also]);
   for (const name of ['k', 'i', 'j', 'r', 's', 't']) if (!used.has(name)) return name;
   let n = 1;
   while (used.has(`k_${n}`)) n += 1;
@@ -3515,6 +3515,196 @@ const sumTelescope: Rule = {
   },
 };
 
+/* ---------- trích hệ số: hàm sinh tầng hai (M72, AL-19) ---------- */
+
+/** Số nguyên hằng của một cây, hoặc `null`. */
+function constExp(e: Expr): number | null {
+  const v = evalReal(e, new Map());
+  return v !== null && Number.isInteger(v) ? v : null;
+}
+
+/**
+ * $\dfrac{1}{(1-v)^m}$ với $m \ge 1$ nguyên — nhận dạng dùng chung.
+ *
+ * Trả `m`, hoặc `null`. Nhận cả dạng không có số mũ ($m = 1$).
+ */
+function repeatedGeometric(e: Expr, v: string): number | null {
+  if (e.k !== 'div') return null;
+  if (constExp(e.num) !== 1) return null;
+  const [base, m] = e.den.k === 'pow' ? [e.den.base, constExp(e.den.exp)] : [e.den, 1];
+  if (m === null || m < 1) return null;
+  // $1 - v$ dựng bằng `add[1, (-1)·v]` — engine không có nút `sub` (§3.1).
+  if (base.k !== 'add' || base.args.length !== 2) return null;
+  const [p, q] = base.args as [Expr, Expr];
+  const one = constExp(p) === 1 ? q : constExp(q) === 1 ? p : null;
+  if (one === null) return null;
+  if (one.k !== 'mul' || one.args.length !== 2) return null;
+  const [c, x] = one.args as [Expr, Expr];
+  if (!(c.k === 'int' && c.v === -1)) return null;
+  return x.k === 'var' && x.name === v ? m : null;
+}
+
+/**
+ * **Tích chập Cauchy**: $[x^n](F \cdot G) = \sum_{i=0}^{n} \bigl([x^i]F\bigr)
+ * \bigl([x^{n-i}]G\bigr)$ — luật trung tâm của chuyên đề hàm sinh (M72).
+ *
+ * Đây là chỗ hai thế giới gặp nhau: **nhân hai hàm sinh** ở vế trái là một phép đại
+ * số, còn **cộng theo mọi cách chia $n$ thành hai phần** ở vế phải là một phép đếm.
+ * Mọi bài "có bao nhiêu cách…" giải bằng hàm sinh đều đi qua đúng dòng này.
+ *
+ * Tích nhiều hơn hai thừa số thì cắt **thừa số đầu** ra, phần còn lại gộp lại: áp
+ * liên tiếp cho ra tích chập nhiều tầng, và mỗi lần áp là **một dòng trên hình** —
+ * đúng kỷ luật "không luật nào nhảy nhiều bước".
+ */
+const coeffOfProduct: Rule = {
+  id: 'coeff_of_product',
+  label: 'tích chập hai hàm sinh',
+  run(m, node) {
+    if (node.k !== 'coeff') return no('cần một chỗ trích hệ số');
+    if (node.of.k !== 'mul' || node.of.args.length < 2) return no('phải trích hệ số của một tích');
+    const [head, ...rest] = node.of.args as [Expr, ...Expr[]];
+    const tail = rest.length === 1 ? (rest[0] as Expr) : mul(m, rest);
+
+    // Chỉ số chạy phải khác **cả** biến chuỗi: $[x^n]$ ràng buộc $x$, nên `varsOf`
+    // không kể nó, và dùng lại đúng tên ấy là bắt một biến đang bị che.
+    const i = freshIndex(node, new Set([node.v]));
+
+    return {
+      after: big(
+        m,
+        'sum',
+        i,
+        int(m, 0),
+        freshCopy(m, node.at).copy,
+        mul(m, [
+          { k: 'coeff', v: node.v, at: variable(m, i), of: head, id: m.next() },
+          {
+            k: 'coeff',
+            v: node.v,
+            at: add(m, [freshCopy(m, node.at).copy, negate(m, variable(m, i))]),
+            of: tail,
+            id: m.next(),
+          },
+        ]),
+      ),
+    };
+  },
+};
+
+/**
+ * Tính **tuyến tính** của phép trích: $[x^n](F + G) = [x^n]F + [x^n]G$, và hằng số
+ * rời khỏi dấu ngoặc vuông.
+ *
+ * Hai hình dạng một tính chất, đúng khuôn `sum_linear`. "Hằng" ở đây nghĩa là
+ * **không chứa biến chuỗi** — $n$ được phép có mặt, và điều đó đúng: $n$ đứng ngoài
+ * phạm vi ràng buộc của $[x^{\cdot}]$.
+ */
+const coeffLinear: Rule = {
+  id: 'coeff_linear',
+  label: 'tính tuyến tính của phép trích',
+  run(m, node) {
+    if (node.k !== 'coeff') return no('cần một chỗ trích hệ số');
+
+    if (node.of.k === 'mul') {
+      const outside = node.of.args.filter((a) => !varsOf(a).has(node.v));
+      const inside = node.of.args.filter((a) => varsOf(a).has(node.v));
+      if (outside.length === 0) return no(`không thừa số nào rời khỏi ${node.v} được`);
+      if (inside.length === 0) return no(`cả tích không chứa ${node.v} — dùng \`coeff_const\``);
+      return {
+        after: mul(m, [
+          ...outside,
+          { k: 'coeff', v: node.v, at: node.at, of: mul(m, inside), id: m.next() } as Expr,
+        ]),
+      };
+    }
+
+    if (node.of.k === 'add') {
+      return {
+        after: add(
+          m,
+          node.of.args.map(
+            (a, k) =>
+              ({
+                k: 'coeff',
+                v: node.v,
+                at: k === 0 ? node.at : freshCopy(m, node.at).copy,
+                of: a,
+                id: m.next(),
+              }) as Expr,
+          ),
+        ),
+      };
+    }
+
+    return no('thân phải là một tổng hoặc một tích');
+  },
+};
+
+/**
+ * $[x^n]\bigl(x^d \cdot F\bigr) = [x^{n-d}]F$ — dịch bậc.
+ *
+ * Điều kiện **$n \ge d$** là thật, không phải thủ tục: dưới đó vế trái bằng $0$ còn
+ * vế phải là một bậc âm, thứ không tồn tại. Khai bằng `guard` chứ không chỉ bằng
+ * chữ, nên bộ kiểm bỏ đúng những điểm ấy thay vì im lặng trượt qua chúng.
+ */
+const coeffShift: Rule = {
+  id: 'coeff_shift',
+  label: 'dịch bậc trích',
+  run(m, node) {
+    if (node.k !== 'coeff') return no('cần một chỗ trích hệ số');
+    if (node.of.k !== 'mul') return no('phải trích hệ số của một tích');
+
+    const degreeOf = (a: Expr): number | null => {
+      if (a.k === 'var' && a.name === node.v) return 1;
+      if (a.k !== 'pow' || a.base.k !== 'var' || a.base.name !== node.v) return null;
+      return intExp(a);
+    };
+    const at = node.of.args.findIndex((a) => degreeOf(a) !== null);
+    if (at < 0) return no(`không thừa số nào là một luỹ thừa của ${node.v}`);
+    const d = degreeOf(node.of.args[at] as Expr) as number;
+    if (d < 1) return no('số mũ phải dương');
+    const rest = node.of.args.filter((_, k) => k !== at);
+    if (rest.length === 0) return no('còn mỗi luỹ thừa — không còn gì để trích');
+
+    return {
+      guard: guardOf('>=0', (g) => add(g, [node.at, int(g, -d)])),
+      condition: `${toPlain(node.at)} ≥ ${d}`,
+      after: {
+        k: 'coeff',
+        v: node.v,
+        at: add(m, [freshCopy(m, node.at).copy, int(m, -d)]),
+        of: rest.length === 1 ? (rest[0] as Expr) : mul(m, rest),
+        id: m.next(),
+      } as Expr,
+    };
+  },
+};
+
+/**
+ * **Chia kẹo**: $[x^n]\dfrac{1}{(1-x)^m} = \dbinom{n+m-1}{m-1}$.
+ *
+ * Một dòng, và nó *là* bài toán chia $n$ vật giống nhau cho $m$ người — "stars and
+ * bars" viết bằng hàm sinh. Engine kiểm nó như kiểm mọi đẳng thức khác: bốc $n$
+ * nguyên, khai chuỗi tới bậc ấy, so với $\binom{n+m-1}{m-1}$ tính trên bộ nguyên
+ * của M56. Không có một dòng mã nào riêng cho "hằng đẳng thức đã biết".
+ *
+ * $m$ phải là **hằng nguyên** $\ge 1$: với $m$ ký hiệu thì không khai chuỗi được ở
+ * bất kỳ bậc nào, và luật sẽ dựng một dòng mà bộ kiểm chỉ biết nói "chưa kiểm được".
+ */
+const coeffRepeatedGeometric: Rule = {
+  id: 'coeff_repeated_geometric',
+  label: 'hệ số của 1/(1−x)^m',
+  run(m, node) {
+    if (node.k !== 'coeff') return no('cần một chỗ trích hệ số');
+    const deg = repeatedGeometric(node.of, node.v);
+    if (deg === null) return no(`thân phải có dạng 1/(1 − ${node.v})^m với m nguyên ≥ 1`);
+    // $m = 1$ cho $\binom{n+0}{0}$ — đúng, và không ai viết `+ 0`. Dựng thẳng.
+    const upper =
+      deg === 1 ? freshCopy(m, node.at).copy : add(m, [freshCopy(m, node.at).copy, int(m, deg - 1)]);
+    return { after: fn(m, 'binom', [upper, int(m, deg - 1)]) };
+  },
+};
+
 /**
  * $\sum_{k=0}^{\infty} x^k = \dfrac{1}{1-x}$ — **hai chiều** (M68, AL-16).
  *
@@ -3625,6 +3815,10 @@ export const RULES: readonly Rule[] = [
   sumShift,
   sumExpand,
   sumTelescope,
+  coeffOfProduct,
+  coeffLinear,
+  coeffShift,
+  coeffRepeatedGeometric,
   prodTelescope,
   powSplit,
   addEquations,

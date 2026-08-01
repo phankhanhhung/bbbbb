@@ -1,6 +1,7 @@
 import {
   ufn,
   seqTerm,
+  coeff,
   infinity,
   Minter,
   add,
@@ -296,6 +297,38 @@ class Parser {
       return root(this.m, n, inner);
     }
 
+    /**
+     * **Trích hệ số**: `coeff(x, n, 1/(1 - x)^3)` in ra $[x^n]\dfrac{1}{(1-x)^3}$.
+     *
+     * Cú pháp mặt là một lời gọi ba đối số chứ không phải `[x^n]…`: dấu ngoặc vuông
+     * chưa có nghĩa nào trong ngữ pháp này, và mở nó ra thì phải trả lời ngay
+     * "$[a](b)$ là trích hệ số hay là tích?" — một câu hỏi mơ hồ ngay ở ký tự đầu.
+     * Cùng lý lẽ đã cấm nhân ngầm (§3.3). Cách viết đẹp nằm ở `typeset`, chỗ nó
+     * thuộc về.
+     *
+     * Đối số **đầu là một tên**: biến chuỗi, ràng buộc trong đối số thứ ba.
+     */
+    if (this.src.startsWith('coeff', this.i) && this.src[this.i + 5] === '(') {
+      this.i += 6;
+      const v = this.name();
+      if (v === null) throw new ParseError('coeff cần một tên biến chuỗi', this.i);
+      if (this.bound.includes(v)) {
+        throw new ParseError(`biến chuỗi "${v}" đã bị một dấu bao ngoài ràng buộc`, this.i);
+      }
+      if (!this.eat(',')) throw new ParseError('coeff cần dấu ","', this.i);
+      // Bậc đọc **ngoài** phạm vi ràng buộc, hệt hai cận của Σ.
+      const at = this.sum();
+      if (!this.eat(',')) throw new ParseError('coeff cần dấu ","', this.i);
+      this.bound.push(v);
+      try {
+        const of = this.sum();
+        if (!this.eat(')')) throw new ParseError('thiếu dấu ")"', this.i);
+        return coeff(this.m, v, at, of);
+      } finally {
+        this.bound.pop();
+      }
+    }
+
     // $\sum$ và $\prod$: `sum(k, 1, n, k^2)`. Đối số **đầu là một tên**, không phải một
     // biểu thức — nó là biến chỉ số, và biến chỉ số không có giá trị để tính.
     for (const [head, op] of BIG_OPS) {
@@ -407,6 +440,8 @@ export function tryParse(
 /* ---------- chữ trơn, cho dòng điều kiện ---------- */
 
 const PLAIN_PREC: Readonly<Record<Expr['k'], number>> = {
+  // $[x^n]F$ ăn **tới hết** cái đứng sau nó, hệt $\Sigma$ — nên nó lỏng như $\Sigma$.
+  coeff: 0,
   inf: 6,
   // Lời gọi hàm xếp ngang nguyên tử: `f(x)` đã tự có ngoặc, không cần thêm.
   ufn: 6,
@@ -484,12 +519,16 @@ export function toPlain(e: Expr): string {
       const body = neg ? stripSignPlain(e) : e;
       if (body.k !== 'mul') return `${neg ? '−' : ''}${toPlain(body)}`;
       const shown = body.args.filter((a) => !(a.k === 'int' && a.v === 1));
-      const text = shown
-        .map((a, i) => {
-          const s = PLAIN_PREC[a.k] < PLAIN_PREC['mul'] ? `(${toPlain(a)})` : toPlain(a);
-          return i > 0 && (a.k === 'int' || a.k === 'rat') ? `·${s}` : s;
-        })
-        .join('');
+      // Dấu nhân **chỉ** ở chỗ thiếu nó thì đọc sai. Kề nhau là cách viết tay ($2x$,
+      // $xy$), nhưng hai chữ số kề nhau thì dính thành một số khác: $x^2 \cdot
+      // \frac1{1-x}$ in ra `x^21/(1 − x)` và đọc thành "x mũ hai mươi mốt". Nên hỏi
+      // **chuỗi đã in**, không hỏi kiểu nút — kiểu nút không biết mình bắt đầu bằng gì.
+      let text = '';
+      for (const [i, a] of shown.entries()) {
+        const s = PLAIN_PREC[a.k] < PLAIN_PREC['mul'] ? `(${toPlain(a)})` : toPlain(a);
+        const glue = i > 0 && (/^[0-9]/.test(s) || a.k === 'int' || a.k === 'rat');
+        text += glue ? `·${s}` : s;
+      }
       return `${neg ? '−' : ''}${text}`;
     }
     case 'div':
@@ -504,6 +543,13 @@ export function toPlain(e: Expr): string {
       const sign = e.op === 'sum' ? 'Σ' : 'Π';
       const body = PLAIN_PREC[e.body.k] <= PLAIN_PREC['big'] ? `(${toPlain(e.body)})` : toPlain(e.body);
       return `${sign}(${e.v}=${toPlain(e.from)}..${toPlain(e.to)}) ${body}`;
+    }
+    case 'coeff': {
+      const of = PLAIN_PREC[e.of.k] <= PLAIN_PREC['coeff'] ? `(${toPlain(e.of)})` : toPlain(e.of);
+      // Bậc phải bọc ngoặc khi nó không phải nguyên tử: `[x^n − k]` đọc thành
+      // "$[x^n]$ trừ $k$", một biểu thức khác hẳn.
+      const at = PLAIN_PREC[e.at.k] < PLAIN_PREC['pow'] ? `(${toPlain(e.at)})` : toPlain(e.at);
+      return `[${e.v}^${at}] ${of}`;
     }
     case 'ufn': {
       if (e.notation !== 'sub') return `${e.name}(${e.args.map(toPlain).join(', ')})`;
@@ -585,6 +631,8 @@ export function unparse(e: Expr): string {
       return e.index === 2 ? `sqrt(${unparse(e.arg)})` : `root(${e.index}, ${unparse(e.arg)})`;
     case 'big':
       return `${e.op}(${e.v}, ${unparse(e.from)}, ${unparse(e.to)}, ${unparse(e.body)})`;
+    case 'coeff':
+      return `coeff(${e.v}, ${unparse(e.at)}, ${unparse(e.of)})`;
     case 'ufn':
       // Chỉ số **luôn** trong ngoặc nhọn khi khứ hồi: `a_n+1` đọc lại thành
       // $a_n + 1$, và một dạng in không đọc lại được là một dạng in sai.

@@ -118,6 +118,10 @@ describe('tầng 0 — parser và printer', () => {
       // Cách viết chỉ số dưới (M71) và một thân **triệt tiêu được** — thiếu nguyên tử
       // thứ hai thì `sum_telescope` không bao giờ áp được lần nào trong phép quét.
       'a_n', 'a_{k+1}', 'sum(k, 1, n, a_{k+1} - a_k)',
+      // M72: trích hệ số. Bậc là **hằng** ở đây, không phải `n`: chốt canh này khứ hồi
+      // 300 biểu thức lồng ba tầng, và một bậc ký hiệu trong đó chỉ tốn thời gian mà
+      // không kiểm thêm được gì về parser.
+      'coeff(x, 2, 1/(1 - x))',
     ];
     let s = 987654321;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
@@ -219,6 +223,14 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       // triệt tiêu được, và một hệ có giá trị đầu để `substitute_from` chạm tới.
       'sum(k, 1, n, a_{k+1} - a_k)', 'sum(k, 1, n, a_k)',
       'a_1 = 3; a_{n+1} - a_1 = 5*n',
+      // M72: trích hệ số. Bốn hình dạng cho bốn luật — tích, tổng, hằng nhân, và
+      // luỹ thừa của biến chuỗi. Bộ sinh không dựng nút `coeff` và cũng không nên:
+      // mỗi lần đánh giá nó là một lượt khai chuỗi, đắt hơn mọi nút khác một bậc.
+      'coeff(x, n, (1/(1 - x)) * (1/(1 - x)^2))',
+      'coeff(x, n, 1/(1 - x) + 1/(1 - x)^2)',
+      'coeff(x, n, 5 * (1/(1 - x)))',
+      'coeff(x, n, x^2 * (1/(1 - x)))',
+      'coeff(x, n, 1/(1 - x)^3)',
     ];
 
     const bad: string[] = [];

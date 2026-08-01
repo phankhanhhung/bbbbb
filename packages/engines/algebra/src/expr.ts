@@ -137,6 +137,27 @@ export type Expr =
       readonly to: Expr;
       readonly body: Expr;
     } & WithId)
+  /**
+   * **Trích hệ số** $[x^n]F(x)$ — kiểu nút thứ 16 (AL-19, M72).
+   *
+   * Toàn bộ chuyên đề hàm sinh chỉ có một câu hỏi, và đây là câu ấy: *dựng một chuỗi
+   * rồi đọc lấy hệ số thứ $n$*. Trước M72 vế "đọc lấy" **không viết ra được** —
+   * engine dựng được $\dfrac{1}{(1-x)^3}$ nhưng không nói được $\binom{n+2}{2}$ là
+   * hệ số của nó.
+   *
+   * `v` là một **tên** và nó **ràng buộc**: $x$ trong `of` là biến chuỗi, không phải
+   * một ẩn tự do. Cùng lối `big.v`, và cùng cái bẫy: quên trừ nó khỏi {@link varsOf}
+   * thì bộ kiểm bốc một giá trị cho $x$ và mọi thứ sai im lặng. `at` thì **ngoài**
+   * phạm vi — $[x^n]$ với $n$ tự do là cả điểm của mục này.
+   *
+   * `children` là `[at, of]`, nên đường dẫn `.0` và `.1`.
+   *
+   * Không có sân nào ngoài **số nguyên** tính được nó, và cách tính thì đúng một
+   * dòng: khai `of` thành chuỗi tới bậc $n$ rồi lấy hệ số ấy. Nghĩa là mọi đồng nhất
+   * thức hàm sinh với $n$ ký hiệu đều kiểm được bằng bốc $n$ nguyên — không phải một
+   * sân mới, chỉ là một nút mới biết tự tính.
+   */
+  | ({ readonly k: 'coeff'; readonly v: string; readonly at: Expr; readonly of: Expr } & WithId)
   | ({ readonly k: 'rel'; readonly op: RelOp; readonly lhs: Expr; readonly rhs: Expr } & WithId)
   /**
    * **Hệ** quan hệ — hội (`and`) hoặc tuyển (`or`).
@@ -318,6 +339,15 @@ export const ufn = (
 export const seqTerm = (m: Minter, name: string, index: Expr): Expr =>
   ufn(m, name, [index], 'sub');
 
+/** Trích hệ số: $[v^{at}]\,of$ (AL-19). */
+export const coeff = (m: Minter, v: string, at: Expr, of: Expr): Expr => ({
+  k: 'coeff',
+  v,
+  at,
+  of,
+  id: m.next(),
+});
+
 export const big = (
   m: Minter,
   op: 'sum' | 'prod',
@@ -370,6 +400,8 @@ export function children(e: Expr): readonly Expr[] {
       return e.args;
     case 'big':
       return [e.from, e.to, e.body];
+    case 'coeff':
+      return [e.at, e.of];
     case 'rel':
       return [e.lhs, e.rhs];
     case 'sys':
@@ -398,6 +430,8 @@ export function withChildren(e: Expr, kids: readonly Expr[]): Expr {
       return { ...e, args: kids };
     case 'big':
       return { ...e, from: kids[0] as Expr, to: kids[1] as Expr, body: kids[2] as Expr };
+    case 'coeff':
+      return { ...e, at: kids[0] as Expr, of: kids[1] as Expr };
     case 'rel':
       return { ...e, lhs: kids[0] as Expr, rhs: kids[1] as Expr };
     case 'sys':
@@ -454,6 +488,12 @@ export function varsOf(e: Expr): Set<string> {
       for (const name of varsOf(n.body)) if (name !== n.v) out.add(name);
       return;
     }
+    if (n.k === 'coeff') {
+      // Cùng luật phạm vi: bậc cần trích nằm **ngoài**, chuỗi nằm **trong**.
+      go(n.at);
+      for (const name of varsOf(n.of)) if (name !== n.v) out.add(name);
+      return;
+    }
     for (const c of children(n)) go(c);
   };
   go(e);
@@ -461,7 +501,8 @@ export function varsOf(e: Expr): Set<string> {
 }
 
 /** Biến chỉ số bị ràng buộc **tại** nút này; rỗng với mọi nút khác. */
-export const boundVar = (e: Expr): string | null => (e.k === 'big' ? e.v : null);
+export const boundVar = (e: Expr): string | null =>
+  e.k === 'big' || e.k === 'coeff' ? e.v : null;
 
 /**
  * Thay mọi `var name` **tự do** bằng `value`.
@@ -475,6 +516,10 @@ export function substituteVar(e: Expr, name: string, value: Expr): Expr {
   if (e.k === 'big' && e.v === name) {
     // Tên bị che: chỉ thay trong hai cận, không thay trong thân.
     return { ...e, from: substituteVar(e.from, name, value), to: substituteVar(e.to, name, value) };
+  }
+  if (e.k === 'coeff' && e.v === name) {
+    // Tên bị che bởi $[x^{\cdot}]$: chỉ thay ở bậc cần trích.
+    return { ...e, at: substituteVar(e.at, name, value) };
   }
   const kids = children(e).map((c) => substituteVar(c, name, value));
   return kids.length === 0 ? e : withChildren(e, kids);
@@ -502,6 +547,8 @@ export function needsRealEval(e: Expr): boolean {
     // bộ bốc điểm số nguyên. `walk` chui cả vào thân, nên một hàm nằm trong thân cũng
     // bị bắt ở nhánh trên.
     if (n.k === 'big') found = true;
+    // $[x^n]F$ chỉ có nghĩa khi $n$ là **số nguyên không âm** — cùng họ với $\sum$.
+    if (n.k === 'coeff') found = true;
     // Số mũ không nguyên cũng không sống ở đó: $x^{1/2}$ cần chọn một trong hai căn,
     // $x^{\sqrt 2}$ thì không có nghĩa gì trên trường hữu hạn. `walk` chui cả vào số
     // mũ (nó là con `.1`), nên căn **nằm trong** số mũ cũng bị bắt ở nhánh trên.
@@ -548,7 +595,8 @@ export function totalDegree(e: Expr): number {
       return isConst(e) ? 0 : Infinity;
     case 'fn':
     case 'big':
-      // $n!$, $C_n^k$, $\sum_{k=1}^{n} f(k)$ **không phải hàm hữu tỉ** của $n$, nên
+    case 'coeff':
+      // $n!$, $C_n^k$, $\sum_{k=1}^{n} f(k)$, $[x^n]F$ **không phải hàm hữu tỉ** của $n$, nên
       // "bậc" của chúng vô nghĩa — trả `Infinity`, cùng lối với $x^n$. Hằng thì bậc $0$.
       return isConst(e) ? 0 : Infinity;
     case 'root':
@@ -729,6 +777,12 @@ export function same(a: Expr, b: Expr): boolean {
         same(a.to, o.to) &&
         same(a.body, o.body)
       );
+    }
+    case 'coeff': {
+      const o = b as typeof a;
+      // So cả tên biến chuỗi, cùng lý lẽ với `big`: đổi tên một biến ràng buộc là
+      // một phép biến đổi, không phải chuyện `same` làm lén.
+      return a.v === o.v && same(a.at, o.at) && same(a.of, o.of);
     }
     case 'rel':
       return (
