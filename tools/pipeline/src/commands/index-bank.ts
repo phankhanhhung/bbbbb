@@ -49,13 +49,30 @@ interface OrderLedger {
 const ORDER_FILE = 'order.json';
 
 async function readLedger(root: string): Promise<OrderLedger> {
+  let raw: string;
   try {
-    return JSON.parse(await readFile(join(root, ORDER_FILE), 'utf8')) as OrderLedger;
-  } catch {
+    raw = await readFile(join(root, ORDER_FILE), 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     // Chưa có sổ: mở sổ rỗng. **Không** đoán thứ tự, và `newest` để rỗng — không
     // biết bài nào mới thì nói là không biết, chứ không gắn nhãn "MỚI" cho cả kho.
     return { order: [], newest: [] };
   }
+
+  /**
+   * Sổ **có mà hỏng** thì nổ to, không mở sổ rỗng: catch trần cũ nuốt cả lỗi
+   * parse, nên một order.json vỡ sau merge conflict làm cả kho bị đánh số lại
+   * theo alphabet — vi phạm chính lời hứa "chỉ ghi thêm, không bao giờ xếp lại"
+   * — rồi bị writeFile ghi đè vĩnh viễn. Lịch sử chỉ còn cứu được từ git, và
+   * chỉ khi có ai đó kịp nhận ra trước lần commit sau.
+   */
+  const parsed = JSON.parse(raw) as OrderLedger;
+  if (!Array.isArray(parsed.order) || !Array.isArray(parsed.newest)) {
+    throw new Error(
+      `${ORDER_FILE} không đúng dạng sổ {order: [], newest: []} — không tự reset; sửa tay hoặc khôi phục từ git`,
+    );
+  }
+  return parsed;
 }
 
 /**

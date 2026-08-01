@@ -165,6 +165,21 @@ describe('sổ thứ tự bài', () => {
     expect(ordinalOf(second, 'c')).toBe(3);
   });
 
+  it('sổ **hỏng** thì nổ to, không lặng lẽ reset — lịch sử thứ tự không tự đánh lại', async () => {
+    // Catch trần cũ nuốt cả lỗi parse: order.json vỡ sau merge conflict → cả kho
+    // bị đánh số lại theo alphabet rồi sổ reset bị ghi đè vĩnh viễn. Sổ chưa có
+    // (ENOENT) mới là ca "mở sổ rỗng"; sổ có mà hỏng là ca "dừng lại, gọi người".
+    const root = await emptyRoot();
+    await indexInto(root, [renamed(base(), 'a')]);
+
+    await writeFile(join(root, 'order.json'), '{ nát', 'utf8');
+    await expect(indexInto(root, [renamed(base(), 'a')])).rejects.toThrow();
+
+    // JSON lành nhưng sai dạng sổ cũng không được coi là "chưa có sổ".
+    await writeFile(join(root, 'order.json'), '{"khong": "phai so"}', 'utf8');
+    await expect(indexInto(root, [renamed(base(), 'a')])).rejects.toThrow(/không tự reset/);
+  });
+
   it('rút một bài rồi thêm bài khác thì số **không tụt** — chỗ trống nằm lại', async () => {
     // Đây là chỗ mà "đánh số lúc dựng" khác hẳn "đánh số theo sổ": đếm lại mỗi
     // lần dựng thì `c` nhận số $2$ của `b` vừa rút, và một con số đã có người

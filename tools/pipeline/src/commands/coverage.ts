@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { buildTree, preorder, type Problem, type Solution } from '@combviz/schema';
 import { createChecker } from '@combviz/check';
 import { ENGINE_DSL, ENGINE_FRAGMENTS } from '../engines.js';
+import { loadTaxonomy } from '../taxonomy.js';
 
 /**
  * `combviz coverage` — bảng điểm của content sprint, đối chiếu DoD Phase 1 §15.1.
@@ -44,16 +45,31 @@ export async function runCoverage(options: CoverageOptions): Promise<boolean> {
     .sort();
 
   const all: Problem[] = [];
+  const rawOf = new Map<Problem, string>();
   for (const file of files) {
-    all.push(JSON.parse(await readFile(file, 'utf8')) as Problem);
+    const raw = await readFile(file, 'utf8');
+    const problem = JSON.parse(raw) as Problem;
+    all.push(problem);
+    rawOf.set(problem, raw);
   }
 
   const published = all.filter((p) => p.status === 'published');
   const drafts = all.filter((p) => p.status !== 'published');
   const bank = options.includeDrafts ? all : published;
 
-  const checker = createChecker({ fragments: ENGINE_FRAGMENTS, dsl: ENGINE_DSL });
-  const criteria = measure(bank, (problem) => checker.check(problem).length === 0);
+  /**
+   * Bộ kiểm của bảng điểm phải là **đúng bộ của CI**: có taxonomy và có raw.
+   * Thiếu taxonomy thì luật tag im lặng không chạy (chính packages/check cảnh
+   * báo điều này ở cửa); thiếu raw thì lớp lint định dạng DAT-03 im. Hậu quả cũ:
+   * một bài `combviz validate` đỏ vẫn được `coverage` đếm là "sạch lint +
+   * validate" — bảng điểm nói dối đúng ở tiêu chí mang tên sự thật.
+   */
+  const checker = createChecker({
+    fragments: ENGINE_FRAGMENTS,
+    dsl: ENGINE_DSL,
+    taxonomy: await loadTaxonomy(options.root),
+  });
+  const criteria = measure(bank, (problem) => checker.check(problem, rawOf.get(problem)).length === 0);
 
   console.log(
     options.includeDrafts

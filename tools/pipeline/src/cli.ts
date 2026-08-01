@@ -310,6 +310,20 @@ async function main(argv: string[]): Promise<number> {
         return 2;
       }
 
+      // `--hold abc` thành NaN, và NaN không nổ: nó lặng lẽ nuốt đúng những
+      // khung đứng hình — khung hold và khung cuối — tức là đúng chỗ CHO-11 bảo
+      // người xem dừng lại đọc. Cùng lý do --fps được kiểm ngay trên.
+      const hold = Number(values.hold);
+      if (!Number.isFinite(hold) || hold < 0 || hold > 60_000) {
+        console.error(`--hold phải là số ms trong [0, 60000], nhận "${values.hold}".`);
+        return 2;
+      }
+      const width = Number(values.width);
+      if (!Number.isFinite(width) || width < 100 || width > 4096) {
+        console.error(`--width phải trong [100, 4096], nhận "${values.width}".`);
+        return 2;
+      }
+
       const result = await runFilm({
         root: resolve(values.root),
         problemId,
@@ -317,8 +331,8 @@ async function main(argv: string[]): Promise<number> {
         ...(values.step ? { stepId: values.step } : {}),
         out: resolve(values.out),
         fps,
-        hold: Number(values.hold),
-        width: Number(values.width),
+        hold,
+        width,
         apng: values.apng,
       });
 

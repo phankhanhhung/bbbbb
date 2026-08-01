@@ -736,6 +736,57 @@ describe('chống lệch chữ–hình', () => {
   });
 });
 
+describe('danh tính xuyên file — lớp mà vòng lặp per-file không thấy', () => {
+  const runValidateCmd = async (
+    files: Record<string, Problem>,
+  ): Promise<{ errors: number; out: string }> => {
+    const { cp, mkdir, mkdtemp, writeFile } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const { runValidate } = await import('../src/commands/validate.js');
+
+    const root = await mkdtemp(join(tmpdir(), 'combviz-val-'));
+    await mkdir(join(root, 'problems'), { recursive: true });
+    await cp(
+      fileURLToPath(new URL('../../../packages/content/taxonomy', import.meta.url)),
+      join(root, 'taxonomy'),
+      { recursive: true },
+    );
+    for (const [name, problem] of Object.entries(files)) {
+      await writeFile(join(root, 'problems', name), JSON.stringify(problem), 'utf8');
+    }
+
+    const logs: string[] = [];
+    const spy = (await import('vitest')).vi
+      .spyOn(console, 'log')
+      .mockImplementation((m) => logs.push(String(m)));
+    try {
+      const report = await runValidate({ root, strict: false });
+      return { errors: report.errors, out: logs.join('\n') };
+    } finally {
+      spy.mockRestore();
+    }
+  };
+
+  it('tên file lệch id là lỗi — đường dẫn và id là hai sự thật phải trùng', async () => {
+    const problem = loadExample();
+    const { errors, out } = await runValidateCmd({ 'ten-lech.json': problem });
+
+    expect(out).toContain('content/filename-mismatch');
+    expect(errors).toBeGreaterThan(0);
+  });
+
+  it('hai file cùng id là lỗi — index đếm đôi, OG card ghi đè nhau', async () => {
+    const problem = loadExample();
+    const { out } = await runValidateCmd({
+      [`${problem.id}.json`]: problem,
+      'ban-sao.json': problem,
+    });
+
+    expect(out).toContain('content/duplicate-id');
+  });
+});
+
 describe('chống lệch chữ–hình — các lỗ hổng', () => {
   const checker = createChecker({ fragments: ENGINE_FRAGMENTS, dsl: ENGINE_DSL });
 

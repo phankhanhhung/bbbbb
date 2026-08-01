@@ -1,5 +1,5 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { join, relative } from 'node:path';
+import { basename, join, relative } from 'node:path';
 import { formatIssue, type ValidationIssue } from '@combviz/schema';
 import { createChecker } from '@combviz/check';
 import { ENGINE_DSL, ENGINE_FRAGMENTS } from '../engines.js';
@@ -29,6 +29,13 @@ export async function runValidate(options: ValidateOptions): Promise<ValidateRep
 
   let errors = 0;
   let warnings = 0;
+  /**
+   * Danh tính **xuyên file** — lớp kiểm mà vòng lặp per-file không thấy được.
+   * Hôm nay kho sạch (114/114 id khớp tên file, 0 trùng) nhưng đó là may chứ
+   * chưa phải luật: hai file cùng id thì index-bank đếm cả hai, OG card ghi đè
+   * nhau lặng lẽ, và `?p=<id>` mở bài nào tuỳ thứ tự đọc thư mục.
+   */
+  const fileOfId = new Map<string, string>();
 
   for (const file of files.sort()) {
     const issues: ValidationIssue[] = [];
@@ -55,6 +62,31 @@ export async function runValidate(options: ValidateOptions): Promise<ValidateRep
     // Một lần gọi, đủ mọi lớp — kể cả taxonomy, thứ trước đây chỉ lệnh này chạy
     // còn Studio và `import-draft` thì không (AUT-04).
     issues.push(...validator.check(parsed, raw));
+
+    const id = (parsed as { id?: unknown }).id;
+    if (typeof id === 'string') {
+      if (basename(file) !== `${id}.json`) {
+        issues.push({
+          code: 'content/filename-mismatch',
+          severity: 'error',
+          message: `Tên file "${basename(file)}" không khớp id "${id}" — phải là ${id}.json`,
+          path: '/id',
+          hint: 'Đường dẫn là cách người ta tìm bài; tên lệch id là hai sự thật về cùng một bài',
+        });
+      }
+      const holder = fileOfId.get(id);
+      if (holder !== undefined) {
+        issues.push({
+          code: 'content/duplicate-id',
+          severity: 'error',
+          message: `Id "${id}" đã dùng ở ${relative(options.root, holder)}`,
+          path: '/id',
+          hint: 'Hai file cùng id: index đếm đôi, OG card ghi đè nhau, deep-link mở bài tuỳ hên',
+        });
+      } else {
+        fileOfId.set(id, file);
+      }
+    }
 
     const fileErrors = issues.filter((i) => i.severity === 'error').length;
     const fileWarnings = issues.filter((i) => i.severity === 'warning').length;
