@@ -2033,6 +2033,68 @@ const absCase: Rule = {
  * khi thay. `substitute` đang được **miễn kiểm**, và M47c dạy rằng chỗ miễn kiểm là
  * chỗ lỗ hổng nằm; luật này không xin miễn.
  */
+/**
+ * **Thay biến bởi một biểu thức** trên cả phương trình — nước đi cốt lõi của
+ * chuyên đề phương trình hàm (AL-17, M73).
+ *
+ * Khác `evaluate_at` ở đúng một chỗ: giá trị thay vào **không cần là hằng**. Đó là
+ * cả lý do luật này tồn tại — $f(x+y) = f(x)+f(y)$ mở ra bằng $y := x$, $y := -x$,
+ * $y := 0$, và chỉ cái cuối là hằng.
+ *
+ * Khác `substitute` ở chỗ nó **áp cho cả quan hệ**, và đó là chỗ đổi nghĩa: thế
+ * vào một cây con là đổi hệ quy chiếu (M69 ghi lại vì sao ở đó không hợp đồng nào
+ * áp được); thế vào cả một đẳng thức **đúng với mọi giá trị** thì là *chuyên biệt
+ * hoá* — một hệ quả, và một hệ quả kiểm được bằng cấu trúc.
+ *
+ * Hợp đồng là `'instance'` chứ **không** phải `'implies'`, và chỗ này đáng ghi lại
+ * vì nó suýt sai. `impliesSolutionSet` bốc điểm trên các nguyên tử đã trừu tượng
+ * hoá, mà phép trừu tượng hoá **cắt đứt** liên hệ giữa $f(x{+}y)$ và $f(2x)$: hai
+ * lời gọi khác đối số thành hai nguyên tử độc lập, nên "trước đúng ⟹ sau đúng"
+ * không còn giữ và bộ kiểm sẽ kết tội một bước hoàn toàn hợp lệ. Câu hỏi đúng ở
+ * đây không phải "có suy ra được không" mà "**có thế đúng không**" — và đó chính
+ * là `'instance'`.
+ */
+const specialize: Rule = {
+  id: 'specialize',
+  label: 'chuyên biệt hoá',
+  needsArg: true,
+  accepts: ['rel', 'sys'],
+  run(m, node, arg) {
+    if (node.k !== 'rel' && node.k !== 'sys') {
+      return no('chuyên biệt hoá áp cho cả một phương trình, không cho một cây con');
+    }
+    const parts = (arg ?? '').split(':=');
+    if (parts.length !== 2) return no('cần tham số dạng "y := 0" hoặc "y := -1*x"');
+    const name = (parts[0] as string).trim();
+    if (!/^[a-zA-Z](_[0-9])?$/.test(name)) return no(`"${name}" không phải tên biến`);
+    if (!varsOf(node).has(name)) return no(`không thấy biến "${name}" trong phương trình này`);
+
+    const value = parse((parts[1] as string).trim(), m);
+    // Thay một biến bởi một biểu thức **chứa chính nó** ($x := x + 1$) là hợp lệ về
+    // toán và gần như luôn là lỗi gõ trong thực tế; cấm thì mất một nước đi thật,
+    // nên cho qua. Chỗ **phải** cấm là tên bị một $\Sigma$ bên trong ràng buộc —
+    // `substituteVar` lo, và `model` chặn cả đường gọi vào giữa thân (`boundAlong`).
+
+    const dup: Array<readonly [TermId, TermId]> = [];
+    const put = (e: Expr): Expr => {
+      if (e.k === 'var' && e.name === name) {
+        // Một bản sao **riêng** cho từng lần xuất hiện, cùng lý do đã ghi ở
+        // `substitute_from`: dùng chung một cây thì id trùng trong dòng vẽ ra.
+        const { copy, pairs } = freshCopy(m, value);
+        dup.push(...pairs);
+        return copy;
+      }
+      if (e.k === 'big' && e.v === name) {
+        return { ...e, from: put(e.from), to: put(e.to) };
+      }
+      const kids = children(e).map(put);
+      return kids.length === 0 ? e : withChildren(e, kids);
+    };
+
+    return { after: put(node), dup, verify: 'instance', binding: { name, expr: value } };
+  },
+};
+
 const evaluateAt: Rule = {
   id: 'evaluate_at',
   label: 'thay giá trị vào',
@@ -3435,6 +3497,7 @@ const geometricSeries: Rule = {
 
 export const RULES: readonly Rule[] = [
   geometricSeries,
+  specialize,
   commute,
   distribute,
   factor,
@@ -3535,6 +3598,7 @@ export const ARG_RULE_PREDICATES: Readonly<Record<string, (node: Expr) => boolea
   // Đặt ẩn phụ và thay giá trị: cần **có biến** để mà thay.
   set_variable: hasVariable,
   evaluate_at: hasVariable,
+  specialize: hasVariable,
   substitute: hasVariable,
   // Chia đa thức: cần chính nó là một đa thức một biến bậc ≥ 1.
   divide_by_linear_factor: (node) => {

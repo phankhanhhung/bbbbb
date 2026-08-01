@@ -1,4 +1,15 @@
-import { hasInfinity, intExp, needsRealEval, totalDegree, varsOf, walk, type Expr } from './expr.js';
+import {
+  children,
+  hasInfinity,
+  hasUninterpreted,
+  intExp,
+  needsRealEval,
+  totalDegree,
+  varsOf,
+  walk,
+  withChildren,
+  type Expr,
+} from './expr.js';
 import { impliesRelationSeries, sameRelationSeries, sameValueSeries } from './series.js';
 import { FUNCTIONS, isIntegerOnly } from './functions.js';
 
@@ -105,6 +116,11 @@ export function evalAt(e: Expr, env: ReadonlyMap<string, bigint>): bigint | null
     }
     case 'abs':
       return null;
+    case 'ufn':
+      // Một hàm **không biết là gì** không có giá trị ở bất kỳ sân nào. Trả `null`
+      // ở cả ba sân bốc điểm là câu trả lời trung thực duy nhất — và `check.ts`
+      // không để mọi biểu thức chứa nó rơi vào "chưa kiểm được": xem `abstract`.
+      return null;
     case 'fn':
     case 'big':
       // $n!$ trên $\mathbb{F}_p$ với $n$ là một thặng dư ngẫu nhiên cỡ $10^9$ là câu
@@ -186,6 +202,8 @@ export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | nu
       if (a < 0) return e.index % 2 === 0 ? null : ok(-Math.pow(-a, 1 / e.index));
       return ok(Math.pow(a, 1 / e.index));
     }
+    case 'ufn':
+      return null;
     case 'fn': {
       const spec = FUNCTIONS[e.name];
       if (e.args.length !== spec.arity) return null;
@@ -363,6 +381,80 @@ export interface SoundnessResult {
  * Bậc vượt trần thì trả `ok` kèm lời khai — cận Schwartz–Zippel không còn ý nghĩa,
  * và im lặng coi như đúng thì tệ hơn nói ra rằng không kiểm được.
  */
+/* ---------- ký hiệu hàm không diễn giải: trừu tượng hoá (AL-17, M73) ---------- */
+
+/**
+ * Thay mỗi lời gọi `f(t)` **cực đại** bằng một nguyên tử mới, chung khoá giữa hai
+ * cây được so.
+ *
+ * Đây là toàn bộ chỗ đứng của bộ kiểm trong một bài phương trình hàm, và lý lẽ của
+ * nó ngắn: nhóm ★ **không nhìn vào trong** $f$. Chuyển vế, nhân hai vế, gom hạng
+ * tử — mọi luật ấy đối xử với $f(x)$ đúng như đối xử với một biến. Nên nếu ta cũng
+ * đối xử với nó như một biến rồi bốc điểm, phép kiểm trả lời đúng câu mà một bước
+ * phương trình hàm khẳng định: *"biến đổi này đúng với **mọi** hàm $f$"*.
+ *
+ * Không có nó thì mọi thao tác ★ trên một phương trình hàm rơi vào "không tìm được
+ * điểm nào xác định" — `evalReal` trả `null` ở mọi nút `ufn` — tức đúng vệt vàng
+ * vĩnh viễn mà M69 vừa dẹp cho $\infty$, mọc lại ở miền khác.
+ *
+ * **Khoá là hình dạng đối số**, không phải danh tính nút: $f(x)$ ở dòng trước và
+ * $f(x)$ ở dòng sau là *cùng một giá trị*, và gán cho chúng hai nguyên tử khác
+ * nhau thì mọi bước đều bị kết tội. Ngược lại $f(x)$ và $f(x+0)$ **khác** khoá —
+ * đúng, vì engine không tự rút gọn: đi từ cái này sang cái kia là một luật có tên,
+ * áp **vào trong** đối số, và bước ấy được kiểm trên chính đối số chứ không qua đây.
+ *
+ * Tên nguyên tử mang tiền tố `#` — cú pháp mặt không sinh ra được ký tự ấy, nên nó
+ * không thể đụng tên biến của tác giả.
+ */
+function abstractUninterpreted(...trees: readonly Expr[]): Expr[] {
+  const atoms = new Map<string, Expr>();
+
+  const go = (e: Expr): Expr => {
+    if (e.k === 'ufn') {
+      // Khoá dựng từ **cây đã trừu tượng hoá** của đối số, nên $f(g(x))$ lồng nhau
+      // vẫn khớp được với chính nó ở dòng sau.
+      const inner = e.args.map(go);
+      const key = `${e.name}(${inner.map(shapeKey).join(',')})`;
+      const seen = atoms.get(key);
+      if (seen) return { ...seen, id: e.id };
+      const atom: Expr = { k: 'var', name: `#${atoms.size}`, id: e.id };
+      atoms.set(key, atom);
+      return atom;
+    }
+    const kids = children(e);
+    return kids.length === 0 ? e : withChildren(e, kids.map(go));
+  };
+
+  return trees.map(go);
+}
+
+/** Hình dạng cây, bỏ danh tính — hai cây `same` nhau cho cùng chuỗi. */
+function shapeKey(e: Expr): string {
+  switch (e.k) {
+    case 'int':
+      return `i${e.v}`;
+    case 'rat':
+      return `r${e.p}/${e.q}`;
+    case 'var':
+      return `v${e.name}`;
+    case 'inf':
+      return 'inf';
+    case 'root':
+      return `root${e.index}(${shapeKey(e.arg)})`;
+    case 'fn':
+    case 'ufn':
+      return `${e.k}:${e.name}(${e.args.map(shapeKey).join(',')})`;
+    case 'rel':
+      return `rel${e.op}(${shapeKey(e.lhs)},${shapeKey(e.rhs)})`;
+    case 'sys':
+      return `sys${e.join}(${e.rels.map(shapeKey).join(',')})`;
+    case 'big':
+      return `big${e.op}:${e.v}(${children(e).map(shapeKey).join(',')})`;
+    default:
+      return `${e.k}(${children(e).map(shapeKey).join(',')})`;
+  }
+}
+
 export function sameValue(
   a: Expr,
   b: Expr,
@@ -376,6 +468,13 @@ export function sameValue(
   // `null` ở nút ấy, nên ba sân kia chỉ có thể trả "không tìm được điểm nào"). Sân chuỗi
   // thì trả lời **chính xác tuyệt đối** bằng hệ số — không xác suất, không sai số.
   if (hasInfinity(a) || hasInfinity(b)) return sameValueSeries(a, b);
+
+  // Ký hiệu hàm không diễn giải: trừu tượng hoá rồi hỏi **lại chính hàm này**, nên
+  // cả 73 luật chạy được trên biểu thức có $f$ mà không luật nào phải biết về nó.
+  if (hasUninterpreted(a) || hasUninterpreted(b)) {
+    const [pa, pb] = abstractUninterpreted(a, b) as [Expr, Expr];
+    return sameValue(pa, pb, seed, trials, guard);
+  }
 
   //
   // Giai thừa và tổ hợp hỏi trước hết: $C_n^k$ *có* tính được trên $\mathbb{F}_p$ khi
@@ -664,6 +763,11 @@ export function sameSolutionSet(
   // hàm sinh. Sân chuỗi trả lời được, và trả lời chính xác tuyệt đối.
   if (hasInfinity(a) || hasInfinity(b)) return sameRelationSeries(a, b);
 
+  if (hasUninterpreted(a) || hasUninterpreted(b)) {
+    const [pa, pb] = abstractUninterpreted(a, b) as [Expr, Expr];
+    return sameSolutionSet(pa, pb, guard, seed, trials);
+  }
+
   const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
   const rand = relationSampler(seed, needsIntegerEval(a) || needsIntegerEval(b));
   const log = witnessLog();
@@ -739,6 +843,11 @@ export function impliesSolutionSet(
 ): ImplicationResult {
   // Cùng cửa định tuyến với `sameSolutionSet` ngay trên — xem chú thích ở đó.
   if (hasInfinity(before) || hasInfinity(after)) return impliesRelationSeries(before, after);
+
+  if (hasUninterpreted(before) || hasUninterpreted(after)) {
+    const [pb, pa] = abstractUninterpreted(before, after) as [Expr, Expr];
+    return impliesSolutionSet(pb, pa, guard, seed, trials);
+  }
 
   const names = [...new Set([...varsOf(before), ...varsOf(after)])].sort();
   const rand = relationSampler(seed, needsIntegerEval(before) || needsIntegerEval(after));

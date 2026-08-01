@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0.0",
+  "id": "functional-equation-cauchy",
+  "statement": {
+    "vi": "Hàm $f$ thoả $f(x+y) = f(x) + f(y)$ với **mọi** $x, y$. Chứng minh $f(0) = 0$ và $f(-x) = -f(x)$ — hai nước mở đầu của mọi bài phương trình hàm."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: engine **không biết** $f$ là hàm nào, và đó chính là điều kiện để nó kiểm được. Nó coi mỗi $f(\\dots)$ là một ẩn rồi bốc điểm — nên câu nó khẳng định là *\"bước này đúng với mọi hàm $f$\"*, đúng câu một lời giải phương trình hàm cần."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Hai nước mở đầu"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giả thiết đúng với **mọi** $x, y$, nên [[a1|thay $y$ bởi $0$]] là một nước đi hợp lệ — và đó là toàn bộ mẹo.\nCòn lại là đại số thường: rút $f(x)$ khỏi hai vế thì $f(0)$ đứng một mình."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "thay y bởi 0",
+              "start": "f(x + y) = f(x) + f(y)",
+              "steps": [
+                {
+                  "arg": "y := 0",
+                  "at": "",
+                  "rule": "specialize"
+                },
+                {
+                  "at": "L.0",
+                  "rule": "drop_unit"
+                },
+                {
+                  "arg": "-1*f(x)",
+                  "at": "",
+                  "rule": "add_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "collect_like"
+                },
+                {
+                  "at": "R",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Sáu dòng: từ f của x cộng y bằng f x cộng f y, thay y bằng 0, rút gọn, tới 0 bằng f của 0."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cùng một nước, giá trị khác: [[a1|thay $y$ bởi $-x$]] cho vế trái thành $f(0)$, mà dòng trên vừa chứng minh nó bằng $0$.\nVậy $f(x) + f(-x) = 0$: hàm cộng tính nào cũng **lẻ**."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "thay y bởi −x",
+              "start": "f(x + y) = f(x) + f(y)",
+              "steps": [
+                {
+                  "arg": "y := -1*x",
+                  "at": "",
+                  "rule": "specialize"
+                },
+                {
+                  "at": "L.0",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: thay y bằng âm x, vế trái rút về f của 0, vế phải là f x cộng f của âm x."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

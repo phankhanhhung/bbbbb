@@ -663,9 +663,21 @@ export function place(box: Box, x: number, y: number): Placed {
 
 /* ---------- cây → hộp ---------- */
 
+/** Dãy đối số ngăn bằng dấu phẩy — dùng cho lời gọi hàm nhiều biến. */
+function commaRow(args: readonly Expr[], size: number): Box {
+  const items: Box[] = [];
+  args.forEach((a, i) => {
+    if (i > 0) items.push(text(', ', size));
+    items.push(toBox(a, size));
+  });
+  return items.length === 1 ? (items[0] as Box) : { t: 'row', items };
+}
+
 /** Độ ưu tiên, để biết khi nào phải bọc ngoặc. */
 const PREC: Readonly<Record<Expr['k'], number>> = {
   inf: 6,
+  // Lời gọi hàm xếp ngang nguyên tử: `f(x)` đã tự có ngoặc, không cần thêm.
+  ufn: 6,
   sys: 0,
   rel: 0,
   add: 1,
@@ -899,6 +911,22 @@ export function toBox(e: Expr, size: number = FONT): Box {
         exp: toBox(e.exp, shrink(size, SCRIPT)),
       });
     }
+    case 'ufn':
+      /**
+       * $f(x)$ — tên **nghiêng** rồi ngoặc.
+       *
+       * Ngược hẳn `sin`/`ln` ở ngay dưới, và ngược có lý do: `sin` đứng thẳng vì
+       * nó là một *từ* ba chữ cái, nghiêng thì đọc ra $s\cdot i\cdot n$. Còn $f$
+       * là một **ký hiệu** đúng nghĩa — cùng hạng với $x$, chỉ khác là nó nhận đối
+       * số — nên nó nghiêng như mọi ký hiệu khác. Đó cũng là cách mọi sách viết.
+       */
+      return tag({
+        t: 'row',
+        items: [
+          text(e.name, size, true),
+          { t: 'paren', inner: commaRow(e.args as Expr[], size), size },
+        ],
+      });
     case 'fn': {
       const spec = FUNCTIONS[e.name];
       if (e.name === 'fact') {

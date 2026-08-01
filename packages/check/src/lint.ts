@@ -150,6 +150,20 @@ function checkPlainLabels(step: Step, path: string): ValidationIssue[] {
 
   if (step.case_label) flag(step.case_label.vi, `${path}/case_label/vi`, 'case_label');
 
+  /**
+   * `config.caption` — **bảy** engine có trường này và **không** engine nào cho nó
+   * đi qua label atlas (D-07): nó là chữ vẽ thẳng vào SVG.
+   *
+   * Lớp lỗi này sống thật và tái phát: M69 bắt được hai caption in nguyên văn
+   * `$\\sigma$` và `$RRRUUU$` ra hình — bắt bằng **lượt nhìn**, sau khi chúng đã
+   * xuất bản một thời gian. Rồi ngay ở M73 nó lại xuất hiện lần thứ ba trên một
+   * bài vừa soạn. Ba lần là đủ để thôi bắt bằng mắt.
+   */
+  for (const scene of [step.scene, step.bijection?.scene]) {
+    const caption = (scene?.config as { caption?: unknown } | undefined)?.caption;
+    if (typeof caption === 'string') flag(caption, `${path}/scene/config/caption`, 'caption');
+  }
+
   const phases = [...(step.choreography?.phases ?? [])].sort(
     (a, b) => a.at + a.duration - (b.at + b.duration),
   );

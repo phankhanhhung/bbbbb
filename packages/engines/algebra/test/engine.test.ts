@@ -68,6 +68,9 @@ const ARGS: Readonly<Record<string, ArgMaker>> = {
   pow_both_sides: () => '2',
   abs_case: () => '+',
   evaluate_at: () => 'x := 3',
+  // `specialize` khác `evaluate_at` ở chỗ giá trị **không cần là hằng** — nên phép
+  // quét phải thay bằng một cây thật, không phải một con số.
+  specialize: (p) => `x := ${p()}`,
   // Chia cho **chính biến** ($a = 0$): ca đơn giản nhất mà bộ sinh có sẵn, và nó áp
   // được bất cứ khi nào hạng tử tự do bằng 0. Ghi ra thay vì để rơi vào nhánh mặc
   // định — trúng tình cờ thì hôm nào đó thôi trúng mà không ai biết.

@@ -113,9 +113,10 @@
     "log-equation-basics",
     "pascal-two-proofs",
     "sign-line-two-ways",
-    "geometric-series-gf"
+    "geometric-series-gf",
+    "functional-equation-cauchy"
   ],
   "newest": [
-    "geometric-series-gf"
+    "functional-equation-cauchy"
   ]
 }

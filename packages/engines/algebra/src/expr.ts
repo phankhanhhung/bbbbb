@@ -88,6 +88,25 @@ export type Expr =
    */
   | ({ readonly k: 'fn'; readonly name: FnName; readonly args: readonly Expr[] } & WithId)
   /**
+   * **Ký hiệu hàm không diễn giải** — $f$, $g$, $h$ của một phương trình hàm
+   * (AL-17, M73).
+   *
+   * Khác `fn` ở đúng một chỗ, và chỗ ấy là tất cả: `fn` tra `FUNCTIONS` để biết
+   * hàm *làm gì*; `ufn` thì **không có gì để tra**. $f$ là một hàm nào đó thoả
+   * phương trình, và đi tìm xem nó có thể là hàm nào chính là cả bài toán.
+   *
+   * Vì thế nó là kiểu nút riêng chứ không phải một dòng thêm trong `FUNCTIONS`.
+   * Nhét vào bảng ấy thì phải bịa một `evalNum`, mà mọi giá trị bịa ra đều biến
+   * bộ bốc điểm thành cỗ máy nói dối. Kiểu riêng thì **mọi** `switch` trong repo
+   * phải khai nó xử lý ra sao — đúng cái giá mà `inf` đã trả ở M68, và đúng lý do
+   * để trả.
+   *
+   * Tên là chữ tác giả gõ chứ không phải một tập đóng: bài này dùng $f$, bài kia
+   * dùng $f$ và $g$ cùng lúc. Ràng buộc duy nhất là **một chữ cái**, để $f(x)$
+   * không đọc nhầm thành tích $f \cdot (x)$.
+   */
+  | ({ readonly k: 'ufn'; readonly name: string; readonly args: readonly Expr[] } & WithId)
+  /**
    * Tổng $\sum$ và tích $\prod$ — **construct ràng buộc biến đầu tiên** của engine.
    *
    * `v` là một **tên**, không phải nút: cùng lối với `root.index`, và vì lý do giống hệt
@@ -177,6 +196,15 @@ export const variable = (m: Minter, name: string): Expr => ({ k: 'var', name, id
 export const infinity = (m: Minter): Expr => ({ k: 'inf', id: m.next() });
 
 /** Cây này có chứa $\infty$ không — cửa định tuyến sang sân chuỗi. */
+/** Cây có ký hiệu hàm không diễn giải không — quyết định lối kiểm (AL-17). */
+export function hasUninterpreted(e: Expr): boolean {
+  let found = false;
+  walk(e, (n) => {
+    if (n.k === 'ufn') found = true;
+  });
+  return found;
+}
+
 export function hasInfinity(e: Expr): boolean {
   let found = false;
   walk(e, (n) => {
@@ -260,6 +288,14 @@ export const fn = (m: Minter, name: FnName, args: readonly Expr[]): Expr => ({
   id: m.next(),
 });
 
+/** Áp dụng một ký hiệu hàm không diễn giải (AL-17). */
+export const ufn = (m: Minter, name: string, args: readonly Expr[]): Expr => ({
+  k: 'ufn',
+  name,
+  args,
+  id: m.next(),
+});
+
 export const big = (
   m: Minter,
   op: 'sum' | 'prod',
@@ -308,6 +344,7 @@ export function children(e: Expr): readonly Expr[] {
     case 'abs':
       return [e.arg];
     case 'fn':
+    case 'ufn':
       return e.args;
     case 'big':
       return [e.from, e.to, e.body];
@@ -335,6 +372,7 @@ export function withChildren(e: Expr, kids: readonly Expr[]): Expr {
     case 'abs':
       return { ...e, arg: kids[0] as Expr };
     case 'fn':
+    case 'ufn':
       return { ...e, args: kids };
     case 'big':
       return { ...e, from: kids[0] as Expr, to: kids[1] as Expr, body: kids[2] as Expr };
@@ -481,6 +519,11 @@ export function totalDegree(e: Expr): number {
       return totalDegree(e.num) + totalDegree(e.den);
     case 'abs':
       return totalDegree(e.arg);
+    case 'ufn':
+      // Một hàm **không biết là gì** thì không phải hàm hữu tỉ của đối số nó: $f(x)$
+      // được phép mọc nhanh hơn mọi đa thức. Cận Schwartz–Zippel không nói được gì
+      // ở đây, và `check.ts` không đi đường bậc cho biểu thức chứa nó.
+      return isConst(e) ? 0 : Infinity;
     case 'fn':
     case 'big':
       // $n!$, $C_n^k$, $\sum_{k=1}^{n} f(k)$ **không phải hàm hữu tỉ** của $n$, nên
@@ -633,6 +676,7 @@ export function same(a: Expr, b: Expr): boolean {
       return a.index === (b as typeof a).index && same(a.arg, (b as typeof a).arg);
     case 'abs':
       return same(a.arg, (b as typeof a).arg);
+    case 'ufn':
     case 'fn': {
       const o = b as typeof a;
       return (

@@ -1,4 +1,5 @@
 import {
+  ufn,
   infinity,
   Minter,
   add,
@@ -19,6 +20,16 @@ import {
   type RelOp,
 } from './expr.js';
 import { FUNCTIONS } from './functions.js';
+
+/**
+ * Trần số đối số của một ký hiệu hàm không diễn giải.
+ *
+ * Ba là đủ cho mọi phương trình hàm của chương trình chuyên ($f(x+y)$, $f(x,y)$
+ * ở dạng hai biến); trần tồn tại vì `f(a,b,c,d,e,…)` gần như luôn là dấu hiệu
+ * người viết đang gõ một thứ khác, và một lời từ chối ở đây rẻ hơn một hình vẽ
+ * tràn khung.
+ */
+const UFN_MAX_ARITY = 3;
 
 /**
  * Parser cho cú pháp mặt (§3.3).
@@ -326,7 +337,34 @@ class Parser {
 
     // Chỉ số dưới một chữ số: `a_1`. Đủ cho dãy, không mở cửa cho tên nhiều chữ.
     const name = this.name();
-    if (name !== null) return variable(this.m, name);
+    if (name === null) throw new ParseError('cần một số hoặc một tên', this.i);
+
+    /**
+     * **Ký hiệu hàm không diễn giải** (AL-17): một tên đứng sát dấu ngoặc mở.
+     *
+     * Đọc được vì engine **cấm nhân ngầm** (§3.3) — cùng cổ tức mà `C(n,k)` đã ăn
+     * ngay trên: một biến không bao giờ đứng sát `(`, nên `f(` chỉ có thể là một
+     * lời gọi. Không cần khai trước tên nào là hàm; chỗ nó đứng đã nói.
+     *
+     * Chỉ nhận **một chữ cái không có chỉ số dưới**: `a_1(x)` gần như chắc chắn là
+     * người viết nhầm một dãy thành một hàm, và đoán hộ họ ở đây thì cái sai sẽ đi
+     * suốt cả bài mà không ai báo.
+     */
+    if (this.src[this.i] === '(') {
+      if (name.length !== 1) {
+        throw new ParseError(`"${name}" có chỉ số dưới — ký hiệu hàm phải là một chữ cái`, this.i);
+      }
+      this.i += 1;
+      const args: Expr[] = [this.sum()];
+      while (this.eat(',')) args.push(this.sum());
+      if (!this.eat(')')) throw new ParseError('thiếu dấu ")"', this.i);
+      if (args.length > UFN_MAX_ARITY) {
+        throw new ParseError(`ký hiệu hàm nhận nhiều nhất ${UFN_MAX_ARITY} đối số`, this.i);
+      }
+      return ufn(this.m, name, args);
+    }
+
+    return variable(this.m, name);
 
     throw new ParseError(`không đọc được ký tự "${ch}"`, this.i);
   }
@@ -354,6 +392,8 @@ export function tryParse(
 
 const PLAIN_PREC: Readonly<Record<Expr['k'], number>> = {
   inf: 6,
+  // Lời gọi hàm xếp ngang nguyên tử: `f(x)` đã tự có ngoặc, không cần thêm.
+  ufn: 6,
   sys: 0,
   rel: 0,
   add: 1,
@@ -449,6 +489,8 @@ export function toPlain(e: Expr): string {
       const body = PLAIN_PREC[e.body.k] <= PLAIN_PREC['big'] ? `(${toPlain(e.body)})` : toPlain(e.body);
       return `${sign}(${e.v}=${toPlain(e.from)}..${toPlain(e.to)}) ${body}`;
     }
+    case 'ufn':
+      return `${e.name}(${e.args.map(toPlain).join(', ')})`;
     case 'fn':
       // Giai thừa của một thứ không phải nguyên tử phải có ngoặc: `x + 1!` đọc ra
       // $x + (1!)$, khác hẳn $(x+1)!$. Bảng ưu tiên không bắt được vì `fn` xếp ngang
@@ -520,6 +562,8 @@ export function unparse(e: Expr): string {
       return e.index === 2 ? `sqrt(${unparse(e.arg)})` : `root(${e.index}, ${unparse(e.arg)})`;
     case 'big':
       return `${e.op}(${e.v}, ${unparse(e.from)}, ${unparse(e.to)}, ${unparse(e.body)})`;
+    case 'ufn':
+      return `${e.name}(${e.args.map(unparse).join(', ')})`;
     case 'fn':
       // Luôn in dạng **lời gọi**, kể cả giai thừa: `fact(n)` khứ hồi được ở mọi vị trí,
       // còn `n!` thì không — `2^n!` đọc lại thành $2^{n!}$ chứ không phải $(2^n)!$.

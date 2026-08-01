@@ -28,6 +28,7 @@ import {
   solutionSetOf,
   contains,
   evalRelation,
+  sameSolutionSet,
   sameValue,
   unparse,
   violationOf,
@@ -928,5 +929,129 @@ describe('M69 — ∞ trên quan hệ: hết vàng vĩnh viễn', () => {
     );
     expect(twoVars.verified).toBe(false);
     expect(twoVars.message).toContain('biến chuỗi duy nhất');
+  });
+});
+
+/**
+ * M73 — **ký hiệu hàm không diễn giải** (AL-17).
+ *
+ * Bảng đo M70 xếp mục này lên đầu bằng một con số: phương trình hàm chiếm ~20% đề
+ * đại số olympiad và engine phủ đúng $0$ — $f(x+y) = f(x)+f(y)$ trước đây **viết
+ * ra cũng không được**, chứ chưa nói kiểm.
+ */
+describe('M73 — ký hiệu hàm không diễn giải', () => {
+  const P = (src: string) => parse(src, new Minter());
+  const run = (start: string, steps: AlgebraStep[]) => readAlgebra(scene(start, steps));
+
+  describe('đọc và in', () => {
+    it('`f(x + y)` đọc được, khứ hồi qua `unparse`', () => {
+      expect(unparse(P('f(x + y) = f(x) + f(y)'))).toBe('(f((x + y)) = (f(x) + f(y)))');
+      expect(toPlain(P('g(x, y)'))).toBe('g(x, y)');
+    });
+
+    it('đọc được vì engine **cấm nhân ngầm** — cùng cổ tức mà `C(n,k)` đã ăn', () => {
+      // Một biến không bao giờ đứng sát `(`, nên `f(` chỉ có thể là một lời gọi.
+      // Không cần khai trước tên nào là hàm; chỗ nó đứng đã nói.
+      expect(unparse(P('f(x)'))).toBe('f(x)');
+      expect(unparse(P('h(x) + h(y)'))).toBe('(h(x) + h(y))');
+    });
+
+    it('từ chối tên có chỉ số dưới: `a_1(x)` gần như luôn là dãy viết nhầm', () => {
+      expect(() => P('a_1(x)')).toThrow(/một chữ cái/);
+    });
+  });
+
+  describe('không sân nào tính được nó — và đó là điều kiện để kiểm được', () => {
+    it('ba sân bốc điểm đều trả `null` tại nút `ufn`', () => {
+      expect(evalReal(P('f(x)'), new Map([['x', 2]]))).toBeNull();
+    });
+
+    it('sân chuỗi cũng không khai được nó', () => {
+      expect(seriesOf(P('f(x)'), 'x', 4)).toBeNull();
+    });
+  });
+
+  /**
+   * Phép trừu tượng hoá: mỗi lời gọi `f(t)` thành một nguyên tử. Nhờ nó **cả 73
+   * luật** chạy được trên biểu thức có $f$ mà không luật nào phải biết về $f$.
+   */
+  describe('trừu tượng hoá: coi mỗi f(…) là một ẩn', () => {
+    it('thao tác ★ trên phương trình hàm **kiểm được**, không còn vệt vàng', () => {
+      const m = run('f(x + y) = f(x) + f(y)', [
+        { rule: 'add_both_sides', at: '', arg: '-1*f(y)' },
+      ]);
+      expect(m.refusal).toBeNull();
+      expect(m.unchecked).toEqual([]);
+      expect(m.unsound).toEqual([]);
+      expect(m.rows[1]!.evidence?.verified).toBe(true);
+    });
+
+    it('cùng đối số ⇒ **cùng** nguyên tử: `f(x) + f(x)` gộp được thành `2f(x)`', () => {
+      const r = sameValue(P('f(x) + f(x)'), P('2*f(x)'));
+      expect(r.ok).toBe(true);
+      expect(r.verified).toBe(true);
+    });
+
+    it('khác đối số ⇒ **khác** nguyên tử — và đó là răng của phép trừu tượng hoá', () => {
+      // Không có chỗ này thì mọi $f(\cdot)$ thành một ẩn duy nhất và bộ kiểm xanh
+      // cho mọi thứ.
+      expect(sameValue(P('f(x) + f(y)'), P('2*f(x)')).ok).toBe(false);
+    });
+
+    it('bước sai trên quan hệ bị bắt', () => {
+      // Hỏi bằng **bất đẳng thức**, không bằng đẳng thức: hai đẳng thức khác nhau
+      // đều sai ở hầu hết mọi điểm nên chúng "đồng ý" — đó là tính chất sẵn có của
+      // `sameSolutionSet` (tập nghiệm có độ đo $0$), không phải chuyện phép trừu
+      // tượng hoá làm hỏng. Chỗ bốc điểm có răng thật là chỗ có dấu.
+      expect(sameSolutionSet(P('f(x) < 0'), P('f(x) > 0'), null, 7).ok).toBe(false);
+    });
+  });
+
+  describe('`specialize` — nước đi cốt lõi của chuyên đề', () => {
+    it('thay bởi một **biểu thức**, không chỉ một hằng', () => {
+      const m = run('f(x + y) = f(x) + f(y)', [
+        { rule: 'specialize', at: '', arg: 'y := -1*x' },
+        { rule: 'collect_like', at: 'L.0' },
+      ]);
+      expect(m.refusal).toBeNull();
+      expect(unparse(m.rows[2]!.expr)).toBe('(f(0) = (f(x) + f(((-1) * x))))');
+      expect(m.unsound).toEqual([]);
+      expect(m.unchecked).toEqual([]);
+    });
+
+    it('chỉ áp cho cả một phương trình, không cho một cây con', () => {
+      // Thế vào một cây con là **đổi hệ quy chiếu** (M69), một chuyện khác hẳn.
+      const m = run('f(x + y) = f(x) + f(y)', [{ rule: 'specialize', at: 'L', arg: 'y := 0' }]);
+      expect(m.refusal).toContain('không cho một cây con');
+    });
+
+    it('biến không có trong phương trình thì từ chối có lời', () => {
+      expect(run('f(x) = x', [{ rule: 'specialize', at: '', arg: 'z := 0' }]).refusal).toContain(
+        'không thấy biến "z"',
+      );
+    });
+
+    it('mỗi lần xuất hiện một bản sao riêng — không id nào trùng trong dòng vẽ ra', () => {
+      const m = run('f(x + y) = f(x) + f(y)', [
+        { rule: 'specialize', at: '', arg: 'y := 2*x' },
+      ]);
+      const ids: string[] = [];
+      walkExpr(m.rows[1]!.expr, (n) => ids.push(n.id));
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+  });
+
+  it('chuỗi Cauchy đầy đủ: $f(0) = 0$, mọi bước đều được kiểm', () => {
+    const m = run('f(x + y) = f(x) + f(y)', [
+      { rule: 'specialize', at: '', arg: 'y := 0' },
+      { rule: 'drop_unit', at: 'L.0' },
+      { rule: 'add_both_sides', at: '', arg: '-1*f(x)' },
+      { rule: 'collect_like', at: 'L' },
+      { rule: 'collect_like', at: 'R' },
+    ]);
+    expect(m.refusal).toBeNull();
+    expect(unparse(m.rows.at(-1)!.expr)).toBe('(0 = f(0))');
+    expect(m.unsound).toEqual([]);
+    expect(m.unchecked).toEqual([]);
   });
 });

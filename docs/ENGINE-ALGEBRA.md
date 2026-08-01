@@ -2801,3 +2801,90 @@ Bẻ răng bốn lần, bốn lần đỏ: hệ số lệch một bậc; mẫu h
 định tuyến sang sân chuỗi; `sum_expand` chấp nhận vô hạn.
 
 3040 test xanh, 98 e2e xanh, 114 bài validate sạch.
+
+---
+
+## 45. Ký hiệu hàm không diễn giải — phương trình hàm (M73, AL-17)
+
+**Vì sao mục này đứng trước hai mục còn lại.** Không phải cảm giác: bảng đo
+`ALGEBRA-COVERAGE.md` (M70) cân ba hạng mục cuối bằng cùng một thước, và phương
+trình hàm ra **~20% đề đại số olympiad, engine phủ đúng $0$**. Không phải "phủ
+kém" — phủ **không**: $f(x+y) = f(x) + f(y)$ trước mục này *viết ra cũng không
+được*, vì parser không có gì để đọc `f(`.
+
+### 45.1 Kiểu nút thứ mười lăm, và cái giá của nó
+
+`ufn` là một kiểu nút riêng, không phải một dòng thêm trong `FUNCTIONS`. Lý lẽ y
+hệt `inf` ở M68: bảng hàm đòi một `evalNum`, mà **mọi** giá trị bịa cho $f$ đều
+biến bộ bốc điểm thành cỗ máy nói dối. Kiểu riêng thì trình biên dịch bắt mọi
+`switch` khai nó xử lý ra sao — và nó bắt thật, ngay lần typecheck đầu: hai bảng
+`PREC` (parse và typeset) đỏ vì thiếu một khoá.
+
+Ba chỗ khác `fn`, và cả ba đều có lý do:
+
+| | `fn` | `ufn` |
+|---|---|---|
+| tên | union **đóng** (`FnName`) | chữ tác giả gõ, một chữ cái |
+| tra bảng | `FUNCTIONS[name]` — arity, cách tính, miền | **không có gì để tra** |
+| sắp chữ | `sin`, `ln` **đứng thẳng** — chúng là *từ* | $f$ **nghiêng** — nó là *ký hiệu* |
+
+Parser đọc được nó mà không cần khai trước tên nào là hàm, và đó là cổ tức của
+một ràng buộc cũ: engine **cấm nhân ngầm** (§3.3), nên một biến không bao giờ
+đứng sát `(`. Chỗ nó đứng đã nói nó là gì. Cùng lý lẽ đã cho `C(n,k)` đọc được ở
+M56.
+
+### 45.2 Chỗ suýt sai: bộ kiểm không được đứng im
+
+Cám dỗ đầu tiên là để $f$ **không kiểm được** cho trung thực: ba sân bốc điểm trả
+`null` tại mọi nút `ufn`, sân chuỗi cũng không khai được nó, nên `verified: false`
+là câu trả lời "đúng".
+
+Nó đúng và nó vô dụng — và M69 vừa dạy đúng bài này ở miền khác: mọi thao tác ★
+trên một đẳng thức hàm sinh từng mang vệt vàng vĩnh viễn cho tới khi có một cửa
+định tuyến. Ở đây vệt vàng ấy sẽ phủ **toàn bộ** chuyên đề phương trình hàm ngay
+từ bài đầu tiên.
+
+Lối ra nằm ở một quan sát về chính nhóm luật: **nhóm ★ không nhìn vào trong $f$.**
+Chuyển vế, nhân hai vế, gom hạng tử — mọi luật ấy đối xử với $f(x)$ đúng như đối
+xử với một biến. Nên `check.ts` cũng làm thế: thay mỗi lời gọi $f(t)$ **cực đại**
+bằng một nguyên tử mới rồi gọi lại chính hợp đồng cũ. Không luật nào phải biết về
+$f$, và cả **73** luật chạy được trên biểu thức chứa nó.
+
+Câu mà phép kiểm khẳng định sau khi trừu tượng hoá là câu đúng cần khẳng định:
+*"bước này đúng với **mọi** hàm $f$"* — chính là điều một dòng của lời giải phương
+trình hàm tuyên bố.
+
+Hai chi tiết quyết định nó có răng hay không:
+
+- **Khoá là hình dạng đối số**, không phải danh tính nút: $f(x)$ ở dòng trên và
+  $f(x)$ ở dòng dưới phải ra **cùng** một nguyên tử, không thì mọi bước đều bị kết
+  tội. Bẻ răng: cho khoá chỉ là tên hàm ⇒ $f(x) + f(y)$ hoá $2f(x)$ được ⇒ test đỏ.
+- **Đối số khác thì nguyên tử khác**: bỏ chỗ này thì bộ kiểm xanh cho mọi thứ.
+
+### 45.3 `specialize`, và vì sao nó **không** dùng hợp đồng `implies`
+
+Nước đi cốt lõi của chuyên đề là thay biến bởi một **biểu thức** (không chỉ một
+hằng — đó là chỗ nó khác `evaluate_at`), trên **cả** phương trình (đó là chỗ nó
+khác `substitute`, vốn thế vào một cây con và là một phép đổi hệ quy chiếu, xem
+M69).
+
+Về mặt lô-gic, chuyên biệt hoá là một **hệ quả**, nên phản xạ đầu tiên là gắn
+`verify: 'implies'`. Sai, và sai theo một kiểu chỉ lộ ra khi ghép hai cơ chế của
+mục này lại: `impliesSolutionSet` bốc điểm trên các nguyên tử **đã trừu tượng
+hoá**, mà phép trừu tượng hoá **cắt đứt** liên hệ giữa $f(x{+}y)$ và $f(2x)$ — hai
+lời gọi khác đối số thành hai ẩn độc lập. Bốc điểm trên chúng thì "trước đúng ⟹
+sau đúng" không còn giữ, và bộ kiểm sẽ kết tội một bước hoàn toàn hợp lệ.
+
+Câu hỏi đúng ở đây không phải *"có suy ra được không"* mà *"**có thế đúng
+không**"* — và đó là hợp đồng `'instance'`, kiểm bằng cấu trúc, đã có sẵn từ M50.
+
+### 45.4 Cái đã sai trước khi đúng
+
+1. **Caption in nguyên văn `$y = 0$` ra hình.** Lần thứ **ba** của cùng một lớp
+   lỗi: M69 bắt hai caption `$\sigma$` và `$RRRUUU$` bằng lượt nhìn, sau khi
+   chúng đã xuất bản. Ba lần là đủ để thôi bắt bằng mắt — `lint/label-not-plain`
+   nay soi cả `config.caption` của **cả hai** pane. Bảy engine có trường này và
+   không engine nào cho nó đi qua label atlas.
+2. **Phép quét ngẫu nhiên tự tố cáo.** Thêm luật mà quên một dòng trong bảng
+   `ARGS` thì luật ấy luôn từ chối và trôi qua phép quét. Chốt canh độ phủ bắt
+   ngay ở lần chạy đầu — đúng như chú thích của nó hứa từ M56.
