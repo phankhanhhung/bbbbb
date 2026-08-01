@@ -244,6 +244,9 @@ Player là sản phẩm chính. Nguyên tắc UI: canvas là nhân vật chính,
 - **PLY-06 [P1] MUST** — **Invariant strip**: nếu problem khai báo `invariants[]`, hiển thị giá trị từng biểu thức tại step hiện tại + sparkline theo tiến trình nhánh đang xem; đánh dấu trực quan khi giá trị đổi/không đổi qua mỗi bước.
 - **PLY-07 [P2] SHOULD** — Chế độ trình chiếu cho GV: fullscreen, con trỏ nhấn mạnh, điều khiển bằng phím/remote, QR code để học sinh mở đúng problem+step trên thiết bị của mình (dựa trên DAT-14).
 - **PLY-08 [P2] SHOULD** — Self-check nhẹ gắn tại step: trắc nghiệm/điền số ngắn do tác giả soạn, phản hồi tại chỗ, không chấm điểm tập trung (NG-04).
+- **PLY-09 [P2] SHOULD** — **Chạm vào hình để hỏi**: chạm tại chỗ (dưới 8px, phân biệt với vuốt đổi step ở 48px) trên canvas hỏi engine "phần tử này có gì để kể", và câu trả lời đổ vào **cùng** cơ chế highlight của anchor — không thêm đường render thứ hai. Engine nào không có gì để kể thì chạm không làm gì. Thực hiện đầu tiên (M63): tiểu sử hạng tử của engine `algebra` (AL-13); mở đường cho các câu hỏi khác đứng lên cùng chỗ chạm ấy.
+  - Thứ tự ưu tiên vệt sáng: rê chuột trên lời kể › thứ vừa chạm › pha timeline đang chạy. Xoá khi chạm hụt, `Escape`, hoặc đổi step.
+- **AL-13 [P2] SHOULD** — **Tiểu sử hạng tử**: với engine `algebra`, chạm một hạng tử làm sáng cả phả hệ của nó — tổ tiên lẫn hậu duệ — ở mọi dòng nó có mặt. Suy từ `AlgebraRow.trace` và tính bền của `TermId` (DAT-11/12); không có dữ liệu mới nào được thêm. Nút nhân bản thì phả hệ rẽ nhánh, nút gộp thì đi lên ra nhiều tổ tiên, nút mới sinh **không** bịa ra tổ tiên.
 
 ---
 

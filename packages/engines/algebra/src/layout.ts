@@ -119,6 +119,19 @@ export interface Layout {
  */
 export const elementId = (rowIndex: number, term: string): string => `r${rowIndex}-${term}`;
 
+/**
+ * Chiều ngược của `elementId`. `null` khi chuỗi không phải danh tính một hạng tử.
+ *
+ * Đứng **cạnh** `elementId` chứ không nằm ở chỗ dùng nó: hai hàm này là một cặp, và
+ * tách chúng ra hai tệp là cách chắc chắn để một hôm nào đó một bên đổi định dạng mà
+ * bên kia không biết. `row0`, `note1`, hay một id của engine khác đều trả `null` —
+ * `r` phải đi liền chữ số thì mới khớp.
+ */
+export function parseElementId(id: string): { row: number; term: string } | null {
+  const m = /^r(\d+)-(.+)$/.exec(id);
+  return m ? { row: Number(m[1]), term: m[2] as string } : null;
+}
+
 /** Danh tính của dòng chữ đỏ thứ `i` — choreography nhắm được, anchor thì không. */
 export const noteId = (index: number): string => `note${index}`;
 

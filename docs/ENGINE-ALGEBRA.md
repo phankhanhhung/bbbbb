@@ -2203,3 +2203,113 @@ tách khỏi `frameSvg` đúng vì lý do này) và **đếm** số node chạm 
 `film` render với `explain: true` và một lớp `defs` riêng, nhưng nó là một **đường ra
 mới**, không phải một sửa đổi trong renderer: 2948 test xanh, 111 bài validate sạch, không
 golden nào đổi. Đó là điều kiện để mục này được xem là đã xong.
+
+---
+
+## 39. Tiểu sử hạng tử — chạm vào hình để hỏi (M63, AL-13)
+
+Câu hỏi mà lớp học hỏi nhiều nhất trước một chuỗi biến đổi là *"con số này từ đâu ra?"*.
+Engine đã có câu trả lời từ M46 và chưa ai hỏi nó.
+
+### 39.1 Không thêm dữ liệu nào — chỉ đem thứ đã tính ra dùng
+
+`AlgebraRow.trace` ghi nút cũ đi đâu; `TermId` bền qua mọi dòng (DAT-11/12) nên $e_2$ ở
+dòng ba **đúng là** nút $e_2$ của dòng một. Hai thứ ấy cộng lại đã là một phả hệ đầy đủ.
+Tới trước M63, chỗ duy nhất đọc `trace` là bộ sinh choreography — nó lấy phần "cái gì vừa
+đổi" rồi bỏ phần còn lại.
+
+`provenance.ts` không thêm một trường nào vào model. Nó chỉ **nối** `trace` qua các cặp
+dòng kề, và cả tệp là hai vòng lặp.
+
+### 39.2 Quy tắc nối có hai vế, và vế thứ hai gánh việc
+
+```
+trace.has(id) ? trace.get(id) : (dòng sau còn id ? [id] : [])
+```
+
+`trace` **chỉ ghi chỗ đổi**: `dup`, `merged`, và một vòng quét bắt nút biến mất. Nút đi
+tiếp nguyên vẹn không có mặt ở đâu cả — mà đó là đa số nút của mọi dòng. Bỏ vế thứ hai
+thì phả hệ đứt ngay dòng đầu tiên hạng tử ấy không bị luật chạm tới, tức gần như luôn.
+
+Đo bằng cách bẻ: gỡ vế thứ hai ở chiều xuôi → **4/14 test đỏ**; gỡ ở chiều ngược → 1 đỏ.
+
+Đi **cả hai chiều** vì không đoán được người ta đang hỏi chiều nào — chạm dòng cuối là
+hỏi "từ đâu ra", chạm dòng đầu là hỏi "rồi thành gì" — và cả hai đều là *cùng một* phả hệ.
+Chiều lên là **nghịch ảnh** của `trace`, không phải một bảng thứ hai: nút gộp từ ba nút
+thì đi lên ra ba tổ tiên, đúng thứ cần thấy.
+
+Ba hình dạng, đo trên chuỗi $2(x+3) + 4x \to 2x + 2\cdot3 + 4x \to 6x + 2\cdot3$:
+
+| chạm | phả hệ |
+|---|---|
+| hệ số $2$ ở dòng 0 | `{0:[e1], 1:[e1,e11], 2:[e11]}` — **rẽ hai**, một nhánh chết |
+| hệ số $6$ ở dòng 2 | `{0:[e8], 1:[e8,e10], 2:[e15]}` — **nhập hai**, lên nữa còn một |
+| nút mới sinh | `{2:[e14]}` — không bịa tổ tiên |
+
+### 39.3 Một lớp canh **không đầu vào nào với tới**, và nó bị gỡ
+
+Bản đầu có thêm `&& !trace.has(one)` ở nhánh tự nối ngược chiều, lý lẽ nghe rất xuôi: một
+`TermId` có thể vừa là **khoá** của `trace` vừa còn sống ở dòng dưới với chính tên ấy, nên
+không kiểm thì phả hệ nở ra tổ tiên không có thật.
+
+Bẻ nó ra thì **14/14 test vẫn xanh**. Không phải vì test yếu — vì hình ấy không tồn tại:
+chỗ duy nhất sinh ra "khoá mà vẫn sống" là `dup`, và `dup` ghi `trace.set(from, [from, to])`,
+tức `from` nằm trong chính danh sách đích, nên vòng lặp nghịch ảnh đã bắt nó rồi; cộng lần
+nữa vào một `Set` không đổi gì.
+
+Đây là bài học M48 **lật ngược**: lần trước là một *test* không với tới nhánh của nó, lần
+này là một *dòng code* không đầu vào nào với tới. Giữ thì mang mãi một lớp canh giả không
+ai kiểm được; gỡ thì code ngắn đi và không mất gì. Gỡ — và ghi lại để lần sau ai đó thấy
+thiếu thì biết nó đã được cân nhắc, không phải bị quên.
+
+### 39.4 Đường chạm đầu tiên của Player, và vùng chết giữa hai ngưỡng
+
+Trước M63, cử chỉ duy nhất trên canvas Player là **vuốt ngang 48px** đổi step; hit-test chỉ
+sống trong Sandbox. Nay có hai cử chỉ trên cùng một canvas, và khoảng giữa chúng phải
+**không làm gì cả**:
+
+| dịch chuyển | nghĩa |
+|---|---|
+| $< 8$px | chạm tại chỗ — hỏi phả hệ |
+| $8..48$px | **không gì cả** |
+| $> 48$px | vuốt — đổi step |
+
+Vùng chết là chủ ý. Một ngón tay dịch 20px là cử chỉ **mập mờ**, và đoán bừa thì một nửa
+số lần đoán sai — mà đoán sai ở đây nghĩa là nhảy mất một bước lời giải. Thà không phản
+ứng: người dùng thử lại, chứ không phải hoàn tác.
+
+Đo cả `y` chứ không chỉ `x`: bản đầu chỉ theo `clientX`, nên cuộn trang một đoạn dài rồi
+nhấc tay cũng tính là "chạm tại chỗ" và làm sáng bừa một hạng tử ngẫu nhiên dưới ngón.
+
+Đi ngược DOM theo đúng mẫu `BijectionPanes.onPoint` — leo hết chuỗi tổ tiên, `data-el`
+**trước** `data-k`. Không gọi `hitTest`: cây DOM đã mang sẵn câu trả lời, còn `hitTest` bắt
+quy đổi toạ độ qua `getScreenCTM`. Cùng lý lẽ M37 đã ghi cho song ánh.
+
+**`null` chứ không phải tập rỗng** khi chạm hụt: Player phân biệt "chạm trúng một hạng tử
+đứng một mình" với "chạm hụt", và cái sau phải **xoá** vệt đang sáng chứ không thay nó bằng
+một vệt rỗng. Đó là cách người ta bỏ chọn.
+
+### 39.5 Ba nguồn cùng nói "nhìn chỗ này"
+
+Rê chuột trên lời kể › hạng tử vừa chạm › pha timeline đang chạy. Cùng lý lẽ đã dùng cho
+`shownAnchor` ở M51: thứ người dùng *vừa làm* thắng thứ máy đang tự chạy.
+
+Cả ba đổ vào **cùng một** `ctx.highlight` — không thêm đường render thứ hai, nên vẫn đúng
+một chỗ quyết định "được nhấn" trông thế nào, và golden không đổi một byte.
+
+### 39.6 Chốt canh đầu tiên đỏ vì một giả định sai
+
+Test e2e bản đầu mở bằng `expect(HALO).toHaveCount(0)` — "chưa chạm thì tối om". Nó đỏ
+ngay: step ấy có anchor, và pha đầu của timeline sinh ra bắt đầu đúng tại `ms = 0`, nên đã
+có sẵn một vệt sáng trước khi ai chạm vào đâu. Nay mọi assert so với **nền** chứ không so
+với rỗng.
+
+Lỗi thứ hai cùng loại: `expect(await lit(page))` đọc DOM **một lần**, trong khi vệt sáng
+tắt qua một lượt `patch` bất đồng bộ. Ba test qua, một test đỏ ngẫu hứng. `expect.poll`
+sửa cả bốn.
+
+Bẻ răng: bỏ `tapped` khỏi thứ tự ưu tiên → 3 đỏ; `Escape` không xoá → 1 đỏ; **đảo thứ tự
+hai nhánh cử chỉ** cho nhánh chạm đứng trước nhánh vuốt → test "vuốt vẫn đổi step" đỏ.
+Cái thứ ba là cái đáng lo nhất của mục này và nó có người canh.
+
+76 e2e xanh trên cả desktop lẫn iPad, 2962 unit test xanh, golden không đổi.

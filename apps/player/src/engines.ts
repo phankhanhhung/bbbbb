@@ -36,6 +36,18 @@ export interface LoadedEngine {
    * đầu. Tác giả vẫn đè được — `step.choreography` luôn thắng.
    */
   readonly choreography?: (scene: Scene, anchor: string) => Choreography | undefined;
+  /**
+   * Phả hệ của một hạng tử (AL-13) — *"con số này từ đâu ra?"*
+   *
+   * Nhận **danh tính vẽ ra** mà người dùng vừa chạm và trả về mọi danh tính cùng phả
+   * hệ, ở mọi dòng. `null` nghĩa là chạm hụt (chỗ trống, nhãn luật, id lạ) — khác hẳn
+   * tập rỗng, vì Player phải **xoá** vệt đang sáng chứ không thay nó bằng một vệt rỗng.
+   *
+   * Chỉ engine nào có khái niệm "cùng một vật qua nhiều hình" mới có. Với `algebra` thì
+   * `TermId` bền qua các dòng (DAT-11/12) là chính khái niệm ấy, và `trace` đã ghi sẵn
+   * mọi thứ cần từ M46 — mục này chỉ là chỗ đem nó ra dùng.
+   */
+  readonly lineage?: (scene: Scene, elementId: string) => ReadonlySet<string> | null;
   /** BD-06 — đếm ô theo color_class. Chỉ engine dạng lưới có. */
   colorSummary?(scene: Scene): Map<number, number>;
   /** BD-03 — độ phủ. Chỉ engine dạng lưới có. */
@@ -160,6 +172,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
       environment: module.algebraEnvironment,
       resolveValidator: module.resolveAlgebraValidator,
       choreography: (scene, anchor) => module.algebraChoreography(scene, { anchor }),
+      lineage: module.algebraLineage,
     };
   },
 };

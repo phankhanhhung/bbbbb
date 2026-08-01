@@ -22,7 +22,7 @@ import {
   type SceneRenderer,
   type SvgNode,
 } from '@combviz/render';
-import { animate, patch } from '@combviz/render/dom';
+import { animate, patch, ELEMENT_ATTR, KEY_ATTR } from '@combviz/render/dom';
 import { defaultTheme } from '@combviz/theme';
 import type { GraphAnalysis } from '@combviz/engine-graph';
 import { loadEngines, loadLabelAtlas, type LoadedEngine } from './engines.js';
@@ -38,6 +38,10 @@ import { Timeline } from './Timeline.jsx';
 import { useChoreography } from './useChoreography.js';
 
 const SPEEDS = [0.5, 1, 2] as const;
+
+/** Một tập rỗng dùng chung: `createContext` chỉ đọc, và dựng `new Set()` mỗi khung
+ *  làm `useMemo` của `ctx` mất tác dụng — cả scene render lại vì một object mới. */
+const EMPTY_HIGHLIGHT: ReadonlySet<string> = new Set();
 
 /**
  * Player (PLY-01..06).
@@ -56,6 +60,8 @@ export function Player({
   const [engines, setEngines] = useState<ReadonlyMap<string, LoadedEngine> | null>(null);
   const [atlas, setAtlas] = useState<LabelAtlas | null>(null);
   const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
+  /** AL-13 — phả hệ của hạng tử vừa chạm; `null` là chưa chạm gì. */
+  const [tapped, setTapped] = useState<ReadonlySet<string> | null>(null);
   const [forkedScene, setForkedScene] = useState<Scene | null>(null);
   // CMS-03: lời giải **che mặc định**. Trang bài mở ra là đề bài và sandbox —
   // người học nên có cơ hội tự nghĩ trước khi thấy lời giải, và một cú bấm là
@@ -142,6 +148,9 @@ export function Player({
   const goTo = useCallback((id: string) => {
     setStepId(id);
     setActiveAnchor(null);
+    // Phả hệ nói về **hạng tử của step này**. Mang nó sang step sau thì nó trỏ vào
+    // những id không còn tồn tại — một vệt sáng trống, im lặng và vô nghĩa.
+    setTapped(null);
   }, []);
 
   const goNext = useCallback(() => {
@@ -187,21 +196,37 @@ export function Player({
    */
   const shownAnchor = activeAnchor ?? timeline.anchor;
 
+  /**
+   * Ba nguồn cùng nói "nhìn chỗ này", và thứ tự ưu tiên là một quyết định (AL-13).
+   *
+   * 1. **Rê chuột trên lời kể** — người đọc đang chủ động chỉ vào một câu.
+   * 2. **Hạng tử vừa chạm** — họ vừa hỏi "cái này từ đâu ra".
+   * 3. **Pha đang chạy** — timeline tự kể.
+   *
+   * Cùng lý lẽ đã dùng cho `shownAnchor`: thứ người dùng *vừa làm* thắng thứ máy đang
+   * tự chạy, vì để timeline giật vệt sáng đi chỗ khác giữa lúc họ đang chỉ là cướp con
+   * trỏ khỏi tay họ. Và cả ba đổ vào **cùng một** `ctx.highlight` — không thêm đường
+   * render thứ hai, nên vẫn đúng một chỗ quyết định "được nhấn" trông thế nào.
+   */
+  const highlight = useMemo(() => {
+    const ofAnchor = (key: string | null): ReadonlySet<string> | null =>
+      key && step.anchors && Object.hasOwn(step.anchors, key)
+        ? new Set(step.anchors[key]!.ids)
+        : null;
+    return ofAnchor(activeAnchor) ?? tapped ?? ofAnchor(timeline.anchor) ?? EMPTY_HIGHLIGHT;
+  }, [activeAnchor, tapped, timeline.anchor, step]);
+
   const ctx = useMemo(
     () =>
       createContext(defaultTheme, {
-        highlight: new Set(
-          shownAnchor && step.anchors && Object.hasOwn(step.anchors, shownAnchor)
-            ? step.anchors[shownAnchor]!.ids
-            : [],
-        ),
+        highlight,
         ...(atlas ? { labels: atlas } : {}),
         // Mực giải thích chỉ có nghĩa ở chỗ có timeline. Player có; golden và OG card
         // render **không qua** choreography nên ở đó nó sẽ hiện luôn và làm rối ảnh
         // tĩnh của cả kho — vì thế nó là một sự thật về *nơi vẽ*, không phải về scene.
         explain: choreography !== undefined,
       }),
-    [shownAnchor, step, atlas, choreography],
+    [highlight, atlas, choreography],
   );
 
   /**
@@ -280,13 +305,26 @@ export function Player({
         setPlaying((v) => !v);
       } else if (event.key === 'Escape') {
         setPlaying(false);
+        setTapped(null);
       }
     };
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
   }, [goNext, goPrev]);
 
-  const swipeStart = useRef<number | null>(null);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+
+  /**
+   * Một cú chạm, hai nghĩa — và **khoảng giữa** phải không làm gì cả.
+   *
+   * Vuốt ngang đổi step (ngưỡng 48px, có từ trước). Chạm tại chỗ hỏi phả hệ (ngưỡng
+   * 8px). Giữa hai ngưỡng ấy là vùng chết, và nó là chủ ý: một ngón tay dịch 20px là
+   * một cử chỉ **mập mờ**, và đoán bừa nghĩa của nó thì một nửa số lần sẽ đoán sai.
+   * Thà không phản ứng — người dùng thử lại, chứ không phải hoàn tác.
+   *
+   * Đo cả `y`: bản đầu chỉ theo `clientX`, nên cuộn trang một đoạn dài rồi nhấc tay
+   * cũng tính là "chạm tại chỗ" và làm sáng bừa một hạng tử ngẫu nhiên dưới ngón.
+   */
   const onCanvasPointerUp = (event: PointerEvent): void => {
     const start = swipeStart.current;
     swipeStart.current = null;
@@ -294,9 +332,13 @@ export function Player({
 
     // Ngưỡng 48px: dưới mức đó gần như luôn là chạm hụt chứ không phải vuốt, và
     // chuyển step vì một cú chạm hụt là cách nhanh nhất làm mất niềm tin.
-    const delta = event.clientX - start;
-    if (delta < -48) goNext();
-    else if (delta > 48) goPrev();
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (dx < -48) return goNext();
+    if (dx > 48) return goPrev();
+    if (Math.abs(dx) >= 8 || Math.abs(dy) >= 8) return;
+
+    setTapped(lineageAt(event.target, step.scene, engines));
   };
 
   const viewport = renderer && step.scene ? renderer.viewportOf(step.scene, ctx) : null;
@@ -390,7 +432,7 @@ export function Player({
           <div
             class={choreography ? 'canvas canvas--choreo' : 'canvas'}
             onPointerDown={(event: PointerEvent) => {
-              swipeStart.current = event.clientX;
+              swipeStart.current = { x: event.clientX, y: event.clientY };
             }}
             onPointerUp={onCanvasPointerUp}
           >
@@ -516,6 +558,43 @@ export function Player({
 }
 
 /** DAT-14: mở đúng step, đúng nhánh từ URL. */
+/**
+ * Từ node DOM dưới ngón tay ngược về phả hệ của hạng tử ấy.
+ *
+ * Đi ngược DOM theo đúng mẫu `BijectionPanes.onPoint`: leo hết chuỗi tổ tiên, `data-el`
+ * **trước** `data-k`. Thứ tự ấy không phải tuỳ tiện — một element được vẽ thành nhiều
+ * node, và node đeo `data-k` có thể là một hình trong suốt làm chỗ bám cho con trỏ
+ * trong khi mực thật nằm ở node khác; chỉ `data-el` nói được node này thuộc về ai.
+ *
+ * Không gọi `hitTest`: toạ độ scene phải quy đổi qua `getScreenCTM`, mà cây DOM **đã**
+ * mang sẵn câu trả lời. Cùng lý lẽ M37 đã ghi cho song ánh.
+ *
+ * `null` khi engine không có khái niệm phả hệ, khi chạm vào chỗ trống, hay khi id dưới
+ * ngón không phải một hạng tử (nhãn luật, hộp dòng). Ba trường hợp ấy đều là "chạm
+ * hụt", và chạm hụt thì **xoá** vệt đang sáng — đó là cách người ta bỏ chọn.
+ */
+function lineageAt(
+  target: EventTarget | null,
+  scene: Scene | undefined,
+  engines: ReadonlyMap<string, LoadedEngine> | null,
+): ReadonlySet<string> | null {
+  const lineage = scene ? engines?.get(scene.engine)?.lineage : undefined;
+  if (!lineage || !scene) return null;
+
+  let node = target as Element | null;
+  while (node) {
+    for (const attr of [ELEMENT_ATTR, KEY_ATTR]) {
+      const id = node.getAttribute?.(attr);
+      if (id !== null && id !== undefined) {
+        const found = lineage(scene, id);
+        if (found !== null) return found;
+      }
+    }
+    node = node.parentElement;
+  }
+  return null;
+}
+
 function readLocation(problem: Problem): { solutionId: string; stepId: string } {
   const params = new URLSearchParams(location.search);
   const solution =

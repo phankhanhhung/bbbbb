@@ -666,3 +666,97 @@ test.describe('Giá trị nội suy trong narrative', () => {
     await expect(page.locator('.invariant__value').first()).toHaveText('3');
   });
 });
+
+test.describe('Tiểu sử hạng tử (AL-13)', () => {
+  /**
+   * Bài `factoring-identities` bước `c3` là một bất phương trình sáu dòng — đủ dài để
+   * một hạng tử có tiểu sử đáng nhìn, và hệ số $3$ sống suốt từ dòng đầu tới dòng cuối.
+   */
+  const CHAIN = '/?p=factoring-identities&sol=sol&step=c3';
+
+  /** Glyph mang danh tính hạng tử — `r{dòng}-{hạng tử}` (`layout.elementId`). */
+  const TERM = '.canvas svg [data-el^="r0-"]';
+
+  /**
+   * Danh tính **đang đeo halo**, đọc từ DOM.
+   *
+   * Halo không nằm trên chính glyph mà trên một `<rect fill="none">` trong `<g>` mang
+   * `data-k` — stroke đặt thẳng lên chữ sẽ vẽ viền quanh từng nét và biến hạng tử
+   * thành vệt mực (`render.ts`). Nên đi từ rect ngược lên tìm `data-k`.
+   */
+  const lit = (page: Page): Promise<string[]> =>
+    page.evaluate(() =>
+      [
+        ...new Set(
+          [...document.querySelectorAll('.canvas svg rect[stroke]')]
+            .filter((n) => (n.getAttribute('stroke') ?? '').toUpperCase() === '#E8B004')
+            .map((n) => n.closest('[data-k]')?.getAttribute('data-k') ?? '')
+            .filter(Boolean),
+        ),
+      ].sort(),
+    );
+
+  const rowsOf = (ids: string[]): Set<string> => new Set(ids.map((id) => id.split('-')[0]!));
+
+  test('chạm một hạng tử thì cả phả hệ sáng lên ở nhiều dòng', async ({ page }) => {
+    await page.goto(CHAIN);
+    await reveal(page);
+
+    // Nền: step này có anchor, và pha đầu của timeline bắt đầu ngay tại `ms = 0`, nên
+    // đã có sẵn một vệt sáng trước khi ai chạm vào đâu. So với nền chứ không so với
+    // rỗng — giả định "chưa chạm thì tối om" sai, và test đầu tiên đỏ vì đúng nó.
+    const before = await lit(page);
+
+    // `click()` của Playwright là pointerdown+pointerup tại cùng một điểm, tức dưới
+    // ngưỡng 8px — đúng cử chỉ "chạm tại chỗ", không phải vuốt.
+    await page.locator(TERM).nth(1).click();
+
+    await expect.poll(() => lit(page)).not.toEqual(before);
+    const after = await lit(page);
+    // Phả hệ phải chạm **nhiều hơn một dòng**: đó là cả điểm của tính năng. Đếm dòng
+    // chứ không đếm element — một dòng nhiều glyph sáng vẫn chỉ nói "chỗ này", không
+    // nói "chỗ này đến từ đâu".
+    expect(rowsOf(after).size).toBeGreaterThanOrEqual(2);
+  });
+
+  test('chạm vào chỗ trống thì vệt sáng về như cũ', async ({ page }) => {
+    await page.goto(CHAIN);
+    await reveal(page);
+
+    const before = await lit(page);
+    await page.locator(TERM).nth(1).click();
+    await expect.poll(() => lit(page)).not.toEqual(before);
+
+    // Mép dưới canvas — trong vùng bắt cử chỉ nhưng ngoài mọi hạng tử.
+    const box = (await page.locator('.canvas').boundingBox())!;
+    await page.mouse.click(box.x + 4, box.y + box.height - 4);
+    await expect.poll(() => lit(page)).toEqual(before);
+  });
+
+  test('Escape cũng trả vệt sáng về như cũ', async ({ page }) => {
+    await page.goto(CHAIN);
+    await reveal(page);
+
+    const before = await lit(page);
+    await page.locator(TERM).nth(1).click();
+    await expect.poll(() => lit(page)).not.toEqual(before);
+
+    await page.keyboard.press('Escape');
+    await expect.poll(() => lit(page)).toEqual(before);
+  });
+
+  test('vuốt ngang vẫn đổi step — cử chỉ mới không nuốt cử chỉ cũ', async ({ page }) => {
+    await page.goto(CHAIN);
+    await reveal(page);
+
+    const box = (await page.locator('.canvas').boundingBox())!;
+    const y = box.y + box.height / 2;
+    await page.mouse.move(box.x + 20, y);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width - 20, y, { steps: 8 });
+    await page.mouse.up();
+
+    // Vuốt sang phải là lùi một bước: `c3` có cha là `s0`.
+    await expect(page).toHaveURL(/step=s0/);
+  });
+});
