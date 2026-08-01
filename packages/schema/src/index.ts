@@ -1,5 +1,6 @@
 export {
   LangString,
+  langValues,
   Slug,
   EntityId,
   Point,
@@ -44,7 +45,7 @@ export {
   type ValueSpan,
 } from './value-markup.js';
 
-export { toReadableMath, toSearchableText } from './math-text.js';
+export { stripBoldMarkup, toReadableMath, toSearchableText } from './math-text.js';
 
 export {
   createEngineRegistry,

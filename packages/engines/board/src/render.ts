@@ -748,8 +748,79 @@ function renderRegion(
         'stroke-linecap': lattice === 'square' ? 'square' : 'round',
         ...elementDecoration(ctx, element),
       }),
+      ...regionLabel(element, config, ctx, cells),
     ],
   );
+}
+
+/** Cỡ chữ nhãn vùng — nhỏ hơn nhãn hàng/cột, vì nó là chú thích chứ không phải dữ liệu. */
+const REGION_LABEL_SIZE = CELL * 0.34;
+
+/**
+ * Tên của một vùng, vẽ **ngay trên** mép trên của nó.
+ *
+ * Trường `label` có trong schema từ lúc dựng `region` và **chưa bao giờ được
+ * vẽ**: `renderRegion` chỉ dựng đường bao, không lớp nào khác đọc tới nó, và
+ * lượt rà trước freeze đo được đúng thế — SVG của `pascal-two-proofs` có glyph
+ * `10` và `data-el="target"` nhưng không có `C(5,2)` ở đâu cả. Ba nhãn ấy là dữ
+ * liệu chết, và một trường chết trong file bài thì tệ hơn một trường vắng mặt:
+ * tác giả khai nó, tin là nó hiện ra, rồi không ai thấy gì.
+ *
+ * Đặt **ngoài** đường bao chứ không trong: vùng một ô là ca thường gặp nhất, và ở
+ * đó bên trong đã có glyph của chính ô ấy — viết đè lên là giấu đi con số mà cả
+ * bài đang nói tới.
+ *
+ * Và đặt đúng trên **ranh giới hai hàng**, không lửng giữa hàng trên. Vùng thường
+ * nằm giữa bàn: lửng giữa thì nhãn đâm thẳng vào glyph của hàng trên (đo ở
+ * `mod-addition-table`: chữ "hàng r = 2" nằm đè lên dãy số $2\,3\,4$), còn ở ranh
+ * giới thì nó cách tâm glyph của **cả hai** hàng đúng nửa ô — xa nhất có thể mà
+ * vẫn dính vào vùng nó chú. Nhờ đó cũng không phải nới khung: `BOARD_PADDING` sẵn
+ * có đủ chỗ cho nhãn của một vùng chạm hàng $0$.
+ */
+function regionLabel(
+  element: SceneElement,
+  config: BoardConfig,
+  ctx: RenderContext,
+  cells: readonly Offset[],
+): SvgNode[] {
+  const label = element['label'];
+  if (typeof label !== 'string' || label === '' || cells.length === 0) return [];
+
+  const lattice = latticeOf(config);
+  const centres = cells.map(([r, c]) => centreOf(lattice, config.rows, config.cols, r, c));
+  const top = Math.min(...centres.map((p) => p.y));
+  // Căn giữa theo **hàng trên cùng** của vùng, không theo cả vùng: một vùng hình
+  // chữ L thì tâm của cả vùng rơi ra ngoài mép trên, và nhãn trôi khỏi chỗ nó chú.
+  const xs = centres.filter((p) => p.y === top).map((p) => p.x);
+  const x = (Math.min(...xs) + Math.max(...xs)) / 2;
+
+  return [
+    {
+      ...text(
+        'text',
+        {
+          x: round(x),
+          y: round(top - CELL * 0.5),
+          'text-anchor': 'middle',
+          'dominant-baseline': 'central',
+          'font-family': ctx.theme.type.uiFamily,
+          'font-size': REGION_LABEL_SIZE,
+          fill: ctx.theme.surface.guide,
+          // Quầng nền quanh chữ, cùng mẹo `paint-order` mà mũi tên của engine đồ
+          // thị dùng. Vùng thường nằm **giữa** bàn, nên mép trên của nó là mép
+          // dưới của một hàng ô đầy quân: không có quầng thì nhãn xám nằm chồng
+          // lên glyph đen và không còn đọc được chữ nào. Thấy ngay ở lượt nhìn
+          // đầu tiên, trên đúng bài `bishop-keeps-colour`.
+          stroke: ctx.theme.surface.canvas,
+          'stroke-width': REGION_LABEL_SIZE * 0.4,
+          'stroke-linejoin': 'round',
+          'paint-order': 'stroke',
+        },
+        label,
+      ),
+      key: `${element.id}__label`,
+    },
+  ];
 }
 
 /** Region dùng toạ độ tuyệt đối trên bàn, không tịnh tiến như tile. */

@@ -736,6 +736,55 @@ describe('chống lệch chữ–hình', () => {
   });
 });
 
+/**
+ * M69 — bản dịch cũng là narrative.
+ *
+ * Mọi lớp kiểm markup trong kho viết `narrative.vi` — mười sáu chỗ, đếm bằng máy
+ * — nên một `[[khoá-không-có]]` hay `{{biểu-thức-hỏng}}` trong bản `en` đi thẳng
+ * ra màn hình người đọc tiếng Anh mà không lớp nào kêu. Kho hôm nay có **0** bản
+ * dịch, và đó chính là lý do bịt bây giờ: không có nội dung nào phải sửa.
+ *
+ * Lằn ranh: **markup phải giải được** kiểm mọi thứ tiếng; **văn phong** (glossary,
+ * độ dài, số câu — Style Guide v1.0 đo trên 114 bài tiếng Việt) chỉ kiểm `vi`.
+ */
+describe('markup của bản dịch cũng được kiểm', () => {
+  it('anchor lạc trong `narrative.en` bị bắt, và lỗi chỉ đúng thứ tiếng', () => {
+    const problem = loadExample();
+    const step = problem.solutions[0]!.steps[0]!;
+    step.narrative!.en = 'Only [[khong_co_khoa_nay|sixty-two]] cells left.';
+
+    const issue = validator
+      .validateProblem(problem)
+      .issues.find((i) => i.code === 'anchor/undeclared-key');
+
+    expect(issue).toBeDefined();
+    expect(issue!.message).toContain('(en)');
+    expect(issue!.path).toMatch(/narrative\/en$/);
+  });
+
+  it('anchor chỉ dùng trong bản dịch **không** bị báo là khai thừa', () => {
+    const problem = loadExample();
+    const step = problem.solutions[0]!.steps[0]!;
+    step.anchors!['a7'] = { ids: ['cell-1-1'] };
+    step.narrative!.en = 'A [[a7|corner]] cell.';
+
+    // Khoá dùng ở bản dịch là khoá **đang làm việc** — chiều "unused" tính trên
+    // hợp các thứ tiếng, không riêng `vi`.
+    expect(codes(problem)).not.toContain('anchor/unused');
+  });
+
+  it('`{{expr}}` hỏng trong `alt_text.en` cũng đỏ', () => {
+    const checker = createChecker({ fragments: ENGINE_FRAGMENTS, dsl: ENGINE_DSL });
+    const problem = loadExample();
+    problem.solutions[0]!.steps[0]!.alt_text = {
+      vi: 'Bàn cờ',
+      en: 'A board with {{khong_co_binding}} rows',
+    };
+
+    expect(checker.check(problem, '').map((i) => i.code)).toContain('dsl/eval-error');
+  });
+});
+
 describe('danh tính xuyên file — lớp mà vòng lặp per-file không thấy', () => {
   const runValidateCmd = async (
     files: Record<string, Problem>,

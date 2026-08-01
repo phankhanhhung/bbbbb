@@ -411,6 +411,56 @@ test.describe('Choreography (CHO-02, CHO-09)', () => {
  * key riêng của renderer — một lỗi mà mọi unit test đều xanh và chỉ lộ ra khi
  * nhìn tận mắt. Đây là chốt canh cho đúng lớp lỗi ấy.
  */
+/**
+ * M69 — đồng hồ timeline phải reset **trong lượt render**, không đợi effect.
+ *
+ * Auto-diff của một lần chuyển step so *khung cuối cùng đã vẽ của step trước* với
+ * *khung đầu của step mới*. Vế trái **được phép** phụ thuộc chỗ timeline cũ đang
+ * đậu — đó là màn hình thật. Vế phải thì không: khung đầu luôn là mốc $0$.
+ *
+ * Nên chốt canh hỏi đúng vế phải, không cần con số phép màu nào: đậu timeline cũ
+ * ở **cuối** rồi chuyển step thì auto-diff phải **lớn hơn hẳn** so với khi cả hai
+ * cùng ở mốc $0$ — vì khung mốc $0$ của step mới giấu gần hết mọi dòng, còn khung
+ * cuối của step cũ thì bày hết. Khi khung mới bị dựng nhầm ở mốc cũ, hai lần đo
+ * **bằng nhau**: cả hai đều đang so hai khung cùng-mốc.
+ *
+ * Đo trước khi viết (`identity-roles-in-colour`, s0 → s1): đúng là *đổi 22*, dựng
+ * ở mốc cuối timeline cũ ra *đổi 10* — bằng đúng số của lần không đậu.
+ *
+ * Và nó **dính lại**, không phải một khung thoáng qua: lượt effect kế tiếp thấy
+ * `isStepChange` đã false nên không tính lại `setDiff` nữa, và bảng chẩn đoán mang
+ * con số sai ấy suốt cả step.
+ */
+test.describe('Chuyển step: khung đầu dựng ở mốc 0 (M69)', () => {
+  const ALG = '/?p=identity-roles-in-colour&sol=sol&step=s0';
+
+  const changedAfterStepChange = async (page: Page, parkAtEnd: boolean): Promise<number> => {
+    await page.goto(ALG);
+    await reveal(page);
+    const scrub = page.locator('.timeline__scrub');
+    await expect(scrub).toBeVisible();
+    if (parkAtEnd) {
+      await scrub.fill((await scrub.getAttribute('max')) ?? '0');
+      await expect(scrub).not.toHaveValue('0');
+    }
+    await page.getByRole('button', { name: 'Sau →' }).click();
+
+    const diagnostics = page.locator('.diagnostics');
+    await expect(diagnostics).toBeVisible();
+    const text = await diagnostics.innerText();
+    const changed = /đổi\s+(\d+)/.exec(text);
+    expect(changed, `không đọc được số "đổi" trong "${text}"`).not.toBeNull();
+    return Number(changed![1]);
+  };
+
+  test('khung đầu của step mới ở mốc 0, kể cả khi timeline cũ đậu ở cuối', async ({ page }) => {
+    const bothAtZero = await changedAfterStepChange(page, false);
+    const oldAtEnd = await changedAfterStepChange(page, true);
+
+    expect(oldAtEnd).toBeGreaterThan(bothAtZero);
+  });
+});
+
 test.describe('Biến hình song ánh (PRN-04)', () => {
   /**
    * Ràng buộc phân biệt "**theo từng cặp**" (SRS §257) với "đồng loạt": ở một

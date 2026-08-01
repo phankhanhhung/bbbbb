@@ -1,5 +1,5 @@
 import { hasInfinity, intExp, needsRealEval, totalDegree, varsOf, walk, type Expr } from './expr.js';
-import { sameValueSeries } from './series.js';
+import { impliesRelationSeries, sameRelationSeries, sameValueSeries } from './series.js';
 import { FUNCTIONS, isIntegerOnly } from './functions.js';
 
 /**
@@ -658,6 +658,12 @@ export function sameSolutionSet(
   seed: number,
   trials = 24,
 ): SoundnessResult {
+  // $\infty$ hỏi trước hết, cùng lý do và cùng thứ tự với `sameValue`: `evalRelation`
+  // đi qua `evalReal`, mà `evalReal` trả `null` ở mọi nút `inf` — nên vòng bốc điểm
+  // dưới đây chạy đủ $480$ lượt rồi trả "không tìm được điểm nào" ở **mọi** đẳng thức
+  // hàm sinh. Sân chuỗi trả lời được, và trả lời chính xác tuyệt đối.
+  if (hasInfinity(a) || hasInfinity(b)) return sameRelationSeries(a, b);
+
   const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
   const rand = relationSampler(seed, needsIntegerEval(a) || needsIntegerEval(b));
   const log = witnessLog();
@@ -731,6 +737,9 @@ export function impliesSolutionSet(
   seed: number,
   trials = 40,
 ): ImplicationResult {
+  // Cùng cửa định tuyến với `sameSolutionSet` ngay trên — xem chú thích ở đó.
+  if (hasInfinity(before) || hasInfinity(after)) return impliesRelationSeries(before, after);
+
   const names = [...new Set([...varsOf(before), ...varsOf(after)])].sort();
   const rand = relationSampler(seed, needsIntegerEval(before) || needsIntegerEval(after));
   const log = witnessLog();

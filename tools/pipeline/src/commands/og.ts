@@ -5,6 +5,7 @@ import {
   createContext,
   createRenderer,
   el,
+  matchScale,
   text,
   toSvgString,
   watermarkNodes,
@@ -13,10 +14,12 @@ import {
 import { defaultTheme } from '@combviz/theme';
 import {
   stripAnchorMarkup,
+  stripBoldMarkup,
   toReadableMath,
   type Problem,
   type Scene,
   type Step,
+  type Viewport,
 } from '@combviz/schema';
 import { loadAtlas } from '../atlas.js';
 import { fontOptions } from '../fonts.js';
@@ -61,7 +64,13 @@ export async function runOg(options: OgOptions): Promise<number> {
       continue;
     }
 
-    const svg = composeCard(problem, step.scene, renderer, ctx);
+    // Pane phải của song ánh lên card cùng pane trái (M69). Card của một bài mà
+    // điểm bán **là** song ánh mà chỉ có một nửa thì nó quảng cáo sai món hàng.
+    const right =
+      step.bijection && renderer.has(step.bijection.scene.engine)
+        ? step.bijection.scene
+        : undefined;
+    const svg = composeCard(problem, step.scene, renderer, ctx, right);
     const target = join(options.out, `${problem.id}.svg`);
     await writeFile(target, `${svg}\n`, 'utf8');
 
@@ -142,26 +151,77 @@ function composeCard(
   scene: Scene,
   renderer: ReturnType<typeof createRenderer>,
   ctx: ReturnType<typeof createContext>,
+  rightScene?: Scene,
 ): string {
   const { ogWidth, ogHeight } = defaultTheme.brand;
-  const viewport = renderer.viewportOf(scene, ctx);
 
   // Hình chiếm nửa trái, chữ nửa phải. Nhúng scene qua `<svg>` lồng với viewBox
   // riêng: nhờ vậy không phải scale toạ độ tay, và hình giữ nguyên tỉ lệ dù bàn
   // cờ vuông hay đồ thị dẹt.
   const figureSize = ogHeight - CARD_PADDING * 2;
-  const figure: SvgNode = {
+  const pane = (s: Scene, box: SvgNode['attrs'], view: Viewport): SvgNode => ({
     tag: 'svg',
     attrs: {
-      x: CARD_PADDING,
-      y: CARD_PADDING,
-      width: figureSize,
-      height: figureSize,
-      viewBox: `${viewport.x} ${viewport.y} ${viewport.width} ${viewport.height}`,
+      ...box,
+      viewBox: `${view.x} ${view.y} ${view.width} ${view.height}`,
       preserveAspectRatio: 'xMidYMid meet',
     },
-    children: renderer.render(scene, ctx),
-  };
+    children: renderer.render(s, ctx),
+  });
+
+  /**
+   * Song ánh: **hai** pane cạnh nhau trong đúng ô hình ấy, cân tỉ lệ bằng
+   * `matchScale` — cùng hàm Player dùng, không phải một bản chép tay thứ hai.
+   *
+   * Chia đôi chiều ngang chứ không nới ô hình sang phần chữ: card có đúng một
+   * bố cục, và đổi bố cục theo loại bài thì kho sẽ có hai loại card mà chỉ một
+   * loại từng được nhìn.
+   */
+  const figures: SvgNode[] = [];
+  if (rightScene) {
+    const [leftView, rightView] = matchScale(
+      renderer.viewportOf(scene, ctx),
+      renderer.viewportOf(rightScene, ctx),
+    );
+    const GAP = 16;
+    const half = (figureSize - GAP) / 2;
+
+    /**
+     * Cạnh nhau hay chồng lên nhau — chọn theo **hình nào to hơn**, không chọn
+     * theo thói quen. Hai pane chia đôi một ô vuông thì mỗi nửa dẹt đứng; scene
+     * của kho phần lớn dẹt ngang (bàn cờ 6×6 cạnh chuỗi biến đổi), nên xếp dọc
+     * cho hình lớn gần gấp đôi. Đo bằng chính hệ số `meet` mà SVG sẽ dùng.
+     */
+    const fit = (w: number, h: number): number =>
+      Math.min(w / leftView.width, h / leftView.height);
+    const sideBySide = fit(half, figureSize) >= fit(figureSize, half);
+
+    figures.push(
+      pane(
+        scene,
+        { x: CARD_PADDING, y: CARD_PADDING, width: sideBySide ? half : figureSize, height: sideBySide ? figureSize : half },
+        leftView,
+      ),
+      pane(
+        rightScene,
+        {
+          x: CARD_PADDING + (sideBySide ? half + GAP : 0),
+          y: CARD_PADDING + (sideBySide ? 0 : half + GAP),
+          width: sideBySide ? half : figureSize,
+          height: sideBySide ? figureSize : half,
+        },
+        rightView,
+      ),
+    );
+  } else {
+    figures.push(
+      pane(
+        scene,
+        { x: CARD_PADDING, y: CARD_PADDING, width: figureSize, height: figureSize },
+        renderer.viewportOf(scene, ctx),
+      ),
+    );
+  }
 
   const textX = CARD_PADDING * 2 + figureSize;
   const textWidth = ogWidth - textX - CARD_PADDING;
@@ -169,7 +229,7 @@ function composeCard(
   return toSvgString(
     [
       el('rect', { width: ogWidth, height: ogHeight, fill: defaultTheme.surface.canvas }),
-      figure,
+      ...figures,
       ...titleLines(problem, textX, textWidth),
       text(
         'text',
@@ -210,7 +270,7 @@ function titleLines(problem: Problem, x: number, width: number): SvgNode[] {
   const perLine = Math.floor(width / (FONT * 0.5));
   // resvg không có KaTeX. Không đổi ký hiệu sang Unicode ở đây thì card — thứ
   // duy nhất người ta thấy khi ai đó chia sẻ link — hiện thẳng "5\times5".
-  const words = toReadableMath(stripAnchorMarkup(problem.statement.vi)).split(/\s+/);
+  const words = toReadableMath(stripBoldMarkup(stripAnchorMarkup(problem.statement.vi))).split(/\s+/);
 
   const lines: string[] = [];
   let current = '';

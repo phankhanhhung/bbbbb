@@ -72,14 +72,34 @@ export function useChoreography(
     [phases, length],
   );
 
-  // Step đổi thì timeline về đầu **và đứng yên**. Không reset thì step mới mở ra ở
-  // giữa chừng câu chuyện của step cũ, và không nút nào cho biết vì sao.
-  //
-  // Trước đây nó tự chạy. Nghĩa là người xem vừa mở một bước ra thì hình đã bắt đầu
-  // đổi, trước cả khi họ kịp đọc câu đầu của lời kể — và lời kể mới là thứ nói cho
-  // họ biết phải nhìn cái gì. Tự chạy tiết kiệm một cú bấm và đổi lại bằng việc mất
-  // toàn bộ phần mở đầu.
+  /**
+   * Step đổi thì timeline về đầu **và đứng yên**, và câu trả lời ấy phải có ngay
+   * **trong lượt render** — không đợi effect (M69).
+   *
+   * Không reset thì step mới mở ra ở giữa chừng câu chuyện của step cũ, và không
+   * nút nào cho biết vì sao. (Trước đây nó còn tự chạy: người xem vừa mở một bước
+   * ra thì hình đã bắt đầu đổi, trước cả khi họ kịp đọc câu đầu của lời kể — mà
+   * lời kể mới là thứ nói cho họ biết phải nhìn cái gì.)
+   *
+   * Reset bằng `useEffect` một mình thì đúng nhưng **muộn một commit**, và khe ấy
+   * đủ rộng để lọt một khung sai: ở lượt render đầu sau `goTo`, `spec` đã là của
+   * step mới trong khi `ms` vẫn là mốc cũ. Player dựng khung đầu của step mới tại
+   * một thời điểm thuộc câu chuyện trước đó — thường là *cuối* timeline cũ, mà
+   * CHO-09 gọi đúng tên: khung mất nhiều thông tin nhất — rồi `diffNodes` đếm
+   * chênh lệch so với khung sai ấy và `animate` bay 260ms về nó trước khi bị
+   * cleanup chém giữa chừng.
+   *
+   * Nên đồng hồ tự trả lời "mấy giờ rồi" bằng một phép so sánh thuần: `spec` chưa
+   * được ghi nhận thì giờ là $0$, chấm hết. Effect vẫn còn, để đưa *state* về đúng
+   * chỗ; nó chỉ không còn là nơi duy nhất biết sự thật.
+   */
+  const specSeen = useRef(spec);
+  const stale = specSeen.current !== spec;
+  const shownMs = stale ? 0 : ms;
+  const shownPlaying = stale ? false : playing;
+
   useEffect(() => {
+    specSeen.current = spec;
     setMs(0);
     setPlaying(false);
   }, [spec, length]);
@@ -108,7 +128,7 @@ export function useChoreography(
    * đặt state thì không còn chỗ cho chuyện đó.
    */
   const msRef = useRef(0);
-  msRef.current = ms;
+  msRef.current = shownMs;
 
   useEffect(() => {
     if (!playing || stepwise || length <= 0) return;
@@ -149,10 +169,10 @@ export function useChoreography(
 
   const phaseIndex = useMemo(() => {
     if (!spec) return -1;
-    const started = activePhases(spec, ms);
+    const started = activePhases(spec, shownMs);
     const last = started.at(-1);
     return last ? phases.findIndex((p) => p.id === last.id) : -1;
-  }, [spec, phases, ms]);
+  }, [spec, phases, shownMs]);
 
   const goPhase = useCallback(
     (delta: number) => {
@@ -177,13 +197,13 @@ export function useChoreography(
   const current = phases[phaseIndex];
 
   return {
-    ms,
+    ms: shownMs,
     length,
-    playing,
+    playing: shownPlaying,
     stepwise,
     setStepwise,
     label: current?.label?.vi ?? null,
-    holding: !playing && ms > 0 && ms < length && holds.includes(Math.round(ms)),
+    holding: !shownPlaying && shownMs > 0 && shownMs < length && holds.includes(Math.round(shownMs)),
     phaseIndex,
     anchor: current?.anchor ?? null,
     setMs: (value: number) => {

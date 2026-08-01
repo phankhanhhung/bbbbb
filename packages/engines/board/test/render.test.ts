@@ -287,3 +287,72 @@ describe('viewport', () => {
     expect(renderer.viewportOf(scene).width).toBe(40);
   });
 });
+
+/**
+ * BD — nhãn của `region` (M69).
+ *
+ * Trường `label` có trong schema từ lúc dựng `region` và **chưa bao giờ được
+ * vẽ**. Lượt rà trước freeze đo được đúng thế trên `pascal-two-proofs`, rồi đếm
+ * lại toàn kho: **11 bài** đã khai nhãn cho vùng và không bài nào hiện ra chữ
+ * nào. Một trường chết trong file bài tệ hơn một trường vắng mặt — tác giả khai
+ * nó, tin là nó hiện ra, rồi không ai thấy gì.
+ */
+describe('nhãn vùng', () => {
+  const board = (elements: unknown[]) =>
+    ({ engine: 'board', config: { rows: 4, cols: 4 }, elements }) as never;
+
+  const textsOf = (svg: string): string[] =>
+    [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((m) => m[1] as string);
+
+  it('vùng có `label` thì chữ ấy ra hình', () => {
+    const svg = renderer.toSvg(
+      board([{ id: 'r1', type: 'region', cells: [[2, 1]], label: 'ô đang xét' }]),
+      ctx,
+    );
+
+    expect(textsOf(svg)).toContain('ô đang xét');
+  });
+
+  it('vùng **không** khai nhãn thì không sinh node chữ nào', () => {
+    const svg = renderer.toSvg(board([{ id: 'r1', type: 'region', cells: [[2, 1]] }]), ctx);
+
+    expect(textsOf(svg)).toEqual([]);
+  });
+
+  it('nhãn nằm trên **ranh giới hàng**, cách đều tâm glyph của hai hàng kề', () => {
+    // Lửng giữa hàng trên thì nhãn đâm vào glyph của hàng ấy — đo được ở
+    // `mod-addition-table`, chữ "hàng r = 2" nằm đè lên dãy số 2 3 4.
+    const svg = renderer.toSvg(
+      board([{ id: 'r1', type: 'region', cells: [[2, 1]], label: 'x' }]),
+      ctx,
+    );
+    const y = Number(/<text[^>]*\by="([-\d.]+)"/.exec(svg)![1]);
+
+    // Ô hàng 2 có tâm ở $y = 25$, mép trên ở $20$; tâm hàng 1 ở $15$.
+    expect(y).toBe(20);
+  });
+
+  it('căn giữa theo **hàng trên cùng** của vùng, không theo cả vùng', () => {
+    // Vùng hình chữ L: tâm của cả vùng rơi ra ngoài mép trên, và nhãn sẽ trôi
+    // khỏi chỗ nó đang chú.
+    const svg = renderer.toSvg(
+      board([
+        { id: 'r1', type: 'region', cells: [[1, 0], [2, 0], [2, 1], [2, 2]], label: 'L' },
+      ]),
+      ctx,
+    );
+    const x = Number(/<text[^>]*\bx="([-\d.]+)"/.exec(svg)![1]);
+
+    // Hàng trên cùng của vùng chỉ có ô $(1,0)$, tâm $x = 5$.
+    expect(x).toBe(5);
+  });
+
+  it('có quầng nền — nhãn giữa bàn không bị glyph nuốt mất', () => {
+    const svg = renderer.toSvg(
+      board([{ id: 'r1', type: 'region', cells: [[2, 1]], label: 'x' }]),
+      ctx,
+    );
+
+    expect(svg).toContain('paint-order="stroke"');
+  });
+});

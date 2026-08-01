@@ -42,6 +42,7 @@ export {
 export {
   CELL_PX,
   UNITS_PER_CELL,
+  matchScale,
   PREFERRED_SCALE,
   MAX_CANVAS_VH,
   sceneBoxStyle,

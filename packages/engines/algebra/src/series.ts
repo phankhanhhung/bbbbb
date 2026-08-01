@@ -330,3 +330,146 @@ export function sameValueSeries(a: Expr, b: Expr, N: number = SERIES_TERMS): Sou
   }
   return { ok: true, verified: true, message: `khớp ${N + 1} hệ số đầu, chính xác tuyệt đối` };
 }
+
+/* ---------- quan hệ trên sân chuỗi (M69) ---------- */
+
+/**
+ * Chân lý của **một quan hệ** đọc bằng hệ số.
+ *
+ * `null` nghĩa là câu hỏi không đặt được ở đây, và ba lý do đều thật: không phải
+ * `rel`; toán tử có **thứ tự** ($<$, $\ge$) — chuỗi luỹ thừa hình thức không có
+ * thứ tự, nên "$\sum x^k < 1/(1-x)$" là câu vô nghĩa chứ không phải câu khó; hoặc
+ * một vế không khai được thành chuỗi.
+ */
+interface SeriesVerdict {
+  readonly holds: boolean;
+  /** Bậc đầu tiên hai vế lệch nhau; `-1` khi khớp hết tới `N`. */
+  readonly at: number;
+  readonly lhs: Frac;
+  readonly rhs: Frac;
+}
+
+function relationVerdict(e: Expr, name: string, N: number): SeriesVerdict | null {
+  if (e.k !== 'rel') return null;
+  if (e.op !== '=' && e.op !== '!=') return null;
+
+  const sl = seriesOf(e.lhs, name, N);
+  const sr = seriesOf(e.rhs, name, N);
+  if (sl === null || sr === null) return null;
+
+  for (let k = 0; k <= N; k += 1) {
+    const x = sl[k] as Frac;
+    const y = sr[k] as Frac;
+    if (x.n !== y.n || x.d !== y.d) {
+      return { holds: e.op === '!=', at: k, lhs: x, rhs: y };
+    }
+  }
+  return { holds: e.op === '=', at: -1, lhs: ZERO, rhs: ZERO };
+}
+
+const lechAt = (name: string, v: SeriesVerdict): string =>
+  `hệ số của ${name}^${v.at} lệch: ${fracText(v.lhs)} ≠ ${fracText(v.rhs)}`;
+
+/** Lý do chung khi sân chuỗi không nhận câu hỏi — nói ra thay vì trả bừa. */
+function seriesRefusal(name: string | null): SoundnessResult {
+  return {
+    ok: true,
+    verified: false,
+    message:
+      name === null
+        ? 'không có biến chuỗi duy nhất — chưa kiểm được trên sân chuỗi'
+        : 'quan hệ này không đọc được bằng hệ số (cần dạng "=" hoặc "≠", hai vế khai được thành chuỗi)',
+  };
+}
+
+/**
+ * Hai quan hệ có **cùng chân lý** không, đọc bằng hệ số (AL-16, M69).
+ *
+ * Đây là bản của `sameSolutionSet` cho sân chuỗi, và nó tồn tại vì chỗ trống nó lấp
+ * đo được: mọi thao tác nhóm ★ trên một đẳng thức hàm sinh — đúng thể loại bài mà
+ * sân chuỗi sinh ra để phục vụ — trước đây mang vệt vàng *"không tìm được điểm nào
+ * xác định"* **vĩnh viễn**, vì `evalRelation` trả `null` tại mọi nút `inf` nên
+ * `done` luôn bằng $0$. Trung thực, nhưng đúng là thất bại M45: một vệt vàng
+ * thường trực mà tác giả không sửa được thì không còn là cảnh báo.
+ *
+ * "Tập nghiệm" đổi nghĩa ở đây, và đổi có lý do: $x$ trong $\sum_k x^k = 1/(1-x)$
+ * **không phải ẩn cần tìm** mà là biến hình thức, nên câu hỏi đúng không phải "hai
+ * tập nghiệm có trùng không" mà "hai câu này có cùng đúng/cùng sai không" — chính
+ * là điều `sameSolutionSet` đo trên từng điểm, chỉ khác là ở đây trả lời được
+ * **chính xác tuyệt đối** thay vì trên $24$ điểm bốc được.
+ *
+ * Cả hai cùng **sai** thì vẫn xanh, đúng như bản bốc điểm xử lý hai quan hệ cùng
+ * sai ở mọi điểm — nhưng lời nhắn nói thẳng ra là cả hai đều sai, vì "xanh" ở ca
+ * ấy dễ đọc nhầm thành "bước này chứng minh được điều gì đó".
+ */
+export function sameRelationSeries(a: Expr, b: Expr, N: number = SERIES_TERMS): SoundnessResult {
+  const name = seriesVariable(a, b);
+  if (name === null) return seriesRefusal(null);
+
+  const va = relationVerdict(a, name, N);
+  const vb = relationVerdict(b, name, N);
+  if (va === null || vb === null) return seriesRefusal(name);
+
+  if (va.holds && vb.holds) {
+    return {
+      ok: true,
+      verified: true,
+      message: `hai dòng cùng đúng trên ${N + 1} hệ số đầu, chính xác tuyệt đối`,
+    };
+  }
+  if (!va.holds && !vb.holds) {
+    return {
+      ok: true,
+      verified: true,
+      message: `cả hai dòng đều **sai** như nhau — dòng trước ${lechAt(name, va)}, dòng sau ${lechAt(name, vb)}`,
+    };
+  }
+  // Chân lý đổi giữa hai dòng: đúng một trong hai là dòng hỏng, và nói được **dòng
+  // nào** cùng hệ số nào — thứ mà một lời than chung chung không nói được.
+  const broke = va.holds ? vb : va;
+  return {
+    ok: false,
+    verified: true,
+    message: va.holds
+      ? `dòng trước đúng nhưng dòng sau sai: ${lechAt(name, broke)}`
+      : `dòng trước sai (${lechAt(name, broke)}) mà dòng sau lại đúng — bước này không bảo toàn chân lý`,
+  };
+}
+
+/**
+ * Chiều **kéo theo** trên sân chuỗi — bản `impliesSolutionSet` cho hàm sinh.
+ *
+ * Cùng ba ô của bảng chân lý mà bản bốc điểm dùng, chỉ khác là ở đây "mọi điểm" thu
+ * về đúng **một** câu hỏi: chuỗi hiệu hai vế có bằng $0$ không.
+ */
+export function impliesRelationSeries(
+  before: Expr,
+  after: Expr,
+  N: number = SERIES_TERMS,
+): SoundnessResult & { readonly widened: boolean } {
+  const name = seriesVariable(before, after);
+  if (name === null) return { ...seriesRefusal(null), widened: false };
+
+  const vb = relationVerdict(before, name, N);
+  const va = relationVerdict(after, name, N);
+  if (vb === null || va === null) return { ...seriesRefusal(name), widened: false };
+
+  if (vb.holds && !va.holds) {
+    return {
+      ok: false,
+      verified: true,
+      widened: false,
+      message: `kéo theo sai: dòng trước đúng mà dòng sau ${lechAt(name, va)}`,
+    };
+  }
+  return {
+    ok: true,
+    verified: true,
+    // `after` đúng trong khi `before` sai: bước **nới rộng** — đúng cái mà bình
+    // phương hai vế làm, và là lý do `implies` tồn tại tách khỏi `same`.
+    widened: va.holds && !vb.holds,
+    message: vb.holds
+      ? `kéo theo đúng trên ${N + 1} hệ số đầu, chính xác tuyệt đối`
+      : 'dòng trước sai như một đẳng thức chuỗi — chiều kéo theo không nói được gì',
+  };
+}

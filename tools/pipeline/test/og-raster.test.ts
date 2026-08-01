@@ -1,5 +1,7 @@
 import { Resvg } from '@resvg/resvg-js';
 import { describe, expect, it } from 'vitest';
+import { defaultTheme } from '@combviz/theme';
+import { rasterize } from '../src/commands/og.js';
 
 /**
  * G-09 — chốt canh cho phông trong đường raster (REN-02, D-08).
@@ -56,5 +58,41 @@ describe('raster OG (G-09)', () => {
 
   it('SVG rỗng thì không có mực — phép đếm đang đo đúng thứ nó tưởng', () => {
     expect(inkRatio(svgWith(''))).toBe(0);
+  });
+});
+
+/**
+ * M69 — phông **mặc định** phải là một quyết định, không phải chỗ resvg bốc bừa.
+ *
+ * `font-family` của chữ giao diện là `'Inter', 'Segoe UI', system-ui, sans-serif`.
+ * Máy build không có ba cái đầu; nếu `defaultFontFamily` bỏ trống thì resvg lấy
+ * đại một mặt trong danh sách vừa nạp — mà danh sách ấy đứng đầu bằng bộ KaTeX.
+ * Hậu quả nhìn thấy trên **mọi** card: tiêu đề in nghiêng, và dòng nào chỉ có
+ * ASCII (không dấu tiếng Việt để buộc rơi xuống DejaVu) in bằng `KaTeX_Fraktur`.
+ * Card của `pascal-two-proofs` ngắt dòng đúng chỗ để chữ "Pascal." đứng một mình,
+ * và nó hiện ra kiểu chữ gô-tích giữa một tiêu đề sans.
+ *
+ * Chốt canh so **byte ảnh**: chữ giao diện vẽ ra phải giống hệt như khi khai
+ * thẳng phông đích. Không cần biết mặt chữ nào thắng — chỉ cần biết nó là mặt ta
+ * đã chọn, chứ không phải mặt nào tình cờ đứng đầu danh sách.
+ */
+describe('phông mặc định của đường raster (M69)', () => {
+  const png = (family: string, content: string): Buffer =>
+    rasterize(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="60">` +
+        `<text x="4" y="42" font-size="34" font-family="${family}" fill="#000000">${content}</text>` +
+        `</svg>`,
+    );
+
+  const UI = defaultTheme.type.uiFamily.replace(/'/g, '&apos;');
+
+  it('chữ chỉ có ASCII vẽ ra bằng đúng phông đã chọn, không phải Fraktur', () => {
+    expect(png(UI, 'Pascal.').equals(png('DejaVu Sans', 'Pascal.'))).toBe(true);
+  });
+
+  it('…và chữ có dấu tiếng Việt cũng vậy — cùng một mặt chữ cho cả tiêu đề', () => {
+    // Trước lượt này hai dòng của cùng một tiêu đề ra hai mặt khác nhau: dòng có
+    // dấu rơi xuống DejaVu, dòng ASCII ở lại Fraktur.
+    expect(png(UI, 'tam giác').equals(png('DejaVu Sans', 'tam giác'))).toBe(true);
   });
 });

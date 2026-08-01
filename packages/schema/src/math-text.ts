@@ -89,9 +89,42 @@ export function toReadableMath(source: string): string {
       mapAll(body, SUPERSCRIPT) ?? whole,
     );
 
-    // Ngoặc nhóm của LaTeX không mang nghĩa khi đã thành chữ.
-    return out.replace(/[{}]/g, '').replace(/\\[a-zA-Z]+/g, '').trim();
+    // Ngoặc **thoát** là ngoặc thật của một tập hợp, không phải ngoặc nhóm của
+    // LaTeX. Một lượt thay duy nhất phân biệt được hai thứ: nhánh trước của
+    // `|` bắt `\{`/`\}` và **giữ** dấu ngoặc, nhánh sau bắt ngoặc trần và bỏ.
+    //
+    // Không có bước này thì `$\{1,2,\dots,n\}$` hiện ra thành `\1,2,…,n\` — hai
+    // dấu gạch chéo lạc giữa tiêu đề, trên card của đúng những bài nói về tập hợp.
+    return out
+      .replace(/\\([{}])|[{}]/g, (_whole, kept: string | undefined) => kept ?? '')
+      .replace(/\\[a-zA-Z]+/g, '')
+      .trim();
   });
+}
+
+/**
+ * Bỏ **dấu** đậm, giữ chữ — cho mọi nơi vẽ ra không có khái niệm "chữ đậm".
+ *
+ * Player đổi `**…**` thành `<strong>`; SVG của OG card thì không có thẻ nào để
+ * đổi sang, nên trước M69 nó in nguyên bốn dấu sao ra ảnh — trên **57/114** card,
+ * tức nửa kho, ở đúng thứ duy nhất người ta thấy khi ai đó chia sẻ link. Lỗi này
+ * không test nào bắt và cũng không thể: nó chỉ lộ ở lượt nhìn.
+ *
+ * Cùng hai luật ngữ nghĩa với `renderMath`, và chép sang đây thay vì gọi nhờ vì
+ * bên kia sống trong `apps/player` (tầng dưới không được biết tới tầng trên):
+ *
+ * - **Không đụng phần trong `$…$`** — `a ** b` ở đó là phép nhân.
+ * - **Số dấu lẻ thì để nguyên tất** — tác giả đang viết phép nhân chứ không phải
+ *   chữ đậm, và nuốt một dấu lẻ là sửa lời họ viết.
+ */
+export function stripBoldMarkup(source: string): string {
+  const outside = source.split(/(\$[^$]*\$)/g);
+  const markers = outside.reduce(
+    (n, part, i) => (i % 2 === 1 ? n : n + (part.match(/\*\*/g) ?? []).length),
+    0,
+  );
+  if (markers === 0 || markers % 2 !== 0) return source;
+  return outside.map((part, i) => (i % 2 === 1 ? part : part.replace(/\*\*/g, ''))).join('');
 }
 
 /**

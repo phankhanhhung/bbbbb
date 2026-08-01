@@ -76,6 +76,16 @@ const GLOSSARY: readonly { readonly wrong: RegExp; readonly right: string }[] = 
   { wrong: term('hình vuông đơn vị'), right: 'ô' },
 ];
 
+/**
+ * Chỉ soi bản **tiếng Việt**, và đó là một quyết định chứ không phải bỏ sót (M69).
+ *
+ * Lằn ranh của cả kho: luật **markup phải giải được** (anchor `[[…]]`, giá trị
+ * `{{…}}`) chạy trên *mọi* bản ngôn ngữ, vì một khoá hỏng là một khoá hỏng bất kể
+ * thứ tiếng. Luật **văn phong** thì không: bảng dưới đây là các cách gọi tiếng
+ * Việt mà kho đã thống nhất, và Style Guide v1.0 đo độ dài, số câu, mật độ anchor
+ * trên $114$ bài **tiếng Việt**. Đem thước ấy đo văn tiếng Anh là đo bằng cái
+ * thước của ngôn ngữ khác.
+ */
 function checkGlossary(problem: Problem): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 

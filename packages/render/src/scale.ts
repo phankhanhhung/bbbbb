@@ -111,6 +111,35 @@ export function widestWidth(viewports: readonly Viewport[]): number {
   return viewports.reduce((max, v) => Math.max(max, v.width), 0);
 }
 
+/**
+ * Nới hai khung hình về **cùng kích thước**, mỗi khung nới quanh tâm của nó.
+ *
+ * Hai pane của một view song ánh luôn được vẽ trong hai ô bằng nhau, nên khung
+ * nào nhỏ hơn sẽ bị phóng to hơn — và một ô bên trái hoá ra to gấp năm lần một ô
+ * bên phải. Với view ấy thì đó không phải chuyện thẩm mỹ: toàn bộ nội dung là
+ * "cái này ứng với cái kia", mà tỉ lệ lệch nhau thì mắt đọc thành "hai thứ chẳng
+ * liên quan".
+ *
+ * Nới được vì cả kho dùng chung một quy ước đơn vị (G-10). Nhờ đó cân bằng khung
+ * là đủ để một ô bên trái to đúng bằng một ô bên phải, kể cả khi hai pane chạy
+ * hai engine khác nhau.
+ *
+ * Sống ở đây chứ không ở Player: từ M69 nó có **hai** người dùng — Player vẽ hai
+ * pane cạnh nhau, và `combviz og` ghép đúng hai pane ấy vào card. Một bản chép
+ * tay thứ hai thì bản thứ hai sẽ lệch, và lệch ở đúng chỗ không ai nhìn.
+ */
+export function matchScale<T extends Viewport>(a: T, b: T): [Viewport, Viewport] {
+  const width = Math.max(a.width, b.width);
+  const height = Math.max(a.height, b.height);
+  const grow = (box: Viewport): Viewport => ({
+    x: box.x - (width - box.width) / 2,
+    y: box.y - (height - box.height) / 2,
+    width,
+    height,
+  });
+  return [grow(a), grow(b)];
+}
+
 function round(value: number, digits: number): number {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor + 0;

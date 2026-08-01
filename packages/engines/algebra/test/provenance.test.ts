@@ -35,7 +35,13 @@ import {
   type AlgebraStep,
   type Expr,
 } from '../src/index.js';
-import { sameValueSeries, seriesOf, fracText } from '../src/series.js';
+import {
+  fracText,
+  impliesRelationSeries,
+  sameRelationSeries,
+  sameValueSeries,
+  seriesOf,
+} from '../src/series.js';
 import { evalReal } from '../src/check.js';
 import { walk as walkExpr } from '../src/expr.js';
 import { toPlain } from '../src/parse.js';
@@ -842,5 +848,85 @@ describe('lượt rà trước freeze — engine đại số', () => {
       const m = run('sum(k, 0, inf, y)', [{ rule: 'sum_const', at: '' }]);
       expect(m.refusal).toContain('vô hạn');
     });
+  });
+});
+
+/**
+ * M69.1 — cửa định tuyến ∞ cho **hai hợp đồng tập nghiệm**.
+ *
+ * Trước lượt này chỉ `sameValue` biết hỏi `hasInfinity`. Hai hợp đồng quan hệ đi
+ * thẳng vào bốc điểm, `evalRelation` → `evalReal` trả `null` ở mọi nút `inf`, nên
+ * `done`/`held` luôn bằng $0$ và **mọi** thao tác nhóm ★ trên một đẳng thức hàm
+ * sinh mang vệt vàng "không tìm được điểm nào" vĩnh viễn — đúng thất bại M45, trên
+ * đúng thể loại bài mà sân chuỗi sinh ra để phục vụ.
+ */
+describe('M69 — ∞ trên quan hệ: hết vàng vĩnh viễn', () => {
+  const P = (src: string) => parse(src, new Minter());
+  const GF_TRUE = 'sum(k, 0, inf, x^k) = 1/(1 - x)';
+  const GF_FALSE = 'sum(k, 0, inf, x^k) = 1/(1 - 2*x)';
+  const run = (start: string, steps: AlgebraStep[]) => readAlgebra(scene(start, steps));
+
+  it('bốn thao tác ★ trên đẳng thức hàm sinh đều KIỂM ĐƯỢC, không còn vệt vàng', () => {
+    const moves: AlgebraStep[] = [
+      { rule: 'add_both_sides', at: '', arg: '1' },
+      { rule: 'mul_both_sides', at: '', arg: '2' },
+      { rule: 'geometric_series', at: 'L' },
+      { rule: 'pow_both_sides', at: '', arg: '2' },
+    ];
+    for (const move of moves) {
+      const m = run(GF_TRUE, [move]);
+      expect(m.refusal, move.rule).toBeNull();
+      expect(m.unchecked, move.rule).toEqual([]);
+      expect(m.unsound, move.rule).toEqual([]);
+      expect(m.rows[1]!.evidence?.verified, move.rule).toBe(true);
+    }
+  });
+
+  it('chân lý đổi giữa hai dòng là **lỗi**, và nói rõ hệ số nào', () => {
+    const broken = sameRelationSeries(P(GF_TRUE), P(GF_FALSE));
+    expect(broken.ok).toBe(false);
+    expect(broken.message).toContain('hệ số của x^1 lệch: 1 ≠ 2');
+
+    // Chiều ngược cũng là lỗi: một bước biến câu sai thành câu đúng thì nó không
+    // phải phép biến đổi tương đương, nó là một câu khác được viết ra.
+    const backwards = sameRelationSeries(P(GF_FALSE), P(GF_TRUE));
+    expect(backwards.ok).toBe(false);
+    expect(backwards.message).toContain('không bảo toàn chân lý');
+  });
+
+  it('cả hai cùng sai thì vẫn xanh — nhưng lời nhắn nói thẳng ra là cả hai đều sai', () => {
+    // Cùng hành vi với bản bốc điểm khi hai quan hệ cùng sai ở mọi điểm. "Xanh" ở
+    // ca này dễ đọc nhầm thành "bước đã chứng minh điều gì đó", nên chữ phải chặn.
+    const both = sameRelationSeries(P(GF_FALSE), P('sum(k, 0, inf, x^k) = 1/(1 - 3*x)'));
+    expect(both.ok).toBe(true);
+    expect(both.message).toContain('đều **sai**');
+  });
+
+  it('kéo theo: đúng → sai là lỗi; sai → đúng là **nới rộng**', () => {
+    const bad = impliesRelationSeries(P(GF_TRUE), P(GF_FALSE));
+    expect(bad.ok).toBe(false);
+    expect(bad.message).toContain('kéo theo sai');
+
+    const wide = impliesRelationSeries(P(GF_FALSE), P(GF_TRUE));
+    expect(wide.ok).toBe(true);
+    expect(wide.widened).toBe(true);
+  });
+
+  it('cố ý HẸP: thứ tự và hai biến đều bị từ chối có lời', () => {
+    // Chuỗi luỹ thừa hình thức **không có thứ tự** — "Σ < 1/(1−x)" là câu vô nghĩa
+    // chứ không phải câu khó, nên từ chối là câu trả lời đúng.
+    const ordered = sameRelationSeries(
+      P('sum(k, 0, inf, x^k) < 1/(1 - x)'),
+      P('sum(k, 0, inf, x^k) < 1/(1 - x)'),
+    );
+    expect(ordered.verified).toBe(false);
+    expect(ordered.message).toContain('"=" hoặc "≠"');
+
+    const twoVars = sameRelationSeries(
+      P('sum(k, 0, inf, (x*y)^k) = 1/(1 - x*y)'),
+      P('sum(k, 0, inf, (x*y)^k) = 1/(1 - x*y)'),
+    );
+    expect(twoVars.verified).toBe(false);
+    expect(twoVars.message).toContain('biến chuỗi duy nhất');
   });
 });

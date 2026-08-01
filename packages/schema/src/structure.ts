@@ -1,5 +1,6 @@
 import { GLOBAL_BOUNDS } from './bounds.js';
 import { parseAnchorMarkup } from './anchor-markup.js';
+import { langValues } from './common.js';
 import type { EngineRegistry } from './engine-registry.js';
 import type { ValidationIssue } from './issues.js';
 import type { Problem, Solution } from './problem.js';
@@ -643,20 +644,33 @@ function checkAnchors(
   issues: ValidationIssue[],
 ): void {
   const anchors = step.anchors ?? {};
-  const spans = step.narrative ? parseAnchorMarkup(step.narrative.vi) : [];
-  const usedKeys = new Set(spans.map((s) => s.key));
+
+  /**
+   * Đọc markup của **mọi** bản ngôn ngữ, không riêng `vi` (M69).
+   *
+   * Bản dịch cũng là narrative: một `[[a3|…]]` sót lại trong `en` sau khi tác giả
+   * đổi tên khoá ở `vi` là đúng cái anchor rot mà ANC-02 sinh ra để bắt, chỉ khác
+   * là nó rot ở thứ tiếng mà không lớp kiểm nào nhìn.
+   *
+   * Chiều "khoá khai mà không ai dùng" thì tính trên **hợp** các thứ tiếng: một
+   * anchor chỉ được dùng trong bản dịch vẫn là một anchor đang làm việc.
+   */
+  const usedKeys = new Set<string>();
 
   // Chiều narrative → bảng không cần scene: [[key]] trỏ vào bảng anchors, không
   // trỏ vào element. Nó phải chạy trước early-return bên dưới, không thì một
   // merge_ref có markup lạc trong narrative thoát kiểm.
-  for (const span of spans) {
-    if (!(span.key in anchors)) {
-      issues.push({
-        code: 'anchor/undeclared-key',
-        severity: 'error',
-        message: `Narrative dùng [[${span.key}|…]] nhưng bảng anchors không có khoá này`,
-        path: `${path}/anchors`,
-      });
+  for (const [lang, textOf] of langValues(step.narrative)) {
+    for (const span of parseAnchorMarkup(textOf)) {
+      usedKeys.add(span.key);
+      if (!(span.key in anchors)) {
+        issues.push({
+          code: 'anchor/undeclared-key',
+          severity: 'error',
+          message: `Narrative (${lang}) dùng [[${span.key}|…]] nhưng bảng anchors không có khoá này`,
+          path: `${path}/narrative/${lang}`,
+        });
+      }
     }
   }
 

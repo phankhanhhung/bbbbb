@@ -14,9 +14,28 @@ nhìn được bằng mắt trước khi sang tầng sau, và mọi tính năng 
 
 ---
 
-## M69 — Trả nợ đuôi của lượt rà (5 món, đều đã có địa chỉ)
+## M69 — Trả nợ đuôi của lượt rà (5 món, đều đã có địa chỉ) — ✅ **XONG 2026-08-01**
 
 Các phát hiện thật, hoãn vì "không chặn freeze" — chứ không phải vì nhỏ:
+
+> **Kết quả, và bốn thứ kế hoạch này không lường trước.** Cả năm món xong; ngoài
+> ra lượt **nhìn PNG** của món 3 lôi ra ba lỗi hiển thị chưa ai biết, tất cả nằm
+> trên đúng kênh growth chính:
+>
+> - `**đậm**` in nguyên **bốn dấu sao** ra ảnh trên **57/114** card — SVG không có
+>   thẻ `<strong>` để đổi sang, và không lớp nào tước markup trước khi vẽ.
+> - `defaultFontFamily` bỏ trống nên resvg **bốc bừa** một mặt trong danh sách vừa
+>   nạp: tiêu đề **mọi** card in nghiêng, và dòng nào chỉ có ASCII in bằng
+>   `KaTeX_Fraktur` — chữ "Pascal." hiện ra kiểu gô-tích giữa một tiêu đề sans.
+> - `toReadableMath` nuốt cả `\{`, nên `$\{1,2,\dots,n\}$` ra `\1,2,…,n\`.
+>
+> Và món 4 hoá ra rộng hơn nhiều: **11 bài** đã khai nhãn cho vùng, không bài nào
+> hiện ra chữ. Đặt nhãn ở ranh giới hai hàng kèm quầng nền — lượt nhìn đầu tiên
+> đặt lửng giữa hàng trên và nhãn đâm thẳng vào glyph.
+>
+> Món 5 chốt lằn ranh thay vì để lửng: **markup phải giải được** (`[[…]]`,
+> `{{…}}`) kiểm mọi thứ tiếng; **văn phong** (glossary, độ dài, số câu — đo trên
+> 114 bài tiếng Việt) chỉ kiểm `vi`, và lý do ghi ngay tại `checkGlossary`.
 
 1. **Định tuyến ∞ cho `sameSolutionSet`/`impliesSolutionSet`.** Chỉ `sameValue`
    biết hỏi `hasInfinity` để sang sân chuỗi; hai hợp đồng kia đi thẳng vào bốc

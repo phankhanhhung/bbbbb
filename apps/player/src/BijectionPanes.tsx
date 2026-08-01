@@ -3,6 +3,7 @@ import {
   applyChoreography,
   createContext,
   keyed,
+  matchScale,
   sceneBoxStyle,
   type LabelAtlas,
   type SceneRenderer,
@@ -57,36 +58,12 @@ function prefersReducedMotion(): boolean {
   );
 }
 
-/** Khung hình chữ nhật — `matchScale`/`unionBox` làm việc trên nó. */
+/** Khung hình chữ nhật — `unionBox` làm việc trên nó. */
 interface Box {
   readonly x: number;
   readonly y: number;
   readonly width: number;
   readonly height: number;
-}
-
-/**
- * Nới hai khung hình về **cùng kích thước**, mỗi khung nới quanh tâm của nó.
- *
- * Hai pane luôn được vẽ trong hai ô CSS bằng nhau, nên khung nào nhỏ hơn sẽ bị
- * phóng to hơn — và một ô bên trái hoá ra to gấp năm lần một ô bên phải. Với view
- * này thì đó không phải chuyện thẩm mỹ: toàn bộ nội dung là "cái này ứng với cái
- * kia", mà tỉ lệ lệch nhau thì mắt đọc thành "hai thứ chẳng liên quan".
- *
- * Nới được vì cả kho dùng chung một quy ước đơn vị (G-10: một ô, một khoảng cách
- * đỉnh = 10 đơn vị scene). Nhờ đó cân bằng khung là đủ để một ô bên trái to đúng
- * bằng một ô bên phải, kể cả khi hai pane chạy hai engine khác nhau.
- */
-export function matchScale(a: Box, b: Box): [Box, Box] {
-  const width = Math.max(a.width, b.width);
-  const height = Math.max(a.height, b.height);
-  const grow = (box: Box): Box => ({
-    x: box.x - (width - box.width) / 2,
-    y: box.y - (height - box.height) / 2,
-    width,
-    height,
-  });
-  return [grow(a), grow(b)];
 }
 
 /** Khung nhỏ nhất chứa cả hai — hệ toạ độ chung của chế độ biến hình. */
@@ -100,7 +77,6 @@ export function unionBox(a: Box, b: Box): Box {
     height: Math.max(a.y + a.height, b.y + b.height) - y,
   };
 }
-
 
 /**
  * PRN-04 — hai cấu hình cạnh nhau, rê vào một bên thì bên kia sáng lên.

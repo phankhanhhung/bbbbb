@@ -11,7 +11,7 @@ import type {
   Step,
   ValidationIssue,
 } from '@combviz/schema';
-import { parseValueMarkup } from '@combviz/schema';
+import { langValues, parseValueMarkup } from '@combviz/schema';
 import type { DslEnvironment } from '@combviz/dsl';
 
 /**
@@ -139,8 +139,8 @@ function evalOnEveryStep(
         // Step `merge_ref` không có hình, nên không có gì để tính `{{expr}}` ra.
         // Không bắt ở đây thì nó lọt qua validate rồi hiện `{{…}}` thô lên màn
         // hình — đúng loại lỗi mà cả cơ chế này sinh ra để chặn.
-        for (const text of [step.narrative?.vi, step.alt_text?.vi]) {
-          for (const span of parseValueMarkup(text ?? '')) {
+        for (const [, text] of [...langValues(step.narrative), ...langValues(step.alt_text)]) {
+          for (const span of parseValueMarkup(text)) {
             issues.push({
               code: 'semantics/value-without-scene',
               severity: 'error',
@@ -236,11 +236,17 @@ function checkValueMarkup(
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
-  for (const [field, text] of [
-    ['narrative', step.narrative?.vi],
-    ['alt_text', step.alt_text?.vi],
-  ] as const) {
-    if (!text) continue;
+  /**
+   * **Mọi** bản ngôn ngữ, không riêng `vi` (M69). `{{expr}}` trong một bản dịch
+   * cũng phải chạy được: nó in ra một con số cho người đọc bản ấy, và một biểu
+   * thức hỏng ở đó để lại đúng bốn dấu ngoặc trên màn hình của họ.
+   */
+  const targets = [
+    ...langValues(step.narrative).map(([lang, text]) => ['narrative', lang, text] as const),
+    ...langValues(step.alt_text).map(([lang, text]) => ['alt_text', lang, text] as const),
+  ];
+
+  for (const [field, lang, text] of targets) {
     for (const span of parseValueMarkup(text)) {
       const outcome = tryEvaluate(span.expr, env, DETERMINISTIC_BUDGET);
       if (!outcome.ok) {
@@ -248,7 +254,7 @@ function checkValueMarkup(
           code: 'dsl/eval-error',
           severity: 'error',
           message: `\`{{${span.expr}}}\` ở step "${step.id}" không chạy được: ${outcome.error}`,
-          path: `${path}/${field}/vi`,
+          path: `${path}/${field}/${lang}`,
           hint: 'Giá trị nội suy phải là biểu thức DSL chạy được trên scene của chính step này',
         });
       } else if (outcome.value === null || typeof outcome.value === 'object') {
@@ -256,7 +262,7 @@ function checkValueMarkup(
           code: 'semantics/value-not-printable',
           severity: 'error',
           message: `\`{{${span.expr}}}\` ở step "${step.id}" cho giá trị không in ra chữ được`,
-          path: `${path}/${field}/vi`,
+          path: `${path}/${field}/${lang}`,
         });
       }
     }

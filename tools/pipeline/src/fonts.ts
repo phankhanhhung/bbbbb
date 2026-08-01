@@ -128,12 +128,32 @@ function restyle(font: Buffer, name: string): Buffer {
 export function fontOptions(): {
   loadSystemFonts: boolean;
   fontFiles: string[];
+  defaultFontFamily: string;
   serifFamily: string;
   sansSerifFamily: string;
 } {
   return {
     loadSystemFonts: true,
     fontFiles: katexFontFiles(),
+    /**
+     * ## Lỗi thứ ba: phông **mặc định** không khai thì resvg bốc bừa (M69)
+     *
+     * `font-family` của chữ giao diện là `'Inter', 'Segoe UI', system-ui,
+     * sans-serif`. Máy build không có ba cái đầu, và `sansSerifFamily` bên dưới
+     * lẽ ra đỡ cho cái thứ tư — nhưng resvg hỏi `defaultFontFamily` **trước**, mà
+     * bỏ trống thì nó lấy đại một mặt trong danh sách vừa nạp. Danh sách ấy giờ
+     * đứng đầu bằng bộ KaTeX.
+     *
+     * Nhìn thấy được, và nhìn thấy trên **mọi** card: tiêu đề bài in bằng một mặt
+     * nghiêng, còn dòng nào **chỉ có ASCII** — không dấu tiếng Việt để buộc rơi
+     * xuống DejaVu — thì in bằng `KaTeX_Fraktur`. Card của `pascal-two-proofs`
+     * ngắt dòng đúng chỗ để chữ "Pascal." đứng một mình, và nó hiện ra kiểu chữ
+     * gô-tích giữa một tiêu đề sans.
+     *
+     * Lại là lớp lỗi mà không test nào bắt được và lượt nhìn bắt ngay: chuỗi SVG
+     * đúng từng byte, sai nằm ở chỗ resvg vẽ chuỗi ấy bằng phông nào.
+     */
+    defaultFontFamily: 'DejaVu Sans',
     serifFamily: 'KaTeX_Main',
     sansSerifFamily: 'DejaVu Sans',
   };

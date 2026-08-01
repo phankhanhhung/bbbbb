@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toReadableMath, toSearchableText } from '../src/math-text.js';
+import { stripBoldMarkup, toReadableMath, toSearchableText } from '../src/math-text.js';
 
 /**
  * Hai chế độ phải **khác nhau đúng chỗ**: một cái dành cho mắt người, một cái
@@ -63,5 +63,43 @@ describe('toSearchableText — chỗ máy so khớp', () => {
 
   it('gộp khoảng trắng thừa do việc tước sinh ra', () => {
     expect(toSearchableText('$a$   $b$')).toBe('a b');
+  });
+});
+
+/**
+ * M69 — hai lỗ lộ ra ở **lượt nhìn OG card**, không ở test nào.
+ *
+ * Card là thứ duy nhất người ta thấy khi ai đó chia sẻ link (§11 gọi nó là kênh
+ * growth chính), và nó vẽ bằng resvg — không KaTeX, không thẻ `<strong>`. Mọi
+ * markup mà Player biết đổi thì ở đây phải được đổi **trước** khi thành chữ.
+ */
+describe('stripBoldMarkup — chữ đậm ở nơi không có chữ đậm', () => {
+  it('bỏ dấu, giữ chữ', () => {
+    expect(stripBoldMarkup('bằng **hai** con đường')).toBe('bằng hai con đường');
+  });
+
+  it('không đụng `**` nằm trong công thức — ở đó nó là phép nhân', () => {
+    expect(stripBoldMarkup('tính $a ** b$ rồi **so** sánh')).toBe('tính $a ** b$ rồi so sánh');
+  });
+
+  it('số dấu **lẻ** thì để nguyên tất — tác giả đang viết phép nhân', () => {
+    expect(stripBoldMarkup('2 ** 3 và 4')).toBe('2 ** 3 và 4');
+  });
+
+  it('không có dấu nào thì trả về đúng chuỗi cũ', () => {
+    expect(stripBoldMarkup('không có gì')).toBe('không có gì');
+  });
+});
+
+describe('toReadableMath — ngoặc thoát là ngoặc thật', () => {
+  it('`\\{…\\}` giữ được ngoặc của tập hợp', () => {
+    // Trước lượt này ra `\1,2,…,n\`: hai dấu gạch chéo lạc giữa tiêu đề, trên
+    // card của đúng những bài nói về tập hợp.
+    expect(toReadableMath('tập $\\{1,2,\\dots,n\\}$ có')).toBe('tập {1,2,…,n} có');
+  });
+
+  it('ngoặc **nhóm** vẫn bị bỏ như cũ', () => {
+    expect(toReadableMath('$x^{12}$')).toBe('x¹²');
+    expect(toReadableMath('$a_{max}$')).toBe('a_max');
   });
 });
