@@ -165,21 +165,33 @@ export const algebraSchemaFragment: EngineSchemaFragment = {
  *
  * Nút **sâu nhất** thắng: chạm vào $x$ trong $(x+1)^2$ thì người ta muốn $x$, không
  * muốn cả luỹ thừa. Đi qua đúng `layout` mà renderer dùng, không đo lại.
+ *
+ * **Hộp cả dòng chỉ là lưới hứng, không tranh với hạng tử nào** (M76b). Bản trước
+ * đổ chung hộp dòng vào cùng danh sách rồi xếp theo diện tích, và ở một biểu thức
+ * mà hạng tử ngoài cùng chiếm trọn dòng — $(x-3)(x+3)$ chẳng hạn — hai hộp **trùng
+ * bề ngang**, nên ai thắng chỉ do chênh nhau một sợi chiều cao. Đổi cách vẽ dấu
+ * ngoặc làm ngoặc cao thêm $0{,}3$ đơn vị, sợi ấy lật, và cả cái tích hoá **không
+ * chọn được** — bảng nước đi của sandbox rỗng ở đúng nút duy nhất có nước đi.
+ *
+ * Một phép so diện tích không nói được "sâu hơn"; chỗ này thì nói được, vì hai tập
+ * hộp vốn đã là hai tầng khác nhau. Hộp dòng chỉ trả lời khi **không hạng tử nào**
+ * hứng điểm ấy — chạm vào khoảng trống bên phải một dòng ngắn thì vẫn chọn cả dòng.
  */
 export const algebraHitTest: HitTest = (scene: Scene, point: ScenePoint): string[] => {
   const model = readAlgebra(scene);
   if (model.refusal !== null) return [];
   const box = layout(model);
 
-  const hits: Array<{ id: string; area: number }> = [];
+  const inside = (b: { x: number; y: number; width: number; height: number }): boolean =>
+    point.x >= b.x && point.x <= b.x + b.width && point.y >= b.y && point.y <= b.y + b.height;
+
+  const terms: Array<{ id: string; area: number }> = [];
+  const rows: string[] = [];
   for (const line of box.lines) {
-    for (const b of [...line.boxes, line.box]) {
-      if (point.x < b.x || point.x > b.x + b.width) continue;
-      if (point.y < b.y || point.y > b.y + b.height) continue;
-      hits.push({ id: b.id, area: b.width * b.height });
-    }
+    for (const b of line.boxes) if (inside(b)) terms.push({ id: b.id, area: b.width * b.height });
+    if (inside(line.box)) rows.push(line.box.id);
   }
-  return hits.sort((a, b) => a.area - b.area).map((h) => h.id);
+  return [...terms.sort((a, b) => a.area - b.area).map((h) => h.id), ...rows];
 };
 
 /**

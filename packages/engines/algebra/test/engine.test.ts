@@ -381,7 +381,10 @@ describe('căn thức', () => {
       return (rule as { x1: number; x2: number }).x2 - (rule as { x1: number; x2: number }).x1;
     };
 
-    expect(renderer.toSvg(scene('sqrt(x + 1)'), ctx)).toContain('<path');
+    // Dấu căn là **glyph surd của bậc font đã chọn** (M76b), không phải móc vẽ tay.
+    // Móc cũ là ba đoạn thẳng nét đều — nó không có chỗ nào dày chỗ nào thanh, và
+    // đó là toàn bộ chỗ khác nhau giữa "có vẽ" và "sắp chữ".
+    expect(renderer.toSvg(scene('sqrt(x + 1)'), ctx)).toContain('√');
     expect(bar('sqrt(x + 1)')).toBeGreaterThan(bar('sqrt(x)'));
   });
 });
@@ -2171,8 +2174,9 @@ describe('M59 — hệ phương trình', () => {
     const eq = p.glyphs.filter((g) => g.s === '=');
     expect(eq).toHaveLength(2);
     expect(eq[0]!.x).toBeCloseTo(eq[1]!.x, 6);
-    // Ngoặc nhọn vẽ bằng path, không phải glyph phóng to.
-    expect(p.paths.length).toBeGreaterThan(0);
+    // Ngoặc nhọn là glyph của bậc font đủ cao (M76b) — không phóng to một glyph, và
+    // cũng không vẽ tay nữa.
+    expect(p.glyphs.some((g) => g.s === '{')).toBe(true);
 
     const mm = measure(box);
     expect((mm.above + mm.below) / ROW).toBeLessThanOrEqual(ALGEBRA_LIMITS.maxHeightCells);
@@ -2468,45 +2472,101 @@ describe('M76 — bảng bề rộng đo bằng máy, dấu gộp vẽ bằng pa
     });
   });
 
-  describe('ngoặc tròn: cao theo ruột, **nét không đổi**', () => {
-    const parenPaths = (src: string) =>
-      drawnOf(src).paths.filter((p) => p.d.includes('Q'));
+  describe('thang dấu gộp: chọn bậc font, không kéo giãn', () => {
+    const delims = (src: string) =>
+      drawnOf(src).glyphs.filter((g) => '(){}√'.includes(g.s));
 
-    it('nét của ngoặc trùm phân số lồng bằng đúng nét của ngoặc một dòng', () => {
-      // Đây là cả lý do đổi cách vẽ. Phóng `font-size` thì nét dày theo chiều cao:
-      // đo trên chính cây hộp, ngoặc của phân số lồng hai tầng dày **gấp 3,68 lần**
-      // ngoặc thường nằm ngay cạnh nó.
-      const small = parenPaths('2*(x + 1)');
-      const tall = parenPaths('2*(((x+1)/(x+2))/((y+1)/(y+2)) + 1)');
-      expect(small).toHaveLength(2);
-      expect(tall.length).toBeGreaterThanOrEqual(2);
-      expect(tall[0]!.width).toBe(small[0]!.width);
+    it('**không glyph dấu gộp nào** được vẽ ở cỡ khác cỡ chữ của dòng', () => {
+      // Đây là bất biến của cả mục. Phóng `font-size` cho cao bằng ruột là cách bản
+      // trước làm, và nó kéo **nét dày lên theo** — ngoặc trùm phân số lồng hai tầng
+      // dày gấp 3,68 lần ngoặc thường nằm ngay cạnh. Chữ thật thì không thế: một
+      // ngoặc cao gấp ba là một **con chữ khác**, thiết kế riêng ở cỡ ấy.
+      for (const src of ['2*(x + 1)', '2*((x+1)/(x+2) + 1)', 'sqrt((a+b)/(c+d))']) {
+        expect(delims(src).every((g) => g.size === FONT), src).toBe(true);
+      }
     });
 
-    it('nhưng nó **có** cao theo ruột — nếu không thì ngoặc thành dấu phẩy', () => {
-      const yOf = (p: { d: string }): number =>
-        Math.abs(Number(/^M[-\d.]+ ([-\d.]+)/.exec(p.d)![1]));
-      expect(yOf(parenPaths('2*(((x+1)/(x+2))/((y+1)/(y+2)) + 1)')[0]!)).toBeGreaterThan(
-        yOf(parenPaths('2*(x + 1)')[0]!) * 2,
-      );
-    });
+    it('bậc lớn dần theo chiều cao ruột, và **bề ngang lớn theo**', () => {
+      // Bề ngang tăng theo bậc là dấu hiệu chúng được thiết kế riêng: một hình phóng
+      // to thì tỉ lệ rộng/cao đứng yên.
+      const family = (src: string) => delims(src)[0]?.family ?? 'Main';
+      expect(family('2*(x + 1)')).toBe('Main');
+      expect(family('2*((x+1)/(x+2) + 1)')).toContain('Size2');
 
-    it('hai ngoặc kề nhau **không** chụm bụng vào nhau', () => {
-      // `(a+b)(c+d)`: bụng của `)` và bụng của `(` cùng nằm ở giữa dòng. Bản đầu
-      // của M76 để chúng cách nhau 1 đơn vị và trên hình chúng dính thành một hình
-      // thấu kính.
-      const [, close, open] = parenPaths('(a + b)*(c + d)');
-      const belly = (p: { d: string }): number => {
-        const [tip, ctrl] = /^M([-\d.]+) [-\d.]+Q([-\d.]+)/.exec(p.d)!.slice(1).map(Number);
-        return ((tip as number) + (ctrl as number)) / 2;
+      const width = (src: string) => {
+        const g = delims(src);
+        return (g[1] as { x: number }).x - (g[0] as { x: number }).x;
       };
-      expect(belly(open!) - belly(close!)).toBeGreaterThan(FONT * 0.3);
+      expect(width('2*((x+1)/(x+2) + 1)')).toBeGreaterThan(width('2*(x + 1)'));
     });
 
-    it('ngoặc **giữ được danh tính** của nút bao nó', () => {
-      // Trước M76 ngoặc là glyph mang `data-el`; nay là path. Mất chỗ ấy thì anchor
-      // trỏ vào một tích có ngoặc sẽ không sáng phần ngoặc.
-      expect(parenPaths('2*(x + 1)').every((p) => p.owner !== null)).toBe(true);
+    it('luật chọn bậc là của TeX: dấu gộp **không cần trùm hết** ruột', () => {
+      // Bắt nó trùm hết thì một ngoặc bọc một dòng chữ thường đã phải nhảy lên
+      // `Size1` — to hơn hẳn chữ quanh nó. Bản đầu của M76b làm đúng thế và mắt bắt
+      // được ngay dù không gọi được tên.
+      expect(delims('2*(x + 1)')[0]?.family).toBeUndefined();
     });
+
+    it('ngoài thang thì mới vẽ tay — và nét lúc ấy **không đổi theo chiều cao**', () => {
+      // Kéo `Size4` cho cao gấp đôi là quay lại đúng lỗi vừa sửa, nên ca ấy đi đường
+      // cung vẽ tay. Đo trên kho: 3/24 ngoặc nhọn, 0/181 ngoặc tròn, 0/54 dấu căn.
+      const deep = drawnOf('2*(((x+1)/(x+2))/((y+1)/(y+2)) + 1)');
+      const arcs = deep.paths.filter((x) => x.d.includes('Q'));
+      expect(arcs.length).toBeGreaterThan(0);
+      const small = drawnOf('2*(x + 1)');
+      expect(small.paths.filter((x) => x.d.includes('Q'))).toHaveLength(0);
+      expect(new Set(arcs.map((a) => a.width)).size).toBe(1);
+    });
+
+    it('dấu gộp **giữ được danh tính** của nút bao nó', () => {
+      // Trước M76b ngoặc là path mang `owner`; nay là glyph. Mất chỗ ấy thì anchor
+      // trỏ vào một tích có ngoặc sẽ không sáng phần ngoặc.
+      expect(delims('2*(x + 1)').every((g) => g.owner !== null)).toBe(true);
+    });
+
+    it('dấu căn là glyph surd, không phải ba đoạn thẳng', () => {
+      const p = drawnOf('sqrt(x + 1)');
+      expect(p.glyphs.some((g) => g.s === '√')).toBe(true);
+      expect(p.paths).toHaveLength(0);
+      // Vạch trùm vẫn là `rule` của engine — KaTeX cũng vẽ nó riêng.
+      expect(p.rules.length).toBeGreaterThan(0);
+    });
+  });
+});
+
+/**
+ * Chạm: hộp cả dòng không tranh với hạng tử (M76b).
+ *
+ * Chốt canh này sinh ra từ một hồi quy thật: đổi cách vẽ ngoặc làm hạng tử ngoài
+ * cùng cao thêm $0{,}3$ đơn vị, và ở một biểu thức mà nó chiếm trọn dòng thì hộp
+ * dòng thắng nó về diện tích — cả cái tích hoá **không chọn được**.
+ */
+describe('M76b — hộp dòng chỉ là lưới hứng', () => {
+  // Một tích **chiếm trọn dòng**: hộp của nó và hộp dòng trùng bề ngang, và tâm nó
+  // rơi vào khe `)(` — trong tích, ngoài cả hai thừa số. Đúng hình dạng đã gãy.
+  const s = scene('(x - 3)*(x + 3)');
+  const lines = layout(readAlgebra(s)).lines;
+
+  it('hạng tử chiếm trọn dòng vẫn chọn được', () => {
+    const line = lines.at(-1)!;
+    const widest = [...line.boxes].sort((a, b) => b.width - a.width)[0]!;
+    // Tiền đề của cả chốt canh: hộp ấy **trùng bề ngang** với hộp dòng. Không còn
+    // trùng thì test này thôi canh chỗ nó sinh ra để canh.
+    expect(widest.width).toBeCloseTo(line.box.width, 6);
+
+    const hit = algebraHitTest(s, {
+      x: widest.x + widest.width / 2,
+      y: widest.y + widest.height / 2,
+    });
+    expect(hit[0]).toBe(widest.id);
+  });
+
+  it('nhưng chỗ trống trong dòng thì vẫn là của dòng', () => {
+    // Hộp dòng không bị gỡ khỏi kết quả — nó chỉ thôi tranh. Chạm dưới đáy mọi hạng
+    // tử mà vẫn trong dòng thì cả dòng trả lời.
+    const line = lines[0]!;
+    const floor = Math.max(...line.boxes.map((b) => b.y + b.height));
+    const hit = algebraHitTest(s, { x: line.box.x + 1, y: Math.min(floor + 0.5, line.box.y + line.box.height) });
+    expect(hit.at(-1)).toBe(line.box.id);
   });
 });

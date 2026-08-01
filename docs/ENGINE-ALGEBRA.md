@@ -3207,3 +3207,78 @@ thành dấu ngoặc nhọn. Cổ tức kèm theo: bớt một chỗ phụ thu�
    một chỗ bẻ, và nó hoàn tác về `HEAD` — tức xoá cả mục này. Dựng lại rồi chạy
    golden: **472/472 khớp từng byte**, nên bản dựng lại đúng bằng bản đã mất. Từ đây
    bẻ răng hoàn tác bằng bản sao, không bằng `git`.
+
+## §49 — Thang dấu gộp: chọn bậc font, không kéo giãn (M76b)
+
+§48 sửa đúng cái nó nhắm — nét thôi dày lên theo chiều cao — và **đánh mất** thứ
+không ai để tên được: dáng chữ. Một ngoặc thật có nét **biến thiên**, dày ở bụng
+thanh dần về hai đầu; một cung tròn nét đều ra dáng một sợi dây. Chú thích của `{`
+bảo *"đừng phóng to glyph"* và câu ấy đúng; kết luận *"vậy thì vẽ tay"* thì sai.
+
+Câu trả lời của ngành in là **thang cỡ**. KaTeX ship năm bậc — `Main`, `Size1`…
+`Size4` — mỗi bậc **một mặt chữ riêng**, không phải một hình phóng to:
+
+| bậc | cao (em) | `(` rộng | `√` rộng |
+|---|---:|---:|---:|
+| Main | 1,000 | 0,389 | 0,833 |
+| Size1 | 1,199 | 0,458 | 1,000 |
+| Size2 | 1,799 | 0,597 | 1,000 |
+| Size3 | 2,399 | 0,736 | 1,000 |
+| Size4 | 2,999 | 0,792 | 1,000 |
+
+Bề ngang **tăng theo bậc**, và đó chính là bằng chứng chúng được thiết kế riêng: một
+hình phóng to thì tỉ lệ rộng/cao đứng yên. Cả năm bậc đều cân tại $+0{,}25$ em trên
+đường chân — trục toán — đo từ `glyf` mà ra, nên đặt chúng chỉ tốn một phép tính.
+
+Bất biến của cả mục, và là thứ chốt canh canh: **không glyph dấu gộp nào được vẽ ở
+cỡ khác cỡ chữ của dòng.**
+
+### 49.1 Luật chọn bậc là của TeX, và nó quan trọng hơn vẻ ngoài
+
+Bản đầu chọn bậc nhỏ nhất **trùm hết** ruột. Kết quả: một ngoặc bọc một dòng chữ
+thường đã phải nhảy lên `Size1` — to hơn hẳn chữ quanh nó. Mắt bắt được ngay dù
+không gọi được tên.
+
+TeX cho phép dấu gộp **thấp hơn ruột**:
+
+$$\text{cao} = \max\bigl(1{,}802\,\delta,\; 2\delta - 0{,}5\bigr), \qquad
+\delta = \max(\text{cao ruột} - \text{trục},\; \text{sâu ruột} + \text{trục})$$
+
+Cân **trục** chứ không cân đường chân — nếu không thì ngoặc bọc một phân số bị lệch
+xuống, vì phân số sâu hơn là cao. Sau khi áp đúng công thức: dòng chữ thường → `Main`,
+một phân số → `Size2`, và số ca rơi khỏi thang tụt từ 8 xuống 0.
+
+### 49.2 Đo trên kho
+
+| dấu | tổng | vẽ bằng glyph | rơi về vẽ tay |
+|---|---:|---:|---:|
+| ngoặc tròn | 181 | **181** | 0 |
+| dấu căn | 54 | **54** | 0 |
+| ngoặc nhọn | 24 | 21 | 3 (hệ từ ba dòng) |
+
+Ngoài thang thì mới vẽ tay, vì kéo `Size4` cho cao gấp rưỡi là quay lại đúng lỗi §48
+vừa sửa. Ba cái ngoặc nhọn ấy là ca thật duy nhất còn lại, và nó được nói ra chứ
+không giấu.
+
+Dấu căn nay là **glyph surd** treo sao cho đỉnh chạm vạch trùm, còn vạch thì vẫn là
+`rule` của engine — KaTeX cũng tách đôi đúng thế. Móc cũ là ba đoạn thẳng nét đều:
+nó không có chỗ nào dày chỗ nào thanh, và đó là toàn bộ chỗ khác nhau giữa "có vẽ"
+và "sắp chữ".
+
+### 49.3 Cái đã sai trước khi đúng
+
+1. **Điểm điều khiển của cung đặt sai một nửa** — bụng một cung bậc hai chỉ đi được
+   nửa đường tới điểm điều khiển. Lỗi này chết cùng phần lớn mã vẽ cung, nhưng nó
+   nằm lại ở nhánh dự phòng.
+2. **Bậc chọn quá to** vì đòi trùm hết ruột (§49.1).
+3. **Một hồi quy thật, và nó không nằm ở chỗ đang sửa.** `algebraHitTest` đổ hộp cả
+   dòng vào chung danh sách với hộp hạng tử rồi xếp theo **diện tích**. Ở một biểu
+   thức mà hạng tử ngoài cùng chiếm trọn dòng — $(x-3)(x+3)$ — hai hộp trùng bề
+   ngang, nên ai thắng chỉ do chênh nhau một sợi chiều cao. Ngoặc mới cao thêm
+   $0{,}3$ đơn vị, sợi ấy lật, và **cả cái tích hoá không chọn được**: bảng nước đi
+   của sandbox rỗng ở đúng nút duy nhất có nước đi. E2e bắt; đo lại thì `movesAtElement`
+   trả về y hệt trước và sau, nên lỗi không ở engine luật mà ở phép so diện tích.
+
+   Chỗ sai thật là **một phép so diện tích không nói được "sâu hơn"**. Hộp dòng là
+   lưới hứng, không phải một hạng tử, nên nó chỉ trả lời khi không hạng tử nào hứng
+   điểm ấy. Cùng lớp với mọi lỗi "hai thứ bằng nhau, ai thắng do tình cờ".
