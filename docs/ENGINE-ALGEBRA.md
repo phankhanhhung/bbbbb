@@ -3258,7 +3258,8 @@ một phân số → `Size2`, và số ca rơi khỏi thang tụt từ 8 xuống
 
 Ngoài thang thì mới vẽ tay, vì kéo `Size4` cho cao gấp rưỡi là quay lại đúng lỗi §48
 vừa sửa. Ba cái ngoặc nhọn ấy là ca thật duy nhất còn lại, và nó được nói ra chứ
-không giấu.
+không giấu. **§50 xoá nốt cột cuối** — cột ấy không đáng tồn tại, và ba là đủ để
+thấy.
 
 Dấu căn nay là **glyph surd** treo sao cho đỉnh chạm vạch trùm, còn vạch thì vẫn là
 `rule` của engine — KaTeX cũng tách đôi đúng thế. Móc cũ là ba đoạn thẳng nét đều:
@@ -3282,3 +3283,126 @@ và "sắp chữ".
    Chỗ sai thật là **một phép so diện tích không nói được "sâu hơn"**. Hộp dòng là
    lưới hứng, không phải một hạng tử, nên nó chỉ trả lời khi không hạng tử nào hứng
    điểm ấy. Cùng lớp với mọi lỗi "hai thứ bằng nhau, ai thắng do tình cờ".
+
+---
+
+## §50 — Trên `Size4` thì ghép mảnh; và ngoặc vuông vào thang (M76c)
+
+§49 để lại một cột: **3 trên 24 ngoặc nhọn** rơi khỏi thang và về cung vẽ tay. Cột ấy
+được ghi ra như một ca hiếm đã được nói. Nó không hiếm đủ.
+
+Ba cái ngoặc ấy nằm ở những bài có $\Sigma$ **trong hệ** — tức những hình to nhất
+trang, những hình người ta nhìn lâu nhất. Và một dấu ngoặc nhọn không giống bất cứ
+ngoặc nhọn nào khác của cùng trang là thứ đập vào mắt trước tiên, kể cả khi ba trên
+hai mươi tư nghe như một sai số. Bài học có tên: **"hiếm" đo bằng số ca, "thấy" đo
+bằng chỗ ca ấy đứng.**
+
+### 50.1 Dấu gộp ghép mảnh — nấc trên cùng của thang
+
+Thang năm bậc dừng ở $3$ em. Trên đó, KaTeX và MathJax **không** kéo giãn `Size4`;
+chúng ghép. `KaTeX_Size4-Regular` ship sẵn một bộ **mảnh** cho việc ấy:
+
+| dấu | đầu trên | đoạn nối | eo | đầu dưới | `advance` |
+|---|---|---|---|---|---:|
+| `(` `)` | `⎛` `⎞` | `⎜` `⎟` | — | `⎝` `⎠` | 0,875 |
+| `[` `]` | `⎡` `⎤` | `⎢` `⎥` | — | `⎣` `⎦` | 0,667 |
+| `{` `}` | `⎧` `⎫` | `⎪` | `⎨` `⎬` | `⎩` `⎭` | 0,889 |
+
+`advance` của mảnh rộng hơn bậc `Size4` (ngoặc tròn $0{,}875$ so với $0{,}792$) —
+đúng như mọi bậc trước nó rộng hơn bậc dưới. Nét vẫn là nét của bộ chữ, nên nấc này
+**không** phản lại bất biến của §49: mảnh vẽ ở đúng cỡ chữ của dòng.
+
+Ngoặc nhọn có **hai** dải nối, một trên eo một dưới, nên số đoạn tính theo *dải* chứ
+không theo cả cụm. Bỏ qua chỗ này thì cụm không sai chỗ — dãy vẫn đối xứng nên eo vẫn
+nằm giữa, chồng lấn vẫn nuốt hết chỗ dôi — nhưng nó ghép **gấp đôi** số mảnh cần và
+phải chồng gần trọn nửa đoạn nối để bù. Sai lặng lẽ, nên nó có một chốt canh riêng
+hỏi thẳng: bớt một vòng thì cụm phải hụt.
+
+### 50.2 Chồng lấn không phải một hằng số — nó là chỗ nuốt phần dôi
+
+Số mảnh là số nguyên, nên cụm ghép thô bao giờ cũng **cao hơn** thứ cần trùm, dôi tới
+gần trọn một đoạn nối. Để nguyên thì dấu ngoặc nhảy nấc thấy được mỗi khi thêm một
+dòng vào hệ.
+
+Nên chồng lấn tính ngược từ chỗ dôi: $\text{lap} = (\text{thô} - \text{cần}) /
+\text{số mối nối}$, sàn là $0{,}01$ em (đủ để mật độ raster thật không để lại sợi
+trắng giữa hai mảnh), trần là **nửa** một đoạn nối. Chồng chỉ ăn vào đoạn nối — một
+nét thẳng — nên không có gì để mất.
+
+Trần ấy gần như không bao giờ bị chạm: chỗ dôi nhỏ hơn một đoạn nối, chia cho ít nhất
+hai mối nối. Nó đỡ đúng một ca — cụm ngắn nhất còn cao hơn thứ cần trùm, tức ngay trên
+vạch rời `Size4` — và ở đó dấu **phải** dôi, vì nó không thể ngắn hơn.
+
+Kết quả đo được: cụm cao **đúng** bằng hộp nó bao, tới ba chữ số.
+
+### 50.3 Ngoặc vuông vào thang, và `[x^n]` vào cùng bộ máy
+
+Câu hỏi thứ hai của lượt này — *"kiểm tra lại cả ngoặc vuông và ngoặc tròn nữa"* —
+lôi ra một chỗ đứng ngoài. $[x^n]$ dựng ở M72 bằng **hai glyph `text` cỡ chữ**: nó
+không lên bậc khi ruột cao lên, và nó **không cân trục**, nên nó nằm lệch $0{,}15$
+đơn vị so với mọi ngoặc tròn cùng dòng. Không ai từng thấy, vì ruột của nó luôn là
+$x^n$ và luôn cùng một chiều cao — tức nó sai theo cách chỉ lộ ra khi có người đổi
+thứ khác.
+
+Đó là hình dạng chung của cả mục: **bậc font, cụm ghép mảnh và phép cân trục là một
+bộ máy; cái gì đứng ngoài nó thì sớm muộn sẽ lệch khỏi nó.** Nay ngoặc vuông có bảng
+bậc riêng ($0{,}278 \to 0{,}417 \to 0{,}472 \to 0{,}528 \to 0{,}583$ em, đọc từ
+`hmtx`) và $[x^n]$ đi qua đúng hộp `paren` mà ngoặc tròn đi.
+
+Một hệ quả nhìn thấy được: hai dấu của một cặp nay hỏi **chung một** chiều cao. Hỏi
+riêng từng bên không sai ở hôm nay — ruột hai bên là một — nhưng nó là cách một ngoặc
+mở cỡ này gặp một ngoặc đóng cỡ khác vào ngày ai đó đổi phép hỏi.
+
+### 50.4 Đo trên kho, sau M76c
+
+Đếm bằng cách quét **glyph thật trong 472 tệp golden** — tức đếm thứ được vẽ ra, không
+đếm thứ cây hộp khai:
+
+| dấu | tổng | glyph một bậc | ghép mảnh | vẽ tay |
+|---|---:|---:|---:|---:|
+| ngoặc tròn | 190 cặp | 190 | 0 | **0** |
+| ngoặc vuông | 5 cặp | 5 | 0 | **0** |
+| dấu căn | 54 | 54 | 0 | **0** |
+| ngoặc nhọn | 24 | 21 | 3 | **0** |
+
+Con số ngoặc nhọn khớp §49.2 ($21 + 3 = 24$); con số ngoặc tròn thì **không** khớp cái
+$181$ ở đó, vì hai phép đếm không đếm cùng một vật — cái này đếm cặp glyph trên golden,
+cái kia đếm chỗ khác. Ghi ra để không ai đọc hai bảng như một phép so trước–sau. Cột
+đáng đọc là cột cuối, và nó bằng $0$ ở cả hai phép đếm.
+
+Nhánh vẽ tay của ngoặc **không còn trong mã** — `parenMetrics` và năm hằng số dáng
+cung chết theo nó. Đây là cổ tức thật của việc đi tới cùng một cơ chế thay vì để lại
+một lối dự phòng: lối dự phòng nào cũng là một lối **ít được đi và ít được nhìn**, tức
+đúng chỗ lỗi ở lại.
+
+### 50.5 Golden churn, soát bằng máy
+
+Bốn tệp đổi trên 472, và cả bốn được máy soát chứ không được liếc:
+
+| tệp | đổi gì |
+|---|---|
+| `system-by-substitution--sol--s1` | 1 `<path>` → 5 mảnh; nội dung dịch phải $2{,}345$ |
+| `arithmetic-sequence-by-telescoping--sol--s0` | 2 `<path>` → 14 mảnh; cùng một phép dịch |
+| `candies-three-children-gf--sol--s1` | `[` `]` dịch lên $0{,}15$ |
+| `candies-three-children-gf--alt--t0` | như trên, 8 glyph |
+
+Phép soát: bỏ mảnh ngoặc và path ngoặc cũ ra khỏi cả hai bản, rồi so **hình dạng từng
+dòng sau khi xoá mọi toạ độ** — khớp $365/365$ và $138/138$. Còn lại đúng **một** phép
+dịch ngang, $2{,}345 = 5 \cdot (0{,}889 - 0{,}42)$: bề ngang thật của cụm ngoặc nhọn
+`Size4` trừ đi con số $0{,}42$ mà nhánh vẽ tay tự đặt cho mình. Nghĩa là churn **giải
+thích được bằng một con số**, không phải "chắc là do đổi ngoặc".
+
+### 50.6 Cái đã sai trước khi đúng
+
+1. **Vá bằng string-splice mù làm hỏng `typeset.ts`** — trùng `Box`, trùng `measure`,
+   trùng `RAD_*`. Khôi phục được vì `HEAD` đã chứa M76b. Bài học M76 (§48.4 mục 5) nói
+   về `git checkout` trong vòng bẻ răng; bài học này là anh em của nó ở phía *sửa*:
+   **thay chuỗi phải có kiểm**, và vòng bẻ răng hoàn tác bằng bản sao trong scratchpad
+   chứ không bằng `git`.
+
+2. **Một chú thích khai một chốt canh không tồn tại.** Bản đầu viết cho `runs` rằng
+   *"bỏ chỗ này thì cái eo trôi khỏi giữa"*. Bẻ răng ra thì test **không đỏ** — vì dãy
+   mảnh đối xứng nên eo giữ nguyên chỗ dù đếm sai. Chú thích ấy tự tin hơn sự thật, và
+   nếu để lại thì lần sau ai đó sẽ tin nó thay vì đo. Sửa cả hai đầu: chú thích nói
+   đúng cái `runs` giữ (số mảnh, không phải vị trí eo), và một chốt canh mới hỏi đúng
+   cái ấy. **Bẻ răng không chỉ kiểm mã — nó kiểm cả lời mình viết về mã.**

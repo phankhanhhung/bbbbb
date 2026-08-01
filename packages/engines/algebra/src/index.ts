@@ -49,6 +49,7 @@ export {
   type Move,
 } from './commands.js';
 export { toBox, measure, place, textWidth, shrink, glyphBox, FONT, ROW } from './typeset.js';
+export type { Box } from './typeset.js';
 export { algebraRenderer } from './render.js';
 
 /**

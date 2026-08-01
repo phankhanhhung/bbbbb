@@ -38,6 +38,7 @@ import {
   ALGEBRA_LIMITS,
   FUNCTIONS,
   type AlgebraStep,
+  type Box,
   type Expr,
 } from '../src/index.js';
 import { toPlain } from '../src/parse.js';
@@ -2507,17 +2508,6 @@ describe('M76 — bảng bề rộng đo bằng máy, dấu gộp vẽ bằng pa
       expect(delims('2*(x + 1)')[0]?.family).toBeUndefined();
     });
 
-    it('ngoài thang thì mới vẽ tay — và nét lúc ấy **không đổi theo chiều cao**', () => {
-      // Kéo `Size4` cho cao gấp đôi là quay lại đúng lỗi vừa sửa, nên ca ấy đi đường
-      // cung vẽ tay. Đo trên kho: 3/24 ngoặc nhọn, 0/181 ngoặc tròn, 0/54 dấu căn.
-      const deep = drawnOf('2*(((x+1)/(x+2))/((y+1)/(y+2)) + 1)');
-      const arcs = deep.paths.filter((x) => x.d.includes('Q'));
-      expect(arcs.length).toBeGreaterThan(0);
-      const small = drawnOf('2*(x + 1)');
-      expect(small.paths.filter((x) => x.d.includes('Q'))).toHaveLength(0);
-      expect(new Set(arcs.map((a) => a.width)).size).toBe(1);
-    });
-
     it('dấu gộp **giữ được danh tính** của nút bao nó', () => {
       // Trước M76b ngoặc là path mang `owner`; nay là glyph. Mất chỗ ấy thì anchor
       // trỏ vào một tích có ngoặc sẽ không sáng phần ngoặc.
@@ -2530,6 +2520,169 @@ describe('M76 — bảng bề rộng đo bằng máy, dấu gộp vẽ bằng pa
       expect(p.paths).toHaveLength(0);
       // Vạch trùm vẫn là `rule` của engine — KaTeX cũng vẽ nó riêng.
       expect(p.rules.length).toBeGreaterThan(0);
+    });
+  });
+
+  /**
+   * Trên `Size4` thì **ghép mảnh**, không vẽ tay (M76c).
+   *
+   * M76b dừng thang ở `Size4` và cho phần trên rơi về cung vẽ tay. Ba trên hai mươi
+   * bốn ngoặc nhọn của kho rơi vào đó — và ba cái ấy nằm ở những bài có $\Sigma$ trong
+   * hệ, tức những hình **to nhất trang**. Một dấu ngoặc nhọn không giống bất cứ ngoặc
+   * nhọn nào khác của kho là thứ đập vào mắt trước tiên; "hiếm" không có nghĩa là
+   * "không thấy".
+   *
+   * Bảng số của các mảnh đo **độc lập** với bảng trong `typeset.ts` (cùng nguồn là
+   * `glyf` của `KaTeX_Size4-Regular`, hai lần đọc). Chép lại ở đây để phép kiểm không
+   * đi hỏi chính thứ nó đang kiểm.
+   */
+  describe('ngoài thang thì ghép mảnh — cùng bộ chữ, không phải bút vẽ', () => {
+    /** `ymax`/`ymin` từng mảnh, `em`. */
+    const INK: Readonly<Record<string, readonly [number, number]>> = {
+      '⎛': [1.154, -0.655],
+      '⎜': [0.61, -0.01],
+      '⎝': [1.165, -0.644],
+      '⎞': [1.154, -0.655],
+      '⎟': [0.61, -0.01],
+      '⎠': [1.165, -0.644],
+      '⎧': [0.899, -0.01],
+      '⎨': [1.16, -0.66],
+      '⎩': [0.01, -0.899],
+      '⎪': [0.31, -0.01],
+      '⎫': [0.899, -0.01],
+      '⎬': [1.16, -0.66],
+      '⎭': [0.01, -0.899],
+    };
+    /** Mực dọc của một mảnh đã đặt: `[đỉnh, đáy]` trên toạ độ scene. */
+    const ink = (g: { s: string; y: number; size: number }): readonly [number, number] => {
+      const [ymax, ymin] = INK[g.s] as readonly [number, number];
+      return [g.y - ymax * g.size, g.y - ymin * g.size];
+    };
+    const pieces = (src: string) => drawnOf(src).glyphs.filter((g) => g.s in INK);
+
+    /** Ngoặc tròn trùm một phân số lồng hai tầng; ngoặc nhọn của hệ ba dòng. */
+    const DEEP_PAREN = '2*(((x+1)/(x+2))/((y+1)/(y+2)) + 1)';
+    const DEEP_BRACE = 'a + b = 1; a - b = 2; a + 2*b = 3';
+
+    it('không còn một cung vẽ tay nào — cả ba hình dấu gộp', () => {
+      // Đây là thứ mục này mua được: mọi dấu gộp của kho, ở mọi cỡ, cùng một bộ chữ.
+      for (const src of [DEEP_PAREN, DEEP_BRACE, '2*(x + 1)', 'a + b = 1; a - b = 2']) {
+        expect(drawnOf(src).paths.filter((p) => p.d.includes('Q')), src).toHaveLength(0);
+      }
+    });
+
+    it('mảnh vẽ ở **đúng cỡ chữ dòng** và bằng chính `KaTeX_Size4`', () => {
+      // Nếu chúng được kéo giãn thì ta lại đúng ở chỗ M76b xuất phát: nét dày lên
+      // theo chiều cao.
+      for (const src of [DEEP_PAREN, DEEP_BRACE]) {
+        const gs = pieces(src);
+        expect(gs.length, src).toBeGreaterThan(2);
+        expect(gs.every((g) => g.size === FONT), src).toBe(true);
+        expect(gs.every((g) => g.family?.includes('Size4')), src).toBe(true);
+      }
+    });
+
+    it('các mảnh **liền nhau**: mảnh sau bắt đầu trước khi mảnh trước hết', () => {
+      // Ghép sát mép thì ở mật độ raster thật còn lại một sợi trắng giữa hai mảnh và
+      // dấu ngoặc hoá đứt quãng — lỗi chỉ thấy trên ảnh, không thấy trên chuỗi SVG.
+      for (const src of [DEEP_PAREN, DEEP_BRACE]) {
+        const column = pieces(src).filter((g) => g.x === (pieces(src)[0] as { x: number }).x);
+        const spans = column.map(ink);
+        for (let i = 1; i < spans.length; i += 1) {
+          const prev = spans[i - 1] as readonly [number, number];
+          const cur = spans[i] as readonly [number, number];
+          expect(cur[0], `${src} mảnh ${i}`).toBeLessThan(prev[1]);
+        }
+      }
+    });
+
+    it('cụm cao **đúng** bằng thứ nó phải trùm — không nhảy nấc theo số mảnh', () => {
+      // Số mảnh là số nguyên nên cụm thô bao giờ cũng dôi; nuốt chỗ dôi bằng chồng lấn
+      // thì thêm một dòng vào hệ không làm ngoặc nhảy một bậc thấy được.
+      const p = place(toBox(parse(DEEP_BRACE, new Minter()), FONT), 0, 0);
+      const box = measure(toBox(parse(DEEP_BRACE, new Minter()), FONT));
+      const spans = p.glyphs.filter((g) => g.s in INK).map(ink);
+      const top = Math.min(...spans.map((s) => s[0]));
+      const bottom = Math.max(...spans.map((s) => s[1]));
+      expect(bottom - top).toBeCloseTo(box.above + box.below, 1);
+    });
+
+    it('số mảnh là **ít nhất** còn với tới — bớt một vòng thì hụt', () => {
+      // Ngoặc nhọn có hai dải nối, một trên eo một dưới, nên mỗi bậc cao thêm **hai**
+      // đoạn. Đếm như thể một dải thì cụm vẫn đúng chỗ và vẫn đúng chiều cao — chồng
+      // lấn nuốt hết chỗ dôi — nhưng nó ghép gấp đôi số mảnh và chồng gần trọn nửa
+      // đoạn nối để bù. Sai lặng lẽ, nên phải hỏi thẳng.
+      const src = 'a + b = 1; a - b = 2; a + 2*b = 3; a + 3*b = 4';
+      const gs = pieces(src);
+      const spans = gs.map(ink);
+      const total = Math.max(...spans.map((s) => s[1])) - Math.min(...spans.map((s) => s[0]));
+      const raw = gs.reduce((acc, g) => {
+        const [ymax, ymin] = INK[g.s] as readonly [number, number];
+        return acc + (ymax - ymin) * g.size;
+      }, 0);
+      const rung = ((INK['⎪'] as readonly [number, number])[0] -
+        (INK['⎪'] as readonly [number, number])[1]) * FONT;
+      expect(raw).toBeGreaterThanOrEqual(total);
+      expect(raw - 2 * rung).toBeLessThan(total);
+    });
+
+    it('eo ngoặc nhọn nằm đúng chỗ eo của ngoặc nhọn **nhỏ** — trục dòng', () => {
+      // Đây là câu hỏi đã sinh ra cả mục: "ngoặc to chẳng giống gì ngoặc nhỏ". Cả hai
+      // cỡ có eo cách đường chân $0{,}25$ em, nên chúng phải rơi vào **một** đường.
+      const waist = pieces(DEEP_BRACE).find((g) => g.s === '⎨');
+      const [ymax, ymin] = INK['⎨'] as readonly [number, number];
+      const bigCentre = (waist as { y: number }).y - ((ymax + ymin) / 2) * FONT;
+
+      const small = drawnOf('a + b = 1; a - b = 2').glyphs.find((g) => g.s === '{');
+      // Cả năm bậc font đều cân tại $+0{,}25$ em trên đường chân của chính glyph.
+      const smallCentre = (small as { y: number }).y - 0.25 * FONT;
+
+      expect(bigCentre).toBeCloseTo(smallCentre, 6);
+    });
+
+    it('ngoặc mở và ngoặc đóng **cùng một lối** — hỏi chung một chiều cao', () => {
+      // Hỏi riêng từng bên là cách một ngoặc mở cỡ này gặp một ngoặc đóng cỡ khác:
+      // ruột hai bên là **một**, nhưng hai phép hỏi thì không bắt buộc phải thế.
+      const gs = pieces(DEEP_PAREN);
+      const xs = [...new Set(gs.map((g) => g.x))].sort((a, b) => a - b);
+      expect(xs).toHaveLength(2);
+      const span = (x: number) => {
+        const s = gs.filter((g) => g.x === x).map(ink);
+        return [Math.min(...s.map((v) => v[0])), Math.max(...s.map((v) => v[1]))];
+      };
+      expect(span(xs[0] as number)).toEqual(span(xs[1] as number));
+    });
+  });
+
+  /**
+   * Ngoặc **vuông** đi cùng thang (M76c).
+   *
+   * $[x^n]$ dựng ở M72 bằng hai glyph `text` cỡ chữ — tức một dấu gộp đứng **ngoài**
+   * bộ máy: nó không lên bậc khi ruột cao lên, và nó không cân trục nên nằm lệch so
+   * với mọi ngoặc tròn cùng dòng. Bậc font, cụm ghép mảnh và phép cân trục là một bộ
+   * máy; cái gì ở ngoài nó thì sớm muộn sẽ lệch khỏi nó.
+   */
+  describe('ngoặc vuông cùng một bộ máy với ngoặc tròn', () => {
+    it('`[` và `]` của $[x^n]$ **cân trục**, đúng chỗ ngoặc tròn cùng cỡ đứng', () => {
+      const square = drawnOf('coeff(x, 5, 1/(1-x))').glyphs.filter((g) => '[]'.includes(g.s));
+      const round = drawnOf('2*(x + 1)').glyphs.filter((g) => '()'.includes(g.s));
+      expect(square).toHaveLength(2);
+      expect(new Set(square.map((g) => g.y))).toEqual(new Set(round.map((g) => g.y)));
+    });
+
+    it('và lên bậc khi ruột cao lên — hệt ngoặc tròn', () => {
+      const box: Box = {
+        t: 'paren',
+        kind: '[',
+        inner: toBox(parse('(x+1)/(x+2)', new Minter()), FONT),
+        size: FONT,
+      };
+      const g = place(box, 0, 0).glyphs.filter((x) => '[]'.includes(x.s));
+      expect(g).toHaveLength(2);
+      expect(g.every((x) => x.family?.includes('Size'))).toBe(true);
+      // Bề ngang lớn theo bậc: `[` của `Size2` rộng $0{,}472$ em so với $0{,}278$ của
+      // `Main` — chúng là hai con chữ khác nhau, không phải một hình phóng to.
+      expect(g.every((x) => x.size === FONT)).toBe(true);
     });
   });
 });

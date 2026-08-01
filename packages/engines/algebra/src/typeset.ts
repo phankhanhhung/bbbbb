@@ -80,9 +80,8 @@ const SUB_CLEAR = 0.34;
 const subDrop = (base: Metrics, sub: Metrics): number =>
   Math.max(base.above * SUB_DROP, sub.above * SUB_CLEAR + base.below);
 
-/** Hở dọc giữa hai dòng của một chồng; bề ngang ngoặc nhọn; hở sau ngoặc. */
+/** Hở dọc giữa hai dòng của một chồng; hở giữa ngoặc nhọn và ruột. */
 const STACK_GAP = 0.42;
-const BRACE_W = 0.42;
 const BRACE_PAD = 0.26;
 
 /** Ký hiệu $\sum$ vẽ to hơn cỡ chữ dòng; hở giữa nó và hai cận; hở trước thân. */
@@ -222,6 +221,8 @@ const DELIM_SIZES: readonly { readonly family: string | null; readonly ymin: num
 const DELIM_ADVANCE: Readonly<Record<string, readonly number[]>> = {
   '(': [0.389, 0.458, 0.597, 0.736, 0.792],
   ')': [0.389, 0.458, 0.597, 0.736, 0.792],
+  '[': [0.278, 0.417, 0.472, 0.528, 0.583],
+  ']': [0.278, 0.417, 0.472, 0.528, 0.583],
   '{': [0.5, 0.583, 0.667, 0.75, 0.806],
   '}': [0.5, 0.583, 0.667, 0.75, 0.806],
   '√': [0.833, 1, 1, 1, 1],
@@ -260,6 +261,112 @@ const radicalNeed = (inner: Metrics, size: number): number =>
 const RULE_EM = 0.075;
 /** Hở giữa đỉnh ruột và vạch trùm. */
 const RAD_CLEAR = 0.08;
+
+/**
+ * **Dấu gộp ghép mảnh** — nấc cuối của thang, và là cách MathJax/KaTeX vẽ mọi dấu
+ * cao hơn `Size4` (M76c).
+ *
+ * Thang năm bậc dừng ở $3$ em. Trên đó, `Size4` còn ship một bộ **mảnh** để ghép:
+ * một đầu trên, một đầu dưới, một đoạn nối lặp bao nhiêu lần cũng được — và với
+ * ngoặc nhọn thì thêm một cái **eo** ở giữa. Ghép chúng cho ra một dấu cao tuỳ ý mà
+ * **nét vẫn là nét của bộ chữ**, không phải một cung vẽ tay.
+ *
+ * Đây là chỗ M76b còn hụt. Nhánh dự phòng vẽ tay của nó chỉ chạm $3$ trên $24$ ngoặc
+ * nhọn — nhưng ba cái ấy nằm ở những bài có $\Sigma$ trong hệ, tức những hình **to
+ * nhất trang**, và một ngoặc nhọn không giống bất cứ ngoặc nhọn nào khác của kho là
+ * thứ đập vào mắt trước tiên. "Hiếm" không có nghĩa là "không thấy".
+ *
+ * `advance` của mảnh rộng hơn bậc `Size4` (ngoặc tròn $0{,}875$ so với $0{,}792$) —
+ * đúng như mọi bậc trước nó rộng hơn bậc dưới.
+ */
+const STACK_PIECES: Readonly<
+  Record<string, { top: string; ext: string; mid: string | null; bottom: string; advance: number }>
+> = {
+  '(': { top: '⎛', ext: '⎜', mid: null, bottom: '⎝', advance: 0.875 },
+  ')': { top: '⎞', ext: '⎟', mid: null, bottom: '⎠', advance: 0.875 },
+  '[': { top: '⎡', ext: '⎢', mid: null, bottom: '⎣', advance: 0.667 },
+  ']': { top: '⎤', ext: '⎥', mid: null, bottom: '⎦', advance: 0.667 },
+  '{': { top: '⎧', ext: '⎪', mid: '⎨', bottom: '⎩', advance: 0.889 },
+  '}': { top: '⎫', ext: '⎪', mid: '⎬', bottom: '⎭', advance: 0.889 },
+};
+
+/** Cao và đỉnh của từng mảnh, `em`, đọc từ `glyf` của `KaTeX_Size4-Regular`. */
+const PIECE: Readonly<Record<string, { h: number; ymax: number }>> = {
+  '⎛': { h: 1.809, ymax: 1.154 },
+  '⎜': { h: 0.62, ymax: 0.61 },
+  '⎝': { h: 1.809, ymax: 1.165 },
+  '⎞': { h: 1.809, ymax: 1.154 },
+  '⎟': { h: 0.62, ymax: 0.61 },
+  '⎠': { h: 1.809, ymax: 1.165 },
+  '⎡': { h: 1.799, ymax: 1.154 },
+  '⎢': { h: 0.602, ymax: 0.602 },
+  '⎣': { h: 1.799, ymax: 1.155 },
+  '⎤': { h: 1.799, ymax: 1.154 },
+  '⎥': { h: 0.602, ymax: 0.602 },
+  '⎦': { h: 1.799, ymax: 1.155 },
+  '⎧': { h: 0.909, ymax: 0.899 },
+  '⎨': { h: 1.82, ymax: 1.16 },
+  '⎩': { h: 0.909, ymax: 0.01 },
+  '⎪': { h: 0.32, ymax: 0.31 },
+  '⎫': { h: 0.909, ymax: 0.899 },
+  '⎬': { h: 1.82, ymax: 1.16 },
+  '⎭': { h: 0.909, ymax: 0.01 },
+};
+
+/**
+ * Chồng lấn **tối thiểu** giữa hai mảnh kề nhau, `em`.
+ *
+ * Ghép sát mép thì ở mật độ raster thật hai mảnh để lại một sợi trắng một pixel giữa
+ * chúng — dấu ngoặc hoá đứt quãng. Chồng một chút thì hết, và chồng ít tới mức không
+ * ai thấy chỗ chồng.
+ */
+const PIECE_LAP = 0.01;
+
+/**
+ * Trần chồng lấn: **nửa** một đoạn nối.
+ *
+ * Số mảnh là số nguyên nên cụm ghép ra bao giờ cũng **dôi** so với chiều cao cần —
+ * dôi tới gần trọn một đoạn nối. Nuốt chỗ dôi ấy bằng cách chồng sâu thêm thì cụm cao
+ * đúng bằng thứ nó phải trùm, và người đọc không thấy dấu ngoặc nhảy nấc theo số
+ * mảnh. Chồng chỉ ăn vào **đoạn nối** — một nét thẳng — nên không có gì để mất; nhưng
+ * quá nửa thì hai đầu cong bắt đầu ăn vào nhau, nên có trần.
+ *
+ * Trần này không bao giờ bị chạm khi số mảnh đã đủ: chỗ dôi nhỏ hơn một đoạn nối, chia
+ * cho ít nhất hai mối nối. Nó chỉ đỡ đúng một ca — cụm ngắn nhất còn cao hơn thứ cần
+ * trùm, tức ngay trên vạch rời `Size4`, và ở đó dấu **phải** dôi vì không thể ngắn hơn.
+ */
+const PIECE_LAP_MAX = 0.5;
+
+const STACK_FAMILY = "'KaTeX_Size4', serif";
+
+/** Dãy mảnh xếp từ trên xuống, chồng lấn thật, và chiều cao thật của cả cụm (em). */
+function stackPlan(
+  glyph: string,
+  need: number,
+): { advance: number; seq: string[]; lap: number; total: number } {
+  const spec = STACK_PIECES[glyph] as NonNullable<(typeof STACK_PIECES)[string]>;
+  const h = (ch: string): number => (PIECE[ch] as { h: number }).h;
+  const fixed = h(spec.top) + h(spec.bottom) + (spec.mid === null ? 0 : h(spec.mid));
+  // Ngoặc nhọn có **hai** dải nối (trên eo và dưới eo), nên `n` là số đoạn **mỗi
+  // dải** và mỗi bậc `n` cao thêm hai đoạn. Quên chỗ này thì cụm không sai chỗ — dãy
+  // vẫn đối xứng nên eo vẫn giữa, và chồng lấn vẫn nuốt chỗ dôi — nhưng nó ghép gấp
+  // đôi số mảnh cần thiết và phải chồng gần trọn nửa đoạn nối để bù. Sai lặng lẽ, nên
+  // nó có một chốt canh riêng.
+  const runs = spec.mid === null ? 1 : 2;
+  const n = Math.max(1, Math.ceil((need - fixed) / (runs * h(spec.ext))));
+  const fill = Array.from({ length: n }, () => spec.ext);
+  const seq =
+    spec.mid === null
+      ? [spec.top, ...fill, spec.bottom]
+      : [spec.top, ...fill, spec.mid, ...fill, spec.bottom];
+  const raw = seq.reduce((acc, ch) => acc + h(ch), 0);
+  const joints = seq.length - 1;
+  const lap = Math.min(
+    Math.max((raw - need) / joints, PIECE_LAP),
+    h(spec.ext) * PIECE_LAP_MAX,
+  );
+  return { advance: spec.advance, seq, lap, total: raw - lap * joints };
+}
 
 interface Delim {
   readonly family: string | null;
@@ -302,6 +409,47 @@ const delimNeed = (inner: Metrics, size: number): number => {
   const delta = Math.max(inner.above - size * AXIS, inner.below + size * AXIS) / size;
   return Math.max(delta * DELIM_FACTOR, 2 * delta - DELIM_SHORTFALL);
 };
+
+/**
+ * Một dấu gộp đã chọn xong hình thức: hoặc **một glyph** của bậc vừa đủ, hoặc một
+ * **cụm mảnh ghép**. Đơn vị scene, không phải em.
+ *
+ * Chỗ duy nhất trả lời câu "dấu này rộng bao nhiêu, cao tới đâu", nên `measure` và
+ * `place` hỏi cùng một câu và nhận cùng một câu trả lời. Hai bên tự tính lấy là cách
+ * ruột nằm lệch khỏi ô mà hộp đã chừa — lỗi ấy đã xảy ra một lần ở dấu căn.
+ *
+ * Cả hai lối đều **cân trục**: glyph vì cả năm bậc cân sẵn tại $+0{,}25$ em, cụm mảnh
+ * vì ta đặt tâm nó vào trục. Nên đổi lối không làm dấu nhảy chỗ.
+ */
+interface DelimPlan {
+  /** Bề ngang **một bên**. */
+  readonly advance: number;
+  readonly above: number;
+  readonly below: number;
+  /** Bậc font đã chọn, hoặc `null` khi phải ghép mảnh. */
+  readonly font: Delim | null;
+  /** Dãy mảnh xếp từ trên xuống — rỗng ở lối glyph. */
+  readonly seq: readonly string[];
+  /** Chồng lấn giữa hai mảnh kề, đơn vị scene. */
+  readonly lap: number;
+}
+
+function delimBox(glyph: string, need: number, size: number): DelimPlan {
+  const font = pickDelim(glyph, need);
+  if (font !== null) {
+    return { advance: font.advance * size, ...delimExtent(font, size), font, seq: [], lap: 0 };
+  }
+  const plan = stackPlan(glyph, need);
+  const half = (plan.total * size) / 2;
+  return {
+    advance: plan.advance * size,
+    above: half + size * AXIS,
+    below: half - size * AXIS,
+    font: null,
+    seq: plan.seq,
+    lap: plan.lap * size,
+  };
+}
 
 /**
  * Glyph **không** nằm trong `KaTeX_Main` — phải khai font riêng, nếu không trình
@@ -417,7 +565,14 @@ export type Box =
   | { t: 'row'; items: readonly Box[] }
   | { t: 'frac'; num: Box; den: Box; size: number }
   | { t: 'sup'; base: Box; exp: Box }
-  | { t: 'paren'; inner: Box; size: number }
+  /**
+   * Cặp dấu gộp bao một hộp. `kind` là **dấu mở**; dấu đóng suy ra.
+   *
+   * `[` đi chung hộp này từ M76c, thay vì hai glyph `text` cỡ chữ như lúc dựng
+   * $[x^n]$ ở M72: bậc font, cụm ghép mảnh và phép cân trục là một bộ máy, và một
+   * dấu gộp đứng ngoài bộ máy ấy sẽ đứng yên trong khi ruột nó cao lên.
+   */
+  | { t: 'paren'; kind?: '(' | '['; inner: Box; size: number }
   /**
    * Dấu căn: móc bên trái, vạch trùm lên trên toàn bộ ruột.
    *
@@ -528,13 +683,8 @@ export function measure(box: Box): Metrics {
       // Cả chồng căn giữa quanh trục của dòng: một hệ hai phương trình phải có dấu $=$
       // của nó nằm hai bên đường chân, không treo lên trên.
       const axis = box.size * AXIS;
-      const font = box.brace === null ? null : pickDelim('{', h / box.size);
       const head =
-        box.brace === null
-          ? 0
-          : font === null
-            ? box.size * (BRACE_W + BRACE_PAD)
-            : box.size * (font.advance + BRACE_PAD);
+        box.brace === null ? 0 : delimBox('{', h / box.size, box.size).advance + box.size * BRACE_PAD;
       return { w: head + lead + tail, above: h / 2 + axis, below: h / 2 - axis };
     }
     case 'big': {
@@ -578,14 +728,13 @@ export function measure(box: Box): Metrics {
     }
     case 'paren': {
       const inner = measure(box.inner);
-      const font = pickDelim('(', delimNeed(inner, box.size));
-      if (font === null) {
-        const { w, above, below } = parenMetrics(inner, box.size);
-        return { w: inner.w + 2 * w, above, below };
-      }
-      const { above, below } = delimExtent(font, box.size);
+      const { advance, above, below } = delimBox(
+        box.kind ?? '(',
+        delimNeed(inner, box.size),
+        box.size,
+      );
       return {
-        w: inner.w + 2 * font.advance * box.size,
+        w: inner.w + 2 * advance,
         above: Math.max(inner.above, above),
         below: Math.max(inner.below, below),
       };
@@ -601,69 +750,6 @@ const RAD_INDEX = 0.52;
 const BAR_PAD = 0.26;
 const RAD_LIFT = 0.34;
 const RAD_PAD = 0.16;
-
-/**
- * Hình dạng ngoặc: **độ cong** và **chỗ đứng** là hai số khác nhau.
- *
- * Bản đầu của M76 gộp chúng làm một — cung bẻ sâu đúng bằng bề ngang đã chừa — và
- * lượt nhìn cho ra ngay hai lỗi: ngoặc ngắn phình thành cái ngoặc vuông bè, còn hai
- * ngoặc kề nhau `)(` chạm bụng nhau thành một hình thấu kính. Tách ra thì mỗi số
- * chữa một chuyện: `PAREN_BOW` lo dáng, `PAREN_SIDE` lo khoảng hở.
- *
- * Độ cong tỉ lệ với chiều cao nhưng **có trần và có sàn**: ngoặc của một dòng chữ
- * cong như ngoặc bình thường, ngoặc trùm bốn dòng thì tương đối *thẳng hơn* — đúng
- * như mọi bộ font toán vẽ, vì một cung giữ nguyên tỉ lệ ở chiều cao gấp bốn sẽ loe
- * ra thành dấu ngoặc nhọn.
- */
-const PAREN_BOW = 0.13;
-const PAREN_BOW_MIN = 0.2;
-const PAREN_BOW_MAX = 0.55;
-/**
- * Hở giữa mép cung và mép hộp — chỗ giữ cho `)(` không dính vào nhau.
- *
- * $0{,}17$ chọn để bề ngang cả ngoặc xấp xỉ advance $0{,}389$ em của glyph `(`
- * trong KaTeX_Main: đổi cách vẽ mà không đổi nhịp dòng.
- */
-const PAREN_SIDE = 0.17;
-/**
- * Hở **trong lòng** ngoặc, giữa đầu cung và mực của ruột.
- *
- * Một glyph ngoặc mang sẵn side bearing hai bên; một cung vẽ tay thì không, nên đầu
- * cung nằm đúng mép hộp của ruột và chữ nghiêng — vốn thò ra ngoài advance — chạm
- * vào nó. Thấy ở $(c+d)$: bụng chữ `d` dính vào ngoặc đóng.
- */
-const PAREN_INNER = 0.09;
-/** Ngoặc nhô ra ngoài ruột chừng này để nó ôm chứ không cắt ngang. */
-const PAREN_LIP = 0.06;
-
-/**
- * Hình học của một cặp ngoặc — **không** phải một glyph phóng to (M76).
- *
- * Bản trước lấy glyph `(` rồi kéo `font-size` lên cho bằng chiều cao ruột. Nét của
- * một glyph dày theo cỡ chữ, nên một ngoặc bọc phân số lồng hai tầng có nét **dày
- * gấp 3,68 lần** ngoặc thường nằm ngay cạnh nó — đo trên chính cây hộp, không phải
- * cảm giác. Trên trang nó ra một cục đậm bên cạnh mấy ngoặc mảnh.
- *
- * Và kho này **đã biết** bài học ấy: `{` của hệ và móc của dấu căn đều vẽ bằng path
- * với đúng lời giải thích "glyph có tỉ lệ cố định nên kéo cho cao thì nét dày ra".
- * Ngoặc tròn là chỗ duy nhất còn làm ngược. Nay nó cũng là path: **cao theo ruột,
- * nét không đổi**, bề ngang loe nhẹ để một ngoặc cao không thành cái kim.
- *
- * Cổ tức kèm theo: bớt một chỗ phụ thuộc font. Ngoặc nay vẽ ra giống hệt nhau ở
- * trình duyệt và ở ảnh tĩnh, dù font nào được nạp.
- */
-function parenMetrics(
-  inner: Metrics,
-  size: number,
-): { w: number; bow: number; above: number; below: number } {
-  const above = Math.max(inner.above, size * ASCENT) + size * PAREN_LIP;
-  const below = Math.max(inner.below, size * DESCENT) + size * PAREN_LIP;
-  const bow = Math.min(
-    Math.max((above + below) * PAREN_BOW, size * PAREN_BOW_MIN),
-    size * PAREN_BOW_MAX,
-  );
-  return { w: bow + size * (PAREN_SIDE + PAREN_INNER), bow, above, below };
-}
 
 /* ---------- glyph đã đặt ---------- */
 
@@ -745,6 +831,56 @@ export function place(box: Box, x: number, y: number): Placed {
   const paths: PlacedPath[] = [];
   const boxes: NodeBox[] = [];
 
+  /**
+   * Vẽ một dấu gộp cao `need` em, mép trái ở `bx`, cân trục của dòng có đường chân
+   * `by`. Trả bề ngang đã chiếm.
+   *
+   * Hai lối, một chỗ gọi: bậc font khi còn trong thang, cụm mảnh ghép khi vượt. Chỗ
+   * gọi **không được biết** đang đi lối nào — nếu nó biết thì sớm muộn hai lối sẽ
+   * được đặt bằng hai phép tính khác nhau, và dấu sẽ nhảy chỗ ở đúng cỡ giao nhau.
+   */
+  const putDelim = (
+    glyph: string,
+    bx: number,
+    by: number,
+    size: number,
+    need: number,
+    owner: TermId | null,
+  ): number => {
+    const plan = delimBox(glyph, need, size);
+    if (plan.font !== null) {
+      // Đường chân của glyph đặt sao cho **tâm nó rơi đúng trục dòng**.
+      glyphs.push({
+        s: glyph,
+        x: bx,
+        y: by + size * (DELIM_AXIS - AXIS),
+        size,
+        italic: false,
+        ...(plan.font.family === null ? {} : { family: plan.font.family }),
+        owner,
+      });
+      return plan.advance;
+    }
+    // Cụm mảnh: xếp từ đỉnh xuống, mỗi mảnh chồng lên mảnh trên `PIECE_LAP` em. Đường
+    // chân từng mảnh suy từ `ymax` của chính nó, vì các mảnh **không** cùng một chỗ
+    // đứng so với đường chân — `⎩` có `ymax` gần $0$ còn `⎧` gần $0{,}9$.
+    let top = by - plan.above;
+    for (const ch of plan.seq) {
+      const piece = PIECE[ch] as { h: number; ymax: number };
+      glyphs.push({
+        s: ch,
+        x: bx,
+        y: top + piece.ymax * size,
+        size,
+        italic: false,
+        family: STACK_FAMILY,
+        owner,
+      });
+      top += piece.h * size - plan.lap;
+    }
+    return plan.advance;
+  };
+
   const go = (b: Box, bx: number, by: number, owner: TermId | null): Metrics => {
     switch (b.t) {
       case 'text': {
@@ -820,13 +956,9 @@ export function place(box: Box, x: number, y: number): Placed {
         const step = b.size * STACK_GAP;
         // Cùng phép tính với `measure` — hai chỗ lệch nhau thì ruột nằm không đúng
         // chỗ mà hộp đã chừa, và cả dòng trôi.
-        const braceFont = b.brace === null ? null : pickDelim('{', (m.above + m.below) / b.size);
+        const braceNeed = (m.above + m.below) / b.size;
         const head =
-          b.brace === null
-            ? 0
-            : braceFont === null
-              ? b.size * (BRACE_W + BRACE_PAD)
-              : b.size * (braceFont.advance + BRACE_PAD);
+          b.brace === null ? 0 : delimBox('{', braceNeed, b.size).advance + b.size * BRACE_PAD;
         const top = by - m.above;
 
         let y = top;
@@ -837,37 +969,7 @@ export function place(box: Box, x: number, y: number): Placed {
           y += rm.below + step;
         });
 
-        if (b.brace !== null) {
-          if (braceFont !== null) {
-            // Glyph của bậc đã chọn, tâm rơi đúng trục dòng — cùng phép đặt với ngoặc
-            // tròn, vì cả năm bậc đều cân tại $+0{,}25$ em.
-            glyphs.push({
-              s: '{',
-              x: bx,
-              y: by + b.size * (DELIM_AXIS - AXIS),
-              size: b.size,
-              italic: false,
-              ...(braceFont.family === null ? {} : { family: braceFont.family }),
-              owner,
-            });
-          } else {
-            // Ngoài thang (hệ từ ba dòng trở lên): vẽ tay. Kéo `Size4` cho cao gấp
-            // rưỡi thì nét dày gấp rưỡi — đúng cái lỗi mà cả mục này sửa.
-            const w = b.size * BRACE_W;
-            const bottom = by + m.below;
-            const mid = (top + bottom) / 2;
-            paths.push({
-              d:
-                `M${round(bx + w)} ${round(top)}` +
-                `Q${round(bx + w * 0.35)} ${round(top)} ${round(bx + w * 0.35)} ${round(top + (mid - top) * 0.45)}` +
-                `Q${round(bx + w * 0.35)} ${round(mid)} ${round(bx)} ${round(mid)}` +
-                `Q${round(bx + w * 0.35)} ${round(mid)} ${round(bx + w * 0.35)} ${round(mid + (bottom - mid) * 0.55)}` +
-                `Q${round(bx + w * 0.35)} ${round(bottom)} ${round(bx + w)} ${round(bottom)}`,
-              width: b.size * RULE_EM,
-              owner,
-            });
-          }
-        }
+        if (b.brace !== null) putDelim('{', bx, by, b.size, braceNeed, owner);
         return m;
       }
       case 'big': {
@@ -973,49 +1075,14 @@ export function place(box: Box, x: number, y: number): Placed {
       }
       case 'paren': {
         const inner = measure(b.inner);
-        const font = pickDelim('(', delimNeed(inner, b.size));
-
-        if (font !== null) {
-          // Đường chân của glyph đặt sao cho **tâm nó rơi đúng trục dòng**.
-          const y = by + b.size * (DELIM_AXIS - AXIS);
-          const adv = font.advance * b.size;
-          const put = (s: string, x: number): void => {
-            glyphs.push({
-              s,
-              x,
-              y,
-              size: b.size,
-              italic: false,
-              ...(font.family === null ? {} : { family: font.family }),
-              owner,
-            });
-          };
-          put('(', bx);
-          go(b.inner, bx + adv, by, owner);
-          put(')', bx + adv + inner.w);
-          return measure(b);
-        }
-
-        // Ngoài thang: cung vẽ tay. Kéo `Size4` cho cao gấp đôi thì nét dày gấp đôi —
-        // đúng cái lỗi mà cả mục này sinh ra để sửa.
-        const { w, bow, above, below } = parenMetrics(inner, b.size);
-        const top = by - above;
-        const bottom = by + below;
-        const mid = (top + bottom) / 2;
-        const stroke = b.size * 0.075;
-
-        /**
-         * Điểm giữa của một cung bậc hai là $(P_0 + 2C + P_2)/4$, nên với hai đầu
-         * cùng hoành độ thì bụng cung chỉ đi được **nửa** đường tới điểm điều khiển.
-         */
-        const arc = (tipX: number, dir: -1 | 1): string =>
-          `M${round(tipX)} ${round(top)}` +
-          `Q${round(tipX + dir * 2 * bow)} ${round(mid)} ${round(tipX)} ${round(bottom)}`;
-
-        const pad = b.size * PAREN_INNER;
-        paths.push({ d: arc(bx + w - pad, -1), width: stroke, owner });
-        go(b.inner, bx + w, by, owner);
-        paths.push({ d: arc(bx + w + inner.w + pad, 1), width: stroke, owner });
+        const open = b.kind ?? '(';
+        const close = open === '(' ? ')' : ']';
+        const need = delimNeed(inner, b.size);
+        // Hai dấu hỏi **cùng một** `need`, nên chúng luôn cùng bậc — hỏi riêng từng
+        // bên là cách một ngoặc mở cỡ này gặp một ngoặc đóng cỡ khác.
+        const adv = putDelim(open, bx, by, b.size, need, owner);
+        go(b.inner, bx + adv, by, owner);
+        putDelim(close, bx + adv + inner.w, by, b.size, need, owner);
         return measure(b);
       }
     }
@@ -1378,9 +1445,12 @@ export function toBox(e: Expr, size: number = FONT): Box {
       return tag({
         t: 'row',
         items: [
-          text('[', size),
-          { t: 'sup', base: text(e.v, size, true), exp: toBox(e.at, script) },
-          text(']', size),
+          {
+            t: 'paren',
+            kind: '[',
+            inner: { t: 'sup', base: text(e.v, size, true), exp: toBox(e.at, script) },
+            size,
+          },
           { t: 'gap', w: size * 0.12 },
           body,
         ],
