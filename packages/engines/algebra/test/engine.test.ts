@@ -1214,12 +1214,15 @@ describe('AL-06 — choreography sinh từ model', () => {
     // 0", và mọi chữ ấy phải thuộc dòng một. (Scene này không có dòng điều kiện — mấy
     // dòng đỏ ấy là tóm tắt cả chuỗi, không thuộc dòng nào.)
     const leaked: string[] = [];
+    let visibleRow0 = 0;
     const visit = (list: readonly SvgNode[]): void => {
       for (const n of list) {
         if (n.tag === 'text' && Number(n.attrs['opacity'] ?? 1) > 0) {
           const owner = n.attrs['data-el'];
           if (typeof owner !== 'string' || !owner.startsWith('r0-')) {
             leaked.push(`${String(n.children?.[0] ?? '?')} (${String(owner)})`);
+          } else {
+            visibleRow0 += 1;
           }
         }
         if (n.children) visit(n.children as readonly SvgNode[]);
@@ -1228,6 +1231,10 @@ describe('AL-06 — choreography sinh từ model', () => {
     visit(nodes as readonly SvgNode[]);
 
     expect(leaked, `lộ trước ở khung 0: ${leaked.join(' | ')}`).toEqual([]);
+    // Chiều DƯƠNG, thiếu nó chốt canh một chiều: khung 0 trắng trơn hoàn toàn
+    // (một hồi quy giấu luôn cả dòng một — opacity nhân vào 0 là ra 0) cũng cho
+    // `leaked` rỗng. "Chỉ có dòng một" phải nghĩa là dòng một CÓ MẶT.
+    expect(visibleRow0, 'khung 0 phải còn mực của dòng một').toBeGreaterThan(0);
   });
 
   it('CHO-12 — hạng tử đi tiếp **bay xuống từ chỗ cũ**, và dòng trên không thủng lỗ', () => {
@@ -1384,7 +1391,10 @@ describe('mực giải thích (M52)', () => {
       const source = box.lines[0]!.boxes.find(
         (b) => Math.abs(b.x + b.width / 2 - t.x1) < 0.01,
       );
-      expect(source?.width ?? 0, `sợi ${t.id} xuất phát từ một nút bao`).toBeLessThanOrEqual(
+      // `?? 0` cũ biến ca hỏng nặng nhất — sợi xuất phát từ toạ độ không thuộc
+      // hộp nào — thành `0 ≤ trần` luôn xanh. Lookup trượt phải ĐỎ trước đã.
+      expect(source, `sợi ${t.id} xuất phát từ x=${t.x1} không thuộc hộp nào`).toBeDefined();
+      expect(source!.width, `sợi ${t.id} xuất phát từ một nút bao`).toBeLessThanOrEqual(
         leafWidth * 2,
       );
     }

@@ -52,9 +52,14 @@ describe('golden SVG toàn kho', () => {
     const expected = new Set(
       problems.flatMap((problem) =>
         problem.solutions.flatMap((solution) =>
-          solution.steps
-            .filter((step) => step.scene !== undefined && renderer.has(step.scene.engine))
-            .map((step) => `${problem.id}--${solution.id}--${step.id}.svg`),
+          solution.steps.flatMap((step) => [
+            ...(step.scene !== undefined && renderer.has(step.scene.engine)
+              ? [`${problem.id}--${solution.id}--${step.id}.svg`]
+              : []),
+            ...(step.bijection !== undefined && renderer.has(step.bijection.scene.engine)
+              ? [`${problem.id}--${solution.id}--${step.id}--bijection.svg`]
+              : []),
+          ]),
         ),
       ),
     );
@@ -90,16 +95,33 @@ describe('golden SVG toàn kho', () => {
   });
 
   for (const problem of problems) {
+    /**
+     * Pane **phải** của song ánh cũng vào lưới hồi quy — cùng căn bệnh công dân
+     * hạng hai mà M66 chữa ở validate và lượt rà này chữa ở formatProblem: 19
+     * bài bijection, 442 file golden, và không một file pane-phải nào. Nửa mà
+     * bài song ánh sinh ra để nói là nửa duy nhất không có ai canh.
+     */
     const scenes = problem.solutions.flatMap((solution) =>
-      solution.steps
-        .filter((step) => step.scene !== undefined)
-        .map((step) => ({ solution: solution.id, step })),
+      solution.steps.flatMap((step) => [
+        ...(step.scene !== undefined
+          ? [{ solution: solution.id, step, scene: step.scene, suffix: '' }]
+          : []),
+        ...(step.bijection !== undefined
+          ? [
+              {
+                solution: solution.id,
+                step,
+                scene: step.bijection.scene,
+                suffix: '--bijection',
+              },
+            ]
+          : []),
+      ]),
     );
 
     describe(problem.id, () => {
-      for (const { solution, step } of scenes) {
-        it(`${solution}/${step.id}`, async () => {
-          const scene = step.scene!;
+      for (const { solution, step, scene, suffix } of scenes) {
+        it(`${solution}/${step.id}${suffix}`, async () => {
           if (!renderer.has(scene.engine)) return;
 
           // Bật pattern (NFR-A1): golden nên khoá luôn kênh dự phòng không màu,
@@ -108,7 +130,7 @@ describe('golden SVG toàn kho', () => {
           const svg = renderer.toSvg(scene, ctx);
 
           await expect(svg).toMatchFileSnapshot(
-            join(GOLDEN, `${problem.id}--${solution}--${step.id}.svg`),
+            join(GOLDEN, `${problem.id}--${solution}--${step.id}${suffix}.svg`),
           );
         });
       }

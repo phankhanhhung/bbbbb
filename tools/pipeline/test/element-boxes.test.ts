@@ -149,6 +149,29 @@ describe('elementBoxes khớp mực thật', () => {
     );
   });
 
+  /**
+   * Sàn cho phần **được** kiểm: oracle `nodeBox` trả null thì id được miễn — đó
+   * là quyết định đúng (im lặng không phải bằng chứng) nhưng phải có ai đếm xem
+   * sự miễn ấy to đến đâu. Đo hiện tại: ~11% id toàn kho, 52% id của graph (cạnh
+   * vẽ bằng path). Không có sàn thì một hồi quy làm oracle từ chối hàng loạt sẽ
+   * chuyển cả bài đo thành xanh-vô-nghĩa — đúng mẫu `expect(checked >
+   * 50)`/`compared > 200` mà engine.test và film.test đã dùng.
+   */
+  const tally = { compared: 0, skipped: 0 };
+
+  /**
+   * Scene mà oracle mù **toàn bộ** — được phép, nhưng phải có tên ở đây.
+   *
+   * `triangle-lozenge-parity` vẽ mọi ô của lưới tam giác bằng path mà `nodeBox`
+   * từ chối đọc, nên không id nào so được. Danh sách này là một sổ nợ có chủ:
+   * scene mới rơi vào tình trạng ấy sẽ làm test đỏ và người thêm phải ghi tên nó
+   * vào đây bằng tay — sự miễn kiểm không bao giờ được im lặng nữa.
+   */
+  const ORACLE_BLIND = new Set([
+    'triangle-lozenge-parity/sol/s0',
+    'triangle-lozenge-parity/sol/s1',
+  ]);
+
   for (const { label, scene } of scenes) {
     if (!covered.has(scene.engine)) continue;
 
@@ -156,6 +179,7 @@ describe('elementBoxes khớp mực thật', () => {
       const ctx = createContext(defaultTheme, { patterns: true, labels: ATLAS });
       const nodes = renderer.render(scene, ctx);
       const wrong: string[] = [];
+      let compared = 0;
 
       for (const id of elementIds(scene)) {
         const declared = renderer.boxesOf(scene, id, ctx);
@@ -163,7 +187,12 @@ describe('elementBoxes khớp mực thật', () => {
 
         // `nodeBox` không đọc được hình này (path lệnh tương đối, cung...) —
         // không kết tội, vì oracle im lặng không phải là bằng chứng.
-        if (!ink) continue;
+        if (!ink) {
+          tally.skipped += 1;
+          continue;
+        }
+        compared += 1;
+        tally.compared += 1;
 
         if (declared.length === 0) {
           wrong.push(`${id}: engine khai rỗng nhưng có mực ở ${canonicalStringify(ink)}`);
@@ -179,6 +208,21 @@ describe('elementBoxes khớp mực thật', () => {
       }
 
       expect(wrong, wrong.join('\n')).toEqual([]);
+      // Mỗi scene phải có ÍT NHẤT một id được so thật — một scene mà oracle từ
+      // chối toàn bộ là một scene không được bài đo này bảo vệ, và điều đó phải
+      // kêu chứ không được im (trừ khi đã ghi tên vào sổ ORACLE_BLIND ở trên).
+      if (!ORACLE_BLIND.has(label)) {
+        expect(compared, `${label}: oracle miễn kiểm toàn bộ id của scene`).toBeGreaterThan(0);
+      }
     });
   }
+
+  it('tỉ lệ được kiểm toàn kho không tụt dưới 85%', () => {
+    const total = tally.compared + tally.skipped;
+    expect(total).toBeGreaterThan(0);
+    expect(
+      tally.compared / total,
+      `chỉ ${tally.compared}/${total} id được so — oracle đang từ chối quá nửa kho?`,
+    ).toBeGreaterThanOrEqual(0.85);
+  });
 });

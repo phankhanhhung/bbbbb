@@ -244,6 +244,10 @@ test.describe('Ngân sách perf', () => {
       `NFR-P3 trang bài = ${kb.toFixed(1)}KB gzip (${fetched.size} file)` +
         ` · cả kho ${(all / 1024).toFixed(1)}KB, không gate`,
     );
+    // Bài đo phải ĐO được gì đã: asset đổi đuôi (.mjs), inline vào HTML, hay
+    // listener hụt → bytes = 0 → gate xanh trong khi không cân được gì. Cùng
+    // nguyên tắc với "nét quét phải đổi được hình" ở bài đo sweep phía trên.
+    expect(fetched.size, 'gate bundle bắt được 0 file — bài đo thành vô nghĩa').toBeGreaterThan(0);
     expect(kb).toBeLessThanOrEqual(BUNDLE_BUDGET_KB);
   });
 
