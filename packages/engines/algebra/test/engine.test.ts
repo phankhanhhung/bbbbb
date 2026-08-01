@@ -2406,3 +2406,107 @@ describe('M61 — hàm siêu việt', () => {
     expect(p.glyphs.find((g) => g.s === 'x')!.italic).toBe(true);
   });
 });
+
+/**
+ * Sắp chữ: bảng bề rộng và hình dạng dấu gộp (M76).
+ *
+ * Cả mục này canh **một** lớp lỗi: layout đo bằng một thứ rồi vẽ ra bằng một thứ
+ * khác. Không test nào cũ bắt được nó, vì golden so chuỗi SVG mà chuỗi thì đúng —
+ * sai nằm ở chỗ chuỗi ấy được vẽ bằng font nào và bằng hộp rộng bao nhiêu.
+ */
+describe('M76 — bảng bề rộng đo bằng máy, dấu gộp vẽ bằng path', () => {
+  const drawnOf = (src: string) => place(toBox(parse(src, new Minter()), FONT), 0, 0);
+
+  describe('bảng bề rộng khớp `hmtx` của font', () => {
+    it('toán tử lấy advance thật, không lấy số ước bằng mắt', () => {
+      // Bản trước khai `+` là 0,62 em trong khi glyph thật rộng 0,778 — `binop`
+      // chừa hở đối xứng, glyph ăn hết hở bên phải, và trang in ra `x +1`.
+      expect(textWidth('+', 1000)).toBe(778);
+      expect(textWidth('=', 1000)).toBe(778);
+      expect(textWidth('(', 1000)).toBe(389);
+    });
+
+    it('chữ **nghiêng** đo bằng bảng nghiêng — biến vẽ nghiêng, nên đây là hầu hết chữ', () => {
+      // KaTeX_Main-Italic hẹp hơn Regular tới 0,096 em ở chữ `b`. Đo một mặt rồi
+      // vẽ mặt kia là sai ở mọi biến.
+      expect(textWidth('b', 1000, false)).toBe(556);
+      expect(textWidth('b', 1000, true)).toBe(460);
+      // Và bảng phải theo **từng chữ**: ước đều 0,5 em thì `m` thiếu 64% còn `l`
+      // dôi gấp đôi.
+      expect(textWidth('m', 1000, true)).toBe(818);
+      expect(textWidth('l', 1000, true)).toBe(256);
+    });
+
+    it('hai toán tử lớn chừa chỗ theo **Size1**, không theo mặc định chữ cái', () => {
+      // 0,5 em là con số cũ, tức chừa **một nửa** thứ được vẽ ra — và trên hình
+      // thì ∏ đâm vào dấu ngoặc đứng ngay sau nó.
+      expect(textWidth('∑', 1000)).toBe(1056);
+      expect(textWidth('∏', 1000)).toBe(944);
+    });
+  });
+
+  describe('glyph không có trong KaTeX_Main phải tự khai font', () => {
+    it('∑ và ∏ mang `family` riêng; chữ thường thì không', () => {
+      const big = drawnOf('sum(k, 1, n, k)').glyphs.find((g) => g.s === '∑');
+      expect(big?.family).toContain('KaTeX_Size1');
+      expect(drawnOf('x + 1').glyphs.every((g) => g.family === undefined)).toBe(true);
+    });
+
+    it('`≠` vẽ tay: một glyph `=` cộng một nét chéo, **không** phải glyph `≠`', () => {
+      // Không font KaTeX nào có U+2260 — quét cả mười tệp. Để nó rơi xuống font
+      // hệ thống là lại một ký tự lạc phông giữa dòng.
+      const p = drawnOf('a != b');
+      expect(p.glyphs.map((g) => g.s)).toContain('=');
+      expect(p.glyphs.map((g) => g.s)).not.toContain('≠');
+      expect(p.paths).toHaveLength(1);
+    });
+
+    it('dấu nhân là `⋅` (U+22C5), không phải `·` (U+00B7) vốn là dấu câu', () => {
+      const glyphs = drawnOf('2*3').glyphs.map((g) => g.s);
+      expect(glyphs).toContain('⋅');
+      expect(glyphs).not.toContain('·');
+    });
+  });
+
+  describe('ngoặc tròn: cao theo ruột, **nét không đổi**', () => {
+    const parenPaths = (src: string) =>
+      drawnOf(src).paths.filter((p) => p.d.includes('Q'));
+
+    it('nét của ngoặc trùm phân số lồng bằng đúng nét của ngoặc một dòng', () => {
+      // Đây là cả lý do đổi cách vẽ. Phóng `font-size` thì nét dày theo chiều cao:
+      // đo trên chính cây hộp, ngoặc của phân số lồng hai tầng dày **gấp 3,68 lần**
+      // ngoặc thường nằm ngay cạnh nó.
+      const small = parenPaths('2*(x + 1)');
+      const tall = parenPaths('2*(((x+1)/(x+2))/((y+1)/(y+2)) + 1)');
+      expect(small).toHaveLength(2);
+      expect(tall.length).toBeGreaterThanOrEqual(2);
+      expect(tall[0]!.width).toBe(small[0]!.width);
+    });
+
+    it('nhưng nó **có** cao theo ruột — nếu không thì ngoặc thành dấu phẩy', () => {
+      const yOf = (p: { d: string }): number =>
+        Math.abs(Number(/^M[-\d.]+ ([-\d.]+)/.exec(p.d)![1]));
+      expect(yOf(parenPaths('2*(((x+1)/(x+2))/((y+1)/(y+2)) + 1)')[0]!)).toBeGreaterThan(
+        yOf(parenPaths('2*(x + 1)')[0]!) * 2,
+      );
+    });
+
+    it('hai ngoặc kề nhau **không** chụm bụng vào nhau', () => {
+      // `(a+b)(c+d)`: bụng của `)` và bụng của `(` cùng nằm ở giữa dòng. Bản đầu
+      // của M76 để chúng cách nhau 1 đơn vị và trên hình chúng dính thành một hình
+      // thấu kính.
+      const [, close, open] = parenPaths('(a + b)*(c + d)');
+      const belly = (p: { d: string }): number => {
+        const [tip, ctrl] = /^M([-\d.]+) [-\d.]+Q([-\d.]+)/.exec(p.d)!.slice(1).map(Number);
+        return ((tip as number) + (ctrl as number)) / 2;
+      };
+      expect(belly(open!) - belly(close!)).toBeGreaterThan(FONT * 0.3);
+    });
+
+    it('ngoặc **giữ được danh tính** của nút bao nó', () => {
+      // Trước M76 ngoặc là glyph mang `data-el`; nay là path. Mất chỗ ấy thì anchor
+      // trỏ vào một tích có ngoặc sẽ không sáng phần ngoặc.
+      expect(parenPaths('2*(x + 1)').every((p) => p.owner !== null)).toBe(true);
+    });
+  });
+});

@@ -80,7 +80,9 @@ export const algebraRenderer: EngineRenderer = {
             {
               x: round(g.x),
               y: round(g.y),
-              'font-family': ctx.theme.type.mathFamily,
+              // `g.family` chỉ có mặt ở glyph mà `mathFamily` **không vẽ được**
+              // (∑, ∏ — không nằm trong KaTeX_Main). Xem `MATH_OP_GLYPHS`.
+              'font-family': g.family ?? ctx.theme.type.mathFamily,
               'font-size': round(g.size),
               ...(g.italic ? { 'font-style': 'italic' } : {}),
               fill: roleInk(ctx, box, g.owner) ?? ink,

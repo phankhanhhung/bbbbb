@@ -3117,3 +3117,93 @@ tại, và dựng một dòng chỉ để nó mang vệt vàng vĩnh viễn là 
 Cũng không có: hằng đẳng thức "gậy khúc côn cầu" ($\sum_k \binom{k+r}{r} =
 \binom{n+r+1}{r+1}$), khai triển chuỗi của $\exp$/$\log$, hàm sinh mũ. Bài flagship
 **dừng lại** đúng chỗ ấy và nói ra vì sao — dừng có lời rẻ hơn một luật không tên.
+
+## §48 — Sắp chữ: thước đo và dấu gộp (M76)
+
+Mục này không thêm khả năng nào. Nó sửa một lớp lỗi mà **không chốt canh nào của kho
+bắt được**, vì golden so **chuỗi SVG** — và chuỗi thì luôn đúng. Cái sai nằm ở chỗ
+chuỗi ấy được vẽ bằng font nào, và bằng hộp rộng bao nhiêu.
+
+### 48.1 Σ và Π chưa bao giờ được vẽ bằng font mà chúng khai
+
+`render.ts` khai `font-family: 'KaTeX_Main', 'Latin Modern Math', serif` cho mọi glyph.
+Quét bảng `cmap` của cả mười tệp font KaTeX:
+
+| font | có `∑` `∏` |
+|---|---|
+| `KaTeX_Main-Regular` | **không** — chỉ có `∞ ( [ { √` |
+| `KaTeX_Size1-Regular` | có |
+| `KaTeX_Size2-Regular` | có |
+
+Trong KaTeX, toán tử lớn là một **họ font riêng**. Nên suốt từ M57 tới M75, mọi dấu
+tổng và dấu tích của kho rơi xuống nhánh sau của chuỗi `font-family` và được vẽ bằng
+serif hệ thống — một typeface khác cả dòng, khác cả giữa các máy. Nay glyph nào không
+có trong `KaTeX_Main` thì **tự khai font của nó** (`PlacedGlyph.family`), và trường ấy
+vắng mặt ở mọi glyph khác đúng để nó mang nghĩa "chỗ này font mặc định không vẽ được".
+
+Cùng lớp: `⋅` (dấu nhân) trước dùng `·` U+00B7 — một dấu **câu**, không có trong KaTeX
+— nên nó cũng lạc phông; nay dùng U+22C5. Còn `≠` thì **không font KaTeX nào có**, nên
+nó được vẽ tay: glyph `=` cộng một nét chéo, đúng lối KaTeX dựng `\neq`.
+
+### 48.2 Bảng bề rộng tự khai là "đo" nhưng có chỗ ước bằng mắt
+
+`typeset.ts` đo bề rộng bằng bảng của riêng nó vì layout phải biết trước chữ rộng bao
+nhiêu. Bảng ấy **đúng** ở chữ hoa (M56 đọc từ font) và **sai** ở nhóm toán tử:
+
+| glyph | bảng cũ | `hmtx` thật | lệch |
+|---|---:|---:|---:|
+| `+` `−` `=` | 0,62 / 0,66 | **0,778** | −20% |
+| `(` `)` | 0,32 | **0,389** | −18% |
+| `∑` | *(mặc định 0,5)* | **1,056** | −53% |
+| `∏` | *(mặc định 0,5)* | **0,944** | −47% |
+| chữ thường | *(đều 0,5)* | 0,256 … 0,833 | tuỳ chữ |
+
+Hai hệ quả nhìn thấy được, và cả hai đều có trong kho đã xuất bản:
+
+- **`x +1`.** `binop` chừa hở **đối xứng** hai bên dấu, nhưng glyph `+` rộng hơn ô đã
+  chừa nên nó ăn hết hở bên phải. Dấu cộng dính vào số đứng sau nó, ở mọi công thức.
+- **`∏` đâm vào dấu ngoặc.** Chừa chỗ bằng một nửa thứ được vẽ ra thì thứ đứng sau
+  bị chồng lên.
+
+Thêm một chỗ chưa ai để ý: biến vẽ **nghiêng**, còn bảng đo mặt **đứng**.
+`KaTeX_Main-Italic` hẹp hơn `Regular` tới $0{,}096$ em (chữ `b`), và ước đều $0{,}5$ em
+thì `m` nghiêng ($0{,}818$) thiếu $64\%$ còn `l` ($0{,}256$) dôi gấp đôi. Nay có hai
+bảng, và `textWidth` nhận cờ `italic`.
+
+### 48.3 Ngoặc tròn: kho đã biết bài học này và làm ngược ở đúng một chỗ
+
+`typeset.ts` chỗ vẽ `{` của hệ ghi nguyên văn:
+
+> *Vẽ bằng path chứ không phóng to glyph `{`: glyph có tỉ lệ cố định nên kéo cho cao
+> bằng ba dòng thì nét dày ra và hai cái móc méo hẳn. Cùng lý lẽ với dấu căn.*
+
+Ngoặc nhọn là path. Dấu căn là path. **Ngoặc tròn thì phóng `font-size`** — đúng cái
+vừa bị cấm. Đo trên chính cây hộp: ngoặc trùm một phân số lồng hai tầng có nét **dày
+gấp 3,68 lần** ngoặc thường nằm ngay cạnh nó.
+
+Nay nó là một cung bậc hai mỗi bên: cao theo ruột, **nét không đổi**, bề ngang loe nhẹ
+theo chiều cao nhưng có trần — vì một cung giữ nguyên tỉ lệ ở chiều cao gấp bốn sẽ loe
+thành dấu ngoặc nhọn. Cổ tức kèm theo: bớt một chỗ phụ thuộc font.
+
+### 48.4 Cái đã sai trước khi đúng
+
+1. **Chẩn đoán đầu tiên sai một điểm, và lượt kiểm bắt được.** Tao đo thấy ảnh tĩnh
+   vẽ bằng DejaVu chứ không phải KaTeX, và định kết luận đường Resvg chưa nạp font.
+   Đọc `tools/pipeline/src/fonts.ts` mới thấy nó đã nạp từ M62, còn sửa cả bit kiểu
+   chữ của bốn mặt — cái vẽ bằng DejaVu là **script đo của tao**, không phải pipeline.
+   Ba lỗi còn lại thì thật; lỗi thứ tư là do dụng cụ đo.
+2. **Bản đầu của ngoặc gộp độ cong với chỗ đứng làm một.** Cung bẻ sâu đúng bằng bề
+   ngang đã chừa, nên ngoặc ngắn phình ra thành ngoặc vuông bè và hai ngoặc kề nhau
+   `)(` chụm bụng thành một hình thấu kính. Tách thành hai hằng số thì mỗi cái chữa
+   một chuyện. Lượt nhìn PNG bắt, không test nào bắt.
+3. **Điểm điều khiển đặt sai một nửa.** Bụng một cung bậc hai chỉ đi được nửa đường
+   tới điểm điều khiển, nên đặt nó cách `bow` thì cung nông đúng một nửa ý định.
+4. **Trần bề ngang phải đo lại vì thước vừa đổi.** Bảng đúng làm mọi công thức rộng
+   thêm chừng $4\%$, và $(a+b+c)^3$ nhảy từ $12{,}55$ lên $13{,}05$ ô — vượt trần
+   $13$ mà M55 đặt. Ràng buộc thật không đổi (chữ phải trên $12$px ở màn hẹp nhất),
+   nên trần đo lại thành $13{,}6$; xem `schema.ts` §1.2. Giữ $13$ là chặn một hằng
+   đẳng thức sách giáo khoa **vì bảng cũ đo sai**, không vì màn hình.
+5. **`git checkout --` xoá mất phần chưa commit.** Lượt bẻ răng dùng nó để hoàn tác
+   một chỗ bẻ, và nó hoàn tác về `HEAD` — tức xoá cả mục này. Dựng lại rồi chạy
+   golden: **472/472 khớp từng byte**, nên bản dựng lại đúng bằng bản đã mất. Từ đây
+   bẻ răng hoàn tác bằng bản sao, không bằng `git`.

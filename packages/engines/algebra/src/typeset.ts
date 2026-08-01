@@ -125,48 +125,92 @@ const MED = 0.3;
 /* ---------- bảng bề ngang, đo cho **bảng chữ của riêng engine này** ---------- */
 
 /**
+ * Bề ngang **advance** của từng glyph, theo `em`, đọc thẳng từ bảng `hmtx` của
+ * `KaTeX_Main-Regular` (và `KaTeX_Size1-Regular` cho hai toán tử lớn).
+ *
  * `estimateTextWidth` ước đều $0{,}55$ em cho mọi ký tự và cố ý ước dôi — đúng cho
- * việc nó sinh ra (chừa lề caption), sai ở đây: ước dôi làm số mũ trôi khỏi cơ số và
- * $x ^2$ đọc thành hai vật rời nhau. `longdiv` đã phải đo riêng vì đúng lý do này.
+ * việc nó sinh ra (chừa lề caption), sai ở đây: sai số bề ngang đẩy số mũ trôi khỏi
+ * cơ số và $x ^2$ đọc thành hai vật rời nhau.
+ *
+ * **Bản trước ước bằng mắt và ước thiếu ở đúng nhóm toán tử** (M76): `+` khai
+ * $0{,}62$ trong khi glyph thật rộng $0{,}778$, `=` khai $0{,}66$ so với $0{,}778$,
+ * `(` khai $0{,}32$ so với $0{,}389$. Hệ quả nhìn thấy được trên mọi công thức đã
+ * xuất bản: `binop` chừa hở **đối xứng** hai bên dấu, nhưng glyph rộng hơn ô đã
+ * chừa nên nó ăn hết hở bên phải — trang in ra `x +1` thay vì `x + 1`. Số dưới đây
+ * đọc bằng máy từ chính tệp font, nên nó hết là chuyện thẩm mỹ.
  */
 const EM: Readonly<Record<string, number>> = {
-  ' ': 0.26,
-  // ∞ rộng hơn mọi chữ cái — đo từ KaTeX_Main: 1 em chẵn.
+  ' ': 0.25,
   '∞': 1.0,
-  '+': 0.62,
-  '−': 0.62,
-  '=': 0.66,
-  '<': 0.62,
-  '>': 0.62,
-  '≤': 0.62,
-  '≥': 0.62,
-  '≠': 0.66,
-  '·': 0.3,
-  '(': 0.32,
-  ')': 0.32,
-  // Ngoặc vuông của $[x^n]$ — đo từ KaTeX_Main, hẹp hơn ngoặc tròn một chút.
-  '[': 0.28,
-  ']': 0.28,
-  '_': 0.4,
-  // Dấu giai thừa là một nét đứng, hẹp gần bằng dấu ngoặc. Không khai thì nó rơi vào
-  // `LETTER_EM = 0.5` và ước dôi $0{,}22$ em — đủ để $n!^2$ vẽ ra số mũ trôi khỏi dấu
-  // `!` và đọc thành hai vật rời nhau. Đúng lỗi mà bảng này sinh ra để tránh.
-  '!': 0.28,
+  '+': 0.778,
+  '−': 0.778,
+  '=': 0.778,
+  '<': 0.778,
+  '>': 0.778,
+  '≤': 0.778,
+  '≥': 0.778,
+  // `≠` **không có trong font KaTeX nào**. Nó được vẽ tay: dấu `=` cộng một nét
+  // chéo (xem `place`), nên bề ngang của nó là bề ngang dấu `=`.
+  '≠': 0.778,
+  // Dấu nhân là `⋅` (U+22C5 DOT OPERATOR), không phải `·` (U+00B7 MIDDLE DOT):
+  // ký tự sau là dấu câu và **không có** trong KaTeX_Main, nên nó rơi xuống font
+  // hệ thống — một chấm lạc phông giữa dòng công thức.
+  '⋅': 0.278,
+  '(': 0.389,
+  ')': 0.389,
+  '[': 0.278,
+  ']': 0.278,
+  '{': 0.5,
+  '_': 0.5,
+  '!': 0.278,
+  '√': 0.833,
+  // Hai toán tử lớn đọc từ **KaTeX_Size1-Regular** — chúng không có trong
+  // KaTeX_Main (xem `MATH_OP_GLYPHS`). Bản trước để chúng rơi vào mặc định chữ cái
+  // $0{,}5$, tức chừa chỗ **bằng một nửa** thứ được vẽ ra, và trên hình thì $\prod$
+  // đâm thẳng vào dấu ngoặc đứng sau nó.
+  '∑': 1.056,
+  '∏': 0.944,
 };
-const DIGIT_EM = 0.5;
-const LETTER_EM = 0.5;
 
 /**
- * Chữ **hoa** rộng hơn hẳn chữ thường — và chỗ ấy lộ ra ở đúng $C_n^k$.
+ * Glyph **không** nằm trong `KaTeX_Main` — phải khai font riêng, nếu không trình
+ * duyệt lặng lẽ rơi xuống font hệ thống và vẽ chúng bằng một typeface khác cả dòng.
  *
- * Ước đều $0{,}5$ em cho mọi chữ cái là đủ tốt suốt bốn hạng mục, vì mọi biến của kho
- * đều là chữ thường. Nay $C$ và $A$ làm **gốc** của một cụm có chỉ số dưới và số mũ, mà
- * $C$ trong KaTeX_Main rộng $0{,}722$ em: ước thiếu $0{,}22$ em đẩy cả hai tầng chỉ số
- * lùi vào trong, và trên trang thì số mũ **đè lên** chữ $C$.
- *
- * Số lấy từ metric của KaTeX_Main. Không golden nào đổi: cả kho chưa có biểu thức nào
- * chứa biến viết hoa (`L`/`R` trong nội dung là **đường dẫn**, không phải glyph).
+ * Đây không phải chuyện lý thuyết: `KaTeX_Main-Regular` không chứa `∑` cũng không
+ * chứa `∏` (quét `cmap` mà ra), nên suốt từ M57 tới M75 mọi dấu tổng và dấu tích
+ * của kho đều được vẽ bằng serif hệ thống.
  */
+const MATH_OP_GLYPHS = new Set(['∑', '∏']);
+
+/**
+ * Font của hai toán tử lớn.
+ *
+ * `Size1` trước `Size2`: engine đã tự phóng ký hiệu lên $1{,}5$ lần (`BIG_GLYPH`),
+ * nên lấy bản nhỏ rồi phóng cho ra đúng nét mà KaTeX vẽ ở display style. Lấy
+ * `Size2` rồi phóng nữa thì nét dày quá so với dòng chữ quanh nó.
+ */
+const MATH_OP_FAMILY = "'KaTeX_Size1', 'KaTeX_Size2', 'Latin Modern Math', serif";
+
+/**
+ * Bề ngang từng chữ cái, `em`, đọc từ `hmtx` — **hai bảng, vì có hai mặt chữ**.
+ *
+ * Biến của công thức vẽ **nghiêng** (`font-style: italic` ⇒ `KaTeX_Main-Italic`),
+ * còn tên hàm và chữ trong nhãn vẽ **đứng** (`KaTeX_Main-Regular`). Hai mặt ấy có
+ * advance khác nhau tới $0{,}096$ em (chữ `b`: $0{,}556$ đứng so với $0{,}460$
+ * nghiêng), nên đo một mặt rồi vẽ mặt kia là sai ở mọi biến.
+ *
+ * Bản trước ước **đều $0{,}5$ em cho mọi chữ thường** (M76 đo lại). Sai số thật:
+ * `m` nghiêng rộng $0{,}818$ — chừa $0{,}5$ tức thiếu $64\%$, và trên trang thì chữ
+ * sau nó bị đè; `l` nghiêng rộng $0{,}256$ — chừa $0{,}5$ tức dôi gấp đôi, ra một
+ * lỗ trống giữa dòng. Chữ hoa thì đã có bảng đo đúng từ M56, chỉ thiếu mặt nghiêng.
+ */
+const LOWER_EM: Readonly<Record<string, number>> = {
+  a: 0.5, b: 0.556, c: 0.444, d: 0.556, e: 0.444, f: 0.306, g: 0.5,
+  h: 0.556, i: 0.278, j: 0.306, k: 0.528, l: 0.278, m: 0.833, n: 0.556,
+  o: 0.5, p: 0.556, q: 0.528, r: 0.392, s: 0.394, t: 0.389, u: 0.556,
+  v: 0.528, w: 0.722, x: 0.528, y: 0.528, z: 0.444,
+};
+
 const UPPER_EM: Readonly<Record<string, number>> = {
   A: 0.75, B: 0.708, C: 0.722, D: 0.764, E: 0.681, F: 0.653, G: 0.785,
   H: 0.75, I: 0.361, J: 0.514, K: 0.778, L: 0.625, M: 0.917, N: 0.75,
@@ -174,19 +218,28 @@ const UPPER_EM: Readonly<Record<string, number>> = {
   V: 0.75, W: 1.028, X: 0.75, Y: 0.75, Z: 0.611,
 };
 
+/** Mặt **nghiêng** — bảng của biến, tức của gần hết mọi chữ trên hình. */
+const ITALIC_EM: Readonly<Record<string, number>> = {
+  a: 0.511, b: 0.46, c: 0.46, d: 0.511, e: 0.46, f: 0.307, g: 0.46,
+  h: 0.511, i: 0.307, j: 0.307, k: 0.46, l: 0.256, m: 0.818, n: 0.562,
+  o: 0.511, p: 0.511, q: 0.46, r: 0.422, s: 0.409, t: 0.332, u: 0.537,
+  v: 0.46, w: 0.664, x: 0.464, y: 0.486, z: 0.409,
+  A: 0.743, B: 0.704, C: 0.716, D: 0.755, E: 0.678, F: 0.653, G: 0.774,
+  H: 0.743, I: 0.386, J: 0.525, K: 0.769, L: 0.627, M: 0.897, N: 0.743,
+  O: 0.767, P: 0.678, Q: 0.767, R: 0.729, S: 0.562, T: 0.716, U: 0.743,
+  V: 0.743, W: 0.999, X: 0.743, Y: 0.743, Z: 0.613,
+};
+
+/** Chữ không có trong bảng nào — dấu tiếng Việt trong nhãn luật chẳng hạn. */
+const LETTER_EM = 0.5;
+const DIGIT_EM = 0.5;
+
 /**
  * Bề ngang **cả tên hàm**, không cộng từng chữ.
  *
- * `ln` cộng từng chữ ra $1{,}0$ em, còn glyph thật chỉ rộng $0{,}778$ — chữ `l` hẹp bằng
- * nửa chữ `n`. Dôi $0{,}22$ em đủ để trên trang thấy một khe hở giữa `ln` và dấu ngoặc,
- * đọc thành hai vật rời nhau. Cùng lớp lỗi với dấu `!` ở M56 và chữ hoa ở $C_n^k$.
- *
- * Chữa theo **cả tên** thay vì theo từng chữ cái: chữa từng chữ thì `t`, `r`, `s`, `n`,
- * `e`, `p` đều đổi bề ngang, mà chúng có mặt làm **biến** trong golden của kho — hình
- * không đổi một nét mà 400 golden phải soát lại. Tên hàm là chuỗi nhiều ký tự duy nhất
- * engine này in ra, nên bảng theo tên vừa đủ và không chạm gì khác.
- *
- * Số lấy từ metric KaTeX_Main.
+ * `ln` cộng từng chữ ra $1{,}0$ em, còn glyph thật chỉ rộng $0{,}778$ — chữ `l` hẹp
+ * bằng nửa chữ `n`. Dôi $0{,}22$ em đủ để trên trang thấy một khe hở giữa `ln` và
+ * dấu ngoặc, đọc thành hai vật rời nhau. Số lấy từ metric KaTeX_Main.
  */
 const WORD_EM: Readonly<Record<string, number>> = {
   ln: 0.778,
@@ -200,12 +253,18 @@ const WORD_EM: Readonly<Record<string, number>> = {
 /** Làm tròn toạ độ để lệnh path không dài lê thê vì sai số dấu phẩy động. */
 const round = (v: number): number => Math.round(v * 1000) / 1000 + 0;
 
-export function textWidth(value: string, size: number): number {
+/**
+ * `italic` **không** có giá trị mặc định vô hại: gần hết chữ trên hình là biến, tức
+ * là nghiêng. Chỗ gọi nào quên truyền thì nó đo bằng mặt đứng và sai đúng nhóm ký
+ * tự đông nhất.
+ */
+export function textWidth(value: string, size: number, italic = false): number {
   const word = WORD_EM[value];
   if (word !== undefined) return word * size;
   let em = 0;
   for (const ch of value) {
-    em += EM[ch] ?? UPPER_EM[ch] ?? (ch >= '0' && ch <= '9' ? DIGIT_EM : LETTER_EM);
+    const letter = italic ? ITALIC_EM[ch] : (LOWER_EM[ch] ?? UPPER_EM[ch]);
+    em += EM[ch] ?? letter ?? (ch >= '0' && ch <= '9' ? DIGIT_EM : LETTER_EM);
   }
   return em * size;
 }
@@ -284,7 +343,7 @@ export function measure(box: Box): Metrics {
   switch (box.t) {
     case 'text':
       return {
-        w: textWidth(box.s, box.size),
+        w: textWidth(box.s, box.size, box.italic),
         above: box.size * ASCENT,
         below: box.size * DESCENT,
       };
@@ -381,14 +440,8 @@ export function measure(box: Box): Metrics {
     }
     case 'paren': {
       const inner = measure(box.inner);
-      // Ngoặc cao theo ruột: một ngoặc cỡ chữ thường bên cạnh một phân số hai tầng
-      // trông như dấu phẩy. Bề ngang cũng giãn theo, nếu không nó thành nét mảnh.
-      const scale = parenScale(inner, box.size);
-      return {
-        w: inner.w + 2 * textWidth('(', box.size * scale),
-        above: Math.max(inner.above, box.size * ASCENT * scale),
-        below: Math.max(inner.below, box.size * DESCENT * scale),
-      };
+      const { w, above, below } = parenMetrics(inner, box.size);
+      return { w: inner.w + 2 * w, above, below };
     }
   }
 }
@@ -402,11 +455,67 @@ const BAR_PAD = 0.26;
 const RAD_LIFT = 0.34;
 const RAD_PAD = 0.16;
 
-/** Ngoặc phải trùm ruột: tỉ lệ theo chiều cao thật, chặn dưới ở 1. */
-function parenScale(inner: Metrics, size: number): number {
-  const need = inner.above + inner.below;
-  const have = size * (ASCENT + DESCENT);
-  return Math.max(1, need / have);
+/**
+ * Hình dạng ngoặc: **độ cong** và **chỗ đứng** là hai số khác nhau.
+ *
+ * Bản đầu của M76 gộp chúng làm một — cung bẻ sâu đúng bằng bề ngang đã chừa — và
+ * lượt nhìn cho ra ngay hai lỗi: ngoặc ngắn phình thành cái ngoặc vuông bè, còn hai
+ * ngoặc kề nhau `)(` chạm bụng nhau thành một hình thấu kính. Tách ra thì mỗi số
+ * chữa một chuyện: `PAREN_BOW` lo dáng, `PAREN_SIDE` lo khoảng hở.
+ *
+ * Độ cong tỉ lệ với chiều cao nhưng **có trần và có sàn**: ngoặc của một dòng chữ
+ * cong như ngoặc bình thường, ngoặc trùm bốn dòng thì tương đối *thẳng hơn* — đúng
+ * như mọi bộ font toán vẽ, vì một cung giữ nguyên tỉ lệ ở chiều cao gấp bốn sẽ loe
+ * ra thành dấu ngoặc nhọn.
+ */
+const PAREN_BOW = 0.13;
+const PAREN_BOW_MIN = 0.2;
+const PAREN_BOW_MAX = 0.55;
+/**
+ * Hở giữa mép cung và mép hộp — chỗ giữ cho `)(` không dính vào nhau.
+ *
+ * $0{,}17$ chọn để bề ngang cả ngoặc xấp xỉ advance $0{,}389$ em của glyph `(`
+ * trong KaTeX_Main: đổi cách vẽ mà không đổi nhịp dòng.
+ */
+const PAREN_SIDE = 0.17;
+/**
+ * Hở **trong lòng** ngoặc, giữa đầu cung và mực của ruột.
+ *
+ * Một glyph ngoặc mang sẵn side bearing hai bên; một cung vẽ tay thì không, nên đầu
+ * cung nằm đúng mép hộp của ruột và chữ nghiêng — vốn thò ra ngoài advance — chạm
+ * vào nó. Thấy ở $(c+d)$: bụng chữ `d` dính vào ngoặc đóng.
+ */
+const PAREN_INNER = 0.09;
+/** Ngoặc nhô ra ngoài ruột chừng này để nó ôm chứ không cắt ngang. */
+const PAREN_LIP = 0.06;
+
+/**
+ * Hình học của một cặp ngoặc — **không** phải một glyph phóng to (M76).
+ *
+ * Bản trước lấy glyph `(` rồi kéo `font-size` lên cho bằng chiều cao ruột. Nét của
+ * một glyph dày theo cỡ chữ, nên một ngoặc bọc phân số lồng hai tầng có nét **dày
+ * gấp 3,68 lần** ngoặc thường nằm ngay cạnh nó — đo trên chính cây hộp, không phải
+ * cảm giác. Trên trang nó ra một cục đậm bên cạnh mấy ngoặc mảnh.
+ *
+ * Và kho này **đã biết** bài học ấy: `{` của hệ và móc của dấu căn đều vẽ bằng path
+ * với đúng lời giải thích "glyph có tỉ lệ cố định nên kéo cho cao thì nét dày ra".
+ * Ngoặc tròn là chỗ duy nhất còn làm ngược. Nay nó cũng là path: **cao theo ruột,
+ * nét không đổi**, bề ngang loe nhẹ để một ngoặc cao không thành cái kim.
+ *
+ * Cổ tức kèm theo: bớt một chỗ phụ thuộc font. Ngoặc nay vẽ ra giống hệt nhau ở
+ * trình duyệt và ở ảnh tĩnh, dù font nào được nạp.
+ */
+function parenMetrics(
+  inner: Metrics,
+  size: number,
+): { w: number; bow: number; above: number; below: number } {
+  const above = Math.max(inner.above, size * ASCENT) + size * PAREN_LIP;
+  const below = Math.max(inner.below, size * DESCENT) + size * PAREN_LIP;
+  const bow = Math.min(
+    Math.max((above + below) * PAREN_BOW, size * PAREN_BOW_MIN),
+    size * PAREN_BOW_MAX,
+  );
+  return { w: bow + size * (PAREN_SIDE + PAREN_INNER), bow, above, below };
 }
 
 /* ---------- glyph đã đặt ---------- */
@@ -418,6 +527,14 @@ export interface PlacedGlyph {
   readonly y: number;
   readonly size: number;
   readonly italic: boolean;
+  /**
+   * Họ font **đè lên** mực chung của engine, cho glyph không có trong `KaTeX_Main`.
+   *
+   * Vắng mặt ở gần hết mọi glyph, và đó là chủ ý: một trường có mặt ở đây nghĩa là
+   * "chỗ này font mặc định **không vẽ được**", chứ không phải một chỗ để chỉnh
+   * kiểu chữ cho đẹp.
+   */
+  readonly family?: string;
   /** Nút gần nhất bao lấy glyph này — dùng để tô khi nhấn. */
   readonly owner: TermId | null;
 }
@@ -434,7 +551,7 @@ export const glyphBox = (
   g: PlacedGlyph,
 ): { x1: number; x2: number; y1: number; y2: number } => ({
   x1: g.x,
-  x2: g.x + textWidth(g.s, g.size),
+  x2: g.x + textWidth(g.s, g.size, g.italic),
   y1: g.y - g.size * ASCENT,
   y2: g.y + g.size * DESCENT,
 });
@@ -485,7 +602,33 @@ export function place(box: Box, x: number, y: number): Placed {
     switch (b.t) {
       case 'text': {
         const m = measure(b);
-        glyphs.push({ s: b.s, x: bx, y: by, size: b.size, italic: b.italic, owner });
+        if (b.s === '≠') {
+          /**
+           * `≠` **không có trong font KaTeX nào** — quét cả mười tệp mà không ra.
+           * Nên vẽ nó: dấu `=` từ font, cộng một nét chéo. Cùng lối KaTeX dựng
+           * `\neq`, và cùng lý lẽ đã cho `{` và `√` là path chứ không phải glyph.
+           */
+          glyphs.push({ s: '=', x: bx, y: by, size: b.size, italic: false, owner });
+          const cx = bx + m.w / 2;
+          const mid = by - b.size * 0.25;
+          paths.push({
+            d:
+              `M${round(cx - b.size * 0.16)} ${round(mid + b.size * 0.34)}` +
+              `L${round(cx + b.size * 0.16)} ${round(mid - b.size * 0.34)}`,
+            width: b.size * 0.07,
+            owner,
+          });
+          return m;
+        }
+        glyphs.push({
+          s: b.s,
+          x: bx,
+          y: by,
+          size: b.size,
+          italic: b.italic,
+          ...(MATH_OP_GLYPHS.has(b.s) ? { family: MATH_OP_FAMILY } : {}),
+          owner,
+        });
         return m;
       }
       case 'tag': {
@@ -646,15 +789,31 @@ export function place(box: Box, x: number, y: number): Placed {
       }
       case 'paren': {
         const inner = measure(b.inner);
-        const scale = parenScale(inner, b.size);
-        const size = b.size * scale;
-        const pw = textWidth('(', size);
-        // Ngoặc đã giãn thì đường chân của nó phải hạ theo, nếu không nó treo lên
-        // trên trong khi ruột nằm giữa.
-        const shift = (inner.above - inner.below) / 2 - (size * (ASCENT - DESCENT)) / 2;
-        glyphs.push({ s: '(', x: bx, y: by - shift, size, italic: false, owner });
-        go(b.inner, bx + pw, by, owner);
-        glyphs.push({ s: ')', x: bx + pw + inner.w, y: by - shift, size, italic: false, owner });
+        const { w, bow, above, below } = parenMetrics(inner, b.size);
+        const top = by - above;
+        const bottom = by + below;
+        const mid = (top + bottom) / 2;
+        const stroke = b.size * 0.075;
+
+        /**
+         * Một cung bậc hai duy nhất mỗi bên.
+         *
+         * Điểm giữa của một cung bậc hai là $(P_0 + 2C + P_2)/4$, nên với hai đầu
+         * cùng hoành độ thì bụng cung chỉ đi được **nửa** đường tới điểm điều
+         * khiển. Muốn bụng sâu `bow` thì điểm điều khiển phải đặt xa `2·bow` —
+         * viết ra vì bản đầu đặt `bow` và cung nông đúng một nửa.
+         */
+        const arc = (tipX: number, dir: -1 | 1): string =>
+          `M${round(tipX)} ${round(top)}` +
+          `Q${round(tipX + dir * 2 * bow)} ${round(mid)} ${round(tipX)} ${round(bottom)}`;
+
+        // Đầu cung lùi vào trong `PAREN_INNER`, ruột vẫn bắt đầu ở `bx + w` — nhờ
+        // đó mép ngoài của cung rơi đúng `PAREN_SIDE` từ mép hộp, và trong lòng
+        // vẫn còn hở.
+        const pad = b.size * PAREN_INNER;
+        paths.push({ d: arc(bx + w - pad, -1), width: stroke, owner });
+        go(b.inner, bx + w, by, owner);
+        paths.push({ d: arc(bx + w + inner.w + pad, 1), width: stroke, owner });
         return measure(b);
       }
     }
@@ -712,6 +871,9 @@ const REL_TEXT: Readonly<Record<string, string>> = {
   '>=': '≥',
   '!=': '≠',
 };
+
+/** Dấu nhân của toán học — xem chú thích `'⋅'` trong bảng `EM`. */
+const MUL_DOT = '⋅';
 
 const text = (s: string, size: number, italic = false): Box => ({ t: 'text', s, size, italic });
 const gap = (w: number): Box => ({ t: 'gap', w });
@@ -887,7 +1049,7 @@ export function toBox(e: Expr, size: number = FONT): Box {
         (a, i) => !(a.k === 'int' && a.v === 1 && e.args.length > 1 && i === 0),
       );
       shown.forEach((arg, i) => {
-        if (i > 0 && needsDot(shown[i - 1] as Expr, arg)) items.push(...binop('·', size, 0.06));
+        if (i > 0 && needsDot(shown[i - 1] as Expr, arg)) items.push(...binop(MUL_DOT, size, 0.06));
         // Căn bậc $n$ có chỉ số ở góc trên trái; đứng sát một chữ số thì `3` của hệ số
         // và `3` của chỉ số đọc thành `33`. Hở một chút là đủ tách chúng ra.
         else if (i > 0 && arg.k === 'root' && arg.index !== 2) items.push(gap(size * 0.16));
@@ -1098,7 +1260,7 @@ function bareMul(e: Expr & { k: 'mul' }, size: number): Box {
   const items: Box[] = [];
   const shown = e.args.filter((a, i) => !(a.k === 'int' && a.v === 1 && e.args.length > 1 && i === 0));
   shown.forEach((arg, i) => {
-    if (i > 0 && needsDot(shown[i - 1] as Expr, arg)) items.push(...binop('·', size, 0.06));
+    if (i > 0 && needsDot(shown[i - 1] as Expr, arg)) items.push(...binop(MUL_DOT, size, 0.06));
     else if (i > 0 && arg.k === 'root' && arg.index !== 2) items.push(gap(size * 0.16));
     // Thừa số âm **không đứng đầu** phải có ngoặc: `3x·−1` đọc ra hai phép toán liền
     // nhau, `3x·(−1)` thì không. Bảng ưu tiên không bắt được vì số là nguyên tử.

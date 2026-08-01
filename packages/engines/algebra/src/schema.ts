@@ -36,12 +36,24 @@ import { Type, type Static } from '@sinclair/typebox';
  * ba bậc. Căn lồng thì tầng 6 mới cao $1{,}50$ ô, tức là không bị trần này chạm tới:
  * đúng như nó phải thế, vì căn lồng đọc được thật.
  *
- * ### `maxWidthCells: 13` — và vì sao đúng $13$
+ * ### `maxWidthCells: 13,6` — và vì sao đúng chừng ấy
  *
- * Con số cũ là $12$, và nó **không phải một số đo** — nó là một số chọn ở M49. Hậu quả
- * đo được ở M55: $(a+b+c)^3$ khai triển rộng $12{,}55$ ô nên **bị từ chối**, trong khi
- * $(a+b)^7$ rộng $11{,}75$ ô thì lọt. Tức là một hằng đẳng thức sách giáo khoa bị chặn
- * còn một thứ hiếm hơn nhiều thì qua — thứ tự ưu tiên ngược với thực tế dạy học.
+ * Con số đầu là $12$, và nó **không phải một số đo** — nó là một số chọn ở M49. Hậu quả
+ * đo được ở M55: một hằng đẳng thức sách giáo khoa bị chặn còn một thứ hiếm hơn nhiều
+ * thì lọt, tức thứ tự ưu tiên ngược với thực tế dạy học. M55 đo lại và ra $13$.
+ *
+ * **M76 đo lại lần nữa, vì thước đã đổi.** `typeset.ts` khai bảng bề rộng của nó là
+ * "đo cho bảng chữ của riêng engine này", nhưng nhóm toán tử thì ước bằng mắt và ước
+ * **thiếu**: `+` khai $0{,}62$ em trong khi glyph thật rộng $0{,}778$. Nghĩa là mọi
+ * con số trong bảng dưới đây, kể cả con số đã dùng để chọn $13$, đều nhỏ hơn thứ thật
+ * sự được vẽ ra. Nay bảng đọc thẳng từ `hmtx` của font, nên các số dịch lên:
+ *
+ * | biểu thức | đo ở M55 | đo thật (M76) |
+ * |---|---:|---:|
+ * | $(a+b)^7$ khai triển | 11,75 | **12,20** |
+ * | $(a+b+c)^3$ khai triển | 12,55 | **13,05** |
+ * | $a^9-b^9$ đã phân tích | 12,32 | **13,15** |
+ * | $(a+b)^8$ khai triển | 13,62 | **14,14** |
  *
  * Bề ngang phải có trần **riêng** vì Player **co** cả hình cho vừa pane và không bao
  * giờ giãn (`render/scale.ts`): một dòng quá rộng không tràn ra ngoài, nó làm *mọi thứ*
@@ -49,22 +61,25 @@ import { Type, type Static } from '@sinclair/typebox';
  * đơn vị scene (`SIZE_FLOOR`) không cứu được: nó canh đơn vị scene, còn cái đau là số
  * pixel cuối cùng.
  *
- * Đo cỡ chữ **thật trên màn hình** ($22$px ở tỉ lệ đầy đủ, co theo `pane / (44·W)`):
+ * Ràng buộc thật **không đổi**, vì nó là chuyện của màn hình chứ không của bảng font:
+ * chữ phải trên $12$px ở màn hẹp nhất. Cỡ chữ thật $= 22 \cdot \text{pane} / (44 W)$
+ * với pane $\approx 328$px trên điện thoại $360$px:
  *
- * | rộng (ô) | ĐT 360px | ĐT 390px | tablet | desktop |
- * |---:|---:|---:|---:|---:|
- * | 12 | 13,7px | 14,9px | 22px | 22px |
- * | 12,55 | 13,1px | 14,3px | 22px | 22px |
- * | **13** | **12,6px** | 13,8px | 22px | 22px |
- * | 13,62 | 12,0px | 13,1px | 22px | 22px |
- * | 14 | 11,7px | 12,8px | 22px | 22px |
+ * | rộng (ô) | ĐT 360px |
+ * |---:|---:|
+ * | 13,05 | 12,6px |
+ * | **13,6** | **12,1px** |
+ * | 13,7 | 12,0px |
+ * | 14,14 | 11,6px |
  *
- * $13$ là bề rộng **cuối cùng** còn giữ chữ trên $12$px ở màn hẹp nhất, và ngay dưới nó
- * mọi thứ tuột xuống dưới ngưỡng ấy. Nó cho qua $(a+b+c)^3$ ($12{,}55$) và $a^9-b^9$ đã
- * phân tích ($12{,}32$), vẫn chặn $(a+b)^8$ ($13{,}62$).
+ * $13{,}6$ là bề rộng cuối cùng còn giữ chữ **trên** $12$px. Nó cho qua $(a+b+c)^3$ và
+ * $a^9-b^9$ đã phân tích — đúng hai thứ mà M55 quyết là phải qua — và vẫn chặn
+ * $(a+b)^8$. Trần là số lẻ vì nó là một **số đo**, không phải một con số tròn ai đó
+ * thấy đẹp; làm tròn xuống $13$ là chặn lại đúng hai hằng đẳng thức vừa nói mà không
+ * có lý do nào từ màn hình.
  *
- * Cả kho hiện đo tối đa $7{,}06$ ô, trung vị $2{,}30$ ô — nên trần này **không** chạm
- * vào nội dung thật; nó là hàng rào cho thứ luật có thể sinh ra.
+ * Cả kho hiện đo tối đa $8{,}00$ ô, trung vị $2{,}52$ ô (293 dòng đại số) — nên trần
+ * này **không** chạm vào nội dung thật; nó là hàng rào cho thứ luật có thể sinh ra.
  *
  * `maxDegree` là cận cho Schwartz–Zippel ở `check.ts`: xác suất phép kiểm bỏ sót một
  * bước sai là $\le d/p$ mỗi lần thử.
@@ -77,7 +92,7 @@ export const ALGEBRA_LIMITS = {
   maxDegree: 64,
   maxSourceLength: 200,
   maxHeightCells: 3,
-  maxWidthCells: 13,
+  maxWidthCells: 13.6,
   /** Số phương trình tối đa trong một hệ (M59) — bốn dòng đã kín chiều cao dòng. */
   maxRelations: 4,
 } as const;
