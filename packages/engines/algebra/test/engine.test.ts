@@ -183,6 +183,9 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       'sum(k, 1, n, 5)', 'sum(k, 1, n, 3*k)', 'sum(k, 1, n, k + k^2)',
       'sum(k, 1, 4, k^2)', 'prod(k, 1, 3, k)', 'prod(k, 1, n, (k + 1)/k)',
       'sum(k, 1, n, k) + x', 'prod(k, 1, n, x)',
+      // M58: số mũ **ký hiệu** — bộ sinh không có toán tử `^` nên nó không bao giờ
+      // dựng $x^{m+n}$ hay $a^n - b^n$, đúng lý do đã phải gieo $\sqrt{48}$.
+      'x^(m + n)', 'a^n - b^n', 'x^n - 1', 'a^n + b^n', 'x^m * x^n', '(x^m)^n',
     ];
 
     const bad: string[] = [];
@@ -1888,5 +1891,99 @@ describe('M57 — tổng và tích', () => {
       expect((mm.above + mm.below) / ROW, src).toBeLessThanOrEqual(ALGEBRA_LIMITS.maxHeightCells);
       expect(mm.w / ROW, src).toBeLessThanOrEqual(ALGEBRA_LIMITS.maxWidthCells);
     }
+  });
+});
+
+describe('M58 — số mũ ký hiệu', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const plain = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return toPlain(m.rows.at(-1)!.expr);
+  };
+
+  it('luật luỹ thừa cũ **đã** chạy với số mũ ký hiệu — không khai lại', () => {
+    // Soát trước khi viết: `pow_add` và `pow_mul` chạy sẵn từ M49, nên M58 chỉ thêm
+    // chiều còn thiếu. Khẳng định ở đây để lần sau không ai viết lại chúng.
+    expect(plain('x^m * x^n', [{ rule: 'pow_add', at: '' }])).toBe('x^(m + n)');
+    expect(plain('(x^m)^n', [{ rule: 'pow_mul', at: '' }])).toBe('x^(mn)');
+  });
+
+  it('`pow_split` — chiều ngược, và nó **chưa** có', () => {
+    expect(plain('x^(m + n)', [{ rule: 'pow_split', at: '' }])).toBe('x^mx^n');
+    expect(run('x^n', [{ rule: 'pow_split', at: '' }]).refusal).toContain('số mũ phải là một tổng');
+  });
+
+  describe('$\\Sigma$ mở khoá hằng đẳng thức bậc $n$ ký hiệu', () => {
+    it('$a^n - b^n$ viết được **không cần dấu ba chấm**', () => {
+      // Đây là lý do "nút dấu ba chấm" nằm ở mục cố ý không làm: $\\Sigma$ *là* dấu ba
+      // chấm, có ngữ nghĩa, và kiểm được.
+      expect(plain('a^n - b^n', [{ rule: 'factor_power_difference', at: '' }])).toBe(
+        '(a − b)(Σ(k=0..n − 1) a^kb^(n − 1 − k))',
+      );
+      // $x^n - 1$ là ví dụ kinh điển nhất của cả họ, và $1$ **là** $1^n$.
+      expect(plain('x^n - 1', [{ rule: 'factor_power_difference', at: '' }])).toBe(
+        '(x − 1)(Σ(k=0..n − 1) x^k)',
+      );
+    });
+
+    it('và bộ kiểm **xác nhận** được nó', () => {
+      for (const src of ['a^n - b^n', 'x^n - 1']) {
+        const m = run(src, [{ rule: 'factor_power_difference', at: '' }]);
+        expect(m.unsound, src).toEqual([]);
+        expect(m.unchecked, src).toEqual([]);
+      }
+    });
+
+    it('chỉ số mới **không được** bắt một biến đang có', () => {
+      // $a^k - b^k$ mà lấy luôn tên `k` làm chỉ số thì biến tự do $k$ bị ràng buộc mất
+      // — đúng lỗi phạm vi mà M57 dựng cả `varsOf` để tránh.
+      expect(plain('a^k - b^k', [{ rule: 'factor_power_difference', at: '' }])).toContain('i=0');
+    });
+
+    it('chuỗi đi hết từ ký hiệu về số cụ thể', () => {
+      expect(
+        plain('x^n - 1', [
+          { rule: 'factor_power_difference', at: '' },
+          { rule: 'evaluate_at', at: '', arg: 'n := 4' },
+          { rule: 'eval_int', at: '1.1' },
+          { rule: 'sum_expand', at: '1' },
+        ]),
+      ).toBe('(x − 1)(1 + x + x^2 + x^3)');
+    });
+  });
+
+  it('tổng hai luỹ thừa bậc ký hiệu **từ chối**, và nói vì sao', () => {
+    // Tính chẵn/lẻ quyết định hẳn câu trả lời, mà engine không biết chẵn lẻ của một ký
+    // hiệu. Đúng tiền lệ `pow_both_sides`.
+    const why = run('a^n + b^n', [{ rule: 'factor_power_sum_odd', at: '' }]).refusal as string;
+    expect(why).toContain('chẵn hay lẻ');
+  });
+
+  describe('`substitute` chui được vào mọi kiểu nút — lỗi có sẵn từ M47b', () => {
+    it('trước M58 nó im lặng bỏ qua căn, trị tuyệt đối, hàm, và tổng', () => {
+      // Bản cũ liệt kê `add`/`mul`/`pow`/`div`/`rel` rồi `default: return e`. Lời từ
+      // chối còn nói sai hẳn — "không thấy biến x" trong khi biến nằm ngay đó.
+      for (const [src, want] of [
+        ['sqrt(x) + 1', '√(4) + 1'],
+        ['abs(x) + 1', '|4| + 1'],
+        ['C(x, 2)', 'C(4,2)'],
+        ['x!', '4!'],
+        ['sum(k, 1, x, k)', 'Σ(k=1..4) k'],
+      ] as const) {
+        expect(plain(src, [{ rule: 'substitute', at: '', arg: 'x := 4' }]), src).toBe(want);
+      }
+    });
+
+    it('và nó tôn trọng **phạm vi**', () => {
+      // $k$ tự do ở ngoài bị thay; $k$ trong thân tổng thì không.
+      expect(plain('sum(k, 1, n, k) + k', [{ rule: 'substitute', at: '', arg: 'k := 9' }])).toBe(
+        'Σ(k=1..n) k + 9',
+      );
+      // Cận trên **ngoài** phạm vi ràng buộc, nên nó bị thay.
+      expect(plain('sum(k, 1, k, k)', [{ rule: 'substitute', at: '', arg: 'k := 9' }])).toBe(
+        'Σ(k=1..9) k',
+      );
+    });
   });
 });

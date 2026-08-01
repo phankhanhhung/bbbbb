@@ -1742,6 +1742,14 @@ const substitute: Rule = {
     let found = false;
     const dup: Array<readonly [TermId, TermId]> = [];
     let first = true;
+    // Đi bằng `children`/`withChildren`, **không** bằng một `switch` viết tay.
+    //
+    // Bản cũ liệt kê `add`/`mul`/`pow`/`div`/`rel` rồi `default: return e`, nên nó im
+    // lặng bỏ qua `abs`, `root`, `fn`, `big`. Hậu quả: `substitute` **chưa bao giờ**
+    // thế được vào trong một dấu căn — từ M47b, năm hạng mục liền — và lời từ chối còn
+    // nói sai hẳn ("không thấy biến x") trong khi biến nằm ngay đó. Không ai gặp vì
+    // chưa bài nào thế vào trong căn; M57 làm nó lộ ra vì `big` là kiểu nút thứ tư bị
+    // bỏ quên. `children` thì **đầy đủ theo kiến trúc**, nên nó không quên được.
     const go = (e: Expr): Expr => {
       if (e.k === 'var' && e.name === name) {
         found = true;
@@ -1753,19 +1761,12 @@ const substitute: Rule = {
         dup.push(...pairs);
         return copy;
       }
-      switch (e.k) {
-        case 'add':
-        case 'mul':
-          return { ...e, args: e.args.map(go) };
-        case 'pow':
-          return { ...e, base: go(e.base), exp: go(e.exp) };
-        case 'div':
-          return { ...e, num: go(e.num), den: go(e.den) };
-        case 'rel':
-          return { ...e, lhs: go(e.lhs), rhs: go(e.rhs) };
-        default:
-          return e;
+      // Tên bị **che** bởi một tổng bên trong: chỉ đi vào hai cận, không vào thân.
+      if (e.k === 'big' && e.v === name) {
+        return { ...e, from: go(e.from), to: go(e.to) };
       }
+      const kids = children(e).map(go);
+      return kids.length === 0 ? e : withChildren(e, kids);
     };
 
     const after = go(node);
@@ -2005,8 +2006,48 @@ const factorPowerDifference: Rule = {
     const neg = stripNegative(m, y);
     if (neg === null) return no('hạng tử thứ hai phải mang dấu trừ');
 
+    // **Số mũ ký hiệu** — và đây là chỗ $\Sigma$ của M57 trả cổ tức.
+    //
+    // $a^n - b^n = (a-b)\left(a^{n-1} + \dots + b^{n-1}\right)$ với $n$ ký hiệu thì
+    // nhân tử sau cần một dấu ba chấm, và engine không có nút cho dấu ba chấm. Nhưng
+    // dấu ba chấm ấy **là** một tổng có chỉ số:
+    //
+    //     a^n − b^n = (a − b) · Σ_{k=0}^{n−1} a^k · b^{n−1−k}
+    //
+    // Viết thế thì nó có ngữ nghĩa, kiểm được (bộ bốc điểm số nguyên thay $n$ bằng
+    // $1..12$ rồi khai tổng ra), và không phải dựng thêm kiểu nút nào. Đây là lý do
+    // "nút dấu ba chấm" nằm ở mục **cố ý không làm**.
+    const symbolic = symbolicPowers(x, neg);
+    if (symbolic !== null) {
+      const { base: a, other: b, exp } = symbolic;
+      const k = freshIndex(node);
+      const kv = (): Expr => variable(m, k);
+      // $x^n - 1$: hạng tử kia là $1$, và $1^{\,n-1-k}$ thì không ai viết ra. Không
+      // dựng nút ấy ngay từ đầu **khác** với rút gọn lén — ở đây không có gì bị bỏ đi,
+      // chỉ là dạng chuẩn của công thức vốn không có nó.
+      const one = b.k === 'int' && b.v === 1;
+      const body = one
+        ? pow(m, freshCopy(m, a).copy, kv())
+        : mul(m, [
+            pow(m, freshCopy(m, a).copy, kv()),
+            pow(
+              m,
+              freshCopy(m, b).copy,
+              add(m, [freshCopy(m, exp).copy, int(m, -1), negate(m, kv())]),
+            ),
+          ]);
+      return {
+        after: mul(m, [
+          add(m, [a, negate(m, b)]),
+          big(m, 'sum', k, int(m, 0), add(m, [freshCopy(m, exp).copy, int(m, -1)]), body),
+        ]),
+      };
+    }
+
     const n = sharedPower(x, neg);
-    if (n === null || n < 2) return no('hai hạng tử phải là luỹ thừa cùng bậc ≥ 2');
+    if (n === null || n < 2) {
+      return no('hai hạng tử phải là luỹ thừa cùng bậc ≥ 2');
+    }
     const a = asPowerOf(m, x, n);
     const b = asPowerOf(m, neg, n);
     if (a === null || b === null) return no(`hai hạng tử phải là luỹ thừa bậc ${n} đúng`);
@@ -2034,6 +2075,13 @@ const factorPowerSumOdd: Rule = {
   run(m, node) {
     if (node.k !== 'add' || node.args.length !== 2) return no('cần một tổng hai hạng tử');
     const [x, y] = node.args as [Expr, Expr];
+    // Số mũ ký hiệu: **từ chối, và nói vì sao**. Tính chẵn/lẻ của $n$ quyết định hẳn
+    // câu trả lời — $n$ lẻ thì phân tích được, $n$ chẵn thì không ($a^2+b^2$ là ví dụ ai
+    // cũng biết) — mà engine không biết tính chẵn lẻ của một ký hiệu. Đúng tiền lệ
+    // `pow_both_sides`: chỗ nào tính chẵn lẻ đổi kết luận thì chỗ ấy phải từ chối.
+    if (symbolicPowers(x, y) !== null) {
+      return no('bậc là ký hiệu — chẵn hay lẻ quyết định có phân tích được hay không');
+    }
     const n = sharedPower(x, y);
     if (n === null || n < 3) return no('hai hạng tử phải là luỹ thừa cùng bậc ≥ 3');
     if (n % 2 === 0) return no(`bậc chẵn thì a^${n} + b^${n} không phân tích được trên ℚ`);
@@ -2225,6 +2273,55 @@ const binomAbsorb: Rule = {
 };
 
 
+
+/**
+ * Hai hạng tử có phải $a^n$ và $b^n$ với **cùng một số mũ không nguyên** không.
+ *
+ * Trả `null` khi số mũ là số nguyên — ca ấy đi đường cũ, viết hết các hạng tử ra. Chỉ
+ * khi số mũ là ký hiệu thì mới cần tới $\Sigma$.
+ */
+function symbolicPowers(
+  x: Expr,
+  y: Expr,
+): { base: Expr; other: Expr; exp: Expr } | null {
+  if (x.k !== 'pow' || intExp(x) !== null) return null;
+  // $x^n - 1$ là ví dụ kinh điển nhất của cả họ, và $1$ **là** $1^n$. Không nhận nó thì
+  // luật từ chối đúng bài mà người ta mở sách ra để tìm.
+  if (y.k === 'int' && y.v === 1) return { base: x.base, other: y, exp: x.exp };
+  if (y.k !== 'pow' || intExp(y) !== null) return null;
+  if (!same(x.exp, y.exp)) return null;
+  return { base: x.base, other: y.base, exp: x.exp };
+}
+
+/**
+ * Một tên chỉ số **chưa dùng** trong cây con này.
+ *
+ * `k` là tên ai cũng viết, nhưng nếu $k$ đã có mặt (chẳng hạn $a^k - b^k$) thì dùng lại
+ * nó là bắt một biến tự do — đúng lỗi phạm vi mà M57 dựng cả một hàm `varsOf` để tránh.
+ */
+function freshIndex(e: Expr): string {
+  const used = varsOf(e);
+  for (const name of ['k', 'i', 'j', 'r', 's', 't']) if (!used.has(name)) return name;
+  let n = 1;
+  while (used.has(`k_${n}`)) n += 1;
+  return `k_${n}`;
+}
+
+/** $x^{m+n} \to x^m x^n$ — chiều ngược của `pow_add`, và nó chưa có. */
+const powSplit: Rule = {
+  id: 'pow_split',
+  label: 'tách số mũ thành tích',
+  run(m, node) {
+    if (node.k !== 'pow') return no('cần một luỹ thừa');
+    if (node.exp.k !== 'add') return no('số mũ phải là một tổng');
+    const base = node.base;
+    const parts = node.exp.args.map((e, i) =>
+      pow(m, i === 0 ? base : freshCopy(m, base).copy, e),
+    );
+    return { after: mul(m, parts) };
+  },
+};
+
 /* ---------- tổng và tích (M57) ---------- */
 
 /**
@@ -2255,7 +2352,22 @@ function replaceIndex(m: Minter, body: Expr, name: string, value: Expr): Expr {
     // Tên bị che bởi một tổng bên trong: dừng, chỉ đi tiếp vào hai cận.
     if (e.k === 'big' && e.v === name) return { ...e, from: go(e.from), to: go(e.to) };
     const kids = children(e).map(go);
-    return kids.length === 0 ? e : withChildren(e, kids);
+    if (kids.length === 0) return e;
+    // Luỹ thừa **thoái hoá** thì dựng lại qua hàm dựng, không qua `withChildren`.
+    //
+    // `pow()` chuẩn hoá $x^1 \to x$ và $x^0 \to 1$, và mọi luật khác đều đi qua nó. Đi
+    // vòng ở đây thì `sum_expand` trên $\sum_{k=0}^{3} x^k$ cho ra `x^0 + x^1 + x^2 +
+    // x^3` — đúng về giá trị, nhưng hai hạng tử đầu là thứ không ai viết.
+    //
+    // Chỉ đi vòng khi số mũ **thật sự** thành $0$ hay $1$: `pow()` cấp danh tính mới,
+    // mà `data-el` trong SVG *là* `TermId`, nên gọi nó ở mọi nút luỹ thừa thì golden
+    // đổi ở những chỗ hình không đổi một nét. Nút nào thoái hoá thì nó biến mất thật —
+    // ở đó danh tính mới là đúng chuyện đang xảy ra.
+    const exp = kids[1];
+    if (e.k === 'pow' && exp !== undefined && exp.k === 'int' && (exp.v === 0 || exp.v === 1)) {
+      return pow(m, kids[0] as Expr, exp);
+    }
+    return withChildren(e, kids);
   };
   return go(body);
 }
@@ -2502,6 +2614,7 @@ export const RULES: readonly Rule[] = [
   sumShift,
   sumExpand,
   prodTelescope,
+  powSplit,
   addBothSides,
   mulBothSides,
   powBothSides,

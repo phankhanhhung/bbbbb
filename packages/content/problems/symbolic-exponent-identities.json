@@ -1,0 +1,189 @@
+{
+  "schema_version": "0.3.0",
+  "id": "symbolic-exponent-identities",
+  "statement": {
+    "vi": "$a^n - b^n$ chia hết cho $a - b$ với **mọi** $n$ nguyên dương. Thương thì sách viết bằng dấu ba chấm — $a^{n-1} + a^{n-2}b + \\dots + b^{n-1}$ — mà dấu ba chấm không phải một đối tượng toán học. Viết lại nó thành một thứ máy đọc được."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: engine **không có** nút cho dấu ba chấm, và cố ý thế. Dấu ba chấm ấy là một tổng có chỉ số, nên viết bằng $\\Sigma$ thì nó có ngữ nghĩa, kiểm được, và thay $n$ bằng số cụ thể lúc nào cũng được."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Dấu ba chấm là một tổng có chỉ số"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bậc là ký hiệu, mà [[a1|phân tích vẫn viết ra được]]: nhân tử thứ hai là một tổng chạy từ $k=0$ tới $n-1$. Không có dấu ba chấm nào, và engine kiểm bước này bằng cách thay $n$ bằng số nguyên nhỏ rồi so hai vế."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a^n - b^n",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_power_difference"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: a mũ n trừ b mũ n, rồi a trừ b nhân tổng từ k bằng 0 tới n trừ 1 của a mũ k nhân b mũ n trừ 1 trừ k."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ca quen nhất là $b = 1$, và ở đó nhân tử thứ hai [[a1|gọn hẳn]] thành $1 + x + \\dots + x^{n-1}$ — cấp số nhân, thứ ai cũng nhận ra."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x^n - 1",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_power_difference"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: x mũ n trừ 1, rồi x trừ 1 nhân tổng từ k bằng 0 tới n trừ 1 của x mũ k."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Và vì $\\Sigma$ là một đối tượng thật chứ không phải một dấu chấm lửng, thay $n = 4$ vào [[a1|rồi viết hết ra]] là chuyện làm được ngay trong cùng chuỗi — không phải bắt đầu lại từ đầu."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x^n - 1",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_power_difference"
+                },
+                {
+                  "arg": "n := 4",
+                  "at": "",
+                  "rule": "evaluate_at"
+                },
+                {
+                  "at": "1.1",
+                  "rule": "eval_int"
+                },
+                {
+                  "at": "1",
+                  "rule": "sum_expand"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Năm dòng: từ x mũ n trừ 1 tới x trừ 1 nhân với 1 cộng x cộng x bình phương cộng x lập phương."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn **tổng** hai luỹ thừa thì engine [[a1|từ chối]] khi bậc là ký hiệu, và lời từ chối chính là nội dung: $n$ lẻ thì phân tích được, $n$ chẵn thì không — $a^2+b^2$ là ví dụ ai cũng biết. Engine không đoán tính chẵn lẻ của một ký hiệu."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a^5 + b^5",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "factor_power_sum_odd"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: a mũ 5 cộng b mũ 5, rồi a cộng b nhân với bốn hạng tử đan dấu."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

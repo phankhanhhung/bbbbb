@@ -103,10 +103,10 @@
     "binomial-absorption",
     "pascal-triangle-identity",
     "sum-shift-index",
-    "telescoping-product"
+    "telescoping-product",
+    "symbolic-exponent-identities"
   ],
   "newest": [
-    "sum-shift-index",
-    "telescoping-product"
+    "symbolic-exponent-identities"
   ]
 }

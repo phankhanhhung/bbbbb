@@ -257,7 +257,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§33 để biết tập luật thật — **53 luật**, xếp theo bảy lớp:
+Xem §21–§34 để biết tập luật thật — **54 luật**, xếp theo tám lớp:
 
 | lớp | luật |
 |---|---|
@@ -268,6 +268,7 @@ Xem §21–§33 để biết tập luật thật — **53 luật**, xếp theo b
 | **chia đa thức** | `divide_by_linear_factor` |
 | **tổ hợp** (M56, §32) | `factorial_step`, `binom_to_factorial`, `binom_symmetry`, `pascal`, `binom_absorb` |
 | **tổng và tích** (M57, §33) | `sum_const`, `sum_linear`, `sum_split`, `sum_shift`, `sum_expand`, `prod_telescope` |
+| **số mũ ký hiệu** (M58, §34) | `pow_split` (và `pow_add`/`pow_mul` vốn đã chạy từ M49) |
 
 **Hai điều luật này cố ý không có:**
 
@@ -1741,3 +1742,83 @@ phân biệt được chúng — ngoặc là thứ duy nhất làm việc ấy.
 Đo chiều cao trước khi chốt, không ước lượng: $\Sigma$ trơn cao $1{,}51$ ô; $\Sigma$ chồng
 $\Sigma$ trong một phân số — ca xấu nhất viết ra được — cao $2{,}74$ ô. Trần là $3$, nên
 lọt, và lọt có biên chứ không sát nút.
+
+---
+
+## 34. Số mũ ký hiệu, và dấu ba chấm (M58)
+
+### 34.1 Soát trước khi viết — và ba phần tư việc đã xong sẵn
+
+Kế hoạch M58 liệt kê năm món. Lượt soát bằng probe cho thấy **hai trong số đó đã chạy**
+từ M49, vì `pow.exp` là `Expr` nên chúng không bao giờ giả định số nguyên:
+
+| | |
+|---|---|
+| `x^m · x^n → x^{m+n}` | `pow_add` — chạy sẵn |
+| `(x^m)^n → x^{mn}` | `pow_mul` — chạy sẵn |
+
+Viết lại chúng là thêm hai luật trùng nghĩa vào một bảng đã 53 dòng. Chốt canh của M58
+khẳng định thẳng rằng chúng chạy, để lần sau không ai viết lại.
+
+Thiếu là **chiều ngược**: `pow_split` ($x^{m+n} \to x^m x^n$).
+
+### 34.2 $\Sigma$ trả nốt món nợ của dấu ba chấm
+
+$a^n - b^n = (a-b)\left(a^{n-1} + a^{n-2}b + \dots + b^{n-1}\right)$ với $n$ ký hiệu thì
+nhân tử sau cần một dấu ba chấm, và engine **không có nút cho dấu ba chấm**. Trước M57
+đó là lý do `factor_power_difference` từ chối mọi bậc ký hiệu.
+
+Nhưng dấu ba chấm ấy *là* một tổng có chỉ số:
+
+$$a^n - b^n \;=\; (a-b)\sum_{k=0}^{n-1} a^{k} b^{\,n-1-k}$$
+
+Viết thế thì nó có ngữ nghĩa, **kiểm được** (bộ bốc điểm số nguyên thay $n$ bằng $1..12$
+rồi khai tổng ra), và không phải dựng thêm kiểu nút nào. Đây là toàn bộ lý do "nút dấu ba
+chấm" nằm ở mục *cố ý không làm* — không phải vì nó khó, mà vì có thứ tốt hơn thay được.
+
+Hai chi tiết nhỏ mà bỏ qua thì lệch:
+
+- **$x^n - 1$** phải nhận được: $1$ **là** $1^n$, và đó là ví dụ kinh điển nhất của cả
+  họ. Không nhận thì luật từ chối đúng bài người ta mở sách ra để tìm. Nhân tử thứ hai
+  khi ấy in thành $\sum x^k$, không phải $\sum x^k 1^{n-1-k}$ — không dựng nút thừa
+  **khác** với rút gọn lén: ở đây không có gì bị bỏ đi.
+- **Chỉ số mới không được bắt một biến đang có.** $a^k - b^k$ mà lấy luôn tên `k` làm
+  chỉ số thì biến tự do $k$ bị ràng buộc mất — đúng lỗi phạm vi mà M57 dựng cả `varsOf`
+  để tránh. `freshIndex` chọn tên chưa dùng.
+
+`factor_power_sum_odd` thì **từ chối** khi bậc là ký hiệu, và lời từ chối là nội dung:
+tính chẵn/lẻ của $n$ quyết định hẳn câu trả lời — $n$ lẻ phân tích được, $n$ chẵn thì
+không ($a^2+b^2$) — mà engine không biết chẵn lẻ của một ký hiệu. Đúng tiền lệ
+`pow_both_sides`: chỗ nào tính chẵn lẻ đổi kết luận thì chỗ ấy phải từ chối.
+
+### 34.3 Một lỗi ngủ từ M47b
+
+`substitute` duyệt cây bằng một `switch` viết tay liệt kê `add`/`mul`/`pow`/`div`/`rel`,
+rồi `default: return e`. Nên nó **im lặng bỏ qua** `abs`, `root`, và (từ M56/M57) `fn`,
+`big`. Hậu quả đo được:
+
+```
+sqrt(x) + 1   ✗ không thấy biến "x" trong cây con này
+abs(x) + 1    ✗ không thấy biến "x" trong cây con này
+x + 1         ✓ (4 + 1)
+```
+
+Lời từ chối không chỉ sai, nó **nói ngược sự thật**: biến nằm ngay đó. Lỗi này có từ
+M47b — năm hạng mục — và không ai gặp vì chưa bài nào thế vào trong một dấu căn. M57 làm
+nó lộ ra vì `big` là kiểu nút thứ tư bị bỏ quên.
+
+Chữa bằng `children`/`withChildren`, vốn **đầy đủ theo kiến trúc** nên không quên được,
+cộng một dòng phạm vi cho `big`. Bài học chung: một `switch` viết tay trên `Expr['k']` là
+một danh sách phải bảo trì tay, và mọi danh sách phải bảo trì tay đều sẽ cũ. Kiểu
+exhaustive của TypeScript bắt được các `switch` **có kiểu trả về đầy đủ**; nó không bắt
+được một `default` nuốt mọi thứ.
+
+### 34.4 `pow()` chuẩn hoá, nên mọi chỗ dựng cây phải đi qua nó
+
+`replaceIndex` (M57) dựng lại cây bằng `withChildren`, tức đi vòng qua hàm dựng. Kết quả:
+`sum_expand` trên $\sum_{k=0}^{3} x^k$ cho ra `x^0 + x^1 + x^2 + x^3` — đúng về giá trị,
+mà hai hạng tử đầu là thứ không ai viết.
+
+`pow()` vốn chuẩn hoá $x^1 \to x$ và $x^0 \to 1$, và mọi luật khác đều đi qua nó. Cho
+`replaceIndex` đi qua nó nữa thì ra `1 + x + x^2 + x^3`. Danh tính không mất gì: cây ở đó
+đã là bản sao mới toanh, sắp thành hạng tử của dòng sau.
