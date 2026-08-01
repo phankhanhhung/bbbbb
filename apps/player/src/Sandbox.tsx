@@ -5,7 +5,10 @@ import {
   command,
   modeFromEvent,
   SELECT_TOOL,
+  trailFull,
+  trailRows,
   type Selection,
+  type Trail,
 } from '@combviz/editor';
 import {
   createContext,
@@ -418,7 +421,7 @@ export function Sandbox({
 
   const exportSvg = useCallback(() => {
     // REN-03: brand mark đóng vào mọi export và người học không tắt được.
-    // Xuất SVG (SBX-05) phải dùng **cùng ngữ cảnh** đang hiển thị, nếu không thì
+    // Xuất SVG (SBX-06) phải dùng **cùng ngữ cảnh** đang hiển thị, nếu không thì
     // file tải về thiếu hẳn công thức mà màn hình đang có.
     const svg = toSvgString(renderer.render(state.scene, ctx), {
       viewport,
@@ -619,9 +622,107 @@ export function Sandbox({
             ))}
           </section>
 
+          <TrailMap trail={state.trail} onJump={sandbox.jumpTo} />
+
           {state.lastLabel ? <p class="diagnostics">vừa xong: {state.lastLabel}</p> : null}
         </aside>
       </div>
+    </section>
+  );
+}
+
+/** Bán kính một chấm, và khoảng cách giữa hai chấm — cả bản đồ chỉ có hai số này. */
+const DOT = 5;
+const GAP = 22;
+
+/**
+ * SBX-06 — **bản đồ vết chân** (M75).
+ *
+ * Mỗi chấm là một thế người học đã đứng; mỗi nét là một nước đi họ đã làm. Chấm
+ * viền đậm là chỗ đang đứng, chấm tô đặc là chỗ đã quay lại (`visits > 1`), chạm
+ * một chấm là **đứng về đó**.
+ *
+ * Nó cố ý nghèo thông tin. Không màu nào nghĩa là "gần lời giải", không nhãn nào
+ * nói "ngõ cụt", không mũi tên nào gợi ý đi tiếp đâu — NG-03 nguyên vẹn. Mọi thứ
+ * trên hình này là thứ chính người học vừa tạo ra, và nó trả lời đúng một câu:
+ * *"chỗ này mình thử rồi à?"*
+ *
+ * Vẽ bằng SVG thô chứ không qua `createRenderer`: đây không phải một scene, không
+ * có element nào, không có anchor nào trỏ vào. Kéo cả bộ máy render vào để vẽ mười
+ * cái chấm là trả một cái giá cho một thứ không dùng.
+ */
+function TrailMap({ trail, onJump }: { trail: Trail; onJump: (id: string) => void }) {
+  const rows = trailRows(trail);
+  if (rows.length <= 1) return null;
+
+  const width = Math.max(...rows.map((row) => row.length));
+  const at = new Map<string, { x: number; y: number }>();
+  rows.forEach((row, depth) => {
+    row.forEach((node, i) => {
+      // Căn giữa từng hàng: một cây rẽ hai nhánh mà dồn trái thì đọc thành một
+      // dòng có gai, không thành một chỗ rẽ.
+      at.set(node.id, {
+        x: (i - (row.length - 1) / 2) * GAP + ((width - 1) / 2) * GAP + DOT * 2,
+        y: depth * GAP + DOT * 2,
+      });
+    });
+  });
+
+  const w = (width - 1) * GAP + DOT * 4;
+  const h = (rows.length - 1) * GAP + DOT * 4;
+
+  return (
+    <section class="constraints trail">
+      <h3>Đã đi qua</h3>
+      <svg class="trail__map" viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="img"
+        aria-label={`Bản đồ vết chân: ${trail.nodes.size} thế đã tới`}>
+        {[...trail.nodes.values()].flatMap((node) =>
+          node.out.map((edge) => {
+            const a = at.get(node.id);
+            const b = at.get(edge.to);
+            if (!a || !b) return null;
+            return (
+              <line
+                key={`${node.id}-${edge.to}`}
+                class="trail__edge"
+                x1={a.x}
+                y1={a.y}
+                x2={b.x}
+                y2={b.y}
+              />
+            );
+          }),
+        )}
+        {[...trail.nodes.values()].map((node) => {
+          const p = at.get(node.id) as { x: number; y: number };
+          const here = node.id === trail.at;
+          return (
+            <circle
+              key={node.id}
+              class={`trail__dot${here ? ' is-here' : ''}${node.visits > 1 ? ' is-again' : ''}`}
+              cx={p.x}
+              cy={p.y}
+              r={DOT}
+              role="button"
+              tabIndex={0}
+              aria-label={
+                here
+                  ? 'đang ở đây'
+                  : node.visits > 1
+                    ? `đã tới ${node.visits} lần — quay về`
+                    : 'quay về chỗ này'
+              }
+              onClick={() => onJump(node.id)}
+              onKeyDown={(event: KeyboardEvent) => {
+                if (event.key === 'Enter' || event.key === ' ') onJump(node.id);
+              }}
+            />
+          );
+        })}
+      </svg>
+      {trailFull(trail) ? (
+        <p class="trail__note">Bản đồ đã đầy — vẫn nghịch tiếp được, chỉ không ghi thêm.</p>
+      ) : null}
     </section>
   );
 }

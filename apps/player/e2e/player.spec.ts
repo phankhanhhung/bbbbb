@@ -959,6 +959,49 @@ test.describe('Sandbox đại số: bảng nước đi (SBX-01, M65)', () => {
     await expect(rows).toHaveCount(before);
   });
 
+  /**
+   * SBX-06 — bản đồ vết chân (M75).
+   *
+   * Thứ nó phải chứng minh không phải "có vẽ ra": mà là **nó giữ được nhánh mà
+   * undo vứt đi**, và chạm vào một chấm thì đứng về đúng đó.
+   */
+  test('bản đồ mọc theo từng nước, và giữ nhánh mà hoàn tác vứt đi', async ({ page }) => {
+    await openSandbox(page);
+
+    // Chưa đi bước nào thì không có bản đồ: một chấm lẻ không phải một tấm bản đồ.
+    await expect(page.locator('.trail__map')).toHaveCount(0);
+
+    const rows = page.locator('.sandbox .canvas svg .cv-alg-row');
+    const before = await rows.count();
+    await tapUntilPlainMove(page);
+    await page.locator('.moves__item').filter({ hasNotText: '…' }).first().click();
+    await expect(rows).toHaveCount(before + 1);
+    await expect(page.locator('.trail__dot')).toHaveCount(2);
+
+    // Hoàn tác: chấm cũ **còn nguyên** trên bản đồ (khác hẳn `future: []` của
+    // lịch sử undo), và chỗ đang đứng lùi về gốc.
+    await page.getByRole('button', { name: /Hoàn tác/ }).click();
+    await expect(rows).toHaveCount(before);
+    await expect(page.locator('.trail__dot')).toHaveCount(2);
+    await expect(page.locator('.trail__dot.is-here')).toHaveCount(1);
+  });
+
+  test('chạm một chấm là **đứng về đó** — không phải một gợi ý, là lịch sử của chính mình', async ({
+    page,
+  }) => {
+    await openSandbox(page);
+    const rows = page.locator('.sandbox .canvas svg .cv-alg-row');
+    const before = await rows.count();
+
+    await tapUntilPlainMove(page);
+    await page.locator('.moves__item').filter({ hasNotText: '…' }).first().click();
+    await expect(rows).toHaveCount(before + 1);
+
+    // Chấm đầu tiên là gốc — chạm vào nó thì chuỗi về lại độ dài ban đầu.
+    await page.locator('.trail__dot').first().click();
+    await expect(rows).toHaveCount(before);
+  });
+
   test('tham số hỏng → **nguyên văn** lời từ chối của engine, không phải một dấu ✗', async ({
     page,
   }) => {

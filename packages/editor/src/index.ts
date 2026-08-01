@@ -23,6 +23,19 @@ export {
 export { allocateId, allocateIds } from './ids.js';
 
 export {
+  createTrail,
+  moveTrail,
+  positionKey,
+  stepTrail,
+  trailFull,
+  trailRows,
+  TRAIL_LIMIT,
+  type Trail,
+  type TrailEdge,
+  type TrailNode,
+} from './trail.js';
+
+export {
   applySelection,
   modeFromEvent,
   EMPTY_SELECTION,

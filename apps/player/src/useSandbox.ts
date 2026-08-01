@@ -3,13 +3,18 @@ import {
   canRedo,
   canUndo,
   createEditorState,
+  createTrail,
   execute,
+  moveTrail,
+  positionKey,
   redo,
+  stepTrail,
   undo,
   type Command,
   type CommandRegistry,
   type EditorState,
   type Selection,
+  type Trail,
 } from '@combviz/editor';
 import { tryEvaluate, type DslEnvironment } from '@combviz/dsl';
 import type { Invariant, Scene, SceneValidator, ValidatorOutcome } from '@combviz/schema';
@@ -47,6 +52,8 @@ export interface SandboxState {
   readonly canUndo: boolean;
   readonly canRedo: boolean;
   readonly lastLabel: string;
+  /** SBX-06 — những chỗ người học đã đặt chân. Không hơn. */
+  readonly trail: Trail;
 }
 
 export interface SandboxApi {
@@ -56,6 +63,8 @@ export interface SandboxApi {
   toggleValidator(id: string): void;
   undo(): void;
   redo(): void;
+  /** Đứng về một chỗ **đã tới**. Chạm một chấm trên bản đồ đi qua đây. */
+  jumpTo(nodeId: string): void;
   resetTo(scene: Scene): void;
 }
 
@@ -64,6 +73,7 @@ export function useSandbox(options: SandboxOptions): SandboxApi {
     createEditorState(options.initialScene),
   );
   const [selection, setSelection] = useState<Selection>(() => new Set<string>());
+  const [trail, setTrail] = useState<Trail>(() => createTrail(options.initialScene));
 
   // SBX-02: bật/tắt từng ràng buộc để "nới luật" khi thí nghiệm. Mặc định bật
   // hết — người học phải chủ động tắt, chứ không phải chủ động bật.
@@ -119,6 +129,11 @@ export function useSandbox(options: SandboxOptions): SandboxApi {
       setEditor((current) => {
         const result = execute(current, options.commands, cmd);
         applied = result.applied;
+        // Chỉ lệnh **áp được** mới để lại vết: một lệnh bị từ chối không đưa
+        // người học đi đâu cả, và ghi nó vào bản đồ là vẽ một chỗ họ chưa tới.
+        if (result.applied) {
+          setTrail((t) => stepTrail(t, result.state.scene, result.state.lastLabel));
+        }
         return result.state;
       });
       return applied;
@@ -138,7 +153,38 @@ export function useSandbox(options: SandboxOptions): SandboxApi {
   const resetTo = useCallback((next: Scene) => {
     setEditor(createEditorState(next));
     setSelection(new Set<string>());
+    setTrail(createTrail(next));
   }, []);
+
+  /**
+   * Undo/redo/nhảy đều là **đứng sang chỗ khác**, không phải đi một bước.
+   *
+   * Một chỗ duy nhất tính lại `at` từ scene mới, thay vì ba chỗ tự đoán mình vừa
+   * đi đâu — ba chỗ thì chỗ thứ ba sẽ lệch, và lệch ở đây nghĩa là chấm "đang
+   * đứng" trên bản đồ trỏ sai.
+   */
+  const walk = useCallback((next: (current: EditorState) => EditorState) => {
+    setEditor((current) => {
+      const after = next(current);
+      setTrail((t) => moveTrail(t, positionKey(after.scene)));
+      return after;
+    });
+  }, []);
+
+  const jumpTo = useCallback(
+    (nodeId: string) => {
+      setTrail((t) => {
+        const node = t.nodes.get(nodeId);
+        // Nhảy **không** đi qua `execute`: nó không phải một lệnh, nên lịch sử
+        // undo nhận nó như một lần đặt lại — đúng, vì cây và dòng là hai cách ghi
+        // khác nhau và cây mới là cái giữ được nhánh bỏ dở.
+        if (node) setEditor(createEditorState(node.scene));
+        return node ? moveTrail(t, nodeId) : t;
+      });
+      setSelection(new Set<string>());
+    },
+    [],
+  );
 
   return {
     state: {
@@ -151,12 +197,14 @@ export function useSandbox(options: SandboxOptions): SandboxApi {
       canUndo: canUndo(editor),
       canRedo: canRedo(editor),
       lastLabel: editor.lastLabel,
+      trail,
     },
     run,
     setSelection,
     toggleValidator,
-    undo: () => setEditor(undo),
-    redo: () => setEditor(redo),
+    undo: () => walk(undo),
+    redo: () => walk(redo),
+    jumpTo,
     resetTo,
   };
 }

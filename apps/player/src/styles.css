@@ -438,6 +438,51 @@ body {
   color: var(--ink-soft);
 }
 
+/* --- Bản đồ vết chân (SBX-06, M75) ---------------------------------------
+   Cố ý nghèo: một màu mực, hai trạng thái chấm. Thêm màu vào đây là bắt đầu nói
+   những thứ mà bản đồ này không được phép biết. */
+.trail__map {
+  display: block;
+  margin: 0.2rem auto 0;
+  max-width: 100%;
+  overflow: visible;
+}
+
+/* `--line` (màu kẻ khung) quá nhạt ở đây: nét nối là thứ mang thông tin "chỗ nào
+   ra chỗ nào", và mất nó thì bản đồ chỉ còn là một đám chấm rời. Đo bằng mắt trên
+   ảnh chụp thật, không bằng cảm giác. */
+.trail__edge {
+  stroke: var(--ink-soft);
+  stroke-width: 1.2;
+  opacity: 0.5;
+}
+
+.trail__dot {
+  fill: var(--paper);
+  stroke: var(--ink-soft);
+  stroke-width: 1.4;
+  cursor: pointer;
+}
+
+/* Đã quay lại đây — tô đặc. Đó là **thông tin duy nhất** bản đồ thêm vào so với
+   một danh sách thao tác, và nó là thông tin người học tự tạo ra. */
+.trail__dot.is-again {
+  fill: var(--ink-soft);
+}
+
+/* Đang đứng đây — viền đậm, không đổi màu: đổi màu thì nó tranh chỗ với `is-again`
+   và hai nghĩa đè lên nhau. */
+.trail__dot.is-here {
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+
+.trail__note {
+  margin: 0.3rem 0 0;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
 .diagnostics {
   margin: 1rem 0 0;
   font-size: 0.75rem;

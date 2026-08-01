@@ -278,6 +278,7 @@ Triết lý: nguyên lý **sống bên trong problem player và sandbox**, khôn
 - **SBX-03 [P2] SHOULD** — **Challenge mode**: problem có thể yêu cầu người học *xây* cấu hình (một cách phủ, một cách tô, một phản ví dụ); hệ thống chấm bằng validator + `goal_expr`; attempt lưu client-side (LOC-02). Khai báo rõ trong metadata: problem thuộc loại minh họa / challenge / cả hai.
 - **SBX-04 [P2] SHOULD** — Chia sẻ trạng thái sandbox bằng URL (state nén trong fragment, không cần backend); người nhận mở ra đúng cấu hình để tranh luận phản ví dụ với nhau.
 - **SBX-05 [P1] MUST** — Export PNG/SVG scene hiện tại (kèm/không kèm chú thích), phục vụ dán vào vở, slide, bài nộp.
+- **SBX-06 [P2] MAY** — **Bản đồ vết chân**: sandbox giữ cái *cây* trạng thái mà lịch sử undo vứt đi (`execute` đặt `future: []` khi làm việc mới), gộp theo **vị trí** — hai thứ tự nước đi tới cùng một thế là một nút — và vẽ nó thành một hình nhỏ: chấm là thế đã đứng, nét là nước đã đi, chấm đặc là chỗ đã quay lại, chạm một chấm là đứng về đó. **Không phải bộ giải, không phải gợi ý** (NG-03 nguyên vẹn): bản đồ chỉ chứa những chỗ người học đã đặt chân, không màu nào nghĩa là "gần lời giải", không nhãn nào nói "ngõ cụt", và không có cửa nào đi tới một thế họ chưa dựng ra. Trần 40 nút; chạm trần thì vẫn nghịch tiếp được và bản đồ **nói ra** rằng nó thôi ghi.
 
 ---
 
