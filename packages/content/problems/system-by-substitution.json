@@ -84,7 +84,7 @@
           "parent": "s0",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Còn khi một phương trình đã rút về $0 = 0$ thì nó [[a1|không nói gì nữa]] và bỏ đi được. Engine chỉ cho bỏ khi hai vế **thật sự** giống hệt nhau — bỏ một phương trình còn nội dung là mất nghiệm."
+            "vi": "Còn khi một phương trình đã rút về hai vế **giống hệt nhau** — ở đây $x + y = x + y$ — thì nó [[a1|không nói gì nữa]] và bỏ đi được. Engine chỉ cho bỏ khi hai vế thật sự trùng nhau từng nút: bỏ một phương trình còn nội dung là mất nghiệm."
           },
           "anchors": {
             "a1": {

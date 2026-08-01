@@ -84,7 +84,7 @@
           "parent": "s0",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Nhân cả một phương trình với một số cũng là một nước đi hợp lệ, và [[a1|engine ghi điều kiện]] khi hệ số chưa chắc khác $0$ — nhân một phương trình với $0$ làm mất thông tin, và đó là bẫy cùng họ với AL-08."
+            "vi": "Nhân cả một phương trình với một số cũng là một nước đi hợp lệ. Ở đây [[a1|hệ số $3$ là hằng khác $0$]] nên engine im lặng cho qua — nó chỉ đòi một dòng đỏ điều kiện khi hệ số **chưa chắc** khác $0$, vì nhân một phương trình với $0$ làm mất thông tin: bẫy cùng họ với AL-08."
           },
           "anchors": {
             "a1": {

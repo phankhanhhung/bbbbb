@@ -115,7 +115,7 @@
             "scene": {
               "engine": "sequence",
               "config": {
-                "caption": "Hoán vị $\\sigma$",
+                "caption": "Hoán vị σ",
                 "mode": "sequence",
                 "show_index": true
               },
@@ -231,7 +231,7 @@
             "scene": {
               "engine": "sequence",
               "config": {
-                "caption": "Hoán vị $\\sigma$",
+                "caption": "Hoán vị σ",
                 "mode": "sequence",
                 "show_index": true
               },
@@ -346,7 +346,7 @@
             "scene": {
               "engine": "sequence",
               "config": {
-                "caption": "Hoán vị $\\sigma$",
+                "caption": "Hoán vị σ",
                 "mode": "sequence",
                 "show_index": true
               },

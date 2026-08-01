@@ -46,7 +46,7 @@
           "parent": null,
           "edge_type": "seq",
           "narrative": {
-            "vi": "Bên trái, engine chạy công thức Pascal và **tự kiểm** từng bước: [[a1|$C_5^2$]] tách thành [[a2|$C_4^1$]] cộng [[a3|$C_4^2$]].\nBên phải là chính đồng nhất thức ấy trên tam giác Pascal: ô [[a1|$C_5^2 = 10$]] bằng tổng **hai ô ngay trên nó**, [[a2|$C_4^1 = 4$]] và [[a3|$C_4^2 = 6$]].\nKhông phải hai bài — là một đồng nhất thức nhìn từ hai phía. Rê vào một cụm chữ thì cả hai phía cùng sáng."
+            "vi": "Bên trái, engine chạy công thức Pascal và **tự kiểm** từng bước: [[a1|$C_5^2$]] tách thành [[a2|$C_4^1$]] cộng [[a3|$C_4^2$]].\nBên phải là chính đồng nhất thức ấy trên tam giác Pascal: ô [[a1|$C_5^2 = 10$]] bằng ô **ngay trên** nó, [[a3|$C_4^2 = 6$]], cộng ô **chéo trên trái**, [[a2|$C_4^1 = 4$]].\nKhông phải hai bài — là một đồng nhất thức nhìn từ hai phía. Rê vào một cụm chữ thì cả hai phía cùng sáng."
           },
           "anchors": {
             "a1": {
@@ -64,7 +64,7 @@
             "a3": {
               "ids": [
                 "r4-e13",
-                "above-right"
+                "above"
               ]
             }
           },
@@ -108,7 +108,7 @@
               ],
               [
                 "r4-e13",
-                "above-right"
+                "above"
               ]
             ],
             "scene": {
@@ -268,26 +268,23 @@
                 {
                   "id": "above-left",
                   "type": "region",
-                  "cells": [[4, 1]],
-                  "label": "C(4,1)"
+                  "cells": [[4, 1]]
                 },
                 {
-                  "id": "above-right",
+                  "id": "above",
                   "type": "region",
-                  "cells": [[4, 2]],
-                  "label": "C(4,2)"
+                  "cells": [[4, 2]]
                 },
                 {
                   "id": "target",
                   "type": "region",
-                  "cells": [[5, 2]],
-                  "label": "C(5,2)"
+                  "cells": [[5, 2]]
                 }
               ]
             }
           },
           "alt_text": {
-            "vi": "Bên trái: chuỗi biến đổi từ C(5,2) thành C(4,1) + C(4,2). Bên phải: tam giác Pascal trên lưới 6×6, ô C(5,2) = 10 được khoanh cùng hai ô ngay trên nó là 4 và 6."
+            "vi": "Bên trái: chuỗi biến đổi từ C(5,2) thành C(4,1) + C(4,2). Bên phải: tam giác Pascal trên lưới 6×6, ô C(5,2) = 10 được khoanh cùng ô ngay trên nó là 6 và ô chéo trên trái là 4."
           },
           "verified": true
         }

@@ -2,7 +2,7 @@
   "schema_version": "0.3.0",
   "id": "log-equation-basics",
   "statement": {
-    "vi": "Bốn luật logarit — tích, thương, luỹ thừa, đổi cơ số — và chỗ chúng khác nhau: ba cái đầu **cần điều kiện**, cái thứ tư thì không, còn cặp $e^{\\ln x}$ thì cũng không. Xem engine ghi đúng chỗ nào cần dòng đỏ."
+    "vi": "Luật tích và luật luỹ thừa của logarit — cả hai **cần điều kiện** — còn cặp $e^{\\ln x}$ thì không, dù trông như cũng phải cần. Xem engine ghi đúng chỗ nào cần dòng đỏ."
   },
   "source": {
     "contest": "folklore",
@@ -98,7 +98,7 @@
             "elements": []
           },
           "alt_text": {
-            "vi": "Hai dòng: ln của x mũ 3, rồi 3 nhân ln x."
+            "vi": "Hai dòng: ln của x mũ 3, rồi 3 nhân ln x, kèm dòng đỏ điều kiện x dương."
           },
           "verified": true
         },
