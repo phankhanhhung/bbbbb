@@ -75,6 +75,12 @@ const ARGS: Readonly<Record<string, ArgMaker>> = {
   // và một `arg` luôn bị từ chối thì luật ấy không bao giờ được quét.
   sum_split: () => '2',
   sum_shift: () => '1',
+  // Phép biến đổi hàng: chỉ số hàng, rồi hệ số. Thiếu dòng nào ở đây thì luật ấy luôn
+  // từ chối và trôi qua phép quét mà không ai biết.
+  add_equations: () => '1,0,2',
+  scale_equation: () => '0,3',
+  substitute_from: () => '0,1',
+  drop_equation: () => '2',
   // Phân hoạch phải **vừa với nút gặp phải**: `add` làm phẳng nên số hạng tử thay đổi
   // theo từng biểu thức, và một `arg` cố định `"0,1|2,3"` chỉ áp được cho tổng đúng
   // bốn hạng tử — tức là hầu như không bao giờ.
@@ -186,6 +192,9 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       // M58: số mũ **ký hiệu** — bộ sinh không có toán tử `^` nên nó không bao giờ
       // dựng $x^{m+n}$ hay $a^n - b^n$, đúng lý do đã phải gieo $\sqrt{48}$.
       'x^(m + n)', 'a^n - b^n', 'x^n - 1', 'a^n + b^n', 'x^m * x^n', '(x^m)^n',
+      // M59: bộ sinh không bao giờ dựng một **hệ** — dấu chấm phẩy chỉ có ở tầng gốc.
+      'x + 2*y = 5; 3*x - y = 1', 'x = 5 - 2*y; 3*x - y = 1',
+      'x = 1; y = 2; x + y = x + y',
     ];
 
     const bad: string[] = [];
@@ -1985,5 +1994,141 @@ describe('M58 — số mũ ký hiệu', () => {
         'Σ(k=1..9) k',
       );
     });
+  });
+});
+
+describe('M59 — hệ phương trình', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const plain = (start: string, steps: AlgebraStep[] = []): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return toPlain(m.rows.at(-1)!.expr);
+  };
+  const tree = (s: string): Expr => parse(s, new Minter());
+  const S = 'x + 2*y = 5; 3*x - y = 1';
+
+  describe('nút và cú pháp', () => {
+    it('hệ là **một `Expr`**, nên đường dẫn cũ chạy nguyên si', () => {
+      const e = tree(S) as Expr & { k: 'sys' };
+      expect(e.k).toBe('sys');
+      // `"0"` chỉ vào phương trình đầu, `"0.L"` vào vế trái của nó. Toàn bộ máy luật,
+      // `replaceAt`, danh tính và choreography không phải sửa một dòng nào.
+      expect(toPlain(nodeAt(e, '0') as Expr)).toBe('x + 2y = 5');
+      expect(toPlain(nodeAt(e, '0.L') as Expr)).toBe('x + 2y');
+    });
+
+    it('dấu **chấm phẩy** ngăn, vì dấu phẩy đã có chủ', () => {
+      // `root(3, x)`, `C(n, k)` và `sum(k, 1, n, …)` đều dùng dấu phẩy.
+      expect(unparse(tree(S))).toBe('((x + (2 * y)) = 5); (((3 * x) + ((-1) * y)) = 1)');
+      expect(unparse(tree(unparse(tree(S))))).toBe(unparse(tree(S)));
+    });
+
+    it('mỗi dòng phải là một quan hệ, và hệ chỉ ở gốc', () => {
+      expect(() => parse('x + y; x - y = 1', new Minter())).toThrow('phải là một quan hệ');
+    });
+
+    it('trần số dòng ép ở **model**, không chỉ ở TypeBox', () => {
+      const why = run('a = 1; b = 2; c = 3; d = 4; e = 5').refusal as string;
+      expect(why).toContain(`quá trần ${ALGEBRA_LIMITS.maxRelations}`);
+      expect(run('a = 1; b = 2; c = 3; d = 4').refusal).toBeNull();
+    });
+  });
+
+  describe('hợp đồng kiểm — và vì sao `sameSolutionSet` **không dùng được**', () => {
+    it('bốc điểm ngẫu nhiên cho một hệ là phép kiểm **luôn xanh**', () => {
+      // Cả hệ trước lẫn hệ sau đều sai ở gần như mọi điểm, nên hai bên "đồng ý" và
+      // `agree` tăng đều. Đây là bằng chứng cho quyết định thiết kế: một hệ **sai hẳn**
+      // vẫn qua được phép kiểm ấy.
+      const before = tree(S);
+      const nonsense = tree('x + 2*y = 5; 3*x - y = 99');
+      const verdict = sameSolutionSet(before, nonsense, null, 4242);
+
+      expect(verdict.ok).toBe(true);
+      expect(verdict.verified).toBe(true);
+    });
+
+    it('còn hợp đồng `claim` thì bắt được, bằng một điểm cụ thể', () => {
+      // `left` đọc ra từ cây **sau**, `right` dựng từ cây **trước**. Cộng sai một vế thì
+      // đẳng thức hỏng ngay.
+      const m = run(S, [{ rule: 'add_equations', at: '', arg: '1,0,-3' }]);
+      expect(m.unsound).toEqual([]);
+      expect(m.unchecked).toEqual([]);
+
+      // Và phép so ấy có răng: hai hiệu khác nhau thì `sameValue` đỏ.
+      expect(sameValue(tree('3*x - y - 3*(x + 2*y)'), tree('3*x - y - 3*(x + 2*y) + 1')).ok).toBe(
+        false,
+      );
+    });
+  });
+
+  describe('bốn phép biến đổi hàng', () => {
+    it('cho ra đúng hệ sau, và cả bốn **kiểm được**', () => {
+      const cases: Array<[string, string, string]> = [
+        [S, 'add_equations', '1,0,-3'],
+        [S, 'scale_equation', '0,3'],
+        ['x = 5 - 2*y; 3*x - y = 1', 'substitute_from', '0,1'],
+        ['x = 1; y = 2; x + y = x + y', 'drop_equation', '2'],
+      ];
+      for (const [start, rule, arg] of cases) {
+        const m = run(start, [{ rule, at: '', arg }]);
+        expect(m.refusal, `${rule}: ${m.refusal}`).toBeNull();
+        expect(m.unsound, rule).toEqual([]);
+        expect(m.unchecked, rule).toEqual([]);
+      }
+      expect(plain(S, [{ rule: 'scale_equation', at: '', arg: '0,3' }])).toBe(
+        '3(x + 2y) = 3·5; 3x − y = 1',
+      );
+      expect(plain('x = 1; y = 2; x + y = x + y', [{ rule: 'drop_equation', at: '', arg: '2' }])).toBe(
+        'x = 1; y = 2',
+      );
+    });
+
+    it('`substitute_from` đòi nguồn **đã cô lập một ẩn**', () => {
+      // Chỗ có răng nhất của luật: thế một thứ không phải ràng buộc là cách nhanh nhất
+      // làm hỏng một hệ, và cửa này chặn bằng cấu trúc chứ không bằng lời hứa.
+      expect(run(S, [{ rule: 'substitute_from', at: '', arg: '0,1' }]).refusal).toContain(
+        'phải có dạng "x = …"',
+      );
+    });
+
+    it('`drop_equation` chỉ bỏ được hàng đã rút về $0 = 0$', () => {
+      const why = run('x = 1; y = 2; x + y = 3', [
+        { rule: 'drop_equation', at: '', arg: '2' },
+      ]).refusal as string;
+      expect(why).toContain('hai vế chưa giống nhau');
+    });
+
+    it('nhân với $0$ và cộng một hàng vào chính nó đều bị chặn', () => {
+      expect(run(S, [{ rule: 'scale_equation', at: '', arg: '0,0' }]).refusal).toContain(
+        'làm mất thông tin',
+      );
+      expect(run(S, [{ rule: 'add_equations', at: '', arg: '0,0,2' }]).refusal).toContain(
+        'phải khác nhau',
+      );
+    });
+
+    it('bất đẳng thức thì **từ chối** — cộng và nhân chúng là chuyện khác', () => {
+      const ineq = 'x + y > 3; x - y < 1';
+      expect(run(ineq, [{ rule: 'add_equations', at: '', arg: '1,0,1' }]).refusal).toContain(
+        'đẳng thức',
+      );
+      expect(run(ineq, [{ rule: 'scale_equation', at: '', arg: '0,3' }]).refusal).toContain(
+        'xét dấu',
+      );
+    });
+  });
+
+  it('vẽ: ngoặc nhọn và dấu $=$ **thẳng cột**', () => {
+    // Đó là thứ làm một hệ đọc được; không gióng thì nó nhìn như hai dòng rời nhau.
+    const box = toBox(tree(S));
+    const p = place(box, 0, 0);
+    const eq = p.glyphs.filter((g) => g.s === '=');
+    expect(eq).toHaveLength(2);
+    expect(eq[0]!.x).toBeCloseTo(eq[1]!.x, 6);
+    // Ngoặc nhọn vẽ bằng path, không phải glyph phóng to.
+    expect(p.paths.length).toBeGreaterThan(0);
+
+    const mm = measure(box);
+    expect((mm.above + mm.below) / ROW).toBeLessThanOrEqual(ALGEBRA_LIMITS.maxHeightCells);
   });
 });

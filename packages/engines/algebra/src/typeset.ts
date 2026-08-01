@@ -80,6 +80,11 @@ const SUB_CLEAR = 0.34;
 const subDrop = (base: Metrics, sub: Metrics): number =>
   Math.max(base.above * SUB_DROP, sub.above * SUB_CLEAR + base.below);
 
+/** Hở dọc giữa hai dòng của một chồng; bề ngang ngoặc nhọn; hở sau ngoặc. */
+const STACK_GAP = 0.42;
+const BRACE_W = 0.42;
+const BRACE_PAD = 0.26;
+
 /** Ký hiệu $\sum$ vẽ to hơn cỡ chữ dòng; hở giữa nó và hai cận; hở trước thân. */
 const BIG_GLYPH = 1.5;
 const BIG_GAP = 0.14;
@@ -222,6 +227,20 @@ export type Box =
    * từ `subsup`: bề ngang là `max(glyph, cận trên, cận dưới)`, còn thân đứng bên phải.
    */
   | { t: 'big'; glyph: string; lower: Box; upper: Box; body: Box; size: number }
+  /**
+   * Một chồng dòng, có thể kèm ngoặc nhọn — hệ phương trình.
+   *
+   * `lead` là bề ngang phần **trước** dấu quan hệ của từng dòng, và nó là cả lý do hộp
+   * này tồn tại: các dấu $=$ phải gióng thẳng cột thì một hệ mới đọc được, còn không thì
+   * nó nhìn như hai dòng rời nhau. Đo `lead` ở `toBox` (chỗ duy nhất còn thấy cây), rồi
+   * `place` đẩy mỗi dòng sang phải $\max(\text{lead}) - \text{lead}$.
+   */
+  | {
+      t: 'stack';
+      brace: '{' | null;
+      rows: readonly { box: Box; lead: number }[];
+      size: number;
+    }
   /** Bọc danh tính: không đổi hình học, chỉ nói "phần này là nút `id`". */
   | { t: 'tag'; id: TermId; inner: Box };
 
@@ -276,6 +295,21 @@ export function measure(box: Box): Metrics {
         above: Math.max(b.above, rise + sp.above),
         below: Math.max(b.below, drop + sb.below),
       };
+    }
+    case 'stack': {
+      const ms = box.rows.map((r) => measure(r.box));
+      const lead = Math.max(0, ...box.rows.map((r) => r.lead));
+      const tail = Math.max(0, ...ms.map((m, i) => m.w - (box.rows[i] as { lead: number }).lead));
+      const step = box.size * STACK_GAP;
+      let h = 0;
+      ms.forEach((m, i) => {
+        h += m.above + m.below + (i > 0 ? step : 0);
+      });
+      const head = box.brace === null ? 0 : box.size * (BRACE_W + BRACE_PAD);
+      // Cả chồng căn giữa quanh trục của dòng: một hệ hai phương trình phải có dấu $=$
+      // của nó nằm hai bên đường chân, không treo lên trên.
+      const axis = box.size * AXIS;
+      return { w: head + lead + tail, above: h / 2 + axis, below: h / 2 - axis };
     }
     case 'big': {
       const g = measure({ t: 'text', s: box.glyph, size: box.size * BIG_GLYPH, italic: false });
@@ -459,6 +493,42 @@ export function place(box: Box, x: number, y: number): Placed {
         go(b.sub, bx + bm.w, by + drop, owner);
         return measure(b);
       }
+      case 'stack': {
+        const m = measure(b);
+        const ms = b.rows.map((r) => measure(r.box));
+        const lead = Math.max(0, ...b.rows.map((r) => r.lead));
+        const step = b.size * STACK_GAP;
+        const head = b.brace === null ? 0 : b.size * (BRACE_W + BRACE_PAD);
+        const top = by - m.above;
+
+        let y = top;
+        ms.forEach((rm, i) => {
+          y += rm.above;
+          const row = b.rows[i] as { box: Box; lead: number };
+          go(row.box, bx + head + (lead - row.lead), y, owner);
+          y += rm.below + step;
+        });
+
+        if (b.brace !== null) {
+          const w = b.size * BRACE_W;
+          const bottom = by + m.below;
+          const mid = (top + bottom) / 2;
+          // Vẽ bằng path chứ không phóng to glyph `{`: glyph có tỉ lệ cố định nên kéo
+          // cho cao bằng ba dòng thì nét dày ra và hai cái móc méo hẳn. Cùng lý lẽ với
+          // dấu căn.
+          paths.push({
+            d:
+              `M${round(bx + w)} ${round(top)}` +
+              `Q${round(bx + w * 0.35)} ${round(top)} ${round(bx + w * 0.35)} ${round(top + (mid - top) * 0.45)}` +
+              `Q${round(bx + w * 0.35)} ${round(mid)} ${round(bx)} ${round(mid)}` +
+              `Q${round(bx + w * 0.35)} ${round(mid)} ${round(bx + w * 0.35)} ${round(mid + (bottom - mid) * 0.55)}` +
+              `Q${round(bx + w * 0.35)} ${round(bottom)} ${round(bx + w)} ${round(bottom)}`,
+            width: b.size * 0.07,
+            owner,
+          });
+        }
+        return m;
+      }
       case 'big': {
         const m = measure(b);
         const glyph: Box = { t: 'text', s: b.glyph, size: b.size * BIG_GLYPH, italic: false };
@@ -568,6 +638,7 @@ export function place(box: Box, x: number, y: number): Placed {
 
 /** Độ ưu tiên, để biết khi nào phải bọc ngoặc. */
 const PREC: Readonly<Record<Expr['k'], number>> = {
+  sys: 0,
   rel: 0,
   add: 1,
   mul: 2,
@@ -863,6 +934,20 @@ export function toBox(e: Expr, size: number = FONT): Box {
           ...binop(REL_TEXT[e.op] as string, size, 0.3),
           toBox(e.rhs, size),
         ],
+      });
+    case 'sys':
+      return tag({
+        t: 'stack',
+        // Hội vẽ ngoặc nhọn; tuyển thì không — nó là "hoặc", và một ngoặc nhọn quanh
+        // hai nhánh loại trừ nhau đọc ra đúng nghĩa ngược lại. (M60 dùng nhánh này.)
+        brace: e.join === 'and' ? '{' : null,
+        rows: e.rels.map((r) => ({
+          box: toBox(r, size),
+          // Phần trước dấu quan hệ: vế trái cộng nửa khoảng hở của toán tử. Đo bằng
+          // chính bộ sắp chữ sẽ vẽ nó, nên con số không thể lệch với cái hiện ra.
+          lead: r.k === 'rel' ? measure(toBox(r.lhs, size)).w + size * 0.3 : 0,
+        })),
+        size,
       });
   }
 }

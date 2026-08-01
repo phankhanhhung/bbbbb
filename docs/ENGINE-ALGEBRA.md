@@ -257,7 +257,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§34 để biết tập luật thật — **54 luật**, xếp theo tám lớp:
+Xem §21–§35 để biết tập luật thật — **58 luật**, xếp theo chín lớp:
 
 | lớp | luật |
 |---|---|
@@ -269,6 +269,7 @@ Xem §21–§34 để biết tập luật thật — **54 luật**, xếp theo t
 | **tổ hợp** (M56, §32) | `factorial_step`, `binom_to_factorial`, `binom_symmetry`, `pascal`, `binom_absorb` |
 | **tổng và tích** (M57, §33) | `sum_const`, `sum_linear`, `sum_split`, `sum_shift`, `sum_expand`, `prod_telescope` |
 | **số mũ ký hiệu** (M58, §34) | `pow_split` (và `pow_add`/`pow_mul` vốn đã chạy từ M49) |
+| **hệ phương trình** (M59, §35) | `add_equations`, `scale_equation`, `substitute_from`, `drop_equation` |
 
 **Hai điều luật này cố ý không có:**
 
@@ -354,7 +355,7 @@ nên không kiểm bằng cách này.
 > đổi chiều (§22.1). "Đúng do cấu trúc" là thứ phải chứng minh, không phải thứ để khai.
 > Đây là lần đầu trong ba lần cùng một bài học lặp lại — xem §25.4.
 
-### 6.1 Sáu hợp đồng kiểm (M50)
+### 6.1 Bảy hợp đồng kiểm (M50, M59)
 
 Không có một câu hỏi chung. Mỗi bước khai **nó hứa gì**, và engine hỏi đúng câu ấy;
 trộn chúng lại là bỏ lọt.
@@ -576,8 +577,8 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
   làm** (M50, theo góp ý ngoài). Xem §26.
 - **Căn bậc ký hiệu** ($\sqrt[n]{x}$ với $n$ là biến). `root.index` vẫn là số nguyên;
   ai cần thì viết $x^{1/n}$, nay đã có.
-- **Hệ phương trình.** Cần một nút chứa **nhiều** quan hệ; chưa có. Đây là mảng lớn
-  nhất còn thiếu của chương trình phổ thông. (Kế hoạch: M59.)
+- ~~**Hệ phương trình**~~ — **đã làm** (M59). Nó không phải "thêm một nút", nó **thêm
+  một hợp đồng kiểm**: `sameSolutionSet` với một hệ là phép kiểm luôn xanh. Xem §35.
 - ~~**Hàm tổ hợp** $n!$, $C_n^k$, $A_n^k$~~ — **đã làm** (M56). Với một nền tảng nhắm
   Olympiad Combinatorics thì đây là lỗ **to hơn** $\log$: chúng là ký hiệu nền của cả
   môn. Xem §32 — nó không phải "thêm một nút", nó **thêm một bộ bốc điểm**.
@@ -1822,3 +1823,96 @@ mà hai hạng tử đầu là thứ không ai viết.
 `pow()` vốn chuẩn hoá $x^1 \to x$ và $x^0 \to 1$, và mọi luật khác đều đi qua nó. Cho
 `replaceIndex` đi qua nó nữa thì ra `1 + x + x^2 + x^3`. Danh tính không mất gì: cây ở đó
 đã là bản sao mới toanh, sắp thành hạng tử của dòng sau.
+
+---
+
+## 35. Hệ phương trình, và hợp đồng kiểm thứ bảy (M59)
+
+### 35.1 Hệ là **một `Expr`**, không phải một dòng chứa nhiều `Expr`
+
+```ts
+| ({ readonly k: 'sys'; readonly join: 'and' | 'or'; readonly rels: readonly Expr[] } & WithId)
+```
+
+`children` là các quan hệ, nên `"0"` chỉ vào phương trình đầu và `"0.L"` vào vế trái của
+nó — **toàn bộ máy luật, `replaceAt`, danh tính và choreography chạy nguyên si**. Phương
+án kia ("một dòng chứa nhiều biểu thức") bắt sửa `model`, `layout`, `choreography` và mọi
+luật; phương án này sửa đúng sáu chỗ như mọi kiểu nút khác.
+
+`join` khai từ M59 dù M59 chỉ dùng `'and'`: tập nghiệm bất phương trình (M60) cần `'or'`,
+và thêm một trường vào một nút đã xuất bản thì đắt hơn khai sẵn.
+
+Dấu **chấm phẩy** ngăn các phương trình, vì dấu phẩy đã thuộc về `root(3, x)`, `C(n, k)`
+và `sum(k, 1, n, …)`. Hệ chỉ ở gốc và không lồng nhau: một hệ của các hệ không phải thứ
+ai viết, và cho phép nó là mở một chiều lồng mà không luật nào biết đi trong đó.
+
+### 35.2 `sameSolutionSet` là một phép kiểm **luôn xanh** — và đây là bằng chứng
+
+Bốc một điểm $(x,y)$ ngẫu nhiên thì cả hệ trước lẫn hệ sau đều **sai**, hai bên "đồng
+ý", `agree` tăng. Chốt canh của M59 khẳng định thẳng chuyện đó bằng một hệ **sai hẳn**:
+
+```ts
+sameSolutionSet(  x + 2y = 5 ; 3x − y = 1,
+                  x + 2y = 5 ; 3x − y = 99 )   →   ok: true, verified: true
+```
+
+Một chốt canh luôn xanh là chốt canh không có. Nên phép biến đổi hàng phải hỏi một câu
+khác — và câu ấy có sẵn trong toán: **hiệu hai vế là một hàm**, còn hàm thì `sameValue`
+kiểm được từ M47.
+
+### 35.3 Hợp đồng thứ bảy: `claim`
+
+```ts
+readonly claim?: { readonly left: Expr; readonly right: Expr };
+```
+
+Luật khai một cặp trong đó `left` **đọc ra từ cây sau** còn `right` **dựng từ cây
+trước**, rồi `model` hỏi `sameValue`. Cộng hai phương trình mà quên một vế thì:
+
+```
+bước 1 (cộng hai phương trình):
+  khác nhau tại x=610369400, y=1418865157: 805362135 ≠ 805362150
+```
+
+Bốn luật, bốn khẳng định:
+
+| luật | `left` (từ sau) | `right` (từ trước) |
+|---|---|---|
+| `add_equations` | hiệu hai vế hàng mới | hiệu cũ $+\ \lambda\cdot$ hiệu hàng nguồn |
+| `scale_equation` | hiệu hai vế hàng mới | $\lambda\cdot$ hiệu cũ |
+| `substitute_from` | hiệu hai vế hàng mới | hiệu cũ **sau khi thế** |
+| `drop_equation` | hiệu hai vế hàng bị bỏ | $0$ |
+
+**Kế hoạch M59 nói sai chỗ này, và ghi lại thì đáng hơn là ép cho vừa.** Bản kế hoạch
+viết "không hợp đồng mới, dùng `verify: 'instance'` qua `replaceVar`". `'instance'` thay
+biến trên **toàn** cây, mà phép biến đổi hàng chỉ đụng *một* phương trình — nó không
+vừa. Ép một hợp đồng không vừa là cách tạo ra một phép kiểm đúng hình thức mà rỗng.
+
+### 35.4 Chỗ có răng nhất không nằm ở bộ kiểm
+
+`substitute_from` đòi phương trình nguồn **đã cô lập một ẩn** ($x = t$, với $x$ là một
+biến trần và $t$ không còn $x$). Đây mới là cửa quan trọng: thế một thứ không phải ràng
+buộc là cách nhanh nhất làm hỏng một hệ, và cửa này chặn bằng **cấu trúc** chứ không bằng
+lời hứa.
+
+Cùng họ: `drop_equation` chỉ bỏ được hàng mà hai vế **giống hệt** nhau (`same`), vì bỏ một
+phương trình còn nội dung là mất nghiệm. Và cả hai luật cộng/nhân **từ chối bất đẳng
+thức** — nhân một bất đẳng thức phải xét dấu, mà đó là chuyện của `mul_both_sides`, không
+phải của một phép biến đổi hàng.
+
+`scale_equation` với hệ số chưa chắc khác $0$ thì ghi điều kiện đỏ và khai `guard` — cùng
+cơ chế và cùng lý lẽ với AL-08.
+
+### 35.5 Vẽ: dấu $=$ phải thẳng cột
+
+Hộp `stack` mang theo `lead` — bề ngang phần **trước** dấu quan hệ của từng dòng, đo bằng
+chính bộ sắp chữ sẽ vẽ nó — rồi `place` đẩy mỗi dòng sang phải $\max(\text{lead}) -
+\text{lead}$. Không gióng thì một hệ nhìn như hai dòng rời nhau, và đó không phải chuyện
+thẩm mỹ: cái làm một hệ *đọc được như một hệ* chính là cột dấu bằng.
+
+Ngoặc nhọn vẽ bằng **path**, không phải glyph `{` phóng to — glyph có tỉ lệ cố định nên
+kéo cho cao bằng ba dòng thì nét dày ra và hai cái móc méo hẳn. Cùng lý lẽ với dấu căn từ
+M47b.
+
+Trần mới `maxRelations: 4`, ép ở `model.ts` chứ không chỉ ở TypeBox — bài học M55: một
+trần chỉ khai ở schema là một trần chỉ chặn được một đường vào.

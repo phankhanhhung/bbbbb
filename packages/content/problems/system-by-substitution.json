@@ -1,0 +1,122 @@
+{
+  "schema_version": "0.3.0",
+  "id": "system-by-substitution",
+  "statement": {
+    "vi": "Cùng một hệ, cách khác: cô lập một ẩn ở một phương trình rồi **thế** vào phương trình kia. Engine chỉ cho thế khi phương trình nguồn đã thật sự có dạng $x = \\dots$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: cửa \"nguồn phải có dạng $x = \\dots$\" không phải hình thức. Thế một thứ không phải ràng buộc là cách nhanh nhất làm hỏng một hệ, và engine chặn nó bằng cấu trúc chứ không bằng lời hứa."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Cô lập rồi thế"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Phương trình đầu đã cô lập $x$. Thế nó vào phương trình thứ hai thì [[a1|chỉ còn một ẩn]] — và từ đó là chuyện của một phương trình bậc nhất bình thường."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x = 5 - 2*y; 3*x - y = 1",
+              "steps": [
+                {
+                  "arg": "0,1",
+                  "at": "",
+                  "rule": "substitute_from"
+                },
+                {
+                  "at": "1.L.0",
+                  "rule": "distribute"
+                },
+                {
+                  "at": "1.L",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bốn hệ: hàng dưới rút dần từ ba nhân năm trừ hai y trừ y, tới còn một ẩn."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn khi một phương trình đã rút về $0 = 0$ thì nó [[a1|không nói gì nữa]] và bỏ đi được. Engine chỉ cho bỏ khi hai vế **thật sự** giống hệt nhau — bỏ một phương trình còn nội dung là mất nghiệm."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x = 1; y = 2; x + y = x + y",
+              "steps": [
+                {
+                  "arg": "2",
+                  "at": "",
+                  "rule": "drop_equation"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hệ ba dòng thành hệ hai dòng."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

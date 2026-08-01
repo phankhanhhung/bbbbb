@@ -1,0 +1,122 @@
+{
+  "schema_version": "0.3.0",
+  "id": "system-by-elimination",
+  "statement": {
+    "vi": "Giải hệ $\\begin{cases} x + 2y = 5 \\\\ 3x - y = 1 \\end{cases}$ bằng phép khử: nhân một phương trình cho hệ số khớp, cộng vào phương trình kia, và một ẩn biến mất."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: engine **không** kiểm bước này bằng cách bốc điểm ngẫu nhiên. Với một hệ thì cả vế trước lẫn vế sau đều sai ở gần như mọi điểm, nên phép kiểm ấy luôn xanh mà không chứng minh gì. Nó kiểm bằng một đẳng thức giữa hiệu hai vế."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Khử một ẩn"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cộng $-3$ lần phương trình đầu vào phương trình thứ hai. Hệ số của $x$ [[a1|triệt tiêu]] — đó là toàn bộ mục đích của con số $-3$: nó chọn để $3x$ gặp $-3x$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x + 2*y = 5; 3*x - y = 1",
+              "steps": [
+                {
+                  "arg": "1,0,-3",
+                  "at": "",
+                  "rule": "add_equations"
+                },
+                {
+                  "at": "1.L.2",
+                  "rule": "distribute"
+                },
+                {
+                  "at": "1.L",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bốn dòng hệ hai phương trình, hàng dưới rút dần cho tới khi chỉ còn y."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nhân cả một phương trình với một số cũng là một nước đi hợp lệ, và [[a1|engine ghi điều kiện]] khi hệ số chưa chắc khác $0$ — nhân một phương trình với $0$ làm mất thông tin, và đó là bẫy cùng họ với AL-08."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x + 2*y = 5; 3*x - y = 1",
+              "steps": [
+                {
+                  "arg": "0,3",
+                  "at": "",
+                  "rule": "scale_equation"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai hệ: hàng đầu nhân ba."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

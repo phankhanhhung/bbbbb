@@ -212,6 +212,16 @@ export function readAlgebra(scene: Scene): AlgebraModel {
   if (depth(current) > ALGEBRA_LIMITS.maxDepth) {
     return { ...empty, refusal: `cây sâu ${depth(current)} tầng, quá ${ALGEBRA_LIMITS.maxDepth}` };
   }
+  // Hệ quá nhiều dòng thì cao vượt khung trước khi kịp dạy được gì. Ép ở đây cùng
+  // khuôn với mọi trần khác — bài học M55: một trần chỉ khai ở TypeBox là một trần chỉ
+  // chặn được một đường vào.
+  if (current.k === 'sys' && current.rels.length > ALGEBRA_LIMITS.maxRelations) {
+    return {
+      ...empty,
+      refusal: `hệ ${current.rels.length} phương trình, quá trần ${ALGEBRA_LIMITS.maxRelations}`,
+    };
+  }
+
   const startTooBig = tooBig(current);
   if (startTooBig !== null) return { ...empty, refusal: `biểu thức vẽ ra ${startTooBig}` };
 
@@ -285,7 +295,11 @@ export function readAlgebra(scene: Scene): AlgebraModel {
     // khác. `abs_case` cần "$A \ge 0$", thứ không đọc ra được từ chuỗi tác giả gõ.
     const guard = outcome.guard ?? null;
 
-    if (outcome.verify === 'instance') {
+    if (outcome.claim !== undefined) {
+      // Hợp đồng thứ bảy (M59): đẳng thức bước này khẳng định. `left` đọc từ cây **sau**,
+      // `right` dựng từ cây **trước**, nên một phép biến đổi hàng sai làm nó hỏng ngay.
+      judge(sameValue(outcome.claim.left, outcome.claim.right, 20260731 + i, 8, guard));
+    } else if (outcome.verify === 'instance') {
       // Thế một giá trị cụ thể: không phải chuyện tập nghiệm mà là chuyện "có thế đúng
       // không". Kiểm bằng **cấu trúc**, và vì thế nó có răng thật.
       const binding = outcome.binding as NonNullable<typeof outcome.binding>;

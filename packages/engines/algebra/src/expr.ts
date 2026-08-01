@@ -90,7 +90,20 @@ export type Expr =
       readonly to: Expr;
       readonly body: Expr;
     } & WithId)
-  | ({ readonly k: 'rel'; readonly op: RelOp; readonly lhs: Expr; readonly rhs: Expr } & WithId);
+  | ({ readonly k: 'rel'; readonly op: RelOp; readonly lhs: Expr; readonly rhs: Expr } & WithId)
+  /**
+   * **Hệ** quan hệ — hội (`and`) hoặc tuyển (`or`).
+   *
+   * Là một `Expr` chứ không phải "một dòng chứa nhiều `Expr`", và chỗ ấy quyết định giá
+   * của cả hạng mục: `children` là các quan hệ, nên `"0"`, `"1"` chỉ vào từng phương
+   * trình và `"0.L"` vào vế trái của phương trình đầu — **toàn bộ máy luật, `replaceAt`,
+   * danh tính và choreography chạy nguyên si**. Phương án kia bắt sửa `model`, `layout`,
+   * `choreography` và mọi luật.
+   *
+   * `join` khai từ M59 dù M59 chỉ dùng `'and'`: tập nghiệm bất phương trình (M60) cần
+   * `'or'`, và thêm một trường vào một nút đã xuất bản thì đắt hơn khai sẵn.
+   */
+  | ({ readonly k: 'sys'; readonly join: 'and' | 'or'; readonly rels: readonly Expr[] } & WithId);
 
 /**
  * Tên hàm engine biết — **đóng**, và mở rộng bằng cách thêm một dòng ở `functions.ts`.
@@ -217,6 +230,13 @@ export const big = (
   body: Expr,
 ): Expr => ({ k: 'big', op, v, from, to, body, id: m.next() });
 
+export const sys = (m: Minter, join: 'and' | 'or', rels: readonly Expr[]): Expr => ({
+  k: 'sys',
+  join,
+  rels,
+  id: m.next(),
+});
+
 export const rel = (m: Minter, op: RelOp, lhs: Expr, rhs: Expr): Expr => ({
   k: 'rel',
   op,
@@ -254,6 +274,8 @@ export function children(e: Expr): readonly Expr[] {
       return [e.from, e.to, e.body];
     case 'rel':
       return [e.lhs, e.rhs];
+    case 'sys':
+      return e.rels;
     default:
       return [];
   }
@@ -279,6 +301,8 @@ export function withChildren(e: Expr, kids: readonly Expr[]): Expr {
       return { ...e, from: kids[0] as Expr, to: kids[1] as Expr, body: kids[2] as Expr };
     case 'rel':
       return { ...e, lhs: kids[0] as Expr, rhs: kids[1] as Expr };
+    case 'sys':
+      return { ...e, rels: kids };
     default:
       return e;
   }
@@ -424,6 +448,8 @@ export function totalDegree(e: Expr): number {
       return Math.ceil(totalDegree(e.arg) / e.index);
     case 'rel':
       return Math.max(totalDegree(e.lhs), totalDegree(e.rhs));
+    case 'sys':
+      return Math.max(0, ...e.rels.map(totalDegree));
   }
 }
 
@@ -557,6 +583,14 @@ export function same(a: Expr, b: Expr): boolean {
         same(a.lhs, (b as typeof a).lhs) &&
         same(a.rhs, (b as typeof a).rhs)
       );
+    case 'sys': {
+      const o = b as typeof a;
+      return (
+        a.join === o.join &&
+        a.rels.length === o.rels.length &&
+        a.rels.every((c, i) => same(c, o.rels[i] as Expr))
+      );
+    }
     default: {
       const x = children(a);
       const y = children(b);

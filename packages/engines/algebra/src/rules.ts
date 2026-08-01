@@ -11,6 +11,7 @@ import {
   abs,
   add,
   big,
+  substituteVar,
   div,
   fn,
   int,
@@ -97,6 +98,24 @@ export interface RuleOutcome {
    * trúc. Đây cũng là đường trả nợ cho `'implies'`.
    */
   readonly verify?: 'root' | 'implies' | 'instance';
+  /**
+   * **Đẳng thức mà bước này khẳng định** — hợp đồng thứ bảy, và nó có vì hệ phương trình.
+   *
+   * `sameSolutionSet` **không dùng được cho hệ**, và lý do phải ghi lại: bốc một điểm
+   * $(x,y)$ ngẫu nhiên thì cả hệ trước lẫn hệ sau đều **sai**, hai bên "đồng ý", `agree`
+   * tăng — phép kiểm xanh mà không chứng minh gì cả. Một chốt canh luôn xanh là chốt
+   * canh không có.
+   *
+   * Nên phép biến đổi hàng kiểm bằng **đẳng thức**: luật khai một cặp $(left, right)$
+   * trong đó `left` đọc ra từ cây **sau** còn `right` dựng từ cây **trước**, rồi `model`
+   * hỏi `sameValue` — bộ kiểm cũ, không sửa gì. Cộng hai phương trình mà cộng sai thì
+   * đẳng thức ấy hỏng ngay, và nó hỏng bằng một con số cụ thể.
+   *
+   * Kế hoạch M59 nói "không hợp đồng mới, dùng `verify: 'instance'` qua `replaceVar`".
+   * Lời ấy sai: `'instance'` thay biến trên **toàn** cây, mà phép biến đổi hàng chỉ đụng
+   * một phương trình. Ghi lại chỗ sai thay vì ép một hợp đồng không vừa.
+   */
+  readonly claim?: { readonly left: Expr; readonly right: Expr };
 }
 
 export type RuleRun = (
@@ -2322,6 +2341,193 @@ const powSplit: Rule = {
   },
 };
 
+
+/* ---------- hệ phương trình (M59) ---------- */
+
+/**
+ * Bốn phép biến đổi hàng, và cả bốn kiểm bằng **đẳng thức** (`claim`), không bằng tập
+ * nghiệm.
+ *
+ * `sameSolutionSet` vô nghĩa ở đây: bốc một điểm $(x,y)$ ngẫu nhiên thì cả hệ trước lẫn
+ * hệ sau đều **sai**, hai bên "đồng ý", và phép kiểm xanh mà không chứng minh gì cả.
+ * Còn hiệu hai vế thì là một **hàm** — hỏi nó có đồng nhất bằng cái engine bảo là được
+ * không thì có răng thật, và răng nói bằng một con số cụ thể.
+ *
+ * `arg` theo quy ước dấu phẩy sẵn có (`commute` dùng `"0,1"`): các chỉ số phương trình,
+ * rồi tới hệ số nếu luật cần.
+ */
+
+/** Đọc `arg` thành danh sách chỉ số/biểu thức, tách bằng dấu phẩy. */
+const argParts = (arg: string | undefined): string[] =>
+  (arg ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0);
+
+/** Chỉ số phương trình hợp lệ trong một hệ. */
+function equationAt(node: Expr & { k: 'sys' }, raw: string | undefined): Expr | string {
+  const i = Number(raw);
+  if (!Number.isInteger(i) || i < 0 || i >= node.rels.length) {
+    return `chỉ số phương trình phải trong 0..${node.rels.length - 1}, đang là "${raw ?? ''}"`;
+  }
+  return node.rels[i] as Expr;
+}
+
+/** Hiệu hai vế của một phương trình — vật mà mọi phép biến đổi hàng thật ra tác động lên. */
+const sideDiff = (m: Minter, e: Expr & { k: 'rel' }): Expr =>
+  add(m, [freshCopy(m, e.lhs).copy, negate(m, freshCopy(m, e.rhs).copy)]);
+
+/** $E_i \leftarrow E_i + \lambda E_j$ — `arg` là `"i,j,λ"`. */
+const addEquations: Rule = {
+  id: 'add_equations',
+  label: 'cộng hai phương trình',
+  needsArg: true,
+  run(m, node, arg) {
+    if (node.k !== 'sys' || node.join !== 'and') return no('cần một hệ phương trình');
+    const parts = argParts(arg);
+    if (parts.length !== 3) return no('cần tham số dạng "0,1,2" — hàng đích, hàng nguồn, hệ số');
+
+    const target = equationAt(node, parts[0]);
+    const source = equationAt(node, parts[1]);
+    if (typeof target === 'string') return no(target);
+    if (typeof source === 'string') return no(source);
+    if (parts[0] === parts[1]) return no('hai hàng phải khác nhau');
+    if (target.k !== 'rel' || source.k !== 'rel') return no('cả hai phải là phương trình');
+    if (target.op !== '=' || source.op !== '=') {
+      return no('mới cộng được hai đẳng thức — cộng bất đẳng thức là chuyện khác');
+    }
+    const coef = tryParse(parts[2] as string, m);
+    if ('error' in coef) return no(`hệ số không đọc được: ${coef.error}`);
+
+    const scaled = (side: Expr): Expr =>
+      add(m, [side, mul(m, [freshCopy(m, coef.expr).copy, freshCopy(m, side === target.lhs ? source.lhs : source.rhs).copy])]);
+    const nextRel: Expr = {
+      ...target,
+      lhs: scaled(target.lhs),
+      rhs: scaled(target.rhs),
+    };
+    const i = Number(parts[0]);
+
+    return {
+      after: { ...node, rels: node.rels.map((r, k) => (k === i ? nextRel : r)) },
+      // `left` đọc ra từ hàng **mới**, `right` dựng từ hai hàng **cũ**. Cộng sai thì
+      // đẳng thức này hỏng, và nó hỏng bằng một điểm cụ thể.
+      claim: {
+        left: sideDiff(m, nextRel as Expr & { k: 'rel' }),
+        right: add(m, [
+          sideDiff(m, target),
+          mul(m, [freshCopy(m, coef.expr).copy, sideDiff(m, source)]),
+        ]),
+      },
+    };
+  },
+};
+
+/** $E_i \leftarrow \lambda E_i$ — `arg` là `"i,λ"`, và $\lambda \ne 0$ là điều kiện thật. */
+const scaleEquation: Rule = {
+  id: 'scale_equation',
+  label: 'nhân một phương trình',
+  needsArg: true,
+  run(m, node, arg) {
+    if (node.k !== 'sys' || node.join !== 'and') return no('cần một hệ phương trình');
+    const parts = argParts(arg);
+    if (parts.length !== 2) return no('cần tham số dạng "0,3" — hàng, hệ số');
+
+    const target = equationAt(node, parts[0]);
+    if (typeof target === 'string') return no(target);
+    if (target.k !== 'rel') return no('phải là một phương trình');
+    if (target.op !== '=') return no('mới nhân được đẳng thức — bất đẳng thức phải xét dấu');
+    const coef = tryParse(parts[1] as string, m);
+    if ('error' in coef) return no(`hệ số không đọc được: ${coef.error}`);
+    if (definitelyNonZero(coef.expr) === false && varsOf(coef.expr).size === 0) {
+      return no('nhân một phương trình với 0 làm mất thông tin');
+    }
+
+    const nextRel: Expr = {
+      ...target,
+      lhs: mul(m, [coef.expr, target.lhs]),
+      rhs: mul(m, [freshCopy(m, coef.expr).copy, target.rhs]),
+    };
+    const i = Number(parts[0]);
+    return {
+      after: { ...node, rels: node.rels.map((r, k) => (k === i ? nextRel : r)) },
+      claim: {
+        left: sideDiff(m, nextRel as Expr & { k: 'rel' }),
+        right: mul(m, [freshCopy(m, coef.expr).copy, sideDiff(m, target)]),
+      },
+      condition: definitelyNonZero(coef.expr) ? undefined : conditionText(parts[1] as string),
+      guard: definitelyNonZero(coef.expr)
+        ? undefined
+        : { expr: freshCopy(m, coef.expr).copy, sign: '!=0' },
+    };
+  },
+};
+
+/** $E_i$ cho $x = t$, thế $t$ vào $E_j$ — `arg` là `"i,j"`. */
+const substituteFrom: Rule = {
+  id: 'substitute_from',
+  label: 'thế từ một phương trình',
+  needsArg: true,
+  run(m, node, arg) {
+    if (node.k !== 'sys' || node.join !== 'and') return no('cần một hệ phương trình');
+    const parts = argParts(arg);
+    if (parts.length !== 2) return no('cần tham số dạng "0,1" — hàng cho ẩn, hàng nhận');
+
+    const source = equationAt(node, parts[0]);
+    const target = equationAt(node, parts[1]);
+    if (typeof source === 'string') return no(source);
+    if (typeof target === 'string') return no(target);
+    if (parts[0] === parts[1]) return no('hai hàng phải khác nhau');
+    if (source.k !== 'rel' || target.k !== 'rel') return no('cả hai phải là phương trình');
+    // Nguồn phải **đã cô lập một ẩn**. Đây là chỗ có răng nhất của luật: thế một thứ
+    // không phải ràng buộc là cách nhanh nhất làm hỏng một hệ, và cửa này chặn nó bằng
+    // cấu trúc chứ không bằng lời hứa.
+    if (source.op !== '=' || source.lhs.k !== 'var') {
+      return no(`hàng ${parts[0]} phải có dạng "x = …" thì mới thế được`);
+    }
+    const name = source.lhs.name;
+    if (varsOf(source.rhs).has(name)) return no(`vế phải vẫn còn ${name}`);
+    if (!varsOf(target).has(name)) return no(`hàng ${parts[1]} không chứa ${name}`);
+
+    const put = (side: Expr): Expr =>
+      substituteVar(side, name, freshCopy(m, source.rhs).copy);
+    const nextRel: Expr = { ...target, lhs: put(target.lhs), rhs: put(target.rhs) };
+    const j = Number(parts[1]);
+
+    return {
+      after: { ...node, rels: node.rels.map((r, k) => (k === j ? nextRel : r)) },
+      claim: {
+        left: sideDiff(m, nextRel as Expr & { k: 'rel' }),
+        right: substituteVar(sideDiff(m, target), name, freshCopy(m, source.rhs).copy),
+      },
+    };
+  },
+};
+
+/** Bỏ một phương trình đã rút về $0 = 0$ — `arg` là chỉ số hàng. */
+const dropEquation: Rule = {
+  id: 'drop_equation',
+  label: 'bỏ phương trình thừa',
+  needsArg: true,
+  run(m, node, arg) {
+    if (node.k !== 'sys') return no('cần một hệ phương trình');
+    if (node.rels.length <= 2) return no('hệ chỉ còn hai dòng — bỏ nữa thì không còn là hệ');
+    const target = equationAt(node, argParts(arg)[0]);
+    if (typeof target === 'string') return no(target);
+    if (target.k !== 'rel' || target.op !== '=') return no('phải là một đẳng thức');
+    if (!same(target.lhs, target.rhs)) {
+      return no(`hai vế chưa giống nhau (${toPlain(target.lhs)} ≠ ${toPlain(target.rhs)})`);
+    }
+    const i = Number(argParts(arg)[0]);
+    return {
+      after: { ...node, rels: node.rels.filter((_, k) => k !== i) },
+      // Khẳng định: hàng bị bỏ đúng là $0 = 0$, tức hiệu hai vế của nó **đồng nhất** $0$.
+      // Bỏ một phương trình còn nội dung là mất nghiệm, nên cửa này phải có răng.
+      claim: { left: sideDiff(m, target), right: int(m, 0) },
+    };
+  },
+};
+
 /* ---------- tổng và tích (M57) ---------- */
 
 /**
@@ -2615,6 +2821,10 @@ export const RULES: readonly Rule[] = [
   sumExpand,
   prodTelescope,
   powSplit,
+  addEquations,
+  scaleEquation,
+  substituteFrom,
+  dropEquation,
   addBothSides,
   mulBothSides,
   powBothSides,

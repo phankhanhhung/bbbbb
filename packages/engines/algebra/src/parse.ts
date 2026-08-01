@@ -11,6 +11,7 @@ import {
   pow,
   rel,
   root,
+  sys,
   variable,
   type Expr,
   type FnName,
@@ -77,12 +78,23 @@ class Parser {
   ) {}
 
   parse(): Expr {
-    const e = this.rel();
+    // **Hệ chỉ ở gốc.** Dấu chấm phẩy ngăn các phương trình — dấu phẩy đã thuộc về
+    // `root(3, x)`, `C(n, k)` và `sum(k, 1, n, …)`. Không cho `sys` lồng `sys`: một hệ
+    // của các hệ không phải thứ ai viết, và cho phép nó là mở một chiều lồng vô hạn mà
+    // không luật nào biết đi trong đó.
+    const first = this.rel();
+    const rels: Expr[] = [first];
+    while (this.eat(';')) rels.push(this.rel());
+
     this.ws();
     if (this.i < this.src.length) {
       throw new ParseError(`thừa ký tự "${this.src.slice(this.i)}"`, this.i);
     }
-    return e;
+    if (rels.length === 1) return first;
+    for (const r of rels) {
+      if (r.k !== 'rel') throw new ParseError('mỗi dòng của hệ phải là một quan hệ', this.i);
+    }
+    return sys(this.m, 'and', rels);
   }
 
   private ws(): void {
@@ -323,6 +335,7 @@ export function tryParse(
 /* ---------- chữ trơn, cho dòng điều kiện ---------- */
 
 const PLAIN_PREC: Readonly<Record<Expr['k'], number>> = {
+  sys: 0,
   rel: 0,
   add: 1,
   mul: 2,
@@ -426,6 +439,8 @@ export function toPlain(e: Expr): string {
       );
     case 'rel':
       return `${wrap(e.lhs)} ${PLAIN_REL[e.op] as string} ${wrap(e.rhs)}`;
+    case 'sys':
+      return e.rels.map(toPlain).join(e.join === 'and' ? '; ' : ' hoặc ');
   }
 }
 
@@ -488,5 +503,8 @@ export function unparse(e: Expr): string {
       return `${FUNCTIONS[e.name].source}(${e.args.map(unparse).join(', ')})`;
     case 'rel':
       return `(${unparse(e.lhs)} ${e.op} ${unparse(e.rhs)})`;
+    case 'sys':
+      // Không bọc ngoặc: hệ chỉ ở gốc, nên không có vị trí nào cần dấu gộp.
+      return e.rels.map(unparse).join('; ');
   }
 }

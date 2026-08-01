@@ -104,9 +104,12 @@
     "pascal-triangle-identity",
     "sum-shift-index",
     "telescoping-product",
-    "symbolic-exponent-identities"
+    "symbolic-exponent-identities",
+    "system-by-elimination",
+    "system-by-substitution"
   ],
   "newest": [
-    "symbolic-exponent-identities"
+    "system-by-elimination",
+    "system-by-substitution"
   ]
 }

@@ -111,6 +111,7 @@ export function evalAt(e: Expr, env: ReadonlyMap<string, bigint>): bigint | null
       // thức có căn đi đường `sameValueReal` thay vì đường này.
       return null;
     case 'rel':
+    case 'sys':
       // Quan hệ không có "giá trị" — nhóm ★ kiểm bằng cấu trúc, không bằng số.
       return null;
   }
@@ -216,6 +217,7 @@ export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | nu
       return ok(acc);
     }
     case 'rel':
+    case 'sys':
       return null;
   }
 }
@@ -507,6 +509,17 @@ function sampleCompare(
  * Giá trị chân lý của một quan hệ tại một điểm. `null` = không xác định ở đây.
  */
 export function evalRelation(e: Expr, env: ReadonlyMap<string, number>): boolean | null {
+  if (e.k === 'sys') {
+    // Hội thì mọi nhánh phải đúng; tuyển thì một nhánh là đủ. `null` ở một nhánh làm
+    // hỏng cả câu trả lời — điểm ấy vô dụng, không phải bằng chứng sai.
+    let out = e.join === 'and';
+    for (const r of e.rels) {
+      const v = evalRelation(r, env);
+      if (v === null) return null;
+      out = e.join === 'and' ? out && v : out || v;
+    }
+    return out;
+  }
   if (e.k !== 'rel') return null;
   const l = evalReal(e.lhs, env);
   const r = evalReal(e.rhs, env);

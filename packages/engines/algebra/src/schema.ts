@@ -78,6 +78,8 @@ export const ALGEBRA_LIMITS = {
   maxSourceLength: 200,
   maxHeightCells: 3,
   maxWidthCells: 13,
+  /** Số phương trình tối đa trong một hệ (M59) — bốn dòng đã kín chiều cao dòng. */
+  maxRelations: 4,
 } as const;
 
 export const AlgebraStep = Type.Object(
