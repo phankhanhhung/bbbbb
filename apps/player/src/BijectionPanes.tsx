@@ -179,6 +179,20 @@ export function BijectionPanes({
   );
 
   /**
+   * Ctx **trần** cho hình học — không mang `highlight`.
+   *
+   * `boxesOf` chỉ hỏi chỗ mực nằm, mà highlight chỉ đổi nước sơn, không đổi
+   * layout. Cho `generated` ăn theo `ctx` đầy đủ thì mỗi lần rê chuột qua một
+   * anchor (M66 cố tình cho anchor chảy vào pane này) là một object spec mới,
+   * và `useChoreography` reset `ms` về 0 — animation biến hình đang chạy giật
+   * về đầu chỉ vì người xem *chỉ vào* thứ đang bay.
+   */
+  const geomCtx = useMemo(
+    () => createContext(defaultTheme, labels ? { labels } : {}),
+    [labels],
+  );
+
+  /**
    * Hai cây node của chế độ biến hình, trong **một** hệ toạ độ.
    *
    * Không dịch pane phải về chỗ pane trái: cả kho dùng chung quy ước đơn vị
@@ -201,8 +215,8 @@ export function BijectionPanes({
     if (anchor === undefined) return null;
     return morphChoreography(
       bijection,
-      (id) => renderer.boxesOf(step.scene!, id, ctx),
-      (id) => renderer.boxesOf(bijection.scene, id, ctx),
+      (id) => renderer.boxesOf(step.scene!, id, geomCtx),
+      (id) => renderer.boxesOf(bijection.scene, id, geomCtx),
       {
         anchor,
         // Chồng lấn **bằng 0** khi bấm từng pha: `goPhase` nhảy tới
@@ -211,7 +225,7 @@ export function BijectionPanes({
         overlapMs: stepwise ? 0 : 380,
       },
     );
-  }, [renderer, step, bijection, ctx, stepwise]);
+  }, [renderer, step, bijection, geomCtx, stepwise]);
 
   const timeline = useChoreography(generated?.spec, 1);
 

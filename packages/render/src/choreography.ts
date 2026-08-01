@@ -109,13 +109,13 @@ export function applyChoreography(
           merge(effects, id, { emphasis: progress });
           break;
         case 'dim':
-          merge(effects, id, { opacity: 1 - 0.75 * progress });
+          attenuate(effects, id, 1 - 0.75 * progress);
           break;
         case 'show':
           merge(effects, id, { opacity: progress });
           break;
         case 'hide':
-          merge(effects, id, { opacity: 1 - progress });
+          attenuate(effects, id, 1 - progress);
           break;
         case 'move':
         case 'morph':
@@ -165,6 +165,20 @@ interface Effect {
 
 function merge(map: Map<string, Effect>, id: string, patch: Effect): void {
   map.set(id, { ...(map.get(id) ?? {}), ...patch });
+}
+
+/**
+ * `dim`/`hide` đi đường này thay vì `merge`: chúng là lời **giảm**, không phải
+ * lời gán. Hai lời giảm thì nhân — spread ghi đè kiểu last-writer để pha muộn
+ * "hồi sinh" element mà pha `hide` trước đã giấu xong (hide xong = 0, dim tại
+ * mốc sau ghi 1−0.75p đè lên → element đã giấu bật lại 25–100%). Còn `show`
+ * vẫn qua `merge` có chủ đích: nó là lời **vén màn** — "trước tôi ẩn, sau tôi
+ * hiện" — nên nó *đặt* kênh mờ và xoá mọi tích luỹ trước đó, và nhờ thế
+ * hide-rồi-show (giấu đi, hiện lại) vẫn kể được.
+ */
+function attenuate(map: Map<string, Effect>, id: string, factor: number): void {
+  const prev = map.get(id) ?? {};
+  map.set(id, { ...prev, opacity: (prev.opacity ?? 1) * factor });
 }
 
 /**

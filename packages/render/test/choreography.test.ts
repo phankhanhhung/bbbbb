@@ -217,12 +217,36 @@ describe('các loại pha', () => {
 
   it('pha muộn hơn ghi đè pha sớm hơn khi cùng chạm một element', () => {
     // Thứ tự áp là thứ tự **thời gian**, không phải thứ tự khai trong file.
+    // `show` là lời VÉN MÀN: nó đặt kênh mờ và xoá tích luỹ trước đó, nên
+    // giấu-đi-rồi-hiện-lại vẫn kể được.
     const s = spec(
       phase({ id: 'sau', kind: 'show', at: 100, duration: 0 }),
       phase({ id: 'truoc', kind: 'hide', at: 0, duration: 0 }),
     );
 
     expect(applyChoreography(cell({}), s, 200)[0]!.attrs['opacity']).toBe(1);
+  });
+
+  it('`hide` xong rồi `dim` muộn hơn: element đã giấu KHÔNG được hồi sinh', () => {
+    // dim/hide là lời GIẢM — hai lời giảm thì nhân. Bản spread-ghi-đè cũ cho pha
+    // dim muộn đè {opacity: 0} của hide bằng 0.25, và element đã giấu bật lại.
+    const s = spec(
+      phase({ id: 'giau', kind: 'hide', at: 0, duration: 200 }),
+      phase({ id: 'mo', kind: 'dim', at: 500, duration: 200 }),
+    );
+
+    expect(applyChoreography(cell({}), s, 800)[0]!.attrs['opacity']).toBe(0);
+  });
+
+  it('hai `hide` chồng lên nhau không nhấp nháy', () => {
+    // Tại giữa pha hide thứ hai: bản cũ last-writer cho opacity nhảy từ 0 về 0.5
+    // rồi mờ lại — một cú nháy sáng của thứ đáng lẽ đã biến mất.
+    const s = spec(
+      phase({ id: 'h1', kind: 'hide', at: 0, duration: 200 }),
+      phase({ id: 'h2', kind: 'hide', at: 300, duration: 200, easing: 'linear' }),
+    );
+
+    expect(applyChoreography(cell({}), s, 400)[0]!.attrs['opacity']).toBe(0);
   });
 
   it('chạm tới element nằm sâu trong cây, và bỏ qua node không key', () => {

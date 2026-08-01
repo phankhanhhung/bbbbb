@@ -162,6 +162,19 @@ export function Player({
     else setPlaying(false);
   }, [tree, step, goTo]);
 
+  /**
+   * Fork sang sandbox dọn nhà y như `goTo`: dừng autoplay và xoá phả hệ/sự cố
+   * đang hiện. Không dọn thì hai chuyện xảy ra sau lưng sandbox — autoplay đổi
+   * step ngầm, và lúc Đóng, vệt lineage + banner incident của ngữ cảnh cũ hiện
+   * lại nguyên xi, nói về một chỗ người dùng đã rời từ lâu.
+   */
+  const fork = useCallback((scene: Scene) => {
+    setPlaying(false);
+    setTapped(null);
+    setIncident(null);
+    setForkedScene(scene);
+  }, []);
+
   const goPrev = useCallback(() => {
     if (step.parent) goTo(step.parent);
   }, [step, goTo]);
@@ -295,7 +308,13 @@ export function Player({
   }, [renderer, baseNodes, step, choreography, ctx, speed, timeline.ms]);
 
   // NFR-A2: mọi điều khiển tới được bằng bàn phím.
+  //
+  // **Gỡ hẳn** listener khi đã fork sang Sandbox, không chỉ đổi JSX: return sớm
+  // ở nhánh render không gỡ được một listener trên window. Để nguyên thì Space
+  // gõ trong ô nhập tham số của panel "Nước đi tại đây" bị preventDefault +
+  // toggle autoplay chạy sau lưng sandbox, còn mũi tên lái một player vô hình.
   useEffect(() => {
+    if (forkedScene) return;
     const onKey = (event: KeyboardEvent): void => {
       if (event.key === 'ArrowRight') {
         event.preventDefault();
@@ -314,7 +333,7 @@ export function Player({
     };
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
-  }, [goNext, goPrev]);
+  }, [goNext, goPrev, forkedScene]);
 
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
 
@@ -336,11 +355,23 @@ export function Player({
 
     // Ngưỡng 48px: dưới mức đó gần như luôn là chạm hụt chứ không phải vuốt, và
     // chuyển step vì một cú chạm hụt là cách nhanh nhất làm mất niềm tin.
+    //
+    // Vuốt chỉ tính khi trục ngang **trội** (|dx| > |dy|): canvas đặt
+    // `touch-action: none` nên một cú kéo dọc không cuộn trang mà giao trọn
+    // pointerup cho ta — kéo dọc 300px lệch ngang 50px mà đổi step thì người
+    // dùng không hiểu chuyện gì vừa xảy ra. Bài học đo-cả-y của nhánh tap,
+    // áp nốt cho nhánh swipe.
     const dx = event.clientX - start.x;
     const dy = event.clientY - start.y;
-    if (dx < -48) return goNext();
-    if (dx > 48) return goPrev();
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx < -48) return goNext();
+      if (dx > 48) return goPrev();
+    }
     if (Math.abs(dx) >= 8 || Math.abs(dy) >= 8) return;
+
+    // Phả hệ và sự cố là công cụ ĐỌC lời giải — trước khi "Xem lời giải" thì
+    // không có gì để hỏi, và trả lời lúc ấy là rò rỉ nội dung đang che.
+    if (!revealed) return;
 
     // Hai câu hỏi, **một** chỗ chạm, và thứ tự là chuyện của cái nào hẹp hơn: phả hệ
     // hỏi về một hạng tử, sự cố hỏi về một dòng cảnh báo, và hai loại danh tính ấy
@@ -427,7 +458,7 @@ export function Player({
       {!revealed ? (
         <div class="reveal">
           <p>Thử tự nghĩ hoặc nghịch sandbox trước đã.</p>
-          <button class="try" onClick={() => step.scene && setForkedScene(step.scene)}>
+          <button class="try" onClick={() => step.scene && fork(step.scene)}>
             Mở sandbox
           </button>{' '}
           <button onClick={() => setRevealed(true)}>Xem lời giải</button>
@@ -548,7 +579,7 @@ export function Player({
           <nav class="controls">
             <button
               class="try"
-              onClick={() => step.scene && setForkedScene(step.scene)}
+              onClick={() => step.scene && fork(step.scene)}
               disabled={!engine}
             >
               Thử từ đây

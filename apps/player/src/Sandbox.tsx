@@ -383,6 +383,14 @@ export function Sandbox({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
+      // Đang gõ trong một ô nhập (panel "Nước đi tại đây" có ô tham số) thì mọi
+      // phím thuộc về ô đó: Ctrl+Z là undo *văn bản*, không phải undo sandbox —
+      // undo sandbox đổi scene, effect dọn `argFor/argText`, và form biến mất
+      // ngay giữa lúc đang gõ.
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
       const meta = event.metaKey || event.ctrlKey;
       if (meta && event.key.toLowerCase() === 'z') {
         event.preventDefault();

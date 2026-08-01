@@ -886,6 +886,9 @@ test.describe('Sandbox đại số: bảng nước đi (SBX-01, M65)', () => {
     await tapLastRowTerm(page);
 
     const labels = await page.locator('.moves__item').allInnerTexts();
+    // Chiều dương trước: bảng rỗng thì hai khẳng định not-contain dưới xanh mà
+    // chưa kiểm phép lọc nào — hit-test đổi bố cục là test thành vô nghĩa.
+    expect(labels.length).toBeGreaterThan(0);
     // Nút đại số thường: không có luật của hệ phương trình hay của tổng $\Sigma$.
     expect(labels.join(' ')).not.toContain('hệ phương trình');
     expect(labels.join(' ')).not.toContain('tách tổng');
@@ -922,6 +925,102 @@ test.describe('Sandbox đại số: bảng nước đi (SBX-01, M65)', () => {
     await expect(refusal).toBeVisible();
     // Câu đầy đủ, không phải một ký tự.
     expect((await refusal.innerText()).length).toBeGreaterThan(10);
+  });
+
+  /**
+   * Lượt rà trước freeze: hai listener bàn phím — của Player và của Sandbox —
+   * từng cùng sống trên window và cùng mù `event.target`. Space trong ô nhập bị
+   * Player nuốt để toggle autoplay chạy sau lưng; Ctrl+Z trong ô nhập bị Sandbox
+   * nuốt để undo cả bàn làm việc và đóng luôn form đang gõ.
+   */
+  test('phím của Player **im** khi đã fork: mũi tên không lái player ẩn phía sau', async ({
+    page,
+  }) => {
+    await openSandbox(page);
+    const url = page.url();
+
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(150);
+    expect(page.url()).toBe(url);
+  });
+
+  test('Space gõ được vào ô nhập tham số — không bị nuốt để toggle autoplay', async ({
+    page,
+  }) => {
+    await openSandbox(page);
+    await tapLastRowTerm(page);
+    await page.locator('.moves__item', { hasText: '…' }).first().click();
+
+    const input = page.locator('.moves__arg input');
+    await input.click();
+    await page.keyboard.type('a b');
+
+    await expect(input).toHaveValue('a b');
+  });
+
+  test('Ctrl+Z trong ô nhập là undo văn bản, không phải undo sandbox', async ({ page }) => {
+    await openSandbox(page);
+
+    const rows = page.locator('.sandbox .canvas svg .cv-alg-row');
+    const before = await rows.count();
+    await tapUntilPlainMove(page);
+    await page.locator('.moves__item').filter({ hasNotText: '…' }).first().click();
+    await expect(rows).toHaveCount(before + 1);
+
+    // Mở một ô nhập trên dòng cuối mới rồi Ctrl+Z ngay trong đó.
+    const count = await rows.last().locator('[data-k]').count();
+    for (let i = 0; i < count; i += 1) {
+      await tapLastRowTerm(page, i);
+      if ((await page.locator('.moves__item').filter({ hasText: '…' }).count()) > 0) break;
+    }
+    const input = page.locator('.moves__arg input');
+    await page.locator('.moves__item').filter({ hasText: '…' }).first().click();
+    await input.click();
+    await page.keyboard.type('xy');
+    await page.keyboard.press('ControlOrMeta+z');
+
+    // Sandbox KHÔNG hoàn tác: dòng vừa thêm vẫn còn, form vẫn mở.
+    await expect(rows).toHaveCount(before + 1);
+    await expect(input).toBeVisible();
+  });
+});
+
+test.describe('Lượt rà: cử chỉ trên canvas không lái nhầm chỗ', () => {
+  test('kéo dọc lệch ngang quá 48px KHÔNG đổi step — trục trội mới được nói', async ({
+    page,
+  }) => {
+    await page.goto(CHESS);
+    await reveal(page);
+    await page.getByRole('button', { name: 'Sau →' }).click();
+    await expect(page).toHaveURL(/step=s1/);
+
+    // Kéo dọc 100px, lệch ngang +60px. `touch-action: none` nên cú kéo này
+    // không cuộn trang mà giao trọn cho canvas — bản cũ chỉ nhìn dx>48 và lùi
+    // step, người dùng không hiểu chuyện gì vừa xảy ra.
+    const box = (await page.locator('.canvas').boundingBox())!;
+    const cx = box.x + box.width / 2;
+    await page.mouse.move(cx, box.y + 20);
+    await page.mouse.down();
+    await page.mouse.move(cx + 60, box.y + 120, { steps: 5 });
+    await page.mouse.up();
+
+    await expect(page).toHaveURL(/step=s1/);
+  });
+
+  test('chạm hình khi lời giải còn che: không phả hệ, không sự cố', async ({ page }) => {
+    await page.goto('/?p=factoring-identities&sol=sol&step=s0');
+    // KHÔNG reveal — phả hệ và sự cố là công cụ đọc lời giải, trước "Xem lời
+    // giải" thì trả lời là rò rỉ nội dung đang che.
+    const term = page
+      .locator('.canvas svg .cv-alg-row')
+      .last()
+      .locator('[data-k] rect')
+      .first();
+    const box = (await term.boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+    await expect(page.locator(HALO)).toHaveCount(0);
+    await expect(page.locator('.incident')).toHaveCount(0);
   });
 });
 
