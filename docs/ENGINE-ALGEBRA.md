@@ -257,7 +257,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§35 để biết tập luật thật — **58 luật**, xếp theo chín lớp:
+Xem §21–§36 để biết tập luật thật — **61 luật**, xếp theo mười lớp:
 
 | lớp | luật |
 |---|---|
@@ -270,6 +270,7 @@ Xem §21–§35 để biết tập luật thật — **58 luật**, xếp theo c
 | **tổng và tích** (M57, §33) | `sum_const`, `sum_linear`, `sum_split`, `sum_shift`, `sum_expand`, `prod_telescope` |
 | **số mũ ký hiệu** (M58, §34) | `pow_split` (và `pow_add`/`pow_mul` vốn đã chạy từ M49) |
 | **hệ phương trình** (M59, §35) | `add_equations`, `scale_equation`, `substitute_from`, `drop_equation` |
+| **tập nghiệm** (M60, §36) | `abs_to_interval`, `interval_from_factors`, `merge_intervals` |
 
 **Hai điều luật này cố ý không có:**
 
@@ -584,9 +585,8 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
   môn. Xem §32 — nó không phải "thêm một nút", nó **thêm một bộ bốc điểm**.
 - ~~**Ký hiệu $\Sigma$, $\Pi$**~~ — **đã làm** (M57). Nó là construct **ràng buộc biến**
   đầu tiên của engine, và cái giá nằm ở đúng một hàm: `varsOf`. Xem §33.
-- **Tập nghiệm / khoảng.** $x^2-3x+2>0$ phân tích ra $(x-2)(x-1)>0$ rồi **dừng**: không
-  có nút nào để đặt đáp số. Thêm luật không cứu được, phải thêm chỗ cho kết quả rơi vào.
-  (Kế hoạch: M60.)
+- ~~**Tập nghiệm / khoảng**~~ — **đã làm** (M60), và rẻ vì chỗ đặt đáp số **đã có sẵn**:
+  `sys` với `join: 'or'` *là* một tuyển khoảng. Xem §36.
 - ~~**Công thức nghiệm bậc hai**~~ — **đã làm** (M47e), và **không** cần nút "hoặc":
   xem §24.
 - **Bộ giải / gợi ý.** §4.
@@ -1916,3 +1916,72 @@ M47b.
 
 Trần mới `maxRelations: 4`, ép ở `model.ts` chứ không chỉ ở TypeBox — bài học M55: một
 trần chỉ khai ở schema là một trần chỉ chặn được một đường vào.
+
+---
+
+## 36. Tập nghiệm, và một lỗ **suýt** không ai thấy (M60)
+
+### 36.1 Chỗ đặt đáp số đã có sẵn từ M59
+
+Lỗ đo được: $x^2-3x+2>0$ phân tích ra $(x-2)(x-1)>0$ rồi **dừng**. Thêm bao nhiêu luật
+cũng vô ích vì không có chỗ cho kết quả rơi vào.
+
+Nhưng chỗ ấy không cần dựng mới: `sys` với `join: 'or'` *là* một tuyển khoảng, và
+`join: 'and'` *là* một khoảng. **Không** có nút `set`/`interval` riêng — một khoảng *là*
+một hội hai bất đẳng thức, và dựng lại nó thành một nút thứ hai là dựng hai lần cùng một
+thứ (đúng lỗi §24.3 đã tránh với hai nghiệm bậc hai).
+
+Ba luật, và chúng chỉ là cách đọc dấu:
+
+| | |
+|---|---|
+| `abs_to_interval` | $\|A\| < a$ thành hội, $\|A\| > a$ thành tuyển |
+| `interval_from_factors` | $(x-r_1)(x-r_2) > 0$ thành hai khoảng ngoài, $< 0$ thành khoảng giữa |
+| `merge_intervals` | hội giữ ràng buộc **chặt** hơn, tuyển giữ ràng buộc **lỏng** hơn |
+
+`interval_from_factors` chỉ nhận **hai** nhân tử. Ba trở lên cho ra một tuyển của các
+hội — hai tầng lồng, không mắt nào đọc nổi trên một dòng. Từ chối có lời thay vì vẽ ra
+một thứ không đọc được.
+
+Vẽ: tuyển nằm **ngang**, nối bằng chữ "hoặc" — đó là cách mọi sách viết một tập nghiệm,
+và một ngoặc nhọn quanh hai nhánh loại trừ nhau đọc ra đúng nghĩa ngược lại.
+
+### 36.2 `sameSolutionSet` **có răng** ở đây — và tương phản mới là điều đáng ghi
+
+Với hệ phương trình (§35.2) nó là một phép kiểm luôn xanh: mọi điểm ngẫu nhiên làm cả
+hai vế cùng sai. Với tập nghiệm thì "thuộc tập nghiệm" là một câu đúng/sai **có nghĩa** ở
+cả hai vế, nên cùng một hàm ấy bắt được sai lệch ngay:
+
+```
+sameSolutionSet( x² − 3x + 2 > 0,  x < 1 )
+  →  ok: false — tập nghiệm khác nhau tại x = 4.6338
+```
+
+Cùng một bộ kiểm mà chỗ này dùng được, chỗ kia không. Đó không phải khiếm khuyết của bộ
+kiểm — nó là hai câu hỏi khác nhau đội lốt một câu.
+
+### 36.3 Lỗ suýt không ai thấy: `unsound: []` vì **chưa ai hỏi**
+
+Hai nhánh cuối của phép kiểm ở `model.ts` hỏi `k === 'rel'`. M60 sinh ra bước đầu tiên
+trong cả lịch sử engine đi từ `rel` sang **`sys`** — và bước ấy không rơi vào nhánh nào:
+
+| | `unsound` |
+|---|---|
+| luật đúng, dispatch cũ | `0` |
+| luật **cố tình sai**, dispatch cũ | `0` |
+| luật **cố tình sai**, dispatch mới | `1` |
+
+Hai dòng đầu giống hệt nhau, và đó là toàn bộ vấn đề: con số $0$ không phân biệt "đã hỏi
+và đúng" với "chưa ai hỏi". Đây đúng loại lỗ mà M47c gọi tên — *chỗ miễn kiểm là chỗ lỗ
+hổng nằm* — và nó chỉ lộ ra khi đi tìm **nhánh nào đã chạy**, không lộ ở kết quả.
+
+Chữa bằng một vị từ `isPredicate(e) = e.k === 'rel' || e.k === 'sys'`, và chốt canh khẳng
+định bằng một luật cố tình sai chứ không bằng một luật đúng — vì một luật đúng cho ra
+cùng con số ở cả hai bên.
+
+### 36.4 Hệ lồng hệ: làm phẳng **cùng phép nối**, không khác
+
+$(A \wedge B) \wedge C$ và $A \wedge B \wedge C$ là một, nên `normalize` làm phẳng —
+cùng chỗ đứng và cùng lý lẽ với `add`/`mul`. Nhưng $(A \vee B) \wedge C$ làm phẳng là đổi
+hẳn nghĩa, nên phép nối phải khớp mới gộp. Một dòng điều kiện, và thiếu nó thì
+`abs_to_interval` áp bên trong một hệ sẽ lặng lẽ biến một tuyển thành một hội.

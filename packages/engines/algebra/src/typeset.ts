@@ -935,12 +935,21 @@ export function toBox(e: Expr, size: number = FONT): Box {
           toBox(e.rhs, size),
         ],
       });
-    case 'sys':
+    case 'sys': {
+      // **Tuyển vẽ nằm ngang**, nối bằng chữ "hoặc" — đó là cách mọi sách viết một tập
+      // nghiệm ($x < 1$ hoặc $x > 2$), và một ngoặc nhọn quanh hai nhánh loại trừ nhau
+      // đọc ra đúng nghĩa ngược lại. Hội thì xếp dọc trong ngoặc nhọn.
+      if (e.join === 'or') {
+        const items: Box[] = [];
+        e.rels.forEach((r, i) => {
+          if (i > 0) items.push(gap(size * 0.4), text('hoặc', size), gap(size * 0.4));
+          items.push(toBox(r, size));
+        });
+        return tag({ t: 'row', items });
+      }
       return tag({
         t: 'stack',
-        // Hội vẽ ngoặc nhọn; tuyển thì không — nó là "hoặc", và một ngoặc nhọn quanh
-        // hai nhánh loại trừ nhau đọc ra đúng nghĩa ngược lại. (M60 dùng nhánh này.)
-        brace: e.join === 'and' ? '{' : null,
+        brace: '{',
         rows: e.rels.map((r) => ({
           box: toBox(r, size),
           // Phần trước dấu quan hệ: vế trái cộng nửa khoảng hở của toán tử. Đo bằng
@@ -949,6 +958,7 @@ export function toBox(e: Expr, size: number = FONT): Box {
         })),
         size,
       });
+    }
   }
 }
 

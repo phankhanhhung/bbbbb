@@ -12,6 +12,7 @@ import {
   add,
   big,
   substituteVar,
+  sys,
   div,
   fn,
   int,
@@ -29,6 +30,7 @@ import {
   walk,
   withChildren,
   type Expr,
+  type RelOp,
   type TermId,
 } from './expr.js';
 import { parse, toPlain, tryParse, unparse } from './parse.js';
@@ -2342,6 +2344,160 @@ const powSplit: Rule = {
 };
 
 
+
+/* ---------- tập nghiệm và khoảng (M60) ---------- */
+
+/**
+ * Ba luật phát biểu **đáp số** của một bất phương trình.
+ *
+ * Lỗ này có thật và đo được: $x^2-3x+2>0$ phân tích ra $(x-2)(x-1)>0$ rồi **dừng** — không
+ * có chỗ nào đặt đáp số. Thêm luật không cứu được, phải thêm chỗ cho kết quả rơi vào.
+ *
+ * Và chỗ ấy **đã có sẵn** từ M59: `sys` với `join: 'or'` *là* một tuyển khoảng. Không dựng
+ * nút `set`/`interval` riêng — một khoảng *là* một hội hai bất đẳng thức, và dựng lại nó
+ * thành một nút thứ hai là dựng hai lần cùng một thứ (đúng lỗi §24.3 đã tránh với hai
+ * nghiệm bậc hai).
+ *
+ * Ở đây `sameSolutionSet` **có răng thật**, ngược hẳn với hệ phương trình (§35.2): bốc một
+ * $x$ ngẫu nhiên thì "thuộc tập nghiệm" là một câu đúng/sai có nghĩa ở cả hai vế. Cùng một
+ * bộ kiểm mà chỗ này dùng được, chỗ kia không.
+ */
+
+/** Số thực của một biểu thức hằng; `null` khi còn biến. */
+const constValue = (e: Expr): number | null =>
+  varsOf(e).size === 0 ? evalReal(e, new Map()) : null;
+
+/** $|A| < a$ và $|A| > a$ — `<` cho một hội, `>` cho một tuyển. */
+const absToInterval: Rule = {
+  id: 'abs_to_interval',
+  label: 'bỏ trị tuyệt đối thành khoảng',
+  run(m, node) {
+    if (node.k !== 'rel') return no('cần một bất phương trình');
+    if (node.lhs.k !== 'abs') return no('vế trái phải là một dấu giá trị tuyệt đối');
+    const bound = constValue(node.rhs);
+    if (bound === null) return no('vế phải phải là một số');
+    if (bound <= 0) return no(`vế phải phải dương (đang là ${bound})`);
+
+    const inner = node.lhs.arg;
+    const other = freshCopy(m, inner);
+    const negBound = negate(m, freshCopy(m, node.rhs).copy);
+
+    if (node.op === '<' || node.op === '<=') {
+      // $|A| < a \iff -a < A < a$ — một **hội**, vẽ trong ngoặc nhọn.
+      return {
+        after: sys(m, 'and', [
+          rel(m, node.op === '<' ? '>' : '>=', inner, negBound),
+          rel(m, node.op, other.copy, node.rhs),
+        ]),
+        dup: other.pairs,
+      };
+    }
+    if (node.op === '>' || node.op === '>=') {
+      // $|A| > a \iff A < -a$ **hoặc** $A > a$ — một tuyển, vẽ nằm ngang.
+      return {
+        after: sys(m, 'or', [
+          rel(m, node.op === '>' ? '<' : '<=', inner, negBound),
+          rel(m, node.op, other.copy, node.rhs),
+        ]),
+        dup: other.pairs,
+      };
+    }
+    return no('mới làm được với < ≤ > ≥');
+  },
+};
+
+/**
+ * $(x-r_1)(x-r_2) > 0$ (hoặc $< 0$) thành khoảng.
+ *
+ * Chỉ **hai** nhân tử bậc nhất, hệ số dẫn đầu $1$, hai nghiệm là số. Đó là ca bậc hai —
+ * gần như toàn bộ chương trình phổ thông — và mở rộng lên $n$ nhân tử thì kết quả là một
+ * tuyển của các hội, tức một cây lồng hai tầng mà không mắt nào đọc nổi trên một dòng.
+ * Từ chối có lời thay vì vẽ ra một thứ không đọc được.
+ */
+const intervalFromFactors: Rule = {
+  id: 'interval_from_factors',
+  label: 'đọc khoảng nghiệm từ dạng tích',
+  run(m, node) {
+    if (node.k !== 'rel') return no('cần một bất phương trình');
+    if (node.op !== '<' && node.op !== '>') return no('mới làm được với < và >');
+    if (constValue(node.rhs) !== 0) return no('vế phải phải là 0');
+    if (node.lhs.k !== 'mul' || node.lhs.args.length !== 2) {
+      return no('vế trái phải là tích **hai** nhân tử bậc nhất');
+    }
+
+    // Mỗi nhân tử phải là $x - r$: một biến cộng một hằng.
+    const roots: number[] = [];
+    let name: string | null = null;
+    for (const f of node.lhs.args) {
+      const poly = univariate(f);
+      if (typeof poly === 'string') return no(poly);
+      if (Math.max(...poly.coefs.keys()) !== 1) return no('mỗi nhân tử phải bậc nhất');
+      if ((poly.coefs.get(1) ?? 0) !== 1) return no('mỗi nhân tử phải có hệ số dẫn đầu 1');
+      if (name !== null && poly.name !== name) return no('hai nhân tử phải cùng một ẩn');
+      name = poly.name;
+      roots.push(-(poly.coefs.get(0) ?? 0));
+    }
+    if (name === null) return no('không có ẩn nào');
+    const [r, q] = roots as [number, number];
+    if (r === q) return no('hai nghiệm trùng nhau — tích là một bình phương, không đổi dấu');
+    const [lo, hi] = r < q ? [r, q] : [q, r];
+
+    const x = (): Expr => variable(m, name as string);
+    if (node.op === '>') {
+      // Ngoài hai nghiệm: tích dương.
+      return {
+        after: sys(m, 'or', [rel(m, '<', x(), int(m, lo)), rel(m, '>', x(), int(m, hi))]),
+      };
+    }
+    // Giữa hai nghiệm: tích âm.
+    return {
+      after: sys(m, 'and', [rel(m, '>', x(), int(m, lo)), rel(m, '<', x(), int(m, hi))]),
+    };
+  },
+};
+
+/**
+ * Gộp hai ràng buộc cùng chiều trên cùng một ẩn.
+ *
+ * Hội thì giữ cái **chặt hơn**, tuyển thì giữ cái **lỏng hơn** — $x>1 \wedge x>2$ là
+ * $x>2$, còn $x<1 \vee x<2$ là $x<2$. So bằng số, nên hai cận phải là hằng.
+ */
+const mergeIntervals: Rule = {
+  id: 'merge_intervals',
+  label: 'gộp hai ràng buộc cùng chiều',
+  run(m, node) {
+    if (node.k !== 'sys') return no('cần một hệ hoặc một tuyển');
+
+    const dir = (op: RelOp): 'up' | 'down' | null =>
+      op === '>' || op === '>=' ? 'up' : op === '<' || op === '<=' ? 'down' : null;
+
+    for (let i = 0; i < node.rels.length; i += 1) {
+      for (let j = i + 1; j < node.rels.length; j += 1) {
+        const a = node.rels[i] as Expr;
+        const b = node.rels[j] as Expr;
+        if (a.k !== 'rel' || b.k !== 'rel') continue;
+        if (a.lhs.k !== 'var' || b.lhs.k !== 'var' || a.lhs.name !== b.lhs.name) continue;
+        const d = dir(a.op);
+        if (d === null || d !== dir(b.op)) continue;
+        const va = constValue(a.rhs);
+        const vb = constValue(b.rhs);
+        if (va === null || vb === null) continue;
+
+        // Hội + chiều lên ⇒ cận lớn hơn thắng; ba tổ hợp còn lại suy ra từ đối xứng.
+        const tighter = node.join === 'and' ? d === 'up' : d === 'down';
+        const keep = (tighter ? va > vb : va < vb) ? a : b;
+        const rest = node.rels.filter((_, k) => k !== i && k !== j);
+        const merged: Expr = rest.length === 0 ? keep : { ...node, rels: [...rest, keep] };
+        return {
+          after: merged,
+          merged: [[[a.id, b.id], keep.id]],
+        };
+      }
+    }
+    return no('không có hai ràng buộc nào cùng ẩn, cùng chiều, cận là số');
+  },
+};
+
 /* ---------- hệ phương trình (M59) ---------- */
 
 /**
@@ -2825,6 +2981,9 @@ export const RULES: readonly Rule[] = [
   scaleEquation,
   substituteFrom,
   dropEquation,
+  absToInterval,
+  intervalFromFactors,
+  mergeIntervals,
   addBothSides,
   mulBothSides,
   powBothSides,

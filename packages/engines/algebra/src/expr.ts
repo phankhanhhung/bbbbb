@@ -527,6 +527,18 @@ export function allPaths(root: Expr): Map<string, Expr> {
  */
 export function normalize(e: Expr): Expr {
   const kids = children(e).map(normalize);
+  // Hệ lồng hệ **cùng phép nối** thì làm phẳng: $(A \wedge B) \wedge C$ và
+  // $A \wedge B \wedge C$ là một. Khác phép nối thì **không** — $(A \vee B) \wedge C$
+  // làm phẳng là đổi hẳn nghĩa. Cùng lý lẽ với `add`/`mul` ở dưới, và cùng chỗ đứng:
+  // ghép cây con xong là chuẩn hoá lại, nếu không đường dẫn bước sau trỏ lệch.
+  if (e.k === 'sys') {
+    const flat: Expr[] = [];
+    for (const c of kids) {
+      if (c.k === 'sys' && c.join === e.join) flat.push(...c.rels);
+      else flat.push(c);
+    }
+    return flat.length === 1 ? (flat[0] as Expr) : { ...e, rels: flat };
+  }
   if (e.k !== 'add' && e.k !== 'mul') return withChildren(e, kids);
 
   const flat: Expr[] = [];

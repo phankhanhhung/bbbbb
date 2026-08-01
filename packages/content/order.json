@@ -106,10 +106,12 @@
     "telescoping-product",
     "symbolic-exponent-identities",
     "system-by-elimination",
-    "system-by-substitution"
+    "system-by-substitution",
+    "absolute-value-interval",
+    "quadratic-inequality-sign"
   ],
   "newest": [
-    "system-by-elimination",
-    "system-by-substitution"
+    "absolute-value-interval",
+    "quadratic-inequality-sign"
   ]
 }

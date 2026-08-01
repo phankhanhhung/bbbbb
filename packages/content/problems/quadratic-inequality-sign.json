@@ -1,0 +1,120 @@
+{
+  "schema_version": "0.3.0",
+  "id": "quadratic-inequality-sign",
+  "statement": {
+    "vi": "Giải $x^2 - 3x + 2 > 0$. Phân tích thành tích thì dễ, nhưng **phát biểu đáp số** mới là chỗ engine từng bó tay: một dạng tích không phải một tập nghiệm."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: tập nghiệm **không** có kiểu nút riêng. Một khoảng *là* một hội hai bất đẳng thức, và một tuyển khoảng *là* một tuyển — cùng nút `sys` đã dựng cho hệ phương trình, chỉ đổi phép nối."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Từ dạng tích sang khoảng"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Phân tích rồi đọc dấu: tích hai thừa số dương khi cả hai cùng dấu, tức [[a1|ngoài hai nghiệm]]. Đó là đáp số, và nó là một **tuyển** — hai khoảng rời nhau, nối bằng chữ \"hoặc\"."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x^2 - 3*x + 2 > 0",
+              "steps": [
+                {
+                  "at": "L",
+                  "rule": "factor_quadratic"
+                },
+                {
+                  "at": "",
+                  "rule": "interval_from_factors"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: x bình phương trừ 3x cộng 2 lớn hơn 0, rồi dạng tích, rồi x nhỏ hơn 1 hoặc x lớn hơn 2."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đổi chiều bất đẳng thức thì đáp số đổi hẳn hình dạng: tích âm khi hai thừa số **trái dấu**, tức [[a1|giữa hai nghiệm]] — một hội, vẽ trong ngoặc nhọn."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x^2 - 3*x + 2 < 0",
+              "steps": [
+                {
+                  "at": "L",
+                  "rule": "factor_quadratic"
+                },
+                {
+                  "at": "",
+                  "rule": "interval_from_factors"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng, kết thúc bằng hệ x lớn hơn 1 và x nhỏ hơn 2."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

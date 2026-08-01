@@ -195,6 +195,9 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       // M59: bộ sinh không bao giờ dựng một **hệ** — dấu chấm phẩy chỉ có ở tầng gốc.
       'x + 2*y = 5; 3*x - y = 1', 'x = 5 - 2*y; 3*x - y = 1',
       'x = 1; y = 2; x + y = x + y',
+      // M60: bất phương trình có trị tuyệt đối và dạng tích — bộ sinh không dựng trúng.
+      'abs(x - 1) < 3', 'abs(x) > 2', '(x - 1)*(x - 2) > 0', '(x - 1)*(x - 2) < 0',
+      'x > 1; x > 2', 'x < 5; x < 9',
     ];
 
     const bad: string[] = [];
@@ -2130,5 +2133,114 @@ describe('M59 — hệ phương trình', () => {
 
     const mm = measure(box);
     expect((mm.above + mm.below) / ROW).toBeLessThanOrEqual(ALGEBRA_LIMITS.maxHeightCells);
+  });
+});
+
+describe('M60 — tập nghiệm và khoảng', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const plain = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return toPlain(m.rows.at(-1)!.expr);
+  };
+
+  it('bất phương trình bậc hai nay **phát biểu được đáp số**', () => {
+    // Lỗ đo được trước M60: $(x-2)(x-1) > 0$ rồi **dừng**, không có chỗ đặt đáp số.
+    expect(
+      plain('x^2 - 3*x + 2 > 0', [
+        { rule: 'factor_quadratic', at: 'L' },
+        { rule: 'interval_from_factors', at: '' },
+      ]),
+    ).toBe('x < 1 hoặc x > 2');
+    expect(
+      plain('x^2 - 3*x + 2 < 0', [
+        { rule: 'factor_quadratic', at: 'L' },
+        { rule: 'interval_from_factors', at: '' },
+      ]),
+    ).toBe('x > 1; x < 2');
+  });
+
+  it('trị tuyệt đối: `<` cho một **hội**, `>` cho một **tuyển**', () => {
+    expect(plain('abs(x - 1) < 3', [{ rule: 'abs_to_interval', at: '' }])).toBe(
+      'x − 1 > −3; x − 1 < 3',
+    );
+    expect(plain('abs(x - 1) > 3', [{ rule: 'abs_to_interval', at: '' }])).toBe(
+      'x − 1 < −3 hoặc x − 1 > 3',
+    );
+  });
+
+  it('gộp hai ràng buộc cùng chiều: hội giữ cái chặt, tuyển giữ cái lỏng', () => {
+    expect(plain('x > 1; x > 2', [{ rule: 'merge_intervals', at: '' }])).toBe('x > 2');
+  });
+
+  describe('bộ kiểm — và chỗ nó **suýt** không chạy', () => {
+    it('bước `rel → sys` phải rơi vào một nhánh kiểm', () => {
+      // Hai nhánh cuối của phép kiểm hỏi `k === 'rel'`, mà M60 sinh ra bước đi từ `rel`
+      // sang `sys`. Không sửa thì bước ấy **không được kiểm gì cả** — `unsound` rỗng vì
+      // chưa ai hỏi, chứ không vì đã hỏi và đúng. Con số 0 không phân biệt hai chuyện ấy,
+      // nên chốt canh phải khẳng định bằng một luật **cố tình sai**.
+      const before = parse('abs(x - 1) > 3', new Minter());
+      const wrong = parse('x - 1 > -3', new Minter()); // đúng phải là `<`
+      const verdict = sameSolutionSet(before, wrong, null, 20260731);
+
+      expect(verdict.ok).toBe(false);
+      expect(verdict.verified).toBe(true);
+    });
+
+    it('và ở đây `sameSolutionSet` **có răng** — ngược hẳn với hệ phương trình', () => {
+      // Với hệ (§35.2) mọi điểm ngẫu nhiên đều làm cả hai vế sai, nên phép kiểm luôn
+      // xanh. Với tập nghiệm thì "thuộc tập nghiệm" là một câu đúng/sai có nghĩa.
+      const bad = sameSolutionSet(
+        parse('x^2 - 3*x + 2 > 0', new Minter()),
+        parse('x < 1', new Minter()),
+        null,
+        20260731,
+      );
+      expect(bad.ok).toBe(false);
+      expect(bad.message).toContain('tập nghiệm khác nhau');
+    });
+
+    it('cả ba luật đều kiểm được, không rơi vào `unchecked`', () => {
+      const cases: Array<[string, AlgebraStep[]]> = [
+        ['abs(x - 1) < 3', [{ rule: 'abs_to_interval', at: '' }]],
+        ['abs(x - 1) > 3', [{ rule: 'abs_to_interval', at: '' }]],
+        ['(x - 1)*(x - 2) > 0', [{ rule: 'interval_from_factors', at: '' }]],
+        ['(x - 1)*(x - 2) < 0', [{ rule: 'interval_from_factors', at: '' }]],
+        ['x > 1; x > 2', [{ rule: 'merge_intervals', at: '' }]],
+      ];
+      for (const [start, steps] of cases) {
+        const m = run(start, steps);
+        expect(m.refusal, start).toBeNull();
+        expect(m.unsound, start).toEqual([]);
+        expect(m.unchecked, start).toEqual([]);
+      }
+    });
+  });
+
+  it('từ chối đúng chỗ, và nói vì sao', () => {
+    expect(run('abs(x) < -1', [{ rule: 'abs_to_interval', at: '' }]).refusal).toContain('phải dương');
+    expect(
+      run('x^2 - 2*x + 1 > 0', [
+        { rule: 'factor_quadratic', at: 'L' },
+        { rule: 'interval_from_factors', at: '' },
+      ]).refusal,
+    ).toContain('hai nghiệm trùng nhau');
+    // Ba nhân tử trở lên cho ra một tuyển của các hội — hai tầng lồng, không mắt nào
+    // đọc nổi trên một dòng. Từ chối có lời thay vì vẽ ra thứ không đọc được.
+    expect(
+      run('(x - 1)*(x - 2)*(x - 3) > 0', [{ rule: 'interval_from_factors', at: '' }]).refusal,
+    ).toContain('**hai** nhân tử');
+  });
+
+  it('hệ lồng hệ **cùng phép nối** thì làm phẳng, khác phép nối thì không', () => {
+    // $(A \\wedge B) \\wedge C$ và $A \\wedge B \\wedge C$ là một; còn
+    // $(A \\vee B) \\wedge C$ làm phẳng là đổi hẳn nghĩa.
+    const flat = run('abs(x) > 2; x > 5', [{ rule: 'abs_to_interval', at: '0' }]);
+    expect(flat.refusal).toBeNull();
+    const root = flat.rows.at(-1)!.expr as Expr & { k: 'sys' };
+    expect(root.join).toBe('and');
+    // Nhánh tuyển vẫn là **một** con của hội, không bị nuốt vào.
+    expect(root.rels).toHaveLength(2);
+    expect((root.rels[0] as Expr & { k: 'sys' }).join).toBe('or');
   });
 });

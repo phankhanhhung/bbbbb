@@ -138,6 +138,17 @@ function tooBig(e: Expr): string | null {
   return null;
 }
 
+/**
+ * Nút này là một **mệnh đề** — quan hệ hay hệ quan hệ.
+ *
+ * Có vì hai nhánh cuối của phép kiểm hỏi `k === 'rel'`, và M60 sinh ra bước đầu tiên đi
+ * từ `rel` sang `sys` ($|x| > 2$ thành một tuyển). Không sửa thì bước ấy **không rơi vào
+ * nhánh kiểm nào cả**: `unsound` rỗng vì chưa ai hỏi, chứ không vì đã hỏi và đúng. Đó là
+ * đúng loại lỗ mà M47c gọi tên — chỗ miễn kiểm là chỗ lỗ hổng nằm — và nó chỉ lộ ra khi
+ * đi tìm *nhánh nào đã chạy*, không lộ ở con số 0.
+ */
+const isPredicate = (e: Expr): boolean => e.k === 'rel' || e.k === 'sys';
+
 const idsOfExpr = (e: Expr): Set<string> => {
   const out = new Set<string>();
   walk(e, (n) => out.add(n.id));
@@ -342,9 +353,9 @@ export function readAlgebra(scene: Scene): AlgebraModel {
               ? ''
               : ' (chiều kéo theo chưa bốc trúng điểm nào để kiểm)'),
       );
-    } else if (target.k === 'rel' && outcome.after.k === 'rel' && rule.id !== 'substitute') {
+    } else if (isPredicate(target) && isPredicate(outcome.after) && rule.id !== 'substitute') {
       judge(sameSolutionSet(target, outcome.after, guard, 20260731 + i));
-    } else if (!rule.onRelation && target.k !== 'rel' && outcome.after.k !== 'rel') {
+    } else if (!rule.onRelation && !isPredicate(target) && !isPredicate(outcome.after)) {
       judge(sameValue(target, outcome.after, 20260731 + i, 8, guard));
     }
 
