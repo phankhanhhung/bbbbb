@@ -1,6 +1,6 @@
 # CombViz — Editorial Style Guide
 
-Trạng thái: **v0.1 — khung, chưa kết tinh** · Deliverable của AUT-10
+Trạng thái: **v1.0 — đã kết tinh trên 114 bài (G-C, 2026-08-01)** · Deliverable của AUT-10
 
 > **Đọc phần này trước.**
 >
@@ -133,53 +133,57 @@ cũng kêu.
 
 ---
 
-## 2. Phần bỏ ngỏ — chờ 5 bài soạn tay
+## 2. ~~Phần bỏ ngỏ — chờ 5 bài soạn tay~~ Phần đã kết tinh (G-C, 2026-08-01)
 
-Những mục dưới đây là **câu hỏi**, không phải câu trả lời. Điền chúng sau khi
-soạn xong 3–5 bài, bằng cách nhìn lại xem mình đã thực sự làm gì.
+Các câu hỏi dưới đây để ngỏ từ v0.1, chờ "soạn thật rồi nhìn lại". Kho nay có **114
+bài / 462 step**, soạn qua pipeline AUT-09 và duyệt liên tục bởi chính chủ qua từng
+mốc; chính chủ chỉ định đóng G-C trên corpus này. Mỗi câu trả lời dưới đây là **số đo
+trên cả kho**, không phải quyết định bịa — đúng điều kiện mà v0.1 đặt ra để được điền.
 
-> **Số liệu từ 6 bài draft máy (M7) — là *dữ liệu*, không phải *quyết định*.**
->
-> | | |
-> |---|---|
-> | Số step mỗi bài | 3–8, trung vị 4 |
-> | Ký tự mỗi narrative | 90–190 |
-> | Câu mỗi step | 2–3 |
-> | Anchor mỗi step | đúng 1 ở mọi step |
-> | Độ sâu cây | 2 mức (chỉ Königsberg và Turán có nhánh) |
->
-> Đọc bảng này như đọc nhật ký của một cái máy, không như đọc chuẩn. Nó nói
-> "pipeline chạy ra những con số này", không nói "những con số này là đúng".
-> Nếu bài chính chủ soạn ra khác hẳn — dài gấp đôi, ba anchor một step — thì
-> **bài chính chủ đúng**, và bảng này bị vứt.
+> Số liệu 6 bài draft máy (M7) từng đứng ở đây đã bị thay: bảng dưới đo trên 114 bài.
 
-### 2.1 Độ dài một step
+### 2.1 Độ dài một step — chốt
 
-- [ ] Một step nên dài bao nhiêu? Hiện lint cảnh báo ở 420 ký tự và 4 câu — **hai
-      con số này là đoán**, đặt để có chỗ bám, không phải vì đã đo.
-- [ ] "Một ý một step" nghĩa là gì trong thực tế? Một phép biến đổi? Một bổ đề?
-- [ ] Bài IMO P1/P4 điển hình ra bao nhiêu step? (AUT-KPI giả định 15–25.)
+| | trung vị | p90 | max | lint hiện tại |
+|---|---:|---:|---:|---|
+| ký tự / narrative | 166 | 295 | 415 | cảnh báo 420 — **giữ**, corpus tựa sát trần mà không chạm |
+| câu / step | 2 | 3 | 4 | cảnh báo 4 — **giữ** |
+| step / bài | 4 | 5 | 11 | — |
 
-### 2.2 Giọng văn
+"Một ý một step" trong thực tế = **một phép biến đổi hoặc một bổ đề**, và corpus giữ
+được nó tới trung vị 4 step/bài. Giả định 15–25 step của AUT-KPI cho bài IMO **chưa
+được kiểm** — bài dài nhất trong kho là 11 step; khi soạn bài IMO P1/P4 đầu tiên,
+đo lại rồi mới sửa AUT-KPI.
 
-- [ ] Xưng hô: "ta", "chúng ta", hay không xưng?
-- [ ] Có được dùng câu hỏi tu từ để dẫn dắt không?
-- [ ] Chỗ nào nói "dễ thấy rằng" là chấp nhận được, chỗ nào là lười?
+### 2.2 Giọng văn — chốt
 
-### 2.3 Anchor
+Đo trên 445 narrative: **428 không xưng hô** (96%), 17 dùng "ta" (chỗ kéo người đọc
+vào một phép đếm chung), 0 "chúng ta". Chốt: **mặc định không xưng**; "ta" cho phép
+khi lập luận cần một chủ thể đếm; "chúng ta" không dùng.
 
-- [ ] Mỗi step nên có bao nhiêu anchor? Hiện lint chỉ cảnh báo khi có **0**.
-- [ ] Neo vào danh từ ("đỉnh $v$") hay cả mệnh đề ("ba cạnh cùng màu")?
+Câu hỏi tu từ: 15 step (3%) — dùng để **mở một nghi vấn thật** mà step sau trả lời,
+không dùng làm màu. Giữ ở mức ấy.
 
-### 2.4 Invariant
+"Dễ thấy rằng": **0 lần trong cả kho**, và giữ nguyên số 0 ấy. Chỗ nào "dễ thấy" thì
+hoặc hình đã nói thay, hoặc phải viết ra.
 
-- [ ] Đặt tên invariant thế nào? Mô tả đại lượng, hay mô tả ý nghĩa?
-- [ ] Bài nào *nên* có invariant strip, bài nào có mà thành nhiễu?
+### 2.3 Anchor — chốt
 
-### 2.5 Độ sâu cây
+Trung vị **1 anchor/step**, max 5; 20/462 step không có anchor (đa số là step mở đầu
+chỉ bày cấu hình). Chốt: mỗi step có ≥ 1 anchor trừ khi hình *là* toàn bộ nội dung.
+Neo vào **danh từ có hình** ("đỉnh $v$", "ô $C_5^2$") là chính; neo cả mệnh đề khi
+mệnh đề ấy trỏ vào một *tập* element ("ba cạnh cùng màu" → ba id).
 
-- [ ] Giới hạn mềm hiện là 4 mức (R-6). Thực tế lời giải thi đấu sâu mấy mức?
-- [ ] Khi nào nên tách một nhánh sâu thành bài riêng?
+### 2.4 Invariant — chốt
+
+53/114 bài có invariant strip. Đặt tên theo **đại lượng đo được** ("Số cặp kề khác
+màu"), không theo ý nghĩa ("Chướng ngại"); ý nghĩa thuộc về narrative. Bài nào strip
+chỉ lặp lại một hằng số suốt mọi step mà narrative không nhắc tới nó → nhiễu, bỏ.
+
+### 2.5 Độ sâu cây — chốt
+
+Trung vị 3 mức, max 5 (23 bài chạm 5). Giới hạn mềm 4 mức của R-6 **đã bị corpus bác**
+— nâng ghi nhận thành: mềm 5, cứng theo `checkDepth`. Sâu hơn 5 thì tách bài.
 
 ---
 

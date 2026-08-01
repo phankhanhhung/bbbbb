@@ -6,6 +6,7 @@ import type { BoardConfig, ColoringPreset } from './schema.js';
 import { cellColorClass, FLIP_CLASSES, latticeOf, type Offset } from './geometry.js';
 import {
   cellCount,
+  cellsInRow,
   directionCount,
   inBoard,
   isLatticeShape,
@@ -33,8 +34,18 @@ function boardConfig(scene: Scene): BoardConfig {
   return scene.config as BoardConfig;
 }
 
+/**
+ * "Ô này có thật không" — theo **hình lưới**, không theo khung chữ nhật.
+ *
+ * §14.2 ghi món nợ này từ M28: trên lưới tam giác hàng $r$ chỉ có $2r+1$ ô, nên
+ * `cell-0-2` của tam giác cạnh 3 nằm trong khung `rows × cols` mà **không tồn tại**.
+ * `paint-cells` và `place-piece` nhận nó, ghi override cho một ô ma; `checkBounds`
+ * chặn được trước khi ra file publish, nhưng sandbox thì đã tô ma rồi. Sửa ở thân
+ * hàm chứ không ở từng chỗ gọi — `toggle-holes`/`draw-region`/`toggle-cross` đã đi
+ * đường `inBoard` từ đầu, nay ba chỗ còn lại về cùng một cửa.
+ */
 function inBounds(config: BoardConfig, row: number, col: number): boolean {
-  return row >= 0 && col >= 0 && row < config.rows && col < config.cols;
+  return inBoard(latticeOf(config), config.rows, config.cols, row, col);
 }
 
 function isHoleAt(config: BoardConfig, row: number, col: number): boolean {
@@ -605,7 +616,10 @@ export function colorSummary(scene: Scene): Map<number, number> {
   const counts = new Map<number, number>();
 
   for (let r = 0; r < config.rows; r += 1) {
-    for (let c = 0; c < config.cols; c += 1) {
+    // `cellsInRow` chứ không phải `cols` (§14.2): tam giác cạnh 3 sọc theo hàng
+    // phải đếm ra $1/3/5$, không phải $3/3/3$ — summary strip BD-06 từng nói dối
+    // trên lưới tam giác vì vòng này đếm cả những ô không tồn tại.
+    for (let c = 0; c < cellsInRow(latticeOf(config), config.cols, r); c += 1) {
       if (isHoleAt(config, r, c)) continue;
       // Dùng lại `cellColorClass` chứ không cài lại luật preset: nếu bảng đếm
       // và hình vẽ tính màu bằng hai đường khác nhau, có ngày chúng bất đồng ý

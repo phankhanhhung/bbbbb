@@ -567,3 +567,37 @@ describe('BD-08 — lật chùm ô (lights-out)', () => {
     expect(resolveBoardValidator('all-cells:1')!.check(holed).ok).toBe(true);
   });
 });
+
+describe('§14.2 — ba món nợ triangle-lattice, trả một lượt', () => {
+  /** Tam giác cạnh 3: hàng $r$ có $2r+1$ ô — hàng 0 chỉ có `cell-0-0`. */
+  const tri = (extra: Partial<BoardConfig> = {}): Scene =>
+    board({ config: { rows: 3, cols: 3, lattice: 'triangle', ...extra } });
+
+  it('`colorSummary` đếm theo hình lưới: sọc theo hàng ra 1/3/5, không phải 3/3/3', () => {
+    // Đúng con số mà §14.2 dùng làm triệu chứng — nay nó là chốt canh.
+    const summary = colorSummary(tri({ coloring_preset: { type: 'stripes', orientation: 'row', k: 3 } }));
+    expect([summary.get(1), summary.get(2), summary.get(3)]).toEqual([1, 3, 5]);
+    // Và tổng phải bằng số ô thật của tam giác: $3^2$, không phải $3 \times 3$... hai
+    // số này trùng nhau ở cạnh 3, nên kiểm thêm cạnh 4 cho khỏi trùng tình cờ.
+    const four = colorSummary(
+      board({ config: { rows: 4, cols: 4, lattice: 'triangle', coloring_preset: { type: 'stripes', orientation: 'row', k: 2 } } }),
+    );
+    expect([...four.values()].reduce((a, b) => a + b, 0)).toBe(16);
+  });
+
+  it('`paint-cells` từ chối ô ma — trong khung chữ nhật mà ngoài hình lưới', () => {
+    // `cell-0-2` nằm trong khung 3×3 nhưng hàng 0 của tam giác chỉ có một ô.
+    expect(run(tri(), 'board/paint-cells', { cells: ['cell-0-2'], color_class: 1 })).toBeNull();
+    // Ô có thật thì vẫn tô được — sửa không được siết quá tay.
+    expect(run(tri(), 'board/paint-cells', { cells: ['cell-2-4'], color_class: 1 })).not.toBeNull();
+  });
+
+  it('`place-piece` cũng vậy', () => {
+    expect(
+      run(tri(), 'board/place-piece', { id: 'p1', kind: 'custom', glyph: '★', pos: [0, 2] }),
+    ).toBeNull();
+    expect(
+      run(tri(), 'board/place-piece', { id: 'p1', kind: 'custom', glyph: '★', pos: [1, 2] }),
+    ).not.toBeNull();
+  });
+});

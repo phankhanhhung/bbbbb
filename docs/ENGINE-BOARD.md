@@ -732,22 +732,22 @@ không phải lỗi của engine.
 | Gộp ô cùng màu thành một `<path>` | Sẽ giết mất chuyển màu mà mắt theo được (§9.2) |
 | Nhiều hình lưới hơn `lozenge` | `LATTICE_SHAPES` cố tình ngắn: thêm hình khi có bài cần nó |
 
-### 14.2 Thiếu sót thật, chưa sửa
+### 14.2 ~~Thiếu sót thật, chưa sửa~~ — đã trả, 2026-08-01
 
-Ba chỗ dùng khung **chữ nhật** `rows × cols` trong khi lưới tam giác có hàng $r$ chỉ
-$2r+1$ ô. Tất cả đều chỉ sai trên lưới `triangle`; lưới vuông và lục giác không đụng
-tới vì ở đó hai cách đếm trùng nhau.
+Ba chỗ từng dùng khung **chữ nhật** `rows × cols` trong khi lưới tam giác có hàng $r$
+chỉ $2r+1$ ô — ghi nợ ở đây từ M28, trả một lượt trong lượt review tổng trước freeze:
 
-| Chỗ | Triệu chứng |
-|---|---|
-| `colorSummary` (`commands.ts`) | Summary strip BD-06 đếm **sai ô**. Tam giác cạnh 3, sọc theo hàng $k=3$: báo $3/3/3$, đáp số đúng là $1/3/5$ |
-| `board/paint-cells` | Nhận `cell-0-2` trên tam giác cạnh 3 — một ô **không tồn tại** — rồi ghi override cho nó. `checkBounds` bắt được sau đó bằng `bounds/cell-override-out-of-board`, nên nó không lọt ra file đã publish, nhưng sandbox thì tô một ô ma |
-| `board/place-piece` | Nhận `pos: [0, 2]` trên cùng bàn ấy |
+| Chỗ | Triệu chứng cũ | Sửa |
+|---|---|---|
+| `colorSummary` | Tam giác cạnh 3, sọc theo hàng $k=3$: báo $3/3/3$, đúng là $1/3/5$ | vòng `c` chạy tới `cellsInRow` |
+| `board/paint-cells` | Nhận `cell-0-2` — một ô **không tồn tại** — và tô một ô ma trong sandbox | thân `inBounds` gọi `inBoard` |
+| `board/place-piece` | Nhận `pos: [0, 2]` trên cùng bàn ấy | cùng cửa `inBounds` |
 
-Cách sửa giống nhau cả ba: thay `inBounds` / vòng `c < cols` bằng `inBoard` /
-`cellsInRow`, đúng như `toggle-holes`, `draw-region` và `toggle-cross` đã làm.
-Chưa có bài nào trong kho chạm phải — 4 scene lưới tam giác đều không dùng ba đường
-này — nên nó là nợ, không phải lỗi đang chảy máu.
+Sửa ở **thân `inBounds`** chứ không ở từng chỗ gọi, nên hai lệnh khỏi cùng lúc và chỗ
+gọi thứ tư trong tương lai khỏi sẵn. Chốt canh dùng đúng con số triệu chứng của bảng
+cũ ($1/3/5$), cộng tam giác cạnh 4 để tổng $16$ không trùng tình cờ với $rows \times
+cols$; bẻ từng fix ra thì đỏ 1 và 2 test. Con số cũ giữ nguyên ở bảng trên làm bằng
+chứng — một món nợ được ghi chính xác thì trả rẻ.
 
 ### 14.3 Ghi nhận giới hạn
 
