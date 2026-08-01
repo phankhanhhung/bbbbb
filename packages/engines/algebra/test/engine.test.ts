@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyChoreography, createContext, createRenderer } from '@combviz/render';
+import { applyChoreography, createContext, createRenderer, CELL_PX } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
 import type { Scene } from '@combviz/schema';
 import type { SceneBox, SvgNode } from '@combviz/render';
@@ -25,14 +25,23 @@ import {
   RULES,
   sameSolutionSet,
   sameValue,
+  sameValueReal,
+  substituteVar,
+  varsOf,
   same,
   glyphBox,
   shrink,
+  textWidth,
   toBox,
   unparse,
   FONT,
+  ALGEBRA_LIMITS,
+  FUNCTIONS,
   type AlgebraStep,
+  type Expr,
 } from '../src/index.js';
+import { toPlain } from '../src/parse.js';
+import { evalReal } from '../src/check.js';
 
 const renderer = createRenderer([algebraRenderer]);
 const ctx = createContext(defaultTheme);
@@ -63,6 +72,16 @@ const ARGS: Readonly<Record<string, ArgMaker>> = {
   // được bất cứ khi nào hạng tử tự do bằng 0. Ghi ra thay vì để rơi vào nhánh mặc
   // định — trúng tình cờ thì hôm nào đó thôi trúng mà không ai biết.
   divide_by_linear_factor: () => 'y',
+  // Chỗ cắt và lượng dịch phải là **hằng**: cả hai luật từ chối khi `arg` chứa chỉ số,
+  // và một `arg` luôn bị từ chối thì luật ấy không bao giờ được quét.
+  sum_split: () => '2',
+  sum_shift: () => '1',
+  // Phép biến đổi hàng: chỉ số hàng, rồi hệ số. Thiếu dòng nào ở đây thì luật ấy luôn
+  // từ chối và trôi qua phép quét mà không ai biết.
+  add_equations: () => '1,0,2',
+  scale_equation: () => '0,3',
+  substitute_from: () => '0,1',
+  drop_equation: () => '2',
   // Phân hoạch phải **vừa với nút gặp phải**: `add` làm phẳng nên số hạng tử thay đổi
   // theo từng biểu thức, và một `arg` cố định `"0,1|2,3"` chỉ áp được cho tổng đúng
   // bốn hạng tử — tức là hầu như không bao giờ.
@@ -87,7 +106,13 @@ describe('tầng 0 — parser và printer', () => {
   it('khứ hồi giữ **đúng cấu trúc** trên biểu thức sinh ngẫu nhiên', () => {
     // Chốt canh của tầng rủi ro nhất. Không kiểm chuỗi in ra giống nhau — kiểm cây
     // giống nhau, vì `unparse` cố ý in dư ngoặc.
-    const ATOMS = ['x', 'y', '2', '3', '-1', 'x^2', 'a_1', 'sqrt(x)', 'sqrt(2)', 'root(3, y)'];
+    const ATOMS = [
+      'x', 'y', '2', '3', '-1', 'x^2', 'a_1', 'sqrt(x)', 'sqrt(2)', 'root(3, y)',
+      // Mỗi kiểu nút mới phải có mặt ở đây, nếu không chốt canh tầng 0 — chốt canh của
+      // tầng rủi ro nhất — im lặng bỏ qua đúng thứ vừa thêm.
+      'n!', 'C(n, k)', 'A(n, 2)', '(x + 1)!',
+      'sum(k, 1, n, k)', 'prod(k, 1, 3, k + 1)', 'ln(x)', 'log(2, x)', 'sin(x)', 'tan(x)',
+    ];
     let s = 987654321;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
     const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(rand() * xs.length)] as T;
@@ -133,6 +158,7 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
     const ATOMS = [
       'x', 'y', '2', '3', '-1', 'x^2', 'y^2', 'x^3', 'y^3',
       'sqrt(x)', 'sqrt(6)', 'abs(x)', 'x^(1/2)', '1/x', '2/y',
+      'n!', 'C(n, k)', 'A(n, 3)', 'sum(k, 1, n, k)', 'ln(x)', 'sin(x)', 'exp(x)',
     ];
     let s = 4242;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
@@ -156,6 +182,27 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       'x^2 + 5*x + 4', '(x^2 + 5*x) + 4 = 0', '1/x + 1/y', 'x/6 + y/6',
       'a*b + a*c + b*d + c*d', '2*x^2 + 2*x + 3*x + 3', 'a^4 - b^4', 'a^3 + b^3',
       'sqrt(x + 5) = x - 1', 'abs(x - 2) = 3*x', 'x^2 + 6*x + 5',
+      // M56: `binom_absorb` cần đúng hình dạng $k\,C_n^k$, một thứ bộ sinh ngẫu nhiên
+      // gần như không bao giờ dựng trúng — cùng lý do đã phải gieo $\sqrt{48}$.
+      'k*C(n, k)', 'C(n, k)', 'n!', '3*k*C(n, k)', 'C(n, k) + C(n, k + 1)',
+      // M57: mỗi luật $\Sigma$ đòi một hình dạng thân riêng — hằng, tích, tổng, phân
+      // số triệt tiêu — mà bộ sinh ngẫu nhiên chỉ dựng được cái đầu.
+      'sum(k, 1, n, 5)', 'sum(k, 1, n, 3*k)', 'sum(k, 1, n, k + k^2)',
+      'sum(k, 1, 4, k^2)', 'prod(k, 1, 3, k)', 'prod(k, 1, n, (k + 1)/k)',
+      'sum(k, 1, n, k) + x', 'prod(k, 1, n, x)',
+      // M58: số mũ **ký hiệu** — bộ sinh không có toán tử `^` nên nó không bao giờ
+      // dựng $x^{m+n}$ hay $a^n - b^n$, đúng lý do đã phải gieo $\sqrt{48}$.
+      'x^(m + n)', 'a^n - b^n', 'x^n - 1', 'a^n + b^n', 'x^m * x^n', '(x^m)^n',
+      // M59: bộ sinh không bao giờ dựng một **hệ** — dấu chấm phẩy chỉ có ở tầng gốc.
+      'x + 2*y = 5; 3*x - y = 1', 'x = 5 - 2*y; 3*x - y = 1',
+      'x = 1; y = 2; x + y = x + y',
+      // M60: bất phương trình có trị tuyệt đối và dạng tích — bộ sinh không dựng trúng.
+      'abs(x - 1) < 3', 'abs(x) > 2', '(x - 1)*(x - 2) > 0', '(x - 1)*(x - 2) < 0',
+      'x > 1; x > 2', 'x < 5; x < 9',
+      // M61: hàm siêu việt — bộ sinh không có tên hàm nào trong bảng nguyên tử.
+      'ln(x*y)', 'ln(x/y)', 'ln(x^3)', 'log(2, x)', 'exp(ln(x))', 'ln(exp(x))',
+      'sin(x)^2 + cos(x)^2', 'sin(2*x)', 'cos(2*x)', 'sin(a) + sin(b)', 'sin(a)*cos(b)',
+      '2^x = 8',
     ];
 
     const bad: string[] = [];
@@ -190,13 +237,17 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
           // có `guard` thì chỉ hứa đúng **trong** điều kiện của nó. Kiểm chúng bằng
           // điểm ngẫu nhiên không điều kiện là hỏi sai câu hỏi.
           if (rule.onRelation || rule.id === 'substitute' || rule.id === 'evaluate_at') continue;
-          // Bỏ theo **cấu trúc kết quả**, không theo danh sách tên: `guard` nghĩa là
-          // "chỉ hứa đúng trong điều kiện này", `binding` nghĩa là "viết bằng biến mới,
-          // phải thế ngược lại rồi mới so". Danh sách tên thì luật thứ mười lại lọt.
-          if (out.guard !== undefined || out.binding !== undefined) continue;
+          // `binding` nghĩa là "viết bằng biến mới, phải thế ngược lại rồi mới so" —
+          // hỏi thẳng bằng điểm ngẫu nhiên là hỏi sai câu hỏi. Bỏ theo **cấu trúc kết
+          // quả**, không theo danh sách tên: danh sách tên thì luật thứ mười lại lọt.
+          if (out.binding !== undefined) continue;
           if (node.k === 'rel' || out.after.k === 'rel') continue;
 
-          const verdict = sameValue(node, out.after, 777 + i);
+          // `guard` thì **không** bỏ qua nữa: bộ kiểm nhận được nó và tự bỏ những điểm
+          // vi phạm. Bản cũ bỏ nguyên bước, và đó là một lỗ im lặng — bốn trong năm
+          // luật tổ hợp của M56 đều có `guard`, nên chúng sẽ được đếm là "đã quét" mà
+          // giá trị thì chưa ai kiểm. Chỗ bỏ qua là chỗ lỗ hổng nằm (M47c).
+          const verdict = sameValue(node, out.after, 777 + i, 8, out.guard ?? null);
           if (!verdict.ok) bad.push(`${rule.id} tại "${at}" của ${src}: ${verdict.message}`);
         }
       }
@@ -1396,5 +1447,924 @@ describe('hình', () => {
 
     expect(layout(readAlgebra(off)).lines.every((l) => l.label === null)).toBe(true);
     expect(renderer.toSvg(off, ctx)).not.toContain('khai triển');
+  });
+});
+
+describe('M55 — dọn nhà', () => {
+  const run = (start: string, steps: AlgebraStep[]) => readAlgebra(scene(start, steps));
+  const last = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return unparse(m.rows.at(-1)!.expr);
+  };
+
+  describe('`at` trỏ bằng **nội dung**', () => {
+    // Cái bẫy: `abs_case` trả về một `add`, nó bị làm phẳng vào tổng cha, và mọi chỉ
+    // số sau nó lùi một nấc. Dấu $|\cdot|$ thứ hai đứng ở `L.1` trước bước, `L.2` sau.
+    it('đường dẫn theo vị trí **dịch chỗ** — đó là lý do `@` tồn tại', () => {
+      const shifted = run('abs(x - 1) + abs(x - 2) = 3', [
+        { rule: 'abs_case', at: 'L.0', arg: '+' },
+        { rule: 'abs_case', at: 'L.1', arg: '+' },
+      ]);
+      expect(shifted.refusal).toContain('cần một dấu giá trị tuyệt đối');
+
+      // Cùng bài, khai bằng nội dung: chạy thẳng, không phải đoán chỉ số nào cả.
+      expect(
+        last('abs(x - 1) + abs(x - 2) = 3', [
+          { rule: 'abs_case', at: '@abs(x - 1)', arg: '+' },
+          { rule: 'abs_case', at: '@abs(x - 2)', arg: '+' },
+        ]),
+      ).toBe('((x + (-1) + x + (-2)) = 3)');
+    });
+
+    it('không khớp, khớp nhiều chỗ, và mẫu hỏng — ba lời từ chối khác nhau', () => {
+      expect(run('x + 1 = 2', [{ rule: 'abs_case', at: '@abs(y)', arg: '+' }]).refusal).toContain(
+        'không cây con nào khớp',
+      );
+
+      const many = run('abs(x) + abs(x) = 3', [{ rule: 'abs_case', at: '@abs(x)', arg: '+' }]);
+      expect(many.refusal).toContain('2 cây con cùng khớp');
+      // Nói **chỗ nào** khớp, để tác giả chuyển sang đường dẫn được ngay.
+      expect(many.refusal).toContain('"L.0"');
+
+      expect(run('x + 1 = 2', [{ rule: 'commute', at: '@((', arg: '0,1' }]).refusal).toContain(
+        'không đọc được',
+      );
+    });
+
+    it('`row.at` giữ đường dẫn **đã giải**, không giữ chuỗi tác giả gõ', () => {
+      // `layout` và `choreography` đưa thẳng nó vào `nodeAt`, mà `nodeAt` không hiểu `@`.
+      const m = run('abs(x - 1) + abs(x - 2) = 3', [
+        { rule: 'abs_case', at: '@abs(x - 2)', arg: '+' },
+      ]);
+      expect(m.rows.at(-1)!.at).toBe('L.1');
+      expect(nodeAt(m.rows[0]!.expr, m.rows.at(-1)!.at)).not.toBeNull();
+    });
+  });
+
+  it('`maxSteps` bị chặn ở **tầng model**, không chỉ ở ajv', () => {
+    const many = (n: number): AlgebraStep[] =>
+      Array.from({ length: n }, () => ({ rule: 'commute', at: '', arg: '0,1' }));
+
+    // Trước M55 chỗ này im lặng chạy đủ 13 bước: `maxItems` của TypeBox là hàng rào
+    // duy nhất, nên mọi đường vào không qua ajv đều đi vòng qua nó.
+    const over = run('a + b', many(ALGEBRA_LIMITS.maxSteps + 1));
+    expect(over.refusal).toContain(`quá trần ${ALGEBRA_LIMITS.maxSteps}`);
+    expect(run('a + b', many(ALGEBRA_LIMITS.maxSteps)).refusal).toBeNull();
+  });
+
+  describe('`factor_quadratic` hệ số dẫn đầu khác 1', () => {
+    const factor = (s: string): string => last(s, [{ rule: 'factor_quadratic', at: '' }]);
+
+    it('hệ số nguyên, không dùng số thực', () => {
+      expect(factor('2*x^2 + 7*x + 3')).toBe('((x + 3) * ((2 * x) + 1))');
+      expect(factor('3*x^2 - 5*x - 2')).toBe('((x + (-2)) * ((3 * x) + 1))');
+      expect(factor('6*x^2 + 11*x + 3')).toBe('(((2 * x) + 3) * ((3 * x) + 1))');
+      expect(factor('4*x^2 - 9')).toBe('(((2 * x) + (-3)) * ((2 * x) + 3))');
+      // Hệ số dẫn đầu **âm** cũng đi được, không phải đổi dấu trước.
+      expect(factor('-2*x^2 + 5*x - 3')).toBe('((x + (-1)) * (((-2) * x) + 3))');
+      // $c = 0$ có nhánh riêng: $0$ không có ước nào để vét.
+      expect(factor('2*x^2 + 3*x')).toBe('(x * ((2 * x) + 3))');
+    });
+
+    it('nhánh $a = 1$ cho ra **đúng cây cũ** — kho không phải soát lại', () => {
+      expect(factor('x^2 + 5*x + 6')).toBe('((x + 2) * (x + 3))');
+      expect(factor('x^2 - x - 6')).toBe('((x + (-3)) * (x + 2))');
+      expect(factor('x^2 - 4')).toBe('((x + (-2)) * (x + 2))');
+    });
+
+    it('vô tỉ thì từ chối, và **chỉ đường** sang công thức nghiệm', () => {
+      const why = run('2*x^2 + 2*x + 3', [{ rule: 'factor_quadratic', at: '' }]).refusal as string;
+      expect(why).toContain('không có cặp số nguyên');
+      expect(why).toContain('công thức nghiệm');
+    });
+  });
+
+  describe('`rationalize` cho căn bậc $n$', () => {
+    const rat = (s: string): string => last(s, [{ rule: 'rationalize', at: '' }]);
+
+    it('bậc ba trở lên nhân cho $\\sqrt[n]{b^{n-1}}$', () => {
+      expect(rat('1/root(3, 2)')).toBe('((1 * root(3, (2)^(2))) / 2)');
+      expect(rat('5/root(4, x)')).toBe('((5 * root(4, (x)^(3))) / x)');
+      expect(rat('1/root(5, 2)')).toBe('((1 * root(5, (2)^(4))) / 2)');
+    });
+
+    it('bậc hai giữ nguyên từng chữ của bản cũ', () => {
+      expect(rat('1/sqrt(2)')).toBe('((1 * sqrt(2)) / 2)');
+      expect(rat('3/sqrt(x)')).toBe('((3 * sqrt(x)) / x)');
+    });
+
+    it('kết quả **đúng về giá trị** — không phải chỉ đúng hình dạng', () => {
+      // Chốt canh thật của luật này: bộ kiểm thực phải xác nhận, và nó có xác nhận
+      // được (chứ không rơi vào `unchecked`, thứ nghĩa là "không tìm được điểm nào").
+      for (const s of ['1/root(3, 2)', '5/root(4, x)', '1/root(5, 2)']) {
+        const m = run(s, [{ rule: 'rationalize', at: '' }]);
+        expect(m.unsound).toEqual([]);
+        expect(m.unchecked).toEqual([]);
+      }
+    });
+
+    it('mẫu là **tổng** chứa căn thì chỉ sang luật đúng', () => {
+      expect(run('1/(sqrt(2) + 1)', [{ rule: 'rationalize', at: '' }]).refusal).toContain(
+        'multiply_by_conjugate',
+      );
+    });
+  });
+
+  describe('trần bề ngang đo lại', () => {
+    it('$(a+b+c)^3$ **qua được** — hằng đẳng thức SGK không còn bị chặn', () => {
+      const m = run('(a + b + c)^3', [{ rule: 'multiply_out', at: '' }]);
+      expect(m.refusal).toBeNull();
+    });
+
+    it('trần vẫn còn răng, và lời từ chối nói **rộng bao nhiêu ô**', () => {
+      const why = run('(a + b)^8', [{ rule: 'multiply_out', at: '' }]).refusal as string;
+      expect(why).toContain('rộng');
+      expect(why).toContain(`quá ${ALGEBRA_LIMITS.maxWidthCells}`);
+    });
+
+    it('trần khớp với chỗ chữ tụt xuống dưới 12px trên màn hẹp nhất', () => {
+      // Con số $13$ không phải chọn cho vừa một bài: nó là bề rộng cuối cùng còn giữ
+      // chữ trên 12px ở điện thoại 360px, với luật co của `render/scale.ts`.
+      // Khẳng định lại phép tính ấy ở đây để nó không lặng lẽ hết đúng.
+      const pane = 360 - 32; // padding 1rem hai bên
+      const px = (w: number): number => FONT * (CELL_PX / ROW) * Math.min(1, pane / (CELL_PX * w));
+
+      expect(px(ALGEBRA_LIMITS.maxWidthCells)).toBeGreaterThan(12);
+      expect(px(ALGEBRA_LIMITS.maxWidthCells + 1)).toBeLessThan(12);
+    });
+  });
+});
+
+describe('M56 — hàm tổ hợp và bộ bốc điểm số nguyên', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const last = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return unparse(m.rows.at(-1)!.expr);
+  };
+  const tree = (s: string): Expr => parse(s, new Minter());
+
+  describe('cú pháp', () => {
+    it('`n!` và `n != 3` là **hai** thứ khác nhau', () => {
+      // `!=` là toán tử quan hệ. Nuốt nhầm dấu `!` làm giai thừa thì `n != 3` thành
+      // lỗi cú pháp — và lỗi ấy sẽ chỉ lộ ra ở bài đầu tiên dùng dấu khác.
+      expect(unparse(tree('n != 3'))).toBe('(n != 3)');
+      expect(unparse(tree('n! = 3'))).toBe('(fact(n) = 3)');
+    });
+
+    it('`C` vừa là tên biến vừa là tên hàm, và không mơ hồ', () => {
+      // Vì engine **cấm nhân ngầm** (§3.3): một biến không bao giờ đứng sát `(`.
+      expect(unparse(tree('C + 1'))).toBe('(C + 1)');
+      expect(unparse(tree('C(n, k)'))).toBe('C(n, k)');
+      expect(() => parse('C(n, k)', new Minter())).not.toThrow();
+    });
+
+    it('giai thừa là **hậu tố** và ăn trước dấu mũ', () => {
+      expect(unparse(tree('n!^2'))).toBe('(fact(n))^(2)');
+      expect(unparse(tree('2^n!'))).toBe('(2)^(fact(n))');
+    });
+
+    it('chữ trơn bọc ngoặc khi đối số không phải nguyên tử', () => {
+      // `x + 1!` đọc ra $x + (1!)$ — một biểu thức khác hẳn $(x+1)!$.
+      expect(toPlain(tree('(x + 1)!'))).toBe('(x + 1)!');
+      expect(toPlain(tree('n!'))).toBe('n!');
+      expect(toPlain(tree('C(n, k)'))).toBe('C(n,k)');
+    });
+  });
+
+  describe('bộ bốc điểm số nguyên — phần đắt nhất', () => {
+    it('bộ **thực** không kiểm được giai thừa, bộ **nguyên** thì được', () => {
+      // Đây là cả lý lẽ của M56 gói trong một khẳng định. `sameValueReal` bốc trong
+      // $[-4,-0{,}3] \cup [0{,}3,4]$, toàn số không nguyên ⇒ `fact` trả `null` ở **mọi**
+      // điểm ⇒ `verified: false`. Không có bộ nguyên thì mọi bước tổ hợp thành
+      // `unchecked`, tức vàng thường trực trên mọi bài — đúng thất bại M45.
+      const a = tree('n!');
+      const b = tree('n * (n - 1)!');
+
+      expect(sameValueReal(a, b, 1, 8).verified).toBe(false);
+      const withInteger = sameValue(a, b);
+      expect(withInteger.verified).toBe(true);
+      expect(withInteger.ok).toBe(true);
+    });
+
+    it('và nó **bắt** được đồng nhất thức sai', () => {
+      expect(sameValue(tree('n!'), tree('n * (n - 2)!')).ok).toBe(false);
+      expect(sameValue(tree('C(n, k)'), tree('C(n, k + 1)')).ok).toBe(false);
+      expect(sameValue(tree('C(n, k)'), tree('C(n, n - k)')).ok).toBe(true);
+    });
+
+    it('điểm ngoài miền bị **bỏ**, không bị kết tội', () => {
+      // $(n-k)!$ với $k > n$ không xác định. Bộ kiểm phải bỏ điểm ấy như bỏ căn bậc
+      // chẵn của số âm — nếu nó kết tội thì `binom_to_factorial` đỏ oan.
+      const v = sameValue(tree('C(n, k)'), tree('n! / (k! * (n - k)!)'));
+      expect(v.ok).toBe(true);
+      expect(v.verified).toBe(true);
+    });
+  });
+
+  describe('năm luật', () => {
+    it('cho ra đúng vế sau', () => {
+      expect(last('n!', [{ rule: 'factorial_step', at: '' }])).toBe('(n * fact((n + (-1))))');
+      expect(last('C(n, k)', [{ rule: 'binom_symmetry', at: '' }])).toBe('C(n, (n + ((-1) * k)))');
+      expect(last('C(n, k)', [{ rule: 'pascal', at: '' }])).toBe(
+        '(C((n + (-1)), (k + (-1))) + C((n + (-1)), k))',
+      );
+      expect(last('k*C(n, k)', [{ rule: 'binom_absorb', at: '' }])).toBe(
+        '(n * C((n + (-1)), (k + (-1))))',
+      );
+      expect(last('C(n, k)', [{ rule: 'binom_to_factorial', at: '' }])).toBe(
+        '(fact(n) / (fact(k) * fact((n + ((-1) * k)))))',
+      );
+    });
+
+    it('cả năm đều **kiểm được** — không luật nào rơi vào `unchecked`', () => {
+      const cases: Array<[string, string]> = [
+        ['n!', 'factorial_step'],
+        ['C(n, k)', 'binom_to_factorial'],
+        ['C(n, k)', 'binom_symmetry'],
+        ['C(n, k)', 'pascal'],
+        ['k*C(n, k)', 'binom_absorb'],
+      ];
+      for (const [start, rule] of cases) {
+        const m = run(start, [{ rule, at: '' }]);
+        expect(m.refusal, `${rule}: ${m.refusal}`).toBeNull();
+        expect(m.unsound, rule).toEqual([]);
+        expect(m.unchecked, rule).toEqual([]);
+      }
+    });
+
+    it('`binom_absorb` so thừa số bằng **cấu trúc**, không bằng tên', () => {
+      expect(last('3*k*C(n, k)', [{ rule: 'binom_absorb', at: '' }])).toBe(
+        '(3 * n * C((n + (-1)), (k + (-1))))',
+      );
+      expect(run('3*C(n, k)', [{ rule: 'binom_absorb', at: '' }]).refusal).toContain(
+        'không có thừa số bằng k',
+      );
+    });
+
+    it('điều kiện in ra khi có biến, **im** khi hiển nhiên đúng', () => {
+      // Chữ đỏ thường trực và vô ích là cách nhanh nhất để người ta ngừng đọc mọi chữ
+      // đỏ, kể cả dòng thật (M45). "$0 \\le 2 \\le 5$" là một dòng như thế.
+      expect(run('C(n, k)', [{ rule: 'pascal', at: '' }]).conditions).toEqual(['n ≥ 1']);
+      expect(run('C(5, 2)', [{ rule: 'binom_to_factorial', at: '' }]).conditions).toEqual([]);
+      expect(run('C(n, k)', [{ rule: 'binom_to_factorial', at: '' }]).conditions).toEqual([
+        '0 ≤ k ≤ n',
+      ]);
+      // Đối xứng đúng ở **mọi** $k$ nguyên nhờ quy ước $C_n^k = 0$ ngoài $[0,n]$.
+      expect(run('C(n, k)', [{ rule: 'binom_symmetry', at: '' }]).conditions).toEqual([]);
+    });
+  });
+
+  describe('sắp chữ', () => {
+    it('$C_n^k$ **chồng cột** — bề ngang là `max`, không phải tổng', () => {
+      // Ghép `sup` với `shift` cho ra $C_n{}^k$ — chỉ số dưới rồi mới tới số mũ, đọc ra
+      // một thứ khác. Đây là lý do `subsup` phải là một hộp riêng.
+      const wide = measure(toBox(tree('C(n, k)')));
+      const base = measure(toBox(tree('C')));
+      const sub = measure(toBox(tree('n'), shrink(FONT, 0.68)));
+      expect(wide.w).toBeLessThan(base.w + sub.w * 2);
+    });
+
+    it('không glyph nào chồng lên nhau, kể cả khi lồng tới sàn cỡ chữ', () => {
+      // $C_n^k$ lồng trong chỉ số dưới của một $C_n^k$ khác đẩy cả hai tầng xuống sàn
+      // `SIZE_FLOOR`, và ở đó `supRise`/`subDrop` — mỗi cái chỉ nhìn *một* tầng —
+      // không còn tách được chúng. Lượt quét này là thứ bắt được, ở $0{,}07$ đơn vị.
+      for (const src of ['C(n, k)', 'C(C(n, k), 2)', 'n!^2', 'C(n, k) = n! / (k! * (n - k)!)']) {
+        const p = place(toBox(tree(src), FONT), 0, 0);
+        const hits: string[] = [];
+        for (let i = 0; i < p.glyphs.length; i += 1) {
+          for (let j = i + 1; j < p.glyphs.length; j += 1) {
+            const a = glyphBox(p.glyphs[i]!);
+            const b = glyphBox(p.glyphs[j]!);
+            const ox = Math.min(a.x2, b.x2) - Math.max(a.x1, b.x1);
+            const oy = Math.min(a.y2, b.y2) - Math.max(a.y1, b.y1);
+            if (ox > 0.05 && oy > 0.05) hits.push(`"${p.glyphs[i]!.s}"×"${p.glyphs[j]!.s}"`);
+          }
+        }
+        expect(hits, `${src}: ${hits.join(', ')}`).toEqual([]);
+      }
+    });
+
+    it('dấu `!` được đo riêng — không thì số mũ trôi khỏi nó', () => {
+      // `estimateTextWidth` ước đều $0{,}5$ em, dôi $0{,}22$ em cho một nét đứng. Đủ để
+      // $n!^2$ vẽ ra hai vật rời nhau. Cùng lớp lỗi với bảng `EM` sinh ra để dẹp.
+      expect(textWidth('!', FONT)).toBeLessThan(textWidth('x', FONT));
+    });
+  });
+});
+
+describe('M57 — tổng và tích', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const last = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return unparse(m.rows.at(-1)!.expr);
+  };
+  const tree = (s: string): Expr => parse(s, new Minter());
+  const at = (s: string, env: Record<string, number>): number | null =>
+    evalReal(tree(s), new Map(Object.entries(env)));
+
+  describe('phạm vi biến — rủi ro chính của hạng mục', () => {
+    it('biến chỉ số **không** là biến tự do', () => {
+      // Bỏ sót chỗ trừ này thì hai chỗ hỏng cùng lúc và cả hai đều im lặng: `maxVars`
+      // đếm thừa, và bộ kiểm bốc một giá trị cho $k$ rồi vòng lặp của `big` đè lên nó —
+      // phép kiểm vẫn xanh, nhưng xanh vì một lý do khác với lý do người ta tưởng.
+      expect([...varsOf(tree('sum(k, 1, n, k)'))]).toEqual(['n']);
+      expect([...varsOf(tree('sum(k, 1, n, k*x))'.slice(0, -1)))].sort()).toEqual(['n', 'x']);
+    });
+
+    it('hai **cận** nằm ngoài phạm vi ràng buộc', () => {
+      // $\\sum_{k=1}^{k}$ — cận trên là một $k$ khác, **tự do**. Trộn hai thứ ấy là lỗi
+      // phạm vi cổ điển nhất, và nó không có triệu chứng nào ngoài một con số sai.
+      expect([...varsOf(tree('sum(k, 1, k, k)'))]).toEqual(['k']);
+    });
+
+    it('lồng nhau thì mỗi tầng ràng buộc tên của nó', () => {
+      expect([...varsOf(tree('sum(j, 1, n, sum(k, 1, j, k)))'.slice(0, -1)))]).toEqual(['n']);
+      // Và trùng tên thì **từ chối ở parser**. Đổi tên tự động là một mẹo, và mẹo ở
+      // tầng ngữ pháp là chỗ lỗi nằm: tác giả gõ `k` rồi `at` của bước sau trỏ vào một
+      // cái tên chưa từng gõ.
+      expect(() => parse('sum(k, 1, n, sum(k, 1, m, k))', new Minter())).toThrow('đã bị');
+    });
+
+    it('`substituteVar` không thò vào thân đã che tên', () => {
+      const e = tree('sum(k, 1, n, k) + k');
+      const out = substituteVar(e, 'k', tree('9'));
+      // $k$ tự do ở ngoài bị thay; $k$ trong thân tổng thì không.
+      expect(unparse(out)).toBe('(sum(k, 1, n, k) + 9)');
+    });
+  });
+
+  describe('đánh giá', () => {
+    it('khai đúng khi hai cận là số nguyên', () => {
+      expect(at('sum(k, 1, n, k)', { n: 4 })).toBe(10);
+      expect(at('sum(k, 1, 4, k^2)', {})).toBe(30);
+      expect(at('prod(k, 1, n, k)', { n: 4 })).toBe(24);
+      expect(at('sum(k, 0, n, C(n, k))', { n: 4 })).toBe(16);
+      expect(at('sum(j, 1, n, sum(k, 1, j, k))', { n: 4 })).toBe(20);
+    });
+
+    it('khoảng **rỗng** cho $0$ với tổng và $1$ với tích', () => {
+      // Quy ước chuẩn, và nó có việc thật: `sum_split` tại $m = b$ sinh ra đúng một
+      // khoảng rỗng, nên nếu chỗ này trả `null` thì luật ấy hoá ra không kiểm được.
+      expect(at('sum(k, 1, 0, k)', {})).toBe(0);
+      expect(at('prod(k, 1, 0, k)', {})).toBe(1);
+    });
+
+    it('cận không nguyên ⇒ điểm vô dụng, **không** phải bằng chứng sai', () => {
+      expect(at('sum(k, 1, n, k)', { n: 2.5 })).toBeNull();
+    });
+  });
+
+  describe('sáu luật', () => {
+    it('cho ra đúng vế sau', () => {
+      expect(last('sum(k, 1, n, 5)', [{ rule: 'sum_const', at: '' }])).toBe('((n + (-1) + 1) * 5)');
+      expect(last('prod(k, 1, n, x)', [{ rule: 'sum_const', at: '' }])).toBe('(x)^((n + (-1) + 1))');
+      expect(last('sum(k, 1, n, 3*k)', [{ rule: 'sum_linear', at: '' }])).toBe(
+        '(3 * sum(k, 1, n, k))',
+      );
+      expect(last('sum(k, 1, 4, k^2)', [{ rule: 'sum_expand', at: '' }])).toBe(
+        '((1)^(2) + (2)^(2) + (3)^(2) + (4)^(2))',
+      );
+      expect(last('prod(k, 1, n, (k + 1)/k)', [{ rule: 'prod_telescope', at: '' }])).toBe(
+        '((n + 1) / 1)',
+      );
+    });
+
+    it('cả sáu **kiểm được** — không luật nào rơi vào `unchecked`', () => {
+      const cases: Array<[string, string, string | undefined]> = [
+        ['sum(k, 1, n, 5)', 'sum_const', undefined],
+        ['sum(k, 1, n, 3*k)', 'sum_linear', undefined],
+        ['sum(k, 1, n, k)', 'sum_split', '2'],
+        ['sum(k, 1, n, k^2)', 'sum_shift', '1'],
+        ['sum(k, 1, 4, k^2)', 'sum_expand', undefined],
+        ['prod(k, 1, n, (k + 1)/k)', 'prod_telescope', undefined],
+      ];
+      for (const [start, rule, arg] of cases) {
+        const m = run(start, [arg === undefined ? { rule, at: '' } : { rule, at: '', arg }]);
+        expect(m.refusal, `${rule}: ${m.refusal}`).toBeNull();
+        expect(m.unsound, rule).toEqual([]);
+        expect(m.unchecked, rule).toEqual([]);
+      }
+    });
+
+    it('`sum_expand` là **cầu nối** về `add` thường', () => {
+      // Không có nó thì $\\Sigma$ là một ốc đảo: cả 47 luật cũ đều không áp được vào
+      // một nút `big`.
+      expect(
+        last('sum(k, 1, 4, k)', [
+          { rule: 'sum_expand', at: '' },
+          { rule: 'eval_int', at: '' },
+        ]),
+      ).toBe('10');
+    });
+
+    it('`prod_telescope` nhận dạng bằng **cấu trúc**, không bằng mẫu chuỗi', () => {
+      expect(run('prod(k, 1, n, (k + 2)/k)', [{ rule: 'prod_telescope', at: '' }]).refusal).toContain(
+        'lùi một bậc',
+      );
+    });
+
+    it('trần sáu hạng tử để **trần kích thước** tự lo phần còn lại', () => {
+      const why = run('sum(k, 1, 7, k)', [{ rule: 'sum_expand', at: '' }]).refusal as string;
+      expect(why).toContain('7 hạng tử');
+    });
+  });
+
+  describe('`guard` phải nhận **số nhiều**', () => {
+    it('`sum_split` sai khi chỗ cắt nằm ngoài khoảng — và engine bắt được', () => {
+      // Đây là ca buộc `Guard` phải thành `Guards`. Tách $\\sum_{k=1}^{n}$ tại $m=3$ chỉ
+      // đúng khi $0 \\le 3 \\le n$; ở $n = 1$ vế trái là $1$ còn vế phải là $6 + 0$.
+      // Gói hai bất đẳng thức vào một biểu thức — $(b-m)(m-a+1) \\ge 0$ — thì đúng tình
+      // cờ và sai khi cả hai cùng âm.
+      const guards = [
+        { expr: tree('n - 3'), sign: '>=0' as const },
+        { expr: tree('3 - 1 + 1'), sign: '>=0' as const },
+      ];
+      const before = tree('sum(k, 1, n, k)');
+      const after = tree('sum(k, 1, 3, k) + sum(k, 4, n, k)');
+
+      // Không điều kiện ⇒ bắt được sai.
+      expect(sameValue(before, after).ok).toBe(false);
+      // Có **cả hai** điều kiện ⇒ đúng.
+      expect(sameValue(before, after, 20260731, 8, guards).ok).toBe(true);
+    });
+
+    it('luật tự khai đủ hai điều kiện, và in ra hình', () => {
+      const m = run('sum(k, 1, n, k)', [{ rule: 'sum_split', at: '', arg: '3' }]);
+      expect(m.unsound).toEqual([]);
+      expect(m.conditions).toEqual(['1 − 1 ≤ 3 ≤ n']);
+    });
+  });
+
+  it('vẽ ra vừa trần — kể cả $\\Sigma$ chồng $\\Sigma$ trong một phân số', () => {
+    for (const src of [
+      'sum(k, 1, n, k^2) = n*(n + 1)*(2*n + 1)/6',
+      '(sum(k, 1, n, k))/(sum(k, 1, n, 1))',
+      'sum(j, 1, n, sum(k, 1, j, k))',
+    ]) {
+      const mm = measure(toBox(tree(src)));
+      expect((mm.above + mm.below) / ROW, src).toBeLessThanOrEqual(ALGEBRA_LIMITS.maxHeightCells);
+      expect(mm.w / ROW, src).toBeLessThanOrEqual(ALGEBRA_LIMITS.maxWidthCells);
+    }
+  });
+});
+
+describe('M58 — số mũ ký hiệu', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const plain = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return toPlain(m.rows.at(-1)!.expr);
+  };
+
+  it('luật luỹ thừa cũ **đã** chạy với số mũ ký hiệu — không khai lại', () => {
+    // Soát trước khi viết: `pow_add` và `pow_mul` chạy sẵn từ M49, nên M58 chỉ thêm
+    // chiều còn thiếu. Khẳng định ở đây để lần sau không ai viết lại chúng.
+    expect(plain('x^m * x^n', [{ rule: 'pow_add', at: '' }])).toBe('x^(m + n)');
+    expect(plain('(x^m)^n', [{ rule: 'pow_mul', at: '' }])).toBe('x^(mn)');
+  });
+
+  it('`pow_split` — chiều ngược, và nó **chưa** có', () => {
+    expect(plain('x^(m + n)', [{ rule: 'pow_split', at: '' }])).toBe('x^mx^n');
+    expect(run('x^n', [{ rule: 'pow_split', at: '' }]).refusal).toContain('số mũ phải là một tổng');
+  });
+
+  describe('$\\Sigma$ mở khoá hằng đẳng thức bậc $n$ ký hiệu', () => {
+    it('$a^n - b^n$ viết được **không cần dấu ba chấm**', () => {
+      // Đây là lý do "nút dấu ba chấm" nằm ở mục cố ý không làm: $\\Sigma$ *là* dấu ba
+      // chấm, có ngữ nghĩa, và kiểm được.
+      expect(plain('a^n - b^n', [{ rule: 'factor_power_difference', at: '' }])).toBe(
+        '(a − b)(Σ(k=0..n − 1) a^kb^(n − 1 − k))',
+      );
+      // $x^n - 1$ là ví dụ kinh điển nhất của cả họ, và $1$ **là** $1^n$.
+      expect(plain('x^n - 1', [{ rule: 'factor_power_difference', at: '' }])).toBe(
+        '(x − 1)(Σ(k=0..n − 1) x^k)',
+      );
+    });
+
+    it('và bộ kiểm **xác nhận** được nó', () => {
+      for (const src of ['a^n - b^n', 'x^n - 1']) {
+        const m = run(src, [{ rule: 'factor_power_difference', at: '' }]);
+        expect(m.unsound, src).toEqual([]);
+        expect(m.unchecked, src).toEqual([]);
+      }
+    });
+
+    it('chỉ số mới **không được** bắt một biến đang có', () => {
+      // $a^k - b^k$ mà lấy luôn tên `k` làm chỉ số thì biến tự do $k$ bị ràng buộc mất
+      // — đúng lỗi phạm vi mà M57 dựng cả `varsOf` để tránh.
+      expect(plain('a^k - b^k', [{ rule: 'factor_power_difference', at: '' }])).toContain('i=0');
+    });
+
+    it('chuỗi đi hết từ ký hiệu về số cụ thể', () => {
+      expect(
+        plain('x^n - 1', [
+          { rule: 'factor_power_difference', at: '' },
+          { rule: 'evaluate_at', at: '', arg: 'n := 4' },
+          { rule: 'eval_int', at: '1.1' },
+          { rule: 'sum_expand', at: '1' },
+        ]),
+      ).toBe('(x − 1)(1 + x + x^2 + x^3)');
+    });
+  });
+
+  it('tổng hai luỹ thừa bậc ký hiệu **từ chối**, và nói vì sao', () => {
+    // Tính chẵn/lẻ quyết định hẳn câu trả lời, mà engine không biết chẵn lẻ của một ký
+    // hiệu. Đúng tiền lệ `pow_both_sides`.
+    const why = run('a^n + b^n', [{ rule: 'factor_power_sum_odd', at: '' }]).refusal as string;
+    expect(why).toContain('chẵn hay lẻ');
+  });
+
+  describe('`substitute` chui được vào mọi kiểu nút — lỗi có sẵn từ M47b', () => {
+    it('trước M58 nó im lặng bỏ qua căn, trị tuyệt đối, hàm, và tổng', () => {
+      // Bản cũ liệt kê `add`/`mul`/`pow`/`div`/`rel` rồi `default: return e`. Lời từ
+      // chối còn nói sai hẳn — "không thấy biến x" trong khi biến nằm ngay đó.
+      for (const [src, want] of [
+        ['sqrt(x) + 1', '√(4) + 1'],
+        ['abs(x) + 1', '|4| + 1'],
+        ['C(x, 2)', 'C(4,2)'],
+        ['x!', '4!'],
+        ['sum(k, 1, x, k)', 'Σ(k=1..4) k'],
+      ] as const) {
+        expect(plain(src, [{ rule: 'substitute', at: '', arg: 'x := 4' }]), src).toBe(want);
+      }
+    });
+
+    it('và nó tôn trọng **phạm vi**', () => {
+      // $k$ tự do ở ngoài bị thay; $k$ trong thân tổng thì không.
+      expect(plain('sum(k, 1, n, k) + k', [{ rule: 'substitute', at: '', arg: 'k := 9' }])).toBe(
+        'Σ(k=1..n) k + 9',
+      );
+      // Cận trên **ngoài** phạm vi ràng buộc, nên nó bị thay.
+      expect(plain('sum(k, 1, k, k)', [{ rule: 'substitute', at: '', arg: 'k := 9' }])).toBe(
+        'Σ(k=1..9) k',
+      );
+    });
+  });
+});
+
+describe('M59 — hệ phương trình', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const plain = (start: string, steps: AlgebraStep[] = []): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return toPlain(m.rows.at(-1)!.expr);
+  };
+  const tree = (s: string): Expr => parse(s, new Minter());
+  const S = 'x + 2*y = 5; 3*x - y = 1';
+
+  describe('nút và cú pháp', () => {
+    it('hệ là **một `Expr`**, nên đường dẫn cũ chạy nguyên si', () => {
+      const e = tree(S) as Expr & { k: 'sys' };
+      expect(e.k).toBe('sys');
+      // `"0"` chỉ vào phương trình đầu, `"0.L"` vào vế trái của nó. Toàn bộ máy luật,
+      // `replaceAt`, danh tính và choreography không phải sửa một dòng nào.
+      expect(toPlain(nodeAt(e, '0') as Expr)).toBe('x + 2y = 5');
+      expect(toPlain(nodeAt(e, '0.L') as Expr)).toBe('x + 2y');
+    });
+
+    it('dấu **chấm phẩy** ngăn, vì dấu phẩy đã có chủ', () => {
+      // `root(3, x)`, `C(n, k)` và `sum(k, 1, n, …)` đều dùng dấu phẩy.
+      expect(unparse(tree(S))).toBe('((x + (2 * y)) = 5); (((3 * x) + ((-1) * y)) = 1)');
+      expect(unparse(tree(unparse(tree(S))))).toBe(unparse(tree(S)));
+    });
+
+    it('mỗi dòng phải là một quan hệ, và hệ chỉ ở gốc', () => {
+      expect(() => parse('x + y; x - y = 1', new Minter())).toThrow('phải là một quan hệ');
+    });
+
+    it('trần số dòng ép ở **model**, không chỉ ở TypeBox', () => {
+      const why = run('a = 1; b = 2; c = 3; d = 4; e = 5').refusal as string;
+      expect(why).toContain(`quá trần ${ALGEBRA_LIMITS.maxRelations}`);
+      expect(run('a = 1; b = 2; c = 3; d = 4').refusal).toBeNull();
+    });
+  });
+
+  describe('hợp đồng kiểm — và vì sao `sameSolutionSet` **không dùng được**', () => {
+    it('bốc điểm ngẫu nhiên cho một hệ là phép kiểm **luôn xanh**', () => {
+      // Cả hệ trước lẫn hệ sau đều sai ở gần như mọi điểm, nên hai bên "đồng ý" và
+      // `agree` tăng đều. Đây là bằng chứng cho quyết định thiết kế: một hệ **sai hẳn**
+      // vẫn qua được phép kiểm ấy.
+      const before = tree(S);
+      const nonsense = tree('x + 2*y = 5; 3*x - y = 99');
+      const verdict = sameSolutionSet(before, nonsense, null, 4242);
+
+      expect(verdict.ok).toBe(true);
+      expect(verdict.verified).toBe(true);
+    });
+
+    it('còn hợp đồng `claim` thì bắt được, bằng một điểm cụ thể', () => {
+      // `left` đọc ra từ cây **sau**, `right` dựng từ cây **trước**. Cộng sai một vế thì
+      // đẳng thức hỏng ngay.
+      const m = run(S, [{ rule: 'add_equations', at: '', arg: '1,0,-3' }]);
+      expect(m.unsound).toEqual([]);
+      expect(m.unchecked).toEqual([]);
+
+      // Và phép so ấy có răng: hai hiệu khác nhau thì `sameValue` đỏ.
+      expect(sameValue(tree('3*x - y - 3*(x + 2*y)'), tree('3*x - y - 3*(x + 2*y) + 1')).ok).toBe(
+        false,
+      );
+    });
+  });
+
+  describe('bốn phép biến đổi hàng', () => {
+    it('cho ra đúng hệ sau, và cả bốn **kiểm được**', () => {
+      const cases: Array<[string, string, string]> = [
+        [S, 'add_equations', '1,0,-3'],
+        [S, 'scale_equation', '0,3'],
+        ['x = 5 - 2*y; 3*x - y = 1', 'substitute_from', '0,1'],
+        ['x = 1; y = 2; x + y = x + y', 'drop_equation', '2'],
+      ];
+      for (const [start, rule, arg] of cases) {
+        const m = run(start, [{ rule, at: '', arg }]);
+        expect(m.refusal, `${rule}: ${m.refusal}`).toBeNull();
+        expect(m.unsound, rule).toEqual([]);
+        expect(m.unchecked, rule).toEqual([]);
+      }
+      expect(plain(S, [{ rule: 'scale_equation', at: '', arg: '0,3' }])).toBe(
+        '3(x + 2y) = 3·5; 3x − y = 1',
+      );
+      expect(plain('x = 1; y = 2; x + y = x + y', [{ rule: 'drop_equation', at: '', arg: '2' }])).toBe(
+        'x = 1; y = 2',
+      );
+    });
+
+    it('`substitute_from` đòi nguồn **đã cô lập một ẩn**', () => {
+      // Chỗ có răng nhất của luật: thế một thứ không phải ràng buộc là cách nhanh nhất
+      // làm hỏng một hệ, và cửa này chặn bằng cấu trúc chứ không bằng lời hứa.
+      expect(run(S, [{ rule: 'substitute_from', at: '', arg: '0,1' }]).refusal).toContain(
+        'phải có dạng "x = …"',
+      );
+    });
+
+    it('`drop_equation` chỉ bỏ được hàng đã rút về $0 = 0$', () => {
+      const why = run('x = 1; y = 2; x + y = 3', [
+        { rule: 'drop_equation', at: '', arg: '2' },
+      ]).refusal as string;
+      expect(why).toContain('hai vế chưa giống nhau');
+    });
+
+    it('nhân với $0$ và cộng một hàng vào chính nó đều bị chặn', () => {
+      expect(run(S, [{ rule: 'scale_equation', at: '', arg: '0,0' }]).refusal).toContain(
+        'làm mất thông tin',
+      );
+      expect(run(S, [{ rule: 'add_equations', at: '', arg: '0,0,2' }]).refusal).toContain(
+        'phải khác nhau',
+      );
+    });
+
+    it('bất đẳng thức thì **từ chối** — cộng và nhân chúng là chuyện khác', () => {
+      const ineq = 'x + y > 3; x - y < 1';
+      expect(run(ineq, [{ rule: 'add_equations', at: '', arg: '1,0,1' }]).refusal).toContain(
+        'đẳng thức',
+      );
+      expect(run(ineq, [{ rule: 'scale_equation', at: '', arg: '0,3' }]).refusal).toContain(
+        'xét dấu',
+      );
+    });
+  });
+
+  it('vẽ: ngoặc nhọn và dấu $=$ **thẳng cột**', () => {
+    // Đó là thứ làm một hệ đọc được; không gióng thì nó nhìn như hai dòng rời nhau.
+    const box = toBox(tree(S));
+    const p = place(box, 0, 0);
+    const eq = p.glyphs.filter((g) => g.s === '=');
+    expect(eq).toHaveLength(2);
+    expect(eq[0]!.x).toBeCloseTo(eq[1]!.x, 6);
+    // Ngoặc nhọn vẽ bằng path, không phải glyph phóng to.
+    expect(p.paths.length).toBeGreaterThan(0);
+
+    const mm = measure(box);
+    expect((mm.above + mm.below) / ROW).toBeLessThanOrEqual(ALGEBRA_LIMITS.maxHeightCells);
+  });
+});
+
+describe('M60 — tập nghiệm và khoảng', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const plain = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return toPlain(m.rows.at(-1)!.expr);
+  };
+
+  it('bất phương trình bậc hai nay **phát biểu được đáp số**', () => {
+    // Lỗ đo được trước M60: $(x-2)(x-1) > 0$ rồi **dừng**, không có chỗ đặt đáp số.
+    expect(
+      plain('x^2 - 3*x + 2 > 0', [
+        { rule: 'factor_quadratic', at: 'L' },
+        { rule: 'interval_from_factors', at: '' },
+      ]),
+    ).toBe('x < 1 hoặc x > 2');
+    expect(
+      plain('x^2 - 3*x + 2 < 0', [
+        { rule: 'factor_quadratic', at: 'L' },
+        { rule: 'interval_from_factors', at: '' },
+      ]),
+    ).toBe('x > 1; x < 2');
+  });
+
+  it('trị tuyệt đối: `<` cho một **hội**, `>` cho một **tuyển**', () => {
+    expect(plain('abs(x - 1) < 3', [{ rule: 'abs_to_interval', at: '' }])).toBe(
+      'x − 1 > −3; x − 1 < 3',
+    );
+    expect(plain('abs(x - 1) > 3', [{ rule: 'abs_to_interval', at: '' }])).toBe(
+      'x − 1 < −3 hoặc x − 1 > 3',
+    );
+  });
+
+  it('gộp hai ràng buộc cùng chiều: hội giữ cái chặt, tuyển giữ cái lỏng', () => {
+    expect(plain('x > 1; x > 2', [{ rule: 'merge_intervals', at: '' }])).toBe('x > 2');
+  });
+
+  describe('bộ kiểm — và chỗ nó **suýt** không chạy', () => {
+    it('bước `rel → sys` phải rơi vào một nhánh kiểm', () => {
+      // Hai nhánh cuối của phép kiểm hỏi `k === 'rel'`, mà M60 sinh ra bước đi từ `rel`
+      // sang `sys`. Không sửa thì bước ấy **không được kiểm gì cả** — `unsound` rỗng vì
+      // chưa ai hỏi, chứ không vì đã hỏi và đúng. Con số 0 không phân biệt hai chuyện ấy,
+      // nên chốt canh phải khẳng định bằng một luật **cố tình sai**.
+      const before = parse('abs(x - 1) > 3', new Minter());
+      const wrong = parse('x - 1 > -3', new Minter()); // đúng phải là `<`
+      const verdict = sameSolutionSet(before, wrong, null, 20260731);
+
+      expect(verdict.ok).toBe(false);
+      expect(verdict.verified).toBe(true);
+    });
+
+    it('và ở đây `sameSolutionSet` **có răng** — ngược hẳn với hệ phương trình', () => {
+      // Với hệ (§35.2) mọi điểm ngẫu nhiên đều làm cả hai vế sai, nên phép kiểm luôn
+      // xanh. Với tập nghiệm thì "thuộc tập nghiệm" là một câu đúng/sai có nghĩa.
+      const bad = sameSolutionSet(
+        parse('x^2 - 3*x + 2 > 0', new Minter()),
+        parse('x < 1', new Minter()),
+        null,
+        20260731,
+      );
+      expect(bad.ok).toBe(false);
+      expect(bad.message).toContain('tập nghiệm khác nhau');
+    });
+
+    it('cả ba luật đều kiểm được, không rơi vào `unchecked`', () => {
+      const cases: Array<[string, AlgebraStep[]]> = [
+        ['abs(x - 1) < 3', [{ rule: 'abs_to_interval', at: '' }]],
+        ['abs(x - 1) > 3', [{ rule: 'abs_to_interval', at: '' }]],
+        ['(x - 1)*(x - 2) > 0', [{ rule: 'interval_from_factors', at: '' }]],
+        ['(x - 1)*(x - 2) < 0', [{ rule: 'interval_from_factors', at: '' }]],
+        ['x > 1; x > 2', [{ rule: 'merge_intervals', at: '' }]],
+      ];
+      for (const [start, steps] of cases) {
+        const m = run(start, steps);
+        expect(m.refusal, start).toBeNull();
+        expect(m.unsound, start).toEqual([]);
+        expect(m.unchecked, start).toEqual([]);
+      }
+    });
+  });
+
+  it('từ chối đúng chỗ, và nói vì sao', () => {
+    expect(run('abs(x) < -1', [{ rule: 'abs_to_interval', at: '' }]).refusal).toContain('phải dương');
+    expect(
+      run('x^2 - 2*x + 1 > 0', [
+        { rule: 'factor_quadratic', at: 'L' },
+        { rule: 'interval_from_factors', at: '' },
+      ]).refusal,
+    ).toContain('hai nghiệm trùng nhau');
+    // Ba nhân tử trở lên cho ra một tuyển của các hội — hai tầng lồng, không mắt nào
+    // đọc nổi trên một dòng. Từ chối có lời thay vì vẽ ra thứ không đọc được.
+    expect(
+      run('(x - 1)*(x - 2)*(x - 3) > 0', [{ rule: 'interval_from_factors', at: '' }]).refusal,
+    ).toContain('**hai** nhân tử');
+  });
+
+  it('hệ lồng hệ **cùng phép nối** thì làm phẳng, khác phép nối thì không', () => {
+    // $(A \\wedge B) \\wedge C$ và $A \\wedge B \\wedge C$ là một; còn
+    // $(A \\vee B) \\wedge C$ làm phẳng là đổi hẳn nghĩa.
+    const flat = run('abs(x) > 2; x > 5', [{ rule: 'abs_to_interval', at: '0' }]);
+    expect(flat.refusal).toBeNull();
+    const root = flat.rows.at(-1)!.expr as Expr & { k: 'sys' };
+    expect(root.join).toBe('and');
+    // Nhánh tuyển vẫn là **một** con của hội, không bị nuốt vào.
+    expect(root.rels).toHaveLength(2);
+    expect((root.rels[0] as Expr & { k: 'sys' }).join).toBe('or');
+  });
+});
+
+describe('M61 — hàm siêu việt', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const plain = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return toPlain(m.rows.at(-1)!.expr);
+  };
+  const tree = (s: string): Expr => parse(s, new Minter());
+
+  it('sáu hàm mới là sáu **dòng bảng** — không kiểu nút nào thêm', () => {
+    // Cổ tức của M56: `fn` là *một* biến thể cho cả họ. Nếu mỗi hàm là một biến thể thì
+    // M61 phải sửa sáu tệp sáu lần.
+    for (const name of ['ln', 'log', 'exp', 'sin', 'cos', 'tan'] as const) {
+      expect(FUNCTIONS[name].arity).toBeGreaterThan(0);
+      expect(FUNCTIONS[name].source).toBe(name);
+    }
+    expect(tree('ln(x)').k).toBe('fn');
+  });
+
+  it('parse và khứ hồi, kể cả `log` có cơ số', () => {
+    for (const src of ['ln(x)', 'log(2, x)', 'exp(x)', 'sin(x) + cos(x)', 'tan(2*x)']) {
+      const u = unparse(tree(src));
+      expect(unparse(tree(u)), src).toBe(u);
+    }
+    // `cos(` không bị `C(` nuốt mất: tên dài thử trước.
+    expect(toPlain(tree('cos(x)'))).toBe('cos(x)');
+    expect(toPlain(tree('C(n, k)'))).toBe('C(n,k)');
+  });
+
+  describe('logarit', () => {
+    it('bốn luật tách và một cặp triệt tiêu', () => {
+      expect(plain('ln(x*y)', [{ rule: 'log_product', at: '' }])).toBe('ln(x) + ln(y)');
+      expect(plain('ln(x/y)', [{ rule: 'log_quotient', at: '' }])).toBe('ln(x) − ln(y)');
+      expect(plain('ln(x^3)', [{ rule: 'log_power', at: '' }])).toBe('3ln(x)');
+      expect(plain('log(2, x)', [{ rule: 'log_change_base', at: '' }])).toBe('ln(x)/ln(2)');
+      expect(plain('exp(ln(x))', [{ rule: 'exp_log', at: '' }])).toBe('x');
+      expect(plain('ln(exp(x))', [{ rule: 'log_exp', at: '' }])).toBe('x');
+    });
+
+    it('điều kiện xác định **in ra hình**, và im khi hiển nhiên', () => {
+      expect(run('ln(x*y)', [{ rule: 'log_product', at: '' }]).conditions).toEqual(['x > 0, y > 0']);
+      // Hằng dương thì không cần dòng đỏ nào.
+      expect(run('ln(2*3)', [{ rule: 'log_product', at: '' }]).conditions).toEqual([]);
+      // `exp_log` **không** cần điều kiện: nếu $\\ln a$ đã xác định thì $a > 0$ sẵn rồi.
+      // Điều kiện nằm ở dấu $\\ln$ của dòng trước, không ở bước này (lý lẽ `root_pow`).
+      expect(run('exp(ln(x))', [{ rule: 'exp_log', at: '' }]).conditions).toEqual([]);
+    });
+
+    it('lấy logarit hai vế **bảo toàn** tập nghiệm, và ghi điều kiện', () => {
+      // $\\ln$ tăng ngặt, nên $A = B \\iff \\ln A = \\ln B$ khi cả hai dương. Từ chối thì
+      // luật này gần như không bao giờ áp được — ghi điều kiện là đúng cơ chế AL-08.
+      const m = run('2^x = 8', [{ rule: 'log_both_sides', at: '' }]);
+      expect(m.unsound).toEqual([]);
+      expect(m.conditions).toEqual(['2^x > 0']);
+    });
+  });
+
+  describe('lượng giác', () => {
+    it('bốn đồng nhất thức có tên', () => {
+      expect(plain('sin(x)^2 + cos(x)^2', [{ rule: 'pythagorean_identity', at: '' }])).toBe('1');
+      expect(plain('sin(2*x)', [{ rule: 'double_angle', at: '' }])).toBe('2sin(x)cos(x)');
+      expect(plain('cos(2*x)', [{ rule: 'double_angle', at: '' }])).toBe('cos(x)^2 − sin(x)^2');
+      expect(plain('sin(a) + sin(b)', [{ rule: 'sum_to_product', at: '' }])).toBe(
+        '2sin((a + b)/2)cos((a − b)/2)',
+      );
+      expect(plain('sin(a)*cos(b)', [{ rule: 'product_to_sum', at: '' }])).toBe(
+        '(sin(a + b) + sin(a − b))/2',
+      );
+    });
+
+    it('nhận dạng bằng **cấu trúc**, nên góc phải khớp thật', () => {
+      expect(
+        run('sin(x)^2 + cos(y)^2', [{ rule: 'pythagorean_identity', at: '' }]).refusal,
+      ).toContain('cùng một góc');
+      expect(run('sin(x)', [{ rule: 'double_angle', at: '' }]).refusal).toContain('một tích');
+    });
+  });
+
+  it('cả mười một luật **kiểm được** — không luật nào rơi vào `unchecked`', () => {
+    const cases: Array<[string, string]> = [
+      ['ln(x*y)', 'log_product'],
+      ['ln(x/y)', 'log_quotient'],
+      ['ln(x^3)', 'log_power'],
+      ['log(2, x)', 'log_change_base'],
+      ['exp(ln(x))', 'exp_log'],
+      ['ln(exp(x))', 'log_exp'],
+      ['sin(x)^2 + cos(x)^2', 'pythagorean_identity'],
+      ['sin(2*x)', 'double_angle'],
+      ['sin(a) + sin(b)', 'sum_to_product'],
+      ['sin(a)*cos(b)', 'product_to_sum'],
+      ['2^x = 8', 'log_both_sides'],
+    ];
+    for (const [start, rule] of cases) {
+      const m = run(start, [{ rule, at: '' }]);
+      expect(m.refusal, `${rule}: ${m.refusal}`).toBeNull();
+      expect(m.unsound, rule).toEqual([]);
+      expect(m.unchecked, rule).toEqual([]);
+    }
+  });
+
+  it('bộ kiểm bắt được đồng nhất thức lượng giác **sai**', () => {
+    // Bộ bốc điểm thực chạy thẳng ở đây — sin/cos xác định ở mọi điểm, nên không có ca
+    // nào bị bỏ và phép kiểm dùng hết số lần thử.
+    expect(sameValue(tree('sin(2*x)'), tree('2*sin(x)*cos(x)')).ok).toBe(true);
+    expect(sameValue(tree('sin(2*x)'), tree('2*sin(x)*sin(x)')).ok).toBe(false);
+    expect(sameValue(tree('cos(2*x)'), tree('cos(x)^2 - sin(x)^2')).ok).toBe(true);
+    expect(sameValue(tree('cos(2*x)'), tree('cos(x)^2 + sin(x)^2')).ok).toBe(false);
+  });
+
+  it('tên hàm vẽ **đứng thẳng**, biến vẫn nghiêng', () => {
+    // Chữ nghiêng dành cho biến; `sin` nghiêng đọc ra $s\\cdot i\\cdot n$ — quy ước từ Euler.
+    const p = place(toBox(tree('sin(x)')), 0, 0);
+    const names = p.glyphs.filter((g) => 'sin'.includes(g.s) && g.s !== 'x');
+    expect(names.length).toBeGreaterThan(0);
+    expect(names.every((g) => !g.italic)).toBe(true);
+    expect(p.glyphs.find((g) => g.s === 'x')!.italic).toBe(true);
   });
 });

@@ -1,7 +1,9 @@
 import {
   Minter,
   add,
+  big,
   div,
+  fn,
   int,
   mul,
   negate,
@@ -9,10 +11,13 @@ import {
   pow,
   rel,
   root,
+  sys,
   variable,
   type Expr,
+  type FnName,
   type RelOp,
 } from './expr.js';
+import { FUNCTIONS } from './functions.js';
 
 /**
  * Parser cho cú pháp mặt (§3.3).
@@ -38,8 +43,42 @@ export class ParseError extends Error {
 // Dài trước ngắn: `<=` phải thử trước `<`, nếu không `<` nuốt mất dấu bằng.
 const RELS: readonly RelOp[] = ['<=', '>=', '!=', '=', '<', '>'];
 
+/**
+ * Cú pháp mặt của các hàm, **dài trước ngắn**.
+ *
+ * `fact` phải đứng trước bất cứ tên một chữ nào bắt đầu bằng `f` nếu sau này có; giữ
+ * thứ tự này làm quy ước để chỗ thêm hàm mới không phải nghĩ lại.
+ */
+/** Cú pháp mặt của tổng và tích. */
+const BIG_OPS: ReadonlyArray<readonly [string, 'sum' | 'prod']> = [
+  ['sum', 'sum'],
+  ['prod', 'prod'],
+];
+
+const NAMED_FNS: ReadonlyArray<readonly [string, FnName]> = [
+  ['fact', 'fact'],
+  ['log', 'log'],
+  ['ln', 'ln'],
+  ['exp', 'exp'],
+  ['sin', 'sin'],
+  ['cos', 'cos'],
+  ['tan', 'tan'],
+  // Một chữ **sau cùng**: `C` và `A` chỉ là hàm khi đứng sát `(`, mà `cos(` cũng bắt
+  // đầu bằng `c` — thứ tự này giữ cho tên dài luôn được thử trước.
+  ['C', 'binom'],
+  ['A', 'perm'],
+];
+
 class Parser {
   private i = 0;
+  /**
+   * Các tên đang bị **ràng buộc** bởi một $\sum$/$\prod$ bao ngoài.
+   *
+   * Có để từ chối $\sum_k \sum_k$ ngay ở tầng ngữ pháp. Đổi tên tự động là một mẹo, và
+   * mẹo ở tầng ngữ pháp là chỗ lỗi nằm: người soạn gõ `k` rồi đọc lại thấy `k'` mà không
+   * hiểu vì sao, còn `at` của bước sau thì trỏ vào một cái tên chưa từng gõ.
+   */
+  private readonly bound: string[] = [];
 
   constructor(
     private readonly src: string,
@@ -47,12 +86,23 @@ class Parser {
   ) {}
 
   parse(): Expr {
-    const e = this.rel();
+    // **Hệ chỉ ở gốc.** Dấu chấm phẩy ngăn các phương trình — dấu phẩy đã thuộc về
+    // `root(3, x)`, `C(n, k)` và `sum(k, 1, n, …)`. Không cho `sys` lồng `sys`: một hệ
+    // của các hệ không phải thứ ai viết, và cho phép nó là mở một chiều lồng vô hạn mà
+    // không luật nào biết đi trong đó.
+    const first = this.rel();
+    const rels: Expr[] = [first];
+    while (this.eat(';')) rels.push(this.rel());
+
     this.ws();
     if (this.i < this.src.length) {
       throw new ParseError(`thừa ký tự "${this.src.slice(this.i)}"`, this.i);
     }
-    return e;
+    if (rels.length === 1) return first;
+    for (const r of rels) {
+      if (r.k !== 'rel') throw new ParseError('mỗi dòng của hệ phải là một quan hệ', this.i);
+    }
+    return sys(this.m, 'and', rels);
   }
 
   private ws(): void {
@@ -110,20 +160,81 @@ class Parser {
   }
 
   /**
-   * `power := atom ('^' unary)?` — **kết hợp phải**, như mọi ký pháp toán: $x$^$2$^$3$
-   * là $x^{(2^3)}$.
+   * `power := atom '!'* ('^' unary)?` — **kết hợp phải**, như mọi ký pháp toán:
+   * $x$^$2$^$3$ là $x^{(2^3)}$.
    *
    * Số mũ đi qua `unary` chứ không qua `sum`: `x^2 + 1` phải là $x^2+1$, không phải
    * $x^{2+1}$. Muốn tổng trong số mũ thì viết ngoặc — `x^(n+1)` — và ngoặc ấy chính là
    * thứ mắt người cũng cần.
+   *
+   * Giai thừa là **hậu tố** và ăn trước dấu mũ, nên `n!^2` là $(n!)^2$ còn `2^n!` là
+   * $2^{n!}$ — đúng thứ tự đọc của mắt.
    */
   private power(): Expr {
-    const base = this.atom();
+    let base = this.atom();
+    while (this.bang()) base = fn(this.m, 'fact', [base]);
     this.ws();
     if (!this.eat('^')) return base;
     const exp = this.unary();
     if (exp.k === 'rel') throw new ParseError('số mũ không thể là một quan hệ', this.i);
     return pow(this.m, base, exp);
+  }
+
+  /**
+   * Dấu giai thừa — và chỗ **không** được nuốt nhầm.
+   *
+   * `!=` là một toán tử quan hệ, nên `n != 3` phải đọc là "$n \ne 3$" chứ không phải
+   * "$n!$ rồi lỗi cú pháp". Kiểm ký tự ngay sau, và **không bỏ qua khoảng trắng** trước
+   * dấu `!`: giai thừa dính liền vào đối số của nó ở mọi cách viết tay, nên `n ! = 3`
+   * không phải thứ cần đọc được.
+   *
+   * Hệ quả có thật và phải nói ra: `n!=3` đọc thành $n \ne 3$. Muốn "$n! = 3$" thì viết
+   * dấu cách — `n! = 3`.
+   */
+  private bang(): boolean {
+    if (this.src[this.i] !== '!' || this.src[this.i + 1] === '=') return false;
+    this.i += 1;
+    return true;
+  }
+
+  /** Ruột của `sum(`/`prod(` — đã ăn tên và dấu ngoặc mở. */
+  private bigBody(op: 'sum' | 'prod', head: string): Expr {
+    this.ws();
+    const name = this.name();
+    if (name === null) throw new ParseError(`${head} cần một tên biến chỉ số`, this.i);
+    if (this.bound.includes(name)) {
+      throw new ParseError(`chỉ số "${name}" đã bị một tổng/tích bao ngoài dùng`, this.i);
+    }
+    if (!this.eat(',')) throw new ParseError(`${head} cần dấu ","`, this.i);
+    // Hai cận đọc **ngoài** phạm vi ràng buộc: $\sum_{k=1}^{k}$ thì cận trên là một $k$
+    // khác, tự do — trộn hai thứ ấy là lỗi phạm vi cổ điển nhất.
+    const from = this.sum();
+    if (!this.eat(',')) throw new ParseError(`${head} cần dấu ","`, this.i);
+    const to = this.sum();
+    if (!this.eat(',')) throw new ParseError(`${head} cần dấu ","`, this.i);
+
+    this.bound.push(name);
+    try {
+      const body = this.sum();
+      if (!this.eat(')')) throw new ParseError('thiếu dấu ")"', this.i);
+      return big(this.m, op, name, from, to, body);
+    } finally {
+      this.bound.pop();
+    }
+  }
+
+  /** Một tên biến: chữ cái, kèm chỉ số dưới một chữ số. `null` khi không có. */
+  private name(): string | null {
+    this.ws();
+    const ch = this.src[this.i];
+    if (ch === undefined || !/[a-zA-Z]/.test(ch)) return null;
+    this.i += 1;
+    let out = ch;
+    if (this.src[this.i] === '_' && /[0-9]/.test(this.src[this.i + 1] ?? '')) {
+      out += `_${this.src[this.i + 1] as string}`;
+      this.i += 2;
+    }
+    return out;
   }
 
   private digits(): number | null {
@@ -177,16 +288,35 @@ class Parser {
       return root(this.m, n, inner);
     }
 
-    if (/[a-zA-Z]/.test(ch)) {
-      this.i += 1;
-      let name = ch;
-      // Chỉ số dưới một chữ số: `a_1`. Đủ cho dãy, không mở cửa cho tên nhiều chữ.
-      if (this.src[this.i] === '_' && /[0-9]/.test(this.src[this.i + 1] ?? '')) {
-        name += `_${this.src[this.i + 1] as string}`;
-        this.i += 2;
-      }
-      return variable(this.m, name);
+    // $\sum$ và $\prod$: `sum(k, 1, n, k^2)`. Đối số **đầu là một tên**, không phải một
+    // biểu thức — nó là biến chỉ số, và biến chỉ số không có giá trị để tính.
+    for (const [head, op] of BIG_OPS) {
+      if (!this.src.startsWith(head, this.i)) continue;
+      if (this.src[this.i + head.length] !== '(') continue;
+      this.i += head.length + 1;
+      return this.bigBody(op, head);
     }
+
+    // Hàm tổ hợp. `C` và `A` cũng là **tên biến hợp lệ**, và chuyện ấy không mơ hồ —
+    // engine **cấm nhân ngầm** (§3.3), nên một biến không bao giờ đứng sát dấu ngoặc
+    // mở. `C(` chỉ có thể là lời gọi hàm. Một ràng buộc cũ trả cổ tức ở đây.
+    for (const [head, name] of NAMED_FNS) {
+      if (!this.src.startsWith(head, this.i)) continue;
+      if (this.src[this.i + head.length] !== '(') continue;
+      this.i += head.length + 1;
+      const spec = FUNCTIONS[name];
+      const args: Expr[] = [this.sum()];
+      while (args.length < spec.arity) {
+        if (!this.eat(',')) throw new ParseError(`${head} cần ${spec.arity} đối số`, this.i);
+        args.push(this.sum());
+      }
+      if (!this.eat(')')) throw new ParseError('thiếu dấu ")"', this.i);
+      return fn(this.m, name, args);
+    }
+
+    // Chỉ số dưới một chữ số: `a_1`. Đủ cho dãy, không mở cửa cho tên nhiều chữ.
+    const name = this.name();
+    if (name !== null) return variable(this.m, name);
 
     throw new ParseError(`không đọc được ký tự "${ch}"`, this.i);
   }
@@ -213,6 +343,7 @@ export function tryParse(
 /* ---------- chữ trơn, cho dòng điều kiện ---------- */
 
 const PLAIN_PREC: Readonly<Record<Expr['k'], number>> = {
+  sys: 0,
   rel: 0,
   add: 1,
   mul: 2,
@@ -220,6 +351,10 @@ const PLAIN_PREC: Readonly<Record<Expr['k'], number>> = {
   pow: 3,
   root: 4,
   abs: 4,
+  fn: 4,
+  // Ký hiệu tổng ăn **tới hết** thân của nó, nên nó lỏng hơn cả phép cộng: $\sum f + g$
+  // đọc ra $(\sum f) + g$ chỉ vì thân được bọc ngoặc khi cần, và chỗ bọc ấy nằm ở đây.
+  big: 1,
   int: 4,
   rat: 4,
   var: 4,
@@ -296,8 +431,24 @@ export function toPlain(e: Expr): string {
       return e.index === 2 ? `√(${toPlain(e.arg)})` : `căn bậc ${e.index} của (${toPlain(e.arg)})`;
     case 'abs':
       return `|${toPlain(e.arg)}|`;
+    case 'big': {
+      const sign = e.op === 'sum' ? 'Σ' : 'Π';
+      const body = PLAIN_PREC[e.body.k] <= PLAIN_PREC['big'] ? `(${toPlain(e.body)})` : toPlain(e.body);
+      return `${sign}(${e.v}=${toPlain(e.from)}..${toPlain(e.to)}) ${body}`;
+    }
+    case 'fn':
+      // Giai thừa của một thứ không phải nguyên tử phải có ngoặc: `x + 1!` đọc ra
+      // $x + (1!)$, khác hẳn $(x+1)!$. Bảng ưu tiên không bắt được vì `fn` xếp ngang
+      // nguyên tử — và đúng là thế với `C(n,k)`, chỉ riêng hậu tố `!` là không.
+      return FUNCTIONS[e.name].plain(
+        e.args.map((a) =>
+          e.name === 'fact' && PLAIN_PREC[a.k] < PLAIN_PREC['fn'] ? `(${toPlain(a)})` : toPlain(a),
+        ),
+      );
     case 'rel':
       return `${wrap(e.lhs)} ${PLAIN_REL[e.op] as string} ${wrap(e.rhs)}`;
+    case 'sys':
+      return e.rels.map(toPlain).join(e.join === 'and' ? '; ' : ' hoặc ');
   }
 }
 
@@ -352,7 +503,16 @@ export function unparse(e: Expr): string {
       return `abs(${unparse(e.arg)})`;
     case 'root':
       return e.index === 2 ? `sqrt(${unparse(e.arg)})` : `root(${e.index}, ${unparse(e.arg)})`;
+    case 'big':
+      return `${e.op}(${e.v}, ${unparse(e.from)}, ${unparse(e.to)}, ${unparse(e.body)})`;
+    case 'fn':
+      // Luôn in dạng **lời gọi**, kể cả giai thừa: `fact(n)` khứ hồi được ở mọi vị trí,
+      // còn `n!` thì không — `2^n!` đọc lại thành $2^{n!}$ chứ không phải $(2^n)!$.
+      return `${FUNCTIONS[e.name].source}(${e.args.map(unparse).join(', ')})`;
     case 'rel':
       return `(${unparse(e.lhs)} ${e.op} ${unparse(e.rhs)})`;
+    case 'sys':
+      // Không bọc ngoặc: hệ chỉ ở gốc, nên không có vị trí nào cần dấu gộp.
+      return e.rels.map(unparse).join('; ');
   }
 }

@@ -99,9 +99,21 @@
     "distribute-and-group-in-colour",
     "identity-roles-in-colour",
     "what-disappears-and-why",
-    "cubic-by-known-root"
+    "cubic-by-known-root",
+    "binomial-absorption",
+    "pascal-triangle-identity",
+    "sum-shift-index",
+    "telescoping-product",
+    "symbolic-exponent-identities",
+    "system-by-elimination",
+    "system-by-substitution",
+    "absolute-value-interval",
+    "quadratic-inequality-sign",
+    "exponential-equation",
+    "log-equation-basics"
   ],
   "newest": [
-    "cubic-by-known-root"
+    "exponential-equation",
+    "log-equation-basics"
   ]
 }

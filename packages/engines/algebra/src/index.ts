@@ -12,11 +12,15 @@ import { ALGEBRA_ELEMENT_SCHEMAS, ALGEBRA_LIMITS, AlgebraConfig } from './schema
 
 export * from './expr.js';
 export * from './schema.js';
+export { FUNCTIONS, isIntegerOnly, type FnSpec } from './functions.js';
 export { parse, tryParse, unparse, ParseError } from './parse.js';
 export { readAlgebra, type AlgebraModel, type AlgebraRow } from './model.js';
 export { RULES, ruleById, applicableRules, type Rule } from './rules.js';
 export {
   sameValue,
+  sameValueReal,
+  sameValueInteger,
+  needsIntegerEval,
   sameSolutionSet,
   impliesSolutionSet,
   evalRelation,

@@ -1,5 +1,6 @@
 import { UNITS_PER_CELL } from '@combviz/render';
 import type { Expr, TermId } from './expr.js';
+import { FUNCTIONS } from './functions.js';
 
 /**
  * Sắp chữ biểu thức — **phần rủi ro nhất của cả engine** (`ENGINE-ALGEBRA.md` §18).
@@ -72,6 +73,49 @@ const SUP_CLEAR = 0.22;
  */
 const supRise = (base: Metrics, exp: Metrics): number =>
   Math.max(base.above * SUP_RISE, exp.below + base.above * SUP_CLEAR);
+
+/** Hạ chỉ số dưới bao nhiêu — gương của `supRise`, đo theo vươn xuống của cơ số. */
+const SUB_DROP = 0.2;
+const SUB_CLEAR = 0.34;
+const subDrop = (base: Metrics, sub: Metrics): number =>
+  Math.max(base.above * SUB_DROP, sub.above * SUB_CLEAR + base.below);
+
+/** Hở dọc giữa hai dòng của một chồng; bề ngang ngoặc nhọn; hở sau ngoặc. */
+const STACK_GAP = 0.42;
+const BRACE_W = 0.42;
+const BRACE_PAD = 0.26;
+
+/** Ký hiệu $\sum$ vẽ to hơn cỡ chữ dòng; hở giữa nó và hai cận; hở trước thân. */
+const BIG_GLYPH = 1.5;
+const BIG_GAP = 0.14;
+const BIG_BODY_GAP = 0.22;
+
+/** Hở tối thiểu giữa đáy số mũ và đỉnh chỉ số dưới, theo cỡ chữ của cụm. */
+const SUBSUP_GAP = 0.12;
+
+/**
+ * Nâng số mũ và hạ chỉ số dưới bao nhiêu — tính **một chỗ** cho `measure` và `place`.
+ *
+ * `supRise` và `subDrop` mỗi cái chỉ nhìn *một* tầng, nên chúng không biết tầng kia ở
+ * đâu. Ở cỡ chữ thường thì thừa chỗ nên không sao; xuống tới sàn `SIZE_FLOOR` — $C_n^k$
+ * lồng trong chỉ số dưới của một $C_n^k$ khác — hai tầng đụng nhau, và lượt quét chồng
+ * chữ bắt được đúng $0{,}07$ đơn vị. Nên phải có một chỗ nhìn **cả hai** rồi đẩy ra.
+ *
+ * Đẩy đều hai phía: dồn hết vào một phía thì cụm lệch khỏi đường chân của dòng.
+ */
+function subsupShift(
+  base: Metrics,
+  sub: Metrics,
+  sup: Metrics,
+  size: number,
+): { rise: number; drop: number } {
+  const rise = supRise(base, sup);
+  const drop = subDrop(base, sub);
+  const have = rise - sup.below + (drop - sub.above);
+  const need = size * SUBSUP_GAP;
+  const push = Math.max(0, need - have) / 2;
+  return { rise: rise + push, drop: drop + push };
+}
 /** Hở trên/dưới vạch phân số. */
 const FRAC_GAP = 0.18;
 const FRAC_PAD = 0.22;
@@ -99,16 +143,65 @@ const EM: Readonly<Record<string, number>> = {
   '(': 0.32,
   ')': 0.32,
   '_': 0.4,
+  // Dấu giai thừa là một nét đứng, hẹp gần bằng dấu ngoặc. Không khai thì nó rơi vào
+  // `LETTER_EM = 0.5` và ước dôi $0{,}22$ em — đủ để $n!^2$ vẽ ra số mũ trôi khỏi dấu
+  // `!` và đọc thành hai vật rời nhau. Đúng lỗi mà bảng này sinh ra để tránh.
+  '!': 0.28,
 };
 const DIGIT_EM = 0.5;
 const LETTER_EM = 0.5;
+
+/**
+ * Chữ **hoa** rộng hơn hẳn chữ thường — và chỗ ấy lộ ra ở đúng $C_n^k$.
+ *
+ * Ước đều $0{,}5$ em cho mọi chữ cái là đủ tốt suốt bốn hạng mục, vì mọi biến của kho
+ * đều là chữ thường. Nay $C$ và $A$ làm **gốc** của một cụm có chỉ số dưới và số mũ, mà
+ * $C$ trong KaTeX_Main rộng $0{,}722$ em: ước thiếu $0{,}22$ em đẩy cả hai tầng chỉ số
+ * lùi vào trong, và trên trang thì số mũ **đè lên** chữ $C$.
+ *
+ * Số lấy từ metric của KaTeX_Main. Không golden nào đổi: cả kho chưa có biểu thức nào
+ * chứa biến viết hoa (`L`/`R` trong nội dung là **đường dẫn**, không phải glyph).
+ */
+const UPPER_EM: Readonly<Record<string, number>> = {
+  A: 0.75, B: 0.708, C: 0.722, D: 0.764, E: 0.681, F: 0.653, G: 0.785,
+  H: 0.75, I: 0.361, J: 0.514, K: 0.778, L: 0.625, M: 0.917, N: 0.75,
+  O: 0.778, P: 0.681, Q: 0.778, R: 0.736, S: 0.556, T: 0.722, U: 0.75,
+  V: 0.75, W: 1.028, X: 0.75, Y: 0.75, Z: 0.611,
+};
+
+/**
+ * Bề ngang **cả tên hàm**, không cộng từng chữ.
+ *
+ * `ln` cộng từng chữ ra $1{,}0$ em, còn glyph thật chỉ rộng $0{,}778$ — chữ `l` hẹp bằng
+ * nửa chữ `n`. Dôi $0{,}22$ em đủ để trên trang thấy một khe hở giữa `ln` và dấu ngoặc,
+ * đọc thành hai vật rời nhau. Cùng lớp lỗi với dấu `!` ở M56 và chữ hoa ở $C_n^k$.
+ *
+ * Chữa theo **cả tên** thay vì theo từng chữ cái: chữa từng chữ thì `t`, `r`, `s`, `n`,
+ * `e`, `p` đều đổi bề ngang, mà chúng có mặt làm **biến** trong golden của kho — hình
+ * không đổi một nét mà 400 golden phải soát lại. Tên hàm là chuỗi nhiều ký tự duy nhất
+ * engine này in ra, nên bảng theo tên vừa đủ và không chạm gì khác.
+ *
+ * Số lấy từ metric KaTeX_Main.
+ */
+const WORD_EM: Readonly<Record<string, number>> = {
+  ln: 0.778,
+  log: 1.278,
+  exp: 1.444,
+  sin: 1.172,
+  cos: 1.338,
+  tan: 1.389,
+};
 
 /** Làm tròn toạ độ để lệnh path không dài lê thê vì sai số dấu phẩy động. */
 const round = (v: number): number => Math.round(v * 1000) / 1000 + 0;
 
 export function textWidth(value: string, size: number): number {
+  const word = WORD_EM[value];
+  if (word !== undefined) return word * size;
   let em = 0;
-  for (const ch of value) em += EM[ch] ?? (ch >= '0' && ch <= '9' ? DIGIT_EM : LETTER_EM);
+  for (const ch of value) {
+    em += EM[ch] ?? UPPER_EM[ch] ?? (ch >= '0' && ch <= '9' ? DIGIT_EM : LETTER_EM);
+  }
   return em * size;
 }
 
@@ -143,6 +236,36 @@ export type Box =
   | { t: 'bars'; inner: Box; size: number }
   /** Dịch đường chân xuống `dy` — chỉ số dưới. */
   | { t: 'shift'; dy: number; inner: Box }
+  /**
+   * Chỉ số dưới **và** số mũ trên cùng một gốc — $C_n^k$, lối Việt Nam.
+   *
+   * Không ghép được từ `sup` và `shift`: hai tầng ấy phải **chồng cột** với nhau, tức
+   * bề ngang của cả cụm là `max` chứ không phải tổng. Ghép hai hộp cũ cho ra
+   * $C_n{}^k$ — chỉ số dưới rồi mới tới số mũ, đọc ra một thứ khác.
+   */
+  | { t: 'subsup'; base: Box; sub: Box; sup: Box; size: number }
+  /**
+   * Ký hiệu tổng/tích với **cận trên và cận dưới**, kiểu display.
+   *
+   * Khác `subsup` ở chỗ hai cận nằm **trên và dưới** ký hiệu chứ không bên phải, và cả
+   * cụm ký-hiệu-cùng-cận thì căn giữa theo trục dọc. Đó cũng là lý do nó không ghép được
+   * từ `subsup`: bề ngang là `max(glyph, cận trên, cận dưới)`, còn thân đứng bên phải.
+   */
+  | { t: 'big'; glyph: string; lower: Box; upper: Box; body: Box; size: number }
+  /**
+   * Một chồng dòng, có thể kèm ngoặc nhọn — hệ phương trình.
+   *
+   * `lead` là bề ngang phần **trước** dấu quan hệ của từng dòng, và nó là cả lý do hộp
+   * này tồn tại: các dấu $=$ phải gióng thẳng cột thì một hệ mới đọc được, còn không thì
+   * nó nhìn như hai dòng rời nhau. Đo `lead` ở `toBox` (chỗ duy nhất còn thấy cây), rồi
+   * `place` đẩy mỗi dòng sang phải $\max(\text{lead}) - \text{lead}$.
+   */
+  | {
+      t: 'stack';
+      brace: '{' | null;
+      rows: readonly { box: Box; lead: number }[];
+      size: number;
+    }
   /** Bọc danh tính: không đổi hình học, chỉ nói "phần này là nút `id`". */
   | { t: 'tag'; id: TermId; inner: Box };
 
@@ -184,6 +307,46 @@ export function measure(box: Box): Metrics {
         w: b.w + e.w,
         above: Math.max(b.above, rise + e.above),
         below: b.below,
+      };
+    }
+    case 'subsup': {
+      const b = measure(box.base);
+      const sb = measure(box.sub);
+      const sp = measure(box.sup);
+      const { rise, drop } = subsupShift(b, sb, sp, box.size);
+      return {
+        // Hai tầng **chồng cột**, nên bề ngang là `max` — đó là cả điểm của hộp này.
+        w: b.w + Math.max(sb.w, sp.w),
+        above: Math.max(b.above, rise + sp.above),
+        below: Math.max(b.below, drop + sb.below),
+      };
+    }
+    case 'stack': {
+      const ms = box.rows.map((r) => measure(r.box));
+      const lead = Math.max(0, ...box.rows.map((r) => r.lead));
+      const tail = Math.max(0, ...ms.map((m, i) => m.w - (box.rows[i] as { lead: number }).lead));
+      const step = box.size * STACK_GAP;
+      let h = 0;
+      ms.forEach((m, i) => {
+        h += m.above + m.below + (i > 0 ? step : 0);
+      });
+      const head = box.brace === null ? 0 : box.size * (BRACE_W + BRACE_PAD);
+      // Cả chồng căn giữa quanh trục của dòng: một hệ hai phương trình phải có dấu $=$
+      // của nó nằm hai bên đường chân, không treo lên trên.
+      const axis = box.size * AXIS;
+      return { w: head + lead + tail, above: h / 2 + axis, below: h / 2 - axis };
+    }
+    case 'big': {
+      const g = measure({ t: 'text', s: box.glyph, size: box.size * BIG_GLYPH, italic: false });
+      const up = measure(box.upper);
+      const lo = measure(box.lower);
+      const body = measure(box.body);
+      const gap = box.size * BIG_GAP;
+      const head = Math.max(g.w, up.w, lo.w);
+      return {
+        w: head + box.size * BIG_BODY_GAP + body.w,
+        above: Math.max(g.above + gap + up.below + up.above, body.above),
+        below: Math.max(g.below + gap + lo.above + lo.below, body.below),
       };
     }
     case 'frac': {
@@ -347,6 +510,66 @@ export function place(box: Box, x: number, y: number): Placed {
         go(b.exp, bx + bm.w, by - supRise(bm, measure(b.exp)), owner);
         return measure(b);
       }
+      case 'subsup': {
+        const bm = measure(b.base);
+        const { rise, drop } = subsupShift(bm, measure(b.sub), measure(b.sup), b.size);
+        go(b.base, bx, by, owner);
+        go(b.sup, bx + bm.w, by - rise, owner);
+        go(b.sub, bx + bm.w, by + drop, owner);
+        return measure(b);
+      }
+      case 'stack': {
+        const m = measure(b);
+        const ms = b.rows.map((r) => measure(r.box));
+        const lead = Math.max(0, ...b.rows.map((r) => r.lead));
+        const step = b.size * STACK_GAP;
+        const head = b.brace === null ? 0 : b.size * (BRACE_W + BRACE_PAD);
+        const top = by - m.above;
+
+        let y = top;
+        ms.forEach((rm, i) => {
+          y += rm.above;
+          const row = b.rows[i] as { box: Box; lead: number };
+          go(row.box, bx + head + (lead - row.lead), y, owner);
+          y += rm.below + step;
+        });
+
+        if (b.brace !== null) {
+          const w = b.size * BRACE_W;
+          const bottom = by + m.below;
+          const mid = (top + bottom) / 2;
+          // Vẽ bằng path chứ không phóng to glyph `{`: glyph có tỉ lệ cố định nên kéo
+          // cho cao bằng ba dòng thì nét dày ra và hai cái móc méo hẳn. Cùng lý lẽ với
+          // dấu căn.
+          paths.push({
+            d:
+              `M${round(bx + w)} ${round(top)}` +
+              `Q${round(bx + w * 0.35)} ${round(top)} ${round(bx + w * 0.35)} ${round(top + (mid - top) * 0.45)}` +
+              `Q${round(bx + w * 0.35)} ${round(mid)} ${round(bx)} ${round(mid)}` +
+              `Q${round(bx + w * 0.35)} ${round(mid)} ${round(bx + w * 0.35)} ${round(mid + (bottom - mid) * 0.55)}` +
+              `Q${round(bx + w * 0.35)} ${round(bottom)} ${round(bx + w)} ${round(bottom)}`,
+            width: b.size * 0.07,
+            owner,
+          });
+        }
+        return m;
+      }
+      case 'big': {
+        const m = measure(b);
+        const glyph: Box = { t: 'text', s: b.glyph, size: b.size * BIG_GLYPH, italic: false };
+        const g = measure(glyph);
+        const up = measure(b.upper);
+        const lo = measure(b.lower);
+        const gap = b.size * BIG_GAP;
+        const head = Math.max(g.w, up.w, lo.w);
+        // Ký hiệu và hai cận **căn giữa theo cột**: lệch cột thì mắt đọc cận trên như
+        // một số mũ của thứ đứng trước.
+        go(glyph, bx + (head - g.w) / 2, by, owner);
+        go(b.upper, bx + (head - up.w) / 2, by - g.above - gap - up.below, owner);
+        go(b.lower, bx + (head - lo.w) / 2, by + g.below + gap + lo.above, owner);
+        go(b.body, bx + head + b.size * BIG_BODY_GAP, by, owner);
+        return m;
+      }
       case 'frac': {
         const m = measure(b);
         const n = measure(b.num);
@@ -440,6 +663,7 @@ export function place(box: Box, x: number, y: number): Placed {
 
 /** Độ ưu tiên, để biết khi nào phải bọc ngoặc. */
 const PREC: Readonly<Record<Expr['k'], number>> = {
+  sys: 0,
   rel: 0,
   add: 1,
   mul: 2,
@@ -449,6 +673,12 @@ const PREC: Readonly<Record<Expr['k'], number>> = {
   // và ruột của nó cũng không cần ngoặc dù là tổng.
   root: 4,
   abs: 4,
+  // Lời gọi hàm có dấu gộp riêng ($C_n^k$ tự đứng, `n!` dính vào đối số), nên nó xếp
+  // ngang nguyên tử. Riêng **đối số** của giai thừa thì không: xem `toBox`.
+  fn: 4,
+  // Ký hiệu tổng ăn **tới hết** thân của nó, nên nó lỏng nhất bảng: $\sum f + g$ đọc ra
+  // $(\sum f) + g$, và chỗ bọc ngoặc cho thân nằm ở `toBox`.
+  big: 0,
   int: 4,
   rat: 4,
   var: 4,
@@ -662,6 +892,71 @@ export function toBox(e: Expr, size: number = FONT): Box {
         exp: toBox(e.exp, shrink(size, SCRIPT)),
       });
     }
+    case 'fn': {
+      const spec = FUNCTIONS[e.name];
+      if (e.name === 'fact') {
+        const arg = e.args[0] as Expr;
+        const inner = toBox(arg, size);
+        // $(x+1)!$ **phải** có ngoặc: `x + 1!` đọc ra $x + (1!)$, một biểu thức khác.
+        // Bảng ưu tiên không bắt được vì hậu tố `!` không phải một nút — nó là hình
+        // dạng của chính nút này. Cùng họ với ngoặc quanh cơ số âm ở `pow`.
+        const atomic = PREC[arg.k] >= PREC['pow'];
+        return tag({
+          t: 'row',
+          items: [atomic ? inner : { t: 'paren', inner, size }, text('!', size)],
+        });
+      }
+      // Hàm siêu việt in tên **đứng thẳng** rồi ngoặc: $\sin(x)$, $\ln(x)$. Chữ nghiêng
+      // dành cho biến, nên `sin` nghiêng đọc ra $s\cdot i\cdot n$ — quy ước có từ Euler.
+      if (e.name !== 'binom' && e.name !== 'perm') {
+        const items: Box[] = [text(spec.source, size)];
+        // $\log_b$ — cơ số là chỉ số dưới, không phải đối số thứ nhất trong ngoặc.
+        const shown = e.name === 'log' ? (e.args.slice(1) as Expr[]) : (e.args as Expr[]);
+        if (e.name === 'log') {
+          items.push({
+            t: 'shift',
+            dy: size * 0.2,
+            inner: toBox(e.args[0] as Expr, shrink(size, SCRIPT)),
+          });
+        }
+        items.push({ t: 'paren', inner: toBox(shown[0] as Expr, size), size });
+        return tag({ t: 'row', items });
+      }
+
+      // $C_n^k$, $A_n^k$ — chỉ số dưới là $n$, số mũ trên là $k$.
+      const [lower, upper] = e.args as [Expr, Expr];
+      return tag({
+        t: 'subsup',
+        base: text(spec.source, size),
+        sub: toBox(lower, shrink(size, SCRIPT)),
+        sup: toBox(upper, shrink(size, SCRIPT)),
+        size,
+      });
+    }
+    case 'big': {
+      // Thân phải bọc ngoặc khi nó là một tổng: $\sum (f + g)$ và $\sum f + g$ là hai
+      // biểu thức khác nhau, và không dấu gộp nào trong ký hiệu $\sum$ phân biệt chúng.
+      const inner = toBox(e.body, size);
+      const body = e.body.k === 'add' || e.body.k === 'rel' ? { t: 'paren' as const, inner, size } : inner;
+      const script = shrink(size, SCRIPT);
+      return tag({
+        t: 'big',
+        glyph: e.op === 'sum' ? '∑' : '∏',
+        // Cận dưới là `k = a`, một cụm ba phần — chỉ số một mình thì không nói được nó
+        // chạy từ đâu.
+        lower: {
+          t: 'row',
+          items: [
+            text(e.v, script, true),
+            ...binop('=', script, 0.12),
+            toBox(e.from, script),
+          ],
+        },
+        upper: toBox(e.to, script),
+        body,
+        size,
+      });
+    }
     case 'root':
       return tag({ t: 'radical', inner: toBox(e.arg, size), index: e.index, size });
     case 'abs':
@@ -682,6 +977,30 @@ export function toBox(e: Expr, size: number = FONT): Box {
           toBox(e.rhs, size),
         ],
       });
+    case 'sys': {
+      // **Tuyển vẽ nằm ngang**, nối bằng chữ "hoặc" — đó là cách mọi sách viết một tập
+      // nghiệm ($x < 1$ hoặc $x > 2$), và một ngoặc nhọn quanh hai nhánh loại trừ nhau
+      // đọc ra đúng nghĩa ngược lại. Hội thì xếp dọc trong ngoặc nhọn.
+      if (e.join === 'or') {
+        const items: Box[] = [];
+        e.rels.forEach((r, i) => {
+          if (i > 0) items.push(gap(size * 0.4), text('hoặc', size), gap(size * 0.4));
+          items.push(toBox(r, size));
+        });
+        return tag({ t: 'row', items });
+      }
+      return tag({
+        t: 'stack',
+        brace: '{',
+        rows: e.rels.map((r) => ({
+          box: toBox(r, size),
+          // Phần trước dấu quan hệ: vế trái cộng nửa khoảng hở của toán tử. Đo bằng
+          // chính bộ sắp chữ sẽ vẽ nó, nên con số không thể lệch với cái hiện ra.
+          lead: r.k === 'rel' ? measure(toBox(r.lhs, size)).w + size * 0.3 : 0,
+        })),
+        size,
+      });
+    }
   }
 }
 

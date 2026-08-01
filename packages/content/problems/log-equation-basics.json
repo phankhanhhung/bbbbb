@@ -1,0 +1,144 @@
+{
+  "schema_version": "0.3.0",
+  "id": "log-equation-basics",
+  "statement": {
+    "vi": "Bốn luật logarit — tích, thương, luỹ thừa, đổi cơ số — và chỗ chúng khác nhau: ba cái đầu **cần điều kiện**, cái thứ tư thì không, còn cặp $e^{\\ln x}$ thì cũng không. Xem engine ghi đúng chỗ nào cần dòng đỏ."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: $e^{\\ln x} = x$ **không** có điều kiện, dù $\\ln x$ đòi $x>0$. Vì nếu $\\ln x$ đã xác định thì $x>0$ sẵn rồi — điều kiện nằm ở dấu $\\ln$ của dòng trước, không ở bước này. Cùng lý lẽ với `root_pow` từ M47b."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Tách và triệt tiêu"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Logarit của một tích [[a1|tách thành tổng]]. Dòng đỏ ghi $x>0,\\ y>0$: ngoài đó vế trái vẫn có thể xác định (khi $xy>0$ mà cả hai cùng âm) trong khi vế phải thì không — nên đây là điều kiện thật, không phải thủ tục."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "ln(x*y)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "log_product"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: ln của x nhân y, rồi ln x cộng ln y, kèm dòng đỏ điều kiện."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Số mũ [[a1|ra trước dấu logarit]] — đây là cửa chính của mọi phương trình mũ, vì nó biến một ẩn ở số mũ thành một ẩn ở hệ số."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "ln(x^3)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "log_power"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: ln của x mũ 3, rồi 3 nhân ln x."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn $e^{\\ln x}$ thì [[a1|triệt tiêu thẳng]], và **không có dòng đỏ nào**. Nghe lạ vì $\\ln x$ rõ ràng đòi $x>0$ — nhưng nếu $\\ln x$ đã viết ra được thì điều kiện ấy đã thoả từ dòng trước rồi."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "exp(ln(x))",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "exp_log"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: exp của ln x, rồi x."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

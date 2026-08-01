@@ -1,0 +1,145 @@
+{
+  "schema_version": "0.3.0",
+  "id": "binomial-absorption",
+  "statement": {
+    "vi": "Trong một tổng tổ hợp, hạng tử $k\\,C_n^k$ trông như hai vật rời nhau. Nó không phải: hệ số $k$ **hút được** vào trong ký hiệu, và cái ra là $n\\,C_{n-1}^{k-1}$. Đây là mẹo chủ lực của mọi tổng tổ hợp có hệ số."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: engine nhận ra thừa số $k$ bằng **cấu trúc**, không bằng tên. Trong $3k\\,C_n^k$ nó vẫn tìm đúng $k$ và để $3$ đứng ngoài; còn $3\\,C_n^k$ thì nó từ chối và nói rõ thiếu thừa số nào."
+    }
+  },
+  "topics": [
+    "counting",
+    "algebra"
+  ],
+  "techniques": [
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Hút hệ số vào ký hiệu"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hệ số $k$ [[a1|biến mất khỏi tích và hoá thành $n$ đứng ngoài]]. Đọc theo nghĩa đếm: chọn $k$ người rồi chỉ định một đội trưởng, cũng là chọn đội trưởng trước ($n$ cách) rồi chọn $k-1$ người còn lại từ $n-1$ người."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "k*C(n, k)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "binom_absorb"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: k nhân C n trên k, rồi n nhân C n trừ 1 trên k trừ 1."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hệ số khác đi kèm cũng không sao. Trong $3k\\,C_n^k$ engine [[a1|chỉ hút đúng thừa số $k$]] và để $3$ nguyên chỗ — nó so thừa số bằng cấu trúc cây, không bằng tên biến."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "3*k*C(n, k)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "binom_absorb"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: 3 nhân k nhân C n trên k, rồi 3 nhân n nhân C n trừ 1 trên k trừ 1."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn đối xứng thì đổi cách nhìn mà không đổi giá trị: chọn $k$ thứ để lấy [[a1|cũng là chọn $n-k$ thứ để bỏ]]. Bước này **không có dòng đỏ nào** — nó đúng ở mọi $k$ nguyên, kể cả ngoài khoảng $[0,n]$, vì ở đó cả hai vế cùng bằng $0$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "C(n, k)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "binom_symmetry"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: C n trên k, rồi C n trên n trừ k."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

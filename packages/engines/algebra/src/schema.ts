@@ -36,10 +36,35 @@ import { Type, type Static } from '@sinclair/typebox';
  * ba bậc. Căn lồng thì tầng 6 mới cao $1{,}50$ ô, tức là không bị trần này chạm tới:
  * đúng như nó phải thế, vì căn lồng đọc được thật.
  *
- * `maxWidthCells: 12` so với thứ rộng nhất viết ra được trong thực tế: khai triển
- * $(a+b)^6$ đo $7{,}78$ ô, cả kho 91 bài đo $7{,}06$ ô. Bề ngang phải có trần **riêng**
- * vì Player co cả hình cho vừa khung — một dòng quá rộng không tràn ra ngoài mà làm
- * *mọi thứ* nhỏ lại, nên sàn cỡ chữ ở đơn vị scene không cứu được.
+ * ### `maxWidthCells: 13` — và vì sao đúng $13$
+ *
+ * Con số cũ là $12$, và nó **không phải một số đo** — nó là một số chọn ở M49. Hậu quả
+ * đo được ở M55: $(a+b+c)^3$ khai triển rộng $12{,}55$ ô nên **bị từ chối**, trong khi
+ * $(a+b)^7$ rộng $11{,}75$ ô thì lọt. Tức là một hằng đẳng thức sách giáo khoa bị chặn
+ * còn một thứ hiếm hơn nhiều thì qua — thứ tự ưu tiên ngược với thực tế dạy học.
+ *
+ * Bề ngang phải có trần **riêng** vì Player **co** cả hình cho vừa pane và không bao
+ * giờ giãn (`render/scale.ts`): một dòng quá rộng không tràn ra ngoài, nó làm *mọi thứ*
+ * nhỏ lại — kể cả các step khác của cùng bài, vì hệ số co dùng chung. Nên sàn cỡ chữ ở
+ * đơn vị scene (`SIZE_FLOOR`) không cứu được: nó canh đơn vị scene, còn cái đau là số
+ * pixel cuối cùng.
+ *
+ * Đo cỡ chữ **thật trên màn hình** ($22$px ở tỉ lệ đầy đủ, co theo `pane / (44·W)`):
+ *
+ * | rộng (ô) | ĐT 360px | ĐT 390px | tablet | desktop |
+ * |---:|---:|---:|---:|---:|
+ * | 12 | 13,7px | 14,9px | 22px | 22px |
+ * | 12,55 | 13,1px | 14,3px | 22px | 22px |
+ * | **13** | **12,6px** | 13,8px | 22px | 22px |
+ * | 13,62 | 12,0px | 13,1px | 22px | 22px |
+ * | 14 | 11,7px | 12,8px | 22px | 22px |
+ *
+ * $13$ là bề rộng **cuối cùng** còn giữ chữ trên $12$px ở màn hẹp nhất, và ngay dưới nó
+ * mọi thứ tuột xuống dưới ngưỡng ấy. Nó cho qua $(a+b+c)^3$ ($12{,}55$) và $a^9-b^9$ đã
+ * phân tích ($12{,}32$), vẫn chặn $(a+b)^8$ ($13{,}62$).
+ *
+ * Cả kho hiện đo tối đa $7{,}06$ ô, trung vị $2{,}30$ ô — nên trần này **không** chạm
+ * vào nội dung thật; nó là hàng rào cho thứ luật có thể sinh ra.
  *
  * `maxDegree` là cận cho Schwartz–Zippel ở `check.ts`: xác suất phép kiểm bỏ sót một
  * bước sai là $\le d/p$ mỗi lần thử.
@@ -52,15 +77,27 @@ export const ALGEBRA_LIMITS = {
   maxDegree: 64,
   maxSourceLength: 200,
   maxHeightCells: 3,
-  maxWidthCells: 12,
+  maxWidthCells: 13,
+  /** Số phương trình tối đa trong một hệ (M59) — bốn dòng đã kín chiều cao dòng. */
+  maxRelations: 4,
 } as const;
 
 export const AlgebraStep = Type.Object(
   {
     /** Tên luật, phải có trong `RULES` (`rules.ts`). */
     rule: Type.String({ minLength: 1, maxLength: 24 }),
-    /** Đường dẫn tới cây con: `""` là gốc, `"L"`/`"R"` là hai vế, rồi chỉ số con. */
-    at: Type.String({ maxLength: 40 }),
+    /**
+     * Cây con để áp luật, khai theo **một trong hai** lối:
+     *
+     * - **vị trí** — `""` là gốc, `"L"`/`"R"` là hai vế, rồi chỉ số con: `"L.0.1"`;
+     * - **nội dung** — `"@abs(x - 2)"`: cây con nào khớp mẫu ấy. Từ chối khi không có
+     *   hoặc có nhiều hơn một chỗ khớp.
+     *
+     * Lối thứ hai có vì đường dẫn theo vị trí **dịch chỗ** khi một luật trả về `add`
+     * vào trong một `add` (xem `resolveAt` ở `model.ts`). Trần dài hơn `arg` vì một
+     * mẫu là cả một biểu thức.
+     */
+    at: Type.String({ maxLength: 64 }),
     arg: Type.Optional(Type.String({ maxLength: 40 })),
     /** Ghi chú đè lên nhãn luật. **Chữ trơn** — nó vào giao diện nguyên văn. */
     note: Type.Optional(Type.String({ maxLength: 32 })),

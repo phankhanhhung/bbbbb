@@ -1,0 +1,144 @@
+{
+  "schema_version": "0.3.0",
+  "id": "absolute-value-interval",
+  "statement": {
+    "vi": "$|x-1| < 3$ và $|x-1| > 3$ trông đối xứng, mà đáp số thì khác hẳn **hình dạng**: một cái là một khoảng, cái kia là hai khoảng rời nhau."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: dấu nhỏ hơn cho một hội (ngoặc nhọn, xếp dọc), dấu lớn hơn cho một tuyển (nằm ngang, nối bằng \"hoặc\"). Hai cách vẽ khác nhau vì hai thứ ấy khác nhau, không phải để cho đẹp."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Hai chiều, hai hình dạng"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "\"Khoảng cách tới $1$ nhỏ hơn $3$\" nghĩa là [[a1|bị kẹp giữa]] — cả hai điều kiện phải cùng đúng, nên nó là một hội và vẽ trong ngoặc nhọn."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "abs(x - 1) < 3",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "abs_to_interval"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: trị tuyệt đối x trừ 1 nhỏ hơn 3, rồi hệ hai bất đẳng thức."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn \"khoảng cách lớn hơn $3$\" thì [[a1|hai phía đều được]], miễn một trong hai đúng — một tuyển, và engine vẽ nó nằm ngang nối bằng chữ \"hoặc\"."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "abs(x - 1) > 3",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "abs_to_interval"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: trị tuyệt đối x trừ 1 lớn hơn 3, rồi x trừ 1 nhỏ hơn âm 3 hoặc x trừ 1 lớn hơn 3."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Và hai ràng buộc cùng chiều thì [[a1|gộp lại được]]: trong một hội, cái chặt hơn thắng — $x>1$ đứng cạnh $x>2$ thì chỉ $x>2$ còn nói điều gì."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "x > 1; x > 2",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "merge_intervals"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: hệ x lớn hơn 1 và x lớn hơn 2, rồi chỉ còn x lớn hơn 2."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

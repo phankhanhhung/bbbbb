@@ -1,0 +1,116 @@
+{
+  "schema_version": "0.3.0",
+  "id": "exponential-equation",
+  "statement": {
+    "vi": "Giải $2^x = 8$. Ẩn nằm ở **số mũ**, và không phép biến đổi đại số nào kéo nó xuống được — phải đổi sân bằng logarit."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: lấy logarit hai vế **bảo toàn** tập nghiệm chứ không nới rộng như bình phương, vì $\\ln$ tăng ngặt. Engine đi hợp đồng `sameSolutionSet` và ghi điều kiện dương ra hình — đúng cơ chế AL-08, không phải một ngoại lệ."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Đổi sân bằng logarit"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Lấy $\\ln$ hai vế, rồi [[a1|số mũ ra trước]]. Ẩn $x$ vừa rơi từ số mũ xuống thành một hệ số — và từ đó nó là một phương trình bậc nhất bình thường."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2^x = 8",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "log_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "log_power"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: 2 mũ x bằng 8, rồi ln hai vế, rồi x nhân ln 2 bằng ln 8."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đổi cơ số cũng là một nước đi có tên: $\\log_2 x$ [[a1|viết lại bằng $\\ln$]], nên mọi logarit đều quy về một cơ số và so sánh được với nhau."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "log(2, x)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "log_change_base"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: log cơ số 2 của x, rồi ln x trên ln 2."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

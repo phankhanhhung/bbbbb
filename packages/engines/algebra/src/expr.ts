@@ -58,7 +58,71 @@ export type Expr =
    * chối một phép biến đổi có trong mọi sách giáo khoa là lỗ hổng nhìn thấy được.
    */
   | ({ readonly k: 'abs'; readonly arg: Expr } & WithId)
-  | ({ readonly k: 'rel'; readonly op: RelOp; readonly lhs: Expr; readonly rhs: Expr } & WithId);
+  /**
+   * Lời gọi hàm — **một** biến thể cho cả họ, không một biến thể mỗi hàm.
+   *
+   * Mỗi kiểu nút mới phải đi qua sáu chỗ (`expr`, `parse`, `typeset`, `check`, `rules`,
+   * và bảng ưu tiên), nên dựng `fact`, `binom`, `log`, `sin` thành bốn biến thể là trả
+   * giá ấy bốn lần. Ở đây trả một lần: tên thuộc một union **đóng**, còn mọi thứ riêng
+   * của từng hàm — arity, cách in, cách tính, miền xác định — nằm trong bảng ở
+   * `functions.ts`. Hàm thứ bảy sau này là *một dòng bảng*.
+   *
+   * Union phải **đóng**: ngữ pháp mở thì printer không biết trước mình phải in những gì,
+   * và đó là lý do parser không nhận hàm tuỳ ý ngay từ §3.3.
+   */
+  | ({ readonly k: 'fn'; readonly name: FnName; readonly args: readonly Expr[] } & WithId)
+  /**
+   * Tổng $\sum$ và tích $\prod$ — **construct ràng buộc biến đầu tiên** của engine.
+   *
+   * `v` là một **tên**, không phải nút: cùng lối với `root.index`, và vì lý do giống hệt
+   * — nó không phải một giá trị để neo hay áp luật vào. `children` là `[from, to, body]`,
+   * nên đường dẫn `.0`, `.1`, `.2`.
+   *
+   * Chỗ ràng buộc **đổi luật chơi** ở đúng một hàm: {@link varsOf} phải **trừ** `v` ra
+   * khỏi thân. Bỏ sót chỗ trừ ấy thì `maxVars` đếm nhầm và bộ kiểm bốc giá trị cho một
+   * biến không tự do — im lặng và sai, kiểu tệ nhất.
+   */
+  | ({
+      readonly k: 'big';
+      readonly op: 'sum' | 'prod';
+      readonly v: string;
+      readonly from: Expr;
+      readonly to: Expr;
+      readonly body: Expr;
+    } & WithId)
+  | ({ readonly k: 'rel'; readonly op: RelOp; readonly lhs: Expr; readonly rhs: Expr } & WithId)
+  /**
+   * **Hệ** quan hệ — hội (`and`) hoặc tuyển (`or`).
+   *
+   * Là một `Expr` chứ không phải "một dòng chứa nhiều `Expr`", và chỗ ấy quyết định giá
+   * của cả hạng mục: `children` là các quan hệ, nên `"0"`, `"1"` chỉ vào từng phương
+   * trình và `"0.L"` vào vế trái của phương trình đầu — **toàn bộ máy luật, `replaceAt`,
+   * danh tính và choreography chạy nguyên si**. Phương án kia bắt sửa `model`, `layout`,
+   * `choreography` và mọi luật.
+   *
+   * `join` khai từ M59 dù M59 chỉ dùng `'and'`: tập nghiệm bất phương trình (M60) cần
+   * `'or'`, và thêm một trường vào một nút đã xuất bản thì đắt hơn khai sẵn.
+   */
+  | ({ readonly k: 'sys'; readonly join: 'and' | 'or'; readonly rels: readonly Expr[] } & WithId);
+
+/**
+ * Tên hàm engine biết — **đóng**, và mở rộng bằng cách thêm một dòng ở `functions.ts`.
+ *
+ * M56 đăng ký ba hàm tổ hợp. Với một nền tảng nhắm Olympiad Combinatorics thì $n!$ và
+ * $C_n^k$ không phải món mở rộng — chúng là ký hiệu nền của cả môn.
+ */
+export type FnName =
+  | 'fact'
+  | 'binom'
+  | 'perm'
+  // M61 — và cả sáu chỉ tốn **một dòng bảng** mỗi cái ở `functions.ts`. Đó là cổ tức
+  // của việc M56 dựng *một* biến thể `fn` cho cả họ thay vì một biến thể mỗi hàm.
+  | 'ln'
+  | 'log'
+  | 'exp'
+  | 'sin'
+  | 'cos'
+  | 'tan';
 
 /**
  * Cấp phát danh tính.
@@ -161,6 +225,29 @@ export const root = (m: Minter, index: number, arg: Expr): Expr => ({
   id: m.next(),
 });
 
+export const fn = (m: Minter, name: FnName, args: readonly Expr[]): Expr => ({
+  k: 'fn',
+  name,
+  args,
+  id: m.next(),
+});
+
+export const big = (
+  m: Minter,
+  op: 'sum' | 'prod',
+  v: string,
+  from: Expr,
+  to: Expr,
+  body: Expr,
+): Expr => ({ k: 'big', op, v, from, to, body, id: m.next() });
+
+export const sys = (m: Minter, join: 'and' | 'or', rels: readonly Expr[]): Expr => ({
+  k: 'sys',
+  join,
+  rels,
+  id: m.next(),
+});
+
 export const rel = (m: Minter, op: RelOp, lhs: Expr, rhs: Expr): Expr => ({
   k: 'rel',
   op,
@@ -192,8 +279,14 @@ export function children(e: Expr): readonly Expr[] {
     case 'root':
     case 'abs':
       return [e.arg];
+    case 'fn':
+      return e.args;
+    case 'big':
+      return [e.from, e.to, e.body];
     case 'rel':
       return [e.lhs, e.rhs];
+    case 'sys':
+      return e.rels;
     default:
       return [];
   }
@@ -213,8 +306,14 @@ export function withChildren(e: Expr, kids: readonly Expr[]): Expr {
     case 'root':
     case 'abs':
       return { ...e, arg: kids[0] as Expr };
+    case 'fn':
+      return { ...e, args: kids };
+    case 'big':
+      return { ...e, from: kids[0] as Expr, to: kids[1] as Expr, body: kids[2] as Expr };
     case 'rel':
       return { ...e, lhs: kids[0] as Expr, rhs: kids[1] as Expr };
+    case 'sys':
+      return { ...e, rels: kids };
     default:
       return e;
   }
@@ -238,12 +337,59 @@ export function depth(e: Expr): number {
   return kids.length === 0 ? 1 : 1 + Math.max(...kids.map(depth));
 }
 
+/**
+ * Các biến **tự do** của một biểu thức.
+ *
+ * Trước M57 đây chỉ là "mọi nút `var`", vì engine không có construct nào ràng buộc tên.
+ * $\sum_{k=1}^{n} k$ đổi chuyện đó: $k$ **không** là biến tự do, và nếu hàm này khai nó
+ * ra thì hai chỗ hỏng cùng lúc, cả hai đều im lặng:
+ *
+ * - `maxVars` đếm thừa, nên một bài hai ẩn bị từ chối vì "quá 6 biến";
+ * - bộ kiểm bốc một giá trị cho $k$ rồi truyền vào `evalReal`, nơi vòng lặp của
+ *   `big` **đè lên nó**. Giá trị bốc ra bị bỏ đi lặng lẽ, và phép kiểm vẫn xanh —
+ *   nhưng nó xanh vì một lý do khác với lý do người ta tưởng.
+ *
+ * Nên đi tay thay vì dùng `walk`: `walk` không có khái niệm phạm vi.
+ */
 export function varsOf(e: Expr): Set<string> {
   const out = new Set<string>();
-  walk(e, (n) => {
-    if (n.k === 'var') out.add(n.name);
-  });
+  const go = (n: Expr): void => {
+    if (n.k === 'var') {
+      out.add(n.name);
+      return;
+    }
+    if (n.k === 'big') {
+      // Hai cận nằm **ngoài** phạm vi ràng buộc — $\sum_{k=1}^{k}$ thì cận trên là một
+      // $k$ khác, tự do, và trộn hai thứ ấy là chỗ lỗi phạm vi cổ điển nhất.
+      go(n.from);
+      go(n.to);
+      for (const name of varsOf(n.body)) if (name !== n.v) out.add(name);
+      return;
+    }
+    for (const c of children(n)) go(c);
+  };
+  go(e);
   return out;
+}
+
+/** Biến chỉ số bị ràng buộc **tại** nút này; rỗng với mọi nút khác. */
+export const boundVar = (e: Expr): string | null => (e.k === 'big' ? e.v : null);
+
+/**
+ * Thay mọi `var name` **tự do** bằng `value`.
+ *
+ * Tôn trọng phạm vi: không thò vào thân một $\sum$ đã ràng buộc chính tên ấy. Có ở đây
+ * chứ không ở `model.ts` vì từ M57 cả `rules` lẫn `model` đều cần, và hai bản chép tay
+ * thì bản thứ hai sẽ quên đúng dòng phạm vi này.
+ */
+export function substituteVar(e: Expr, name: string, value: Expr): Expr {
+  if (e.k === 'var' && e.name === name) return value;
+  if (e.k === 'big' && e.v === name) {
+    // Tên bị che: chỉ thay trong hai cận, không thay trong thân.
+    return { ...e, from: substituteVar(e.from, name, value), to: substituteVar(e.to, name, value) };
+  }
+  const kids = children(e).map((c) => substituteVar(c, name, value));
+  return kids.length === 0 ? e : withChildren(e, kids);
 }
 
 export const isConst = (e: Expr): boolean => varsOf(e).size === 0;
@@ -258,6 +404,16 @@ export function needsRealEval(e: Expr): boolean {
   let found = false;
   walk(e, (n) => {
     if (n.k === 'root' || n.k === 'abs') found = true;
+    // Giai thừa và tổ hợp cũng không: chúng chỉ có nghĩa ở **số nguyên**, và trên
+    // $\mathbb{F}_p$ thì $n!$ với $n$ là một thặng dư ngẫu nhiên là câu vô nghĩa.
+    // Đường đi thật của chúng là bộ bốc điểm **số nguyên** (`needsIntegerEval`); nhánh
+    // này là lớp chắn thứ hai, để nếu lối lái ấy hỏng thì kết quả là "không kiểm được"
+    // chứ không phải một số bịa ra.
+    if (n.k === 'fn') found = true;
+    // $\sum$ chỉ khai được khi hai cận là **số nguyên**, nên nó cũng thuộc họ đi đường
+    // bộ bốc điểm số nguyên. `walk` chui cả vào thân, nên một hàm nằm trong thân cũng
+    // bị bắt ở nhánh trên.
+    if (n.k === 'big') found = true;
     // Số mũ không nguyên cũng không sống ở đó: $x^{1/2}$ cần chọn một trong hai căn,
     // $x^{\sqrt 2}$ thì không có nghĩa gì trên trường hữu hạn. `walk` chui cả vào số
     // mũ (nó là con `.1`), nên căn **nằm trong** số mũ cũng bị bắt ở nhánh trên.
@@ -292,12 +448,19 @@ export function totalDegree(e: Expr): number {
       return totalDegree(e.num) + totalDegree(e.den);
     case 'abs':
       return totalDegree(e.arg);
+    case 'fn':
+    case 'big':
+      // $n!$, $C_n^k$, $\sum_{k=1}^{n} f(k)$ **không phải hàm hữu tỉ** của $n$, nên
+      // "bậc" của chúng vô nghĩa — trả `Infinity`, cùng lối với $x^n$. Hằng thì bậc $0$.
+      return isConst(e) ? 0 : Infinity;
     case 'root':
       // Bậc **làm tròn lên**: nó chỉ dùng làm cận cho Schwartz–Zippel, mà biểu thức
       // có căn thì không đi đường ấy nữa (xem `check.ts`). Ước dôi ở đây là an toàn.
       return Math.ceil(totalDegree(e.arg) / e.index);
     case 'rel':
       return Math.max(totalDegree(e.lhs), totalDegree(e.rhs));
+    case 'sys':
+      return Math.max(0, ...e.rels.map(totalDegree));
   }
 }
 
@@ -375,6 +538,18 @@ export function allPaths(root: Expr): Map<string, Expr> {
  */
 export function normalize(e: Expr): Expr {
   const kids = children(e).map(normalize);
+  // Hệ lồng hệ **cùng phép nối** thì làm phẳng: $(A \wedge B) \wedge C$ và
+  // $A \wedge B \wedge C$ là một. Khác phép nối thì **không** — $(A \vee B) \wedge C$
+  // làm phẳng là đổi hẳn nghĩa. Cùng lý lẽ với `add`/`mul` ở dưới, và cùng chỗ đứng:
+  // ghép cây con xong là chuẩn hoá lại, nếu không đường dẫn bước sau trỏ lệch.
+  if (e.k === 'sys') {
+    const flat: Expr[] = [];
+    for (const c of kids) {
+      if (c.k === 'sys' && c.join === e.join) flat.push(...c.rels);
+      else flat.push(c);
+    }
+    return flat.length === 1 ? (flat[0] as Expr) : { ...e, rels: flat };
+  }
   if (e.k !== 'add' && e.k !== 'mul') return withChildren(e, kids);
 
   const flat: Expr[] = [];
@@ -404,12 +579,41 @@ export function same(a: Expr, b: Expr): boolean {
       return a.index === (b as typeof a).index && same(a.arg, (b as typeof a).arg);
     case 'abs':
       return same(a.arg, (b as typeof a).arg);
+    case 'fn': {
+      const o = b as typeof a;
+      return (
+        a.name === o.name &&
+        a.args.length === o.args.length &&
+        a.args.every((c, i) => same(c, o.args[i] as Expr))
+      );
+    }
+    case 'big': {
+      const o = b as typeof a;
+      // So cả **tên biến chỉ số**: $\sum_k f(k)$ và $\sum_j f(j)$ bằng nhau về giá trị
+      // nhưng khác nhau về cây, và `same` là phép so **cấu trúc**. Đổi tên chỉ số là
+      // một luật có tên (`sum_shift` với dịch $0$), không phải chuyện `same` làm lén.
+      return (
+        a.op === o.op &&
+        a.v === o.v &&
+        same(a.from, o.from) &&
+        same(a.to, o.to) &&
+        same(a.body, o.body)
+      );
+    }
     case 'rel':
       return (
         a.op === (b as typeof a).op &&
         same(a.lhs, (b as typeof a).lhs) &&
         same(a.rhs, (b as typeof a).rhs)
       );
+    case 'sys': {
+      const o = b as typeof a;
+      return (
+        a.join === o.join &&
+        a.rels.length === o.rels.length &&
+        a.rels.every((c, i) => same(c, o.rels[i] as Expr))
+      );
+    }
     default: {
       const x = children(a);
       const y = children(b);

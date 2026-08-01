@@ -1,0 +1,155 @@
+{
+  "schema_version": "0.3.0",
+  "id": "sum-shift-index",
+  "statement": {
+    "vi": "Đổi biến chỉ số trong một tổng nghe như thủ tục, nhưng nó là **cách duy nhất** để hai tổng lệch nhau một bậc gặp được nhau. Xem $\\sum_{k=1}^{n} k^2$ dịch chỉ số, tách khoảng, và rút hằng ra ngoài."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: bước tách tổng khai **hai** điều kiện, không một. Tách $\\sum_{k=1}^{n}$ tại $m=3$ chỉ đúng khi $3$ nằm trong khoảng, và ở $n=1$ thì vế phải thừa hẳn — engine bắt được điều đó trước khi bài lên kho."
+    }
+  },
+  "topics": [
+    "counting",
+    "algebra"
+  ],
+  "techniques": [
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Ba nước đi trên một tổng"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đặt $j = k+1$: chỉ số chạy từ $2$ tới $n+1$, và thân [[a1|lùi lại một bậc]] thành $(k-1)^2$. Giá trị không đổi một li — chỉ cách gọi tên từng hạng tử là đổi."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "sum(k, 1, n, k^2)",
+              "steps": [
+                {
+                  "arg": "1",
+                  "at": "",
+                  "rule": "sum_shift"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: tổng k bình phương từ 1 tới n, rồi tổng k trừ 1 bình phương từ 2 tới n cộng 1."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tách khoảng tại $3$ thì [[a1|một tổng thành hai]]. Dòng đỏ ghi điều kiện $0 \\le 3 \\le n$: ngoài khoảng ấy phép tách sai hẳn — ở $n=1$ vế trái là $1$ còn vế phải đã là $6$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "sum(k, 1, n, k)",
+              "steps": [
+                {
+                  "arg": "3",
+                  "at": "",
+                  "rule": "sum_split"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: tổng k từ 1 tới n, rồi tổng k từ 1 tới 3 cộng tổng k từ 4 tới n."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hệ số hằng thì [[a1|ra ngoài dấu tổng]] — nó không phụ thuộc chỉ số nên không có việc gì bên trong. Rồi khoảng cụ thể thì viết hết ra được, và từ đó cả 47 luật đại số cũ áp được như với một tổng thường."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "sum(k, 1, 4, 3*k)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "sum_linear"
+                },
+                {
+                  "at": "@sum(k, 1, 4, k)",
+                  "rule": "sum_expand"
+                },
+                {
+                  "at": "1",
+                  "rule": "eval_int"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bốn dòng: tổng 3k, rồi 3 nhân tổng k, rồi viết hết bốn hạng tử, rồi bằng 10."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

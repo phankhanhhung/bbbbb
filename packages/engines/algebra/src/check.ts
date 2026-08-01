@@ -1,4 +1,5 @@
-import { intExp, needsRealEval, totalDegree, varsOf, type Expr } from './expr.js';
+import { intExp, needsRealEval, totalDegree, varsOf, walk, type Expr } from './expr.js';
+import { FUNCTIONS, isIntegerOnly } from './functions.js';
 
 /**
  * Kiểm một bước biến đổi có **đúng** không, bằng đánh giá ngẫu nhiên trên
@@ -98,12 +99,19 @@ export function evalAt(e: Expr, env: ReadonlyMap<string, bigint>): bigint | null
     }
     case 'abs':
       return null;
+    case 'fn':
+    case 'big':
+      // $n!$ trên $\mathbb{F}_p$ với $n$ là một thặng dư ngẫu nhiên cỡ $10^9$ là câu
+      // vô nghĩa, không phải câu khó tính. $\sum_{k=1}^{n}$ với cận như thế cũng vậy.
+      // Biểu thức có hàm hoặc tổng đi đường **số nguyên**.
+      return null;
     case 'root':
       // Căn không sống trên $\mathbb{F}_p$: $\sqrt a$ chỉ tồn tại khi $a$ là thặng dư
       // bậc hai, và khi tồn tại thì có **hai** nghiệm không có nhánh chính tắc. Biểu
       // thức có căn đi đường `sameValueReal` thay vì đường này.
       return null;
     case 'rel':
+    case 'sys':
       // Quan hệ không có "giá trị" — nhóm ★ kiểm bằng cấu trúc, không bằng số.
       return null;
   }
@@ -170,10 +178,52 @@ export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | nu
       if (a < 0) return e.index % 2 === 0 ? null : ok(-Math.pow(-a, 1 / e.index));
       return ok(Math.pow(a, 1 / e.index));
     }
+    case 'fn': {
+      const spec = FUNCTIONS[e.name];
+      if (e.args.length !== spec.arity) return null;
+      const vs: number[] = [];
+      for (const a of e.args) {
+        const v = evalReal(a, env);
+        if (v === null) return null;
+        vs.push(v);
+      }
+      // `null` từ bảng nghĩa là **điểm này vô dụng** — đối số không nguyên, âm, hoặc
+      // kết quả đã ra khỏi vùng số nguyên chính xác. Cùng lối với căn bậc chẵn của số
+      // âm: bỏ điểm, không kết tội.
+      const v = spec.evalNum(vs);
+      return v === null ? null : ok(v);
+    }
+    case 'big': {
+      const from = evalReal(e.from, env);
+      const to = evalReal(e.to, env);
+      if (from === null || to === null) return null;
+      // Cận phải là **số nguyên**: $\sum_{k=1}^{2{,}7}$ không có nghĩa. Điểm ấy vô dụng
+      // chứ không phải bằng chứng sai — cùng lối với căn bậc chẵn của số âm.
+      if (!Number.isInteger(from) || !Number.isInteger(to)) return null;
+      // Trần khai: cùng con số với `maxDegree`, và cùng lý lẽ — quá đó thì phép kiểm
+      // tốn hơn thứ nó mua, và trả `null` (không kiểm được) thì trung thực hơn là chạy.
+      if (to - from > BIG_SPAN_MAX) return null;
+
+      let acc = e.op === 'sum' ? 0 : 1;
+      // Khoảng rỗng ($to < from$) cho $0$ với tổng và $1$ với tích — quy ước chuẩn, và
+      // nó **có việc**: `sum_split` tại $m = b$ sinh ra đúng một khoảng rỗng.
+      for (let i = from; i <= to; i += 1) {
+        const inner = new Map(env);
+        inner.set(e.v, i);
+        const v = evalReal(e.body, inner);
+        if (v === null) return null;
+        acc = e.op === 'sum' ? acc + v : acc * v;
+      }
+      return ok(acc);
+    }
     case 'rel':
+    case 'sys':
       return null;
   }
 }
+
+/** Số hạng tối đa khai được khi kiểm — cùng con số và cùng lý lẽ với `maxDegree`. */
+const BIG_SPAN_MAX = 64;
 
 /**
  * Điều kiện một bước tự khai: điểm vi phạm nó bị **bỏ qua** khi kiểm.
@@ -188,14 +238,34 @@ export interface Guard {
   readonly sign: '!=0' | '>=0' | '<=0';
 }
 
-/** Điểm này có dùng được không: `false` khi nó vi phạm điều kiện bước tự khai. */
-function guardHolds(guard: Guard | null, env: ReadonlyMap<string, number>): boolean {
+/**
+ * Một điều kiện, hoặc **nhiều** — và số nhiều không phải chuyện thẩm mỹ.
+ *
+ * Bản đầu cho đúng một `Guard`, và chỗ ấy vỡ ở `sum_split`: tách $\sum_a^b$ tại $m$ chỉ
+ * đúng khi $a-1 \le m \le b$, tức **hai** bất đẳng thức. Gói hai thứ ấy vào một biểu
+ * thức — chẳng hạn $(b-m)(m-a+1) \ge 0$ — thì đúng tình cờ và sai khi cả hai cùng âm.
+ * Mã hoá hai điều kiện thành một là đúng loại mẹo mà engine này tránh ở mọi chỗ khác.
+ */
+export type Guards = Guard | readonly Guard[];
+
+/** Điểm này có dùng được không: `false` khi nó vi phạm **bất kỳ** điều kiện nào. */
+function guardHolds(guard: Guards | null, env: ReadonlyMap<string, number>): boolean {
   if (guard === null) return true;
-  const v = evalReal(guard.expr, env);
-  if (v === null) return false;
-  if (guard.sign === '!=0') return Math.abs(v) > 1e-6;
-  return guard.sign === '>=0' ? v >= 0 : v <= 0;
+  for (const g of Array.isArray(guard) ? guard : [guard as Guard]) {
+    const v = evalReal(g.expr, env);
+    if (v === null) return false;
+    if (g.sign === '!=0') {
+      if (Math.abs(v) <= 1e-6) return false;
+    } else if (g.sign === '>=0' ? v < 0 : v > 0) {
+      return false;
+    }
+  }
+  return true;
 }
+
+/** Danh sách điều kiện, dạng chuẩn — để chỗ khác khỏi phải nghĩ về hai kiểu. */
+export const guardList = (g: Guards | null): readonly Guard[] =>
+  g === null ? [] : Array.isArray(g) ? g : [g as Guard];
 
 export interface SoundnessResult {
   readonly ok: boolean;
@@ -227,12 +297,20 @@ export function sameValue(
   b: Expr,
   seed = 20260731,
   trials = 8,
-  guard: Guard | null = null,
+  guard: Guards | null = null,
 ): SoundnessResult {
+  // Ba sân, và thứ tự hỏi **quan trọng**.
+  //
+  // Giai thừa và tổ hợp hỏi trước hết: $C_n^k$ *có* tính được trên $\mathbb{F}_p$ khi
+  // $n$ là hằng, nhưng đường ấy im lặng đúng ở chỗ nguy hiểm nhất — $n$ ký hiệu — nên
+  // lái sang bộ nguyên trước rồi mới xét tới hai sân kia.
+  if (needsIntegerEval(a) || needsIntegerEval(b)) {
+    return sameValueInteger(a, b, seed, trials, guard);
+  }
   // Có căn thì đổi sân: $\mathbb{F}_p$ không có khái niệm "căn bậc hai của $2$".
   // Điều kiện có **dấu** cũng buộc đổi sân: trường hữu hạn không có thứ tự, nên
   // "$A \ge 0$" ở đó là một câu vô nghĩa chứ không phải một câu khó kiểm.
-  if (needsRealEval(a) || needsRealEval(b) || (guard !== null && guard.sign !== '!=0')) {
+  if (needsRealEval(a) || needsRealEval(b) || guardList(guard).some((g) => g.sign !== '!=0')) {
     return sameValueReal(a, b, seed, trials, guard);
   }
 
@@ -255,10 +333,12 @@ export function sameValue(
 
     // Điều kiện "$\ne 0$" kiểm được ngay trên $\mathbb{F}_p$; loại dấu đã bị lái sang
     // đường thực ở trên.
-    if (guard !== null) {
-      const g = evalAt(guard.expr, env);
-      if (g === null || g === 0n) continue;
+    let skip = false;
+    for (const g of guardList(guard)) {
+      const v = evalAt(g.expr, env);
+      if (v === null || v === 0n) skip = true;
     }
+    if (skip) continue;
 
     const va = evalAt(a, env);
     const vb = evalAt(b, env);
@@ -294,19 +374,116 @@ export function sameValueReal(
   b: Expr,
   seed: number,
   trials: number,
-  guard: Guard | null = null,
+  guard: Guards | null = null,
 ): SoundnessResult {
-  const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
+  return sampleCompare(a, b, seed, trials, guard, realSampler(seed), 40, 'điểm thực');
+}
+
+/**
+ * Biểu thức có phần **chỉ sống ở số nguyên** không — quyết định bộ bốc điểm nào chạy.
+ *
+ * Ba hàm tổ hợp đều thế. $n!$ tại $n = 2{,}7$ không phải một câu khó tính, nó là một câu
+ * không có nghĩa trong phạm vi engine này.
+ */
+export function needsIntegerEval(e: Expr): boolean {
+  let found = false;
+  walk(e, (n) => {
+    if (n.k === 'fn' && isIntegerOnly(n.name)) found = true;
+    // $\sum$ chỉ khai được ở cận **nguyên**, nên nó dùng chung bộ bốc điểm với hàm tổ
+    // hợp. Đây chính là chỗ M56 trả cổ tức: không phải dựng thêm bộ nào.
+    if (n.k === 'big') found = true;
+  });
+  return found;
+}
+
+/**
+ * Bản **số nguyên** của `sameValueReal` — bộ bốc điểm thứ ba, và lý do nó phải có.
+ *
+ * `sameValueReal` bốc trong $[-4,-0{,}3] \cup [0{,}3,4]$, toàn số **không nguyên**. Với
+ * một biểu thức có $n!$ thì mọi điểm ấy trả `null`, nên `done` không bao giờ tăng, nên
+ * mọi bước rơi vào `verified: false` ⇒ `unchecked` ⇒ **vàng thường trực trên mọi bài tổ
+ * hợp**. Đó đúng thất bại M45: một vệt vàng không bao giờ tắt là cách nhanh nhất để
+ * người ta ngừng đọc mọi cảnh báo, kể cả cảnh báo thật.
+ *
+ * Nên bộ kiểm phải **kiểm được**, không chỉ phải trung thực. Bốc số nguyên trong
+ * $[0, 12]$: đủ nhỏ để $12!$ còn chính xác từng đơn vị, đủ rộng để hai đa thức khác nhau
+ * bậc $\le 12$ không thể trùng nhau ở mọi điểm.
+ *
+ * Vẫn tính bằng `evalReal` chứ không bằng một bộ đánh giá riêng: điểm thì nguyên, nhưng
+ * biểu thức quanh nó vẫn có thể có căn và phân số, và hai bộ đánh giá song song là hai
+ * chỗ để lệch nhau.
+ */
+export function sameValueInteger(
+  a: Expr,
+  b: Expr,
+  seed: number,
+  trials: number,
+  guard: Guards | null = null,
+): SoundnessResult {
+  return sampleCompare(a, b, seed, trials, guard, integerSampler(seed), 40, 'điểm nguyên');
+}
+
+/** Bộ sinh điểm: một hàm không đối số, gọi một lần cho mỗi biến. */
+type Sampler = () => number;
+
+/** Trong $[-4,-0{,}3] \cup [0{,}3,4]$ — né lân cận $0$ để mẫu số không nổ. */
+function realSampler(seed: number): Sampler {
   let s = (seed >>> 0) || 1;
-  const rand = (): number => {
+  return () => {
     s = (s * 1103515245 + 12345) & 0x7fffffff;
     const u = s / 0x7fffffff;
-    // Trong $[-4, -0{,}3] \cup [0{,}3, 4]$: né lân cận $0$ để mẫu số không nổ.
     return u < 0.5 ? -(0.3 + u * 7.4) : 0.3 + (u - 0.5) * 7.4;
   };
+}
+
+/**
+ * Bộ bốc cho **quan hệ** — rộng hơn bộ giá trị ($[-4{,}75, 4{,}75]$ né lân cận $0$).
+ *
+ * Câu hỏi ở đây là "hai bên có cùng đúng/sai không", nên cần trải qua nhiều miền dấu
+ * hơn; còn câu hỏi giá trị chỉ cần điểm nào cũng được miễn xác định.
+ *
+ * Có `fn` chỉ sống ở số nguyên thì đổi sang bộ nguyên — cùng lý lẽ với `sameValue`.
+ */
+function relationSampler(seed: number, integer: boolean): Sampler {
+  if (integer) return integerSampler(seed);
+  let s = (seed >>> 0) || 1;
+  return () => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const u = s / 0x7fffffff;
+    return u < 0.5 ? -(0.25 + u * 9) : 0.25 + (u - 0.5) * 9;
+  };
+}
+
+/** Số nguyên trong $[0, 12]$ — trần chọn để $12!$ còn nằm trong vùng chính xác. */
+function integerSampler(seed: number): Sampler {
+  let s = (seed >>> 0) || 1;
+  return () => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    return (s >>> 8) % 13;
+  };
+}
+
+/**
+ * Vòng bốc điểm dùng chung cho cả hai bộ.
+ *
+ * Tách ra vì hai bộ chỉ khác nhau ở **cách bốc một con số** — mọi thứ còn lại (bỏ điểm
+ * vi phạm `guard`, bỏ điểm ngoài miền, phân biệt "khớp" với "không kiểm được") là một.
+ * Hai bản chép tay thì bản thứ hai sẽ khác bản thứ nhất ở đúng chỗ không ai nhìn.
+ */
+function sampleCompare(
+  a: Expr,
+  b: Expr,
+  _seed: number,
+  trials: number,
+  guard: Guards | null,
+  rand: Sampler,
+  attemptsPerTrial: number,
+  label: string,
+): SoundnessResult {
+  const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
   let done = 0;
 
-  for (let attempt = 0; attempt < trials * 40 && done < trials; attempt += 1) {
+  for (let attempt = 0; attempt < trials * attemptsPerTrial && done < trials; attempt += 1) {
     const env = new Map<string, number>();
     for (const n of names) env.set(n, rand());
     if (!guardHolds(guard, env)) continue;
@@ -325,13 +502,24 @@ export function sameValueReal(
   if (done === 0) {
     return { ok: true, verified: false, message: 'không tìm được điểm nào xác định' };
   }
-  return { ok: true, verified: true, message: `khớp trên ${done} điểm thực` };
+  return { ok: true, verified: true, message: `khớp trên ${done} ${label}` };
 }
 
 /**
  * Giá trị chân lý của một quan hệ tại một điểm. `null` = không xác định ở đây.
  */
 export function evalRelation(e: Expr, env: ReadonlyMap<string, number>): boolean | null {
+  if (e.k === 'sys') {
+    // Hội thì mọi nhánh phải đúng; tuyển thì một nhánh là đủ. `null` ở một nhánh làm
+    // hỏng cả câu trả lời — điểm ấy vô dụng, không phải bằng chứng sai.
+    let out = e.join === 'and';
+    for (const r of e.rels) {
+      const v = evalRelation(r, env);
+      if (v === null) return null;
+      out = e.join === 'and' ? out && v : out || v;
+    }
+    return out;
+  }
   if (e.k !== 'rel') return null;
   const l = evalReal(e.lhs, env);
   const r = evalReal(e.rhs, env);
@@ -370,17 +558,12 @@ export function evalRelation(e: Expr, env: ReadonlyMap<string, number>): boolean
 export function sameSolutionSet(
   a: Expr,
   b: Expr,
-  guard: Guard | null,
+  guard: Guards | null,
   seed: number,
   trials = 24,
 ): SoundnessResult {
   const names = [...new Set([...varsOf(a), ...varsOf(b)])].sort();
-  let s = (seed >>> 0) || 1;
-  const rand = (): number => {
-    s = (s * 1103515245 + 12345) & 0x7fffffff;
-    const u = s / 0x7fffffff;
-    return u < 0.5 ? -(0.25 + u * 9) : 0.25 + (u - 0.5) * 9;
-  };
+  const rand = relationSampler(seed, needsIntegerEval(a) || needsIntegerEval(b));
   let done = 0;
   let agree = 0;
 
@@ -435,17 +618,12 @@ export interface ImplicationResult extends SoundnessResult {
 export function impliesSolutionSet(
   before: Expr,
   after: Expr,
-  guard: Guard | null,
+  guard: Guards | null,
   seed: number,
   trials = 40,
 ): ImplicationResult {
   const names = [...new Set([...varsOf(before), ...varsOf(after)])].sort();
-  let s = (seed >>> 0) || 1;
-  const rand = (): number => {
-    s = (s * 1103515245 + 12345) & 0x7fffffff;
-    const u = s / 0x7fffffff;
-    return u < 0.5 ? -(0.25 + u * 9) : 0.25 + (u - 0.5) * 9;
-  };
+  const rand = relationSampler(seed, needsIntegerEval(before) || needsIntegerEval(after));
   let held = 0;
   let widened = false;
 
@@ -513,6 +691,17 @@ export function definiteSign(e: Expr): 1 | -1 | 0 {
   const v = evalReal(e, new Map());
   if (v === null || Math.abs(v) < 1e-12) return 0;
   return v > 0 ? 1 : -1;
+}
+
+/**
+ * Biểu thức này có **chắc chắn dương** không — điều kiện lấy logarit.
+ *
+ * Cùng tinh thần thận trọng với `definitelyNonZero`: có biến ⇒ `false`, kể cả $x^2+1$.
+ */
+export function definitelyPositive(e: Expr): boolean {
+  if (varsOf(e).size > 0) return false;
+  const v = evalReal(e, new Map());
+  return v !== null && v > 0;
 }
 
 export function definitelyNonNegative(e: Expr): boolean {

@@ -257,7 +257,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§26 để biết tập luật thật, xếp theo ba lớp:
+Xem §21–§37 để biết tập luật thật — **72 luật**, xếp theo mười một lớp:
 
 | lớp | luật |
 |---|---|
@@ -265,6 +265,13 @@ Xem §21–§26 để biết tập luật thật, xếp theo ba lớp:
 | **hằng đẳng thức & đa thức** | `expand_square`, `expand_cube`, `multiply_out`, `expand_diff_squares`, `factor_diff_squares`, `factor_cubes`, `factor_quadratic`, `complete_square`, `factor_power_difference`, `factor_power_sum_odd` |
 | **căn & luỹ thừa** | `pow_add`, `pow_mul`, `root_pow`, `root_of_product`, `eval_root`, `pull_square_out`, `rationalize`, `multiply_by_conjugate`, `denest_radical`, `root_to_power`, `power_to_root` |
 | **phương trình có điều kiện (★)** | `add_both_sides`, `mul_both_sides`, `pow_both_sides`, `abs_case`, `evaluate_at`, `set_variable`, `substitute`, `quadratic_formula` |
+| **chia đa thức** | `divide_by_linear_factor` |
+| **tổ hợp** (M56, §32) | `factorial_step`, `binom_to_factorial`, `binom_symmetry`, `pascal`, `binom_absorb` |
+| **tổng và tích** (M57, §33) | `sum_const`, `sum_linear`, `sum_split`, `sum_shift`, `sum_expand`, `prod_telescope` |
+| **số mũ ký hiệu** (M58, §34) | `pow_split` (và `pow_add`/`pow_mul` vốn đã chạy từ M49) |
+| **hệ phương trình** (M59, §35) | `add_equations`, `scale_equation`, `substitute_from`, `drop_equation` |
+| **tập nghiệm** (M60, §36) | `abs_to_interval`, `interval_from_factors`, `merge_intervals` |
+| **hàm siêu việt** (M61, §37) | `log_product`, `log_quotient`, `log_power`, `log_change_base`, `exp_log`, `log_exp`, `log_both_sides`, `pythagorean_identity`, `double_angle`, `sum_to_product`, `product_to_sum` |
 
 **Hai điều luật này cố ý không có:**
 
@@ -350,7 +357,7 @@ nên không kiểm bằng cách này.
 > đổi chiều (§22.1). "Đúng do cấu trúc" là thứ phải chứng minh, không phải thứ để khai.
 > Đây là lần đầu trong ba lần cùng một bài học lặp lại — xem §25.4.
 
-### 6.1 Sáu hợp đồng kiểm (M50)
+### 6.1 Bảy hợp đồng kiểm (M50, M59)
 
 Không có một câu hỏi chung. Mỗi bước khai **nó hứa gì**, và engine hỏi đúng câu ấy;
 trộn chúng lại là bỏ lọt.
@@ -513,18 +520,23 @@ Kèm `reaches:` ⇒ bài khai được `kind: "both"`.
 ```ts
 export const ALGEBRA_LIMITS = {
   maxNodes: 120,        // mỗi biểu thức
-  maxDepth: 6,          // độ sâu cây; phân số lồng phân số ăn 2 tầng
+  maxDepth: 24,         // **chỉ** chặn đệ quy bệnh lý, không phải trần đọc được
   maxSteps: 12,         // số dòng, khớp maxRows của derivation
   maxVars: 6,
-  maxAbsInt: 9999,
   maxDegree: 64,        // bậc tổng, cận cho Schwartz–Zippel ở §6
   maxSourceLength: 200,
+  maxHeightCells: 3,    // đo bằng chính bộ sắp chữ sẽ vẽ nó
+  maxWidthCells: 13,
 } as const;
 ```
 
-`maxDepth: 6` không phải để tiết kiệm bộ nhớ mà vì **printer**: mỗi tầng phân số
-lồng nhau làm cỡ chữ giảm và chiều cao dòng tăng, và quá sáu tầng thì không đọc được
-trên iPad — thiết bị đích của NFR-P1..P3.
+**Trần đọc được đo bằng kích thước vẽ ra, không bằng độ sâu cây** (M49, §25.1). Bản đầu
+khai `maxDepth: 6` và nói nó đứng thay cho chiều cao dòng; nó không đứng thay được, vì
+`add` tốn một tầng và tốn $0$ chiều cao còn căn lồng gần như miễn phí cả hai chiều.
+
+`maxSteps` được ép ở **`model.ts`** từ M55, không chỉ ở `maxItems` của TypeBox — trước
+đó `readAlgebra` chạy tuốt 14 bước và `checkBounds` im lặng, nên mọi đường vào không qua
+ajv đều đi vòng qua nó. `maxWidthCells` cũng đo lại ở M55; xem §31.
 
 ---
 
@@ -547,10 +559,10 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
 
 ## 16. Cố ý **không** làm
 
-- **Hàm siêu việt.** Không $\sin$, không $\log$. Lúc cần chúng thì đây là dự án khác,
-  không phải một phiên bản sau. ($2^x$ **vẽ** được từ M49 vì số mũ là `Expr`, nhưng
-  không có **luật** nào biến đổi nó — muốn có thì phải có logarit. Biểu diễn được
-  không đồng nghĩa biến đổi được, và ranh giới ấy là cố ý.)
+- ~~**Hàm siêu việt**~~ — **đã làm** (M61). Lời khai cũ nói "lúc cần chúng thì đây là dự
+  án khác"; hoá ra không, vì M56 đã trả trước cái giá đắt: mỗi hàm là **một dòng bảng**.
+  Nhận xét kèm theo thì vẫn đúng và nay được thanh toán — $2^x$ vẽ được từ M49 mà không
+  luật nào biến đổi nó, và muốn có thì phải có logarit. Xem §37.
 - ~~**Số mũ ký hiệu**~~ — **đã làm** (M49). Lời khai cũ nói $x^n$ "kéo theo cả một
   tầng suy luận về miền — không đáng". Nửa đầu đúng, nửa sau sai: $x^n$ có mặt từ lớp
   8, và tầng suy luận về miền ấy hoá ra gói gọn được trong hai chỗ, không hơn — xem
@@ -562,13 +574,20 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
 - ~~**Giá trị tuyệt đối**~~ — **đã làm** (M47c), chính vì cái thiếu ấy đã cắn.
 - ~~**Luỹ thừa số mũ hữu tỉ**~~ — **đã làm** (M49). Nó là nội dung lớp 11–12; khai nó
   là "chưa có" trong khi engine nhắm toàn bộ đại số phổ thông là tự mâu thuẫn.
-- **Phần nguyên, logarit.** Chưa có.
+- **Phần nguyên.** Chưa có. (Logarit đã có từ M61.)
 - ~~**Quy đồng, nhóm hạng tử, hoàn thành bình phương, bình phương hai vế**~~ — **đã
   làm** (M50, theo góp ý ngoài). Xem §26.
 - **Căn bậc ký hiệu** ($\sqrt[n]{x}$ với $n$ là biến). `root.index` vẫn là số nguyên;
   ai cần thì viết $x^{1/n}$, nay đã có.
-- **Hệ phương trình.** Cần một nút chứa **nhiều** quan hệ; chưa có. Đây là mảng lớn
-  nhất còn thiếu của chương trình phổ thông.
+- ~~**Hệ phương trình**~~ — **đã làm** (M59). Nó không phải "thêm một nút", nó **thêm
+  một hợp đồng kiểm**: `sameSolutionSet` với một hệ là phép kiểm luôn xanh. Xem §35.
+- ~~**Hàm tổ hợp** $n!$, $C_n^k$, $A_n^k$~~ — **đã làm** (M56). Với một nền tảng nhắm
+  Olympiad Combinatorics thì đây là lỗ **to hơn** $\log$: chúng là ký hiệu nền của cả
+  môn. Xem §32 — nó không phải "thêm một nút", nó **thêm một bộ bốc điểm**.
+- ~~**Ký hiệu $\Sigma$, $\Pi$**~~ — **đã làm** (M57). Nó là construct **ràng buộc biến**
+  đầu tiên của engine, và cái giá nằm ở đúng một hàm: `varsOf`. Xem §33.
+- ~~**Tập nghiệm / khoảng**~~ — **đã làm** (M60), và rẻ vì chỗ đặt đáp số **đã có sẵn**:
+  `sys` với `join: 'or'` *là* một tuyển khoảng. Xem §36.
 - ~~**Công thức nghiệm bậc hai**~~ — **đã làm** (M47e), và **không** cần nút "hoặc":
   xem §24.
 - **Bộ giải / gợi ý.** §4.
@@ -1401,3 +1420,644 @@ trả chuỗi khi từ chối để phía gọi tự gói vào ngữ cảnh củ
 ### 30.4 Còn lại gì
 
 `associate` **sẽ không có** (§26.1). Ngoài nó, tập luật 42 phủ hết danh sách rà soát.
+(M56 nâng lên **47** với năm luật tổ hợp — xem §32.)
+
+---
+
+## 31. Dọn nhà trước khi mở ngữ pháp (M55)
+
+Ba lượt review — của tao, của người ngoài, và lượt đối chiếu bằng code — hội tụ vào một
+câu: engine khoẻ ở việc viết lại biểu thức cục bộ, bất lực ở chỗ **ngữ pháp không có nút
+để biểu diễn**. Kế hoạch mở ngữ pháp (hàm tổ hợp, $\Sigma$, hệ phương trình, hàm siêu
+việt) nằm ở M56–M61. M55 là lượt dọn trước, và nó đóng đúng những lỗ mà lượt soát bằng
+probe **đo được** chứ không đoán ra.
+
+### 31.1 Đường dẫn theo vị trí **dịch chỗ**, và chỗ chữa nằm ở đầu kia
+
+Đo được: $|x-1| + |x-2| = 3$, chạy `abs_case` tại `L.0`, thì dấu $|\cdot|$ thứ hai
+**nhảy từ `L.1` sang `L.2`**. Vì luật trả về `x + (-1)`, một `add`, và nó bị làm phẳng
+vào tổng cha — mọi chỉ số sau nó lùi một nấc.
+
+Bất biến làm phẳng **không bỏ được**: bỏ nó là mở lại lỗi M47 #8 (`add` lồng `add` ⇒ mọi
+đường dẫn của bước sau trỏ lệch). Nên chỗ chữa ở đầu kia — cho `at` trỏ bằng **nội dung**:
+
+```json
+{ "rule": "abs_case", "at": "@abs(x - 2)", "arg": "+" }
+```
+
+Tiền tố `@` nghĩa là "cây con nào khớp mẫu này". Từ chối khi không khớp chỗ nào, và khi
+khớp **nhiều hơn một** chỗ thì nói ra *có mấy chỗ và ở đâu*, để tác giả chuyển sang đường
+dẫn được ngay. Cả họ bài từ hai dấu trị tuyệt đối trở lên nay soạn được.
+
+**Không** cho trỏ bằng `TermId`. Id do `Minter` cấp theo thứ tự dựng cây; tác giả không
+đoán được nó, nên id-trong-`at` là một đường cụt đội lốt tính năng.
+
+Một chi tiết dễ bỏ sót: `row.at` phải giữ đường dẫn **đã giải**, không giữ chuỗi tác giả
+gõ — `layout` và `choreography` đưa thẳng nó vào `nodeAt`, mà `nodeAt` không hiểu `@`.
+
+### 31.2 Một trần được khai mà **không được ép**
+
+`readAlgebra` chạy đủ 14 bước và `checkBounds` trả về **không một issue nào**. Thứ duy
+nhất chặn `maxSteps` là `maxItems` của TypeBox, tức chỉ chặn nội dung đi qua ajv.
+
+Mọi trần khác — `maxNodes`, `maxDegree`, `maxHeightCells`, `maxWidthCells` — đều ép ở
+`model.ts`. Riêng cái này lệch, và lệch **âm thầm**: không có triệu chứng nào cho tới lúc
+một đường vào khác xuất hiện. Đây là lớp lỗi khó thấy nhất của kho: một luật viết ra rồi
+để đó, y như quy ước G-10 trước khi `render/scale.ts` thi hành nó.
+
+### 31.3 Trần bề ngang là một **số chọn**, không phải một số đo
+
+`maxWidthCells: 12` đặt ở M49 theo cảm tính. Hậu quả đo được:
+
+| biểu thức sau khi khai triển | rộng |
+|---|---:|
+| $(a+b+c)^2$ | 6,16 ô |
+| $(a+b)^6$ | 9,88 ô |
+| $(a+b)^7$ | 11,75 ô — lọt |
+| **$(a+b+c)^3$** | **12,55 ô — bị từ chối** |
+
+Một hằng đẳng thức sách giáo khoa bị chặn còn một thứ hiếm hơn nhiều thì qua. Thứ tự ưu
+tiên ngược với thực tế dạy học.
+
+Cách sửa **không** phải nâng lên 13 cho vừa một bài, mà là hỏi trần này thật ra canh cái
+gì. Câu trả lời nằm ở `render/scale.ts`: Player **co** hình cho vừa pane và không bao giờ
+giãn, nên một dòng quá rộng không tràn ra ngoài — nó kéo *mọi* step của cùng bài nhỏ lại,
+vì hệ số co dùng chung. Tức trần này canh **số pixel cuối cùng của chữ**, và đo được:
+
+| rộng (ô) | ĐT 360px | ĐT 390px | tablet | desktop |
+|---:|---:|---:|---:|---:|
+| 12 | 13,7px | 14,9px | 22px | 22px |
+| **13** | **12,6px** | 13,8px | 22px | 22px |
+| 14 | 11,7px | 12,8px | 22px | 22px |
+
+$13$ là bề rộng cuối cùng còn giữ chữ trên $12$px ở màn hẹp nhất. Nó cho qua
+$(a+b+c)^3$ và $a^9-b^9$ đã phân tích ($12{,}32$), vẫn chặn $(a+b)^8$ ($13{,}62$). Cả kho
+đo tối đa $7{,}06$ ô, trung vị $2{,}30$ — trần này không chạm nội dung thật, nó là hàng
+rào cho thứ **luật** có thể sinh ra.
+
+Kèm theo là một chú thích sai bị gỡ: `model.ts` nói *"công thức quá rộng **tràn** chứ
+không co lại"* — ngược hẳn với `scale.ts`. Một chú thích sai ở đúng chỗ biện minh cho một
+con số thì tệ hơn không có chú thích.
+
+### 31.4 Hai lỗ mà review ngoài bắt trúng
+
+**`factor_quadratic` chỉ nhận hệ số dẫn đầu $=1$.** $2x^2+7x+3$ bị từ chối — nội dung lớp
+9. Cách tìm mới là vét cạn **xác định** trên ước của $a$ và của $c$: $p_1 \mid a$,
+$q_1 \mid c$, rồi kiểm hạng tử giữa. Mọi phép so trên số nguyên, không có sai số nào để
+lọt. Thứ tự duyệt cố định nên nhánh $a=1$ cho ra **đúng cặp cũ** — và ở đây có một bài
+học nhỏ: bản đầu dựng cây theo thứ tự khác, hình **giống hệt từng toạ độ** mà hai golden
+vẫn đổi, vì `data-el` *là* `TermId`. Cấp danh tính cho cả hai biến trước rồi mới dựng thì
+diff về không.
+
+**`rationalize` chỉ trục được căn bậc hai.** $\frac{1}{\sqrt[3]2}$ bị từ chối, dù công
+thức là cùng một ý ở mọi bậc: $\frac{a}{\sqrt[n]b} = \frac{a\sqrt[n]{b^{\,n-1}}}{b}$. Hai
+nhánh dựng cây tách riêng **cố ý** — nhánh bậc hai giữ nguyên từng chữ của bản cũ, kể cả
+thứ tự cấp danh tính. Mẫu **nhị thức** chứa căn thì từ chối có lời và chỉ sang
+`multiply_by_conjugate`, thay vì im lặng rơi vào "mẫu không chứa căn".
+
+### 31.5 Chốt canh, và phép thử răng
+
+14 chốt canh mới. Rồi bẻ từng chỗ đã sửa và xem test có đỏ không — cả 7 chỗ đều bị bắt.
+Đây không phải nghi thức: M48 đã dạy rằng một test không với tới được nhánh nó nhắm là
+một test xanh vô nghĩa, và cách duy nhất biết được là **thử làm hỏng**.
+
+---
+
+## 32. Hàm tổ hợp, và bộ bốc điểm thứ ba (M56)
+
+Engine nhắm Olympiad Combinatorics mà `n!` chết ở parser. Đây là hạng mục đầu tiên của
+loạt mở ngữ pháp (M56–M61), và nó dựng hai thứ mà mọi hạng mục sau đứng lên: **một biến
+thể nút cho cả họ hàm**, và **một bộ bốc điểm mới**.
+
+### 32.1 Một biến thể, một bảng — vì kiểu nút mới đắt
+
+Mỗi kiểu nút mới phải đi qua đúng sáu chỗ: `expr` (biến thể, `children`, `withChildren`,
+`same`, `totalDegree`, `varsOf`, `needsRealEval`), `parse` (nhánh `atom`, `PLAIN_PREC`,
+`toPlain`, `unparse`), `typeset` (biến thể `Box`, `measure`, `place`, `toBox`, `PREC`),
+`check` (`evalAt`, `evalReal`), `rules`, và bảng ưu tiên. `layout` với `choreography` thì
+**miễn phí** — chúng làm việc trên hộp và `TermId`, không trên `Expr['k']`.
+
+Dựng `fact`, `binom`, `perm`, rồi sau này `log`, `sin`, `exp` thành sáu biến thể là trả
+cái giá ấy sáu lần. Nên trả **một lần**:
+
+```ts
+| ({ readonly k: 'fn'; readonly name: FnName; readonly args: readonly Expr[] } & WithId)
+```
+
+`FnName` là union **đóng**, còn mọi thứ riêng của từng hàm — arity, cú pháp mặt, cách in
+chữ trơn, cách tính — nằm ở bảng trong `functions.ts`. Hàm thứ bảy là **một dòng bảng**.
+Đây là lý do M56 đứng trước M61 dù M61 mới là thứ được gọi tên.
+
+Cách **vẽ** thì cố ý không ở bảng: nó cần kiểu `Box` của `typeset.ts`, mà `typeset` đã
+import từ `expr` — để cách vẽ vào bảng là dựng một vòng import.
+
+### 32.2 `C(` không mơ hồ, và lý do là một quyết định cũ
+
+`C` và `A` cũng là tên biến hợp lệ. Không mơ hồ, vì engine **cấm nhân ngầm** từ §3.3:
+một biến không bao giờ đứng sát dấu ngoặc mở, nên `C(` chỉ có thể là lời gọi hàm. Một
+ràng buộc đặt ra vì lý do khác hẳn, trả cổ tức ở đây.
+
+Chỗ **thật sự** mơ hồ là dấu `!`, vì `!=` là toán tử quan hệ. Quy tắc: `!` chỉ là giai
+thừa khi ký tự ngay sau **không** phải `=`, và không bỏ qua khoảng trắng trước nó. Hệ quả
+phải nói ra: `n!=3` đọc thành $n \ne 3$; muốn "$n! = 3$" thì viết dấu cách.
+
+### 32.3 Bộ bốc điểm thứ ba — và vì sao nó là chốt canh, không phải tiện nghi
+
+Hai bộ kiểm cũ **đều chết** với giai thừa:
+
+- $\mathbb{F}_p$: $n!$ với $n$ là một thặng dư ngẫu nhiên cỡ $10^9$ là câu vô nghĩa.
+- Thực: bốc trong $[-4,-0{,}3]\cup[0{,}3,4]$, toàn số **không nguyên** ⇒ `fact` trả
+  `null` ở **mọi** điểm.
+
+Đo bằng cách tắt bộ nguyên đi rồi chạy lại cả năm luật:
+
+```
+factorial_step       unchecked=1  không tìm được điểm nào xác định
+binom_to_factorial   unchecked=1  không tìm được điểm nào xác định
+pascal               unchecked=1  không tìm được điểm nào xác định
+binom_absorb         unchecked=1  không tìm được điểm nào xác định
+```
+
+Tức **vàng thường trực trên mọi bài tổ hợp** — đúng thất bại M45, và là cách nhanh nhất
+để người ta ngừng đọc mọi cảnh báo. Bộ kiểm phải **kiểm được**, không chỉ phải trung
+thực; trung thực một mình là chưa đủ.
+
+Nên `sameValueInteger` bốc số nguyên trong $[0, 12]$: đủ nhỏ để $12!$ còn chính xác từng
+đơn vị (quá $18!$ thì `number` làm tròn, và lúc ấy phép so sẽ báo "khớp" cho hai thứ
+không bằng nhau), đủ rộng để hai đa thức khác nhau bậc $\le 12$ không trùng nhau ở mọi
+điểm. Vẫn tính bằng `evalReal` chứ không bằng một bộ đánh giá song song — điểm thì nguyên
+nhưng biểu thức quanh nó vẫn có thể có căn và phân số, và hai bộ đánh giá là hai chỗ để
+lệch nhau.
+
+`sameValue` nay hỏi **ba** sân, và thứ tự hỏi quan trọng: số nguyên → thực → $\mathbb{F}_p$.
+$C_n^k$ *có* tính được trên $\mathbb{F}_p$ khi $n$ là hằng, nhưng đường ấy im lặng đúng ở
+chỗ nguy hiểm nhất — $n$ ký hiệu.
+
+Nó có răng thật, và răng nói bằng số cụ thể:
+
+```
+pascal (bẻ thành C(n−1,k−1) + C(n−1,k+1)):
+  khác nhau tại k=6, n=12: 924 ≠ 792
+```
+
+**Không có hợp đồng kiểm thứ bảy.** Sáu hợp đồng của §6.1 giữ nguyên; thứ thêm vào là một
+*sân*, không phải một *câu hỏi*. Phân biệt ấy đáng giữ, vì cùng bộ bốc điểm này sẽ phục
+vụ $\Sigma$ (M57) và số mũ ký hiệu (M58) mà không phải khai thêm gì.
+
+### 32.4 Chỗ quét bỏ qua `guard` là một lỗ im lặng
+
+Phép quét ngẫu nhiên trước M56 **bỏ nguyên bước** khi luật khai `guard`, với lý lẽ "luật
+chỉ hứa đúng trong điều kiện của nó". Lý lẽ đúng, kết luận sai: `sameValue` **nhận được**
+`guard` và tự bỏ những điểm vi phạm. Bốn trong năm luật M56 đều có `guard`, nên chúng sẽ
+được đếm là "đã quét" trong khi giá trị chưa ai kiểm.
+
+Sửa thành truyền `guard` vào bộ kiểm. Thử răng bằng cách bẻ `factorial_step`: phép quét
+bắt được, và bắt ở cả những biểu thức sinh ngẫu nhiên sâu năm tầng. Chỗ bỏ qua là chỗ lỗ
+hổng nằm (M47c).
+
+### 32.5 Sắp chữ: $C_n^k$ phải **chồng cột**
+
+Lối Việt Nam: chỉ số dưới $n$, số mũ trên $k$. Không ghép được từ `sup` và `shift` sẵn có
+— hai tầng ấy phải chồng cột với nhau, tức bề ngang của cả cụm là `max` chứ không phải
+tổng. Ghép hai hộp cũ cho ra $C_n{}^k$, đọc ra một thứ khác. Nên có hộp `subsup`.
+
+Ba lỗi hiển thị, và cả ba chỉ lộ ở **lượt đo và lượt nhìn**, không ở test:
+
+1. **Hai tầng đụng nhau ở sàn cỡ chữ.** `supRise` và `subDrop` mỗi cái chỉ nhìn *một*
+   tầng nên không biết tầng kia ở đâu. Ở cỡ thường thì thừa chỗ; $C_n^k$ lồng trong chỉ số
+   dưới của một $C_n^k$ khác đẩy cả hai xuống `SIZE_FLOOR` và chúng chồng $0{,}07$ đơn vị.
+   Phải có một chỗ nhìn **cả hai** rồi đẩy đều ra hai phía.
+2. **Dấu `!` không có trong bảng bề ngang** nên rơi vào $0{,}5$ em, dôi $0{,}22$ — đủ để
+   $n!^2$ vẽ ra số mũ trôi khỏi dấu `!`, đọc thành hai vật rời nhau.
+3. **Chữ hoa rộng hơn chữ thường**, mà bảng ước đều $0{,}5$ em cho mọi chữ cái. $C$ trong
+   KaTeX_Main rộng $0{,}722$ em: ước thiếu đẩy cả hai tầng chỉ số lùi vào trong, và trên
+   trang thì số mũ **đè lên** chữ $C$. Suốt bốn hạng mục không ai thấy, vì mọi biến của
+   kho đều là chữ thường — lỗi ngủ cho tới khi một chữ hoa làm **gốc** của một cụm.
+
+Không golden nào đổi vì cả kho chưa có biểu thức nào chứa biến viết hoa.
+
+### 32.6 Điều kiện hiển nhiên đúng thì **im**
+
+$C_5^2$ khai "$0 \le 2 \le 5$" là một dòng đỏ nói một chuyện ai cũng thấy. Bỏ khi tính ra
+được và thoả; có biến thì luôn in, vì engine không biết miền. Tiền lệ có sẵn ở
+`rationalize`, và lý lẽ là M45: chữ đỏ thường trực vô ích giết chữ đỏ thật.
+
+Ngược lại, `binom_symmetry` **không** khai điều kiện nào — nó đúng ở mọi $k$ nguyên nhờ
+quy ước $C_n^k = 0$ ngoài $[0,n]$, vì ở đó cả hai vế cùng bằng $0$. Quy ước ấy cũng là
+thứ làm `pascal` đúng tại $k = 0$.
+
+---
+
+## 33. $\Sigma$, $\Pi$, và construct ràng buộc biến đầu tiên (M57)
+
+### 33.1 Cả hạng mục gói trong một hàm
+
+`varsOf`. Trước M57 nó là ba dòng — "mọi nút `var`" — vì engine không có construct nào
+ràng buộc tên. $\sum_{k=1}^{n} k$ đổi chuyện đó, và bỏ sót chỗ trừ làm **hai** thứ hỏng
+cùng lúc, cả hai đều im lặng:
+
+- `maxVars` đếm thừa, nên một bài hai ẩn bị từ chối vì "quá 6 biến";
+- bộ kiểm bốc một giá trị cho $k$ rồi truyền vào `evalReal`, nơi vòng lặp của `big`
+  **đè lên nó**. Giá trị bốc ra bị bỏ đi lặng lẽ, và phép kiểm **vẫn xanh** — nhưng nó
+  xanh vì một lý do khác với lý do người ta tưởng.
+
+Cái thứ hai là loại lỗi tệ nhất kho này có thể mắc, vì không chốt canh hành vi nào bắt
+được: phép quét ngẫu nhiên chạy qua và không kêu gì. Đo được: bẻ đúng dòng trừ ấy thì
+**chỉ** hai chốt canh khai thẳng về phạm vi đỏ lên, còn 132 chốt canh còn lại xanh hết.
+Đó là lý do hai chốt canh ấy tồn tại và tại sao chúng khẳng định `varsOf` chứ không
+khẳng định một hệ quả của nó.
+
+Ba chỗ phải đúng, và cả ba đều là chỗ dễ sai:
+
+| | |
+|---|---|
+| **thân** | trừ `v` ra |
+| **hai cận** | **không** trừ — $\sum_{k=1}^{k}$ thì cận trên là một $k$ khác, tự do |
+| **lồng nhau** | mỗi tầng ràng buộc tên của nó, không phải một tập chung |
+
+Trùng tên thì **từ chối ở parser**: $\sum_k$ lồng trong $\sum_k$. Đổi tên tự động là một
+mẹo, và mẹo ở tầng ngữ pháp là chỗ lỗi nằm — tác giả gõ `k`, đọc lại thấy `k'` mà không
+hiểu vì sao, còn `at` của bước sau thì trỏ vào một cái tên chưa từng gõ.
+
+Kèm theo là `substituteVar` chuyển từ `model.ts` ra `expr.ts` và học phạm vi: nó không
+thò vào thân một $\sum$ đã ràng buộc chính tên ấy. Từ M57 cả `rules` lẫn `model` đều cần
+nó, và hai bản chép tay thì bản thứ hai sẽ quên đúng dòng phạm vi này.
+
+### 33.2 Bộ bốc điểm của M56 dùng lại **nguyên si**
+
+$\sum$ chỉ khai được khi hai cận là số nguyên — đúng điều kiện mà `sameValueInteger` của
+M56 cung cấp. Nên M57 **không khai thêm gì**: một dòng trong `needsIntegerEval`, hết.
+
+Đây là cổ tức của quyết định ở §32.3: thứ M56 thêm là một **sân**, không phải một **câu
+hỏi**. Sáu hợp đồng kiểm của §6.1 vẫn là sáu.
+
+Khoảng **rỗng** cho $0$ với tổng và $1$ với tích. Quy ước chuẩn, và nó có việc thật:
+`sum_split` tại $m = b$ sinh ra đúng một khoảng rỗng, nên nếu chỗ này trả `null` thì luật
+ấy hoá ra không kiểm được.
+
+### 33.3 `guard` phải nhận **số nhiều** — và ca buộc nó là `sum_split`
+
+Tách $\sum_{k=a}^{b}$ tại $m$ chỉ đúng khi $a-1 \le m \le b$. Hai bất đẳng thức, mà
+`RuleOutcome.guard` chỉ nhận một. Engine bắt được ngay ở lượt chạy thử:
+
+```
+sum_split tại "" của Σ(k=1..n) k: khác nhau tại n=1: 1 ≠ 6
+```
+
+Ở $n=1$ vế trái là $1$, còn vế phải là $\sum_1^3 + \sum_4^1 = 6 + 0$.
+
+Gói hai điều kiện vào một biểu thức — chẳng hạn $(b-m)(m-a+1) \ge 0$ — thì **đúng tình
+cờ**: nó cũng đúng khi cả hai thừa số cùng âm. Mã hoá hai điều kiện thành một là đúng
+loại mẹo engine này tránh ở mọi chỗ khác, nên `Guard` thành `Guards = Guard | Guard[]`,
+và `guardHolds` đòi **mọi** điều kiện cùng thoả.
+
+Rẻ hơn tưởng: `model.ts` chỉ chuyển tiếp, còn `check.ts` gom hai kiểu về một qua
+`guardList()`.
+
+### 33.4 `sum_expand` là cầu nối, không phải tiện nghi
+
+Không có nó thì $\Sigma$ là một **ốc đảo**: cả 47 luật cũ đều không áp được vào một nút
+`big`. Nó viết hết các hạng tử khi hai cận là số, và từ đó mọi thứ trở lại là `add`
+thường.
+
+Trần sáu hạng tử — không phải vì sáu là con số thiêng, mà vì bảy trở lên thì dòng đụng
+trần bề ngang, và **để trần kích thước từ chối thì đúng phân công hơn** là dựng thêm một
+trần ở đây. Cùng lý lẽ với tầng C của M50.
+
+### 33.5 `prod_telescope` nhận dạng bằng cấu trúc
+
+$\prod_{k=a}^{b} \frac{f(k+1)}{f(k)} = \frac{f(b+1)}{f(a)}$. Nhận dạng bằng cách hỏi
+"tử có đúng bằng mẫu sau khi thay $k \to k+1$ không" — một phép so cấu trúc, xác định,
+không có ca nào nó "gần đúng". $\frac{k+2}{k}$ bị từ chối ngay dù nhìn rất giống.
+
+### 33.6 Vẽ
+
+Hộp `big` riêng, không ghép được từ `subsup`: hai cận nằm **trên và dưới** ký hiệu chứ
+không bên phải, nên bề ngang là $\max(\text{glyph}, \text{cận trên}, \text{cận dưới})$
+còn thân đứng bên phải.
+
+`PREC['big'] = 0` — lỏng nhất bảng, vì ký hiệu tổng ăn tới hết thân của nó. Hệ quả:
+$\sum f + g$ luôn vẽ ra $\left(\sum f\right) + g$. Hơi nặng mắt, nhưng $\sum(f+g)$ và
+$\sum f + g$ là hai biểu thức khác nhau mà **không dấu gộp nào** trong ký hiệu $\sum$
+phân biệt được chúng — ngoặc là thứ duy nhất làm việc ấy.
+
+Đo chiều cao trước khi chốt, không ước lượng: $\Sigma$ trơn cao $1{,}51$ ô; $\Sigma$ chồng
+$\Sigma$ trong một phân số — ca xấu nhất viết ra được — cao $2{,}74$ ô. Trần là $3$, nên
+lọt, và lọt có biên chứ không sát nút.
+
+---
+
+## 34. Số mũ ký hiệu, và dấu ba chấm (M58)
+
+### 34.1 Soát trước khi viết — và ba phần tư việc đã xong sẵn
+
+Kế hoạch M58 liệt kê năm món. Lượt soát bằng probe cho thấy **hai trong số đó đã chạy**
+từ M49, vì `pow.exp` là `Expr` nên chúng không bao giờ giả định số nguyên:
+
+| | |
+|---|---|
+| `x^m · x^n → x^{m+n}` | `pow_add` — chạy sẵn |
+| `(x^m)^n → x^{mn}` | `pow_mul` — chạy sẵn |
+
+Viết lại chúng là thêm hai luật trùng nghĩa vào một bảng đã 53 dòng. Chốt canh của M58
+khẳng định thẳng rằng chúng chạy, để lần sau không ai viết lại.
+
+Thiếu là **chiều ngược**: `pow_split` ($x^{m+n} \to x^m x^n$).
+
+### 34.2 $\Sigma$ trả nốt món nợ của dấu ba chấm
+
+$a^n - b^n = (a-b)\left(a^{n-1} + a^{n-2}b + \dots + b^{n-1}\right)$ với $n$ ký hiệu thì
+nhân tử sau cần một dấu ba chấm, và engine **không có nút cho dấu ba chấm**. Trước M57
+đó là lý do `factor_power_difference` từ chối mọi bậc ký hiệu.
+
+Nhưng dấu ba chấm ấy *là* một tổng có chỉ số:
+
+$$a^n - b^n \;=\; (a-b)\sum_{k=0}^{n-1} a^{k} b^{\,n-1-k}$$
+
+Viết thế thì nó có ngữ nghĩa, **kiểm được** (bộ bốc điểm số nguyên thay $n$ bằng $1..12$
+rồi khai tổng ra), và không phải dựng thêm kiểu nút nào. Đây là toàn bộ lý do "nút dấu ba
+chấm" nằm ở mục *cố ý không làm* — không phải vì nó khó, mà vì có thứ tốt hơn thay được.
+
+Hai chi tiết nhỏ mà bỏ qua thì lệch:
+
+- **$x^n - 1$** phải nhận được: $1$ **là** $1^n$, và đó là ví dụ kinh điển nhất của cả
+  họ. Không nhận thì luật từ chối đúng bài người ta mở sách ra để tìm. Nhân tử thứ hai
+  khi ấy in thành $\sum x^k$, không phải $\sum x^k 1^{n-1-k}$ — không dựng nút thừa
+  **khác** với rút gọn lén: ở đây không có gì bị bỏ đi.
+- **Chỉ số mới không được bắt một biến đang có.** $a^k - b^k$ mà lấy luôn tên `k` làm
+  chỉ số thì biến tự do $k$ bị ràng buộc mất — đúng lỗi phạm vi mà M57 dựng cả `varsOf`
+  để tránh. `freshIndex` chọn tên chưa dùng.
+
+`factor_power_sum_odd` thì **từ chối** khi bậc là ký hiệu, và lời từ chối là nội dung:
+tính chẵn/lẻ của $n$ quyết định hẳn câu trả lời — $n$ lẻ phân tích được, $n$ chẵn thì
+không ($a^2+b^2$) — mà engine không biết chẵn lẻ của một ký hiệu. Đúng tiền lệ
+`pow_both_sides`: chỗ nào tính chẵn lẻ đổi kết luận thì chỗ ấy phải từ chối.
+
+### 34.3 Một lỗi ngủ từ M47b
+
+`substitute` duyệt cây bằng một `switch` viết tay liệt kê `add`/`mul`/`pow`/`div`/`rel`,
+rồi `default: return e`. Nên nó **im lặng bỏ qua** `abs`, `root`, và (từ M56/M57) `fn`,
+`big`. Hậu quả đo được:
+
+```
+sqrt(x) + 1   ✗ không thấy biến "x" trong cây con này
+abs(x) + 1    ✗ không thấy biến "x" trong cây con này
+x + 1         ✓ (4 + 1)
+```
+
+Lời từ chối không chỉ sai, nó **nói ngược sự thật**: biến nằm ngay đó. Lỗi này có từ
+M47b — năm hạng mục — và không ai gặp vì chưa bài nào thế vào trong một dấu căn. M57 làm
+nó lộ ra vì `big` là kiểu nút thứ tư bị bỏ quên.
+
+Chữa bằng `children`/`withChildren`, vốn **đầy đủ theo kiến trúc** nên không quên được,
+cộng một dòng phạm vi cho `big`. Bài học chung: một `switch` viết tay trên `Expr['k']` là
+một danh sách phải bảo trì tay, và mọi danh sách phải bảo trì tay đều sẽ cũ. Kiểu
+exhaustive của TypeScript bắt được các `switch` **có kiểu trả về đầy đủ**; nó không bắt
+được một `default` nuốt mọi thứ.
+
+### 34.4 `pow()` chuẩn hoá, nên mọi chỗ dựng cây phải đi qua nó
+
+`replaceIndex` (M57) dựng lại cây bằng `withChildren`, tức đi vòng qua hàm dựng. Kết quả:
+`sum_expand` trên $\sum_{k=0}^{3} x^k$ cho ra `x^0 + x^1 + x^2 + x^3` — đúng về giá trị,
+mà hai hạng tử đầu là thứ không ai viết.
+
+`pow()` vốn chuẩn hoá $x^1 \to x$ và $x^0 \to 1$, và mọi luật khác đều đi qua nó. Cho
+`replaceIndex` đi qua nó nữa thì ra `1 + x + x^2 + x^3`. Danh tính không mất gì: cây ở đó
+đã là bản sao mới toanh, sắp thành hạng tử của dòng sau.
+
+---
+
+## 35. Hệ phương trình, và hợp đồng kiểm thứ bảy (M59)
+
+### 35.1 Hệ là **một `Expr`**, không phải một dòng chứa nhiều `Expr`
+
+```ts
+| ({ readonly k: 'sys'; readonly join: 'and' | 'or'; readonly rels: readonly Expr[] } & WithId)
+```
+
+`children` là các quan hệ, nên `"0"` chỉ vào phương trình đầu và `"0.L"` vào vế trái của
+nó — **toàn bộ máy luật, `replaceAt`, danh tính và choreography chạy nguyên si**. Phương
+án kia ("một dòng chứa nhiều biểu thức") bắt sửa `model`, `layout`, `choreography` và mọi
+luật; phương án này sửa đúng sáu chỗ như mọi kiểu nút khác.
+
+`join` khai từ M59 dù M59 chỉ dùng `'and'`: tập nghiệm bất phương trình (M60) cần `'or'`,
+và thêm một trường vào một nút đã xuất bản thì đắt hơn khai sẵn.
+
+Dấu **chấm phẩy** ngăn các phương trình, vì dấu phẩy đã thuộc về `root(3, x)`, `C(n, k)`
+và `sum(k, 1, n, …)`. Hệ chỉ ở gốc và không lồng nhau: một hệ của các hệ không phải thứ
+ai viết, và cho phép nó là mở một chiều lồng mà không luật nào biết đi trong đó.
+
+### 35.2 `sameSolutionSet` là một phép kiểm **luôn xanh** — và đây là bằng chứng
+
+Bốc một điểm $(x,y)$ ngẫu nhiên thì cả hệ trước lẫn hệ sau đều **sai**, hai bên "đồng
+ý", `agree` tăng. Chốt canh của M59 khẳng định thẳng chuyện đó bằng một hệ **sai hẳn**:
+
+```ts
+sameSolutionSet(  x + 2y = 5 ; 3x − y = 1,
+                  x + 2y = 5 ; 3x − y = 99 )   →   ok: true, verified: true
+```
+
+Một chốt canh luôn xanh là chốt canh không có. Nên phép biến đổi hàng phải hỏi một câu
+khác — và câu ấy có sẵn trong toán: **hiệu hai vế là một hàm**, còn hàm thì `sameValue`
+kiểm được từ M47.
+
+### 35.3 Hợp đồng thứ bảy: `claim`
+
+```ts
+readonly claim?: { readonly left: Expr; readonly right: Expr };
+```
+
+Luật khai một cặp trong đó `left` **đọc ra từ cây sau** còn `right` **dựng từ cây
+trước**, rồi `model` hỏi `sameValue`. Cộng hai phương trình mà quên một vế thì:
+
+```
+bước 1 (cộng hai phương trình):
+  khác nhau tại x=610369400, y=1418865157: 805362135 ≠ 805362150
+```
+
+Bốn luật, bốn khẳng định:
+
+| luật | `left` (từ sau) | `right` (từ trước) |
+|---|---|---|
+| `add_equations` | hiệu hai vế hàng mới | hiệu cũ $+\ \lambda\cdot$ hiệu hàng nguồn |
+| `scale_equation` | hiệu hai vế hàng mới | $\lambda\cdot$ hiệu cũ |
+| `substitute_from` | hiệu hai vế hàng mới | hiệu cũ **sau khi thế** |
+| `drop_equation` | hiệu hai vế hàng bị bỏ | $0$ |
+
+**Kế hoạch M59 nói sai chỗ này, và ghi lại thì đáng hơn là ép cho vừa.** Bản kế hoạch
+viết "không hợp đồng mới, dùng `verify: 'instance'` qua `replaceVar`". `'instance'` thay
+biến trên **toàn** cây, mà phép biến đổi hàng chỉ đụng *một* phương trình — nó không
+vừa. Ép một hợp đồng không vừa là cách tạo ra một phép kiểm đúng hình thức mà rỗng.
+
+### 35.4 Chỗ có răng nhất không nằm ở bộ kiểm
+
+`substitute_from` đòi phương trình nguồn **đã cô lập một ẩn** ($x = t$, với $x$ là một
+biến trần và $t$ không còn $x$). Đây mới là cửa quan trọng: thế một thứ không phải ràng
+buộc là cách nhanh nhất làm hỏng một hệ, và cửa này chặn bằng **cấu trúc** chứ không bằng
+lời hứa.
+
+Cùng họ: `drop_equation` chỉ bỏ được hàng mà hai vế **giống hệt** nhau (`same`), vì bỏ một
+phương trình còn nội dung là mất nghiệm. Và cả hai luật cộng/nhân **từ chối bất đẳng
+thức** — nhân một bất đẳng thức phải xét dấu, mà đó là chuyện của `mul_both_sides`, không
+phải của một phép biến đổi hàng.
+
+`scale_equation` với hệ số chưa chắc khác $0$ thì ghi điều kiện đỏ và khai `guard` — cùng
+cơ chế và cùng lý lẽ với AL-08.
+
+### 35.5 Vẽ: dấu $=$ phải thẳng cột
+
+Hộp `stack` mang theo `lead` — bề ngang phần **trước** dấu quan hệ của từng dòng, đo bằng
+chính bộ sắp chữ sẽ vẽ nó — rồi `place` đẩy mỗi dòng sang phải $\max(\text{lead}) -
+\text{lead}$. Không gióng thì một hệ nhìn như hai dòng rời nhau, và đó không phải chuyện
+thẩm mỹ: cái làm một hệ *đọc được như một hệ* chính là cột dấu bằng.
+
+Ngoặc nhọn vẽ bằng **path**, không phải glyph `{` phóng to — glyph có tỉ lệ cố định nên
+kéo cho cao bằng ba dòng thì nét dày ra và hai cái móc méo hẳn. Cùng lý lẽ với dấu căn từ
+M47b.
+
+Trần mới `maxRelations: 4`, ép ở `model.ts` chứ không chỉ ở TypeBox — bài học M55: một
+trần chỉ khai ở schema là một trần chỉ chặn được một đường vào.
+
+---
+
+## 36. Tập nghiệm, và một lỗ **suýt** không ai thấy (M60)
+
+### 36.1 Chỗ đặt đáp số đã có sẵn từ M59
+
+Lỗ đo được: $x^2-3x+2>0$ phân tích ra $(x-2)(x-1)>0$ rồi **dừng**. Thêm bao nhiêu luật
+cũng vô ích vì không có chỗ cho kết quả rơi vào.
+
+Nhưng chỗ ấy không cần dựng mới: `sys` với `join: 'or'` *là* một tuyển khoảng, và
+`join: 'and'` *là* một khoảng. **Không** có nút `set`/`interval` riêng — một khoảng *là*
+một hội hai bất đẳng thức, và dựng lại nó thành một nút thứ hai là dựng hai lần cùng một
+thứ (đúng lỗi §24.3 đã tránh với hai nghiệm bậc hai).
+
+Ba luật, và chúng chỉ là cách đọc dấu:
+
+| | |
+|---|---|
+| `abs_to_interval` | $\|A\| < a$ thành hội, $\|A\| > a$ thành tuyển |
+| `interval_from_factors` | $(x-r_1)(x-r_2) > 0$ thành hai khoảng ngoài, $< 0$ thành khoảng giữa |
+| `merge_intervals` | hội giữ ràng buộc **chặt** hơn, tuyển giữ ràng buộc **lỏng** hơn |
+
+`interval_from_factors` chỉ nhận **hai** nhân tử. Ba trở lên cho ra một tuyển của các
+hội — hai tầng lồng, không mắt nào đọc nổi trên một dòng. Từ chối có lời thay vì vẽ ra
+một thứ không đọc được.
+
+Vẽ: tuyển nằm **ngang**, nối bằng chữ "hoặc" — đó là cách mọi sách viết một tập nghiệm,
+và một ngoặc nhọn quanh hai nhánh loại trừ nhau đọc ra đúng nghĩa ngược lại.
+
+### 36.2 `sameSolutionSet` **có răng** ở đây — và tương phản mới là điều đáng ghi
+
+Với hệ phương trình (§35.2) nó là một phép kiểm luôn xanh: mọi điểm ngẫu nhiên làm cả
+hai vế cùng sai. Với tập nghiệm thì "thuộc tập nghiệm" là một câu đúng/sai **có nghĩa** ở
+cả hai vế, nên cùng một hàm ấy bắt được sai lệch ngay:
+
+```
+sameSolutionSet( x² − 3x + 2 > 0,  x < 1 )
+  →  ok: false — tập nghiệm khác nhau tại x = 4.6338
+```
+
+Cùng một bộ kiểm mà chỗ này dùng được, chỗ kia không. Đó không phải khiếm khuyết của bộ
+kiểm — nó là hai câu hỏi khác nhau đội lốt một câu.
+
+### 36.3 Lỗ suýt không ai thấy: `unsound: []` vì **chưa ai hỏi**
+
+Hai nhánh cuối của phép kiểm ở `model.ts` hỏi `k === 'rel'`. M60 sinh ra bước đầu tiên
+trong cả lịch sử engine đi từ `rel` sang **`sys`** — và bước ấy không rơi vào nhánh nào:
+
+| | `unsound` |
+|---|---|
+| luật đúng, dispatch cũ | `0` |
+| luật **cố tình sai**, dispatch cũ | `0` |
+| luật **cố tình sai**, dispatch mới | `1` |
+
+Hai dòng đầu giống hệt nhau, và đó là toàn bộ vấn đề: con số $0$ không phân biệt "đã hỏi
+và đúng" với "chưa ai hỏi". Đây đúng loại lỗ mà M47c gọi tên — *chỗ miễn kiểm là chỗ lỗ
+hổng nằm* — và nó chỉ lộ ra khi đi tìm **nhánh nào đã chạy**, không lộ ở kết quả.
+
+Chữa bằng một vị từ `isPredicate(e) = e.k === 'rel' || e.k === 'sys'`, và chốt canh khẳng
+định bằng một luật cố tình sai chứ không bằng một luật đúng — vì một luật đúng cho ra
+cùng con số ở cả hai bên.
+
+### 36.4 Hệ lồng hệ: làm phẳng **cùng phép nối**, không khác
+
+$(A \wedge B) \wedge C$ và $A \wedge B \wedge C$ là một, nên `normalize` làm phẳng —
+cùng chỗ đứng và cùng lý lẽ với `add`/`mul`. Nhưng $(A \vee B) \wedge C$ làm phẳng là đổi
+hẳn nghĩa, nên phép nối phải khớp mới gộp. Một dòng điều kiện, và thiếu nó thì
+`abs_to_interval` áp bên trong một hệ sẽ lặng lẽ biến một tuyển thành một hội.
+
+---
+
+## 37. Hàm siêu việt — sáu dòng bảng (M61)
+
+### 37.1 Cái giá đã trả từ M56
+
+Đặc tả §16 từng khai: *"Không $\sin$, không $\log$. Lúc cần chúng thì đây là dự án khác,
+không phải một phiên bản sau."* Lời ấy đúng với kiến trúc lúc viết — khi mỗi hàm là một
+kiểu nút thì sáu hàm là sáu vòng sửa sáu tệp.
+
+M56 đổi kiến trúc ấy: **một** biến thể `fn` cho cả họ, mọi thứ riêng của từng hàm ở bảng
+`functions.ts`. Nên M61 là sáu dòng bảng, hết. Không kiểu nút mới, không sửa `expr.ts`
+ngoài việc nới union tên, không đụng `check.ts`.
+
+Đó là toàn bộ lý do M56 đứng trước M61 trong kế hoạch dù M61 mới là thứ được gọi tên.
+
+### 37.2 Trường `domain` khai ở M56 có **hình dạng sai** — và M61 là chỗ phát hiện
+
+M56 khai `domain?: (args) => Guard | null` với chú thích *"dùng ở M61"*. Đến lúc dùng thì
+nó thừa: `evalReal` của $\ln$ trả `null` ngay khi đối số $\le 0$ (`Math.log` cho
+`-Infinity`/`NaN`), nên bộ bốc điểm **đã** tự bỏ mọi điểm ngoài miền. Một `Guard` ở đó
+không thêm răng nào, nó chỉ trùng lặp.
+
+Việc còn thiếu là **nói cho người đọc**: $\log(ab) = \log a + \log b$ đúng khi $a>0$ và
+$b>0$, và dòng đỏ ấy là nội dung chứ không phải thủ tục. Nên trường đổi thành
+`domainText`, trả chữ.
+
+Bài học: một trường khai trước cho một hạng mục chưa tới thì đoán được **có cần**, không
+đoán được **hình dạng nào**. Ghi lại chỗ đoán sai thay vì lặng lẽ đổi kiểu.
+
+### 37.3 Điều kiện: chỗ nào cần, chỗ nào **không**
+
+| bước | dòng đỏ |
+|---|---|
+| $\log(xy) \to \log x + \log y$ | $x>0,\ y>0$ |
+| $\log(x^3) \to 3\log x$ | $x>0$ |
+| $\log(2\cdot 3) \to \log 2 + \log 3$ | **không** — hằng dương, hiển nhiên |
+| $e^{\ln x} \to x$ | **không** |
+
+Dòng cuối nghe lạ vì $\ln x$ rõ ràng đòi $x>0$. Nhưng nếu $\ln x$ đã **viết ra được** thì
+điều kiện ấy đã thoả từ dòng trước; điều kiện nằm ở chính dấu $\ln$, không ở bước triệt
+tiêu. Đúng lý lẽ `root_pow` từ M47b, và đây là lần thứ hai nó được dùng.
+
+`log_both_sides` **không từ chối** khi hai vế chưa chắc dương — nó ghi điều kiện, đúng cơ
+chế AL-08. Từ chối thì luật này gần như không bao giờ áp được, vì hai vế thường chứa biến.
+Và nó đi hợp đồng `sameSolutionSet` chứ không phải `implies`: $\ln$ **tăng ngặt**, nên nó
+bảo toàn tập nghiệm chứ không nới rộng như bình phương.
+
+### 37.4 Tập luật **đóng**, mười một dòng
+
+Sáu luật logarit, bốn đồng nhất thức lượng giác có tên, một luật nhóm ★. Hết.
+
+**Không** có "rút gọn biểu thức lượng giác": không gian đồng nhất thức lượng giác vô hạn,
+và một nút bấm nhảy năm bước là đúng thứ làm người học không học được gì (§4). Mười một
+luật này là những đồng nhất thức có tên trong sách, không phải một bộ giải.
+
+Nhận dạng bằng **cấu trúc**: `double_angle` đòi góc có dạng $2\cdot\theta$ như một *tích*,
+`pythagorean_identity` đòi $\sin^2$ và $\cos^2$ của **cùng một góc** so bằng `same`. Không
+có ca nào chúng "gần đúng".
+
+Bộ kiểm ở đây chạy đường **thực**, và nó thoải mái nhất trong cả ba sân: $\sin$ và $\cos$
+xác định ở mọi điểm nên không điểm nào bị bỏ. Đo được: $\sin 2x$ so với $2\sin x\cos x$
+qua, so với $2\sin x\sin x$ đỏ.
+
+### 37.5 Lỗi bề ngang lần thứ ba
+
+`ln` cộng từng chữ ra $1{,}0$ em, glyph thật rộng $0{,}778$ — chữ `l` hẹp bằng nửa chữ
+`n`. Trên trang thấy một khe hở giữa `ln` và dấu ngoặc, đọc thành hai vật rời nhau.
+
+Cùng lớp lỗi với dấu `!` (M56) và chữ hoa ở $C_n^k$ (M56), nhưng cách chữa khác: đo theo
+**cả tên**, không theo từng chữ cái. Chữa từng chữ thì `t`, `r`, `s`, `n`, `e`, `p` đều
+đổi bề ngang, mà chúng có mặt làm **biến** trong golden của kho — hình không đổi một nét
+mà 400 golden phải soát lại. Tên hàm là chuỗi nhiều ký tự **duy nhất** engine này in ra,
+nên một bảng theo tên vừa đủ và không chạm gì khác.
