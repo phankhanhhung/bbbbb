@@ -77,7 +77,7 @@ function occupies(
     return pos?.[0] === row && pos?.[1] === col;
   }
 
-  if (element.type === 'region') {
+  if (element.type === 'region' || element.type === 'path') {
     const cells = (element['cells'] as Offset[] | undefined) ?? [];
     return cells.some(([r, c]) => r === row && c === col);
   }

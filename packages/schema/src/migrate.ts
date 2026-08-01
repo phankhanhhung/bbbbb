@@ -63,6 +63,29 @@ export const MIGRATIONS: readonly Migration[] = [
      */
     apply: (problem) => problem,
   },
+  {
+    from: '1.0.0',
+    to: '1.1.0',
+    summary:
+      'thêm element `path` của board (BD-11) — không đổi dữ liệu bài nào, chỉ đóng dấu phiên bản',
+    /**
+     * **Minor đầu tiên sau freeze**, và bài kiểm tra thật của bộ máy này: từ
+     * `1.0.0` trở đi, mỗi thay đổi schema *phải* đi qua đây, và toàn kho phải
+     * đóng dấu lại được bằng một lệnh.
+     *
+     * Vẫn đồng nhất, và lần này lý do khác ba lần trước: element mới là một
+     * **biến thể mới của union**, nên mọi file cũ vẫn hợp lệ ở schema mới —
+     * không như `cell_overrides` vốn đóng (`additionalProperties: false`) và
+     * bắt buộc phải bump. Nhưng con dấu vẫn phải đổi, vì một file dùng `path`
+     * mà mang dấu `1.0.0` sẽ bị chính schema `1.0.0` từ chối, và người đọc file
+     * không có cách nào khác để biết nó cần bộ đọc nào.
+     *
+     * Chuyển động thật của bước này nằm ở chỗ khác: cửa sổ đọc **trượt**. Từ
+     * đây `0.3.0` ra khỏi cửa sổ, và một file mang dấu ấy phải bị `validate`
+     * chặn ở cửa với `version/unreadable` chứ không đi tiếp vào Player.
+     */
+    apply: (problem) => problem,
+  },
 ];
 
 export interface MigrateResult {

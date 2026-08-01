@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "id": "erdos-szekeres-monotone",
   "statement": {
     "vi": "Cho $n^2+1$ số thực **phân biệt** xếp thành một dãy. Chứng minh rằng luôn tìm được một dãy con đơn điệu (tăng ngặt hoặc giảm ngặt) gồm $n+1$ số. Chứng minh thêm rằng $n^2$ số thì chưa chắc — tức cận này là chặt."

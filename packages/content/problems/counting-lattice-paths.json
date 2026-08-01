@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "id": "counting-lattice-paths",
   "statement": {
     "vi": "Trên bàn $4\\times4$ ô, đi từ ô góc trên trái tới ô góc dưới phải, mỗi bước chỉ được sang phải hoặc xuống dưới một ô. Hỏi có bao nhiêu đường đi?"

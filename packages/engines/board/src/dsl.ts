@@ -37,6 +37,8 @@ export interface BoardDerived {
   readonly tiles: readonly ElementValue[];
   readonly pieces: readonly ElementValue[];
   readonly regions: readonly ElementValue[];
+  /** BD-11 — đường đi. Mỗi cái phơi `length` và `color_class`. */
+  readonly paths: readonly ElementValue[];
   readonly rows: number;
   readonly cols: number;
   readonly lattice: Lattice;
@@ -142,7 +144,19 @@ function computeDerived(scene: Scene): BoardDerived {
       }),
     );
 
-  return { cells, tiles, pieces, regions, rows, cols, lattice, wrap, occupancy };
+  // BD-11 — đường đi đọc được từ DSL bằng **độ dài** và màu. Không phơi cả dãy ô:
+  // một `invariant` đọc "đường này đi qua ô (2,3)" là một phát biểu về *một* bài
+  // chứ không phải một bất biến, và DSL chỉ nên nói những thứ đếm được.
+  const paths = scene.elements
+    .filter((e) => e.type === 'path')
+    .map((e) =>
+      element(e.id, {
+        length: ((e['cells'] as Offset[] | undefined) ?? []).length,
+        color_class: Number(e.color_class ?? 0),
+      }),
+    );
+
+  return { cells, tiles, pieces, regions, paths, rows, cols, lattice, wrap, occupancy };
 }
 
 /**
@@ -196,6 +210,7 @@ export function boardEnvironment(scene: Scene): DslEnvironment {
       tiles: derived.tiles,
       pieces: derived.pieces,
       regions: derived.regions,
+      paths: derived.paths,
       rows: derived.rows,
       cols: derived.cols,
     },

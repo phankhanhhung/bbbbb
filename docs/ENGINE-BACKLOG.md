@@ -6,7 +6,8 @@
 
 ### 0.1 Nó không được chạy trước G-C
 
-> **G-C đã đóng 2026-08-01** (schema 1.0.0, theo chỉ định chính chủ — hồ sơ đóng
+> **G-C đã đóng 2026-08-01** (schema freeze 1.0.0, theo chỉ định chính chủ; nay
+> đã ở `1.1.0` sau minor đầu tiên của M74 — hồ sơ đóng
 > và rủi ro còn lại ở `PLAN-P1.md` §10). Điều kiện chặn của mục này vì thế đã
 > hết hiệu lực: danh sách dưới đây từ nay là hàng đợi **mở**, lấy theo thứ tự
 > đề xuất §1 hoặc theo chỉ định. `PRD-07` vẫn nguyên: không thêm engine chỉ để
@@ -127,6 +128,14 @@ bằng toạ độ.
   một pha `show` hiện được nét mà không hiện lại cả ô. Kèm `sieve-primes-100` viết
   lại: bốn số nguyên tố sàng mang bốn màu, nét gạch mang màu của ước nguyên tố nhỏ
   nhất.
+- **BD-11 ✅ (M74)** — **đường đi hạng nhất**: element `path` với `cells` là dãy ô,
+  vẽ nối tâm, kèm `arrow`/`dashed`/`label`. Mỗi bước có id riêng
+  `<pathId>-step-<i>`, nên anchor và choreography trỏ được vào *nước đi thứ ba* —
+  đúng khả năng mà cách hack cũ (một `piece` glyph mũi tên mỗi ô) có và một
+  `polyline` liền mạch thì không. `lattice-path-binary-word` viết lại bằng nó, song
+  ánh nay ghép `route-step-i` với `w_i`. Kèm **bump schema `1.0.0` → `1.1.0`**:
+  minor đầu tiên sau freeze, migration đồng nhất, và lần đầu cửa sổ đọc trượt
+  (`0.3.0` ra khỏi cửa sổ vĩnh viễn).
 - **BD-09 ✅ (M30)** — **quân ghép trên lưới phi vuông**: `LATTICE_SHAPES` +
   `latticeTileCells` ở `lattice.ts`, hình `lozenge`, trường `dir` trên `tile`.
   `triangle-lozenge-parity` nay là `challenge`.

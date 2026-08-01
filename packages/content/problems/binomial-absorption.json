@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "id": "binomial-absorption",
   "statement": {
     "vi": "Trong một tổng tổ hợp, hạng tử $k\\,C_n^k$ trông như hai vật rời nhau. Nó không phải: hệ số $k$ **hút được** vào trong ký hiệu, và cái ra là $n\\,C_{n-1}^{k-1}$. Đây là mẹo chủ lực của mọi tổng tổ hợp có hệ số."

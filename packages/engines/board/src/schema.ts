@@ -15,6 +15,9 @@ export const BOARD_LIMITS = {
   maxTiles: 400,
   maxPieces: 200,
   maxRegions: 32,
+  maxPaths: 16,
+  /** Số đỉnh của một đường. Một chu trình Hamilton trên bàn 8×8 cần 65. */
+  maxPathCells: 200,
 } as const;
 
 /** BD-01: preset tham số hoá — công cụ chứng minh chủ lực của dạng tiling. */
@@ -233,10 +236,37 @@ export const TileElement = defineElement('tile', {
   flip: Type.Optional(Type.Boolean({ default: false })),
 });
 
+/**
+ * BD-11 — **đường đi trên bàn**, một element hạng nhất (M74).
+ *
+ * Trước nó, một lời giải muốn vẽ đường đi phải xếp từng ô một `piece` mang glyph
+ * mũi tên (`lattice-path-binary-word` làm đúng thế). Cách ấy trông gần đúng và
+ * sai ở ba chỗ không nhìn ra ngay: mũi tên nằm **trong ô** chứ không nối hai ô,
+ * nên nước đi cuối cùng không có chỗ đứng; một quân là một *vật ở một ô*, nên
+ * choreography kéo nó đi như kéo một quân cờ chứ không như vẽ thêm một đoạn; và
+ * `data-el` của cả đường là sáu id rời, nên anchor "cả đường đi" phải liệt kê tay
+ * từng cái.
+ *
+ * `cells` là **dãy ô đi qua**, và đường vẽ nối **tâm** các ô ấy. Không đòi hai ô
+ * liên tiếp phải kề nhau: đường đi của quân mã không kề, và một luật đòi kề sẽ
+ * chặn đúng họ bài mà element này sinh ra để phục vụ.
+ *
+ * `arrow` đặt mũi tên ở đầu cuối — có hướng hay không là **nội dung**, không phải
+ * trang trí: một chu trình Hamilton thì không, một đường đi từ góc này sang góc
+ * kia thì có. `dashed` cho đường **giả định** (nhánh phản chứng), cùng quy ước nét
+ * đứt mà các engine khác đã dùng.
+ */
+export const PathElement = defineElement('path', {
+  cells: Type.Array(Coord, { minItems: 2, maxItems: BOARD_LIMITS.maxPathCells }),
+  arrow: Type.Optional(Type.Boolean({ default: false })),
+  dashed: Type.Optional(Type.Boolean({ default: false })),
+  label: Type.Optional(Type.String({ maxLength: 32 })),
+});
+
 /** Nhóm ô có viền đậm — dùng để khoanh "vùng đang xét" trong lập luận. */
 export const RegionElement = defineElement('region', {
   cells: Type.Array(Coord, { minItems: 1 }),
   label: Type.Optional(Type.String({ maxLength: 32 })),
 });
 
-export const BoardElement = Type.Union([PieceElement, TileElement, RegionElement]);
+export const BoardElement = Type.Union([PieceElement, TileElement, RegionElement, PathElement]);

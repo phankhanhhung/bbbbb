@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "id": "euclid-game-two-piles",
   "statement": {
     "vi": "Hai đống sỏi có $25$ và $7$ viên. Mỗi lượt, người đi chọn một đống rồi bốc khỏi đống ấy một **bội số dương của số viên ở đống kia** (không được bốc quá số viên đang có). Ai không còn nước đi thì thua. Hỏi ai có chiến lược thắng?"

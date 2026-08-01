@@ -8,10 +8,11 @@ import {
   BoardConfig,
   PieceElement,
   RegionElement,
+  PathElement,
   TileElement,
   type BoardConfig as BoardConfigType,
 } from './schema.js';
-import { cellId, strikeId } from './ids.js';
+import { cellId, pathStepId, strikeId } from './ids.js';
 import { latticeOf } from './geometry.js';
 import {
   cellCount,
@@ -61,6 +62,7 @@ export const boardSchemaFragment: EngineSchemaFragment = {
     piece: PieceElement,
     tile: TileElement,
     region: RegionElement,
+    path: PathElement,
   },
   bounds: { engine: 'board', limits: BOARD_LIMITS },
   resolveValidator: resolveBoardValidator,
@@ -90,6 +92,16 @@ export const boardSchemaFragment: EngineSchemaFragment = {
           ids.add(strikeId(r, c));
         }
       }
+    }
+
+    // BD-11 — mỗi bước của mỗi đường có danh tính riêng, và nó phải **tra cứu
+    // được**: anchor trỏ vào "nước đi thứ ba" và pha choreography hiện dần từng
+    // bước đều đi qua đây. Chốt canh "mọi đích của mọi pha phải tồn tại" bắt ngay
+    // nếu quên.
+    for (const element of scene.elements) {
+      if (element.type !== 'path') continue;
+      const cells = (element['cells'] as unknown[] | undefined) ?? [];
+      for (let i = 0; i + 1 < cells.length; i += 1) ids.add(pathStepId(element.id, i));
     }
     return ids;
   },
@@ -178,6 +190,17 @@ export const boardSchemaFragment: EngineSchemaFragment = {
       });
     }
 
+    const paths = scene.elements.filter((e) => e.type === 'path');
+    if (paths.length > BOARD_LIMITS.maxPaths) {
+      issues.push({
+        code: 'bounds/too-many-paths',
+        severity: 'error',
+        message: `${paths.length} đường, vượt trần ${BOARD_LIMITS.maxPaths}`,
+        path: `${path}/elements`,
+      });
+    }
+    issues.push(...checkPathCells(scene, config, path));
+
     issues.push(...checkTilePlacement(scene, config, path));
     issues.push(...checkTilePose(scene, config, path));
     issues.push(...checkWrap(scene, config, path));
@@ -185,6 +208,63 @@ export const boardSchemaFragment: EngineSchemaFragment = {
     return issues;
   },
 };
+
+/**
+ * Ô của một đường phải nằm **trên bàn**, và hai ô liên tiếp phải **khác nhau**
+ * (BD-11).
+ *
+ * Không đòi hai ô liên tiếp phải *kề* nhau: đường đi của quân mã không kề, và một
+ * luật đòi kề sẽ chặn đúng họ bài mà element này sinh ra để phục vụ. Nhưng lặp lại
+ * cùng một ô hai lần liên tiếp thì vẽ ra một đoạn dài $0$ — vô hình, và gần như
+ * luôn là gõ nhầm.
+ *
+ * Ô **khuyết** thì chỉ cảnh báo, không chặn: một đường đi *qua chỗ khoét* có thể
+ * chính là thứ lời giải muốn chỉ ra là bất khả.
+ */
+function checkPathCells(
+  scene: Scene,
+  config: BoardConfigType,
+  path: string,
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const lattice = latticeOf(config);
+
+  scene.elements.forEach((item, i) => {
+    if (item.type !== 'path') return;
+    const cells = (item['cells'] as Array<[number, number]> | undefined) ?? [];
+    const where = `${path}/elements/${i}`;
+
+    cells.forEach(([r, c], k) => {
+      if (!inBoard(lattice, config.rows, config.cols, r, c)) {
+        issues.push({
+          code: 'bounds/path-cell-out-of-board',
+          severity: 'error',
+          message: `Đường "${item.id}" đi qua ô (${r}, ${c}) nằm ngoài bàn ${config.rows}×${config.cols}`,
+          path: `${where}/cells/${k}`,
+        });
+      } else if (isHole(config, r, c)) {
+        issues.push({
+          code: 'bounds/path-cell-on-hole',
+          severity: 'warning',
+          message: `Đường "${item.id}" đi qua ô khuyết (${r}, ${c})`,
+          path: `${where}/cells/${k}`,
+          hint: 'Có chủ ý thì bỏ qua — một đường đi qua chỗ khoét có thể là chính điều cần chỉ ra',
+        });
+      }
+      const prev = cells[k - 1];
+      if (prev && prev[0] === r && prev[1] === c) {
+        issues.push({
+          code: 'bounds/path-repeats-cell',
+          severity: 'error',
+          message: `Đường "${item.id}" lặp lại ô (${r}, ${c}) ngay sau chính nó — đoạn dài 0, không vẽ ra gì`,
+          path: `${where}/cells/${k}`,
+        });
+      }
+    });
+  });
+
+  return issues;
+}
 
 /**
  * Bàn dán mép chỉ có nghĩa ở đâu, và đụng vào cái gì (BD-05).

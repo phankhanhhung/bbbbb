@@ -356,3 +356,100 @@ describe('nhãn vùng', () => {
     expect(svg).toContain('paint-order="stroke"');
   });
 });
+
+/**
+ * BD-11 — đường đi hạng nhất (M74).
+ *
+ * Thứ nó thay thế: sáu quân mang glyph mũi tên xếp trên sáu ô. Nên mọi khẳng định
+ * dưới đây đều đo đúng chỗ cách cũ **không làm được**.
+ */
+describe('BD-11 — đường đi', () => {
+  const withPath = (extra: Record<string, unknown> = {}, cells = [[2, 0], [2, 1], [1, 1]]) =>
+    ({
+      engine: 'board',
+      config: { rows: 3, cols: 3 },
+      elements: [{ id: 'route', type: 'path', color_class: 1, cells, ...extra }],
+    }) as never;
+
+  const groupOf = (scene: never, context = ctx) =>
+    renderer
+      .render(scene, context)
+      .flatMap((g) => g.children ?? [])
+      .find((n) => n.key === 'route');
+  const nodesOf = (scene: never, context = ctx) =>
+    (groupOf(scene, context)?.children ?? []) as ReadonlyArray<{
+      tag: string;
+      key?: string;
+      attrs: Record<string, unknown>;
+    }>;
+
+  it('vẽ **một đoạn một node**, nối tâm các ô', () => {
+    const nodes = nodesOf(withPath());
+    expect(nodes.map((n) => n.tag)).toEqual(['polyline', 'polyline']);
+    expect(nodes[0]!.attrs['points']).toBe('5,25 15,25');
+    expect(nodes[1]!.attrs['points']).toBe('15,25 15,15');
+  });
+
+  it('mỗi bước có **danh tính riêng** — đây là chỗ nó thắng cách hack cũ', () => {
+    // Sáu quân mũi tên cho phép trỏ vào *nước đi thứ ba*; một `polyline` liền một
+    // mạch thì không. Bài song ánh ghép từng nước với từng chữ cần đúng khả năng ấy.
+    expect(nodesOf(withPath()).map((n) => n.key)).toEqual(['route-step-0', 'route-step-1']);
+
+    const ids = boardSchemaFragment.implicitElementIds(withPath());
+    expect(ids.has('route-step-0')).toBe(true);
+    expect(ids.has('route-step-1')).toBe(true);
+    // Ba ô ⇒ **hai** bước. Khai dư một id thì chốt canh ANC-01 đòi mực cho một
+    // thứ không được vẽ ra.
+    expect(ids.has('route-step-2')).toBe(false);
+  });
+
+  it('nhấn cả đường **và** nhấn một bước đều thấy được', () => {
+    // Bỏ vế "cả đường" thì anchor trỏ vào `route` không làm gì cả — và ANC-01 đã
+    // bắt đúng lỗi ấy ở lần chạy đầu.
+    const plain = nodesOf(withPath());
+    const whole = nodesOf(withPath(), { ...ctx, highlight: new Set(['route']) });
+    expect(whole[0]!.attrs['stroke']).not.toBe(plain[0]!.attrs['stroke']);
+    expect(whole[1]!.attrs['stroke']).not.toBe(plain[1]!.attrs['stroke']);
+
+    const one = nodesOf(withPath(), { ...ctx, highlight: new Set(['route-step-1']) });
+    expect(one[1]!.attrs['stroke']).not.toBe(plain[1]!.attrs['stroke']);
+    expect(one[0]!.attrs['stroke']).toBe(plain[0]!.attrs['stroke']);
+  });
+
+  it('mũi tên chỉ khi khai, và nó **không** đứt quãng', () => {
+    expect(nodesOf(withPath()).length).toBe(2);
+    const arrowed = nodesOf(withPath({ arrow: true, dashed: true }));
+    expect(arrowed.length).toBe(3);
+    // Nét đứt trên hai nét chụm đọc thành hai gạch rời chứ không thành đầu nhọn.
+    expect(arrowed[0]!.attrs['stroke-dasharray']).not.toBe('none');
+    expect(arrowed[2]!.attrs['stroke-dasharray']).toBe('none');
+  });
+
+  it('hộp của một **bước** là hai ô đầu mút; hộp của cả đường là mọi ô', () => {
+    expect(boardRenderer.elementBoxes!(withPath(), 'route-step-0')).toHaveLength(2);
+    expect(boardRenderer.elementBoxes!(withPath(), 'route')).toHaveLength(3);
+  });
+
+  it('ô ngoài bàn là lỗi, ô lặp lại là lỗi, ô khuyết chỉ là cảnh báo', () => {
+    const codes = (scene: never) =>
+      boardSchemaFragment.checkBounds!(scene, '/s').map((i) => i.code);
+
+    expect(codes(withPath({}, [[0, 0], [9, 9]]))).toContain('bounds/path-cell-out-of-board');
+    // Lặp ô ngay sau chính nó ⇒ một đoạn dài 0, vô hình, và gần như luôn là gõ nhầm.
+    expect(codes(withPath({}, [[0, 0], [0, 0]]))).toContain('bounds/path-repeats-cell');
+    // Còn đi qua chỗ khoét thì **có thể chính là điều cần chỉ ra** — cảnh báo, không chặn.
+    const holed = {
+      engine: 'board',
+      config: { rows: 3, cols: 3, holes: [[1, 1]] },
+      elements: [{ id: 'route', type: 'path', cells: [[0, 0], [1, 1]] }],
+    } as never;
+    const issues = boardSchemaFragment.checkBounds!(holed, '/s');
+    expect(issues.map((i) => i.code)).toContain('bounds/path-cell-on-hole');
+    expect(issues.every((i) => i.severity === 'warning')).toBe(true);
+  });
+
+  it('không đòi hai ô liên tiếp phải **kề** nhau — đường quân mã là hợp lệ', () => {
+    // Một luật đòi kề sẽ chặn đúng họ bài mà element này sinh ra để phục vụ.
+    expect(boardSchemaFragment.checkBounds!(withPath({}, [[0, 0], [2, 1]]), '/s')).toEqual([]);
+  });
+});

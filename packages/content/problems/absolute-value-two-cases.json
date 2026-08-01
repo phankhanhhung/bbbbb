@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "id": "absolute-value-two-cases",
   "statement": {
     "vi": "Phương trình chứa dấu giá trị tuyệt đối tách thành hai nhánh, và **mỗi nhánh mang theo điều kiện của nó**. Bỏ quên điều kiện là cách nhanh nhất để nhận một nghiệm không tồn tại. Giải $|x-2| = 3x$."

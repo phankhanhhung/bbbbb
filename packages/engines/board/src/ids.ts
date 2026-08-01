@@ -39,3 +39,20 @@ export function parseStrikeId(id: string): { row: number; col: number } | null {
   if (!match) return null;
   return { row: Number(match[1]), col: Number(match[2]) };
 }
+
+/**
+ * Id của **một bước** trong một đường đi (BD-11, M74).
+ *
+ * Cả đường có một id (id của element), và mỗi đoạn nối hai ô liên tiếp có id
+ * riêng. Không phải cho đủ bộ: đó là chỗ element này **thắng** cách hack cũ mà
+ * không mất gì. Sáu quân mang glyph mũi tên cho phép trỏ vào *nước đi thứ ba*, và
+ * một bài song ánh ghép từng nước với từng chữ cái cần đúng khả năng ấy. Một
+ * `polyline` liền một mạch thì không trỏ vào giữa được, nên đường vẽ ra thành
+ * **từng đoạn**, mỗi đoạn một `data-el`.
+ *
+ * Hệ quả kèm theo: choreography hiện dần từng bước — thứ mà sáu quân cờ làm được
+ * nhưng một đường liền thì không.
+ */
+export function pathStepId(pathId: string, index: number): string {
+  return `${pathId}-step-${index}`;
+}

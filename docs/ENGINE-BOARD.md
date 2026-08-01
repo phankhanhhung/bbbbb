@@ -433,13 +433,52 @@ Lưới vuông vẫn vẽ `<rect>`, không phải `<polygon>` bốn đỉnh: hai
 hình, nhưng đổi thẻ sẽ làm lệch golden của hai mươi bài đang publish mà không đổi
 một pixel nào.
 
+### 4.4 Đường đi (BD-11, M74)
+
+Element `path` với `cells` = **dãy ô đi qua**; đường vẽ nối **tâm** các ô ấy.
+Kèm ba tuỳ chọn: `arrow` (mũi tên ở đầu cuối), `dashed` (đường giả định), `label`.
+
+Trước nó, lời giải muốn vẽ đường đi phải xếp từng ô một `piece` mang glyph mũi tên
+— `lattice-path-binary-word` làm đúng thế suốt từ M9. Cách ấy trông gần đúng và sai
+ở ba chỗ không nhìn ra ngay: mũi tên nằm **trong ô** chứ không nối hai ô nên nước đi
+cuối không có chỗ đứng; một quân là *vật ở một ô* nên choreography kéo nó đi như kéo
+quân cờ chứ không như vẽ thêm một đoạn; và anchor "cả đường đi" phải liệt kê tay sáu
+id rời.
+
+**Không đòi hai ô liên tiếp phải kề nhau.** Đường đi của quân mã không kề, và một
+luật đòi kề sẽ chặn đúng họ bài mà element này sinh ra để phục vụ. Thứ *bị* chặn là
+lặp lại cùng một ô ngay sau chính nó — một đoạn dài $0$, vô hình, gần như luôn là gõ
+nhầm. Đi qua ô **khuyết** chỉ cảnh báo: một đường xuyên chỗ khoét có thể chính là
+điều lời giải muốn chỉ ra là bất khả.
+
+**Mỗi bước có danh tính riêng** (`<pathId>-step-<i>`), và đó là chỗ element này
+*thắng* cách hack cũ mà không mất gì. Sáu quân mũi tên cho phép trỏ vào "nước đi thứ
+ba", và một bài song ánh ghép từng nước với từng chữ cái cần đúng khả năng ấy — nên
+đường vẽ ra thành **từng đoạn**, mỗi đoạn một node. Hệ quả kèm theo: choreography
+hiện dần từng bước, thứ mà một `polyline` liền một mạch không làm được.
+
+Hai chi tiết cài đặt đáng biết, và cả hai đều là lỗi đã mắc rồi sửa:
+
+- **Nét lấy `strokeForClass`, không `inkForClass`.** `on` là màu chữ *nằm trên* nền
+  của lớp ấy nên nó sáng; vẽ một đường bằng nó ra một dải trắng gần như vô hình trên
+  nền canvas. Bản đầu làm thế, và lượt nhìn PNG đầu tiên lôi nó ra ngay.
+- **Mỗi đoạn hỏi `decorationForAny(ctx, [stepId, pathId])`.** Chỉ hỏi id đoạn thì
+  anchor trỏ vào cả đường **không làm gì cả** — chốt canh ANC-01 bắt đúng lỗi ấy ở
+  lần chạy đầu, trên đúng ba step của bài vừa viết lại.
+
+Mũi tên vẽ bằng một `polyline` hai nét chụm chứ không bằng `<marker>`: marker sống
+trong `<defs>`, mà chưa lớp nào của pipeline này — serialize, patch DOM, Resvg — nói
+chuyện với `defs`. Nó cũng **không** nhận nét đứt: một mũi tên đứt quãng đọc thành
+hai gạch rời chứ không thành đầu nhọn.
+
 ### 9.3 Danh tính và trang trí
 
 | Node | `key` |
 |---|---|
 | ô | `cell-<r>-<c>` |
 | nét gạch (BD-10) | `strike-<r>-<c>` |
-| tile / piece / region | `element.id` |
+| tile / piece / region / path | `element.id` |
+| một bước của một đường (BD-11) | `<pathId>-step-<i>` |
 | dấu khống chế | `<pieceId>-atk-<r>-<c>` |
 | nhãn bảng | `row-label-<r>`, `col-label-<c>`, `row-sum-<r>`, `col-sum-<c>`, `grand-sum` |
 

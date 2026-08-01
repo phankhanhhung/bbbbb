@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "id": "take-at-most-half",
   "statement": {
     "vi": "Trên bàn có $40$ viên sỏi. Hai người lần lượt bốc, mỗi lượt được bốc ít nhất $1$ viên và **nhiều nhất một nửa** số viên đang có. Ai không bốc được nữa thì thua. Hỏi ai có chiến lược thắng?"

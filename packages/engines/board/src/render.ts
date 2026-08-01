@@ -1,6 +1,7 @@
 import type { Scene, SceneElement, Viewport } from '@combviz/schema';
 import {
   decorationAttrs,
+  decorationForAny,
   el,
   elementDecoration,
   estimateTextWidth,
@@ -35,7 +36,7 @@ import {
   wrapOf,
 } from './lattice.js';
 import { tileCells } from './dsl.js';
-import { cellId, parseCellId, parseStrikeId, strikeId } from './ids.js';
+import { cellId, parseCellId, parseStrikeId, pathStepId, strikeId } from './ids.js';
 import { attackedCells, cellCentre, type AttackBoard } from './attacks.js';
 import type { BoardConfig } from './schema.js';
 
@@ -88,6 +89,19 @@ function boxesOf(scene: Scene, id: string): readonly SceneBox[] {
     return box ? [box] : [];
   }
 
+  // Id của một **bước** trong một đường: hộp của hai ô đầu mút. Nhờ đó
+  // `matchScale`, morph song ánh và vệt sáng anchor đều trả lời đúng cho nó.
+  const step = /^(.*)-step-(\d+)$/.exec(id);
+  if (step) {
+    const owner = scene.elements.find((e) => e.id === step[1] && e.type === 'path');
+    const cells = (owner?.['cells'] as Offset[] | undefined) ?? [];
+    const k = Number(step[2]);
+    return [cells[k], cells[k + 1]]
+      .filter((cell): cell is Offset => cell !== undefined)
+      .map(boxOfCell)
+      .filter((box): box is SceneBox => box !== null);
+  }
+
   const element = scene.elements.find((e) => e.id === id);
   if (!element) return [];
 
@@ -98,7 +112,9 @@ function boxesOf(scene: Scene, id: string): readonly SceneBox[] {
         ? ((element['cells'] as Offset[] | undefined) ?? [])
         : element.type === 'piece'
           ? [(element['pos'] as Offset | undefined) ?? [-1, -1]]
-          : [];
+          : element.type === 'path'
+            ? ((element['cells'] as Offset[] | undefined) ?? [])
+            : [];
 
   return cells.map(boxOfCell).filter((box): box is SceneBox => box !== null);
 }
@@ -545,6 +561,8 @@ function renderElement(
       return [renderPiece(element, config, ctx)];
     case 'region':
       return [renderRegion(element, config, ctx)];
+    case 'path':
+      return [renderPath(element, config, ctx)];
     default:
       return [];
   }
@@ -721,6 +739,148 @@ function renderPiece(
       ),
     ],
   );
+}
+
+/** Nửa cạnh của đầu mũi tên, theo cỡ ô. */
+const ARROW_HEAD = CELL * 0.17;
+
+/**
+ * BD-11 — đường đi nối **tâm** các ô (M74).
+ *
+ * Một `polyline` duy nhất mang `data-el` của cả đường, chứ không sáu vật rời như
+ * cách hack cũ: nhờ đó anchor "cả đường đi" là *một* id, và một pha `show` vẽ cả
+ * đường ra cùng lúc thay vì bật sáu quân cờ.
+ *
+ * Mũi tên vẽ bằng một `polyline` thứ hai (hai nét chụm) chứ không bằng `marker`:
+ * `<marker>` sống trong `<defs>`, mà cả pipeline render của kho này — serialize,
+ * patch DOM, raster hoá bằng Resvg — chưa lớp nào nói chuyện với `defs`. Một
+ * đường gãy hai nét thì mọi lớp ấy đã biết vẽ.
+ */
+function renderPath(
+  element: SceneElement,
+  config: BoardConfig,
+  ctx: RenderContext,
+): SvgNode {
+  const cells = (element['cells'] as Offset[] | undefined) ?? [];
+  const lattice = latticeOf(config);
+  const points = cells.map(([r, c]) => centreOf(lattice, config.rows, config.cols, r, c));
+  // `strokeForClass`, **không** `inkForClass`: `on` là màu chữ *nằm trên* nền
+  // của lớp ấy, nên nó sáng — vẽ một đường bằng nó ra một dải trắng gần như vô
+  // hình trên nền canvas. Thấy ngay ở lượt nhìn PNG đầu tiên.
+  const stroke =
+    element.color_class === undefined
+      ? ctx.theme.object.pieceStroke
+      : strokeForClass(ctx, element.color_class);
+  const dash: Record<string, string | number> =
+    element['dashed'] === true
+      ? { 'stroke-dasharray': `${round(CELL * 0.22)} ${round(CELL * 0.16)}` }
+      : {};
+
+  const line = (
+    pts: readonly { x: number; y: number }[],
+    extra: Record<string, string | number> = {},
+  ): Record<string, string | number> => ({
+    points: pts.map((p) => `${round(p.x)},${round(p.y)}`).join(' '),
+    fill: 'none',
+    stroke,
+    'stroke-width': ctx.theme.stroke.region,
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+    ...dash,
+    ...extra,
+  });
+
+  // Từng đoạn một node, mỗi node một `data-el` — xem `pathStepId`. Nhấn một đoạn
+  // thì `decorationAttrs` đổi màu nét ấy (một nét không có `fill` để dựng halo
+  // quanh, cùng đánh đổi đã ghi ở nét gạch BD-10).
+  const segments = points.slice(0, -1).map((from, i) => {
+    const sid = pathStepId(element.id, i);
+    return keyed(
+      sid,
+      'polyline',
+      line([from, points[i + 1] as { x: number; y: number }], {
+        // Nhấn **cả đường** hay nhấn **một bước** đều phải thấy: `decorationForAny`
+        // hỏi id đoạn trước, rồi id cả đường. Bỏ vế thứ hai thì anchor "cả đường
+        // đi" không làm gì cả, và chốt canh ANC-01 bắt ngay — nó đã bắt.
+        ...decorationForAny(ctx, [sid, element.id], element.emphasis),
+      }),
+    );
+  });
+
+  const head: SvgNode[] = [];
+  if (element['arrow'] === true && points.length >= 2) {
+    const tip = points[points.length - 1] as { x: number; y: number };
+    const from = points[points.length - 2] as { x: number; y: number };
+    const dx = tip.x - from.x;
+    const dy = tip.y - from.y;
+    const len = Math.hypot(dx, dy) || 1;
+    // Đơn vị dọc đường và đơn vị vuông góc — hai nét của đầu mũi tên là tổ hợp
+    // của chúng, nên nó đúng ở mọi hướng, kể cả hướng chéo của quân mã.
+    const ux = dx / len;
+    const uy = dy / len;
+    head.push(
+      el(
+        'polyline',
+        line(
+          [
+            { x: tip.x - ARROW_HEAD * (ux * 2 - uy), y: tip.y - ARROW_HEAD * (uy * 2 + ux) },
+            tip,
+            { x: tip.x - ARROW_HEAD * (ux * 2 + uy), y: tip.y - ARROW_HEAD * (uy * 2 - ux) },
+          ],
+          // Đầu mũi tên **không** nhận nét đứt: một mũi tên đứt quãng đọc thành
+          // hai gạch rời chứ không thành một đầu nhọn.
+          { 'stroke-dasharray': 'none' },
+        ),
+      ),
+    );
+  }
+
+  return keyed(element.id, 'g', groupAttrs(ctx, element), [
+    ...segments,
+    ...head,
+    ...pathLabel(element, ctx, points),
+  ]);
+}
+
+/**
+ * Nhãn của một đường, đặt cạnh **điểm đầu**.
+ *
+ * Không đặt ở giữa: một đường đi zigzag có "giữa" rơi vào đâu đó giữa hai nét, và
+ * chữ ở đó đè lên chính đường. Điểm đầu thì luôn có một phía trống — đường mới
+ * chỉ vừa bắt đầu ở đó. Cùng bài học với nhãn vùng ở M69.
+ */
+function pathLabel(
+  element: SceneElement,
+  ctx: RenderContext,
+  points: readonly { x: number; y: number }[],
+): SvgNode[] {
+  const label = element['label'];
+  if (typeof label !== 'string' || label === '' || points.length === 0) return [];
+  const head = points[0] as { x: number; y: number };
+  return [
+    {
+      ...text(
+        'text',
+        {
+          x: round(head.x),
+          y: round(head.y - CELL * 0.42),
+          'text-anchor': 'middle',
+          'dominant-baseline': 'central',
+          'font-family': ctx.theme.type.uiFamily,
+          'font-size': REGION_LABEL_SIZE,
+          fill: ctx.theme.surface.guide,
+          // Cùng quầng nền `paint-order` mà nhãn vùng dùng, và cùng lý do: đường
+          // đi bắt đầu ở một ô có thể đầy glyph.
+          stroke: ctx.theme.surface.canvas,
+          'stroke-width': REGION_LABEL_SIZE * 0.4,
+          'stroke-linejoin': 'round',
+          'paint-order': 'stroke',
+        },
+        label,
+      ),
+      key: `${element.id}__label`,
+    },
+  ];
 }
 
 function renderRegion(

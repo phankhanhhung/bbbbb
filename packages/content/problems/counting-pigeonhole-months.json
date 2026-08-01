@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "id": "counting-pigeonhole-months",
   "statement": {
     "vi": "Trong một nhóm $13$ người, chứng minh luôn có hai người sinh cùng tháng."

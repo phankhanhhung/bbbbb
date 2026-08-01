@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "id": "quadratic-inequality-sign",
   "statement": {
     "vi": "Giải $x^2 - 3x + 2 > 0$. Phân tích thành tích thì dễ, nhưng **phát biểu đáp số** mới là chỗ engine từng bó tay: một dạng tích không phải một tập nghiệm."

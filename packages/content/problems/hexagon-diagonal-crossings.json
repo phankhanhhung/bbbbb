@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "id": "hexagon-diagonal-crossings",
   "statement": {
     "vi": "Các đường chéo của một lục giác lồi cắt nhau tại bao nhiêu điểm? Và vì sao lục giác **đều** lại cho ít điểm hơn?"
