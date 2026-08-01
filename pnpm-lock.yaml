@@ -472,6 +472,9 @@ importers:
       '@resvg/resvg-js':
         specifier: ^2.6.2
         version: 2.6.2
+      katex:
+        specifier: ^0.16.11
+        version: 0.16.47
       mathjax-full:
         specifier: ^3.2.2
         version: 3.2.2

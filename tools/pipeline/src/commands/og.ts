@@ -19,6 +19,7 @@ import {
   type Step,
 } from '@combviz/schema';
 import { loadAtlas } from '../atlas.js';
+import { fontOptions } from '../fonts.js';
 import { ENGINE_RENDERERS } from '../engines.js';
 
 /**
@@ -117,13 +118,17 @@ function pickOgStep(problem: Problem): Step | undefined {
  * chỉ có bản SVG tức là mọi link chia sẻ đều trống ảnh — mà §11 xem OG card là
  * kênh growth chính.
  *
- * Phông lấy từ hệ thống (G-09). Đây là chỗ mỏng nhất của đường này: máy không có
+ * Phông giao diện lấy từ hệ thống (G-09), phông toán lấy từ katex — xem `fonts.ts`
+ * cho hai lỗi mà lựa chọn ấy sửa. Đây là chỗ mỏng nhất của đường này: máy không có
  * phông thì resvg **âm thầm bỏ chữ**, ra một card đẹp mà trống trơn — nên có
  * test riêng rasterize chữ tiếng Việt và ký tự quân cờ rồi soi xem có mực không.
  */
 export function rasterize(svg: string): Buffer {
   return new Resvg(svg, {
-    font: { loadSystemFonts: true },
+    // Phông toán lấy từ katex, không phó mặc phông hệ thống — xem `fonts.ts`. Card
+    // của bài đại số/derivation trước đây vẽ công thức bằng một serif thay thế, tức
+    // là rộng hơn hộp mà layout đã tính.
+    font: fontOptions(),
     background: defaultTheme.surface.canvas,
   })
     .render()

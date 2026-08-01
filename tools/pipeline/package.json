@@ -9,12 +9,12 @@
   "dependencies": {
     "@combviz/check": "workspace:*",
     "@combviz/dsl": "workspace:*",
+    "@combviz/engine-algebra": "workspace:*",
     "@combviz/engine-board": "workspace:*",
     "@combviz/engine-derivation": "workspace:*",
-    "@combviz/engine-algebra": "workspace:*",
-    "@combviz/engine-longdiv": "workspace:*",
     "@combviz/engine-game": "workspace:*",
     "@combviz/engine-graph": "workspace:*",
+    "@combviz/engine-longdiv": "workspace:*",
     "@combviz/engine-point": "workspace:*",
     "@combviz/engine-sequence": "workspace:*",
     "@combviz/engine-set": "workspace:*",
@@ -22,6 +22,7 @@
     "@combviz/schema": "workspace:*",
     "@combviz/theme": "workspace:*",
     "@resvg/resvg-js": "^2.6.2",
+    "katex": "^0.16.11",
     "mathjax-full": "^3.2.2",
     "yaml": "^2.6.1"
   }

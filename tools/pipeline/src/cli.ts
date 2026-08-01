@@ -12,6 +12,7 @@ import { runLabels } from './commands/labels.js';
 import { runNewProblem, STARTER_ENGINES } from './commands/new-problem.js';
 import { runImportDraft } from './commands/import-draft.js';
 import { runOg } from './commands/og.js';
+import { runFilm } from './commands/film.js';
 import { runStats } from './commands/stats.js';
 import { runIndex } from './commands/index-bank.js';
 import { runCoverage } from './commands/coverage.js';
@@ -62,6 +63,16 @@ const USAGE = `combviz — công cụ soạn/duyệt kho bài
   combviz og [--root <content>] [--out <dir>] [--problem <id>] [--png]
       Sinh OG/social card cho từng bài (REN-02). --png raster thêm bản PNG —
       mạng xã hội không đọc SVG.
+
+  combviz film <problem-id> [--sol <id>] [--step <id>] [--fps 25] [--hold 800]
+                            [--width 720] [--apng] --out <dir>
+      Dựng thước phim của một step: dãy frame-%04d.png + manifest.json, chạy
+      trong Node không cần browser (REN-05). Cùng choreography Player chạy —
+      engine algebra tự sinh nhịp, engine khác phải khai choreography sẵn.
+      --hold: đứng hình bao lâu ở mỗi mốc hold (CHO-11) và ở khung cuối.
+      --apng: gộp thêm film.png xem được thẳng trên browser.
+      Muốn mp4 thì dựng từ dãy PNG:
+        ffmpeg -framerate 25 -i frame-%04d.png -pix_fmt yuv420p film.mp4
 
   combviz index [--root <content>] [--out <file.json>]
       Sinh chỉ mục kho cho tìm kiếm client-side (CMS-02).
@@ -267,6 +278,55 @@ async function main(argv: string[]): Promise<number> {
         ...(values.problem ? { problemId: values.problem } : {}),
         png: values.png,
       });
+      return 0;
+    }
+
+    case 'film': {
+      const { values, positionals } = parseArgs({
+        args: rest,
+        options: {
+          root: { type: 'string', default: 'packages/content' },
+          sol: { type: 'string' },
+          step: { type: 'string' },
+          out: { type: 'string' },
+          fps: { type: 'string', default: '25' },
+          hold: { type: 'string', default: '800' },
+          width: { type: 'string', default: '720' },
+          apng: { type: 'boolean', default: false },
+        },
+        allowPositionals: true,
+      });
+
+      const problemId = positionals[0];
+      if (!problemId || !values.out) {
+        console.error('Cần <problem-id> và --out <dir>.\n');
+        console.error(USAGE);
+        return 2;
+      }
+
+      const fps = Number(values.fps);
+      if (!Number.isFinite(fps) || fps <= 0 || fps > 60) {
+        console.error(`--fps phải trong khoảng (0, 60], nhận "${values.fps}".`);
+        return 2;
+      }
+
+      const result = await runFilm({
+        root: resolve(values.root),
+        problemId,
+        ...(values.sol ? { solutionId: values.sol } : {}),
+        ...(values.step ? { stepId: values.step } : {}),
+        out: resolve(values.out),
+        fps,
+        hold: Number(values.hold),
+        width: Number(values.width),
+        apng: values.apng,
+      });
+
+      console.log(
+        `✓ ${problemId} step ${result.stepId} → ${values.out}\n` +
+          `  ${result.frames} khung ở ${result.fps}fps (timeline ${result.length}ms)` +
+          `${values.apng ? ', + film.png' : ''}`,
+      );
       return 0;
     }
 

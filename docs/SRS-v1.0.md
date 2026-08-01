@@ -311,6 +311,7 @@ Engine render deterministic từ snapshot + auto-diff (DAT-11/12), nên xuất b
 - **REN-02 [P1] MUST** — OG/social card tự sinh per problem: scene tiêu biểu (chính chủ chọn step trong Studio) + brand mark + tên bài; chạy trong build, không làm tay.
 - **REN-03 [P1] MUST** — Mọi export từ Sandbox (SBX-05) đóng brand mark kín đáo ở góc; người học không tắt được, chính chủ tắt được trong Studio.
 - **REN-04 [P2] MUST** — Render solution playback → video (webm/mp4), preset **16:9 và 9:16**, tốc độ và điểm dừng cấu hình theo step, caption lấy từ narrative (bật/tắt). Mục tiêu vận hành: 1 bài → 1 clip với ≤ 15 phút chỉnh tay. Nhánh case render thành các clip riêng hoặc một clip theo đường đi chọn trước.
+  - **Phần lõi đã có (M62)** — `combviz film <bài> [--fps] [--hold] [--apng] --out <dir>`: dãy `frame-%04d.png` + `manifest.json`, tuỳ chọn gộp APNG. Dùng **đúng** `applyChoreography` mà Player dùng, nên đây cũng là chỗ CHO-08 lần đầu được kiểm (`tools/pipeline/test/film.test.ts`). Điểm dừng theo `hold` của step đã tôn trọng. **Chưa có:** preset 16:9/9:16, caption từ narrative, webm/mp4 (dựng ngoài repo từ dãy PNG — ffmpeg không vào repo, xem `ENGINE-ALGEBRA.md` §38.1), gộp nhiều step thành một clip.
 - **REN-05 [P3] MAY** — Kịch bản render nâng cao: nhấn anchor theo timeline, ghép voice-over track thu ngoài. Không TTS trong phạm vi.
 
 ---

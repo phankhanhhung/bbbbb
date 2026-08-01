@@ -2061,3 +2061,145 @@ Cùng lớp lỗi với dấu `!` (M56) và chữ hoa ở $C_n^k$ (M56), nhưng 
 đổi bề ngang, mà chúng có mặt làm **biến** trong golden của kho — hình không đổi một nét
 mà 400 golden phải soát lại. Tên hàm là chuỗi nhiều ký tự **duy nhất** engine này in ra,
 nên một bảng theo tên vừa đủ và không chạm gì khác.
+
+---
+
+## 38. `combviz film` — CHO-08 lần đầu được kiểm (M62)
+
+Mục này không mở thêm ngữ pháp. Nó lấy một tài sản đã có sẵn và **đem ra dùng** — rồi
+phát hiện ba chỗ hỏng mà không lớp lưới nào của kho chạm tới được.
+
+### 38.1 Một lời hứa chưa ai chạy thì không phải một lời hứa
+
+CHO-08 viết từ ngày đầu, trong chính chú thích của `applyChoreography`:
+
+> Không đọc giờ, không random, không trạng thái. Cùng `t` cho cùng khung ở mọi nơi —
+> Player gọi mỗi rAF, render video gọi theo timestep cố định, và hai bên phải ra byte
+> giống nhau.
+
+Vế đầu có người chạy. Vế sau thì **không có call site**: tới trước M62, thứ duy nhất gọi
+`applyChoreography` là `Player.tsx`. Nghĩa là "tất định" chưa từng bị thử — hàm có thể
+đã thuần suốt, hoặc đã hỏng từ M51 và không ai biết.
+
+`combviz film` là vế thứ hai. Nó **không dựng lại phép tính nào**: cùng `createRenderer`,
+cùng `applyChoreography`, cùng `toSvgString`. Nhờ vậy chốt canh của nó là một phát biểu về
+*engine*, không phải về lệnh: bẻ nhánh `progress <= 0` trong `choreography.ts` thì
+`film.test.ts` đỏ hai dòng.
+
+Đường ra: dãy `frame-%04d.png` + `manifest.json`, và `--apng` gộp một file xem thẳng trên
+browser. **Không** mp4, không ffmpeg trong repo — ffmpeg là một binary hệ thống, không cài
+được bằng `pnpm install`, và là thứ đầu tiên thiếu trên máy CI. Ai cần mp4 thì dãy PNG nằm
+sẵn đó, một dòng lệnh là xong; dòng ấy in trong `--help`.
+
+**Đính chính kế hoạch.** Kế hoạch M62 ghi lệnh này vào `REN-05`. Đọc lại SRS thì sai:
+REN-05 là kịch bản nâng cao + voice-over, còn thứ lệnh này làm chính là **REN-04**
+(*"render solution playback → video"*). Nó trả phần lõi của REN-04 — timeline tất định,
+điểm dừng theo `hold`, một bài một clip — và để lại preset 16:9/9:16 cùng caption
+voice-over. Ghi ra chứ không sửa số cho khớp: xem §35.3 và §37.2, cùng loại.
+
+### 38.2 APNG ghép bằng `node:buffer`, không thêm phụ thuộc
+
+Kế hoạch ghi `upng-js`. Đo lại thì nó **đắt hơn thứ nó thay**: `upng-js` mã hoá từ buffer
+RGBA thô, tức mỗi khung phải giữ $w \times h \times 4$ byte rồi nén lại bằng deflate viết
+bằng JS — với clip 5 giây ở 25fps, bề rộng 720 là ~140 MB giữ trong RAM và 125 lượt nén.
+Trong khi resvg **đã** trả về PNG nén sẵn.
+
+Mà APNG, theo đúng đặc tả, **là** một dãy PNG chung `IHDR`: khung đầu giữ nguyên `IDAT`,
+khung sau đổi nhãn thành `fdAT` và thêm số thứ tự. Không giải nén, không nén lại, không
+đọc một pixel nào. `apng.ts` vì thế ngắn hơn phần chú thích của nó, và Chromium mở được
+file nó sinh ra (đã thử: `naturalWidth = 720`, hai lần chụp cách 1,5 giây khác nhau).
+
+Khung trùng nhau **byte-identical** liền kề gộp thành một khung dài hơn — quãng đứng hình
+ở mốc `hold` sinh hàng chục bản y hệt, và 186 khung của `extraneous-root-by-squaring` gộp
+còn 76 mà không mất một pixel thông tin nào.
+
+### 38.3 Lỗi thứ nhất lượt nhìn bắt: pha `focus` **câm** khi không có CSS
+
+Clip đầu tiên xuất ra chạy đủ $4180$ ms và **1,2 giây đầu không có chuyện gì xảy ra**.
+Không lỗi, không cảnh báo, test xanh.
+
+Nguyên do nằm ở một quyết định đúng: `applyChoreography` cố ý không chọn màu, nó gắn
+`data-phase` rồi thôi — vì nó không biết theme và phải chạy y hệt ở Node lẫn browser.
+Trong Player, lớp đọc thuộc tính ấy là `styles.css`:
+
+```css
+.canvas [data-phase] { filter: drop-shadow(0 0 3px var(--halo)) drop-shadow(0 0 6px var(--halo)); }
+```
+
+Trong resvg **không có lớp ấy**. Nên `data-phase` là thuộc tính không ai đọc, và mọi pha
+`focus` — thứ mang cả mốc `hold`, tức khoảnh khắc quan trọng nhất của mỗi bước — trôi qua
+không để lại dấu vết.
+
+`withFocusGlow` là **anh em song sinh của `styles.css`**, không phải tính năng mới: cùng
+một quyết định thị giác nói bằng thứ tiếng thứ hai (`feDropShadow`, đúng màu
+`theme.emphasis.anchorHalo` mà `--halo` đang dùng). Hai bản có thể lệch nếu ai đó sửa một
+bên — cái giá phải trả để giữ `applyChoreography` mù theme.
+
+Hai chi tiết đo được, không đoán:
+
+- **Bán kính theo tỉ lệ của Player, không theo `--width`.** CSS nói `3px` ở tỉ lệ hiển thị
+  của Player ($44$px mỗi $10$ đơn vị, G-10), nên quy về đơn vị scene là $3/4{,}4$. Lấy
+  theo bề rộng xuất ra thì cùng một clip xuất ở 1440 có quầng bằng nửa bản 720 — quầng
+  phải to bằng chữ, không bằng file.
+- **Tiến độ đi vào `flood-opacity`.** CSS bỏ qua giá trị của `data-phase` và mượn
+  `transition` để sáng dần; ở đây không có transition, nên tiến độ lượng tử hoá thành 8
+  mức để số filter còn đếm được mà vẫn tất định.
+
+### 38.4 Lỗi thứ hai: phông là **một nửa của phép đo**
+
+Sau khi có quầng sáng, khung cuối lộ tiếp một chuyện: quầng anchor **cắt ngang chữ số
+cuối** của dòng `x = 8`.
+
+Đo thì layout đúng đến từng phần nghìn: hộp dòng rộng $11{,}30$, glyph `8` bắt đầu ở
+$20{,}233$ và theo metric KaTeX kết thúc đúng ở $22{,}733$ — mép phải của hộp. Sai nằm ở
+chỗ khác: `typeset.ts` đo bề ngang **bằng bảng metric của KaTeX**, còn resvg với mỗi
+`loadSystemFonts` thì trên máy này có $59$ phông và **không cái nào** là KaTeX. Nó lặng lẽ
+rơi về một sans hệ thống, chữ số rộng hơn, hình tràn khỏi hộp.
+
+Không lớp lưới nào bắt được: golden so **chuỗi SVG**, mà chuỗi SVG thì đúng — sai nằm ở
+chỗ resvg vẽ chuỗi ấy bằng phông khác. Nên phông ở đây không phải chuyện trang trí, nó là
+**một nửa của phép đo**; nửa kia đã nằm sẵn trong repo và hai nửa phải trỏ vào cùng bộ
+file. Sửa dùng chung cho cả `og --png`, vốn có đúng lỗi ấy từ trước.
+
+### 38.5 Lỗi thứ ba: bốn mặt chữ **tự khai mình là Regular**
+
+Trỏ thẳng vào `katex/dist/fonts` xong thì mọi thứ hoá **nghiêng**, kể cả chữ Việt của nhãn
+luật. Đọc bảng `OS/2` mới ra nguyên do:
+
+| file | family | subfamily | `fsSelection` |
+|---|---|---|---|
+| `KaTeX_Main-Regular.ttf` | KaTeX_Main | Regular | `0b1000000` |
+| `KaTeX_Main-Italic.ttf` | KaTeX_Main | Italic | `0b1000000` |
+| `KaTeX_Main-Bold.ttf` | KaTeX_Main | Bold | `0b1000000` |
+| `KaTeX_Main-BoldItalic.ttf` | KaTeX_Main | Bold Italic | `0b1000000` |
+
+Bit thứ 6 là `REGULAR`. **Cả bốn mặt đều khai mình là Regular**, không mặt nào bật bit
+`ITALIC` hay `BOLD`. Với KaTeX đó không phải lỗi: trong browser, kiểu chữ do
+`@font-face { font-style: italic }` khai ở CSS quyết định, bảng trong file không ai đọc.
+Nhưng resvg **chỉ có** bảng trong file.
+
+`fonts.ts` sửa đúng hai bit ấy trên một bản sao trong cache, suy kiểu chữ từ tên file —
+chính thứ mà `@font-face` của KaTeX cũng dùng để suy. File gốc trong `node_modules` không
+đụng tới. Checksum bảng **không** tính lại vì `ttf-parser` (bộ đọc của resvg) không kiểm;
+ghi ra đây để lần sau đổi bộ đọc thì biết chỗ nào nợ.
+
+### 38.6 Bẻ răng — và một chốt canh rỗng đội lốt
+
+Bốn cơ chế mới, bốn lần bẻ, bốn lần đỏ: nhánh `show` chưa bắt đầu, quầng focus, mốc
+`hold`, số thứ tự `fdAT`.
+
+Lần bẻ thứ nhất lộ ra một chuyện khác. Chốt canh *"khung `ms = 0` không lộ thứ chưa hiện"*
+chạy trên hai bài — một đại số, một bàn cờ — và khi bẻ nhánh `show`, **chỉ nửa đại số
+đỏ**. Nửa bàn cờ vẫn xanh vì nó dò danh tính bằng regex trên chuỗi SVG, mà engine bàn cờ
+đeo danh tính ở `key` — một **trường của node**, không phải thuộc tính, nên `toSvgString`
+không viết nó ra. Nó quét $0$ node và xanh mà chẳng kiểm gì.
+
+Đúng bài học M48, lần thứ hai: *một test không với tới nhánh của nó là một test rỗng đội
+lốt*, và cách duy nhất biết là **bẻ thứ nó canh**. Chữa: đi trên cây node (`frameNodes`,
+tách khỏi `frameSvg` đúng vì lý do này) và **đếm** số node chạm tới.
+
+### 38.7 Golden không đổi một byte
+
+`film` render với `explain: true` và một lớp `defs` riêng, nhưng nó là một **đường ra
+mới**, không phải một sửa đổi trong renderer: 2948 test xanh, 111 bài validate sạch, không
+golden nào đổi. Đó là điều kiện để mục này được xem là đã xong.
