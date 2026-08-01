@@ -101,10 +101,12 @@
     "what-disappears-and-why",
     "cubic-by-known-root",
     "binomial-absorption",
-    "pascal-triangle-identity"
+    "pascal-triangle-identity",
+    "sum-shift-index",
+    "telescoping-product"
   ],
   "newest": [
-    "binomial-absorption",
-    "pascal-triangle-identity"
+    "sum-shift-index",
+    "telescoping-product"
   ]
 }

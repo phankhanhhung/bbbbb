@@ -100,8 +100,10 @@ export function evalAt(e: Expr, env: ReadonlyMap<string, bigint>): bigint | null
     case 'abs':
       return null;
     case 'fn':
+    case 'big':
       // $n!$ trên $\mathbb{F}_p$ với $n$ là một thặng dư ngẫu nhiên cỡ $10^9$ là câu
-      // vô nghĩa, không phải câu khó tính. Biểu thức có hàm đi đường **số nguyên**.
+      // vô nghĩa, không phải câu khó tính. $\sum_{k=1}^{n}$ với cận như thế cũng vậy.
+      // Biểu thức có hàm hoặc tổng đi đường **số nguyên**.
       return null;
     case 'root':
       // Căn không sống trên $\mathbb{F}_p$: $\sqrt a$ chỉ tồn tại khi $a$ là thặng dư
@@ -190,10 +192,36 @@ export function evalReal(e: Expr, env: ReadonlyMap<string, number>): number | nu
       const v = spec.evalNum(vs);
       return v === null ? null : ok(v);
     }
+    case 'big': {
+      const from = evalReal(e.from, env);
+      const to = evalReal(e.to, env);
+      if (from === null || to === null) return null;
+      // Cận phải là **số nguyên**: $\sum_{k=1}^{2{,}7}$ không có nghĩa. Điểm ấy vô dụng
+      // chứ không phải bằng chứng sai — cùng lối với căn bậc chẵn của số âm.
+      if (!Number.isInteger(from) || !Number.isInteger(to)) return null;
+      // Trần khai: cùng con số với `maxDegree`, và cùng lý lẽ — quá đó thì phép kiểm
+      // tốn hơn thứ nó mua, và trả `null` (không kiểm được) thì trung thực hơn là chạy.
+      if (to - from > BIG_SPAN_MAX) return null;
+
+      let acc = e.op === 'sum' ? 0 : 1;
+      // Khoảng rỗng ($to < from$) cho $0$ với tổng và $1$ với tích — quy ước chuẩn, và
+      // nó **có việc**: `sum_split` tại $m = b$ sinh ra đúng một khoảng rỗng.
+      for (let i = from; i <= to; i += 1) {
+        const inner = new Map(env);
+        inner.set(e.v, i);
+        const v = evalReal(e.body, inner);
+        if (v === null) return null;
+        acc = e.op === 'sum' ? acc + v : acc * v;
+      }
+      return ok(acc);
+    }
     case 'rel':
       return null;
   }
 }
+
+/** Số hạng tối đa khai được khi kiểm — cùng con số và cùng lý lẽ với `maxDegree`. */
+const BIG_SPAN_MAX = 64;
 
 /**
  * Điều kiện một bước tự khai: điểm vi phạm nó bị **bỏ qua** khi kiểm.
@@ -208,14 +236,34 @@ export interface Guard {
   readonly sign: '!=0' | '>=0' | '<=0';
 }
 
-/** Điểm này có dùng được không: `false` khi nó vi phạm điều kiện bước tự khai. */
-function guardHolds(guard: Guard | null, env: ReadonlyMap<string, number>): boolean {
+/**
+ * Một điều kiện, hoặc **nhiều** — và số nhiều không phải chuyện thẩm mỹ.
+ *
+ * Bản đầu cho đúng một `Guard`, và chỗ ấy vỡ ở `sum_split`: tách $\sum_a^b$ tại $m$ chỉ
+ * đúng khi $a-1 \le m \le b$, tức **hai** bất đẳng thức. Gói hai thứ ấy vào một biểu
+ * thức — chẳng hạn $(b-m)(m-a+1) \ge 0$ — thì đúng tình cờ và sai khi cả hai cùng âm.
+ * Mã hoá hai điều kiện thành một là đúng loại mẹo mà engine này tránh ở mọi chỗ khác.
+ */
+export type Guards = Guard | readonly Guard[];
+
+/** Điểm này có dùng được không: `false` khi nó vi phạm **bất kỳ** điều kiện nào. */
+function guardHolds(guard: Guards | null, env: ReadonlyMap<string, number>): boolean {
   if (guard === null) return true;
-  const v = evalReal(guard.expr, env);
-  if (v === null) return false;
-  if (guard.sign === '!=0') return Math.abs(v) > 1e-6;
-  return guard.sign === '>=0' ? v >= 0 : v <= 0;
+  for (const g of Array.isArray(guard) ? guard : [guard as Guard]) {
+    const v = evalReal(g.expr, env);
+    if (v === null) return false;
+    if (g.sign === '!=0') {
+      if (Math.abs(v) <= 1e-6) return false;
+    } else if (g.sign === '>=0' ? v < 0 : v > 0) {
+      return false;
+    }
+  }
+  return true;
 }
+
+/** Danh sách điều kiện, dạng chuẩn — để chỗ khác khỏi phải nghĩ về hai kiểu. */
+export const guardList = (g: Guards | null): readonly Guard[] =>
+  g === null ? [] : Array.isArray(g) ? g : [g as Guard];
 
 export interface SoundnessResult {
   readonly ok: boolean;
@@ -247,7 +295,7 @@ export function sameValue(
   b: Expr,
   seed = 20260731,
   trials = 8,
-  guard: Guard | null = null,
+  guard: Guards | null = null,
 ): SoundnessResult {
   // Ba sân, và thứ tự hỏi **quan trọng**.
   //
@@ -260,7 +308,7 @@ export function sameValue(
   // Có căn thì đổi sân: $\mathbb{F}_p$ không có khái niệm "căn bậc hai của $2$".
   // Điều kiện có **dấu** cũng buộc đổi sân: trường hữu hạn không có thứ tự, nên
   // "$A \ge 0$" ở đó là một câu vô nghĩa chứ không phải một câu khó kiểm.
-  if (needsRealEval(a) || needsRealEval(b) || (guard !== null && guard.sign !== '!=0')) {
+  if (needsRealEval(a) || needsRealEval(b) || guardList(guard).some((g) => g.sign !== '!=0')) {
     return sameValueReal(a, b, seed, trials, guard);
   }
 
@@ -283,10 +331,12 @@ export function sameValue(
 
     // Điều kiện "$\ne 0$" kiểm được ngay trên $\mathbb{F}_p$; loại dấu đã bị lái sang
     // đường thực ở trên.
-    if (guard !== null) {
-      const g = evalAt(guard.expr, env);
-      if (g === null || g === 0n) continue;
+    let skip = false;
+    for (const g of guardList(guard)) {
+      const v = evalAt(g.expr, env);
+      if (v === null || v === 0n) skip = true;
     }
+    if (skip) continue;
 
     const va = evalAt(a, env);
     const vb = evalAt(b, env);
@@ -322,7 +372,7 @@ export function sameValueReal(
   b: Expr,
   seed: number,
   trials: number,
-  guard: Guard | null = null,
+  guard: Guards | null = null,
 ): SoundnessResult {
   return sampleCompare(a, b, seed, trials, guard, realSampler(seed), 40, 'điểm thực');
 }
@@ -337,6 +387,9 @@ export function needsIntegerEval(e: Expr): boolean {
   let found = false;
   walk(e, (n) => {
     if (n.k === 'fn' && isIntegerOnly(n.name)) found = true;
+    // $\sum$ chỉ khai được ở cận **nguyên**, nên nó dùng chung bộ bốc điểm với hàm tổ
+    // hợp. Đây chính là chỗ M56 trả cổ tức: không phải dựng thêm bộ nào.
+    if (n.k === 'big') found = true;
   });
   return found;
 }
@@ -363,7 +416,7 @@ export function sameValueInteger(
   b: Expr,
   seed: number,
   trials: number,
-  guard: Guard | null = null,
+  guard: Guards | null = null,
 ): SoundnessResult {
   return sampleCompare(a, b, seed, trials, guard, integerSampler(seed), 40, 'điểm nguyên');
 }
@@ -420,7 +473,7 @@ function sampleCompare(
   b: Expr,
   _seed: number,
   trials: number,
-  guard: Guard | null,
+  guard: Guards | null,
   rand: Sampler,
   attemptsPerTrial: number,
   label: string,
@@ -492,7 +545,7 @@ export function evalRelation(e: Expr, env: ReadonlyMap<string, number>): boolean
 export function sameSolutionSet(
   a: Expr,
   b: Expr,
-  guard: Guard | null,
+  guard: Guards | null,
   seed: number,
   trials = 24,
 ): SoundnessResult {
@@ -552,7 +605,7 @@ export interface ImplicationResult extends SoundnessResult {
 export function impliesSolutionSet(
   before: Expr,
   after: Expr,
-  guard: Guard | null,
+  guard: Guards | null,
   seed: number,
   trials = 40,
 ): ImplicationResult {

@@ -80,6 +80,11 @@ const SUB_CLEAR = 0.34;
 const subDrop = (base: Metrics, sub: Metrics): number =>
   Math.max(base.above * SUB_DROP, sub.above * SUB_CLEAR + base.below);
 
+/** Ký hiệu $\sum$ vẽ to hơn cỡ chữ dòng; hở giữa nó và hai cận; hở trước thân. */
+const BIG_GLYPH = 1.5;
+const BIG_GAP = 0.14;
+const BIG_BODY_GAP = 0.22;
+
 /** Hở tối thiểu giữa đáy số mũ và đỉnh chỉ số dưới, theo cỡ chữ của cụm. */
 const SUBSUP_GAP = 0.12;
 
@@ -209,6 +214,14 @@ export type Box =
    * $C_n{}^k$ — chỉ số dưới rồi mới tới số mũ, đọc ra một thứ khác.
    */
   | { t: 'subsup'; base: Box; sub: Box; sup: Box; size: number }
+  /**
+   * Ký hiệu tổng/tích với **cận trên và cận dưới**, kiểu display.
+   *
+   * Khác `subsup` ở chỗ hai cận nằm **trên và dưới** ký hiệu chứ không bên phải, và cả
+   * cụm ký-hiệu-cùng-cận thì căn giữa theo trục dọc. Đó cũng là lý do nó không ghép được
+   * từ `subsup`: bề ngang là `max(glyph, cận trên, cận dưới)`, còn thân đứng bên phải.
+   */
+  | { t: 'big'; glyph: string; lower: Box; upper: Box; body: Box; size: number }
   /** Bọc danh tính: không đổi hình học, chỉ nói "phần này là nút `id`". */
   | { t: 'tag'; id: TermId; inner: Box };
 
@@ -262,6 +275,19 @@ export function measure(box: Box): Metrics {
         w: b.w + Math.max(sb.w, sp.w),
         above: Math.max(b.above, rise + sp.above),
         below: Math.max(b.below, drop + sb.below),
+      };
+    }
+    case 'big': {
+      const g = measure({ t: 'text', s: box.glyph, size: box.size * BIG_GLYPH, italic: false });
+      const up = measure(box.upper);
+      const lo = measure(box.lower);
+      const body = measure(box.body);
+      const gap = box.size * BIG_GAP;
+      const head = Math.max(g.w, up.w, lo.w);
+      return {
+        w: head + box.size * BIG_BODY_GAP + body.w,
+        above: Math.max(g.above + gap + up.below + up.above, body.above),
+        below: Math.max(g.below + gap + lo.above + lo.below, body.below),
       };
     }
     case 'frac': {
@@ -433,6 +459,22 @@ export function place(box: Box, x: number, y: number): Placed {
         go(b.sub, bx + bm.w, by + drop, owner);
         return measure(b);
       }
+      case 'big': {
+        const m = measure(b);
+        const glyph: Box = { t: 'text', s: b.glyph, size: b.size * BIG_GLYPH, italic: false };
+        const g = measure(glyph);
+        const up = measure(b.upper);
+        const lo = measure(b.lower);
+        const gap = b.size * BIG_GAP;
+        const head = Math.max(g.w, up.w, lo.w);
+        // Ký hiệu và hai cận **căn giữa theo cột**: lệch cột thì mắt đọc cận trên như
+        // một số mũ của thứ đứng trước.
+        go(glyph, bx + (head - g.w) / 2, by, owner);
+        go(b.upper, bx + (head - up.w) / 2, by - g.above - gap - up.below, owner);
+        go(b.lower, bx + (head - lo.w) / 2, by + g.below + gap + lo.above, owner);
+        go(b.body, bx + head + b.size * BIG_BODY_GAP, by, owner);
+        return m;
+      }
       case 'frac': {
         const m = measure(b);
         const n = measure(b.num);
@@ -538,6 +580,9 @@ const PREC: Readonly<Record<Expr['k'], number>> = {
   // Lời gọi hàm có dấu gộp riêng ($C_n^k$ tự đứng, `n!` dính vào đối số), nên nó xếp
   // ngang nguyên tử. Riêng **đối số** của giai thừa thì không: xem `toBox`.
   fn: 4,
+  // Ký hiệu tổng ăn **tới hết** thân của nó, nên nó lỏng nhất bảng: $\sum f + g$ đọc ra
+  // $(\sum f) + g$, và chỗ bọc ngoặc cho thân nằm ở `toBox`.
+  big: 0,
   int: 4,
   rat: 4,
   var: 4,
@@ -772,6 +817,30 @@ export function toBox(e: Expr, size: number = FONT): Box {
         base: text(spec.source, size),
         sub: toBox(lower, shrink(size, SCRIPT)),
         sup: toBox(upper, shrink(size, SCRIPT)),
+        size,
+      });
+    }
+    case 'big': {
+      // Thân phải bọc ngoặc khi nó là một tổng: $\sum (f + g)$ và $\sum f + g$ là hai
+      // biểu thức khác nhau, và không dấu gộp nào trong ký hiệu $\sum$ phân biệt chúng.
+      const inner = toBox(e.body, size);
+      const body = e.body.k === 'add' || e.body.k === 'rel' ? { t: 'paren' as const, inner, size } : inner;
+      const script = shrink(size, SCRIPT);
+      return tag({
+        t: 'big',
+        glyph: e.op === 'sum' ? '∑' : '∏',
+        // Cận dưới là `k = a`, một cụm ba phần — chỉ số một mình thì không nói được nó
+        // chạy từ đâu.
+        lower: {
+          t: 'row',
+          items: [
+            text(e.v, script, true),
+            ...binop('=', script, 0.12),
+            toBox(e.from, script),
+          ],
+        },
+        upper: toBox(e.to, script),
+        body,
         size,
       });
     }

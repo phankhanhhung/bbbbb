@@ -3,13 +3,14 @@ import {
   definitelyNonNegative,
   definitelyNonZero,
   evalReal,
-  type Guard,
+  type Guards,
 } from './check.js';
 import { intExp, needsRealEval } from './expr.js';
 import {
   Minter,
   abs,
   add,
+  big,
   div,
   fn,
   int,
@@ -29,7 +30,7 @@ import {
   type Expr,
   type TermId,
 } from './expr.js';
-import { parse, toPlain, unparse } from './parse.js';
+import { parse, toPlain, tryParse, unparse } from './parse.js';
 
 /**
  * Tập luật (`ENGINE-ALGEBRA.md` §4).
@@ -59,7 +60,7 @@ export interface RuleOutcome {
    * vì chỉ nó biết điều kiện là gì: `abs_case` cần "$A \ge 0$", thứ không đọc ra được
    * từ chuỗi tác giả gõ.
    */
-  readonly guard?: Guard;
+  readonly guard?: Guards;
   /**
    * Các **vai** trong hằng đẳng thức đang áp: nhóm $i$ được tô một màu.
    *
@@ -2223,6 +2224,236 @@ const binomAbsorb: Rule = {
   },
 };
 
+
+/* ---------- tổng và tích (M57) ---------- */
+
+/**
+ * Sáu luật cho $\sum$ và $\prod$.
+ *
+ * Cả sáu là **đồng nhất thức**, đi hợp đồng `sameValue` — nay chạy trên bộ bốc điểm số
+ * nguyên của M56, vì $\sum$ chỉ khai được khi hai cận là số nguyên. Đó là cổ tức của
+ * việc M56 dựng một *sân* chứ không một *câu hỏi*: M57 không phải khai thêm gì.
+ *
+ * Chỗ phải cẩn thận ở mọi luật dưới đây là **phạm vi**: biến chỉ số bị ràng buộc, nên
+ * mọi phép thế phải đi qua `substituteVar` (tôn trọng che tên) chứ không đi qua một
+ * phép duyệt cây trần.
+ */
+
+/** Thân có nhắc tới biến chỉ số không. */
+const usesIndex = (e: Expr & { k: 'big' }): boolean => varsOf(e.body).has(e.v);
+
+/**
+ * Thay biến chỉ số bằng một giá trị, **cấp danh tính mới cho từng chỗ thay**.
+ *
+ * `substituteVar` dùng lại *cùng một* nút ở mọi vị trí, và điều đó đúng cho một phép so
+ * cấu trúc nhưng sai cho một cây sắp đem vẽ: một nút có hai chỗ đứng thì choreography
+ * kéo nó về một chỗ (bài học M47). Nên mỗi lần thay là một `freshCopy`.
+ */
+function replaceIndex(m: Minter, body: Expr, name: string, value: Expr): Expr {
+  const go = (e: Expr): Expr => {
+    if (e.k === 'var' && e.name === name) return freshCopy(m, value).copy;
+    // Tên bị che bởi một tổng bên trong: dừng, chỉ đi tiếp vào hai cận.
+    if (e.k === 'big' && e.v === name) return { ...e, from: go(e.from), to: go(e.to) };
+    const kids = children(e).map(go);
+    return kids.length === 0 ? e : withChildren(e, kids);
+  };
+  return go(body);
+}
+
+/** Số hạng của một khoảng: $b - a + 1$. */
+const spanOf = (m: Minter, from: Expr, to: Expr): Expr =>
+  add(m, [freshCopy(m, to).copy, negate(m, freshCopy(m, from).copy), int(m, 1)]);
+
+/** $\sum_{k=a}^{b} c = (b-a+1)c$ và $\prod_{k=a}^{b} c = c^{\,b-a+1}$ khi $c$ không có $k$. */
+const sumConst: Rule = {
+  id: 'sum_const',
+  label: 'thân không phụ thuộc chỉ số',
+  run(m, node) {
+    if (node.k !== 'big') return no('cần một tổng hoặc một tích');
+    if (usesIndex(node)) return no(`thân còn chứa chỉ số ${node.v}`);
+    const span = spanOf(m, node.from, node.to);
+    return {
+      after: node.op === 'sum' ? mul(m, [span, node.body]) : pow(m, node.body, span),
+    };
+  },
+};
+
+/**
+ * Tính **tuyến tính** của tổng — hai hình dạng, một tính chất.
+ *
+ * Rút thừa số hằng ra ngoài ($\sum c\,f = c\sum f$), và tách tổng của tổng
+ * ($\sum (f+g) = \sum f + \sum g$). Không áp cho $\prod$: ở đó hai hình dạng ấy là hai
+ * tính chất khác nhau, và gộp chúng dưới một cái tên là nói dối về nội dung.
+ */
+const sumLinear: Rule = {
+  id: 'sum_linear',
+  label: 'tính tuyến tính của tổng',
+  run(m, node) {
+    if (node.k !== 'big') return no('cần một tổng');
+    if (node.op !== 'sum') return no('tính chất này của tổng, không của tích');
+
+    if (node.body.k === 'mul') {
+      const outside = node.body.args.filter((a) => !varsOf(a).has(node.v));
+      const inside = node.body.args.filter((a) => varsOf(a).has(node.v));
+      if (outside.length === 0) return no('không thừa số nào rời khỏi chỉ số được');
+      if (inside.length === 0) return no('cả thân không phụ thuộc chỉ số — dùng `sum_const`');
+      return {
+        after: mul(m, [
+          ...outside,
+          big(m, 'sum', node.v, node.from, node.to, mul(m, inside)),
+        ]),
+      };
+    }
+
+    if (node.body.k === 'add') {
+      const parts = node.body.args.map((a, i) =>
+        i === 0
+          ? big(m, 'sum', node.v, node.from, node.to, a)
+          : big(
+              m,
+              'sum',
+              node.v,
+              freshCopy(m, node.from).copy,
+              freshCopy(m, node.to).copy,
+              a,
+            ),
+      );
+      return { after: add(m, parts) };
+    }
+
+    return no('thân phải là một tích hoặc một tổng');
+  },
+};
+
+/** $\sum_{k=a}^{b} = \sum_{k=a}^{m} + \sum_{k=m+1}^{b}$ — `arg` là chỗ cắt $m$. */
+const sumSplit: Rule = {
+  id: 'sum_split',
+  label: 'tách tổng tại một chỉ số',
+  needsArg: true,
+  run(m, node, arg) {
+    if (node.k !== 'big') return no('cần một tổng hoặc một tích');
+    if (arg === undefined) return no('cần chỗ cắt, ví dụ "3"');
+    const cut = tryParse(arg, m);
+    if ('error' in cut) return no(`chỗ cắt không đọc được: ${cut.error}`);
+    if (varsOf(cut.expr).has(node.v)) return no(`chỗ cắt không được chứa chỉ số ${node.v}`);
+
+    // **Hai** điều kiện, và cả hai đều có răng: engine bắt được bước sai ở $n = 1$ khi
+    // chỗ cắt $3$ nằm ngoài khoảng $[1, 1]$ — nửa sau thành khoảng rỗng ($0$ với tổng)
+    // trong khi nửa đầu đã ăn quá tay. Đây chính là ca buộc `guard` phải nhận số nhiều.
+    const guard: Guards = [
+      { expr: add(m, [freshCopy(m, node.to).copy, negate(m, freshCopy(m, cut.expr).copy)]), sign: '>=0' },
+      {
+        expr: add(m, [
+          freshCopy(m, cut.expr).copy,
+          negate(m, freshCopy(m, node.from).copy),
+          int(m, 1),
+        ]),
+        sign: '>=0',
+      },
+    ];
+    const second = freshCopy(m, cut.expr);
+    return {
+      guard,
+      condition: `${toPlain(node.from)} − 1 ≤ ${toPlain(cut.expr)} ≤ ${toPlain(node.to)}`,
+      after: (node.op === 'sum' ? add : mul)(m, [
+        big(m, node.op, node.v, node.from, cut.expr, node.body),
+        big(
+          m,
+          node.op,
+          node.v,
+          add(m, [second.copy, int(m, 1)]),
+          freshCopy(m, node.to).copy,
+          freshCopy(m, node.body).copy,
+        ),
+      ]),
+      dup: second.pairs,
+    };
+  },
+};
+
+/**
+ * Đổi biến chỉ số: $\sum_{k=a}^{b} f(k) = \sum_{k=a+c}^{b+c} f(k-c)$. `arg` là $c$.
+ *
+ * Đặt $j = k + c$ rồi gọi lại biến mới là $k$ — đó là cách người ta viết tay, và nó giữ
+ * cho `at` của bước sau không phải đổi theo.
+ */
+const sumShift: Rule = {
+  id: 'sum_shift',
+  label: 'đổi biến chỉ số',
+  needsArg: true,
+  run(m, node, arg) {
+    if (node.k !== 'big') return no('cần một tổng hoặc một tích');
+    if (arg === undefined) return no('cần lượng dịch, ví dụ "1"');
+    const shift = tryParse(arg, m);
+    if ('error' in shift) return no(`lượng dịch không đọc được: ${shift.error}`);
+    if (varsOf(shift.expr).has(node.v)) return no(`lượng dịch không được chứa chỉ số ${node.v}`);
+
+    const back = add(m, [variable(m, node.v), negate(m, freshCopy(m, shift.expr).copy)]);
+    return {
+      after: big(
+        m,
+        node.op,
+        node.v,
+        add(m, [node.from, freshCopy(m, shift.expr).copy]),
+        add(m, [node.to, freshCopy(m, shift.expr).copy]),
+        replaceIndex(m, node.body, node.v, back),
+      ),
+    };
+  },
+};
+
+/**
+ * Viết hết ra khi hai cận là số — **cầu nối** duy nhất từ $\sum$ về `add` thường.
+ *
+ * Không có nó thì $\sum$ là một ốc đảo: cả 47 luật cũ đều không áp được vào một nút
+ * `big`. Trần sáu hạng tử vì bảy trở lên thì dòng vượt trần bề ngang, và để trần kích
+ * thước từ chối thì đúng phân công hơn là dựng thêm một trần ở đây (bài học M50 tầng C).
+ */
+const sumExpand: Rule = {
+  id: 'sum_expand',
+  label: 'viết hết các hạng tử',
+  run(m, node) {
+    if (node.k !== 'big') return no('cần một tổng hoặc một tích');
+    if (node.from.k !== 'int' || node.to.k !== 'int') return no('hai cận phải là số nguyên');
+    const count = node.to.v - node.from.v + 1;
+    if (count <= 0) return no('khoảng rỗng — không có hạng tử nào');
+    if (count > 6) return no(`${count} hạng tử, quá 6 — hãy tách bớt trước`);
+
+    const terms = Array.from({ length: count }, (_, i) =>
+      replaceIndex(m, freshCopy(m, node.body).copy, node.v, int(m, (node.from as Expr & { k: 'int' }).v + i)),
+    );
+    return { after: (node.op === 'sum' ? add : mul)(m, terms) };
+  },
+};
+
+/**
+ * $\prod_{k=a}^{b} \dfrac{f(k+1)}{f(k)} = \dfrac{f(b+1)}{f(a)}$ — tích lồng nhau triệt tiêu.
+ *
+ * Nhận dạng bằng **cấu trúc**, không bằng mẫu chuỗi: tử phải đúng bằng mẫu sau khi thay
+ * $k \to k+1$. Xác định, và không có ca nào nó "gần đúng".
+ */
+const prodTelescope: Rule = {
+  id: 'prod_telescope',
+  label: 'tích triệt tiêu dây chuyền',
+  run(m, node) {
+    if (node.k !== 'big' || node.op !== 'prod') return no('cần một tích');
+    if (node.body.k !== 'div') return no('thân phải là một phân số');
+    const { num, den } = node.body;
+
+    const probe = new Minter();
+    const shifted = replaceIndex(probe, den, node.v, add(probe, [variable(probe, node.v), int(probe, 1)]));
+    if (!same(num, shifted)) return no('tử không phải là mẫu với chỉ số lùi một bậc');
+
+    return {
+      after: div(
+        m,
+        replaceIndex(m, freshCopy(m, den).copy, node.v, add(m, [freshCopy(m, node.to).copy, int(m, 1)])),
+        replaceIndex(m, freshCopy(m, den).copy, node.v, freshCopy(m, node.from).copy),
+      ),
+    };
+  },
+};
+
 export const RULES: readonly Rule[] = [
   commute,
   distribute,
@@ -2265,6 +2496,12 @@ export const RULES: readonly Rule[] = [
   binomSymmetry,
   pascal,
   binomAbsorb,
+  sumConst,
+  sumLinear,
+  sumSplit,
+  sumShift,
+  sumExpand,
+  prodTelescope,
   addBothSides,
   mulBothSides,
   powBothSides,

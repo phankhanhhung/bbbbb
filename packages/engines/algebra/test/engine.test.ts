@@ -26,6 +26,8 @@ import {
   sameSolutionSet,
   sameValue,
   sameValueReal,
+  substituteVar,
+  varsOf,
   same,
   glyphBox,
   shrink,
@@ -38,6 +40,7 @@ import {
   type Expr,
 } from '../src/index.js';
 import { toPlain } from '../src/parse.js';
+import { evalReal } from '../src/check.js';
 
 const renderer = createRenderer([algebraRenderer]);
 const ctx = createContext(defaultTheme);
@@ -68,6 +71,10 @@ const ARGS: Readonly<Record<string, ArgMaker>> = {
   // được bất cứ khi nào hạng tử tự do bằng 0. Ghi ra thay vì để rơi vào nhánh mặc
   // định — trúng tình cờ thì hôm nào đó thôi trúng mà không ai biết.
   divide_by_linear_factor: () => 'y',
+  // Chỗ cắt và lượng dịch phải là **hằng**: cả hai luật từ chối khi `arg` chứa chỉ số,
+  // và một `arg` luôn bị từ chối thì luật ấy không bao giờ được quét.
+  sum_split: () => '2',
+  sum_shift: () => '1',
   // Phân hoạch phải **vừa với nút gặp phải**: `add` làm phẳng nên số hạng tử thay đổi
   // theo từng biểu thức, và một `arg` cố định `"0,1|2,3"` chỉ áp được cho tổng đúng
   // bốn hạng tử — tức là hầu như không bao giờ.
@@ -97,6 +104,7 @@ describe('tầng 0 — parser và printer', () => {
       // Mỗi kiểu nút mới phải có mặt ở đây, nếu không chốt canh tầng 0 — chốt canh của
       // tầng rủi ro nhất — im lặng bỏ qua đúng thứ vừa thêm.
       'n!', 'C(n, k)', 'A(n, 2)', '(x + 1)!',
+      'sum(k, 1, n, k)', 'prod(k, 1, 3, k + 1)',
     ];
     let s = 987654321;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
@@ -143,7 +151,7 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
     const ATOMS = [
       'x', 'y', '2', '3', '-1', 'x^2', 'y^2', 'x^3', 'y^3',
       'sqrt(x)', 'sqrt(6)', 'abs(x)', 'x^(1/2)', '1/x', '2/y',
-      'n!', 'C(n, k)', 'A(n, 3)',
+      'n!', 'C(n, k)', 'A(n, 3)', 'sum(k, 1, n, k)',
     ];
     let s = 4242;
     const rand = (): number => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
@@ -170,6 +178,11 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       // M56: `binom_absorb` cần đúng hình dạng $k\,C_n^k$, một thứ bộ sinh ngẫu nhiên
       // gần như không bao giờ dựng trúng — cùng lý do đã phải gieo $\sqrt{48}$.
       'k*C(n, k)', 'C(n, k)', 'n!', '3*k*C(n, k)', 'C(n, k) + C(n, k + 1)',
+      // M57: mỗi luật $\Sigma$ đòi một hình dạng thân riêng — hằng, tích, tổng, phân
+      // số triệt tiêu — mà bộ sinh ngẫu nhiên chỉ dựng được cái đầu.
+      'sum(k, 1, n, 5)', 'sum(k, 1, n, 3*k)', 'sum(k, 1, n, k + k^2)',
+      'sum(k, 1, 4, k^2)', 'prod(k, 1, 3, k)', 'prod(k, 1, n, (k + 1)/k)',
+      'sum(k, 1, n, k) + x', 'prod(k, 1, n, x)',
     ];
 
     const bad: string[] = [];
@@ -1718,5 +1731,162 @@ describe('M56 — hàm tổ hợp và bộ bốc điểm số nguyên', () => {
       // $n!^2$ vẽ ra hai vật rời nhau. Cùng lớp lỗi với bảng `EM` sinh ra để dẹp.
       expect(textWidth('!', FONT)).toBeLessThan(textWidth('x', FONT));
     });
+  });
+});
+
+describe('M57 — tổng và tích', () => {
+  const run = (start: string, steps: AlgebraStep[] = []) => readAlgebra(scene(start, steps));
+  const last = (start: string, steps: AlgebraStep[]): string => {
+    const m = run(start, steps);
+    if (m.refusal !== null) throw new Error(m.refusal);
+    return unparse(m.rows.at(-1)!.expr);
+  };
+  const tree = (s: string): Expr => parse(s, new Minter());
+  const at = (s: string, env: Record<string, number>): number | null =>
+    evalReal(tree(s), new Map(Object.entries(env)));
+
+  describe('phạm vi biến — rủi ro chính của hạng mục', () => {
+    it('biến chỉ số **không** là biến tự do', () => {
+      // Bỏ sót chỗ trừ này thì hai chỗ hỏng cùng lúc và cả hai đều im lặng: `maxVars`
+      // đếm thừa, và bộ kiểm bốc một giá trị cho $k$ rồi vòng lặp của `big` đè lên nó —
+      // phép kiểm vẫn xanh, nhưng xanh vì một lý do khác với lý do người ta tưởng.
+      expect([...varsOf(tree('sum(k, 1, n, k)'))]).toEqual(['n']);
+      expect([...varsOf(tree('sum(k, 1, n, k*x))'.slice(0, -1)))].sort()).toEqual(['n', 'x']);
+    });
+
+    it('hai **cận** nằm ngoài phạm vi ràng buộc', () => {
+      // $\\sum_{k=1}^{k}$ — cận trên là một $k$ khác, **tự do**. Trộn hai thứ ấy là lỗi
+      // phạm vi cổ điển nhất, và nó không có triệu chứng nào ngoài một con số sai.
+      expect([...varsOf(tree('sum(k, 1, k, k)'))]).toEqual(['k']);
+    });
+
+    it('lồng nhau thì mỗi tầng ràng buộc tên của nó', () => {
+      expect([...varsOf(tree('sum(j, 1, n, sum(k, 1, j, k)))'.slice(0, -1)))]).toEqual(['n']);
+      // Và trùng tên thì **từ chối ở parser**. Đổi tên tự động là một mẹo, và mẹo ở
+      // tầng ngữ pháp là chỗ lỗi nằm: tác giả gõ `k` rồi `at` của bước sau trỏ vào một
+      // cái tên chưa từng gõ.
+      expect(() => parse('sum(k, 1, n, sum(k, 1, m, k))', new Minter())).toThrow('đã bị');
+    });
+
+    it('`substituteVar` không thò vào thân đã che tên', () => {
+      const e = tree('sum(k, 1, n, k) + k');
+      const out = substituteVar(e, 'k', tree('9'));
+      // $k$ tự do ở ngoài bị thay; $k$ trong thân tổng thì không.
+      expect(unparse(out)).toBe('(sum(k, 1, n, k) + 9)');
+    });
+  });
+
+  describe('đánh giá', () => {
+    it('khai đúng khi hai cận là số nguyên', () => {
+      expect(at('sum(k, 1, n, k)', { n: 4 })).toBe(10);
+      expect(at('sum(k, 1, 4, k^2)', {})).toBe(30);
+      expect(at('prod(k, 1, n, k)', { n: 4 })).toBe(24);
+      expect(at('sum(k, 0, n, C(n, k))', { n: 4 })).toBe(16);
+      expect(at('sum(j, 1, n, sum(k, 1, j, k))', { n: 4 })).toBe(20);
+    });
+
+    it('khoảng **rỗng** cho $0$ với tổng và $1$ với tích', () => {
+      // Quy ước chuẩn, và nó có việc thật: `sum_split` tại $m = b$ sinh ra đúng một
+      // khoảng rỗng, nên nếu chỗ này trả `null` thì luật ấy hoá ra không kiểm được.
+      expect(at('sum(k, 1, 0, k)', {})).toBe(0);
+      expect(at('prod(k, 1, 0, k)', {})).toBe(1);
+    });
+
+    it('cận không nguyên ⇒ điểm vô dụng, **không** phải bằng chứng sai', () => {
+      expect(at('sum(k, 1, n, k)', { n: 2.5 })).toBeNull();
+    });
+  });
+
+  describe('sáu luật', () => {
+    it('cho ra đúng vế sau', () => {
+      expect(last('sum(k, 1, n, 5)', [{ rule: 'sum_const', at: '' }])).toBe('((n + (-1) + 1) * 5)');
+      expect(last('prod(k, 1, n, x)', [{ rule: 'sum_const', at: '' }])).toBe('(x)^((n + (-1) + 1))');
+      expect(last('sum(k, 1, n, 3*k)', [{ rule: 'sum_linear', at: '' }])).toBe(
+        '(3 * sum(k, 1, n, k))',
+      );
+      expect(last('sum(k, 1, 4, k^2)', [{ rule: 'sum_expand', at: '' }])).toBe(
+        '((1)^(2) + (2)^(2) + (3)^(2) + (4)^(2))',
+      );
+      expect(last('prod(k, 1, n, (k + 1)/k)', [{ rule: 'prod_telescope', at: '' }])).toBe(
+        '((n + 1) / 1)',
+      );
+    });
+
+    it('cả sáu **kiểm được** — không luật nào rơi vào `unchecked`', () => {
+      const cases: Array<[string, string, string | undefined]> = [
+        ['sum(k, 1, n, 5)', 'sum_const', undefined],
+        ['sum(k, 1, n, 3*k)', 'sum_linear', undefined],
+        ['sum(k, 1, n, k)', 'sum_split', '2'],
+        ['sum(k, 1, n, k^2)', 'sum_shift', '1'],
+        ['sum(k, 1, 4, k^2)', 'sum_expand', undefined],
+        ['prod(k, 1, n, (k + 1)/k)', 'prod_telescope', undefined],
+      ];
+      for (const [start, rule, arg] of cases) {
+        const m = run(start, [arg === undefined ? { rule, at: '' } : { rule, at: '', arg }]);
+        expect(m.refusal, `${rule}: ${m.refusal}`).toBeNull();
+        expect(m.unsound, rule).toEqual([]);
+        expect(m.unchecked, rule).toEqual([]);
+      }
+    });
+
+    it('`sum_expand` là **cầu nối** về `add` thường', () => {
+      // Không có nó thì $\\Sigma$ là một ốc đảo: cả 47 luật cũ đều không áp được vào
+      // một nút `big`.
+      expect(
+        last('sum(k, 1, 4, k)', [
+          { rule: 'sum_expand', at: '' },
+          { rule: 'eval_int', at: '' },
+        ]),
+      ).toBe('10');
+    });
+
+    it('`prod_telescope` nhận dạng bằng **cấu trúc**, không bằng mẫu chuỗi', () => {
+      expect(run('prod(k, 1, n, (k + 2)/k)', [{ rule: 'prod_telescope', at: '' }]).refusal).toContain(
+        'lùi một bậc',
+      );
+    });
+
+    it('trần sáu hạng tử để **trần kích thước** tự lo phần còn lại', () => {
+      const why = run('sum(k, 1, 7, k)', [{ rule: 'sum_expand', at: '' }]).refusal as string;
+      expect(why).toContain('7 hạng tử');
+    });
+  });
+
+  describe('`guard` phải nhận **số nhiều**', () => {
+    it('`sum_split` sai khi chỗ cắt nằm ngoài khoảng — và engine bắt được', () => {
+      // Đây là ca buộc `Guard` phải thành `Guards`. Tách $\\sum_{k=1}^{n}$ tại $m=3$ chỉ
+      // đúng khi $0 \\le 3 \\le n$; ở $n = 1$ vế trái là $1$ còn vế phải là $6 + 0$.
+      // Gói hai bất đẳng thức vào một biểu thức — $(b-m)(m-a+1) \\ge 0$ — thì đúng tình
+      // cờ và sai khi cả hai cùng âm.
+      const guards = [
+        { expr: tree('n - 3'), sign: '>=0' as const },
+        { expr: tree('3 - 1 + 1'), sign: '>=0' as const },
+      ];
+      const before = tree('sum(k, 1, n, k)');
+      const after = tree('sum(k, 1, 3, k) + sum(k, 4, n, k)');
+
+      // Không điều kiện ⇒ bắt được sai.
+      expect(sameValue(before, after).ok).toBe(false);
+      // Có **cả hai** điều kiện ⇒ đúng.
+      expect(sameValue(before, after, 20260731, 8, guards).ok).toBe(true);
+    });
+
+    it('luật tự khai đủ hai điều kiện, và in ra hình', () => {
+      const m = run('sum(k, 1, n, k)', [{ rule: 'sum_split', at: '', arg: '3' }]);
+      expect(m.unsound).toEqual([]);
+      expect(m.conditions).toEqual(['1 − 1 ≤ 3 ≤ n']);
+    });
+  });
+
+  it('vẽ ra vừa trần — kể cả $\\Sigma$ chồng $\\Sigma$ trong một phân số', () => {
+    for (const src of [
+      'sum(k, 1, n, k^2) = n*(n + 1)*(2*n + 1)/6',
+      '(sum(k, 1, n, k))/(sum(k, 1, n, 1))',
+      'sum(j, 1, n, sum(k, 1, j, k))',
+    ]) {
+      const mm = measure(toBox(tree(src)));
+      expect((mm.above + mm.below) / ROW, src).toBeLessThanOrEqual(ALGEBRA_LIMITS.maxHeightCells);
+      expect(mm.w / ROW, src).toBeLessThanOrEqual(ALGEBRA_LIMITS.maxWidthCells);
+    }
   });
 });

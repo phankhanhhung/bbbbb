@@ -1,0 +1,113 @@
+{
+  "schema_version": "0.3.0",
+  "id": "telescoping-product",
+  "statement": {
+    "vi": "Tích $\\prod_{k=1}^{n} \\frac{k+1}{k}$ có $n$ thừa số, mà kết quả chỉ là $n+1$. Mọi thứ ở giữa triệt tiêu theo dây chuyền — và engine nhận ra chuyện ấy bằng **cấu trúc**, không bằng cách nhìn mặt chữ."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: luật kiểm tử có đúng bằng mẫu sau khi thay $k \\to k+1$ hay không. Xác định, không có ca nào nó \"gần đúng\" — $\\frac{k+2}{k}$ bị từ chối ngay dù nhìn rất giống."
+    }
+  },
+  "topics": [
+    "counting",
+    "algebra"
+  ],
+  "techniques": [
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Nhìn dây chuyền triệt tiêu"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Với $n$ cụ thể thì thấy ngay: [[a1|viết hết bốn thừa số ra]] và tử của mỗi cái đúng bằng mẫu của cái sau. Chỉ mẫu đầu và tử cuối sống sót."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "prod(k, 1, 4, (k + 1)/k)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "sum_expand"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: tích từ k bằng 1 tới 4 của k cộng 1 trên k, rồi bốn phân số nhân nhau."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Và với $n$ ký hiệu thì luật làm đúng chuyện ấy trong một bước: [[a1|còn lại $\\frac{n+1}{1}$]]. Engine kiểm bằng cách thay $n$ bằng số nguyên nhỏ rồi so hai vế — nó không tin lời ai."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "prod(k, 1, n, (k + 1)/k)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "prod_telescope"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: tích từ k bằng 1 tới n của k cộng 1 trên k, rồi n cộng 1 trên 1."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

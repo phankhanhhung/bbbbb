@@ -1,6 +1,7 @@
 import {
   Minter,
   add,
+  big,
   div,
   fn,
   int,
@@ -47,6 +48,12 @@ const RELS: readonly RelOp[] = ['<=', '>=', '!=', '=', '<', '>'];
  * `fact` phải đứng trước bất cứ tên một chữ nào bắt đầu bằng `f` nếu sau này có; giữ
  * thứ tự này làm quy ước để chỗ thêm hàm mới không phải nghĩ lại.
  */
+/** Cú pháp mặt của tổng và tích. */
+const BIG_OPS: ReadonlyArray<readonly [string, 'sum' | 'prod']> = [
+  ['sum', 'sum'],
+  ['prod', 'prod'],
+];
+
 const NAMED_FNS: ReadonlyArray<readonly [string, FnName]> = [
   ['fact', 'fact'],
   ['C', 'binom'],
@@ -55,6 +62,14 @@ const NAMED_FNS: ReadonlyArray<readonly [string, FnName]> = [
 
 class Parser {
   private i = 0;
+  /**
+   * Các tên đang bị **ràng buộc** bởi một $\sum$/$\prod$ bao ngoài.
+   *
+   * Có để từ chối $\sum_k \sum_k$ ngay ở tầng ngữ pháp. Đổi tên tự động là một mẹo, và
+   * mẹo ở tầng ngữ pháp là chỗ lỗi nằm: người soạn gõ `k` rồi đọc lại thấy `k'` mà không
+   * hiểu vì sao, còn `at` của bước sau thì trỏ vào một cái tên chưa từng gõ.
+   */
+  private readonly bound: string[] = [];
 
   constructor(
     private readonly src: string,
@@ -162,6 +177,46 @@ class Parser {
     return true;
   }
 
+  /** Ruột của `sum(`/`prod(` — đã ăn tên và dấu ngoặc mở. */
+  private bigBody(op: 'sum' | 'prod', head: string): Expr {
+    this.ws();
+    const name = this.name();
+    if (name === null) throw new ParseError(`${head} cần một tên biến chỉ số`, this.i);
+    if (this.bound.includes(name)) {
+      throw new ParseError(`chỉ số "${name}" đã bị một tổng/tích bao ngoài dùng`, this.i);
+    }
+    if (!this.eat(',')) throw new ParseError(`${head} cần dấu ","`, this.i);
+    // Hai cận đọc **ngoài** phạm vi ràng buộc: $\sum_{k=1}^{k}$ thì cận trên là một $k$
+    // khác, tự do — trộn hai thứ ấy là lỗi phạm vi cổ điển nhất.
+    const from = this.sum();
+    if (!this.eat(',')) throw new ParseError(`${head} cần dấu ","`, this.i);
+    const to = this.sum();
+    if (!this.eat(',')) throw new ParseError(`${head} cần dấu ","`, this.i);
+
+    this.bound.push(name);
+    try {
+      const body = this.sum();
+      if (!this.eat(')')) throw new ParseError('thiếu dấu ")"', this.i);
+      return big(this.m, op, name, from, to, body);
+    } finally {
+      this.bound.pop();
+    }
+  }
+
+  /** Một tên biến: chữ cái, kèm chỉ số dưới một chữ số. `null` khi không có. */
+  private name(): string | null {
+    this.ws();
+    const ch = this.src[this.i];
+    if (ch === undefined || !/[a-zA-Z]/.test(ch)) return null;
+    this.i += 1;
+    let out = ch;
+    if (this.src[this.i] === '_' && /[0-9]/.test(this.src[this.i + 1] ?? '')) {
+      out += `_${this.src[this.i + 1] as string}`;
+      this.i += 2;
+    }
+    return out;
+  }
+
   private digits(): number | null {
     this.ws();
     const start = this.i;
@@ -213,6 +268,15 @@ class Parser {
       return root(this.m, n, inner);
     }
 
+    // $\sum$ và $\prod$: `sum(k, 1, n, k^2)`. Đối số **đầu là một tên**, không phải một
+    // biểu thức — nó là biến chỉ số, và biến chỉ số không có giá trị để tính.
+    for (const [head, op] of BIG_OPS) {
+      if (!this.src.startsWith(head, this.i)) continue;
+      if (this.src[this.i + head.length] !== '(') continue;
+      this.i += head.length + 1;
+      return this.bigBody(op, head);
+    }
+
     // Hàm tổ hợp. `C` và `A` cũng là **tên biến hợp lệ**, và chuyện ấy không mơ hồ —
     // engine **cấm nhân ngầm** (§3.3), nên một biến không bao giờ đứng sát dấu ngoặc
     // mở. `C(` chỉ có thể là lời gọi hàm. Một ràng buộc cũ trả cổ tức ở đây.
@@ -230,16 +294,9 @@ class Parser {
       return fn(this.m, name, args);
     }
 
-    if (/[a-zA-Z]/.test(ch)) {
-      this.i += 1;
-      let name = ch;
-      // Chỉ số dưới một chữ số: `a_1`. Đủ cho dãy, không mở cửa cho tên nhiều chữ.
-      if (this.src[this.i] === '_' && /[0-9]/.test(this.src[this.i + 1] ?? '')) {
-        name += `_${this.src[this.i + 1] as string}`;
-        this.i += 2;
-      }
-      return variable(this.m, name);
-    }
+    // Chỉ số dưới một chữ số: `a_1`. Đủ cho dãy, không mở cửa cho tên nhiều chữ.
+    const name = this.name();
+    if (name !== null) return variable(this.m, name);
 
     throw new ParseError(`không đọc được ký tự "${ch}"`, this.i);
   }
@@ -274,6 +331,9 @@ const PLAIN_PREC: Readonly<Record<Expr['k'], number>> = {
   root: 4,
   abs: 4,
   fn: 4,
+  // Ký hiệu tổng ăn **tới hết** thân của nó, nên nó lỏng hơn cả phép cộng: $\sum f + g$
+  // đọc ra $(\sum f) + g$ chỉ vì thân được bọc ngoặc khi cần, và chỗ bọc ấy nằm ở đây.
+  big: 1,
   int: 4,
   rat: 4,
   var: 4,
@@ -350,6 +410,11 @@ export function toPlain(e: Expr): string {
       return e.index === 2 ? `√(${toPlain(e.arg)})` : `căn bậc ${e.index} của (${toPlain(e.arg)})`;
     case 'abs':
       return `|${toPlain(e.arg)}|`;
+    case 'big': {
+      const sign = e.op === 'sum' ? 'Σ' : 'Π';
+      const body = PLAIN_PREC[e.body.k] <= PLAIN_PREC['big'] ? `(${toPlain(e.body)})` : toPlain(e.body);
+      return `${sign}(${e.v}=${toPlain(e.from)}..${toPlain(e.to)}) ${body}`;
+    }
     case 'fn':
       // Giai thừa của một thứ không phải nguyên tử phải có ngoặc: `x + 1!` đọc ra
       // $x + (1!)$, khác hẳn $(x+1)!$. Bảng ưu tiên không bắt được vì `fn` xếp ngang
@@ -415,6 +480,8 @@ export function unparse(e: Expr): string {
       return `abs(${unparse(e.arg)})`;
     case 'root':
       return e.index === 2 ? `sqrt(${unparse(e.arg)})` : `root(${e.index}, ${unparse(e.arg)})`;
+    case 'big':
+      return `${e.op}(${e.v}, ${unparse(e.from)}, ${unparse(e.to)}, ${unparse(e.body)})`;
     case 'fn':
       // Luôn in dạng **lời gọi**, kể cả giai thừa: `fact(n)` khứ hồi được ở mọi vị trí,
       // còn `n!` thì không — `2^n!` đọc lại thành $2^{n!}$ chứ không phải $(2^n)!$.

@@ -257,7 +257,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§32 để biết tập luật thật — **47 luật**, xếp theo sáu lớp:
+Xem §21–§33 để biết tập luật thật — **53 luật**, xếp theo bảy lớp:
 
 | lớp | luật |
 |---|---|
@@ -267,6 +267,7 @@ Xem §21–§32 để biết tập luật thật — **47 luật**, xếp theo s
 | **phương trình có điều kiện (★)** | `add_both_sides`, `mul_both_sides`, `pow_both_sides`, `abs_case`, `evaluate_at`, `set_variable`, `substitute`, `quadratic_formula` |
 | **chia đa thức** | `divide_by_linear_factor` |
 | **tổ hợp** (M56, §32) | `factorial_step`, `binom_to_factorial`, `binom_symmetry`, `pascal`, `binom_absorb` |
+| **tổng và tích** (M57, §33) | `sum_const`, `sum_linear`, `sum_split`, `sum_shift`, `sum_expand`, `prod_telescope` |
 
 **Hai điều luật này cố ý không có:**
 
@@ -579,8 +580,8 @@ Như `longdiv`: vẽ một dòng chữ đỏ nói **vì sao**, không vẽ bản
 - ~~**Hàm tổ hợp** $n!$, $C_n^k$, $A_n^k$~~ — **đã làm** (M56). Với một nền tảng nhắm
   Olympiad Combinatorics thì đây là lỗ **to hơn** $\log$: chúng là ký hiệu nền của cả
   môn. Xem §32 — nó không phải "thêm một nút", nó **thêm một bộ bốc điểm**.
-- **Ký hiệu $\Sigma$, $\Pi$.** Cần một construct **ràng buộc biến** — thứ engine chưa
-  từng có. (Kế hoạch: M57.)
+- ~~**Ký hiệu $\Sigma$, $\Pi$**~~ — **đã làm** (M57). Nó là construct **ràng buộc biến**
+  đầu tiên của engine, và cái giá nằm ở đúng một hàm: `varsOf`. Xem §33.
 - **Tập nghiệm / khoảng.** $x^2-3x+2>0$ phân tích ra $(x-2)(x-1)>0$ rồi **dừng**: không
   có nút nào để đặt đáp số. Thêm luật không cứu được, phải thêm chỗ cho kết quả rơi vào.
   (Kế hoạch: M60.)
@@ -1641,3 +1642,102 @@ $C_5^2$ khai "$0 \le 2 \le 5$" là một dòng đỏ nói một chuyện ai cũn
 Ngược lại, `binom_symmetry` **không** khai điều kiện nào — nó đúng ở mọi $k$ nguyên nhờ
 quy ước $C_n^k = 0$ ngoài $[0,n]$, vì ở đó cả hai vế cùng bằng $0$. Quy ước ấy cũng là
 thứ làm `pascal` đúng tại $k = 0$.
+
+---
+
+## 33. $\Sigma$, $\Pi$, và construct ràng buộc biến đầu tiên (M57)
+
+### 33.1 Cả hạng mục gói trong một hàm
+
+`varsOf`. Trước M57 nó là ba dòng — "mọi nút `var`" — vì engine không có construct nào
+ràng buộc tên. $\sum_{k=1}^{n} k$ đổi chuyện đó, và bỏ sót chỗ trừ làm **hai** thứ hỏng
+cùng lúc, cả hai đều im lặng:
+
+- `maxVars` đếm thừa, nên một bài hai ẩn bị từ chối vì "quá 6 biến";
+- bộ kiểm bốc một giá trị cho $k$ rồi truyền vào `evalReal`, nơi vòng lặp của `big`
+  **đè lên nó**. Giá trị bốc ra bị bỏ đi lặng lẽ, và phép kiểm **vẫn xanh** — nhưng nó
+  xanh vì một lý do khác với lý do người ta tưởng.
+
+Cái thứ hai là loại lỗi tệ nhất kho này có thể mắc, vì không chốt canh hành vi nào bắt
+được: phép quét ngẫu nhiên chạy qua và không kêu gì. Đo được: bẻ đúng dòng trừ ấy thì
+**chỉ** hai chốt canh khai thẳng về phạm vi đỏ lên, còn 132 chốt canh còn lại xanh hết.
+Đó là lý do hai chốt canh ấy tồn tại và tại sao chúng khẳng định `varsOf` chứ không
+khẳng định một hệ quả của nó.
+
+Ba chỗ phải đúng, và cả ba đều là chỗ dễ sai:
+
+| | |
+|---|---|
+| **thân** | trừ `v` ra |
+| **hai cận** | **không** trừ — $\sum_{k=1}^{k}$ thì cận trên là một $k$ khác, tự do |
+| **lồng nhau** | mỗi tầng ràng buộc tên của nó, không phải một tập chung |
+
+Trùng tên thì **từ chối ở parser**: $\sum_k$ lồng trong $\sum_k$. Đổi tên tự động là một
+mẹo, và mẹo ở tầng ngữ pháp là chỗ lỗi nằm — tác giả gõ `k`, đọc lại thấy `k'` mà không
+hiểu vì sao, còn `at` của bước sau thì trỏ vào một cái tên chưa từng gõ.
+
+Kèm theo là `substituteVar` chuyển từ `model.ts` ra `expr.ts` và học phạm vi: nó không
+thò vào thân một $\sum$ đã ràng buộc chính tên ấy. Từ M57 cả `rules` lẫn `model` đều cần
+nó, và hai bản chép tay thì bản thứ hai sẽ quên đúng dòng phạm vi này.
+
+### 33.2 Bộ bốc điểm của M56 dùng lại **nguyên si**
+
+$\sum$ chỉ khai được khi hai cận là số nguyên — đúng điều kiện mà `sameValueInteger` của
+M56 cung cấp. Nên M57 **không khai thêm gì**: một dòng trong `needsIntegerEval`, hết.
+
+Đây là cổ tức của quyết định ở §32.3: thứ M56 thêm là một **sân**, không phải một **câu
+hỏi**. Sáu hợp đồng kiểm của §6.1 vẫn là sáu.
+
+Khoảng **rỗng** cho $0$ với tổng và $1$ với tích. Quy ước chuẩn, và nó có việc thật:
+`sum_split` tại $m = b$ sinh ra đúng một khoảng rỗng, nên nếu chỗ này trả `null` thì luật
+ấy hoá ra không kiểm được.
+
+### 33.3 `guard` phải nhận **số nhiều** — và ca buộc nó là `sum_split`
+
+Tách $\sum_{k=a}^{b}$ tại $m$ chỉ đúng khi $a-1 \le m \le b$. Hai bất đẳng thức, mà
+`RuleOutcome.guard` chỉ nhận một. Engine bắt được ngay ở lượt chạy thử:
+
+```
+sum_split tại "" của Σ(k=1..n) k: khác nhau tại n=1: 1 ≠ 6
+```
+
+Ở $n=1$ vế trái là $1$, còn vế phải là $\sum_1^3 + \sum_4^1 = 6 + 0$.
+
+Gói hai điều kiện vào một biểu thức — chẳng hạn $(b-m)(m-a+1) \ge 0$ — thì **đúng tình
+cờ**: nó cũng đúng khi cả hai thừa số cùng âm. Mã hoá hai điều kiện thành một là đúng
+loại mẹo engine này tránh ở mọi chỗ khác, nên `Guard` thành `Guards = Guard | Guard[]`,
+và `guardHolds` đòi **mọi** điều kiện cùng thoả.
+
+Rẻ hơn tưởng: `model.ts` chỉ chuyển tiếp, còn `check.ts` gom hai kiểu về một qua
+`guardList()`.
+
+### 33.4 `sum_expand` là cầu nối, không phải tiện nghi
+
+Không có nó thì $\Sigma$ là một **ốc đảo**: cả 47 luật cũ đều không áp được vào một nút
+`big`. Nó viết hết các hạng tử khi hai cận là số, và từ đó mọi thứ trở lại là `add`
+thường.
+
+Trần sáu hạng tử — không phải vì sáu là con số thiêng, mà vì bảy trở lên thì dòng đụng
+trần bề ngang, và **để trần kích thước từ chối thì đúng phân công hơn** là dựng thêm một
+trần ở đây. Cùng lý lẽ với tầng C của M50.
+
+### 33.5 `prod_telescope` nhận dạng bằng cấu trúc
+
+$\prod_{k=a}^{b} \frac{f(k+1)}{f(k)} = \frac{f(b+1)}{f(a)}$. Nhận dạng bằng cách hỏi
+"tử có đúng bằng mẫu sau khi thay $k \to k+1$ không" — một phép so cấu trúc, xác định,
+không có ca nào nó "gần đúng". $\frac{k+2}{k}$ bị từ chối ngay dù nhìn rất giống.
+
+### 33.6 Vẽ
+
+Hộp `big` riêng, không ghép được từ `subsup`: hai cận nằm **trên và dưới** ký hiệu chứ
+không bên phải, nên bề ngang là $\max(\text{glyph}, \text{cận trên}, \text{cận dưới})$
+còn thân đứng bên phải.
+
+`PREC['big'] = 0` — lỏng nhất bảng, vì ký hiệu tổng ăn tới hết thân của nó. Hệ quả:
+$\sum f + g$ luôn vẽ ra $\left(\sum f\right) + g$. Hơi nặng mắt, nhưng $\sum(f+g)$ và
+$\sum f + g$ là hai biểu thức khác nhau mà **không dấu gộp nào** trong ký hiệu $\sum$
+phân biệt được chúng — ngoặc là thứ duy nhất làm việc ấy.
+
+Đo chiều cao trước khi chốt, không ước lượng: $\Sigma$ trơn cao $1{,}51$ ô; $\Sigma$ chồng
+$\Sigma$ trong một phân số — ca xấu nhất viết ra được — cao $2{,}74$ ô. Trần là $3$, nên
+lọt, và lọt có biên chứ không sát nút.
