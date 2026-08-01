@@ -11,6 +11,7 @@ import {
   type PlacedRule,
 } from './typeset.js';
 import { children, nodeAt, walk, type TermId } from './expr.js';
+import { boundsOf, solutionSetOf } from './solutionset.js';
 import type { AlgebraModel, AlgebraRow } from './model.js';
 
 /**
@@ -53,6 +54,19 @@ const COND_SIZE = FONT * 0.6;
  */
 const DOT_R = FONT * 0.13;
 const DOT_INSET = FONT * 0.75;
+
+/**
+ * Trục số: bề ngang, chiều cao, bán kính đầu mút.
+ *
+ * Bề ngang **cố định** chứ không co theo khoảng giá trị: hai dòng liên tiếp phải cùng
+ * một thước thì mắt mới so được "khoảng này rộng hơn khoảng kia". Co theo dữ liệu thì
+ * $(1,2)$ và $(1,10)$ vẽ ra dài bằng nhau — đúng số, sai ý.
+ */
+const AXIS_W = FONT * 5.2;
+const AXIS_H = FONT * 0.62;
+/** Nửa chiều cao vùng chạm/halo của trục — dùng chung với renderer. */
+export const AXIS_HALF = FONT * 0.42;
+export const END_R = FONT * 0.16;
 
 export interface PlacedLine {
   readonly row: AlgebraRow;
@@ -137,8 +151,31 @@ export interface ExplainInk {
   readonly roleOf: ReadonlyMap<string, number>;
 }
 
+/**
+ * **Trục số** của một dòng (AL-15) — tập nghiệm vẽ ra được.
+ *
+ * Toạ độ đã đặt sẵn ở đơn vị scene, nên renderer chỉ việc biến thành node. Cùng lối với
+ * `ExplainInk`: hình học thuộc về tầng bố cục, vì chỉ tầng này biết dòng nằm ở đâu.
+ */
+export interface NumberLine {
+  readonly id: string;
+  readonly step: number;
+  /** Hai đầu trục, đơn vị scene. */
+  readonly x1: number;
+  readonly x2: number;
+  readonly y: number;
+  /** Đoạn tô — tia thì chạm mép trục. */
+  readonly spans: readonly { readonly x1: number; readonly x2: number }[];
+  /** Đầu mút: đặc khi thuộc tập ($\le$), rỗng khi không ($<$). */
+  readonly dots: readonly { readonly x: number; readonly closed: boolean }[];
+  /** Vạch chia có ghi số. */
+  readonly ticks: readonly { readonly x: number; readonly text: string }[];
+}
+
 export interface Layout {
   readonly lines: readonly PlacedLine[];
+  /** Trục số dưới từng dòng — chỉ khi tác giả bật `show_sets` (AL-15). */
+  readonly sets: readonly NumberLine[];
   /** Dòng chữ đỏ dưới hình: điều kiện AL-08, rồi món nợ nghiệm ngoại lai. */
   readonly notes: readonly { readonly x: number; readonly y: number; readonly text: string }[];
   readonly explain: ExplainInk;
@@ -182,6 +219,9 @@ export const noteId = (index: number): string => `note${index}`;
 /** Danh tính dải chứng cứ của dòng `k` (AL-14). Cả dải mang **một** tên, như ngoặc nhọn. */
 export const evidenceId = (rowIndex: number): string => `ev${rowIndex}`;
 
+/** Danh tính trục số dưới dòng `k` (AL-15) — neo được, choreography hiện được. */
+export const setId = (rowIndex: number): string => `set${rowIndex}`;
+
 /** Bề ngang phần đứng **trước** dấu quan hệ — thứ mọi dòng phải gióng theo. */
 function leadWidth(row: AlgebraRow): number {
   return row.expr.k === 'rel' ? measure(toBox(row.expr.lhs)).w : 0;
@@ -192,6 +232,8 @@ export function layout(model: AlgebraModel): Layout {
   const maxLead = Math.max(0, ...rows.map(leadWidth));
 
   const lines: PlacedLine[] = [];
+  const sets: NumberLine[] = [];
+  const showSets = model.config.show_sets === true;
   let y = 0;
   let right = 0;
 
@@ -221,6 +263,16 @@ export function layout(model: AlgebraModel): Layout {
 
     right = Math.max(right, x + m.w);
     y += m.above + m.below + LINE_GAP;
+
+    // Trục số **ngay dưới dòng nó nói về**, không gom xuống cuối hình: một tập nghiệm
+    // là kết quả của *dòng ấy*, và đặt nó cách xa dòng ấy thì mắt phải nối lại bằng trí
+    // nhớ. Chỉ vẽ khi tác giả bật cờ và khi dòng ở dạng đọc ra được.
+    const drawn = showSets ? numberLine(row, k, x, y) : null;
+    if (drawn !== null) {
+      sets.push(drawn);
+      right = Math.max(right, drawn.x2);
+      y += AXIS_H + LINE_GAP;
+    }
   }
 
   // Cột luật đứng sau dòng rộng nhất, nên nó không bao giờ đè lên công thức.
@@ -260,6 +312,7 @@ export function layout(model: AlgebraModel): Layout {
 
   return {
     lines: withLabels,
+    sets,
     notes,
     explain: explainInk(model, withLabels, notes),
     width: round(
@@ -267,6 +320,62 @@ export function layout(model: AlgebraModel): Layout {
     ),
     height: round(y),
   };
+}
+
+/**
+ * Trục số của một dòng, hoặc `null` khi dòng ấy không ở dạng vẽ được.
+ *
+ * Thước dùng chung cho mọi dòng: khoảng $[-6, 6]$ cố định, cắt bớt chỉ khi mọi mốc nằm
+ * gọn trong một khoảng hẹp hơn. Hai dòng liên tiếp cùng thước thì so được bằng mắt.
+ */
+function numberLine(row: AlgebraRow, step: number, left: number, top: number): NumberLine | null {
+  const set = solutionSetOf(row.expr);
+  if (set === null) return null;
+  const bounds = boundsOf(set);
+  if (bounds.length === 0) return null;
+
+  const lo = Math.min(...bounds);
+  const hi = Math.max(...bounds);
+  // Đệm hai bên để tia còn chỗ chạy ra: nếu mốc nằm sát mép thì "đi tới vô cùng" trông
+  // như "dừng ở đây".
+  const pad = Math.max(1, (hi - lo) * 0.5);
+  const from = lo - pad;
+  const to = hi + pad;
+  const y = round(top + AXIS_H * 0.55);
+  // Gióng mép trái với **dòng nó nói về**, không dán vào lề trang: các dòng gióng theo
+  // dấu quan hệ nên chúng thụt vào khác nhau, và một dải nằm tít bên trái đọc thành một
+  // vật rời chứ không phải kết quả của dòng ngay trên nó.
+  const at = (v: number): number => round(left + ((v - from) / (to - from)) * AXIS_W);
+
+  const spans = set.pieces.map((p) => ({
+    x1: at(p.lo ?? from),
+    x2: at(p.hi ?? to),
+  }));
+  const dots: { x: number; closed: boolean }[] = [];
+  for (const p of set.pieces) {
+    if (p.lo !== null) dots.push({ x: at(p.lo), closed: p.loClosed });
+    if (p.hi !== null && p.hi !== p.lo) dots.push({ x: at(p.hi), closed: p.hiClosed });
+  }
+
+  return {
+    id: setId(step),
+    step,
+    x1: round(left),
+    x2: round(left + AXIS_W),
+    y,
+    spans,
+    dots,
+    ticks: bounds.map((v) => ({ x: at(v), text: numberText(v) })),
+  };
+}
+
+/** Số trên vạch: nguyên thì in trần, không thì phân số mẫu nhỏ. */
+function numberText(v: number): string {
+  const sign = v < 0 ? '−' : '';
+  const a = Math.abs(v);
+  if (Number.isInteger(a)) return `${sign}${a}`;
+  for (const q of [2, 3, 4]) if (Number.isInteger(a * q)) return `${sign}${a * q}/${q}`;
+  return `${sign}${a.toFixed(2)}`;
 }
 
 /**
@@ -430,6 +539,17 @@ export function boxOf(box: Layout, id: string): NodeBox | null {
     if (line.box.id === id) return line.box;
     for (const b of line.boxes) if (b.id === id) return b;
   }
+  for (const set of box.sets) {
+    if (set.id === id) {
+      return {
+        id,
+        x: set.x1,
+        y: round(set.y - AXIS_HALF),
+        width: round(set.x2 - set.x1),
+        height: round(AXIS_HALF * 2),
+      };
+    }
+  }
   return null;
 }
 
@@ -459,6 +579,9 @@ export function drawnIds(box: Layout): Set<string> {
     out.add(line.box.id);
     for (const b of line.boxes) out.add(b.id);
   }
+  // Trục số **có mực và neo được** — khác dải chứng cứ, vốn chỉ sống ở chế độ giải
+  // thích nên phải ở `explainIds`. Trục số hiện ở mọi lượt vẽ khi cờ bật, kể cả golden.
+  for (const set of box.sets) out.add(set.id);
   return out;
 }
 

@@ -10,7 +10,7 @@ import {
   type SceneBox,
   type SvgNode,
 } from '@combviz/render';
-import { boxOf, layout, noteId, RULE_SIZE, type Layout } from './layout.js';
+import { AXIS_HALF, boxOf, END_R, layout, noteId, RULE_SIZE, type Layout } from './layout.js';
 import { readAlgebra } from './model.js';
 import { FONT, ROW } from './typeset.js';
 
@@ -186,6 +186,8 @@ export const algebraRenderer: EngineRenderer = {
       nodes.push(el('g', { class: 'cv-alg-row' }, children));
     }
 
+    nodes.push(...setNodes(box, ctx));
+
     if (ctx.explain) nodes.push(...explainNodes(box, ctx));
 
     for (const [i, note] of box.notes.entries()) {
@@ -276,6 +278,130 @@ function roleInk(ctx: RenderContext, box: Layout, owner: string | null): string 
  * hiện hết cùng dòng mới thì hình thành mạng nhện. Bộ sinh cho chúng một pha `show`
  * ngay sau pha "chỗ sắp đổi" của bước tương ứng.
  */
+/**
+ * Trục số (AL-15) — tập nghiệm vẽ ra được.
+ *
+ * Ba lớp mực, và thứ tự vẽ là thứ tự đọc: trục mảnh làm nền, đoạn tô đậm nói *"chỗ
+ * này"*, đầu mút nói *"tới đâu, có kể mút hay không"*. Chấm **đặc** cho $\le$ và chấm
+ * **rỗng** cho $<$ — quy ước sách giáo khoa, và nó là toàn bộ chỗ khác nhau giữa hai
+ * đáp án chỉ lệch một dấu.
+ *
+ * Cả cụm mang **một** danh tính (`setId`), như ngoặc nhọn: nó là một vật, không phải
+ * một tập hợp vật.
+ */
+function setNodes(box: Layout, ctx: RenderContext): SvgNode[] {
+  const out: SvgNode[] = [];
+  const ink = ctx.theme.object.pieceGlyph;
+  const guide = ctx.theme.surface.guide;
+
+  for (const set of box.sets) {
+    const tip = round(FONT * 0.22);
+    const children: SvgNode[] = [
+      // Tay cầm nhận halo — cùng lối với hộp bao của từng hạng tử. Không có nó thì
+      // trục số **có danh tính mà không sáng lên được**, và anchor trỏ vào nó là một
+      // anchor câm. Chốt canh `ANC-01 — mọi element phải sáng được` bắt đúng chuyện ấy
+      // ngay lần chạy đầu.
+      el('rect', {
+        x: round(set.x1 - tip),
+        y: round(set.y - AXIS_HALF),
+        width: round(set.x2 - set.x1 + tip * 2),
+        height: round(AXIS_HALF * 2),
+        rx: 0.6,
+        fill: 'none',
+        ...decorationAttrs(ctx, set.id, undefined, 0.5),
+      }),
+      el('line', {
+        x1: set.x1,
+        x2: set.x2,
+        y1: set.y,
+        y2: set.y,
+        stroke: guide,
+        'stroke-width': round(FONT * 0.05),
+      }),
+    ];
+
+    for (const span of set.spans) {
+      children.push(
+        el('line', {
+          x1: span.x1,
+          x2: span.x2,
+          y1: set.y,
+          y2: set.y,
+          stroke: ink,
+          'stroke-width': round(END_R * 0.9),
+          'stroke-linecap': 'butt',
+        }),
+      );
+    }
+
+    /**
+     * Mũi tên hai đầu, vẽ **sau** đoạn tô và mang màu của thứ chạm tới nó.
+     *
+     * Không có mũi tên thì một **tia** chạy hết trục đọc thành một đoạn dừng lại ở đó —
+     * đo được ở lượt nhìn: hai tia của $x<1$ hoặc $x>2$ trông y hệt hai đoạn hữu hạn.
+     * Vẽ trước đoạn tô thì đoạn tô đè lên và mũi tên biến mất; vẽ sau mà giữ màu nhạt
+     * thì nó chìm vào nét đen. Nên: sau, và cùng màu với thứ đang chạy tới đó.
+     */
+    const reaches = (edge: number): boolean =>
+      set.spans.some((sp) => Math.abs(sp.x1 - edge) < 1e-6 || Math.abs(sp.x2 - edge) < 1e-6);
+    for (const [edge, dir] of [
+      [set.x1, 1],
+      [set.x2, -1],
+    ] as const) {
+      children.push(
+        el('path', {
+          d:
+            `M${round(edge + dir * tip)} ${round(set.y - tip)}` +
+            `L${edge} ${set.y}L${round(edge + dir * tip)} ${round(set.y + tip)}`,
+          fill: 'none',
+          stroke: reaches(edge) ? ink : guide,
+          'stroke-width': round(FONT * 0.07),
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+        }),
+      );
+    }
+
+    for (const dot of set.dots) {
+      children.push(
+        el('circle', {
+          cx: dot.x,
+          cy: set.y,
+          r: round(END_R),
+          // Rỗng thì **nền giấy** chứ không phải `fill: none`: đoạn tô chạy qua ngay
+          // dưới nó, và một vòng tròn trong suốt trên nền đen đọc thành một chấm đặc.
+          fill: dot.closed ? ink : ctx.theme.surface.canvas,
+          stroke: ink,
+          'stroke-width': round(END_R * 0.42),
+        }),
+      );
+    }
+
+    for (const tick of set.ticks) {
+      children.push(
+        text(
+          'text',
+          {
+            x: tick.x,
+            y: round(set.y + FONT * 0.62),
+            'text-anchor': 'middle',
+            'font-family': ctx.theme.type.mathFamily,
+            'font-size': round(FONT * 0.58),
+            // Số trên vạch là **dữ liệu**, không phải trang trí: cùng mực với công thức.
+            // Vẽ bằng màu guide thì ở mật độ thật nó nhoè thành một vệt xám.
+            fill: ink,
+          },
+          tick.text,
+        ),
+      );
+    }
+
+    out.push(keyed(set.id, 'g', {}, children));
+  }
+
+  return out;
+}
+
 function explainNodes(box: Layout, ctx: RenderContext): SvgNode[] {
   const out: SvgNode[] = [];
   const guide = ctx.theme.surface.guide;

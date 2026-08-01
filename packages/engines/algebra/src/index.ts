@@ -33,10 +33,11 @@ export {
   type SoundnessResult,
   type Witness,
 } from './check.js';
-export { layout, boxOf, drawnIds, explainIds, elementId, parseElementId } from './layout.js';
+export { layout, boxOf, drawnIds, explainIds, elementId, parseElementId, setId } from './layout.js';
 export { algebraChoreography, choreographyOf, choreographyTargets } from './choreography.js';
 export { algebraLineage, lineageOf } from './provenance.js';
 export { algebraIncident, violationOf } from './incident.js';
+export { solutionSetOf, boundsOf, contains, type SolutionSet, type Piece } from './solutionset.js';
 export {
   algebraCommands,
   APPLY_RULE,

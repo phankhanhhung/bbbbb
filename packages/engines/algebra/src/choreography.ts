@@ -1,6 +1,6 @@
 import type { Choreography, Scene } from '@combviz/schema';
 import { nodeAt, walk, type Expr, type TermId } from './expr.js';
-import { elementId, evidenceId, layout, noteId, type Layout } from './layout.js';
+import { elementId, evidenceId, layout, noteId, setId, type Layout } from './layout.js';
 import { readAlgebra, type AlgebraModel } from './model.js';
 
 /**
@@ -224,6 +224,9 @@ export function choreographyOf(
                 // bước không hợp đồng kiểm nào chạy, thì không có chấm nào — và một
                 // pha nhắm vào tên không tồn tại là một pha im lặng không làm gì.
                 ...(box.explain.evidence.some((d) => d.step === k) ? [evidenceId(k)] : []),
+                // Trục số cũng thuộc về dòng ấy (M67) — bày nó ra trước khi dòng hiện
+                // là bày kết luận trước khi kể, đúng lỗi M51 và M64 đã mắc.
+                ...(box.sets.some((s) => s.step === k) ? [setId(k)] : []),
                 ...slice,
               ]
             : slice

@@ -3,6 +3,7 @@ import type { Scene } from '@combviz/schema';
 import {
   algebraCommands,
   algebraIncident,
+  boxOf,
   ARG_RULE_PREDICATES,
   algebraLineage,
   drawnIds,
@@ -20,7 +21,11 @@ import {
   parse,
   parseElementId,
   readAlgebra,
+  ROW,
   RULES,
+  solutionSetOf,
+  contains,
+  evalRelation,
   sameValue,
   unparse,
   violationOf,
@@ -397,5 +402,172 @@ describe('lệnh áp luật', () => {
       current = out;
     }
     expect(refusal).toContain(`${ALGEBRA_LIMITS.maxSteps}`);
+  });
+});
+
+/**
+ * Trục số (M67, AL-15) — tập nghiệm vẽ ra được.
+ *
+ * Chuyện kiểm ở đây là **vẽ đúng cái đã kiểm**: mỗi đoạn tô được đối chiếu với chính
+ * `evalRelation` mà bộ kiểm dùng, chứ không với một bản sao logic. Hai bản không lệch
+ * nhau được vì chỉ có một bản.
+ */
+describe('đọc tập nghiệm ra từ cấu trúc', () => {
+  const setOf = (start: string, steps: AlgebraStep[] = []) =>
+    solutionSetOf(readAlgebra(scene(start, steps)).rows.at(-1)!.expr);
+
+  it('tuyển hai tia thì giữ **hai** mảnh', () => {
+    const set = setOf('x^2 - 3*x + 2 > 0', [
+      { rule: 'factor_quadratic', at: 'L' },
+      { rule: 'interval_from_factors', at: '' },
+    ])!;
+    expect(set.name).toBe('x');
+    expect(set.pieces).toEqual([
+      { lo: null, hi: 1, loClosed: false, hiClosed: false },
+      { lo: 2, hi: null, loClosed: false, hiClosed: false },
+    ]);
+  });
+
+  it('hội hai nửa thì **giao** thành một khoảng', () => {
+    const set = setOf('x^2 - 3*x + 2 < 0', [
+      { rule: 'factor_quadratic', at: 'L' },
+      { rule: 'interval_from_factors', at: '' },
+    ])!;
+    expect(set.pieces).toEqual([{ lo: 1, hi: 2, loClosed: false, hiClosed: false }]);
+  });
+
+  it('dấu **không ngặt** cho đầu mút đặc', () => {
+    expect(setOf('x >= -2; x <= 2')!.pieces).toEqual([
+      { lo: -2, hi: 2, loClosed: true, hiClosed: true },
+    ]);
+  });
+
+  it('vế đảo cũng đọc được, và **lật dấu** đúng', () => {
+    // `3 > x` là `x < 3`. Quên lật dấu ở đây là cái bẫy đã cắn `mul_both_sides` một lần.
+    expect(setOf('3 > x')!.pieces).toEqual([{ lo: null, hi: 3, loClosed: false, hiClosed: false }]);
+  });
+
+  it('dạng **không chuẩn** thì im, không đoán', () => {
+    // `abs_to_interval` cho ra $(x-1) > -3$: vế trái không phải biến trần. Dịch nó
+    // thành $x > -2$ là *giải* một bước, và một bước giải người học không thấy là đúng
+    // thứ §4 cấm.
+    expect(setOf('abs(x - 1) < 3', [{ rule: 'abs_to_interval', at: '' }])).toBeNull();
+    expect(setOf('x + y > 0')).toBeNull();
+    expect(setOf('x^2 + 1')).toBeNull();
+  });
+
+  it('**vẽ đúng cái đã kiểm**: mọi điểm khớp với `evalRelation`', () => {
+    for (const [start, steps] of [
+      ['x^2 - 3*x + 2 > 0', [{ rule: 'factor_quadratic', at: 'L' }, { rule: 'interval_from_factors', at: '' }]],
+      ['x^2 - 3*x + 2 < 0', [{ rule: 'factor_quadratic', at: 'L' }, { rule: 'interval_from_factors', at: '' }]],
+      ['x >= -2; x <= 2', []],
+      ['x > 1; x > 2', [{ rule: 'merge_intervals', at: '' }]],
+    ] as [string, AlgebraStep[]][]) {
+      const expr = readAlgebra(scene(start, steps)).rows.at(-1)!.expr;
+      const set = solutionSetOf(expr)!;
+      expect(set, start).not.toBeNull();
+
+      let checked = 0;
+      for (let t = -40; t <= 40; t += 1) {
+        const x = t / 4;
+        const truth = evalRelation(expr, new Map([[set.name, x]]));
+        if (truth === null) continue;
+        expect(contains(set, x), `${start} tại x = ${x}`).toBe(truth);
+        checked += 1;
+      }
+      // Bài học M48: một vòng lặp không chạy lần nào là một chốt canh rỗng.
+      expect(checked, start).toBeGreaterThan(50);
+    }
+  });
+});
+
+describe('hình học trục số', () => {
+  const CHAIN_SET = scene('x^2 - 3*x + 2 > 0', [
+    { rule: 'factor_quadratic', at: 'L' },
+    { rule: 'interval_from_factors', at: '' },
+  ]);
+  const withFlag = (on: boolean): Scene =>
+    ({
+      ...CHAIN_SET,
+      config: { ...(CHAIN_SET.config as object), show_sets: on },
+    }) as Scene;
+
+  it('cờ tắt thì **không có gì đổi** — kho cũ không đụng một byte', () => {
+    expect(layout(readAlgebra(withFlag(false))).sets).toEqual([]);
+    expect(drawnIds(layout(readAlgebra(withFlag(false)))).size).toBe(
+      drawnIds(layout(readAlgebra(CHAIN_SET))).size,
+    );
+  });
+
+  it('cờ bật thì trục nằm dưới **đúng dòng** của nó, gióng mép trái', () => {
+    const box = layout(readAlgebra(withFlag(true)));
+    expect(box.sets).toHaveLength(1);
+    const set = box.sets[0]!;
+    const line = box.lines[set.step]!;
+    expect(set.x1).toBe(line.box.x);
+    expect(set.y).toBeGreaterThan(line.box.y + line.box.height);
+  });
+
+  it('danh tính trục **neo được**: có trong `drawnIds` và `boxOf` tra ra', () => {
+    const box = layout(readAlgebra(withFlag(true)));
+    const id = box.sets[0]!.id;
+    expect(drawnIds(box).has(id)).toBe(true);
+    expect(boxOf(box, id)).not.toBeNull();
+  });
+
+  it('tia chạm mép trục, đoạn hữu hạn thì không', () => {
+    const rays = layout(readAlgebra(withFlag(true))).sets[0]!;
+    expect(rays.spans[0]!.x1).toBe(rays.x1);
+    expect(rays.spans[1]!.x2).toBe(rays.x2);
+
+    const inner = layout(
+      readAlgebra({
+        ...CHAIN_SET,
+        config: { start: 'x >= -2; x <= 2', steps: [], show_sets: true },
+      } as Scene),
+    ).sets[0]!;
+    expect(inner.spans[0]!.x1).toBeGreaterThan(inner.x1);
+    expect(inner.spans[0]!.x2).toBeLessThan(inner.x2);
+  });
+});
+
+describe('trục số và các trần', () => {
+  const chain = (on: boolean): Scene =>
+    ({
+      engine: 'algebra',
+      config: {
+        start: 'x^2 - 3*x + 2 > 0',
+        steps: [
+          { rule: 'factor_quadratic', at: 'L' },
+          { rule: 'interval_from_factors', at: '' },
+        ],
+        show_sets: on,
+      },
+      elements: [],
+    }) as Scene;
+
+  it('trục số **không** đụng trần `maxHeightCells`', () => {
+    // `tooBig` đo **một biểu thức**, không đo cả trang: một chuỗi 5 dòng đã cao hơn 3 ô
+    // từ lâu và vẫn hợp lệ. Trục số cộng vào chiều cao *trang*, nên nó nằm ngoài trần
+    // ấy theo đúng thiết kế — khẳng định ra đây để lần sau ai đó đọc `maxHeightCells`
+    // thì biết nó canh cái gì.
+    expect(readAlgebra(chain(true)).refusal).toBeNull();
+  });
+
+  it('mỗi trục cộng chưa tới **0,6 ô** chiều cao — đo, không đoán', () => {
+    const off = layout(readAlgebra(chain(false)));
+    const on = layout(readAlgebra(chain(true)));
+    const perStrip = (on.height - off.height) / ROW / on.sets.length;
+    expect(on.sets.length).toBe(1);
+    expect(perStrip).toBeGreaterThan(0.3);
+    expect(perStrip).toBeLessThan(0.6);
+  });
+
+  it('trục **không** làm hình rộng thêm ở bài này', () => {
+    // Trục gióng mép trái với dòng của nó và rộng $5{,}2$ cỡ chữ; dòng luật vốn đã đẩy
+    // mép phải xa hơn thế. Nếu một ngày trục vượt qua, `right` đã tính nó rồi.
+    expect(layout(readAlgebra(chain(true))).width).toBe(
+      layout(readAlgebra(chain(false))).width,
+    );
   });
 });

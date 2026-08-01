@@ -118,6 +118,18 @@ export const AlgebraConfig = Type.Object(
     steps: Type.Optional(Type.Array(AlgebraStep, { maxItems: ALGEBRA_LIMITS.maxSteps })),
     /** Hiện cột tên luật bên phải mỗi dòng. */
     show_rules: Type.Optional(Type.Boolean({ default: true })),
+    /**
+     * Vẽ **trục số** dưới những dòng là một tập nghiệm đọc ra được (AL-15).
+     *
+     * Mặc định **tắt**, và đó là một quyết định chứ không phải một sự dè dặt: trục số
+     * chỉ có nghĩa ở bài bất phương trình, và bật sẵn cho cả kho là thêm một dải trắng
+     * dưới mỗi dòng của 80 bài không cần nó. Tắt sẵn cũng có nghĩa **không golden nào
+     * đổi** khi mục này ra đời.
+     *
+     * Dòng nào không ở dạng chuẩn (một vế là biến trần, vế kia là hằng) thì **không vẽ
+     * gì**, im lặng — xem `solutionset.ts`.
+     */
+    show_sets: Type.Optional(Type.Boolean({ default: false })),
     caption: Type.Optional(Type.String({ maxLength: 48 })),
   },
   { additionalProperties: false },

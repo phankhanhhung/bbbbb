@@ -1,0 +1,124 @@
+{
+  "schema_version": "0.3.0",
+  "id": "sign-line-two-ways",
+  "statement": {
+    "vi": "Giải $x^2 - 3x + 2 > 0$ và $x^2 - 3x + 2 < 0$. **Cùng** hai nghiệm $1$ và $2$, hai tập nghiệm ngược nhau — nhìn trên trục số thì chỗ khác nhau hiện ra ngay."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: engine không giải bất phương trình. Nó chỉ **đọc** tập nghiệm ra từ dạng chuẩn mà chính người học vừa biến đổi tới, rồi vẽ. Dòng nào chưa về dạng ấy thì không có trục số, và im lặng."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-01",
+  "updated": "2026-08-01",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Hai chiều dấu"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Phân tích $x^2 - 3x + 2 = (x-1)(x-2)$. Tích **dương** khi hai nhân tử cùng dấu, nên nghiệm là [[a1|hai tia rời nhau]]: $x < 1$ hoặc $x > 2$.\nHai đầu mút $1$ và $2$ vẽ bằng chấm **rỗng** — dấu $>$ ngặt nên chúng không thuộc tập."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "set2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "tích dương ⇒ hai nhân tử cùng dấu",
+              "show_sets": true,
+              "start": "x^2 - 3*x + 2 > 0",
+              "steps": [
+                {
+                  "at": "L",
+                  "rule": "factor_quadratic"
+                },
+                {
+                  "at": "",
+                  "rule": "interval_from_factors"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng biến đổi từ x^2 − 3x + 2 > 0 tới x < 1 hoặc x > 2, kèm trục số với hai tia rời nhau và hai đầu mút rỗng tại 1 và 2."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đổi chiều dấu thì mọi thứ lật: tích **âm** khi hai nhân tử trái dấu, nên nghiệm là [[a1|khoảng ở giữa]] $1 < x < 2$ — đúng phần mà lần trước bị loại.\nCùng hai mốc, cùng hai chấm rỗng, khác chỗ tô."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "set2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "tích âm ⇒ hai nhân tử trái dấu",
+              "show_sets": true,
+              "start": "x^2 - 3*x + 2 < 0",
+              "steps": [
+                {
+                  "at": "L",
+                  "rule": "factor_quadratic"
+                },
+                {
+                  "at": "",
+                  "rule": "interval_from_factors"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng biến đổi từ x^2 − 3x + 2 < 0 tới 1 < x < 2, kèm trục số với một đoạn giữa 1 và 2, hai đầu mút rỗng."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

@@ -2598,3 +2598,87 @@ ai rê vào đâu. Giống hệt baseline mà M63 và M64 đã gặp — lần t
 *"chưa chạm thì tối om"*. Nay so với **nền**.
 
 2997 test xanh, 98 e2e xanh, 112 bài validate sạch.
+
+---
+
+## 43. Trục số — tập nghiệm vẽ ra được (M67, AL-15)
+
+M60 dạy engine nói *"$x < 1$ hoặc $x > 2$"*. Mục này dạy nó **vẽ** câu ấy.
+
+### 43.1 Đọc, không giải
+
+`solutionSetOf` chỉ nhận **dạng chuẩn** mà M60 đã dựng ra: một vế là biến trần, vế kia
+là hằng. Đó chính là dạng `interval_from_factors` và `merge_intervals` trả về — tức là
+dạng mà người học *vừa biến đổi tới*. Gặp dạng khác thì **không vẽ gì**, im lặng.
+
+Im lặng chứ không phải một dòng cảnh báo: trục số là một món quà, không phải một nghĩa
+vụ. Bài chưa về dạng chuẩn vẫn là một bài đúng, và bày một lời than ở đó là biến một
+tính năng thành một lời trách.
+
+Hệ quả đo được và **ghi ra thay vì lấp**: `abs_to_interval` cho ra $(x-1) > -3$ — không
+phải dạng chuẩn — nên `absolute-value-interval` không có trục số. Dịch $x-1$ thành $x$ là
+*giải* một bước, và một bước giải mà người học không thấy là đúng thứ §4 cấm.
+
+Hai chỗ dễ sai, cả hai đã có răng:
+
+- **Đảo vế phải lật dấu.** `3 > x` là `x < 3`. Quên lật là cái bẫy đã cắn
+  `mul_both_sides` một lần (§6); bẻ nó ra ở đây → 1 test đỏ.
+- **Hội thì giao, tuyển thì giữ nhiều mảnh.** $x<1$ **hoặc** $x>2$ là hai tia rời nhau,
+  vẽ thành một khoảng là nói dối. Bẻ → 4 test đỏ.
+
+### 43.2 Chuyện kiểm: **vẽ đúng cái đã kiểm**
+
+Mỗi tập nghiệm được đối chiếu với chính `evalRelation` mà bộ kiểm dùng, trên $81$ điểm
+lưới $\frac14$. Không có bản sao logic nào, nên hai bên không lệch nhau được. Và vòng lặp
+**đếm số điểm thật sự so** — một vòng bỏ qua hết vì `null` là một chốt canh rỗng (M48,
+lần thứ tư).
+
+### 43.3 Ba thứ chỉ lượt nhìn nói được
+
+Đo ở **đúng mật độ Player** ($4{,}4$px mỗi đơn vị — bài này rộng $578$px, không phải
+$1800$):
+
+1. **Tia trông như đoạn.** Hai tia của $x<1$ hoặc $x>2$ chạy hết trục và dừng lại ở mép,
+   đọc thành hai đoạn hữu hạn. Thêm mũi tên hai đầu — vẽ **sau** đoạn tô (vẽ trước thì
+   bị đè) và **mang màu của thứ chạm tới nó**: mũi tên đen nghĩa là nghiệm chạy tiếp ra
+   vô cùng, mũi tên xám nghĩa là không. Một chi tiết màu mang một mệnh đề.
+2. **Dải dán vào lề trái** trong khi dòng của nó thụt vào giữa — đọc thành một vật rời.
+   Gióng mép trái với dòng.
+3. **Số trên vạch vẽ bằng màu guide** thì ở mật độ thật nó nhoè thành vệt xám. Số là
+   **dữ liệu**, không phải trang trí: cùng mực với công thức.
+
+### 43.4 Một chốt canh cũ bắt một lỗ mới, lần thứ hai trong đợt
+
+Trục số có danh tính (`set{k}`) và vào `drawnIds` — neo được. Nhưng nhóm ấy **không phản
+ứng gì** khi được highlight, nên anchor trỏ vào nó là một anchor câm.
+
+`ANC-01 — mọi element phải sáng được` đỏ ngay lần chạy đầu. Chữa: một tay cầm
+`rect fill="none"` mang `decorationAttrs`, đúng lối mà hộp bao của từng hạng tử đã dùng
+từ M46. (M64 cũng được một chốt canh cũ cứu như thế — đó là dấu hiệu bộ lưới đang làm
+đúng việc của nó.)
+
+### 43.5 Trần
+
+Đo, không đoán:
+
+| | cao (ô) | rộng (ô) |
+|---|---:|---:|
+| `show_sets: false` | 2,33 | 12,54 |
+| `show_sets: true` | 2,92 | 12,54 |
+
+Mỗi trục cộng $\approx 0{,}59$ ô chiều cao và **không** cộng bề ngang ở bài này (trục
+rộng $5{,}2$ cỡ chữ, cột nhãn luật vốn đã đẩy mép phải xa hơn; nếu một ngày trục vượt
+qua thì `right` đã tính nó rồi).
+
+`maxHeightCells` **không** bị đụng: `tooBig` đo *một biểu thức*, không đo cả trang — một
+chuỗi 5 dòng đã cao hơn 3 ô từ lâu và vẫn hợp lệ. Khẳng định ra test để lần sau ai đọc
+`maxHeightCells` thì biết nó canh cái gì.
+
+Cờ mặc định **tắt**: trục số chỉ có nghĩa ở bài bất phương trình, và bật sẵn cho cả kho
+là thêm một dải trắng dưới mỗi dòng của 80 bài không cần nó. Tắt sẵn cũng có nghĩa
+**không golden cũ nào đổi** — bẻ cờ thành luôn-bật thì 7 golden đỏ, đúng như phải thế.
+
+Bài mới: `sign-line-two-ways` — cùng hai nghiệm $1$ và $2$, hai chiều dấu, hai tập nghiệm
+ngược nhau, và chỗ khác nhau hiện ra ở chỗ tô chứ không ở chữ.
+
+3018 test xanh, 113 bài validate sạch.
