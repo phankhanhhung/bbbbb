@@ -10,6 +10,8 @@ import {
   algebraSchemaFragment,
   algebraChoreography,
   EXPR_KINDS,
+  binderOf,
+  checkArity,
   allPaths,
   drawnIds,
   elementId,
@@ -812,6 +814,25 @@ describe('bound', () => {
         );
         expect(issues.map((i) => i.code), JSON.stringify(step)).toContain('bounds/algebra-refused');
       }
+    });
+
+    it('arity của `fn` được soi ở **model**, không chỉ ở parser', () => {
+      // Parser ép arity — nhưng chỉ parser. Luật dựng nút `fn` bằng tay
+      // (`binom_to_factorial`, `binom_symmetry`, `pascal`, …) và trên đường ấy không có
+      // gì hỏi: `C(n)` thiếu một đối số thì `evalReal` đọc `args[1]` ra `undefined`, và
+      // cái sai chảy vào một con số chứ không thành một lời từ chối.
+      //
+      // `checkArity` viết ra từ M56 cho đúng khe này rồi **chưa từng được gọi**. Nay nó
+      // chạy sau mỗi bước; chốt canh gọi thẳng nó, vì cây sai arity chỉ dựng được bằng
+      // tay (parser không cho) — đúng như một backstop phải thế.
+      const good = parse('C(n, k)', new Minter()) as Extract<Expr, { k: 'fn' }>;
+      expect(checkArity(good)).toBeNull();
+      expect(checkArity({ ...good, args: [good.args[0] as Expr] })).toBe(
+        'C cần 2 đối số, đang có 1',
+      );
+      expect(checkArity({ ...good, args: [...good.args, good.args[0] as Expr] })).toContain(
+        'đang có 3',
+      );
     });
 
     it('quét chéo luật × đường dẫn × tham số: **không lượt nào ném**', () => {
@@ -2100,6 +2121,32 @@ describe('M57 — tổng và tích', () => {
       const out = substituteVar(e, 'k', tree('9'));
       // $k$ tự do ở ngoài bị thay; $k$ trong thân tổng thì không.
       expect(unparse(out)).toBe('(sum(k, 1, n, k) + 9)');
+    });
+
+    it('luật phạm vi khai **một chỗ** — và nó nói bằng chỉ số, không bằng tham chiếu', () => {
+      // `binderOf` gom bảng phạm vi vốn được chép tay ở ba nơi (`varsOf`,
+      // `substituteVar`, `substituteIndex`). Nó trả về **chỉ số** của con nằm ngoài
+      // phạm vi, không trả về tham chiếu, và đây là ca nói tại sao: `substituteVar`
+      // khai thẳng rằng nó trả *cùng một object* ở mọi chỗ khớp, nên một cận và thân
+      // hoàn toàn có thể là **một** đối tượng. So bằng tham chiếu thì lúc ấy thân bị
+      // nhận nhầm là "ngoài phạm vi" — tức thay vào đúng chỗ phải che.
+      const shared = tree('k');
+      const aliased: Expr = {
+        k: 'big',
+        op: 'sum',
+        v: 'k',
+        from: tree('1'),
+        to: shared,
+        body: shared, // cùng một object với cận trên
+        id: 'alias0',
+      };
+
+      expect(binderOf(aliased)).toEqual({ name: 'k', outside: [0, 1] });
+
+      const out = substituteVar(aliased, 'k', tree('9')) as Extract<Expr, { k: 'big' }>;
+      // Cận trên bị thay (ngoài phạm vi), thân thì **không** — dù hai chỗ vốn là một.
+      expect(unparse(out.to)).toBe('9');
+      expect(unparse(out.body)).toBe('k');
     });
   });
 

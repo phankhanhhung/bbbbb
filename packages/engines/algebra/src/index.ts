@@ -7,12 +7,12 @@ import { allPaths, nodeAt, totalDegree, varsOf, Minter } from './expr.js';
 import { boxOf, drawnIds, layout } from './layout.js';
 import { readAlgebra } from './model.js';
 import { tryParse } from './parse.js';
-import { applicableRules, ruleById, RULES } from './rules.js';
+import { applicableRules, ruleById } from './rules.js';
 import { ALGEBRA_ELEMENT_SCHEMAS, ALGEBRA_LIMITS, AlgebraConfig } from './schema.js';
 
 export * from './expr.js';
 export * from './schema.js';
-export { FUNCTIONS, isIntegerOnly, type FnSpec } from './functions.js';
+export { FUNCTIONS, checkArity, isIntegerOnly, type FnSpec } from './functions.js';
 export { parse, tryParse, unparse, ParseError } from './parse.js';
 export { readAlgebra, type AlgebraModel, type AlgebraRow, type Condition } from './model.js';
 export { RULES, ruleById, applicableRules, ARG_RULE_PREDICATES, type Rule } from './rules.js';
@@ -327,10 +327,6 @@ export function resolveAlgebraValidator(id: string): SceneValidator | null {
   return null;
 }
 
-/** Bảng luật, để tài liệu và giao diện đọc chung một nguồn. */
-export const ALGEBRA_RULE_LABELS: Readonly<Record<string, string>> = Object.fromEntries(
-  RULES.map((r) => [r.id, r.label]),
-);
 
 export { ruleById as resolveAlgebraRule };
 export { boxOf as algebraBoxOf };

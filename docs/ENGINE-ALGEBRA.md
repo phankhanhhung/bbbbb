@@ -3596,3 +3596,44 @@ Trích dẫn sai một cái tên đắt đúng bằng không trích dẫn gì: n
 thấy, rồi mất niềm tin vào cả đoạn chú thích — kể cả những câu trong đó vốn đúng. Và nó
 là biến thể khó thấy nhất của cả §51: không phải mã sai, không phải lời hứa suông, mà
 **một con trỏ trỏ vào chỗ trống**.
+
+### 51.9 Bốn export chết, và ba số phận khác nhau
+
+Quét cả repo tìm export không ai gọi, trong `packages/engines/algebra/src`:
+
+| export | số chỗ gọi | xử lý |
+|---|---:|---|
+| `checkArity` | 0 | **nối vào**, nó bịt một khe thật |
+| `boundVar` | 0 | **thay bằng `binderOf`**, nó là nửa câu trả lời |
+| `ALGEBRA_RULE_LABELS` | 0 | xoá |
+| `PAD` (+ `THIN`, `MED`) | 0 | xoá |
+
+Ba số phận, và chỗ đáng học nằm ở hai cái đầu.
+
+**`checkArity`** viết ra ở M56 cho một khe có thật: arity được ép ở **parser**, và chỉ
+ở parser. Luật thì dựng nút `fn` bằng tay — `binom_to_factorial`, `binom_symmetry`,
+`pascal` — và trên đường ấy không có gì hỏi. Một luật dựng $C(n)$ thiếu đối số thì
+`evalReal` đọc `args[1]` ra `undefined`, và cái sai chảy vào một **con số** chứ không
+thành một lời từ chối. Hàm kiểm ấy nằm đó bốn hạng mục mà chưa ai gọi: một lời hứa
+chưa ai thu. Nay nó chạy sau mỗi bước, và lời từ chối nói rõ *"lỗi trong engine"* — vì
+parser đã chặn phía tác giả, nên nếu nó nổ thì lỗi ở luật.
+
+**`boundVar`** thì chết vì một lý do tinh vi hơn: nó trả về **nửa** câu trả lời. Ràng
+buộc biến là hai chuyện — *tên nào bị ràng buộc*, và *con nào nằm ngoài phạm vi ấy* —
+và chuyện thứ hai mới là chuyện hay sai: cận của $\sum$ nằm **ngoài** ($\sum_{k=1}^{k}$
+có cận trên là một $k$ khác, tự do), thân nằm trong. `boundVar` chỉ trả cái tên, nên
+không ai gọi được nó mà xong việc, nên bảng phạm vi bị **chép tay ở ba chỗ**:
+`varsOf`, `substituteVar`, và `substituteIndex` (§51.1). Một trừu tượng chết nằm cạnh
+ba bản chép tay của chính nó.
+
+`binderOf` trả cả câu. Và nó trả bằng **chỉ số** con, không bằng tham chiếu — vì
+`substituteVar` khai thẳng rằng nó trả *cùng một object* ở mọi chỗ khớp, nên một cận
+và thân hoàn toàn có thể là một đối tượng; so bằng tham chiếu thì lúc ấy thân bị nhận
+nhầm là "ngoài phạm vi", tức thay vào đúng chỗ phải che. Bản đầu của lượt này viết đúng
+kiểu ấy; chốt canh cho ca aliasing là thứ giữ lại bài học.
+
+Còn hai cái bị xoá thì đáng xoá vì lý do khác nhau: `PAD` không hứa gì (nó chỉ là số),
+còn `ALGEBRA_RULE_LABELS` **có** hứa — chú thích của nó nói *"để tài liệu và giao diện
+đọc chung một nguồn"* — nhưng không tài liệu nào và không giao diện nào đọc nó. Một
+nguồn chung mà chỉ có một đầu thì không phải nguồn chung; `RULES` vẫn export, ai cần
+bảng ấy dựng lại mất một dòng.

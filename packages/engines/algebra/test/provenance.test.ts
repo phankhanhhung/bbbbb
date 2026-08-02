@@ -476,6 +476,11 @@ describe('đọc tập nghiệm ra từ cấu trúc', () => {
       ['x^2 - 3*x + 2 < 0', [{ rule: 'factor_quadratic', at: 'L' }, { rule: 'interval_from_factors', at: '' }]],
       ['x >= -2; x <= 2', []],
       ['x > 1; x > 2', [{ rule: 'merge_intervals', at: '' }]],
+      // Hợp hai tia **gõ thẳng ở `start`** — đường vào mới của M77. Hai ca đầu đã đi
+      // tới một hệ `hoặc` qua `interval_from_factors`, nhưng đi tới và **bắt đầu từ**
+      // là hai đường khác nhau, và đường thứ hai vừa mới mở.
+      ['x < 1 hoặc x > 2', []],
+      ['x <= -1 hoặc x >= 3', []],
     ] as [string, AlgebraStep[]][]) {
       const expr = readAlgebra(scene(start, steps)).rows.at(-1)!.expr;
       const set = solutionSetOf(expr)!;

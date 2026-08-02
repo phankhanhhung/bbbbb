@@ -25,6 +25,7 @@ import {
   type Expr,
   type TermId,
 } from './expr.js';
+import { checkArity } from './functions.js';
 import { ParseError, tryParse } from './parse.js';
 import { ruleById } from './rules.js';
 import { ALGEBRA_LIMITS, type AlgebraConfig } from './schema.js';
@@ -184,6 +185,29 @@ function tooBig(e: Expr): string | null {
  */
 const isPredicate = (e: Expr): boolean => e.k === 'rel' || e.k === 'sys';
 
+/**
+ * Mọi nút `fn` trong cây có **đúng số đối số** không.
+ *
+ * Arity được ép ở parser — nhưng chỉ ở parser. Luật thì dựng nút `fn` bằng tay
+ * (`binom_to_factorial`, `binom_symmetry`, `binom_absorb`, `pascal`, …), và trên đường
+ * ấy **không có gì hỏi**. Một luật dựng `C(n)` thiếu một đối số thì `evalReal` đọc
+ * `args[1]` ra `undefined`, và cái sai chảy vào một con số chứ không thành một lời từ
+ * chối.
+ *
+ * `checkArity` viết ra từ M56 cho đúng khe này rồi **chưa từng được gọi** — một hàm
+ * kiểm mồ côi là một lời hứa chưa ai thu. Nay nó chạy sau mỗi bước.
+ *
+ * Đây là backstop, không phải hàng rào cho nội dung: parser đã chặn phía tác giả, nên
+ * nếu nó nổ thì lỗi ở **luật**, và lời từ chối nói đúng như thế.
+ */
+function badArity(e: Expr): string | null {
+  let bad: string | null = null;
+  walk(e, (n) => {
+    if (bad === null && n.k === 'fn') bad = checkArity(n);
+  });
+  return bad;
+}
+
 const idsOfExpr = (e: Expr): Set<string> => {
   const out = new Set<string>();
   walk(e, (n) => out.add(n.id));
@@ -319,6 +343,9 @@ function readAlgebraOrThrow(scene: Scene): AlgebraModel {
       refusal: `hệ ${current.rels.length} phương trình, quá trần ${ALGEBRA_LIMITS.maxRelations}`,
     };
   }
+
+  const startArity = badArity(current);
+  if (startArity !== null) return { ...empty, refusal: `lỗi trong engine: ${startArity}` };
 
   const startTooBig = tooBig(current);
   if (startTooBig !== null) return { ...empty, refusal: `biểu thức vẽ ra ${startTooBig}` };
@@ -564,6 +591,10 @@ function readAlgebraOrThrow(scene: Scene): AlgebraModel {
     const deg = totalDegree(current);
     if (Number.isFinite(deg) && deg > ALGEBRA_LIMITS.maxDegree) {
       return { ...empty, rows, refusal: `sau bước ${i + 1} bậc vượt ${ALGEBRA_LIMITS.maxDegree}` };
+    }
+    const arity = badArity(current);
+    if (arity !== null) {
+      return { ...empty, rows, refusal: `lỗi trong engine: bước ${i + 1} (${rule.label}) dựng ${arity}` };
     }
     const big = tooBig(current);
     if (big !== null) return { ...empty, rows, refusal: `sau bước ${i + 1} hình ${big}` };

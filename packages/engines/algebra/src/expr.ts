@@ -543,18 +543,14 @@ export function varsOf(e: Expr): Set<string> {
       out.add(n.name);
       return;
     }
-    if (n.k === 'big') {
-      // Hai cận nằm **ngoài** phạm vi ràng buộc — $\sum_{k=1}^{k}$ thì cận trên là một
-      // $k$ khác, tự do, và trộn hai thứ ấy là chỗ lỗi phạm vi cổ điển nhất.
-      go(n.from);
-      go(n.to);
-      for (const name of varsOf(n.body)) if (name !== n.v) out.add(name);
-      return;
-    }
-    if (n.k === 'coeff') {
-      // Cùng luật phạm vi: bậc cần trích nằm **ngoài**, chuỗi nằm **trong**.
-      go(n.at);
-      for (const name of varsOf(n.of)) if (name !== n.v) out.add(name);
+    const b = binderOf(n);
+    if (b !== null) {
+      // Luật phạm vi khai **một chỗ** (`binderOf`): con ngoài thì biến tự do vẫn tự do,
+      // con trong thì tên bị che. Chép tay bảng này là chỗ lỗi phạm vi cổ điển nhất.
+      children(n).forEach((c, i) => {
+        if (b.outside.includes(i)) go(c);
+        else for (const name of varsOf(c)) if (name !== b.name) out.add(name);
+      });
       return;
     }
     for (const c of children(n)) go(c);
@@ -568,6 +564,47 @@ export const boundVar = (e: Expr): string | null =>
   e.k === 'big' || e.k === 'coeff' ? e.v : null;
 
 /**
+ * Nút ràng buộc: tên bị ràng buộc, và **con nào nằm ngoài phạm vi ấy**.
+ *
+ * Hai chuyện, không phải một, và chuyện thứ hai mới hay bị quên: cận của $\sum$ nằm
+ * **ngoài** phạm vi — $\sum_{k=1}^{k}$ thì cận trên là một $k$ khác, tự do — còn thân
+ * thì nằm trong. `coeff` cùng luật: bậc cần trích ở ngoài, chuỗi ở trong.
+ *
+ * Bảng ấy từng được chép tay ở **ba** chỗ (`varsOf`, `substituteVar`, và
+ * `substituteIndex` của `series.ts`), trong khi `boundVar` — vốn định là chỗ khai nó —
+ * chỉ trả về cái tên, tức nửa câu trả lời, và vì thế **không ai gọi**: một trừu tượng
+ * chết bên cạnh ba bản chép tay của chính nó.
+ *
+ * Nay nó trả cả câu. Kiểu ràng buộc thứ ba thêm vào đây là xong; quên thì `never` ở
+ * dưới báo lỗi biên dịch.
+ */
+export interface Binder {
+  readonly name: string;
+  /**
+   * **Chỉ số** trong `children(e)` của những con nằm ngoài phạm vi ràng buộc.
+   *
+   * Chỉ số chứ không phải tham chiếu: `substituteVar` khai thẳng rằng nó trả về *cùng
+   * một object* ở mọi chỗ khớp, nên hai con của một nút hoàn toàn có thể là **một** đối
+   * tượng. So bằng tham chiếu thì lúc ấy $\sum_{k=1}^{k} k$ có thân trùng cận, và thân
+   * bị nhận nhầm là "ngoài phạm vi" — tức thay vào đúng chỗ phải che.
+   */
+  readonly outside: readonly number[];
+}
+
+export function binderOf(e: Expr): Binder | null {
+  switch (e.k) {
+    // `children` là `[from, to, body]` — hai cận ngoài, thân trong.
+    case 'big':
+      return { name: e.v, outside: [0, 1] };
+    // `children` là `[at, of]` — bậc cần trích ngoài, chuỗi trong.
+    case 'coeff':
+      return { name: e.v, outside: [0] };
+    default:
+      return null;
+  }
+}
+
+/**
  * Thay mọi `var name` **tự do** bằng `value`.
  *
  * Tôn trọng phạm vi: không thò vào thân một $\sum$ đã ràng buộc chính tên ấy. Có ở đây
@@ -576,14 +613,17 @@ export const boundVar = (e: Expr): string | null =>
  */
 export function substituteVar(e: Expr, name: string, value: Expr): Expr {
   if (e.k === 'var' && e.name === name) return value;
-  if (e.k === 'big' && e.v === name) {
-    // Tên bị che: chỉ thay trong hai cận, không thay trong thân.
-    return { ...e, from: substituteVar(e.from, name, value), to: substituteVar(e.to, name, value) };
+
+  // Tên bị che: thay ở con **ngoài** phạm vi, để nguyên con trong. Luật phạm vi đọc từ
+  // `binderOf`, không chép lại — xem chú thích ở đó.
+  const b = binderOf(e);
+  if (b !== null && b.name === name) {
+    const kids = children(e).map((c, i) =>
+      b.outside.includes(i) ? substituteVar(c, name, value) : c,
+    );
+    return withChildren(e, kids);
   }
-  if (e.k === 'coeff' && e.v === name) {
-    // Tên bị che bởi $[x^{\cdot}]$: chỉ thay ở bậc cần trích.
-    return { ...e, at: substituteVar(e.at, name, value) };
-  }
+
   const kids = children(e).map((c) => substituteVar(c, name, value));
   return kids.length === 0 ? e : withChildren(e, kids);
 }

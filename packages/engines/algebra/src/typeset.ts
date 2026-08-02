@@ -118,8 +118,6 @@ function subsupShift(
 /** Hở trên/dưới vạch phân số. */
 const FRAC_GAP = 0.18;
 const FRAC_PAD = 0.22;
-const THIN = 0.18;
-const MED = 0.3;
 
 /* ---------- bảng bề ngang, đo cho **bảng chữ của riêng engine này** ---------- */
 
@@ -1557,5 +1555,3 @@ function needsDot(left: Expr, right: Expr): boolean {
   return numeric(left) && numeric(right);
 }
 
-/** Khoảng hở hai bên một dòng, để hộp bao không dính mép. */
-export const PAD = { thin: THIN * FONT, med: MED * FONT } as const;
