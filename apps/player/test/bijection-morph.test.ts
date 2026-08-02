@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import type { Bijection } from '@combviz/schema';
-import type { SceneBox } from '@combviz/render';
+import type { Bijection, Scene } from '@combviz/schema';
+import type { SceneBox, SvgNode } from '@combviz/render';
+import { applyChoreography, createContext, keyed } from '@combviz/render';
+import { ELEMENT_ATTR } from '@combviz/render/dom';
+import { graphRenderer } from '@combviz/engine-graph';
+import { defaultTheme } from '@combviz/theme';
 import {
   MORPH_LEFT_GROUP,
   MORPH_RIGHT_GROUP,
   morphChoreography,
+  prefixRightPane,
 } from '../src/bijection-morph.js';
 
 const box = (x: number): SceneBox[] => [{ x, y: 0, width: 4, height: 4 }];
@@ -167,5 +172,111 @@ describe('PRN-04 — timeline biến hình theo từng cặp', () => {
     expect(out.boxOf('r:b1')).toEqual(box(50));
     // Không tiền tố thì tra sang pane trái — và bên trái không có `b1`.
     expect(out.boxOf('b1')).toEqual([]);
+  });
+});
+
+/**
+ * Chốt canh cho **mối nối**, không cho hai đầu.
+ *
+ * Chín case trên đều gọi `morphChoreography` với hộp giả — hàm thuần, không cây
+ * node nào. Chúng xanh suốt trong khi Player vẽ ra một ma trận vỡ vụn, vì lỗi
+ * không nằm trong timeline lẫn trong `applyChoreography`: nó nằm ở chỗ hai thứ
+ * gặp nhau, đúng chỗ duy nhất không ai chạy. Nên nhóm này dựng cây **thật** từ
+ * engine và chạy đúng lối Player chạy.
+ */
+describe('PRN-04 — cây gộp hai pane, chạy đúng lối Player chạy', () => {
+  const vertices = [
+    { id: 'v1', type: 'vertex', label: '1', pos: [0, -12] },
+    { id: 'v2', type: 'vertex', label: '2', pos: [12, 0] },
+    { id: 'v3', type: 'vertex', label: '3', pos: [0, 12] },
+  ];
+  const edges = [
+    { id: 'ev1v2', type: 'edge', u: 'v1', v: 'v2' },
+    { id: 'ev2v3', type: 'edge', u: 'v2', v: 'v3' },
+  ];
+  const graphScene = {
+    engine: 'graph',
+    config: { show_labels: true },
+    elements: [...vertices, ...edges],
+  } as unknown as Scene;
+  const matrixScene = {
+    engine: 'graph',
+    config: { show_labels: true, show_sums: true, view: 'matrix' },
+    elements: [...vertices, ...edges],
+  } as unknown as Scene;
+
+  const pairs: [string, string][] = [
+    ['ev1v2', 'ev1v2'],
+    ['ev2v3', 'ev2v3'],
+  ];
+  const bij = { scene: matrixScene, pairs } as unknown as Bijection;
+  const ctx = createContext(defaultTheme, {});
+  const boxes = (scene: Scene) => (id: string) => graphRenderer.elementBoxes(scene, id, ctx);
+
+  const generated = morphChoreography(bij, boxes(graphScene), boxes(matrixScene), {
+    anchor: 'a1',
+  })!;
+
+  const morphNodes = [
+    keyed(MORPH_LEFT_GROUP, 'g', {}, graphRenderer.render(graphScene, ctx)),
+    keyed(MORPH_RIGHT_GROUP, 'g', {}, prefixRightPane(graphRenderer.render(matrixScene, ctx))),
+  ];
+
+  const groupOf = (nodes: readonly SvgNode[], key: string): SvgNode =>
+    nodes.find((n) => n.key === key)!;
+
+  const collect = (node: SvgNode, seen: SvgNode[] = []): SvgNode[] => {
+    seen.push(node);
+    for (const child of node.children ?? []) collect(child, seen);
+    return seen;
+  };
+
+  const last = generated.spec.phases[generated.spec.phases.length - 1]!;
+  const endMs = last.at + last.duration;
+  const marks = [0, Math.round(endMs / 3), Math.round((endMs * 2) / 3), endMs];
+
+  it('không khung nào dời một node của pane **phải** — kể cả khung cuối', () => {
+    // Đây là lỗi thật, và nó chỉ hiện ở khung **đứng yên** cuối cùng: mỗi ô ma
+    // trận mang cạnh bị dời đúng bằng vector cạnh-bay-sang-bảng, tới hơn bốn ô,
+    // xa hơn cả bề ngang cái bảng. Ô $0$ không thuộc cặp nào nên đứng nguyên —
+    // nửa bảng đúng chỗ, nửa văng đi.
+    for (const ms of marks) {
+      const out = applyChoreography(morphNodes, generated.spec, ms, { boxOf: generated.boxOf });
+      const moved = collect(groupOf(out, MORPH_RIGHT_GROUP))
+        .filter((n) => n.attrs['transform'] !== undefined)
+        .map((n) => `${String(n.key)} ${String(n.attrs['transform'])}`);
+
+      expect(moved, `t = ${ms}ms`).toEqual([]);
+    }
+  });
+
+  it('pane trái **có** dời — nếu không thì chốt trên xanh vì không có gì chạy', () => {
+    const middle = applyChoreography(morphNodes, generated.spec, marks[1]!, {
+      boxOf: generated.boxOf,
+    });
+    const moved = collect(groupOf(middle, MORPH_LEFT_GROUP)).filter(
+      (n) => n.attrs['transform'] !== undefined,
+    );
+
+    expect(moved.length).toBeGreaterThan(0);
+  });
+
+  it('hai pane không dùng chung một danh tính nào trong **không gian mà máy tra**', () => {
+    // `key` và `data-el` không phải hai không gian tên — `rewrite` gộp chúng làm
+    // một (`data-el` trước, `key` là đường lui), nên va chạm thật nằm **chéo**:
+    // `key` bên trái đụng `data-el` bên phải. Đếm hai không gian rời nhau thì
+    // chốt này xanh trong khi lỗi vẫn còn nguyên — đã thử, và nó xanh thật.
+    const idsOf = (group: string): Set<string> => {
+      const out = new Set<string>();
+      for (const node of collect(groupOf(morphNodes, group))) {
+        const owner = node.attrs[ELEMENT_ATTR];
+        const id = typeof owner === 'string' ? owner : node.key;
+        if (id !== undefined) out.add(id);
+      }
+      return out;
+    };
+    const rightIds = idsOf(MORPH_RIGHT_GROUP);
+
+    expect([...idsOf(MORPH_LEFT_GROUP)].filter((id) => rightIds.has(id))).toEqual([]);
   });
 });

@@ -7,13 +7,12 @@ import {
   sceneBoxStyle,
   type LabelAtlas,
   type SceneRenderer,
-  type SvgNode,
 } from '@combviz/render';
 import {
   MORPH_LEFT_GROUP,
   MORPH_RIGHT_GROUP,
-  MORPH_RIGHT_PREFIX,
   morphChoreography,
+  prefixRightPane,
 } from './bijection-morph.js';
 import { useChoreography } from './useChoreography.js';
 import { Timeline } from './Timeline.jsx';
@@ -35,21 +34,6 @@ interface Props {
    * sáng được nửa mà Player vẽ — tức là mất đúng nửa mà song ánh sinh ra để nói.
    */
   readonly anchor?: string | null;
-}
-
-/**
- * Đổi key của cả một cây, để hai pane gộp được vào **một** cây mà không đụng nhau.
- *
- * Cần thiết vì key hai bên hoàn toàn có thể trùng: ở GR-07 đồ thị và ma trận kề
- * của nó là **cùng** một tập element vẽ hai kiểu, nên `pairs` là `[e, e]`. Hai
- * node cùng key trong một cây thì `patch` mất dấu cả hai.
- */
-function prefixKeys(nodes: readonly SvgNode[], prefix: string): SvgNode[] {
-  return nodes.map((node) => {
-    const children = node.children ? prefixKeys(node.children, prefix) : undefined;
-    const next = node.key === undefined ? node : { ...node, key: `${prefix}${node.key}` };
-    return children ? { ...next, children } : next;
-  });
 }
 
 function prefersReducedMotion(): boolean {
@@ -219,12 +203,7 @@ export function BijectionPanes({
     if (!step.scene || !bijection) return [];
     return [
       keyed(MORPH_LEFT_GROUP, 'g', {}, renderer.render(step.scene, ctx)),
-      keyed(
-        MORPH_RIGHT_GROUP,
-        'g',
-        {},
-        prefixKeys(renderer.render(bijection.scene, ctx), MORPH_RIGHT_PREFIX),
-      ),
+      keyed(MORPH_RIGHT_GROUP, 'g', {}, prefixRightPane(renderer.render(bijection.scene, ctx))),
     ];
   }, [renderer, step, bijection, ctx]);
 

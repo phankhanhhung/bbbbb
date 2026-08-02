@@ -1,5 +1,6 @@
 import type { Bijection } from '@combviz/schema';
-import type { BoxLookup, Choreography, SceneBox } from '@combviz/render';
+import type { BoxLookup, Choreography, SceneBox, SvgNode } from '@combviz/render';
+import { ELEMENT_ATTR } from '@combviz/render/dom';
 
 type Phase = Choreography['phases'][number];
 
@@ -63,6 +64,42 @@ export interface GeneratedMorph {
   readonly boxOf: BoxLookup;
   /** Cặp không đo được hộp ở một trong hai đầu. */
   readonly skipped: readonly (readonly [string, string])[];
+}
+
+/**
+ * Đổi **cả hai** danh tính của một cây — `key` và `data-el` — sang không gian
+ * pane phải.
+ *
+ * Ở cạnh `RIGHT` chứ không ở `BijectionPanes` vì nó phải khớp với tiền tố ấy
+ * từng chữ: hai hằng số rời nhau ở hai tệp là hai chỗ để lệch nhau.
+ *
+ * Cần thiết vì danh tính hai bên hoàn toàn có thể trùng: ở GR-07 đồ thị và ma
+ * trận kề của nó là **cùng** một tập element vẽ hai kiểu, nên `pairs` là
+ * `[e, e]`. Hai node cùng key trong một cây thì `patch` mất dấu cả hai.
+ *
+ * `data-el` phải đổi theo, và bỏ sót nó là một lỗi đã thật sự xảy ra: bản đầu
+ * chỉ đổi `key`, nhưng `applyChoreography` tra effect theo **`data-el` trước**,
+ * `key` chỉ là đường lui. Nên ô ma trận `r:mx-v1-v2` vẫn đeo `data-el = ev1v2`
+ * y hệt cạnh bên trái, ăn trúng pha `morph` của cạnh ấy, và bị dời đúng bằng
+ * vector cạnh-bay-sang-bảng — tới hơn bốn ô, xa hơn cả bề ngang cái bảng. Khung
+ * cuối là một ma trận vỡ vụn, và nó **đứng yên** ở đó chứ không phải một khung
+ * giữa đường.
+ *
+ * Đổi được vì trong chế độ biến hình không ai đọc `data-el` của pane phải: tra
+ * ngược từ con trỏ chỉ chạy ở view hai pane, và không pha nào nhắm vào element
+ * bên phải — chúng chỉ nhắm vào `MORPH_RIGHT_GROUP`, một key trên `<g>` bọc
+ * ngoài.
+ */
+export function prefixRightPane(nodes: readonly SvgNode[]): SvgNode[] {
+  return nodes.map((node) => {
+    const children = node.children ? prefixRightPane(node.children) : undefined;
+    let next = node.key === undefined ? node : { ...node, key: `${RIGHT}${node.key}` };
+    const owner = node.attrs[ELEMENT_ATTR];
+    if (typeof owner === 'string') {
+      next = { ...next, attrs: { ...next.attrs, [ELEMENT_ATTR]: `${RIGHT}${owner}` } };
+    }
+    return children ? { ...next, children } : next;
+  });
 }
 
 /** Dưới ngưỡng này thì coi như hai hình trùng chỗ — không có gì để bay. */
