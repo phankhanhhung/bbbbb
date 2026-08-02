@@ -2804,8 +2804,19 @@ nói $|x| < 1$. Đó là răng chính của lượt nới, và có test riêng.
 
 **Vì sao dừng ở $1 - ax$.** Bậc $\ge 2$ là một chuyện khác hẳn: $\frac{1}{1-x-x^2}$ cần
 phân thức riêng phần trên $\mathbb{Q}(\sqrt5)$ và nhị thức tổng quát $\binom{1/2}{n}$ —
-đúng ranh giới `series.ts` đã tự vạch (*"`fn`, `root`, `abs` → `null`"*). **Nợ có tên:**
-Fibonacci/Binet qua hàm sinh, và $\frac{1}{1-P(x)}$ với $\deg P \ge 2$.
+đúng ranh giới `series.ts` đã tự vạch (*"`fn`, `root`, `abs` → `null`"*).
+
+**Nợ ấy đã thu hẹp lại (AL-20).** Lượt sau đó dò ra rằng phần lớn giá trị của "phân thức
+riêng phần" **không** nằm sau ranh giới vô tỉ: `partial_fractions` tách
+$\frac{c}{\prod_i (1-a_ix)}$ với $a_i$ **nguyên phân biệt** bằng công thức che
+$c_i = c\prod_{j\ne i} \frac{a_i}{a_i-a_j}$, và mọi $c_i$ là **hữu tỉ chính xác** — nút
+`rat` mang chúng, sân kiểm chuỗi xác nhận từng dòng, không chỗ nào phải làm tròn. Cả họ
+truy hồi tuyến tính có nghiệm đặc trưng hữu tỉ mở ra: tháp Hà Nội ($2^n-1$), $3^n-2^n$,
+và mọi bài người học gặp **trước** Fibonacci.
+
+Còn nợ, và nay lời ghi nợ sắc hơn: nghiệm **lặp** (cần hạng tử $\frac{c}{(1-ax)^m}$, mà
+công thức che không sinh ra — phải đạo hàm) và nghiệm **vô tỉ** (Fibonacci/Binet). Cả
+hai đều từ chối **có lời** thay vì trả một khai triển thiếu hạng tử.
 
 Điều kiện $|x| < 1$ là **chữ**, không phải `Guard` — và chỗ khác biệt ấy chính là phần
 dạy học: nó nói về khi nào đẳng thức **số học** có nghĩa, trong khi thứ engine vừa kiểm

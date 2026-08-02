@@ -805,6 +805,25 @@ function integerSampler(seed: number): Sampler {
  * vi phạm `guard`, bỏ điểm ngoài miền, phân biệt "khớp" với "không kiểm được") là một.
  * Hai bản chép tay thì bản thứ hai sẽ khác bản thứ nhất ở đúng chỗ không ai nhìn.
  */
+/**
+ * Giá trị tuyệt đối **lớn nhất** gặp trên đường tính, không chỉ ở ngọn.
+ *
+ * Dùng làm thang cho khoảng chấp nhận số học: một biểu thức đi qua $10^8$ rồi triệt
+ * tiêu về $1$ không thể hứa mười sáu chữ số ở đầu ra, và trần đo bằng đầu ra sẽ gọi
+ * chính xác-hết-mức-có-thể là sai.
+ *
+ * Nút không tính ra số (biến chưa gán, hàm không diễn giải) bị bỏ qua — chúng không
+ * đóng góp vào sai số làm tròn của **lần chạy này**.
+ */
+function magnitude(expr: Expr, env: Map<string, number>): number {
+  let biggest = 0;
+  walk(expr, (node) => {
+    const value = evalReal(node, env);
+    if (value !== null && Number.isFinite(value)) biggest = Math.max(biggest, Math.abs(value));
+  });
+  return biggest;
+}
+
 function sampleCompare(
   a: Expr,
   b: Expr,
@@ -828,8 +847,26 @@ function sampleCompare(
     const vb = evalReal(b, env);
     if (va === null || vb === null) continue;
     done += 1;
+    // Khoảng chấp nhận phải nhìn **giá trị trung gian**, không chỉ nhìn kết quả.
+    //
+    // Bắt được ở lượt thêm `partial_fractions`: `((3 + n!) - (n! - y^2)) / (x^2(y^3+3))`
+    // tại $n = 12$ cho kết quả $0{,}6363\ldots$ — thang $1$ — nhưng đường đi qua
+    // $12! \approx 4{,}8 \cdot 10^8$ rồi trừ đi gần hết. Float64 có $\approx 16$ chữ
+    // số; triệt tiêu như thế ăn mất $9$, nên hai vế lệch nhau ở chữ số thứ $9$ **dù cả
+    // hai đều đúng**. Đo bằng thang kết quả thì đó là "sai"; đo bằng thang thật thì đó
+    // là chính xác hết mức máy hứa được.
+    //
+    // Mô hình sai số: sai số tuyệt đối $\approx \varepsilon_{\text{máy}} \times$ giá trị
+    // trung gian lớn nhất. Nên trần là **max** của hai thứ — $10^{-9}$ theo thang kết
+    // quả (chặt, cho biểu thức hiền) và $10^{-15}$ theo thang trung gian (nới đúng bằng
+    // mức triệt tiêu đã ăn mất). Một phép biến đổi thật sự sai trên biểu thức hiền vẫn
+    // bị bắt, vì ở đó hai thang bằng nhau.
+    //
+    // Lỗi này **có từ trước**; hạt giống mới chỉ dịch điểm bốc vào đúng chỗ nó nằm.
     const scale = Math.max(1, Math.abs(va), Math.abs(vb));
-    if (Math.abs(va - vb) > 1e-9 * scale) {
+    const swing = Math.max(magnitude(a, env), magnitude(b, env));
+    const tolerance = Math.max(1e-9 * scale, 1e-15 * swing);
+    if (Math.abs(va - vb) > tolerance) {
       const at = names.map((n) => `${n}=${(env.get(n) as number).toFixed(4)}`).join(', ');
       return {
         ok: false,

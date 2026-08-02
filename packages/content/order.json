@@ -139,9 +139,10 @@
     "imo-1987-p1-fixed-points",
     "imo-1986-p3-pentagon-operation",
     "five-colour-planar-sketch",
-    "timetable-edge-colouring"
+    "timetable-edge-colouring",
+    "hanoi-generating-function"
   ],
   "newest": [
-    "timetable-edge-colouring"
+    "hanoi-generating-function"
   ]
 }

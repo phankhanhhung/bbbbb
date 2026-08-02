@@ -1,0 +1,216 @@
+{
+  "schema_version": "1.5.0",
+  "id": "hanoi-generating-function",
+  "statement": {
+    "vi": "Tháp Hà Nội $n$ đĩa cần $a_n$ nước, với $a_0 = 0$ và $a_n = 2a_{n-1} + 1$. Tìm công thức đóng cho $a_n$ **bằng hàm sinh**."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Ai cũng đoán được $2^n - 1$ rồi quy nạp. Chỗ đáng nhìn là cỗ máy làm việc ấy **mà không cần đoán trước**: truy hồi thành một phương trình cho hàm sinh, phương trình cho $\\frac{x}{(1-x)(1-2x)}$, phân thức riêng phần tách nó, và hai mảnh rơi ra đúng $-1$ và $2 \\cdot 2^{n-1}$. Không bước nào cần biết đáp số."
+    }
+  },
+  "topics": [
+    "sequences",
+    "counting"
+  ],
+  "techniques": [
+    "generating-function"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "sequence",
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Sáu số hạng đầu: $0, 1, 3, 7, 15, 31$. [[a1|Mỗi số]] gấp đôi số trước rồi cộng $1$ — chuyển hết đĩa trên xuống cọc phụ, chuyển đĩa đáy, rồi chuyển chồng ấy sang. Đáp số $2^n - 1$ đoán được ngay từ hàng này; phần còn lại của bài là làm nó **mà không đoán**."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a1",
+                "a2",
+                "a3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "a₀ = 0, a₁ = 1, … a₅ = 31",
+              "mode": "sequence"
+            },
+            "elements": [
+              {
+                "id": "a0",
+                "type": "item",
+                "label": "0",
+                "pos": 0,
+                "value": 0
+              },
+              {
+                "id": "a1",
+                "type": "item",
+                "color_class": 3,
+                "label": "1",
+                "pos": 1,
+                "value": 1
+              },
+              {
+                "id": "a2",
+                "type": "item",
+                "color_class": 3,
+                "label": "3",
+                "pos": 2,
+                "value": 3
+              },
+              {
+                "id": "a3",
+                "type": "item",
+                "color_class": 3,
+                "label": "7",
+                "pos": 3,
+                "value": 7
+              },
+              {
+                "id": "a4",
+                "type": "item",
+                "label": "15",
+                "pos": 4,
+                "value": 15
+              },
+              {
+                "id": "a5",
+                "type": "item",
+                "label": "31",
+                "pos": 5,
+                "value": 31
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hàng sáu số 0, 1, 3, 7, 15, 31; ba số giữa được đánh dấu."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đặt $A(x) = \\sum_n a_n x^n$. Truy hồi cho $A = 2xA + \\frac{x}{1-x}$, giải ra $A = \\frac{x}{(1-x)(1-2x)}$. Đọc hệ số thì thừa số $x$ dịch bậc, còn phần còn lại là một phân số mà [[a1|phân thức riêng phần]] tách thành hai mảnh — mỗi mảnh là một chuỗi hình học đọc được ngay."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "tách mẫu thành hai mảnh",
+              "start": "coeff(x, n, (x) * (1/((1-x)*(1-2*x))))",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "coeff_shift"
+                },
+                {
+                  "at": "@1/((1-x)*(1-2*x))",
+                  "rule": "partial_fractions"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: hệ số của x mũ n trong x nhân một trên tích hai thừa số, dịch bậc, rồi tách thành âm một trên một trừ x cộng hai trên một trừ hai x."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn lại là máy chạy: tính tuyến tính đẩy hệ số vào từng mảnh, rồi mỗi mảnh trả về luỹ thừa của nó. Kết quả [[a1|$-1 + 2 \\cdot 2^{n-1}$]], đúng bằng $2^n - 1$ — và không dòng nào trong chuỗi này cần biết trước đáp số. Điều kiện $n \\ge 1$ engine tự kèm: $a_0$ nằm ngoài phép dịch bậc."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row7"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "đọc hệ số của x mũ n",
+              "start": "coeff(x, n, (x) * (1/((1-x)*(1-2*x))))",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "coeff_shift"
+                },
+                {
+                  "at": "@1/((1-x)*(1-2*x))",
+                  "rule": "partial_fractions"
+                },
+                {
+                  "at": "",
+                  "rule": "coeff_linear"
+                },
+                {
+                  "at": "0",
+                  "rule": "coeff_linear"
+                },
+                {
+                  "at": "1",
+                  "rule": "coeff_linear"
+                },
+                {
+                  "at": "0.1",
+                  "rule": "coeff_repeated_geometric"
+                },
+                {
+                  "at": "1.1",
+                  "rule": "coeff_repeated_geometric"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Tám dòng: dịch bậc, phân thức riêng phần, ba lần tính tuyến tính, rồi hai lần đổi chuỗi hình học thành luỹ thừa."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

@@ -358,6 +358,14 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       'coeff(x, n, 5 * (1/(1 - x)))',
       'coeff(x, n, x^2 * (1/(1 - x)))',
       'coeff(x, n, 1/(1 - x)^3)',
+      // `partial_fractions` (AL-20): bộ sinh ngẫu nhiên không bao giờ dựng ra một phân
+      // số có mẫu là **tích các thừa số 1 − a·x**, nên không có hạt giống này thì luật
+      // ấy chưa từng áp được lần nào — và một luật chưa từng áp được là một luật chưa
+      // được phép quét kiểm bảo toàn giá trị. Chốt canh độ phủ ở cuối bắt đúng chuyện
+      // đó, y như nó đã bắt `geometric_series` lúc M68.
+      '1/((1 - x)*(1 - 2*x))',
+      '1/((1 - 2*x)*(1 - 3*x))',
+      '1/((1 - x)*(1 - 2*x)*(1 - 3*x))',
     ];
 
     const bad: string[] = [];

@@ -100,6 +100,7 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Khoảng hở Vizing ($\\Delta$ hay $\\Delta+1$) | tô màu cạnh | ✅ có trong kho (tam giác cần $3$ dù $\\Delta = 2$ — điều kiện hai phía không phải trang trí) |
 | Bổ đề bậc $\\le 5$ của hình phẳng | công thức Euler | ✅ có trong kho (`five-colour-planar-sketch`: đếm bậc hai chiều, **không nhìn hình cụ thể nào**) |
 | Ngũ giác đổi dấu dừng sau hữu hạn bước — **IMO 1986 bài 3** | đại lượng đơn điệu | ✅ có trong kho (tổng bất biến **không** chứng minh được gì; $\\sum(x_i-x_{i+2})^2$ mới là thứ giảm) |
+| Tháp Hà Nội qua hàm sinh ($2^n-1$) | truy hồi tuyến tính | ✅ có trong kho (`partial_fractions`, AL-20 — cỗ máy chạy **mà không cần đoán đáp số**) |
 | Tham lam đủ $\\Delta+1$ màu | tô màu đỉnh | ✅ có trong kho (`greedy-colouring-degree-bound`: cận không đổi, số màu **thật** đổi theo thứ tự duyệt) |
 | Cayley $n^{n-2}$ (mã Prüfer) | song ánh | ✅ có trong kho (GR-09: mã vẽ thành hàng ô dưới cây) |
 | $R(3,3,3) > 16$ — **IMO 1964 bài 4** | đồ thị, ba màu | ✅ có trong kho (chuồng bồ câu hai nhát; `no-mono-triangle` vốn không phân biệt màu nên chạy được ngay) |

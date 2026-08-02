@@ -3788,6 +3788,83 @@ const coeffRepeatedGeometric: Rule = {
 };
 
 /**
+ * **Phân thức riêng phần** cho hàm sinh: $\dfrac{c}{\prod_i (1 - a_i x)}
+ * = \sum_i \dfrac{c_i}{1 - a_i x}$ — nghịch đảo của `combine_fraction` (AL-20).
+ *
+ * Đây là mảnh cuối nối truy hồi tuyến tính với hàm sinh. Trước nó,
+ * $[x^n]\frac{1}{(1-x)(1-2x)}$ không đi được: `coeff_of_product` đòi một `mul`, mà
+ * parser dựng ra một `div` với mẫu là tích. Tách xong thì `coeff_linear` và
+ * `coeff_repeated_geometric` lo nốt, và cả họ "truy hồi tuyến tính hệ số hằng" mở ra.
+ *
+ * ## Vì sao **chỉ** nghiệm phân biệt, và **chỉ** hữu tỉ
+ *
+ * Hệ số tách ra theo công thức che: $c_i = c \prod_{j \ne i} \dfrac{a_i}{a_i - a_j}$.
+ * Với $a_i$ nguyên phân biệt thì mọi $c_i$ là **hữu tỉ chính xác**, engine có nút `rat`
+ * để mang chúng, và sân kiểm chuỗi xác nhận từng dòng. Không có chỗ nào phải làm tròn.
+ *
+ * Nghiệm **lặp** thì khai triển cần thêm hạng tử $\frac{c}{(1-ax)^m}$ với $m \ge 2$, và
+ * công thức che không cho ra chúng — phải đạo hàm. `coeff_repeated_geometric` đọc được
+ * những hạng tử ấy rồi, nhưng **dựng** ra chúng là một luật khác; từ chối có lời thay
+ * vì trả một khai triển thiếu hạng tử.
+ *
+ * **Nghiệm vô tỉ vẫn là nợ có tên.** $\frac{1}{1-x-x^2}$ của Fibonacci không tách được
+ * ở đây: mẫu không phải tích các thừa số tuyến tính **hữu tỉ**, và tách nó cần
+ * $\mathbb{Q}(\sqrt5)$ cộng nhị thức tổng quát $\binom{1/2}{n}$ — đúng ranh giới
+ * `series.ts` đã tự vạch. Nhưng phần lớn giá trị của "phân thức riêng phần" **không**
+ * nằm sau ranh giới ấy: tháp Hà Nội, $2^n - 1$, $3^n - 2^n$, mọi truy hồi có nghiệm đặc
+ * trưng hữu tỉ — tất cả đi được, và chúng là phần người học gặp trước.
+ */
+const partialFractions: Rule = {
+  id: 'partial_fractions',
+  label: 'phân thức riêng phần',
+  run(m, node) {
+    if (node.k !== 'div') return no('cần một phân số');
+    const c = constExp(node.num);
+    if (c === null) return no('tử phải là một hằng nguyên');
+    if (node.den.k !== 'mul') return no('mẫu phải là một **tích** các thừa số 1 − a·x');
+
+    const factors: { a: number; x: Expr & { k: 'var' } }[] = [];
+    for (const factor of node.den.args) {
+      const found = geometricDenominator(factor);
+      if (found === null) return no('mỗi thừa số của mẫu phải có dạng 1 − a·x, a nguyên ≠ 0');
+      factors.push(found);
+    }
+    if (factors.length < 2) return no('cần ít nhất hai thừa số để tách');
+
+    const name = (factors[0] as { x: { name: string } }).x.name;
+    if (factors.some((f) => f.x.name !== name)) return no('các thừa số phải cùng một biến');
+
+    const roots = factors.map((f) => f.a);
+    if (new Set(roots).size !== roots.length) {
+      // Nghiệm lặp cần hạng tử bậc cao; công thức che không sinh ra chúng.
+      return no('mẫu có thừa số lặp: khai triển cần hạng tử 1/(1 − a·x)^m, luật này chưa dựng');
+    }
+
+    // Công thức che, chạy trên hữu tỉ chính xác: $c_i = c \prod_{j \ne i} a_i/(a_i - a_j)$.
+    const terms: Expr[] = roots.map((ai, i) => {
+      let p = c;
+      let q = 1;
+      for (const [j, aj] of roots.entries()) {
+        if (i === j) continue;
+        p *= ai;
+        q *= ai - aj;
+      }
+      const coefficient = rat(m, p, q);
+      const x = variable(m, name);
+      const denominator = ai === 1 ? add(m, [int(m, 1), negate(m, x)])
+                                   : add(m, [int(m, 1), mul(m, [int(m, -ai), x])]);
+      const fraction = div(m, int(m, 1), denominator);
+      // Hệ số $1$ thì không viết ra — `1·F` là thứ không ai viết tay.
+      return coefficient.k === 'int' && coefficient.v === 1
+        ? fraction
+        : mul(m, [coefficient, fraction]);
+    });
+
+    return { after: add(m, terms) };
+  },
+};
+
+/**
  * $\sum_{k=0}^{\infty} (ax)^k = \dfrac{1}{1-ax}$ — **hai chiều** (M68, AL-16; hệ số
  * dẫn $a$ thêm ở loạt bài 3/4).
  *
@@ -3879,6 +3956,7 @@ const geometricSeries: Rule = {
 
 export const RULES: readonly Rule[] = [
   geometricSeries,
+  partialFractions,
   specialize,
   commute,
   distribute,

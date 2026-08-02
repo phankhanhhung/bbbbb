@@ -43,7 +43,7 @@ import {
   sameValueSeries,
   seriesOf,
 } from '../src/series.js';
-import { evalReal, hasBoundUninterpreted } from '../src/check.js';
+import { evalReal, hasBoundUninterpreted, sameValueReal } from '../src/check.js';
 import { walk as walkExpr, same } from '../src/expr.js';
 import { toPlain } from '../src/parse.js';
 
@@ -769,6 +769,123 @@ describe('luật chuỗi hình học', () => {
       // Không ngoặc thừa cho cơ số dương.
       expect(toPlain(P('2^n'))).toBe('2^n');
       expect(toPlain(P('x^n'))).toBe('x^n');
+    });
+
+    /**
+     * `partial_fractions` (AL-20) — mảnh cuối nối truy hồi tuyến tính với hàm sinh.
+     *
+     * Trước nó $[x^n]\frac{1}{(1-x)(1-2x)}$ không đi được: `coeff_of_product` đòi một
+     * `mul`, mà parser dựng ra một `div` có mẫu là tích. Tách xong thì `coeff_linear`
+     * và `coeff_repeated_geometric` lo nốt.
+     */
+    describe('phân thức riêng phần', () => {
+      it('tách mẫu hai thừa số, hệ số **hữu tỉ chính xác**', () => {
+        const two = run('1/((1-x)*(1-2*x))', [{ rule: 'partial_fractions', at: '' }]);
+        expect(two.refusal).toBeNull();
+        expect(toPlain(two.rows[1]!.expr)).toBe('−1/(1 − x) + 2·1/(1 − 2x)');
+        expect(two.unsound).toEqual([]);
+        // Sân kiểm chuỗi **có** kiểm dòng này — tách mà bộ kiểm im thì là tách hỏng.
+        expect(two.unchecked).toEqual([]);
+
+        // Ba thừa số cho hệ số không nguyên, và `rat` mang chúng chính xác.
+        const three = run('1/((1-x)*(1-2*x)*(1-3*x))', [
+          { rule: 'partial_fractions', at: '' },
+        ]);
+        expect(toPlain(three.rows[1]!.expr)).toBe('1/2·1/(1 − x) − 4·1/(1 − 2x) + 9/2·1/(1 − 3x)');
+        expect(three.unsound).toEqual([]);
+        expect(three.unchecked).toEqual([]);
+      });
+
+      it('nối được tới tận công thức đóng: tháp Hà Nội ra $2^n - 1$', () => {
+        const m = run('coeff(x, n, (x) * (1/((1-x)*(1-2*x))))', [
+          { rule: 'coeff_shift', at: '' },
+          { rule: 'partial_fractions', at: '@1/((1-x)*(1-2*x))' },
+          { rule: 'coeff_linear', at: '' },
+          { rule: 'coeff_linear', at: '0' },
+          { rule: 'coeff_linear', at: '1' },
+          { rule: 'coeff_repeated_geometric', at: '0.1' },
+          { rule: 'coeff_repeated_geometric', at: '1.1' },
+        ]);
+        expect(m.refusal).toBeNull();
+        expect(toPlain(m.rows[m.rows.length - 1]!.expr)).toBe('−1 + 2·2^(n − 1)');
+        expect(m.unsound).toEqual([]);
+        expect(m.unchecked).toEqual([]);
+      });
+
+    /**
+     * Trần số học của phép so giá trị — răng cho **chính cái trần**.
+     *
+     * Bẻ răng lúc thêm `partial_fractions` lộ ra: nới trần từ $10^{-15}$ lên $10^{-3}$
+     * mà **không test nào đỏ**. Tức là cả phép quét bảo toàn giá trị có thể đang chạy
+     * với một trần lỏng tuỳ ý và không ai biết — nó vẫn xanh, chỉ là không còn bắt gì.
+     *
+     * Ba khẳng định, và chúng phải đi cùng nhau: bằng nhau thì nói bằng, khác nhau thì
+     * nói khác, và khác **ít** thì vẫn phải nói khác.
+     */
+    describe('trần số học của `sameValueReal`', () => {
+      const P = (src: string) => parse(src, new Minter());
+
+      it('hai biểu thức bằng nhau ⇒ khớp', () => {
+        expect(sameValueReal(P('(x + 1)^2'), P('x^2 + 2*x + 1'), 11, 24).ok).toBe(true);
+      });
+
+      it('khác nhau **rõ** ⇒ bắt được', () => {
+        const out = sameValueReal(P('(x + 1)^2'), P('x^2 + 2*x + 2'), 11, 24);
+        expect(out.ok).toBe(false);
+        expect(out.verified).toBe(true);
+      });
+
+      it('khác nhau **ít** vẫn phải bắt — đây là chỗ trần lỏng sẽ lọt', () => {
+        // Lệch $10^{-6}$ trên biểu thức không triệt tiêu: thang kết quả cỡ $1$, thang
+        // trung gian cũng cỡ $1$, nên trần đúng phải là $10^{-9}$ và $10^{-6}$ lọt qua
+        // được là dấu hiệu trần đã lỏng.
+        // Parser chỉ nhận số nguyên, nên viết lệch bằng phân số: $1 + 10^{-6}$.
+        const out = sameValueReal(P('x + 1'), P('x + 1000001/1000000'), 11, 24);
+        expect(out.ok).toBe(false);
+      });
+
+      it('triệt tiêu lớn thì **không** bị gọi nhầm là sai', () => {
+        // Cùng một giá trị, viết hai cách, đi qua $12!$ rồi trừ gần hết. Trần đo bằng
+        // thang kết quả sẽ gọi đây là sai; đo bằng thang trung gian thì đúng.
+        const a = P('((3 + fact(12)) - (fact(12) - y^2)) / (x^2 * (y^3 + 3))');
+        const b = P('(3 + y^2) / (x^2 * (y^3 + 3))');
+        expect(sameValueReal(a, b, 11, 24).ok).toBe(true);
+      });
+    });
+
+      it('mẫu là tích **một** thừa số ⇒ từ chối — guard này phải với tới được', () => {
+        // `1/(1-2x)` không tới được nhánh ấy: mẫu của nó không phải `mul`, nên lời từ
+        // chối đến từ một guard **khác**. Bẻ răng lộ ra điều đó — bỏ `factors.length < 2`
+        // đi mà không test nào đỏ. Nên dựng thẳng cây có `mul` một thừa số.
+        const m = new Minter();
+        const one: Expr = {
+          k: 'div',
+          num: { k: 'int', v: 1, id: m.next() },
+          den: { k: 'mul', args: [parse('1 - 2*x', m)], id: m.next() },
+          id: m.next(),
+        } as Expr;
+        const rule = RULES.find((r) => r.id === 'partial_fractions')!;
+        const out = rule.run(m, one, undefined);
+        expect('refusal' in out).toBe(true);
+        expect((out as { refusal: string }).refusal).toContain('ít nhất hai thừa số');
+      });
+
+      it('từ chối có lời ở **đúng ba** chỗ ranh giới', () => {
+        // Nghiệm lặp: công thức che không sinh ra hạng tử bậc cao, nên nói ra thay vì
+        // trả một khai triển thiếu.
+        expect(
+          run('1/((1-x)*(1-x))', [{ rule: 'partial_fractions', at: '' }]).refusal,
+        ).toContain('thừa số lặp');
+        // Bậc 2 không tách được thành thừa số tuyến tính **hữu tỉ** — đây là chỗ
+        // Fibonacci dừng lại, và nó là nợ có tên chứ không phải một lỗi.
+        expect(
+          run('1/(1 - x - x^2)', [{ rule: 'partial_fractions', at: '' }]).refusal,
+        ).toContain('tích');
+        // Một thừa số duy nhất thì chẳng có gì để tách.
+        expect(
+          run('1/(1-2*x)', [{ rule: 'partial_fractions', at: '' }]).refusal,
+        ).toContain('tích');
+      });
     });
 
     it('$a$ ký hiệu ⇒ từ chối; $a = 0$ ⇒ từ chối', () => {
