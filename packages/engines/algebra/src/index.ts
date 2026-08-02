@@ -64,6 +64,35 @@ function idsOf(scene: Scene): Set<string> {
   return drawnIds(layout(model));
 }
 
+/**
+ * Một bước **không bảo toàn giá trị** — cổng cuối trước khi toán sai lên trang.
+ *
+ * Tách thành hàm có tên vì lượt bẻ răng hàng loạt lộ ra rằng nó **không có răng nào**:
+ * đổi `bounds/algebra-unsound` thành một mã khác mà toàn bộ 3798 test vẫn xanh. Ba anh
+ * em của nó (`algebra-no-elements`, `algebra-refused`, `algebra-vars`) đều có test
+ * khẳng định đúng mã; riêng cái này thì không.
+ *
+ * Vì sao nó thoát: nhánh này chỉ chạy khi **một luật của engine sai**, mà mọi luật đều
+ * đúng — không đầu vào nào dựng ra được `unsound` không rỗng, nên không test nào đi qua
+ * đây được bằng đường thường. Đó là phòng thủ cho ngày một luật hỏng, và phòng thủ
+ * không ai kiểm là phòng thủ có thể đã mục từ lâu.
+ *
+ * Tách ra thì hợp đồng gọi được thẳng: **mã nào, mức nào, nói gì**. `severity` là phần
+ * quan trọng hơn cả mã — hạ nó xuống `warning` thì toán sai vẫn publish được, và cổng
+ * vẫn xanh.
+ */
+export function unsoundIssue(bad: string, path: string): ValidationIssue {
+  return {
+    // Bước sai là **lỗi của engine**, không của tác giả — tác giả không gõ vế sau.
+    // Vẫn chặn publish: hình lúc ấy dạy một phép biến đổi sai.
+    code: 'bounds/algebra-unsound',
+    severity: 'error',
+    message: `Bước không bảo toàn giá trị: ${bad}`,
+    path: `${path}/config/steps`,
+    hint: 'Đây là lỗi của luật trong engine, không phải của nội dung bài',
+  };
+}
+
 export const ALGEBRA_VALIDATOR_IDS = ['each-step-sound', 'no-vanishing-divisor', 'reaches:<expr>'] as const;
 
 export const algebraSchemaFragment: EngineSchemaFragment = {
@@ -100,16 +129,8 @@ export const algebraSchemaFragment: EngineSchemaFragment = {
       return issues;
     }
 
-    // Bước sai là **lỗi của engine**, không của tác giả — tác giả không gõ vế sau.
-    // Vẫn chặn publish: hình lúc ấy dạy một phép biến đổi sai.
     for (const bad of model.unsound) {
-      issues.push({
-        code: 'bounds/algebra-unsound',
-        severity: 'error',
-        message: `Bước không bảo toàn giá trị: ${bad}`,
-        path: `${path}/config/steps`,
-        hint: 'Đây là lỗi của luật trong engine, không phải của nội dung bài',
-      });
+      issues.push(unsoundIssue(bad, path));
     }
 
     // Không kiểm được **khác** đã kiểm và đúng, nên nó phải hiện ra. Cảnh báo chứ

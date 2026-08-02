@@ -8,6 +8,7 @@ import {
   algebraHitTest,
   algebraRenderer,
   algebraSchemaFragment,
+  unsoundIssue,
   algebraChoreography,
   EXPR_KINDS,
   binderOf,
@@ -3041,5 +3042,43 @@ describe('M76b — hộp dòng chỉ là lưới hứng', () => {
     const floor = Math.max(...line.boxes.map((b) => b.y + b.height));
     const hit = algebraHitTest(s, { x: line.box.x + 1, y: Math.min(floor + 0.5, line.box.y + line.box.height) });
     expect(hit.at(-1)).toBe(line.box.id);
+  });
+});
+
+/**
+ * **Cổng cuối trước khi toán sai lên trang** — và nó từng không có răng nào.
+ *
+ * Lượt bẻ răng hàng loạt: đổi mã lỗi `bounds/algebra-unsound` thành một tên khác mà
+ * toàn bộ 3798 test vẫn xanh. Ba anh em của nó đều có test khẳng định đúng mã; riêng
+ * cái này thì không, vì nhánh ấy chỉ chạy khi **một luật của engine sai** — và mọi luật
+ * đều đúng, nên không đầu vào nào đi qua đây được bằng đường thường.
+ *
+ * Phòng thủ cho ngày một luật hỏng. Phòng thủ không ai kiểm là phòng thủ có thể đã mục.
+ */
+describe('bước không bảo toàn giá trị — hợp đồng của cổng chặn', () => {
+  it('mã đúng, đường dẫn đúng, và nói ra **bước nào**', () => {
+    const issue = unsoundIssue('bước 2 (nhân phân phối)', '/solutions/0/steps/1/scene');
+    expect(issue.code).toBe('bounds/algebra-unsound');
+    expect(issue.path).toBe('/solutions/0/steps/1/scene/config/steps');
+    expect(issue.message).toContain('bước 2 (nhân phân phối)');
+  });
+
+  it('`severity` là **error**, không phải warning — đây mới là phần quan trọng', () => {
+    // Hạ xuống `warning` thì toán sai vẫn publish được và cổng vẫn xanh. Mã lỗi sai chỉ
+    // làm tác giả tra nhầm chỗ; mức sai làm cả hàng rào biến mất.
+    expect(unsoundIssue('bất kỳ', '/p').severity).toBe('error');
+  });
+
+  it('lời gợi ý trỏ đúng người phải sửa: **engine**, không phải tác giả', () => {
+    // Tác giả không gõ vế sau của một bước — engine sinh ra nó. Một hint đổ lỗi cho nội
+    // dung sẽ khiến người soạn đi sửa bài, mà bài không sai.
+    expect(unsoundIssue('bất kỳ', '/p').hint).toContain('engine');
+  });
+
+  it('nối vào `checkBounds` thật: mọi phần tử `unsound` thành **một** issue', () => {
+    // Kiểm phần nối, không chỉ phần hợp đồng — hàm đúng mà vòng lặp quên gọi thì cổng
+    // vẫn thủng.
+    const source = algebraSchemaFragment.checkBounds.toString();
+    expect(source).toContain('unsoundIssue');
   });
 });

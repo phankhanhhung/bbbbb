@@ -481,6 +481,40 @@ trước.
 
 ---
 
+## 3b. Soát chốt canh bằng bẻ răng hàng loạt (2026-08-02)
+
+Câu hỏi: *"còn cổng nào đang xanh mà không canh gì?"* — đặt ra sau khi `AL-20` tình cờ
+lộ ra rằng trần số học của phép quét bảo toàn giá trị có thể nới từ $10^{-15}$ lên
+$10^{-3}$ mà không test nào đỏ.
+
+Cách trả lời: `tools/mutation-sweep.py`. Sửa **một** chốt canh, chạy toàn bộ test, so số
+test hỏng với mốc, khôi phục. Mutant **chết** nghĩa là chốt canh ấy đang canh thật;
+mutant **sống sót** nghĩa là cổng vẫn xanh nhưng không gác gì.
+
+**Lượt đầu: 19 mutant, 16 chết, 3 sống sót.**
+
+| sống sót | hỏng thầm ở đâu | răng đã lắp |
+|---|---|---|
+| `SERIES_TERMS = 1` | Sân kiểm thứ tư hạ độ sâu từ $12$ xuống "so hệ số bậc $0$" — lớp duy nhất phân biệt một luật hàm sinh **đúng** với một luật chỉ trùng vài hệ số đầu | 4 test: lệch ở bậc ngay dưới trần phải bắt; lệch nông phải **nói rõ hệ số nào**; không báo động giả; và **trần là trần** — khoá luôn con số $12$ |
+| `MAX_CANVAS_VH = 9999` | Hàng rào duy nhất trên trục dọc. Bỏ nó thì scene cao đẩy narrative ra khỏi màn hình — hình đúng, tỉ lệ đúng, golden khớp từng byte, chỉ **bố cục** hỏng | 2 test: trần phải tính theo **viewport** chứ không theo pixel; và phải chừa chỗ cho chữ |
+| mã lỗi `bounds/algebra-unsound` | Cổng cuối trước khi **toán sai** lên trang. Ba anh em của nó đều có test khẳng định đúng mã; riêng nó thì không | tách `unsoundIssue()` thành hàm có tên + 4 test: mã, **mức** (`error` chứ không `warning`), hint trỏ đúng engine, và phần **nối** vào `checkBounds` |
+
+Hai điều đáng giữ lại từ lượt này.
+
+**Một — cái sống sót thứ ba thoát vì một lý do có cấu trúc.** Nhánh ấy chỉ chạy khi *một
+luật của engine sai*, mà mọi luật đều đúng: không đầu vào nào dựng ra `unsound` không
+rỗng, nên không test nào đi qua đó được bằng đường thường. Phòng thủ cho ngày một luật
+hỏng — và phòng thủ không ai kiểm là phòng thủ có thể đã mục từ lâu. Cách vá là **tách
+hợp đồng thành hàm gọi được**, không phải cố dựng một đầu vào không tồn tại.
+
+**Hai — 16 cái chết đều chết rất to.** `maxSteps = 1` làm đỏ $39$ test,
+`VERTEX_RADIUS = 0.1` đỏ $148$, `SCHEMA_VERSION` lệch đỏ $14$. Vấn đề của kho **không**
+phải chất lượng trung bình của chốt canh mà là **phân bố**: vài chỗ không ai canh, nằm
+rải rác chứ không tụ một khu. Đọc mã không tìm ra chúng — chỉ quét mới tìm ra.
+
+Giữ `tools/mutation-sweep.py` trong kho, kể cả ba mutant đã vá, để lượt sau còn kiểm
+được rằng răng vẫn còn đó.
+
 ## 4. Việc **không** nằm trong tài liệu này
 
 Ba thứ hay bị nhầm là "làm engine mạnh hơn":

@@ -44,7 +44,7 @@ import {
   seriesOf,
 } from '../src/series.js';
 import { evalReal, hasBoundUninterpreted, sameValueReal } from '../src/check.js';
-import { SERIES_TERMS, sameValueSeries } from '../src/series.js';
+import { SERIES_TERMS } from '../src/series.js';
 import { walk as walkExpr, same } from '../src/expr.js';
 import { toPlain } from '../src/parse.js';
 
