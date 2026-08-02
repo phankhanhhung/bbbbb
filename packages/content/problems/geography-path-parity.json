@@ -1,0 +1,394 @@
+{
+  "schema_version": "1.4.0",
+  "id": "geography-path-parity",
+  "statement": {
+    "vi": "Một quân cờ đứng ở đầu trái của một đường thẳng $6$ đỉnh. Hai người lần lượt đẩy quân sang đỉnh kề rồi **xoá đỉnh vừa rời đi**. Ai không còn nước đi thì thua. Ai thắng — và câu trả lời đổi thế nào khi đường có $5$ đỉnh?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Vertex geography trên đường thẳng: bên đi trước thắng ⟺ số đỉnh chẵn. Đây là ca dễ nhất của định lý ghép cặp, vì trên đường thẳng ghép cặp lớn nhất nhìn thấy được bằng mắt."
+    }
+  },
+  "topics": [
+    "games",
+    "graph-basics"
+  ],
+  "techniques": [
+    "parity",
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Trên đường thẳng không có lựa chọn nào cả: quân chỉ đi được **về phía trước**, vì phía sau đã bị xoá. Nên cả ván là một dãy [[a1|năm nước bắt buộc]], và ai đi nước thứ năm thì người kia hết nước."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e0",
+                "e1",
+                "e2",
+                "e3",
+                "e4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "token": "v0"
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [22, 0]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [44, 0]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [66, 0]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [88, 0]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "F",
+                "pos": [110, 0]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              }
+            ]
+          },
+          "play": {
+            "rule": "geography",
+            "first": "left"
+          },
+          "alt_text": {
+            "vi": "Đường thẳng sáu đỉnh A tới F, quân ở A."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Sau nước đầu, [[a1|$A$]] biến mất và thứ còn lại là **cùng một bài toán trên $5$ đỉnh** — với người kia đi trước. Đó là toàn bộ lập luận: mỗi nước hạ số đỉnh đi một và đổi vai."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "token": "v1"
+            },
+            "elements": [
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [22, 0]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [44, 0]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [66, 0]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [88, 0]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "F",
+                "pos": [110, 0]
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              }
+            ]
+          },
+          "play": {
+            "rule": "geography",
+            "first": "right"
+          },
+          "alt_text": {
+            "vi": "A đã bị xoá; quân ở B, còn năm đỉnh."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hai nước, còn [[a1|bốn đỉnh]] và Người 1 lại đi. Ghép cặp $AB$, $CD$, $EF$ phủ **mọi** đỉnh, nên đỉnh xuất phát luôn được phủ — và định lý nói bên đi trước thắng đúng ở đó."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v2",
+                "v3",
+                "v4",
+                "v5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "token": "v2"
+            },
+            "elements": [
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [44, 0]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [66, 0]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [88, 0]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "F",
+                "pos": [110, 0]
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              }
+            ]
+          },
+          "play": {
+            "rule": "geography",
+            "first": "left"
+          },
+          "alt_text": {
+            "vi": "Quân ở C, còn bốn đỉnh."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đường lẻ thì [[a1|một đỉnh]] không ghép cặp được, và ghép cặp lớn nhất bỏ sót đúng đỉnh xuất phát. Ván dài $4$ nước, Người 2 đi nước cuối. **Số đỉnh chẵn thì người đi trước thắng, lẻ thì thua** — và nó không phụ thuộc gì vào độ dài trông có vẻ hào phóng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "token": "v0"
+            },
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "B",
+                "pos": [22, 0]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "C",
+                "pos": [44, 0]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "D",
+                "pos": [66, 0]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "E",
+                "pos": [88, 0]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              }
+            ]
+          },
+          "play": {
+            "rule": "geography",
+            "first": "left"
+          },
+          "alt_text": {
+            "vi": "Đường thẳng năm đỉnh A tới E, quân ở A."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

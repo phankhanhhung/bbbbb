@@ -30,7 +30,7 @@
   "status": "published",
   "kind": "challenge",
   "created": "2026-07-29",
-  "updated": "2026-07-29",
+  "updated": "2026-08-02",
   "invariants": [
     {
       "expr": "xor",
@@ -96,6 +96,10 @@
                 "count": 7
               }
             ]
+          },
+          "play": {
+            "rule": "piles",
+            "first": "left"
           },
           "alt_text": {
             "vi": "Ba đống sỏi 3, 5, 7 viên."

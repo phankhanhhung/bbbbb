@@ -119,10 +119,16 @@
     "candies-three-children-gf",
     "chomp-poison-corner",
     "geography-token-on-graph",
-    "hackenbush-blue-red-halves"
+    "hackenbush-blue-red-halves",
+    "chomp-two-rows-staircase",
+    "geography-path-parity",
+    "hackenbush-one-stalk-half",
+    "nim-two-piles-mirror"
   ],
   "newest": [
-    "geography-token-on-graph",
-    "hackenbush-blue-red-halves"
+    "chomp-two-rows-staircase",
+    "geography-path-parity",
+    "hackenbush-one-stalk-half",
+    "nim-two-piles-mirror"
   ]
 }

@@ -31,7 +31,7 @@
   "status": "published",
   "kind": "challenge",
   "created": "2026-07-30",
-  "updated": "2026-07-30",
+  "updated": "2026-08-02",
   "invariants": [
     {
       "expr": "moves",
@@ -90,6 +90,10 @@
                 "count": 7
               }
             ]
+          },
+          "play": {
+            "rule": "piles",
+            "first": "left"
           },
           "alt_text": {
             "vi": "Hai đống sỏi, một đống hai mươi lăm viên và một đống bảy viên."

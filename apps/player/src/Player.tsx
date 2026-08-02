@@ -626,14 +626,20 @@ export function Player({
           <nav class="controls">
             {/* Bài chơi được thì **chơi** là đường chính, không phải sandbox: cả M78
                 sinh ra để câu "thử đi" có nghĩa là chơi một ván chứ không phải nghịch
-                một hình. */}
+                một hình.
+
+                Nhãn cố ý **không** chứa "Thử từ đây". Bản đầu để "Chơi thử từ đây", và
+                hai nút cạnh nhau đọc ra như hai biến thể của cùng một việc trong khi
+                chúng làm hai chuyện khác hẳn: một bên chơi luân phiên theo luật, một bên
+                sửa hình tự do. (Nó còn làm hai chốt canh e2e cũ bắt nhầm nút — nhưng đó
+                là triệu chứng, không phải bệnh.) */}
             {step.play && step.scene ? (
               <button
                 class="try"
                 onClick={() => step.scene && step.play && startPlay(step.scene, step.play)}
                 disabled={!engine}
               >
-                Chơi thử từ đây
+                Chơi ván này
               </button>
             ) : null}
             <button

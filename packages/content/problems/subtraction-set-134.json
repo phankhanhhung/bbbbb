@@ -31,7 +31,7 @@
   "status": "published",
   "kind": "both",
   "created": "2026-07-30",
-  "updated": "2026-07-30",
+  "updated": "2026-08-02",
   "invariants": [
     {
       "expr": "total",
@@ -91,6 +91,10 @@
                 "count": 20
               }
             ]
+          },
+          "play": {
+            "rule": "piles",
+            "first": "left"
           },
           "alt_text": {
             "vi": "Một đống 20 viên sỏi."

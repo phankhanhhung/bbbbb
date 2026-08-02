@@ -1,0 +1,325 @@
+{
+  "schema_version": "1.4.0",
+  "id": "hackenbush-one-stalk-half",
+  "statement": {
+    "vi": "Hackenbush xanh–cam, một nhánh duy nhất: cạnh **xanh** ở dưới, cạnh **cam** ở trên. Người 1 gỡ cạnh xanh, Người 2 gỡ cạnh cam, và phần rời mặt đất thì rụng. Mỗi bên có đúng một cạnh của mình. Ai thắng?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Blue–Red Hackenbush: nhánh xanh-dưới-cam-trên có giá trị $1/2$. Đây là thế nhỏ nhất mà giá trị **không** phải số nguyên, và là chỗ ý tưởng \"cạnh đội cạnh\" hiện ra rõ nhất."
+    }
+  },
+  "topics": [
+    "games",
+    "graph-basics"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mỗi bên một cạnh, nên đếm thì hoà. Nhưng [[a1|cạnh xanh]] **đỡ** [[a2|cạnh cam]]: gỡ cạnh dưới thì cạnh trên rơi theo, còn gỡ cạnh trên thì cạnh dưới đứng nguyên. Hai cạnh ấy không ngang giá."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "lo"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "hi"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "ground": "g"
+            },
+            "elements": [
+              {
+                "id": "g",
+                "type": "vertex",
+                "label": "Đất",
+                "pos": [0, 44]
+              },
+              {
+                "id": "m",
+                "type": "vertex",
+                "label": "",
+                "pos": [0, 22]
+              },
+              {
+                "id": "t",
+                "type": "vertex",
+                "label": "",
+                "pos": [0, 0]
+              },
+              {
+                "id": "lo",
+                "type": "edge",
+                "color_class": 1,
+                "u": "g",
+                "v": "m"
+              },
+              {
+                "id": "hi",
+                "type": "edge",
+                "color_class": 3,
+                "u": "m",
+                "v": "t"
+              }
+            ]
+          },
+          "play": {
+            "rule": "hackenbush",
+            "first": "left"
+          },
+          "alt_text": {
+            "vi": "Một nhánh hai cạnh mọc từ mặt đất: xanh ở dưới, cam ở trên."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: Người 1 đi trước"
+          },
+          "narrative": {
+            "vi": "Người 1 buộc phải gỡ cạnh xanh — cạnh duy nhất của mình — và **cả nhánh rụng**, mang theo cạnh cam. Còn lại [[a1|mặt đất trống]]: Người 2 không có cạnh cam nào để gỡ, nên Người 2 thua."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "g"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "ground": "g"
+            },
+            "elements": [
+              {
+                "id": "g",
+                "type": "vertex",
+                "label": "Đất",
+                "pos": [0, 44]
+              }
+            ]
+          },
+          "play": {
+            "rule": "hackenbush",
+            "first": "right"
+          },
+          "alt_text": {
+            "vi": "Chỉ còn mặt đất và đỉnh gốc; không cạnh nào."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: Người 2 đi trước"
+          },
+          "narrative": {
+            "vi": "Người 2 gỡ cạnh cam. Không gì rụng, và [[a1|cạnh xanh]] còn nguyên. Người 1 gỡ nó, rồi Người 2 hết cạnh — Người 2 lại thua."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "lo"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "ground": "g"
+            },
+            "elements": [
+              {
+                "id": "g",
+                "type": "vertex",
+                "label": "Đất",
+                "pos": [0, 44]
+              },
+              {
+                "id": "m",
+                "type": "vertex",
+                "label": "",
+                "pos": [0, 22]
+              },
+              {
+                "id": "lo",
+                "type": "edge",
+                "color_class": 1,
+                "u": "g",
+                "v": "m"
+              }
+            ]
+          },
+          "play": {
+            "rule": "hackenbush",
+            "first": "left"
+          },
+          "alt_text": {
+            "vi": "Nhánh còn mỗi cạnh xanh nối đất."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy **Người 1 thắng dù ai đi trước** — thế này có lợi cho Người 1, dù mỗi bên đúng [[a1|một cạnh]]. Câu còn lại là: lợi **bao nhiêu**?"
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "lo"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "ground": "g"
+            },
+            "elements": [
+              {
+                "id": "g",
+                "type": "vertex",
+                "label": "Đất",
+                "pos": [0, 44]
+              },
+              {
+                "id": "m",
+                "type": "vertex",
+                "label": "",
+                "pos": [0, 22]
+              },
+              {
+                "id": "t",
+                "type": "vertex",
+                "label": "",
+                "pos": [0, 0]
+              },
+              {
+                "id": "lo",
+                "type": "edge",
+                "color_class": 1,
+                "u": "g",
+                "v": "m"
+              },
+              {
+                "id": "hi",
+                "type": "edge",
+                "color_class": 3,
+                "u": "m",
+                "v": "t"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Thế mở màn, nhìn lại: một nhánh xanh dưới, cam trên."
+          },
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s3",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Không tới trọn một cạnh. Đặt thế này cạnh **một** cạnh cam đơn thì Người 2 thắng; đặt **hai** bản sao cạnh một cạnh cam thì hoà. Nên [[a1|nó]] đáng đúng nửa cạnh xanh — và đó là lý do bài Hackenbush ba cạnh cam kia vẫn hoà."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "lo"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "ground": "g"
+            },
+            "elements": [
+              {
+                "id": "g",
+                "type": "vertex",
+                "label": "Đất",
+                "pos": [0, 44]
+              },
+              {
+                "id": "m",
+                "type": "vertex",
+                "label": "",
+                "pos": [0, 22]
+              },
+              {
+                "id": "t",
+                "type": "vertex",
+                "label": "",
+                "pos": [0, 0]
+              },
+              {
+                "id": "lo",
+                "type": "edge",
+                "color_class": 1,
+                "u": "g",
+                "v": "m"
+              },
+              {
+                "id": "hi",
+                "type": "edge",
+                "color_class": 3,
+                "u": "m",
+                "v": "t"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Thế mở màn, nhìn lại: một nhánh xanh dưới, cam trên."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

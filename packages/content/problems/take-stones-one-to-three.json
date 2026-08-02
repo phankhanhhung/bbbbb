@@ -31,7 +31,7 @@
   "status": "published",
   "kind": "challenge",
   "created": "2026-07-29",
-  "updated": "2026-07-29",
+  "updated": "2026-08-02",
   "invariants": [
     {
       "expr": "total",
@@ -85,6 +85,10 @@
                 "count": 20
               }
             ]
+          },
+          "play": {
+            "rule": "piles",
+            "first": "left"
           },
           "alt_text": {
             "vi": "Một đống hai mươi viên sỏi."

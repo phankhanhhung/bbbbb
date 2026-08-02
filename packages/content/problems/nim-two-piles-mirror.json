@@ -1,0 +1,198 @@
+{
+  "schema_version": "1.4.0",
+  "id": "nim-two-piles-mirror",
+  "statement": {
+    "vi": "Hai đống sỏi, mỗi đống $7$ viên. Hai người lần lượt bốc bất kì số viên dương từ **một** đống. Ai bốc viên cuối cùng thì thắng. Ai có chiến lược thắng, và chiến lược ấy là gì?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Nim hai đống. Thế cân bằng là thế thua — trường hợp nhỏ nhất của định lý Bouton, và là chỗ ý tưởng \"soi gương\" hiện ra trần trụi nhất."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "construction",
+    "invariant"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "game"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "invariants": [
+    {
+      "expr": "xor",
+      "id": "inv-x",
+      "label": {
+        "vi": "XOR hai đống"
+      }
+    },
+    {
+      "expr": "max(piles, p => p.count) - min(piles, p => p.count)",
+      "id": "inv-d",
+      "label": {
+        "vi": "Chênh lệch hai đống"
+      }
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hai đống [[a1|bằng nhau]]. Người 2 có một chiến lược không cần nghĩ: **bốc y hệt** đối thủ, chỉ ở đống kia. Số dưới mỗi đống là giá trị Grundy, và ở thế cân bằng thì $7 \\oplus 7 = 0$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0",
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              },
+              "show_grundy": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 7
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 7
+              }
+            ]
+          },
+          "play": {
+            "rule": "piles",
+            "first": "left"
+          },
+          "alt_text": {
+            "vi": "Hai đống, mỗi đống bảy viên."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Người 1 bốc $3$ viên ở [[a1|đống trái]]. Thế hết cân bằng: $4 \\oplus 7 = 3 \\ne 0$, và đó chính là chỗ Người 1 vừa **tự cho** đối thủ một nước thắng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              },
+              "show_grundy": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 4
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 7
+              }
+            ]
+          },
+          "play": {
+            "rule": "piles",
+            "first": "right"
+          },
+          "alt_text": {
+            "vi": "Đống trái còn bốn viên, đống phải bảy viên."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Người 2 soi gương: bốc $3$ ở [[a1|đống phải]]. Cân bằng trở lại. Người 1 đối mặt cùng một hình dạng bài toán, chỉ nhỏ hơn — nên lập luận **lặp lại** cho tới khi hai đống cùng rỗng, và người vừa đi nước cuối là Người 2."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "game",
+            "config": {
+              "rule": {
+                "min": 1,
+                "type": "subtract"
+              },
+              "show_grundy": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "pile",
+                "count": 4
+              },
+              {
+                "id": "p1",
+                "type": "pile",
+                "count": 4
+              }
+            ]
+          },
+          "play": {
+            "rule": "piles",
+            "first": "left"
+          },
+          "alt_text": {
+            "vi": "Hai đống, mỗi đống bốn viên — cân bằng trở lại."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

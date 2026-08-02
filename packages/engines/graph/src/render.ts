@@ -640,8 +640,14 @@ function renderGround(graph: GraphModel, ctx: RenderContext, id: string | undefi
   if (!vertex || graph.vertices.length === 0) return [];
 
   const xs = graph.vertices.map((v) => v.x);
-  const left = Math.min(...xs) - VERTEX_RADIUS * 2;
-  const right = Math.max(...xs) + VERTEX_RADIUS * 2;
+  const mid = (Math.min(...xs) + Math.max(...xs)) / 2;
+  // **Sàn cho bề ngang.** Một nhánh Hackenbush đơn mọc thẳng đứng thì mọi đỉnh cùng một
+  // hoành độ, nên `max - min` bằng $0$ và nét đất co lại thành một vệt nguệch ngoạc dưới
+  // chân — nhìn ra một lỗi vẽ chứ không ra mặt đất. Mà nhánh đơn lại là hình Hackenbush
+  // tự nhiên nhất: nó là thế nhỏ nhất có giá trị không nguyên.
+  const half = Math.max((Math.max(...xs) - Math.min(...xs)) / 2 + VERTEX_RADIUS * 2, VERTEX_RADIUS * 5);
+  const left = mid - half;
+  const right = mid + half;
   const y = round(vertex.y);
 
   const ticks: SvgNode[] = [];

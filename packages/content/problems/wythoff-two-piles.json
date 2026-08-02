@@ -31,7 +31,7 @@
   "status": "published",
   "kind": "challenge",
   "created": "2026-07-30",
-  "updated": "2026-07-30",
+  "updated": "2026-08-02",
   "invariants": [
     {
       "expr": "total",
@@ -99,6 +99,10 @@
                 "count": 15
               }
             ]
+          },
+          "play": {
+            "rule": "piles",
+            "first": "left"
           },
           "alt_text": {
             "vi": "Hai đống sỏi, một đống mười viên và một đống mười lăm viên."

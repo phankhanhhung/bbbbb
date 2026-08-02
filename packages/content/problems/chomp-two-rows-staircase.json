@@ -1,0 +1,286 @@
+{
+  "schema_version": "1.4.0",
+  "id": "chomp-two-rows-staircase",
+  "statement": {
+    "vi": "Thanh sô-cô-la $2 \\times 5$, ô góc trên trái có độc. Hai người lần lượt chọn một ô còn lại và ăn hết phần từ ô đó xuống dưới và sang phải; ai buộc phải ăn ô độc thì thua. Người đi trước thắng — nhưng **thắng bằng cách nào**?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chomp $2 \\times n$. Khác với thanh vuông, ở đây chiến lược thắng **chỉ ra được**: ăn ô dưới-phải rồi giữ hàng dưới ngắn hơn hàng trên đúng một ô."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "construction",
+    "induction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Định lý trộm chiến lược nói người đi trước thắng mọi thanh khác $1\\times1$, nhưng nó **không chỉ ra nước nào** — nó chỉ chứng minh bằng phản chứng. Trên thanh hai hàng thì chỉ ra được, và nước ấy là [[a1|ô dưới-phải]]."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 8
+                },
+                "cell-0-1": {
+                  "color_class": 3
+                },
+                "cell-0-2": {
+                  "color_class": 3
+                },
+                "cell-0-3": {
+                  "color_class": 3
+                },
+                "cell-0-4": {
+                  "color_class": 3
+                },
+                "cell-1-0": {
+                  "color_class": 3
+                },
+                "cell-1-1": {
+                  "color_class": 3
+                },
+                "cell-1-2": {
+                  "color_class": 3
+                },
+                "cell-1-3": {
+                  "color_class": 3
+                },
+                "cell-1-4": {
+                  "color_class": 3
+                }
+              },
+              "cols": 5,
+              "rows": 2
+            },
+            "elements": []
+          },
+          "play": {
+            "rule": "chomp",
+            "first": "left",
+            "misere": true
+          },
+          "alt_text": {
+            "vi": "Thanh hai hàng năm cột, ô góc trên trái sẫm màu là ô độc."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ăn đúng một ô, và hình còn lại là một **bậc thang**: [[a1|hàng trên]] dài $5$, [[a2|hàng dưới]] dài $4$. Đó là thế mà Người 1 sẽ giữ suốt ván — hàng dưới ngắn hơn hàng trên đúng một ô."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-4"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-1-3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 8
+                },
+                "cell-0-1": {
+                  "color_class": 3
+                },
+                "cell-0-2": {
+                  "color_class": 3
+                },
+                "cell-0-3": {
+                  "color_class": 3
+                },
+                "cell-0-4": {
+                  "color_class": 3
+                },
+                "cell-1-0": {
+                  "color_class": 3
+                },
+                "cell-1-1": {
+                  "color_class": 3
+                },
+                "cell-1-2": {
+                  "color_class": 3
+                },
+                "cell-1-3": {
+                  "color_class": 3
+                }
+              },
+              "cols": 5,
+              "holes": [[1, 4]],
+              "rows": 2
+            },
+            "elements": []
+          },
+          "play": {
+            "rule": "chomp",
+            "first": "right",
+            "misere": true
+          },
+          "alt_text": {
+            "vi": "Hàng trên năm ô, hàng dưới bốn ô."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Người 2 ăn từ [[a1|ô $(0,3)$]], cắt hàng trên còn $3$. Bậc thang gãy: giờ hàng trên $3$, hàng dưới $4$ — hàng dưới **dài hơn**."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 8
+                },
+                "cell-0-1": {
+                  "color_class": 3
+                },
+                "cell-0-2": {
+                  "color_class": 3
+                },
+                "cell-1-0": {
+                  "color_class": 3
+                },
+                "cell-1-1": {
+                  "color_class": 3
+                },
+                "cell-1-2": {
+                  "color_class": 3
+                }
+              },
+              "cols": 5,
+              "holes": [[0, 3], [0, 4], [1, 3], [1, 4]],
+              "rows": 2
+            },
+            "elements": []
+          },
+          "play": {
+            "rule": "chomp",
+            "first": "left",
+            "misere": true
+          },
+          "alt_text": {
+            "vi": "Hàng trên ba ô, hàng dưới bốn ô."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Người 1 dựng lại bậc thang bằng [[a1|một nước]]: cắt hàng dưới còn $2$. Nước đáp luôn tồn tại, và nó luôn là **một** nước — đó là toàn bộ chiến lược. Bậc thang teo dần cho tới khi chỉ còn ô độc, và người buộc phải ăn nó là Người 2."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 8
+                },
+                "cell-0-1": {
+                  "color_class": 3
+                },
+                "cell-0-2": {
+                  "color_class": 3
+                },
+                "cell-1-0": {
+                  "color_class": 3
+                },
+                "cell-1-1": {
+                  "color_class": 3
+                }
+              },
+              "cols": 5,
+              "holes": [
+                [0, 3],
+                [0, 4],
+                [1, 2],
+                [1, 3],
+                [1, 4]
+              ],
+              "rows": 2
+            },
+            "elements": []
+          },
+          "play": {
+            "rule": "chomp",
+            "first": "right",
+            "misere": true
+          },
+          "alt_text": {
+            "vi": "Hàng trên ba ô, hàng dưới hai ô — bậc thang dựng lại."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

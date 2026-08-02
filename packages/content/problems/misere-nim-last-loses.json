@@ -31,7 +31,7 @@
   "status": "published",
   "kind": "both",
   "created": "2026-07-30",
-  "updated": "2026-07-30",
+  "updated": "2026-08-02",
   "invariants": [
     {
       "expr": "winning_moves",
@@ -97,6 +97,11 @@
                 "count": 3
               }
             ]
+          },
+          "play": {
+            "rule": "piles",
+            "first": "left",
+            "misere": true
           },
           "alt_text": {
             "vi": "Ba đống sỏi: một viên, hai viên, ba viên."
