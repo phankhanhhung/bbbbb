@@ -437,6 +437,77 @@ test.describe('Cây lời giải phân nhánh (PLY-02)', () => {
   });
 
   /**
+   * **Một bản đồ, hai lớp**: chứng minh của tác giả, và chỗ người học rẽ ra nghịch.
+   *
+   * M75 đã dựng bản đồ vết chân, nhưng nó sống trong `Sandbox` — mà `Sandbox` thay
+   * cả màn hình (`Player` return sớm), nên hai bản đồ **chưa bao giờ cùng ở trên
+   * màn**. Đề xuất "vẽ đường đi sandbox thành một nhánh ma" giả định chúng cùng ở
+   * đó; thực tế thì không, nên chỗ nối phải là một dòng tóm tắt sống ở `Player` và
+   * vượt qua được vòng vào–ra sandbox.
+   *
+   * Test đi đúng đường ấy: thử vài thế, đóng sandbox, và đòi bản đồ **nhớ**.
+   */
+  test('nhánh ma: sandbox rẽ ra chỗ nào thì bản đồ nhớ chỗ đó', async ({ page }) => {
+    // Bài bốc đống: thanh công cụ sandbox có nút nước đi thật, nên "nghịch vài
+    // thế" là ba cú bấm chắc chắn đổi scene — không phụ thuộc vào việc chạm trúng
+    // một ô trên canvas.
+    await page.goto('/?p=nim-three-piles-xor');
+    await reveal(page);
+    await expect(page.locator('.tree__ghost')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Thử từ đây' }).click();
+    await expect(page.locator('section.sandbox')).toBeVisible();
+
+    // Nước đi trong sandbox game là **hai chạm**: chọn nước ở thanh công cụ, rồi
+    // chạm đống. Bấm ba lần nút thôi thì không thế nào đổi, và vết chân đứng yên.
+    const stones = page.locator('.sandbox .canvas svg circle');
+    await expect.poll(() => stones.count()).toBeGreaterThan(0);
+    const canvas = page.locator('.sandbox .canvas svg');
+    const box = (await canvas.boundingBox()) as { x: number; y: number; width: number; height: number };
+    for (let k = 0; k < 2; k += 1) {
+      await page.getByRole('button', { name: /^Bốc 1$/ }).first().click();
+      await page.mouse.click(box.x + box.width * 0.12, box.y + box.height * 0.4);
+    }
+
+    // Đóng sandbox: bản đồ lời giải phải mọc nhánh ma, và nhãn nói bao nhiêu thế.
+    await page.getByRole('button', { name: 'Đóng', exact: true }).click();
+    await expect(page.locator('.tree__ghost')).toHaveCount(1);
+    expect(await page.locator('.tree__ghost').getAttribute('aria-label')).toMatch(
+      /Đã thử \d+ thế từ đây/,
+    );
+  });
+
+  /**
+   * **Xương sống bất biến**: cạnh nào giữ nguyên mọi đại lượng thì tô đậm.
+   *
+   * `InvariantStrip.tsx` viết thẳng điều đáng nói nhất của họ bài này — *"con số
+   * đứng yên **chính là** lời giải"*. Một dải liền màu trên sợi đọc ra ngay điều
+   * ấy, không phải dò từng con số.
+   *
+   * `sign-flip-4x4` khai hai bất biến và có một bước **cố ý làm đổi** — đó là chỗ
+   * duy nhất test này đứng vững: một bài mà mọi bước đều đứng yên thì "tô hết" và
+   * "tô đúng" cho ra cùng một hình.
+   */
+  test('cạnh giữ nguyên bất biến thì tô đậm — và cạnh làm đổi thì không', async ({ page }) => {
+    await page.goto('/?p=sign-flip-4x4');
+    await reveal(page);
+
+    const steady = page.locator('.tree__edge--steady');
+    const all = page.locator('.tree__edge');
+    expect(await steady.count()).toBeGreaterThan(0);
+    // Không phải mọi cạnh — nếu bằng nhau thì phép tô không phân biệt được gì.
+    expect(await steady.count()).toBeLessThan(await all.count());
+
+    // Bài **không** khai bất biến thì không có xương sống nào. Không dùng
+    // `mutilated-chessboard` cho phép so ngược này: nó khai `inv-bw`, nên nó **có**
+    // xương sống — đúng như phải thế, và đó là lý do phép so ngược cần một bài
+    // thật sự trống `invariants`.
+    await page.goto('/?p=absolute-value-interval');
+    await reveal(page);
+    await expect(page.locator('.tree__edge--steady')).toHaveCount(0);
+  });
+
+  /**
    * `role="tree"` là một lời hứa về bàn phím, không chỉ về nhãn.
    *
    * Trước lượt này mỗi node mang `tabIndex={0}`, nên một cây 11 node ăn 11 lần Tab

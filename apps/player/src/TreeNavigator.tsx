@@ -22,7 +22,31 @@ interface TreeNavigatorProps {
   currentId: string;
   /** Bước đã đứng qua trong phiên này — xem `coverageOf`. */
   visited: ReadonlySet<string>;
+  /**
+   * Chuyến đi sandbox gần nhất, vẽ thành **nhánh ma**.
+   *
+   * Hai lớp trên **một** bản đồ: nhánh của tác giả là chứng minh, nhánh ma là chỗ
+   * người học rẽ ra nghịch. Tách hẳn về mặt thị giác (nét chấm, `--ink-soft`, chữ
+   * nghiêng) vì trộn hai thứ ấy là nói dối về cái nào có thẩm quyền.
+   *
+   * **Một** chấm cho cả chuyến, không phải 40. `TRAIL_LIMIT` cho phép tới 40 thế,
+   * mà bản đồ lời giải rộng nhất trong kho có 7 chấm — chép sang là chôn chứng minh
+   * dưới đống thí nghiệm. Con số nằm trong nhãn; hình dạng chi tiết vẫn ở bản đồ
+   * vết chân trong sandbox, nơi nó có chỗ.
+   */
+  excursion?: { from: string; states: number };
+  /**
+   * Bước giữ nguyên **mọi** bất biến so với bước trước — cạnh đi vào tô đậm màu.
+   *
+   * Đây là ý rủi ro nhất trong lượt, và hàng rào là: **không thêm một hàng, một
+   * nhãn hay một con số nào**. Nó chỉ đổi màu một cái cạnh đã có. Bảng số vẫn
+   * thuộc về `InvariantStrip`; nếu ngày nào chỗ này bắt đầu in giá trị ra thì hai
+   * widget đã nói cùng một chuyện và cái thứ hai nên bị gỡ.
+   */
+  steady?: ReadonlySet<string>;
   onSelect: (stepId: string) => void;
+  /** Bấm nhánh ma ⇒ mở lại sandbox từ đúng bước ấy. */
+  onFork?: (stepId: string) => void;
 }
 
 /**
@@ -112,7 +136,15 @@ export const TREE_SCALE = TREE_CELL_PX / COLUMN;
 /** Trần chiều cao khung bản đồ. Vượt thì **cuộn**, không co. */
 export const TREE_MAX_PX = 260;
 
-export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNavigatorProps) {
+export function TreeNavigator({
+  tree,
+  currentId,
+  visited,
+  excursion,
+  steady,
+  onSelect,
+  onFork,
+}: TreeNavigatorProps) {
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const [open, setOpen] = useState(true);
 
@@ -246,9 +278,19 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
     setCollapsed((current) => new Set([...current, ...fresh]));
   }, [covered, onPath, tree, layout.shape]);
 
+  // Nhánh ma treo dưới-phải bước đã bấm "Thử từ đây". Chỉ vẽ khi node ấy đang hiện
+  // — nhánh cha thu lại thì nhánh ma theo, vì nó là con của bước ấy chứ không phải
+  // một lớp nổi lên trên.
+  const ghostAt = excursion
+    ? layout.nodes.find((n) => n.step.id === excursion.from)
+    : undefined;
+  const ghost = ghostAt ? { x: ghostAt.x + COLUMN, y: ghostAt.y + ROW } : undefined;
+
   const minX = Math.min(...layout.nodes.map((n) => n.x), 0);
-  const boxWidth = layout.width + COLUMN;
-  const boxHeight = layout.height;
+  // Khung phải **chứa** nhánh ma, không thì nó vẽ ra ngoài viewBox và biến mất —
+  // đúng lỗi mà `box(nodes)` vừa sửa cho bố cục sợi, nên không lặp lại nó ở đây.
+  const boxWidth = layout.width + COLUMN + (ghost ? COLUMN : 0);
+  const boxHeight = layout.height + (ghost && ghost.y >= layout.height - ROW ? ROW : 0);
 
   return (
     <section
@@ -296,13 +338,60 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
             {layout.edges.map((edge, i) => (
               <path
                 key={i}
+                class={!edge.dashed && steady?.has(edge.to.step.id) ? 'tree__edge tree__edge--steady' : 'tree__edge'}
                 d={edgePath(edge.from, edge.to, edge.dashed)}
                 fill="none"
-                stroke={edge.dashed ? '#9A9A92' : '#C4C4BD'}
-                stroke-width={edge.dashed ? 1 : 1.5}
+                stroke={
+                  edge.dashed
+                    ? '#9A9A92'
+                    : steady?.has(edge.to.step.id)
+                      ? '#3A7D3A'
+                      : '#C4C4BD'
+                }
+                stroke-width={edge.dashed ? 1 : steady?.has(edge.to.step.id) ? 3 : 1.5}
                 {...(edge.dashed ? { 'stroke-dasharray': '3 3' } : {})}
               />
             ))}
+
+            {/* **Nhánh ma** — chuyến sandbox gần nhất, nét chấm và mờ hẳn. Vẽ trước
+                node để nó nằm dưới, và không bao giờ tranh chỗ đọc với chứng minh. */}
+            {ghost && ghostAt ? (
+              <g
+                class="tree__ghost"
+                onClick={() => onFork?.(excursion?.from ?? '')}
+                role="button"
+                aria-label={`Đã thử ${excursion?.states} thế từ đây — mở lại sandbox`}
+                tabindex={-1}
+              >
+                <path
+                  d={edgePath(ghostAt, { x: ghost.x, y: ghost.y }, false)}
+                  fill="none"
+                  stroke="#9A9A92"
+                  stroke-width="1.2"
+                  stroke-dasharray="1 3"
+                />
+                <circle
+                  cx={ghost.x}
+                  cy={ghost.y}
+                  r="6"
+                  fill="#FDFDFC"
+                  stroke="#9A9A92"
+                  stroke-width="1.2"
+                  stroke-dasharray="1 3"
+                />
+                <text
+                  x={ghost.x}
+                  y={ghost.y + 0.5}
+                  text-anchor="middle"
+                  dominant-baseline="central"
+                  font-size="7"
+                  font-style="italic"
+                  fill="#6A6A62"
+                >
+                  {excursion?.states}
+                </text>
+              </g>
+            ) : null}
 
             {/* **Đổi engine là chuyện của cạnh, không phải của node.** Nó xảy ra
                 *giữa* hai bước, nên vạch nó lên node là vạch sai một nửa: node đích

@@ -42,6 +42,17 @@ interface SandboxProps {
   /** D-07 — bảng nhãn LaTeX; `null` khi bài không có công thức trong canvas. */
   labels?: LabelAtlas | null;
   onClose?: () => void;
+  /**
+   * Báo ra **số thế đã thử** mỗi khi vết chân dài thêm.
+   *
+   * Sandbox thay cả màn hình (`Player` return sớm), nên bản đồ lời giải và bản đồ
+   * vết chân **chưa bao giờ cùng ở trên màn** — đó là chỗ đề xuất "một bản đồ, hai
+   * lớp" vấp phải. Cách nối rẻ và trung thực: sandbox kể lại chuyến đi bằng một
+   * con số, `Player` giữ nó, và bản đồ lời giải mọc một **nhánh ma** ở đúng bước
+   * đã bấm "Thử từ đây". Không chép 40 chấm sang một bản đồ 7 chấm — chỗ này cả
+   * lượt vẫn giữ một luật: một tín hiệu, không phải một hoa văn.
+   */
+  onTrail?: (states: number) => void;
 }
 
 /**
@@ -62,6 +73,7 @@ export function Sandbox({
   goalExpr,
   labels,
   onClose,
+  onTrail,
 }: SandboxProps) {
   const renderer = useMemo(() => createRenderer([engine.renderer]), [engine]);
 
@@ -81,6 +93,12 @@ export function Sandbox({
   const pending = useRef<string | null>(null);
 
   const { state } = sandbox;
+
+  // Báo ra sau **mỗi** lần vết chân dài thêm, không phải lúc đóng: người học có thể
+  // rời sandbox bằng nút back của trình duyệt, và một tín hiệu chỉ phát lúc đóng
+  // đúng cách là một tín hiệu mất đúng lúc cần nhất.
+  const states = state.trail.nodes.size;
+  useEffect(() => onTrail?.(states), [states, onTrail]);
 
   // Danh sách công cụ là hàm của **scene hiện tại**, không phải của bài: bốc hết
   // một đống thì nước "bốc 5" biến mất khỏi thanh công cụ ngay lúc đó.

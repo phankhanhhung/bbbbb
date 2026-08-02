@@ -109,6 +109,18 @@ export function Player({
     setVisited((seen) => (seen.has(step.id) ? seen : new Set(seen).add(step.id)));
   }, [step.id]);
 
+  /**
+   * Chuyến đi sandbox gần nhất: **bấm "Thử từ đây" ở bước nào, và thử bao nhiêu thế**.
+   *
+   * M75 đã dựng bản đồ vết chân, nhưng nó sống trong `Sandbox`, mà `Sandbox` thay
+   * cả màn hình — nên hai bản đồ chưa bao giờ cùng ở trên màn. Giữ một dòng tóm tắt
+   * ở đây là cách rẻ nhất để bản đồ lời giải nói được câu *"đây là chứng minh, còn
+   * kia là chỗ tôi đã rẽ ra nghịch"* mà không phải chép 40 chấm sang một bản đồ 7
+   * chấm.
+   */
+  const [excursion, setExcursion] = useState<{ from: string; states: number } | null>(null);
+
+
   const svgRef = useRef<SVGSVGElement>(null);
   const previous = useRef<SvgNode[]>([]);
   const lastStepId = useRef<string | null>(null);
@@ -136,6 +148,51 @@ export function Player({
     () => (scene: Scene) => engines?.get(scene.engine)?.environment(scene) ?? null,
     [engines],
   );
+
+  /**
+   * Bước nào **giữ nguyên mọi bất biến** so với bước trước — xương sống của bản đồ.
+   *
+   * `InvariantStrip.tsx` viết thẳng ra điều đáng nói nhất: *"với dạng bài bất biến,
+   * con số đứng yên **chính là** lời giải"*. 55/141 bài khai `invariants`, và ở
+   * chúng bản đồ đang vẽ hình dạng của lời giải mà không vẽ thứ làm nên lời giải.
+   * Một dải liền màu trên sợi = đại lượng ấy đứng yên suốt — nhìn phát ra ngay,
+   * không phải đọc từng con số.
+   *
+   * **Không dựng widget thứ hai.** Rủi ro của ý này là hai chỗ nói cùng một chuyện,
+   * nên nó chỉ tô **cạnh** của bản đồ chứ không mọc thêm hàng, thêm nhãn hay thêm
+   * số. Bảng số vẫn là việc của `InvariantStrip`.
+   */
+  const steady = useMemo(() => {
+    const out = new Set<string>();
+    const invariants = problem.invariants ?? [];
+    if (invariants.length === 0 || !engines) return out;
+
+    const cache = new Map<string, readonly (number | null)[] | null>();
+    const valuesAt = (s: Step): readonly (number | null)[] | null => {
+      if (cache.has(s.id)) return cache.get(s.id) ?? null;
+      const env = s.scene ? environmentFor(s.scene) : null;
+      const got = env
+        ? invariants.map((inv) => {
+            const outcome = tryEvaluate(inv.expr, env, DETERMINISTIC_BUDGET);
+            return outcome.ok && typeof outcome.value === 'number' ? outcome.value : null;
+          })
+        : null;
+      cache.set(s.id, got);
+      return got;
+    };
+
+    for (const s of tree.steps.values()) {
+      const parent = s.parent ? tree.steps.get(s.parent) : undefined;
+      if (!parent) continue;
+      const before = valuesAt(parent);
+      const after = valuesAt(s);
+      if (!before || !after) continue;
+      // `null` **không** tính là đứng yên: không đo được thì không được vẽ thành
+      // "không đổi" — đó đúng là chỗ một bản đồ bất biến nói dối nặng nhất.
+      if (before.every((v, i) => v !== null && v === after[i])) out.add(s.id);
+    }
+    return out;
+  }, [problem, tree, environmentFor, engines]);
 
   /**
    * Thay `{{expr}}` bằng giá trị tính từ chính scene của step.
@@ -193,13 +250,19 @@ export function Player({
    * step ngầm, và lúc Đóng, vệt lineage + banner incident của ngữ cảnh cũ hiện
    * lại nguyên xi, nói về một chỗ người dùng đã rời từ lâu.
    */
-  const fork = useCallback((scene: Scene) => {
-    setPlaying(false);
-    setTapped(null);
-    setIncident(null);
-    setPlayed(null);
-    setForkedScene(scene);
-  }, []);
+  const fork = useCallback(
+    (scene: Scene, fromStepId: string) => {
+      setPlaying(false);
+      setTapped(null);
+      setIncident(null);
+      setPlayed(null);
+      setForkedScene(scene);
+      // Chuyến mới thì đếm lại từ đầu — nhánh ma là *chuyến gần nhất*, không phải
+      // tổng cộng dồn của cả phiên.
+      setExcursion({ from: fromStepId, states: 0 });
+    },
+    [],
+  );
 
   /** Mở bàn chơi. Dọn nhà y hệt `fork`, và cùng lý do. */
   const startPlay = useCallback((scene: Scene, play: NonNullable<Step['play']>) => {
@@ -480,6 +543,9 @@ export function Player({
           labels={atlas}
           {...(problem.sandbox?.goal_expr ? { goalExpr: problem.sandbox.goal_expr } : {})}
           onClose={() => setForkedScene(null)}
+          onTrail={(states) =>
+            setExcursion((now) => (now && now.states !== states ? { ...now, states } : now))
+          }
         />
       </div>
     );
@@ -519,7 +585,7 @@ export function Player({
               Chơi thử
             </button>
           ) : null}{' '}
-          <button class="try" onClick={() => step.scene && fork(step.scene)}>
+          <button class="try" onClick={() => step.scene && fork(step.scene, step.id)}>
             Mở sandbox
           </button>{' '}
           <button onClick={() => setRevealed(true)}>Xem lời giải</button>
@@ -658,7 +724,7 @@ export function Player({
             ) : null}
             <button
               class="try"
-              onClick={() => step.scene && fork(step.scene)}
+              onClick={() => step.scene && fork(step.scene, step.id)}
               disabled={!engine}
             >
               Thử từ đây
@@ -670,7 +736,13 @@ export function Player({
               tree={tree}
               currentId={step.id}
               visited={visited}
+              steady={steady}
+              {...(excursion && excursion.states > 1 ? { excursion } : {})}
               onSelect={goTo}
+              onFork={(id) => {
+                const target = tree.steps.get(id);
+                if (target?.scene) fork(target.scene, id);
+              }}
             />
           ) : null}
 
