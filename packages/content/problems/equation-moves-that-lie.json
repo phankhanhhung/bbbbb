@@ -7,7 +7,7 @@
   "source": {
     "contest": "folklore",
     "note": {
-      "vi": "Nguỵ biện quen thuộc, ở đây do **máy** dựng chứ không do người gõ: engine áp từng luật rồi tự ghi điều kiện, nên chỗ hỏng hiện ra thành một dòng đỏ thay vì thành một câu văn nhắc nhở."
+      "vi": "Nguỵ biện quen thuộc, ở đây do **máy** dựng chứ không do người gõ: engine áp từng luật rồi tự ghi điều kiện, nên chỗ hỏng hiện ra thành một dòng đỏ thay vì thành một câu văn nhắc nhở. Bài này **nói về** chốt canh `each-step-sound`, nên hộp cát bật đúng nó: mọi nước bạn tự đi cũng đi qua bộ kiểm ấy, và một nước dối trá bị bắt không phải bằng một dấu tích mà bằng **một điểm cụ thể**."
     }
   },
   "topics": [
@@ -28,7 +28,7 @@
     "draft-may"
   ],
   "status": "published",
-  "kind": "illustration",
+  "kind": "both",
   "created": "2026-07-31",
   "updated": "2026-07-31",
   "solutions": [
@@ -261,6 +261,11 @@
       ]
     }
   ],
+  "sandbox": {
+    "validators": [
+      "each-step-sound"
+    ]
+  },
   "og_step_ref": {
     "sol_id": "sol",
     "step_id": "s1"

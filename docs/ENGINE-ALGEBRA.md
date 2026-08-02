@@ -3850,3 +3850,100 @@ Chỉ **một** tính chất, và chỉ **một chiều**:
   một lời hứa suông — đúng thứ §51 vừa gỡ bốn cái.
 - $A = B \Rightarrow f(A) = f(B)$ đúng với **mọi** hàm, không cần giả thiết nào, nên nó
   không phải một nước đi đáng đặt tên. Chiều đáng dạy là chiều cần đơn ánh.
+
+---
+
+## §54 — Hộp cát đại số: đường M65 dựng, và nội dung đầu tiên đi qua nó (AL-23)
+
+### §54.1 — Một năng lực đã trả tiền mà chưa ai đi qua
+
+M65 dựng trọn đường tương tác của engine này: lệnh `APPLY_RULE`, ba hàm
+`applyRule` / `moveRefusal` / `movesAtElement` trong `commands.ts`, panel *"Nước đi tại
+đây"* trong `Sandbox.tsx`, và ba validator (`each-step-sound`, `no-vanishing-divisor`,
+`reaches:<expr>`). §41 khai một câu rất chắc về nó:
+
+> *"chạm một cây con thì thấy đúng những luật áp được tại đó; chính chỗ lọc ấy là phần
+> dạy học."*
+
+Rồi **43/43 bài đại số đều khai `illustration`**. Không bài nào bật hộp cát, nên không
+người học nào chạm được vào cây con nào, nên câu trên chưa từng có ai đối chiếu. Đây
+đúng lớp nợ mà loạt bài lượng giác vừa đóng ở phía *luật* (§5 của
+`ALGEBRA-COVERAGE.md`), chỉ khác là ở đây thứ chưa ai dùng không phải một luật mà là cả
+một **đường**.
+
+Và một đường chưa ai đi thì không ai biết nó gãy ở đâu. Lượt này đi, và nó gãy ngay ở
+chỗ thứ nhất.
+
+### §54.2 — `reaches:` — một chốt canh luôn xanh, sống từ AL-07
+
+Validator `reaches:<expr>` hỏi *"dòng cuối đã tới đích chưa"*. Bản gốc trả lời bằng
+`sameValue(dòng cuối, đích)`. Với một **biểu thức** thì đúng. Với một **phương trình**
+thì đo được:
+
+```
+sameValue(x = 3, x = 4).ok              → true
+sameSolutionSet(x = 3, x = 4, …).ok     → true      (còn khai verified: true)
+```
+
+Không phải bộ kiểm hỏng. Tập nghiệm của một phương trình có **độ đo $0$** trong miền
+bốc điểm, nên hai phương trình khác hẳn nhau vẫn cùng **sai** ở gần như mọi điểm bốc
+trúng; hai bên "đồng ý" ở mọi điểm, và phép so xanh mà không chứng minh gì. Đúng cái bẫy
+mà hợp đồng `claim` (M59) đã gọi tên cho hệ phương trình — chỉ là ở đây không ai gọi
+tên nó, vì chưa bài nào dùng validator này kể từ AL-07.
+
+Nên nó là một chốt canh **luôn xanh**, tức một chốt canh không có. Bài học lặp lại lần
+thứ ba trong cùng một mạch (`reaches:` ở đây, `impliesSolutionSet` cho AM–GM ở §52.2,
+`sameValue` cho hệ ở M59): **bốc điểm không phân biệt được hai đẳng thức**, và mọi chỗ
+sắp dùng nó để phân biệt hai đẳng thức phải đổi sang so **cấu trúc**.
+
+`reachesTarget` (trong `index.ts`) so `same(normalize(...))`. Đó cũng là ngữ nghĩa
+đúng, không chỉ là ngữ nghĩa kiểm được: đích là một **dạng** tác giả đặt ra, người học
+tới đó bằng cách áp luật, và `x = 1 + 2` chưa phải `x = 3`. Khi giá trị khớp mà dạng
+chưa khớp thì nó **nói ra** — *"bằng … rồi, nhưng chưa đúng dạng"* — vì đó là lúc người
+học gần đích nhất và dễ bỏ cuộc nhất.
+
+### §54.3 — Vì sao phải có builtin `reaches()`, không chỉ validator
+
+Huy hiệu *"✓ Đạt mục tiêu"* của Sandbox chạy bằng `sandbox.goal_expr`, một biểu thức
+**DSL** đánh giá trong `algebraEnvironment`. Môi trường ấy khai đúng năm ràng buộc:
+`rows`, `steps`, `conditions`, `deg`, `expr_nodes` — tất cả đều nói được *"còn bao nhiêu
+dòng"* và *"bậc là mấy"*, và **không cái nào** nói được *"dòng cuối bằng $x = 3$"*.
+
+Nên trước lượt này, một bài đại số challenge chỉ có hai lối: treo một mục tiêu yếu
+(`deg == 1`) hoặc không có huy hiệu nào. Đích thật của một bài đại số **không viết được**
+thành `goal_expr`. Builtin `reaches` gỡ đúng chỗ ấy, và nó không dựng thêm phép kiểm
+nào: cả builtin lẫn validator gọi **một** hàm `reachesTarget`. Hai bản chép tay cho một
+câu hỏi là chuyện kho vừa phải gỡ ở cổng đếm sandbox (`ENGINE-BACKLOG.md` §3b.1) — không
+đáng dựng lại cái vừa tháo.
+
+### §54.4 — Ba bài, và một quy tắc soạn bài rút ra từ lượt nhìn
+
+| bài | `kind` | hộp cát bật gì | vì sao đúng bài ấy |
+|---|---|---|---|
+| `cancel-only-after-factoring` | `challenge` | `goal_expr: reaches("x + (-2)")` + `each-step-sound` | bài **là** chỗ lọc nước đi: bẫy gạch $x$ bị từ chối bằng chữ |
+| `equation-moves-that-lie` | `both` | `each-step-sound` | bài **nói về** chính chốt canh ấy |
+| `extraneous-root-by-squaring` | `both` | `each-step-sound`, `no-vanishing-divisor` | bài nói về nghiệm ngoại lai; ràng buộc thứ hai sáng cả ở đường vòng bài không đi |
+
+`goal_expr` là trường của **bài**, còn scene đại số thì của **bước** — nên một đích chỉ
+có nghĩa khi bài có đúng một scene đại số. `cancel-only-after-factoring` vì thế có đúng
+một bước, và đó là ràng buộc thật của schema chứ không phải một lựa chọn soạn bài.
+
+Lượt nhìn bằng mắt bắt hai chỗ, và chỗ thứ hai thành một luật soạn bài:
+
+- caption *"còn một nước nữa"* đứng cạnh huy hiệu *"✓ Đạt mục tiêu"* sau khi người học
+  đi xong — hai câu cãi nhau ngay trên một màn hình. Đổi thành *"phân tích trước, rút
+  gọn sau"*, một câu đúng ở mọi lúc.
+- `no-vanishing-divisor` **đỏ lên khi người học đi đúng nước cuối**, vì nước rút gọn ấy
+  *phải* kèm điều kiện $x + 2 \ne 0$. Nên bỏ nó khỏi bài này.
+
+  > **Một ràng buộc mà lời giải đúng vi phạm là cách nhanh nhất dạy người ta bỏ qua mọi
+  > ràng buộc.** Điều kiện kia không mất đi — nó có dòng đỏ riêng ngay dưới hình, và
+  > dòng ấy đúng ở mọi lúc. Chỉ là nó không được đội lốt một chốt canh.
+
+### §54.5 — Ranh giới
+
+- Ba bài, không phải bốn mươi ba. Bật hộp cát cho một bài mà đường vòng không có nghĩa
+  thì đẻ ra đồ chơi cho đủ chỉ tiêu — đúng điều `sandbox-status.ts` từ chối làm ở phía
+  cổng đếm.
+- `reaches` chỉ đọc **dòng cuối**. Một đích kiểu *"đã đi qua dạng nào đó"* cần đọc cả
+  chuỗi, và chưa bài nào cần — nên chưa dựng.

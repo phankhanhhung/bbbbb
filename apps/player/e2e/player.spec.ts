@@ -1716,3 +1716,58 @@ test('Geography: quân hiện trên hình và nước đi theo cạnh', async ({
   await expect(page.locator('.moves__item')).toHaveCount(2);
   await expect(page.locator('.play__canvas .cv-play-token')).toBeVisible();
 });
+
+/**
+ * **Hộp cát đại số** (AL-23) — đường tương tác lớn nhất của kho, và trước lượt này chưa
+ * nội dung nào đi qua nó.
+ *
+ * M65 dựng `applyRule`, `moveRefusal`, `movesAtElement` và panel *"Nước đi tại đây"*,
+ * rồi 43/43 bài đại số đều khai `illustration`. Test này đi đúng đường một người học đi:
+ * chạm một cây con, đọc danh sách luật **đã lọc**, gõ tham số, và nhìn huy hiệu đổi.
+ */
+test.describe('Hộp cát đại số (AL-23)', () => {
+  test('chạm một cây con, áp một luật thật, và huy hiệu mục tiêu bật xanh', async ({ page }) => {
+    await page.goto('/?p=cancel-only-after-factoring');
+    await page.getByRole('button', { name: 'Mở sandbox' }).click();
+    await expect(page.locator('section.sandbox')).toBeVisible();
+
+    // Chưa tới đích: bài cho sẵn nước một, còn đúng một nước.
+    await expect(page.locator('.badge--todo')).toHaveText('Chưa đạt mục tiêu');
+
+    // Chưa chạm gì thì panel nói thế, chứ không bày một danh sách rỗng.
+    await expect(page.locator('.moves__hint')).toBeVisible();
+
+    // Chạm **cả phân thức** — hộp bao ngoài của dòng cuối. Danh sách luật ở đó khác hẳn
+    // danh sách ở tử, và chính chỗ lọc ấy là phần dạy học (`algebra/index.ts`, M65).
+    //
+    // Chạm bằng `data-el` chứ không bằng phần trăm toạ độ. Bản đầu bấm `30%/75%` của
+    // canvas và trượt: viewport rộng hơn nội dung (cột nhãn luật chừa chỗ bên phải) nên
+    // phần trăm của khung **không** là phần trăm của hình. `data-el` thì đúng thứ hợp
+    // đồng danh tính vẽ ra đã hứa và `anchors` đã dựa vào từ M6.
+    //
+    // Và phải `mouse.click` chứ không `locator.click`: danh tính vẽ ra của một phân số
+    // **là gạch phân số** — một `<line>` cao $0$ — nên Playwright coi nó "không nhìn
+    // thấy được" và từ chối bấm. Toạ độ của chính nó thì đúng, và điểm ấy nằm gọn giữa
+    // tử và mẫu, tức đúng chỗ hit-test trả về cả phân thức.
+    const bar = page.locator('.sandbox .canvas [data-el="r1-e12"]');
+    const barBox = (await bar.boundingBox()) as { x: number; y: number; width: number; height: number };
+    await page.mouse.click(barBox.x + barBox.width / 2, barBox.y + barBox.height / 2);
+
+    const cancel = page.locator('.moves__item', { hasText: 'rút gọn' });
+    await expect(cancel).toBeVisible();
+    await cancel.click();
+
+    // Luật này đòi tham số, và tham số **sai** phải trả về chữ chứ không im lặng —
+    // "lời từ chối là nội dung", đúng câu `commands.ts` khai từ M65.
+    const arg = page.getByLabel(/^Tham số cho/);
+    await arg.fill('x');
+    await page.getByRole('button', { name: 'Chạy' }).click();
+    await expect(page.locator('.moves__refusal')).toContainText('không phải thừa số chung');
+    await expect(page.locator('.badge--todo')).toBeVisible();
+
+    // Tham số đúng: dòng mới hiện ra và huy hiệu đổi.
+    await arg.fill('x + 2');
+    await page.getByRole('button', { name: 'Chạy' }).click();
+    await expect(page.locator('.badge--done')).toHaveText('✓ Đạt mục tiêu');
+  });
+});

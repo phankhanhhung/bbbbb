@@ -177,9 +177,10 @@ tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mớ
 | **AL-21** — bất đẳng thức có tên: `am_gm`, `cauchy_schwarz` + 3 bài; đóng phần *có tên* của §4.1 | 08-02 | `ENGINE-ALGEBRA.md` §52 |
 | **AL-22** — kết luận về hàm: `config.assume` + `use_injective` + 1 bài; schema `1.6.0` | 08-02 | `ENGINE-ALGEBRA.md` §53 |
 | **Hai cổng đếm sandbox** nói ngược nhau — `coverage` đỏ 7 bài mà `validate` xanh; gộp về một vị từ | 08-02 | `ENGINE-BACKLOG.md` §3b.1 |
+| **AL-23** — hộp cát đại số: 3 bài đầu tiên đi qua đường M65; builtin `reaches`; một chốt canh luôn xanh từ AL-07 bị gỡ | 08-02 | `ENGINE-ALGEBRA.md` §54 |
 
-Kho đi từ **114 bài → 148 bài** trong hai ngày, test từ **3459** (M78.8) lên
-**3943 / 69 tệp**, schema từ `1.0.0` lên `1.6.0` — sáu minor, sáu migration đồng nhất.
+Kho đi từ **114 bài → 149 bài** trong hai ngày, test từ **3459** (M78.8) lên
+**3953 / 69 tệp**, schema từ `1.0.0` lên `1.6.0` — sáu minor, sáu migration đồng nhất.
 
 > **Một cái bẫy đếm, ghi ra để lần sau không phải điều tra lại.** Con số chính thức
 > là số của `pnpm test` (`vitest run` không lọc đường dẫn) — **3843 / 67 tệp** lúc
@@ -277,9 +278,10 @@ lại vẫn phải soát tay — nhưng nay ít nhất chúng có một danh sá
   ra `tan(a+b)/2` trên OG card, đọc thành "tan của $a+b$, chia 2". Vòng được bằng
   `\left(...\right)`; chữa đúng là `structures()` biết tên phép toán ăn một đối số.
   `PLAN-P1.md` §10.3c — phần còn mở của một mục đã đóng.
-- **Bài đại số chưa bài nào có sandbox** — 39/39 là `illustration`, dù M65 đã dựng
-  panel "Nước đi tại đây" cho engine ấy. Năng lực có, nội dung chưa gọi tới. Cùng
-  khuôn với dòng `point` ngay trên.
+- ~~**Bài đại số chưa bài nào có sandbox**~~ — đóng ở AL-23: `3/44` bài đại số bật hộp
+  cát. Ghi lại vì cái giá của nó: lượt đi đầu tiên qua đường ấy tìm ra validator
+  `reaches:` đã **luôn xanh** kể từ AL-07, và không phép bẻ răng nào bắt được vì không
+  bài nào gọi nó. `ENGINE-ALGEBRA.md` §54.2.
 
 ---
 

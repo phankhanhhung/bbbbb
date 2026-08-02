@@ -74,7 +74,8 @@ xong, và chỗ chưa xong lớn nhất vẫn là §4.1.
 | Sân kiểm | **4** | $\mathbb{F}_p$ · thực · nguyên · chuỗi hệ số |
 | Hợp đồng kiểm | **7** | `sameValue`, `sameSolutionSet`, `implies`, `root`, `instance`, `binding`, `claim` |
 | Hàm không-đa-thức | **9** | `binom cos exp fact ln log perm sin tan` |
-| Bài dùng engine | **43 / 148** | `engines_used` chứa `algebra` |
+| Bài dùng engine | **44 / 149** | `engines_used` chứa `algebra` |
+| …bật hộp cát | **3** | `kind` khác `illustration` — xem `ENGINE-ALGEBRA.md` §54 |
 
 Bảng này đi từ $73$ luật lên $80$ kể từ lượt đo M70 — bảy luật, và đúng bảy: M71 thêm
 `sum_telescope` + `specialize`, M72 thêm bốn luật `coeff_*`, AL-20 thêm
@@ -98,6 +99,17 @@ Từ lượt này con số ấy **có răng**: `tools/pipeline/test/trigonometry
 rồi so với cả con số ở bảng trên, danh sách tên ở §5, lẫn chữ đếm trong tiêu đề §5.
 Trước đó nó là một khẳng định tự khai *"đo bằng máy"* mà không máy nào đo lại — đúng
 lớp lỗi mà lượt soát tài liệu tìm thấy mười hai lần trong cùng ngày.
+
+Dòng **hộp cát** mới ở bảng trên đo một thứ khác hẳn: không phải engine biết làm gì, mà
+**nội dung có đi qua đường tương tác không**. Nó đứng ở $0/43$ suốt từ M65 — cả đường
+`applyRule` / `moveRefusal` / `movesAtElement` cùng ba validator dựng xong rồi không bài
+nào bật. AL-23 đưa nó lên $3/44$, và lượt đi đầu tiên ấy tìm ra một chốt canh **luôn
+xanh** đã sống từ AL-07 (`ENGINE-ALGEBRA.md` §54.2). Đó là lý do con số này đáng có mặt
+trong bảng dù nó không đo năng lực: **một năng lực chưa nội dung nào đi qua là một năng
+lực chưa ai kiểm.**
+
+Cả hai con số cuối bảng đều có răng — `tools/pipeline/test/trigonometry.test.ts` quét kho
+thật rồi so với đúng chữ in ở đây.
 
 Trần cứng đáng nhớ khi đọc bảng §3: `maxSteps: 12` (một scene tối đa 12 bước),
 `maxVars: 6`, `maxRelations: 4`, `maxDegree: 64`.

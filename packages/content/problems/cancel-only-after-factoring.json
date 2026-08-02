@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.6.0",
+  "id": "cancel-only-after-factoring",
+  "statement": {
+    "vi": "Rút gọn $\\dfrac{x^2 - 4}{x + 2}$. Nước đầu có sẵn dưới đây; **nước còn lại bạn tự tìm** trong hộp cát. Engine chỉ cho đi những nước hợp lệ, và mỗi nước bị từ chối đều nói ra vì sao."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: bẫy kinh điển là gạch $x$ ở tử với $x$ ở mẫu. Engine **không cho** — nó trả lời \"$x$ không phải thừa số chung của tử và mẫu\", và câu ấy dạy nhiều hơn một dấu tích. Rút gọn chỉ áp được cho **thừa số**, nên phải phân tích thành nhân tử trước; và nước rút gọn đúng vẫn kèm một dòng điều kiện $x + 2 \\ne 0$, vì chỗ nó bằng $0$ là chỗ phân số ban đầu không xác định. Chỉ khai **một** ràng buộc, và đó là một luật soạn bài rút ra từ lượt nhìn: `no-vanishing-divisor` đỏ lên ngay khi người học đi đúng nước cuối, vì nước ấy *phải* kèm điều kiện. Một ràng buộc mà lời giải đúng vi phạm là cách nhanh nhất dạy người ta bỏ qua mọi ràng buộc — điều kiện $x + 2 \\ne 0$ đã có dòng đỏ riêng ngay dưới hình, và dòng ấy đúng ở mọi lúc."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Nước đầu cho sẵn, nước sau tự tìm"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Gạch $x$ ở tử với $x$ ở mẫu là sai, và engine từ chối bằng chữ: *\"$x$ không phải thừa số chung của tử và mẫu\"*. Rút gọn chỉ áp được cho **thừa số**, mà $x^2 - 4$ chưa phải một tích — nên nước đầu là phân tích nó ra, và [[a1|dòng thứ hai]] để lộ thừa số chung.\nCòn một nước. Bấm **Nghịch thử**, chạm vào cả phân thức rồi tìm luật rút gọn — nó sẽ hỏi bạn rút thừa số nào."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "phân tích trước, rút gọn sau",
+              "start": "(x^2 + (-1)*4)/(x + 2)",
+              "steps": [
+                {
+                  "at": "0",
+                  "rule": "factor_diff_squares"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: phân số x bình phương trừ 4 trên x cộng 2; rồi tử thành (x trừ 2)(x cộng 2), mẫu vẫn x cộng 2."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "reaches(\"x + (-2)\")",
+    "validators": [
+      "each-step-sound"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

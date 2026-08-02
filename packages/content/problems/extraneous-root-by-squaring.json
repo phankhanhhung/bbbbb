@@ -7,7 +7,7 @@
   "source": {
     "contest": "folklore",
     "note": {
-      "vi": "Chỗ đáng nhìn: engine tự ghi dòng đỏ \"nghiệm có thể ngoại lai\" ngay khi bước bình phương chạy. Nó không suy ra từ kết quả — với phương trình, tập nghiệm mỏng tới mức bốc điểm ngẫu nhiên không bao giờ trúng — mà từ **hợp đồng kiểm** của chính luật ấy."
+      "vi": "Chỗ đáng nhìn: engine tự ghi dòng đỏ \"nghiệm có thể ngoại lai\" ngay khi bước bình phương chạy. Nó không suy ra từ kết quả — với phương trình, tập nghiệm mỏng tới mức bốc điểm ngẫu nhiên không bao giờ trúng — mà từ **hợp đồng kiểm** của chính luật ấy. Hộp cát bật thêm `no-vanishing-divisor`: nghịch tới đâu, chỗ chia cho một thứ có thể bằng $0$ vẫn sáng lên tới đó — kể cả những đường vòng bài không đi."
     }
   },
   "topics": [
@@ -28,7 +28,7 @@
     "draft-may"
   ],
   "status": "published",
-  "kind": "illustration",
+  "kind": "both",
   "created": "2026-07-31",
   "updated": "2026-07-31",
   "solutions": [
@@ -234,6 +234,12 @@
       ]
     }
   ],
+  "sandbox": {
+    "validators": [
+      "each-step-sound",
+      "no-vanishing-divisor"
+    ]
+  },
   "og_step_ref": {
     "sol_id": "sol",
     "step_id": "s0"

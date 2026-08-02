@@ -1,11 +1,11 @@
 import type { HitTest, ScenePoint } from '@combviz/editor';
 import { SELECT_TOOL, type SandboxTool } from '@combviz/editor';
 import type { EngineSchemaFragment, Scene, SceneValidator, ValidationIssue } from '@combviz/schema';
-import { element, type DslEnvironment } from '@combviz/dsl';
+import { DslError, element, type DslEnvironment } from '@combviz/dsl';
 import { sameValue } from './check.js';
-import { allPaths, nodeAt, totalDegree, varsOf, Minter } from './expr.js';
+import { allPaths, nodeAt, normalize, same, totalDegree, varsOf, Minter } from './expr.js';
 import { boxOf, drawnIds, layout } from './layout.js';
-import { readAlgebra } from './model.js';
+import { readAlgebra, type AlgebraModel } from './model.js';
 import { tryParse } from './parse.js';
 import { applicableRules, ruleById } from './rules.js';
 import { ALGEBRA_ELEMENT_SCHEMAS, ALGEBRA_LIMITS, AlgebraConfig } from './schema.js';
@@ -221,6 +221,19 @@ export const algebraHitTest: HitTest = (scene: Scene, point: ScenePoint): string
  *
  * Khai **cấu trúc** của chuỗi biến đổi, đủ cho invariant kiểu "bậc không tăng qua
  * mỗi bước" nói được thành biểu thức.
+ *
+ * ## `reaches("x = 3")` — và vì sao thiếu nó thì challenge đại số không có đích
+ *
+ * Huy hiệu *"✓ Đạt mục tiêu"* của Sandbox chạy bằng `sandbox.goal_expr`, tức một biểu
+ * thức DSL đánh giá trong môi trường này. Năm ràng buộc ở trên nói được *"còn bao nhiêu
+ * dòng"* và *"bậc là mấy"* — và **không cái nào** nói được đích thật của một bài đại số:
+ * *"dòng cuối bằng $x = 3$"*. Nên trước lượt này, một bài đại số challenge hoặc treo
+ * một mục tiêu yếu (`deg == 1`), hoặc không có huy hiệu nào.
+ *
+ * Phép so ấy **đã có** — validator `reaches:<expr>` dùng nó từ AL-07. Nên builtin này
+ * không dựng thêm phép kiểm nào; nó chỉ mở cùng phép kiểm ấy ra cho DSL, qua đúng một
+ * hàm (`reachesTarget`) mà cả hai cửa gọi. Hai bản chép tay cho một câu hỏi là chuyện
+ * kho vừa phải gỡ ở cổng đếm sandbox (`ENGINE-BACKLOG.md` §3b.1).
  */
 export function algebraEnvironment(scene: Scene): DslEnvironment {
   const model = readAlgebra(scene);
@@ -239,7 +252,66 @@ export function algebraEnvironment(scene: Scene): DslEnvironment {
               element(node.id, { kind: node.k, path, degree: totalDegree(node) }),
             ),
     },
-    builtins: {},
+    builtins: {
+      reaches: (args, pos) => {
+        const [target] = args;
+        if (args.length !== 1 || typeof target !== 'string') {
+          throw new DslError('reaches() cần đúng một chuỗi, ví dụ reaches("x = 3")', pos);
+        }
+        return reachesTarget(model, target).ok;
+      },
+    },
+  };
+}
+
+/**
+ * Dòng cuối có **đúng dạng** `wanted` không — một phép so, hai cửa gọi.
+ *
+ * Cửa thứ nhất là validator `reaches:<expr>` (AL-07); cửa thứ hai là builtin `reaches()`
+ * của DSL, tức huy hiệu *"✓ Đạt mục tiêu"*. Chúng phải nói cùng một câu, và cách duy
+ * nhất chắc chắn là cùng một hàm.
+ *
+ * ## Vì sao **cấu trúc**, không phải bốc điểm — và một chốt canh luôn xanh đã sống ở đây
+ *
+ * Bản gốc hỏi `sameValue(dòng cuối, đích)`. Với biểu thức thì đúng; với **phương trình**
+ * thì nó luôn nói "tới rồi". Đo được: `sameValue(x = 3, x = 4)` trả `ok`, và
+ * `sameSolutionSet` cũng thế — thậm chí còn khai `verified: true`.
+ *
+ * Không phải bộ kiểm hỏng: tập nghiệm của một phương trình có **độ đo $0$**, nên hai
+ * phương trình khác hẳn nhau vẫn cùng **sai** ở gần như mọi điểm bốc trúng, hai bên
+ * "đồng ý", và phép so xanh mà không chứng minh gì. Đúng cái bẫy mà hợp đồng `claim`
+ * (M59) đã gọi tên cho hệ phương trình — chỉ là ở đây không ai gọi tên nó, vì **chưa bài
+ * nào dùng validator này** kể từ AL-07. Một năng lực chưa nội dung nào đi qua là một
+ * năng lực chưa ai kiểm; loạt sandbox đại số vừa đi qua và nó lộ ra ngay.
+ *
+ * Nên `reaches` so **cấu trúc**, và đó cũng là ngữ nghĩa đúng: đích là một **dạng** tác
+ * giả đặt ra, còn người học tới đó bằng cách áp luật. `x = 1 + 2` chưa phải `x = 3` —
+ * và nói thế là dạy đúng, không phải khó tính.
+ *
+ * Khi giá trị khớp mà dạng chưa khớp thì **nói ra**, vì đó là lúc người học gần nhất và
+ * dễ nản nhất.
+ */
+export function reachesTarget(
+  model: AlgebraModel,
+  wanted: string,
+): { ok: boolean; message: string; violations: readonly string[] } {
+  const last = model.rows.at(-1);
+  if (last === undefined) return { ok: false, message: 'chưa có dòng nào', violations: [] };
+
+  const target = tryParse(wanted, new Minter());
+  if ('error' in target) {
+    return { ok: false, message: `đích không đọc được: ${target.error}`, violations: [] };
+  }
+
+  if (same(normalize(last.expr), normalize(target.expr))) {
+    return { ok: true, message: `dòng cuối đúng dạng ${wanted}`, violations: [] };
+  }
+
+  const close = sameValue(last.expr, target.expr).ok;
+  return {
+    ok: false,
+    message: close ? `bằng ${wanted} rồi, nhưng chưa đúng dạng` : `chưa tới ${wanted}`,
+    violations: [last.id],
   };
 }
 
@@ -327,21 +399,8 @@ export function resolveAlgebraValidator(id: string): SceneValidator | null {
     return {
       id,
       label: `Tới được ${wanted}`,
-      check(scene: Scene) {
-        const model = readAlgebra(scene);
-        const last = model.rows.at(-1);
-        if (last === undefined) return { ok: false, violations: [], message: 'chưa có dòng nào' };
-        const target = tryParse(wanted, new Minter());
-        if ('error' in target) {
-          return { ok: false, violations: [], message: `đích không đọc được: ${target.error}` };
-        }
-        const verdict = sameValue(last.expr, target.expr);
-        return {
-          ok: verdict.ok,
-          violations: verdict.ok ? [] : [last.id],
-          message: verdict.ok ? `dòng cuối bằng ${wanted}` : `chưa tới: ${verdict.message}`,
-        };
-      },
+      // Cùng hàm với builtin `reaches()` của DSL — xem `reachesTarget`.
+      check: (scene: Scene) => reachesTarget(readAlgebra(scene), wanted),
     };
   }
 

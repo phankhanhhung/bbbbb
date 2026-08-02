@@ -576,6 +576,36 @@ chạy gần nhất của nó**, và cổng nào không nằm trong `pnpm check`
 động gọi. `combviz coverage` là cổng như thế — nay nó vào danh sách chốt canh chung của
 mỗi đợt.
 
+### 3b.2 Lượt sau nữa: một validator luôn xanh vì chưa ai gọi nó (2026-08-02)
+
+Cùng một họ với 3b.1, và cũng không tìm ra bằng bẻ răng — bẻ răng **không thể** tìm ra
+nó. Mutant chỉ chết khi có một chốt canh chạy qua chỗ bị sửa, và validator `reaches:`
+(engine đại số, dựng ở AL-07) **chưa bài nào trong kho gọi**, nên mọi mutant trong thân
+nó đều sống sót một cách vô hình: không có test nào để đỏ.
+
+Nó lộ ra khi AL-23 soạn bài đầu tiên bật hộp cát đại số. Bản gốc trả lời *"đã tới đích
+chưa"* bằng `sameValue`, và đo được:
+
+```
+sameValue(x = 3, x = 4).ok           → true
+sameSolutionSet(x = 3, x = 4, …).ok  → true      (còn khai verified: true)
+```
+
+Tập nghiệm của một phương trình có **độ đo $0$**, nên hai phương trình khác hẳn nhau
+vẫn cùng *sai* ở gần như mọi điểm bốc trúng; hai bên "đồng ý" ở mọi điểm và phép so
+xanh mà không chứng minh gì. Chi tiết ở `ENGINE-ALGEBRA.md` §54.2.
+
+Hai điều đáng mang đi:
+
+- **Bẻ răng đo được chốt canh, không đo được *thiếu* chốt canh.** Câu hỏi bổ sung, rẻ
+  như câu hỏi của 3b.1: *"năng lực nào đã dựng mà chưa nội dung nào đi qua?"* —
+  `ALGEBRA-COVERAGE.md` §5 hỏi đúng câu ấy cho **luật**, và bảng §2 nay hỏi thêm cho
+  **đường tương tác**. Cả hai đều là danh sách nợ, không phải danh sách khoe.
+- **Bốc điểm không phân biệt được hai đẳng thức.** Lần thứ ba trong cùng một mạch
+  (`claim` cho hệ ở M59, `impliesSolutionSet` cho AM–GM ở `ENGINE-ALGEBRA.md` §52.2,
+  `reaches:` ở đây). Chỗ nào sắp dùng bốc điểm để phân biệt hai đẳng thức thì phải đổi
+  sang so **cấu trúc** — và ba lần là đủ để coi đây là một luật, không phải ba tai nạn.
+
 ## 4. Việc **không** nằm trong tài liệu này
 
 Ba thứ hay bị nhầm là "làm engine mạnh hơn":

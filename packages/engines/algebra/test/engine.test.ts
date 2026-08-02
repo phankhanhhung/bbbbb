@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { applyChoreography, createContext, createRenderer, CELL_PX } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
+import { tryEvaluate } from '@combviz/dsl';
 import type { Scene } from '@combviz/schema';
 import type { SceneBox, SvgNode } from '@combviz/render';
 import {
@@ -27,6 +28,10 @@ import {
   peelsTo,
   place,
   readAlgebra,
+  moveRefusal,
+  applyRule,
+  reachesTarget,
+  algebraEnvironment,
   resolveAlgebraValidator,
   ROW,
   RULES,
@@ -3454,5 +3459,105 @@ describe('§53 — dùng tính đơn ánh', () => {
     expect(peelsTo(parse('f(x) >= f(y)', new Minter()), parse('x = y', new Minter()))).toBe(false);
     expect(peelsTo(parse('f(x) >= f(y)', new Minter()), parse('x >= y', new Minter()))).toBe(false);
     expect(peelsTo(parse('x = y', new Minter()), parse('x = y', new Minter()))).toBe(false);
+  });
+});
+
+/**
+ * **Hộp cát đại số có nội dung đi qua** (AL-23) — và một chốt canh luôn xanh đã sống ở
+ * đây suốt từ AL-07.
+ *
+ * M65 dựng trọn đường tương tác — `applyRule`, `moveRefusal`, `movesAtElement`, ba
+ * validator — rồi **43/43 bài đại số đều khai `illustration`**, tức không nội dung nào
+ * đi qua nó. Một năng lực chưa ai đi qua là một năng lực chưa ai kiểm, và lượt này đi
+ * qua thì nó lộ ra ngay ở validator `reaches:`.
+ */
+describe('§54 — hộp cát đại số', () => {
+  const at = (start: string, steps: AlgebraStep[] = []) => scene(start, steps);
+
+  it('`reaches` so **cấu trúc** — vì bốc điểm không phân biệt nổi hai phương trình', () => {
+    // Đây là lỗi thật, có sẵn từ AL-07: tập nghiệm của một phương trình có độ đo $0$,
+    // nên `x = 3` và `x = 4` cùng **sai** ở gần như mọi điểm bốc trúng, hai bên "đồng
+    // ý", và phép so xanh mà không chứng minh gì.
+    expect(sameValue(parse('x = 3', new Minter()), parse('x = 4', new Minter())).ok).toBe(true);
+    expect(sameSolutionSet(parse('x = 3', new Minter()), parse('x = 4', new Minter()), null, 1).ok)
+      .toBe(true);
+
+    // Nên `reachesTarget` không hỏi hai bộ ấy.
+    const solved = readAlgebra(
+      at('2*x = x + 3', [
+        { rule: 'add_both_sides', at: '', arg: '-1*x' },
+        { rule: 'collect_like', at: 'L' },
+        { rule: 'collect_like', at: 'R' },
+      ] as AlgebraStep[]),
+    );
+
+    expect(reachesTarget(solved, 'x = 3').ok).toBe(true);
+    expect(reachesTarget(solved, 'x = 4').ok).toBe(false);
+    expect(reachesTarget(solved, '3 = x').ok).toBe(false);
+  });
+
+  it('…và nói ra khi **giá trị đúng mà dạng chưa đúng** — lúc người học gần nhất', () => {
+    const half = readAlgebra(at('x^2 + 6*x + 5'));
+    const verdict = reachesTarget(half, '(x + 3)^2 + (-4)');
+
+    expect(verdict.ok).toBe(false);
+    expect(verdict.message).toContain('nhưng chưa đúng dạng');
+    // Còn lệch cả giá trị thì câu khác hẳn.
+    expect(reachesTarget(half, 'x + 1').message).toContain('chưa tới');
+  });
+
+  it('validator và builtin DSL đi **một** hàm', () => {
+    const s = at('2*x = x + 3', [
+      { rule: 'add_both_sides', at: '', arg: '-1*x' },
+      { rule: 'collect_like', at: 'L' },
+      { rule: 'collect_like', at: 'R' },
+    ] as AlgebraStep[]);
+
+    // Cửa thứ nhất: validator (dải chốt canh của sandbox).
+    expect(resolveAlgebraValidator('reaches:x = 3')?.check(s).ok).toBe(true);
+    expect(resolveAlgebraValidator('reaches:x = 4')?.check(s).ok).toBe(false);
+
+    // Cửa thứ hai: builtin (huy hiệu "Đạt mục tiêu"). Trước lượt này môi trường DSL
+    // **không nói được** đích thật của một bài đại số — năm ràng buộc của nó chỉ đếm
+    // dòng và đo bậc.
+    const env = algebraEnvironment(s);
+    expect(tryEvaluate('reaches("x = 3")', env)).toEqual({ ok: true, value: true });
+    expect(tryEvaluate('reaches("x = 4")', env)).toEqual({ ok: true, value: false });
+    expect(tryEvaluate('reaches(3)', env).ok, 'phải đòi một chuỗi').toBe(false);
+  });
+
+  it('bài challenge đi hết được bằng đúng những nước hộp cát bày ra', () => {
+    // Chuỗi của `cancel-only-after-factoring`: bài cho sẵn nước một, người học tìm nước
+    // hai. Phép so này đi đúng đường ấy qua `applyRule`, tức đường lệnh của sandbox.
+    const start = at('(x^2 + (-1)*4)/(x + 2)', [
+      { rule: 'factor_diff_squares', at: '0' },
+    ] as AlgebraStep[]);
+
+    expect(readAlgebra(start).refusal).toBeNull();
+    expect(tryEvaluate('reaches("x + (-2)")', algebraEnvironment(start))).toEqual({
+      ok: true,
+      value: false,
+    });
+
+    const done = applyRule(start, { at: '', rule: 'cancel_common', arg: 'x + 2' });
+    expect('refusal' in done, JSON.stringify(done)).toBe(false);
+    expect(tryEvaluate('reaches("x + (-2)")', algebraEnvironment(done as Scene))).toEqual({
+      ok: true,
+      value: true,
+    });
+  });
+
+  it('**lời từ chối là nội dung** — cái bẫy của bài trả về chữ, không phải `null`', () => {
+    // `index.ts` khai từ M65 rằng chỗ lọc nước đi *là* phần dạy học. Bẫy kinh điển của
+    // bài này — gạch $x$ ở tử với $x$ ở mẫu — phải bị từ chối **kèm lý do**.
+    const start = at('(x^2 + (-1)*4)/(x + 2)');
+    const refusal = moveRefusal(start, { at: '', rule: 'cancel_common', arg: 'x' });
+
+    expect(refusal).not.toBeNull();
+    expect(refusal).toContain('không phải thừa số chung');
+
+    // Và một nước hợp lệ thì **không** có chữ nào — hai cửa cùng một hàm `applyRule`,
+    // nên chúng không lệch nhau được.
+    expect(moveRefusal(start, { at: '0', rule: 'factor_diff_squares' })).toBeNull();
   });
 });

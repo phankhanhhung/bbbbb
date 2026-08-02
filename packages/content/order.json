@@ -147,9 +147,10 @@
     "am-gm-fence-perimeter",
     "am-gm-from-a-square",
     "cauchy-engel-two-fractions",
-    "functional-equation-injective"
+    "functional-equation-injective",
+    "cancel-only-after-factoring"
   ],
   "newest": [
-    "functional-equation-injective"
+    "cancel-only-after-factoring"
   ]
 }

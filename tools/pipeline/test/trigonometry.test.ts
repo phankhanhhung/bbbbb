@@ -180,6 +180,36 @@ describe('ALGEBRA-COVERAGE.md §2/§5 — con số duy nhất có thể xấu đ
     expect(lines[head]).toContain(`## 5. ${WORDS[unused.length] ?? unused.length} luật chưa bài nào dùng`);
   });
 
+  it('hai con số cuối bảng §2 — bài dùng engine, và bài bật hộp cát', async () => {
+    // Cùng khuôn với cái răng ở trên: quét kho thật, so với đúng chữ in trong tài liệu.
+    // Dòng "bật hộp cát" đo một thứ khác hẳn phần còn lại của bảng — không phải engine
+    // biết làm gì mà **nội dung có đi qua đường tương tác không** — và nó là con số duy
+    // nhất trong bảng đứng yên ở $0$ suốt từ M65 tới AL-23.
+    let algebra = 0;
+    let sandboxed = 0;
+    let total = 0;
+
+    for (const name of await readdir(PROBLEMS)) {
+      if (!name.endsWith('.json')) continue;
+      total += 1;
+      const problem = await load(name.replace(/\.json$/, ''));
+      if (!(problem.engines_used ?? []).includes('algebra')) continue;
+      algebra += 1;
+      if ((problem.kind ?? 'illustration') !== 'illustration') sandboxed += 1;
+    }
+
+    const doc = await readFile('docs/ALGEBRA-COVERAGE.md', 'utf8');
+    const lines = doc.split('\n');
+    const cell = (label: string): string[] => {
+      const row = lines.find((l) => l.includes(label));
+      return [...(row as string).matchAll(/\*\*([\d\s/]+)\*\*/g)].map((m) => m[1] as string);
+    };
+
+    expect(cell('| Bài dùng engine |')[0]?.replace(/\s/g, '')).toBe(`${algebra}/${total}`);
+    expect(cell('…bật hộp cát')[0]).toBe(String(sandboxed));
+    expect(sandboxed).toBeGreaterThan(0);
+  });
+
   it('bốn luật lượng giác đã có bài dùng, và bài ấy tồn tại', async () => {
     const used = await rulesUsedInBank();
 
