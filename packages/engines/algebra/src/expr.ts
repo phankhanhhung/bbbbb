@@ -682,15 +682,33 @@ export function totalDegree(e: Expr): number {
  * gộp chúng là lỗi thiết kế đắt nhất có thể mắc ở engine này: sau `commute` thì hạng
  * tử đổi đường dẫn, nên id-theo-đường-dẫn biến một phép dịch chỗ thành cặp xoá–thêm.
  */
-export function segmentsOf(path: string): number[] {
+/**
+ * Đọc đường dẫn, trả `null` khi nó không phải một đường dẫn.
+ *
+ * Có **hai** hàm cho một luật vì chúng trả lời cho hai người khác nhau: `segmentsOf`
+ * cho mã trong engine, nơi một đường dẫn hỏng là lỗi lập trình và ném ra là đúng;
+ * `trySegments` cho `readAlgebra`, nơi đường dẫn đến từ **nội dung tác giả** và một
+ * lời từ chối là đúng. Luật thì chỉ viết một lần, ở đây.
+ */
+export function trySegments(path: string): number[] | null {
   if (path === '') return [];
-  return path.split('.').map((s) => {
-    if (s === 'L') return 0;
-    if (s === 'R') return 1;
-    const n = Number(s);
-    if (!Number.isInteger(n) || n < 0) throw new Error(`đoạn đường dẫn không hợp lệ: "${s}"`);
-    return n;
-  });
+  const out: number[] = [];
+  for (const s of path.split('.')) {
+    if (s === 'L') out.push(0);
+    else if (s === 'R') out.push(1);
+    else {
+      const n = Number(s);
+      if (!Number.isInteger(n) || n < 0) return null;
+      out.push(n);
+    }
+  }
+  return out;
+}
+
+export function segmentsOf(path: string): number[] {
+  const segs = trySegments(path);
+  if (segs === null) throw new Error(`đoạn đường dẫn không hợp lệ: "${path}"`);
+  return segs;
 }
 
 export function nodeAt(root: Expr, path: string): Expr | null {

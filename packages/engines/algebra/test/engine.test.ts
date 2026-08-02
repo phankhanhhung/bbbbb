@@ -736,6 +736,80 @@ describe('bound', () => {
   });
 
   /**
+   * **`readAlgebra` trả về, không ném** (M77).
+   *
+   * Nội dung là dữ liệu, không phải mã (NFR-S1) — nên một chuỗi gõ nhầm trong JSON của
+   * bài phải ra một lời từ chối, không ra một ngoại lệ. Hai lối từng lọt:
+   *
+   * - `at` không phải đường dẫn (`"zzz"`) → `segmentsOf` ném;
+   * - `arg` không đọc được (`"x := (((("`) → luật gọi `parse`, `ParseError` ném.
+   *
+   * Hậu quả đo được: `checkBounds` **sập cả `combviz validate`** trên một bản nháp gõ
+   * nhầm dấu ngoặc — đúng ca mà validator sinh ra để phục vụ. Và ở sandbox thì `arg`
+   * là thứ **người học gõ**, nên đó là đường từ bàn phím tới một ngoại lệ chưa ai bắt.
+   */
+  describe('không ném ra ngoài', () => {
+    const model = (config: Record<string, unknown>) =>
+      readAlgebra({ engine: 'algebra', config, elements: [] } as never);
+
+    it('`at` hỏng ra **lời từ chối**, và nói ra đường dẫn hỏng', () => {
+      expect(model({ start: 'x + 1 = 2', steps: [{ rule: 'collect_like', at: 'zzz' }] }).refusal)
+        .toBe('bước 1 (gộp hạng tử đồng dạng): đường dẫn "zzz" không hợp lệ');
+    });
+
+    it('`arg` không đọc được ra lời từ chối, và **nhắc lại nguyên văn** cái đã gõ', () => {
+      // Người học phải thấy lại thứ mình gõ thì mới sửa được — lời từ chối là nội dung.
+      const r = model({ start: 'x + 1 = 2', steps: [{ rule: 'substitute', at: '', arg: 'x := ((((' }] });
+      expect(r.refusal).toContain('x := ((((');
+      expect(r.refusal).toContain('không đọc được');
+    });
+
+    it('validator **báo lỗi** thay vì sập, ở cả hai lối', () => {
+      for (const step of [
+        { rule: 'collect_like', at: 'zzz' },
+        { rule: 'substitute', at: '', arg: 'x := ((((' },
+      ]) {
+        const issues = algebraSchemaFragment.checkBounds(
+          { engine: 'algebra', config: { start: 'x + 1 = 2', steps: [step] }, elements: [] } as never,
+          '',
+        );
+        expect(issues.map((i) => i.code), JSON.stringify(step)).toContain('bounds/algebra-refused');
+      }
+    });
+
+    it('quét chéo luật × đường dẫn × tham số: **không lượt nào ném**', () => {
+      // Chốt canh này quét hẹp hơn lượt fuzz đã dùng để tìm ra lỗ (347k lượt), nhưng
+      // cùng hình dạng: mọi luật, những `at` hỏng đủ kiểu, những `arg` hỏng đủ kiểu.
+      const STARTS = ['x + 1 = 2', 'sqrt(x + 1) = x - 1', 'x < 1 hoặc x > 2', 'sum(k, 1, n, k) = n'];
+      const ATS = ['', 'L', 'R.1', 'zzz', 'L.99', '@x', '@không đọc được'];
+      const ARGS = [undefined, '', 'x := ((((', ':=', '1/0', '((((', 'x;y'];
+
+      const thrown: string[] = [];
+      const internal: string[] = [];
+      for (const start of STARTS) {
+        for (const rule of RULES) {
+          for (const at of ATS) {
+            for (const arg of ARGS) {
+              const step = arg === undefined ? { rule: rule.id, at } : { rule: rule.id, at, arg };
+              try {
+                const r = model({ start, steps: [step] });
+                // Lưới ngoài cùng có nổ không: nó là backstop, không phải chỗ nuốt lỗi.
+                if (r.refusal?.startsWith('lỗi trong engine')) {
+                  internal.push(`${rule.id} @"${at}" arg=${arg}: ${r.refusal}`);
+                }
+              } catch (e) {
+                thrown.push(`${rule.id} @"${at}" arg=${arg} trên "${start}": ${(e as Error).message}`);
+              }
+            }
+          }
+        }
+      }
+      expect(thrown.slice(0, 5), `${thrown.length} lượt ném`).toEqual([]);
+      expect(internal.slice(0, 5), `${internal.length} lượt rơi vào lưới cuối`).toEqual([]);
+    });
+  });
+
+  /**
    * **Mọi trần đều phải có răng** (M77).
    *
    * `maxSteps`, `maxRelations`, `maxHeightCells`, `maxWidthCells` đều có chốt canh từ

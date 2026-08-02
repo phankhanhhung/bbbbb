@@ -20,11 +20,12 @@ import {
   same,
   substituteVar,
   totalDegree,
+  trySegments,
   walk,
   type Expr,
   type TermId,
 } from './expr.js';
-import { tryParse } from './parse.js';
+import { ParseError, tryParse } from './parse.js';
 import { ruleById } from './rules.js';
 import { ALGEBRA_LIMITS, type AlgebraConfig } from './schema.js';
 import { ROW, measure, toBox } from './typeset.js';
@@ -206,7 +207,14 @@ const idsOfExpr = (e: Expr): Set<string> => {
  * là thứ cả choreography dựa vào (§3.4).
  */
 function resolveAt(root: Expr, at: string): { path: string } | { refusal: string } {
-  if (!at.startsWith('@')) return { path: at };
+  if (!at.startsWith('@')) {
+    // `at` là **nội dung tác giả**, nên một đường dẫn hỏng phải ra lời từ chối chứ
+    // không ra một ngoại lệ. Trước M77 nó rơi thẳng xuống `segmentsOf` và ném ra khỏi
+    // `readAlgebra` — tức `combviz validate` **sập** trên một bản nháp gõ nhầm, thay
+    // vì in ra một dòng lint. Xem chú thích ở `readAlgebra`.
+    if (trySegments(at) === null) return { refusal: `đường dẫn "${at}" không hợp lệ` };
+    return { path: at };
+  }
   const source = at.slice(1).trim();
   const pattern = tryParse(source, new Minter());
   if ('error' in pattern) return { refusal: `mẫu "${source}" không đọc được: ${pattern.error}` };
@@ -222,7 +230,52 @@ function resolveAt(root: Expr, at: string): { path: string } | { refusal: string
   return { path: hits[0] as string };
 }
 
+/**
+ * **`readAlgebra` trả về, không ném.** Đây là hợp đồng của cả engine (M77).
+ *
+ * Mọi thứ đứng trên engine — validator, layout, render, `combviz film`, sandbox —
+ * đều đi qua đúng cửa này, và cửa này khai kiểu trả về là `AlgebraModel` với một
+ * trường `refusal`. Một ngoại lệ lọt ra là **phá hợp đồng ở chỗ không ai bọc**.
+ *
+ * Nó từng lọt, ở hai lối, và cả hai đều bắt nguồn từ **nội dung tác giả**:
+ *
+ * | lối | ví dụ | hậu quả |
+ * |---|---|---|
+ * | `at` không phải đường dẫn | `at: "zzz"` | `segmentsOf` ném |
+ * | `arg` không đọc được | `arg: "x := (((("` | luật gọi `parse` và `ParseError` ném |
+ *
+ * Cả hai đều là chuỗi trong JSON của bài, tức **dữ liệu, không phải mã** (NFR-S1).
+ * Đo được: `algebraSchemaFragment.checkBounds` trên một bản nháp gõ nhầm dấu ngoặc
+ * **sập cả `combviz validate`** thay vì in một dòng lint — đúng ca mà validator sinh
+ * ra để phục vụ.
+ *
+ * Chữa ở **một** chỗ chứ không vá 79 luật: đường dẫn soát ngay tại `resolveAt`, còn
+ * `ParseError` từ `arg` thì bắt quanh `rule.run`. Cái lưới ngoài cùng dưới đây bắt nốt
+ * phần còn lại, nhưng nó **nói rõ đó là lỗi engine** — một lời từ chối im lặng nuốt
+ * mất một lỗi lập trình thì tệ hơn hẳn một ngoại lệ, vì ngoại lệ ít ra còn to tiếng.
+ *
+ * Và chốt canh **hỏi luôn cái lưới**: quét chéo luật × đường dẫn × tham số rồi khẳng
+ * định không lượt nào rơi vào nó. Không có khẳng định ấy thì lưới này là chỗ tiện nhất
+ * để một lỗi thật nằm im — bẻ hai chỗ chữa ở trên ra thì test đỏ, còn bẻ **cái lưới**
+ * ra thì test vẫn xanh, và đó là bằng chứng nó đang là hàng rào chứ không phải cái nạng.
+ */
 export function readAlgebra(scene: Scene): AlgebraModel {
+  try {
+    return readAlgebraOrThrow(scene);
+  } catch (error) {
+    return {
+      config: (scene.config ?? {}) as AlgebraConfig,
+      rows: [],
+      conditions: [],
+      unsound: [],
+      unchecked: [],
+      extraneous: [],
+      refusal: `lỗi trong engine: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}
+
+function readAlgebraOrThrow(scene: Scene): AlgebraModel {
   const config = (scene.config ?? {}) as AlgebraConfig;
   const m = new Minter();
   const empty: AlgebraModel = {
@@ -309,7 +362,21 @@ export function readAlgebra(scene: Scene): AlgebraModel {
     }
 
     const before = idsOfExpr(current);
-    const outcome = rule.run(m, target, step.arg);
+    // Luật nào nhận một **biểu thức** làm tham số đều gọi `parse` trên `step.arg`, và
+    // `arg` là chuỗi tác giả gõ. Bắt ở đây một lần thay vì bọc `try` trong từng luật:
+    // lời từ chối ra cùng một khuôn với mọi lời từ chối khác, và luật mới viết sau này
+    // được che sẵn mà không phải nhớ gì.
+    let outcome: ReturnType<typeof rule.run>;
+    try {
+      outcome = rule.run(m, target, step.arg);
+    } catch (error) {
+      if (!(error instanceof ParseError)) throw error;
+      return {
+        ...empty,
+        rows,
+        refusal: `bước ${i + 1} (${rule.label}): tham số "${step.arg ?? ''}" không đọc được: ${error.message}`,
+      };
+    }
     if ('refusal' in outcome) {
       return {
         ...empty,
