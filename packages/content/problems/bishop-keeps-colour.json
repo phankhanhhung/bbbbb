@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "id": "bishop-keeps-colour",
   "statement": {
     "vi": "Chứng minh quân tượng không bao giờ đi tới được ô khác màu với ô nó đang đứng — nói riêng, một quân tượng không thể đi qua hết $64$ ô."

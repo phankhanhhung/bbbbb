@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "id": "misere-nim-last-loses",
   "statement": {
     "vi": "Hai người lần lượt chọn một đống sỏi và bốc tuỳ ý số viên (ít nhất một). Ai bốc **viên cuối cùng** thì **thua** — khác Nim thường đúng một câu. Hỏi quy tắc XOR còn đúng không, và nếu không thì hỏng ở đâu?"

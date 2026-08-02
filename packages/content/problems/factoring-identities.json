@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "id": "factoring-identities",
   "statement": {
     "vi": "Phân tích đa thức thành nhân tử bằng **hằng đẳng thức đáng nhớ** và bằng cách tách hạng tử, rồi dùng cùng bộ luật ấy để giải một bất phương trình. Mỗi bước do máy áp và máy tự kiểm, nên chỗ hay nhớ nhầm — dấu ở giữa của hằng đẳng thức bậc ba, chiều của bất đẳng thức — không lọt được."

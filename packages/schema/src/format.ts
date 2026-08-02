@@ -54,6 +54,8 @@ const KEY_ORDER: Readonly<Record<string, readonly string[]>> = {
     // `verified`, tức là xa nhất khỏi thứ chúng nói về.
     'bijection',
     'choreography',
+    // `play` cũng gắn vào scene (nó nói scene ấy chơi thế nào), nên nó đi cùng cụm.
+    'play',
     'alt_text',
     'author_notes',
     'claims',
@@ -69,6 +71,8 @@ const KEY_ORDER: Readonly<Record<string, readonly string[]>> = {
   // alphabet — pane phải thành công dân hạng hai của cả *bộ định dạng*, cùng
   // căn bệnh mà M66 chữa ở lớp kiểm.
   bijection: ['label_left', 'label_right', 'pairs', 'scene'],
+  // Thứ tự đọc của một ván: luật nào, ai đi trước, quy ước gì, áp bằng gì, trần bao nhiêu.
+  play: ['rule', 'first', 'misere', 'apply', 'solver_bound'],
   choreography: ['phases'],
   // Thứ tự đọc của một pha: nó là gì, tác động lên ai, đi đâu/từ đâu, lúc nào,
   // rồi mới tới phần trang trí. Trước đây phase rơi vào shape null → `anchor`
@@ -114,6 +118,7 @@ function nestedShape(
   if (shape === 'step' && key === 'scene') return 'scene';
   if (shape === 'step' && key === 'bijection') return 'bijection';
   if (shape === 'bijection' && key === 'scene') return 'scene';
+  if (shape === 'step' && key === 'play') return 'play';
   if (shape === 'step' && key === 'choreography') return 'choreography';
   if (shape === 'choreography' && key === 'phases') return 'phase';
   if (shape === 'scene' && key === 'elements') return 'element';

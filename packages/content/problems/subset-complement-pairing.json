@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "id": "subset-complement-pairing",
   "statement": {
     "vi": "Phép lấy phần bù ghép các tập con của $\\{1,\\dots,4\\}$ thành từng cặp. Dùng nó để chứng minh số tập con là số chẵn."

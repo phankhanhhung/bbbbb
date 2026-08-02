@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "id": "fractions-common-denominator",
   "statement": {
     "vi": "Cộng hai phân số đại số cần đúng hai thao tác: **quy đồng** cho hai mẫu bằng nhau, rồi **gộp** hai tử lại. Chúng là hai bước riêng, có tên riêng, và mỗi bước đổi đúng một thứ."

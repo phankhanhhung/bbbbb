@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "id": "sperner-antichain-four",
   "statement": {
     "vi": "Trên tập $\\{1,2,3,4\\}$, một **phản xích** là một họ tập con đôi một không chứa nhau. Chỉ ra một phản xích có $6$ tập, và chứng minh không phản xích nào đông hơn."

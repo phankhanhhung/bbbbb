@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "id": "counting-subsets-two-power",
   "statement": {
     "vi": "Một tập có $3$ phần tử. Chứng minh nó có đúng $2^3 = 8$ tập con."

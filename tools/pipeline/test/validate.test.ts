@@ -552,6 +552,55 @@ describe('PRN-04 — view song ánh', () => {
   });
 
   /**
+   * GM-01/02 — khối `play` (M78).
+   *
+   * Hai chuyện, và chỉ hai. Tên họ luật **không** kiểm ở đây: danh sách họ luật là
+   * chuyện của engine chủ, cùng lý do mà `structure.ts` không biết engine nào có
+   * element gì.
+   */
+  describe('GM — khối play', () => {
+    const withPlay = (play: Record<string, unknown>): Problem => {
+      const problem = loadBijection();
+      stepOf(problem).play = play as Step['play'];
+      return problem;
+    };
+
+    it('`play` không có scene là lỗi — không có thế nào để chơi', () => {
+      const problem = withPlay({ rule: 'nim' });
+      delete stepOf(problem).scene;
+
+      expect(codes(problem)).toContain('structure/play-without-scene');
+    });
+
+    it('`play` bình thường thì im lặng', () => {
+      expect(codes(withPlay({ rule: 'nim', first: 'right', misere: true }))).not.toContain(
+        'play/script-apply',
+      );
+    });
+
+    it('khoá lạ trong `play` bị **chặn ở cửa** (DAT-20)', () => {
+      // `additionalProperties: false` ở đây không phải trang trí — cùng bài học mà
+      // `Step.anchors` đã trả giá: khoá lệch schema mặc định được thả qua cùng giá trị
+      // tuỳ ý của nó, rồi nổ ở tầng dưới. Bẻ răng M78.1 lôi ra rằng chốt canh này
+      // **không tồn tại**, dù dòng mã thì có: gỡ `additionalProperties: false` ra mà
+      // cả bộ test vẫn xanh.
+      expect(codes(withPlay({ rule: 'nim', khoa_la: 1 }))).not.toEqual([]);
+    });
+
+    it('lối `apply: "script"` **cảnh báo**, không chặn — chỗ đánh đổi phải có mặt trong bản duyệt', () => {
+      // Không phải lỗi: lối ấy hợp lệ và mạnh hơn. Nhưng nó mất ba bảo đảm mà lớp lệnh
+      // cho không, và một đánh đổi nằm im trong tệp script là một đánh đổi không ai
+      // đọc lại. Chặn thì sai; im thì tệ hơn.
+      const issue = validator
+        .validateProblem(withPlay({ rule: 'chomp', apply: 'script' }))
+        .issues.find((i) => i.code === 'play/script-apply');
+
+      expect(issue?.severity).toBe('warning');
+      expect(issue?.message).toContain('tất định');
+    });
+  });
+
+  /**
    * CHO-01..09 — dàn dựng phải neo được, trỏ được, đọc được khi tắt chuyển động.
    *
    * Dùng chính bài song ánh làm nền vì `morph` (CHO-05) sống đúng ở đây: một phần

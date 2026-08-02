@@ -1,10 +1,28 @@
 export {
   command,
   defineCommand,
+  other,
   type Command,
   type CommandDef,
   type CommandRegistry,
+  type Move,
+  type PlayPlayer,
 } from './command.js';
+
+export {
+  createPlay,
+  playMove,
+  replayPlay,
+  resetPlay,
+  toDraftSteps,
+  undoMove,
+  PLAY_LIMIT,
+  type DraftStep,
+  type PlayMoveRecord,
+  type PlayOutcome,
+  type PlayRules,
+  type PlaySession,
+} from './play.js';
 
 export {
   createEditorState,

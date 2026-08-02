@@ -61,6 +61,75 @@ export const Bijection = Type.Object(
 export type Bijection = Static<typeof Bijection>;
 
 /**
+ * GM-01/02 — step này **chơi được**: hai người luân phiên trên cùng một máy.
+ *
+ * Khối này cố ý **rất mỏng**, và đó là quyết định trung tâm của nó. Nó không mô tả
+ * luật, không mô tả thế, không mô tả bàn. Thế là `scene` của chính step — một bàn cờ,
+ * một đồ thị, một dãy đống — còn tham số của luật thì đã nằm trong `scene.config`, nơi
+ * engine chủ vốn đã kiểm chúng. Khối này chỉ trả lời đúng một câu: *"chơi cái scene ấy
+ * theo họ luật nào"*.
+ *
+ * Nhét luật vào đây sẽ là nguồn sự thật thứ hai bên cạnh `config`, và hai nguồn cho một
+ * câu hỏi là lớp lỗi đắt nhất kho này từng gặp.
+ *
+ * **Vì sao là khối trên `step` chứ không phải trường trong `scene`:** một scene board
+ * là một scene board dù có ai chơi nó hay không. Đẩy `rule`/`first` vào `board.config`
+ * nghĩa là schema của 33 bài bàn cờ mọc thêm ba trường chỉ có nghĩa với những bài là
+ * game. `bijection` đã là tiền lệ của đúng hình dạng này.
+ *
+ * **Lượt đi không có ở đây**, và đó không phải thiếu sót: nó suy từ `first` cộng số
+ * nước đã đi (xem `editor/play.ts`). Một trường "đang tới lượt ai" trong dữ liệu là một
+ * trường có thể lệch với dãy nước, mà dãy nước mới là thứ có thật.
+ */
+export const Play = Type.Object(
+  {
+    /**
+     * Họ luật, do **engine chủ** đăng ký. Engine kiểm tên này ở `checkBounds`, không
+     * kiểm ở JSON Schema: danh sách họ luật là chuyện của engine, và khai nó thành một
+     * union ở đây là buộc schema chung phải biết mọi engine.
+     */
+    rule: Type.String({ minLength: 1, maxLength: 32 }),
+    /** Bên đi trước. Tên theo quy ước CGT; giao diện gọi là "Người 1"/"Người 2". */
+    first: Type.Optional(
+      Type.Union([Type.Literal('left'), Type.Literal('right')], { default: 'left' }),
+    ),
+    /**
+     * Ai đi nước **cuối cùng** thì **thua**.
+     *
+     * Đây là nơi duy nhất khai quy ước của một *ván*. Engine game có sẵn
+     * `config.misere` cho phần phân tích Grundy của nó; khi cả hai cùng có mặt,
+     * `checkBounds` của engine ấy bắt chúng phải khớp — một cross-check, không phải một
+     * bản sao.
+     */
+    misere: Type.Optional(Type.Boolean({ default: false })),
+    /**
+     * Nước đi được áp bằng gì.
+     *
+     * `"command"` (mặc định): nước mang theo một lệnh của engine chủ, nên nó thuần và
+     * replay được — thừa hưởng nguyên vẹn bảo đảm mà ENG-01 dựng cho lớp lệnh.
+     *
+     * `"script"`: luật tự trả về scene mới. Mạnh hơn, và **mất ba bảo đảm** mà phiên
+     * chơi phải dựng cổng để bù (tất định, đúng engine, ghi ván theo id thay vì theo
+     * lệnh — xem `editor/play.ts`). Validate cảnh báo khi bài chọn lối này, để chỗ đánh
+     * đổi ấy có mặt trong bản duyệt chứ không nằm im trong một tệp script.
+     */
+    apply: Type.Optional(
+      Type.Union([Type.Literal('command'), Type.Literal('script')], { default: 'command' }),
+    ),
+    /**
+     * Trần số thế mà solver được duyệt cho bài này (GM-03).
+     *
+     * Vắng nghĩa là dùng trần của họ luật. Có mặt nghĩa là tác giả **hạ** nó xuống —
+     * nâng lên thì engine vẫn kẹp theo trần của mình, vì cái treo máy người học là số
+     * thế thật chứ không phải con số tác giả gõ.
+     */
+    solver_bound: Type.Optional(Type.Integer({ minimum: 1, maximum: 1_000_000 })),
+  },
+  { additionalProperties: false },
+);
+export type Play = Static<typeof Play>;
+
+/**
  * Một **pha** của choreography (CHO-01..09).
  *
  * `anchor` **bắt buộc**, và đó là quyết định trung tâm của cả lớp này. CHO-07 nói
@@ -203,6 +272,9 @@ export const Step = Type.Object(
     /** PRN-04. Cần `scene` — kiểm ở tầng structure, không ở JSON Schema. */
     bijection: Type.Optional(Bijection),
 
+    /** GM-01/02 — step chơi được. Cần `scene`; họ luật do engine chủ kiểm. */
+    play: Type.Optional(Play),
+
     /**
      * CHO-01..10 — timeline nhiều pha. Ràng buộc chéo (anchor có thật, target có
      * thật, pha không tràn) kiểm ở tầng structure.
@@ -284,6 +356,13 @@ export interface Step {
     pairs: [string, string][];
     label_left?: { vi: string; en?: string };
     label_right?: { vi: string; en?: string };
+  };
+  play?: {
+    rule: string;
+    first?: 'left' | 'right';
+    misere?: boolean;
+    apply?: 'command' | 'script';
+    solver_bound?: number;
   };
   alt_text?: { vi: string; en?: string };
   author_notes?: string;

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "id": "stones-move-invariant",
   "statement": {
     "vi": "Ba đống sỏi có $5$, $8$ và $11$ viên. Mỗi bước lấy một viên từ một đống bỏ sang đống khác. Hỏi có thể làm cho ba đống bằng nhau không?"

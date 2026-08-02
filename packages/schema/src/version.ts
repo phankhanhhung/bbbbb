@@ -19,8 +19,13 @@
  * trí "hiện tại" xuống "n−1", vẫn đọc được; `0.3.0` thì từ đây nằm ngoài cửa
  * sổ vĩnh viễn, và validate nói ra điều đó thay vì để Player đoán.
  *
+ * **`1.2.0` — khối `step.play` (GM-01/02, M78)**: step khai được rằng nó **chơi
+ * được**. Cùng luật với `1.1.0` — thêm một trường optional trên `Step`, không đổi
+ * lời hứa nào, nên minor và migration đồng nhất. Cửa sổ đọc trượt tiếp: `1.1.0`
+ * xuống n−1, `1.0.0` ra khỏi cửa sổ.
+ *
  * Từ đây: thêm trường optional = minor + migration đồng nhất; đổi/gỡ = major.
  * Cửa sổ đọc của Player là minor hiện tại và n−1 (`isReadableVersion`), và
  * validate đứng gác ở cửa (`version/unreadable`).
  */
-export const SCHEMA_VERSION = '1.1.0';
+export const SCHEMA_VERSION = '1.2.0';

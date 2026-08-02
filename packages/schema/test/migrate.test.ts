@@ -84,7 +84,7 @@ describe('migrate', () => {
  * lặng lẽ: một file rơi ra khỏi cửa sổ mà không ai báo thì Player đọc nó bằng bộ
  * đọc của schema hôm nay và diễn giải sai những trường nó không biết.
  */
-describe('DAT-02 — bước nhảy 1.0.0 → 1.1.0', () => {
+describe('DAT-02 — bước nhảy minor sau freeze', () => {
   it('có đúng một migration từ mỗi phiên bản, và chuỗi đi được tới hiện tại', () => {
     const froms = MIGRATIONS.map((m) => m.from);
     expect(new Set(froms).size).toBe(froms.length);
@@ -97,18 +97,31 @@ describe('DAT-02 — bước nhảy 1.0.0 → 1.1.0', () => {
   });
 
   it('bài mang dấu `0.3.0` nâng được **hết** chặng, qua cả mốc major', () => {
-    const result = migrateProblem({ schema_version: '0.3.0', id: 'x' });
+    // Hỏi **bất biến**, không hỏi con số: đích là `SCHEMA_VERSION` hiện hành, và số
+    // bước là số migration còn lại từ mốc ấy. Bản trước đóng đinh `'1.1.0'` và `2`, nên
+    // nó đỏ ở mọi lần bump minor — đỏ vì phiên bản đổi, chứ không vì bộ máy nâng cấp
+    // hỏng. Một chốt canh đỏ vì lý do không liên quan là một chốt canh sắp bị tắt.
+    const from = '0.3.0';
+    const rest = MIGRATIONS.slice(MIGRATIONS.findIndex((m) => m.from === from));
+    const result = migrateProblem({ schema_version: from, id: 'x' });
+
     expect(result.issues).toEqual([]);
-    expect(result.problem['schema_version']).toBe('1.1.0');
-    expect(result.applied).toHaveLength(2);
+    expect(result.problem['schema_version']).toBe(SCHEMA_VERSION);
+    expect(result.applied).toHaveLength(rest.length);
+    // Và chặng ấy **đi qua mốc major** — đó là chỗ đáng canh, không phải con số 2.
+    expect(rest.some((m) => m.to === '1.0.0')).toBe(true);
   });
 
-  it('cửa sổ đọc **trượt**: `1.0.0` vào, `0.3.0` ra vĩnh viễn', () => {
-    // Đây là chuyển động thật của bước nhảy này — bản thân dữ liệu không đổi một byte.
-    expect(isReadableVersion('1.1.0')).toBe(true);
-    expect(isReadableVersion('1.0.0')).toBe(true);
+  it('cửa sổ đọc **trượt**: minor hiện tại và n−1 vào, n−2 ra vĩnh viễn', () => {
+    // Chuyển động thật của mỗi lần bump — bản thân dữ liệu không đổi một byte.
+    const minor = Number(SCHEMA_VERSION.split('.')[1]);
+    const at = (m: number): string => `1.${m}.0`;
+
+    expect(isReadableVersion(SCHEMA_VERSION)).toBe(true);
+    expect(isReadableVersion(at(minor - 1))).toBe(true);
+    expect(isReadableVersion(at(minor - 2))).toBe(false);
     expect(isReadableVersion('0.3.0')).toBe(false);
-    // Và minor tiếp theo sẽ đẩy `1.0.0` ra — kiểm bằng chính hàm ấy, không bằng lời hứa.
-    expect(isReadableVersion('1.0.0', '1.2.0')).toBe(false);
+    // Và minor tiếp theo đẩy n−1 ra — kiểm bằng chính hàm ấy, không bằng lời hứa.
+    expect(isReadableVersion(at(minor - 1), at(minor + 1))).toBe(false);
   });
 });

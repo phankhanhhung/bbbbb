@@ -86,6 +86,19 @@ export const MIGRATIONS: readonly Migration[] = [
      */
     apply: (problem) => problem,
   },
+  {
+    from: '1.1.0',
+    to: '1.2.0',
+    summary: 'thêm khối `step.play` (GM-01/02) — không đổi dữ liệu bài nào, chỉ đóng dấu phiên bản',
+    /**
+     * Đồng nhất, cùng lý do với `1.1.0`: `play` là trường **optional** trên `Step`, nên
+     * mọi file cũ vẫn hợp lệ ở schema mới. Con dấu vẫn phải đổi, vì một file có `play`
+     * mà mang dấu `1.1.0` sẽ bị chính schema `1.1.0` từ chối (`additionalProperties:
+     * false` trên `Step`), và người đọc file không có cách nào khác để biết nó cần bộ
+     * đọc nào.
+     */
+    apply: (problem) => problem,
+  },
 ];
 
 export interface MigrateResult {

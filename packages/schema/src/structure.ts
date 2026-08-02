@@ -177,6 +177,7 @@ function checkSolutionTree(
       checkSceneBounds(step.scene, `${path}/scene`, engines, issues);
     }
     checkBijection(step, path, engines, issues);
+    checkPlay(step, path, issues);
     checkChoreography(step, path, engines, issues);
   });
 
@@ -357,6 +358,43 @@ function knownIds(scene: Scene, engines: EngineRegistry): Set<string> {
     for (const id of fragment.implicitElementIds(scene)) known.add(id);
   }
   return known;
+}
+
+/**
+ * GM-01/02 — một step chơi được phải có **thế** để chơi.
+ *
+ * Hai chuyện kiểm ở đây, và chỉ hai. Tên họ luật thì **không**: danh sách họ luật là
+ * chuyện của engine chủ, nên nó kiểm ở `checkBounds` của engine ấy — cùng lý do mà
+ * `structure.ts` không biết engine nào có element gì.
+ *
+ * Chuyện thứ hai là lối `apply: "script"`. Nó **không sai** và không bị chặn; nó chỉ
+ * đắt hơn lối mặc định đúng ba bảo đảm (tất định, đúng engine, ghi ván theo id), và
+ * phiên chơi phải dựng cổng để bù. Cảnh báo ở đây để chỗ đánh đổi ấy có mặt trong bản
+ * duyệt — nếu không thì nó nằm im trong một tệp script và không ai đọc lại.
+ */
+function checkPlay(step: Step, path: string, issues: ValidationIssue[]): void {
+  const play = step.play;
+  if (!play) return;
+
+  if (!step.scene) {
+    issues.push({
+      code: 'structure/play-without-scene',
+      severity: 'error',
+      message: 'Step khai `play` nhưng không có `scene`: không có thế nào để chơi',
+      path: `${path}/play`,
+    });
+    return;
+  }
+
+  if (play.apply === 'script') {
+    issues.push({
+      code: 'play/script-apply',
+      severity: 'warning',
+      message: 'Ván áp nước bằng script: mất bảo đảm tất định của lớp lệnh',
+      path: `${path}/play/apply`,
+      hint: 'Phiên chơi chạy script hai lần và so byte; script không tất định sẽ bị từ chối ngay ở nước ấy',
+    });
+  }
 }
 
 /**
