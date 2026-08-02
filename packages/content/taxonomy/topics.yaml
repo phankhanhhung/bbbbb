@@ -43,3 +43,10 @@ topics:
   - id: algebra
     label:
       vi: Đại số
+  # Topic thứ hai ngoài tổ hợp, thêm khi có chuyên đề Bézout → nghiệm hữu tỉ. Nó
+  # **không** kéo theo một engine mới: phần máy giữ được tính đúng vẫn là chuỗi
+  # biến đổi đại số, còn quan hệ chia hết thì engine `algebra` không có khái niệm
+  # nào — nó nằm ở lời kể, và mọi bài gắn topic này phải nói rõ ranh giới ấy.
+  - id: number-theory
+    label:
+      vi: Số học
