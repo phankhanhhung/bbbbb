@@ -752,13 +752,20 @@ body {
 
 .tree__canvas {
   margin-top: 0.4rem;
+  /* Rộng hoặc cao quá khung thì **cuộn**, không co — cùng luật với
+     `packages/render/src/scale.ts`, chỉ khác là ở đó còn được phép co. Bản đồ thì
+     không: co nó nghĩa là chấm và ô chạm nhỏ lại, mà ô chạm đã đúng bằng sàn
+     NFR-A3 rồi. `max-height` đặt ở JSX cạnh hằng số sinh ra nó. */
   overflow: auto;
 }
 
 .tree__canvas svg {
   display: block;
-  width: 100%;
-  height: auto;
+  /* **Không** `width: 100%`. Kích thước do `TREE_SCALE` quyết định và in ra thuộc
+     tính `width`/`height` bằng pixel thật; để CSS kéo giãn ở đây là trả lại đúng
+     lỗi mà hằng số ấy vừa dẹp — cùng một chấm to nhỏ khác nhau giữa hai bài, và
+     đổi cỡ ngay khi thu gọn một nhánh. */
+  margin-inline: auto;
 }
 
 .tree__node {

@@ -189,6 +189,85 @@ test.describe('Cây lời giải phân nhánh (PLY-02)', () => {
       label,
     );
   });
+
+  /**
+   * **Một chấm, một cỡ** — trên mọi bài, và cả sau khi thu gọn một nhánh.
+   *
+   * Đây là chốt canh cho luật tỉ lệ của bản đồ, và nó phải đo **pixel thật trên
+   * màn hình** chứ không đọc thuộc tính `r`: cái sai cũ nằm đúng ở chỗ `r` không
+   * đổi mà pixel thì đổi. `viewBox` tính từ hộp bao của cây cộng `width: 100%`
+   * cho ra hệ số riêng cho từng bài — đo được $2{,}17\times$ ở một lời giải
+   * tuyến tính và $1{,}73\times$ ở `ramsey-3-3-six`, tức cùng một chấm chênh nhau
+   * $25\%$.
+   *
+   * Ba phép so, và chiều thứ ba là chiều tinh vi nhất: thu gọn một nhánh làm
+   * `layout.height` đổi, nên ở bản cũ **mọi** node đổi cỡ vì một thao tác chỉ
+   * đáng lẽ giấu vài node đi.
+   */
+  test('chấm trên bản đồ luôn cùng một cỡ — khác bài, và sau khi thu gọn', async ({ page }) => {
+    const dotWidth = async (): Promise<number> => {
+      const box = await page.locator('.tree__node circle').first().boundingBox();
+      expect(box).not.toBeNull();
+      return Math.round((box as { width: number }).width);
+    };
+
+    await page.goto(RAMSEY);
+    await reveal(page);
+    const onRamsey = await dotWidth();
+
+    // Thu gọn một nhánh: hộp bao của cây đổi, chấm thì không được đổi.
+    await page.locator('.tree__collapse').first().click();
+    expect(await dotWidth()).toBe(onRamsey);
+
+    await page.goto(CHESS);
+    await reveal(page);
+    expect(await dotWidth()).toBe(onRamsey);
+
+    // Và nó phải đúng con số mà hằng số hứa. Hộp bao **gồm cả nét viền**, nên
+    // đường kính đo được là $(2r + \text{stroke}) \times$ hệ số, không phải $2r$ —
+    // chép công thức thiếu nét viền thì test đỏ ở một con số đúng.
+    expect(onRamsey).toBe(Math.round(((2 * 6 + 1.5) * 44) / 26));
+  });
+
+  /**
+   * `role="tree"` là một lời hứa về bàn phím, không chỉ về nhãn.
+   *
+   * Trước lượt này mỗi node mang `tabIndex={0}`, nên một cây 11 node ăn 11 lần Tab
+   * — ngược hẳn với thứ `role="tree"` khai với screen reader — và nút thu gọn là
+   * một `<circle>` có `onClick`, tức người dùng bàn phím **không thu gọn được
+   * nhánh nào**.
+   */
+  test('bàn phím: một tab stop, ↑↓ đi node, ←→ thu mở nhánh', async ({ page }) => {
+    await page.goto(RAMSEY);
+    await reveal(page);
+
+    const stops = page.locator('.tree__node[tabindex="0"]');
+    await expect(stops).toHaveCount(1);
+
+    await stops.first().focus();
+    const start = await page.evaluate(() =>
+      document.activeElement?.getAttribute('aria-label'),
+    );
+
+    await page.keyboard.press('ArrowDown');
+    const next = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+    expect(next).not.toBe(start);
+    // Roving: vẫn đúng **một** tab stop, và nó đã dời theo focus.
+    await expect(stops).toHaveCount(1);
+
+    // ← trên một node có con đang mở thì thu nhánh ấy lại.
+    const expandable = page.locator('.tree__node[aria-expanded="true"]').first();
+    await expandable.focus();
+    const before = await page.locator('.tree__node').count();
+    await page.keyboard.press('ArrowLeft');
+    expect(await page.locator('.tree__node').count()).toBeLessThan(before);
+    await expect(page.locator('.tree__node[aria-expanded="false"]')).toHaveCount(1);
+
+    // → mở lại, và focus không rơi về body giữa chừng.
+    await page.keyboard.press('ArrowRight');
+    expect(await page.locator('.tree__node').count()).toBe(before);
+    expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY');
+  });
 });
 
 test.describe('Đầu bài', () => {
