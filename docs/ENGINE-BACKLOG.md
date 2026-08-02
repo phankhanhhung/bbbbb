@@ -542,6 +542,40 @@ rải rác chứ không tụ một khu. Đọc mã không tìm ra chúng — ch�
 Giữ `tools/mutation-sweep.py` trong kho, kể cả ba mutant đã vá, để lượt sau còn kiểm
 được rằng răng vẫn còn đó.
 
+### 3b.1 Lượt sau: hai cổng đếm sandbox nói ngược nhau (2026-08-02)
+
+Không tìm ra bằng bẻ răng mà bằng một câu hỏi rẻ hơn: **chạy hết mọi lệnh soát, không
+chỉ lệnh trong `pnpm check`.** `combviz coverage` in `· 141/148 Sandbox dùng được` và
+gọi tên bảy bài, trong khi `pnpm validate` xanh tuyệt đối, 0 cảnh báo. Cả bảy là bài
+**chơi được** (`step.play`):
+
+```
+chomp-poison-corner        geography-path-parity     hackenbush-blue-red-halves
+chomp-two-rows-staircase   geography-token-on-graph  hackenbush-one-stalk-half
+nim-two-piles-mirror
+```
+
+Nguyên nhân: DoD §15.1 *"100% bài có sandbox + validator"* được cài **hai lần** —
+`lint/no-sandbox` và tiêu chí của bảng điểm — và mệnh đề miễn bài chơi được thêm vào
+lint ở M78 mà không thêm vào bảng điểm. Cả hai cổng đều đúng theo mã của mình; cái sai
+là **có hai mã cho một câu hỏi**.
+
+Chỗ đáng ghi nhất: chú thích của `lint.ts` khẳng định hai cổng đồng bộ, và khẳng định ấy
+đứng ngay trong một đoạn cảnh báo về đúng lớp lỗi này — *"Hai luật cùng một kho mà nói
+ngược nhau thì một trong hai sẽ bị bỏ qua."* Nó tự nó là ví dụ cho điều nó nói.
+
+Vá: một vị từ `sandboxStatus` trong `@combviz/check`, cả hai cổng gọi. Và chốt canh phải
+gọi **hai cổng thật** — bản đầu gọi `lintProblem` với `sandboxSatisfied`, mà sau lượt gộp
+thì `lintProblem` *cũng* gọi `sandboxSatisfied`, nên phép so chỉ khẳng định một hàm đồng
+ý với chính nó và không thể đỏ vì đúng cái lý do nó mang tên. Bản dùng được gọi
+`measure()` của `coverage.ts`; bẻ răng bằng cách **tách lại** bản chép tay thứ hai (đúng
+bản M78 đã lệch) thì nó đỏ.
+
+Bài học chung với hai lỗi của công cụ soát ở trên: **một cổng chỉ đáng tin bằng lượt
+chạy gần nhất của nó**, và cổng nào không nằm trong `pnpm check` thì phải có người chủ
+động gọi. `combviz coverage` là cổng như thế — nay nó vào danh sách chốt canh chung của
+mỗi đợt.
+
 ## 4. Việc **không** nằm trong tài liệu này
 
 Ba thứ hay bị nhầm là "làm engine mạnh hơn":

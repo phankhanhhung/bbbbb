@@ -1,4 +1,5 @@
 import { formatProblem, parseAnchorMarkup, stripAnchorMarkup } from '@combviz/schema';
+import { sandboxStatus } from './sandbox-status.js';
 import type { Problem, Step, ValidationIssue } from '@combviz/schema';
 
 /**
@@ -341,26 +342,7 @@ function checkPublishReadiness(problem: Problem): ValidationIssue[] {
     });
   }
 
-  /**
-   * Bài khai `illustration` **được miễn** sandbox, đúng như `combviz coverage`
-   * đã miễn từ M9.
-   *
-   * Hai luật cùng một kho mà nói ngược nhau thì một trong hai sẽ bị bỏ qua, và
-   * luật hay bị bỏ qua nhất là luật cảnh báo về thứ tác giả **cố ý** làm. Miễn ở
-   * đây không phải cửa lách: `illustration` là tuyên bố rằng bài này không có
-   * thao tác nào có nghĩa, và ép sandbox lên nó chỉ đẻ ra đồ chơi cho đủ chỉ tiêu.
-   */
-  /**
-   * Bài **chơi được** (GM-01) cũng có thao tác có nghĩa — thao tác ấy là *ván cờ*.
-   *
-   * Không có dòng này thì bài Chomp đầu tiên bị đòi thêm một sandbox bên cạnh một ván
-   * chơi hoàn chỉnh, và hai lối cùng đòi người học "nghịch đi" ở hai chỗ khác nhau.
-   * Đúng cái bẫy mà chú thích ngay trên đã gọi tên ở ca `illustration`: một luật cảnh
-   * báo về thứ tác giả **cố ý** làm là luật sắp bị bỏ qua.
-   */
-  const playable = problem.solutions.some((s) => s.steps.some((step) => step.play !== undefined));
-
-  if (!problem.sandbox && !playable && (problem.kind ?? 'illustration') !== 'illustration') {
+  if (sandboxStatus(problem) === 'missing') {
     issues.push({
       code: 'lint/no-sandbox',
       severity: 'warning',

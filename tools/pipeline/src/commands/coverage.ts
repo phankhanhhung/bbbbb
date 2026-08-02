@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { buildTree, preorder, type Problem, type Solution } from '@combviz/schema';
-import { createChecker } from '@combviz/check';
+import { createChecker, sandboxSatisfied, sandboxStatus } from '@combviz/check';
 import { ENGINE_DSL, ENGINE_FRAGMENTS } from '../engines.js';
 import { loadTaxonomy } from '../taxonomy.js';
 
@@ -147,25 +147,25 @@ export function measure(
     // một sandbox cho phản hồi bằng máy. Với họ bài "lật dấu", phản hồi đó là
     // `goal_expr` chứ không phải validator — ràng buộc của bài nằm trong chính
     // thao tác hợp lệ (`board/flip-line`), nên không có gì để một validator cấm.
-    // Đếm cả hai dạng, nhưng **in riêng** số bài có validator để không ai tưởng
-    // hai thứ là một.
-    by(
-      'Sandbox dùng được (bài challenge/both)',
-      0,
-      (p) =>
-        // Bài khai `illustration` **được miễn**, và đó không phải cửa lách: nó là
-        // một tuyên bố của tác giả rằng bài này không có thao tác nào có nghĩa.
-        // Ép sandbox lên mọi bài chỉ đẻ ra đồ chơi vô nghĩa cho đủ chỉ tiêu, mà
-        // một sandbox không ai muốn nghịch còn tệ hơn không có sandbox.
-        (p.kind ?? 'illustration') === 'illustration' ||
-        (p.sandbox?.validators?.length ?? 0) > 0 ||
-        p.sandbox?.goal_expr !== undefined,
-      true,
-    ),
+    //
+    // Phép đo **không** viết ở đây: nó ở `sandboxStatus` của `@combviz/check`, cùng
+    // hàm mà `lint/no-sandbox` gọi. Trước lượt soát 2026-08-02 đây là bản chép tay thứ
+    // hai, và nó lệch: mệnh đề miễn bài **chơi được** thêm vào lint ở M78 mà không
+    // thêm vào đây, nên `pnpm validate` xanh trong khi bảng này báo đỏ bảy bài cờ.
+    by('Sandbox dùng được (bài challenge/both)', 0, sandboxSatisfied, true),
     {
+      // In riêng từng cửa miễn, không gộp: hai cửa nói hai chuyện khác nhau, và gộp
+      // chúng lại là giấu mất chuyện "kho có bao nhiêu bài chơi được".
       label: '… trong đó khai `illustration` (được miễn sandbox)',
       target: 0,
-      count: bank.filter((p) => (p.kind ?? 'illustration') === 'illustration').length,
+      count: bank.filter((p) => sandboxStatus(p) === 'exempt-illustration').length,
+      missing: [],
+      info: true,
+    },
+    {
+      label: '… trong đó chơi được `step.play` (được miễn sandbox)',
+      target: 0,
+      count: bank.filter((p) => sandboxStatus(p) === 'exempt-playable').length,
       missing: [],
       info: true,
     },

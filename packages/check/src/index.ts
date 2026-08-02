@@ -12,6 +12,7 @@ import { checkDerivation } from './derivation.js';
 
 export { checkSemantics, type EngineDslModule } from './semantics.js';
 export { lintProblem } from './lint.js';
+export { sandboxStatus, sandboxSatisfied, type SandboxStatus } from './sandbox-status.js';
 export { checkTaxonomy, type Taxonomy, type VocabEntry } from './taxonomy.js';
 export { checkDerivation } from './derivation.js';
 

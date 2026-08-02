@@ -176,9 +176,10 @@ tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mớ
 | **Tiêu đề OG đo bề rộng thật** — đóng `PLAN-P1.md` §10.3b, `18/144 → 0` card tràn | 08-02 | `PLAN-P1.md` §10.3b |
 | **AL-21** — bất đẳng thức có tên: `am_gm`, `cauchy_schwarz` + 3 bài; đóng phần *có tên* của §4.1 | 08-02 | `ENGINE-ALGEBRA.md` §52 |
 | **AL-22** — kết luận về hàm: `config.assume` + `use_injective` + 1 bài; schema `1.6.0` | 08-02 | `ENGINE-ALGEBRA.md` §53 |
+| **Hai cổng đếm sandbox** nói ngược nhau — `coverage` đỏ 7 bài mà `validate` xanh; gộp về một vị từ | 08-02 | `ENGINE-BACKLOG.md` §3b.1 |
 
 Kho đi từ **114 bài → 148 bài** trong hai ngày, test từ **3459** (M78.8) lên
-**3940 / 68 tệp**, schema từ `1.0.0` lên `1.6.0` — sáu minor, sáu migration đồng nhất.
+**3943 / 69 tệp**, schema từ `1.0.0` lên `1.6.0` — sáu minor, sáu migration đồng nhất.
 
 > **Một cái bẫy đếm, ghi ra để lần sau không phải điều tra lại.** Con số chính thức
 > là số của `pnpm test` (`vitest run` không lọc đường dẫn) — **3843 / 67 tệp** lúc
@@ -309,4 +310,10 @@ nói không.
 ```bash
 pnpm check      # index && typecheck && lint && test && validate && labels
 CHROMIUM_PATH=/opt/pw-browsers/chromium pnpm e2e
+python3 tools/mutation-sweep.py                    # thoát ≠ 0 nếu có mục BỎ QUA
+npx tsx tools/pipeline/src/cli.ts coverage         # bảng điểm DoD §15.1
 ```
+
+Hai lệnh cuối **không** nằm trong `pnpm check`, và đó là lý do chúng phải có tên ở đây:
+một cổng chỉ đáng tin bằng lượt chạy gần nhất của nó. `combviz coverage` vào danh sách
+sau khi nó báo đỏ bảy bài suốt từ M78 mà không ai chạy — `ENGINE-BACKLOG.md` §3b.1.
