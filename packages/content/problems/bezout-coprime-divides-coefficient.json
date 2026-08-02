@@ -2,12 +2,12 @@
   "schema_version": "1.5.0",
   "id": "bezout-coprime-divides-coefficient",
   "statement": {
-    "vi": "Cho $\\gcd(p,q) = 1$. Nếu $q$ chia hết $a p^3$ thì vì sao $q$ phải chia hết chính $a$? Bézout trả lời bằng một phép khai triển."
+    "vi": "Định lý nghiệm hữu tỉ dừng lại ở $q \\mid ap^3$. Đi tiếp tới $q \\mid a$ cần biết $\\gcd(p,q) = 1$ có **sống sót** khi $p$ lên luỹ thừa hay không — Bézout trả lời bằng một phép khai triển."
   },
   "source": {
     "contest": "folklore",
     "note": {
-      "vi": "Bổ đề Euclid, dạng cần cho định lý nghiệm hữu tỉ. Engine kiểm phần đại số — phép khai triển; phần chia hết nằm ở lời kể, vì engine này không có khái niệm chia hết."
+      "vi": "Bổ đề Euclid ở đúng dạng định lý nghiệm hữu tỉ cần. Chọn đường lập phương thay vì giả định sẵn $\\gcd(p^3,q) = 1$: phép khai triển **là** chứng minh của điều ấy. Engine kiểm phần đại số; mọi câu chia hết nằm ở lời kể, vì engine này không có khái niệm chia hết."
     }
   },
   "topics": [
@@ -44,7 +44,7 @@
           "parent": null,
           "edge_type": "seq",
           "narrative": {
-            "vi": "$\\gcd(p,q) = 1$ nên có $u, v$ nguyên với $up + vq = 1$ — đó là Bézout. Lập phương [[a1|hai vế]]: vế phải vẫn là $1$, còn vế trái nở ra bốn hạng tử."
+            "vi": "$\\gcd(p,q) = 1$ nên có $u, v$ nguyên với $up + vq = 1$ — đó là Bézout. Nhưng bài trước để lại $q \\mid ap^3$, tức cần một Bézout cho **$p^3$**, không phải cho $p$. Lập phương [[a1|hai vế]] là cách lấy nó ra: vế phải vẫn là $1$, vế trái nở ra bốn hạng tử."
           },
           "anchors": {
             "a1": {
@@ -76,7 +76,7 @@
           "parent": "s0",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Nhân cả hai vế với $a$ — hệ số đầu của một đa thức bậc ba nên $a \\neq 0$, đúng điều kiện engine in đỏ. Nhìn [[a1|bốn hạng tử]] bên trái: hạng tử đầu mang $p^3$, ba hạng tử sau đều mang một thừa số $q$."
+            "vi": "Nhân hai vế với $a$ — hệ số đầu của một đa thức bậc ba nên $a \\neq 0$, đúng điều kiện engine in đỏ. Hạng tử đầu là $a(up)^3$, tức $u^3 \\cdot ap^3$; ba [[a1|hạng tử sau]] đều mang một thừa số $q$. Vế phải là $a$."
           },
           "anchors": {
             "a1": {
@@ -117,7 +117,7 @@
           "parent": "s1",
           "edge_type": "seq",
           "narrative": {
-            "vi": "Giả thiết cho $q \\mid a p^3$, nên $q$ chia hết hạng tử đầu. Ba hạng tử còn lại có sẵn thừa số $q$. Vậy $q$ chia hết cả [[a1|vế trái]], mà vế trái bằng $a$ — nên $q \\mid a$."
+            "vi": "Giả thiết $q \\mid ap^3$ làm hạng tử đầu chia hết cho $q$, ba hạng tử sau thì có sẵn $q$. Vậy $q$ chia hết [[a1|vế trái]], mà vế trái bằng $a$ — nên $q \\mid a$. Nói gọn: lập phương Bézout cho ra một Bézout mới của $p^3$ và $q$, tức nguyên tố cùng nhau sống sót qua luỹ thừa."
           },
           "anchors": {
             "a1": {
