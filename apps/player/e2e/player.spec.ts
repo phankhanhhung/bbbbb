@@ -366,6 +366,48 @@ test.describe('Cây lời giải phân nhánh (PLY-02)', () => {
   });
 
   /**
+   * Bốn ký hiệu, và **mỗi ký hiệu phải nói lại thành lời**.
+   *
+   * Luật của bảng ký hiệu là hai tiêu chí chứ không một: trỏ tới một trường có
+   * thật trong schema, **và** trường ấy đổi *thứ người học làm được tại bước đó*.
+   * Test đi theo đúng hai tiêu chí — có hình, và nhãn nói cùng một điều. Ký hiệu
+   * chỉ có trên hình thì nó chỉ tồn tại cho người nhìn thấy nó.
+   */
+  test('node mang dấu của thứ bước đó **làm được**: chơi, song ánh, đổi engine', async ({
+    page,
+  }) => {
+    // Ván chơi ⇒ ô vuông bo góc thay cho chấm.
+    await page.goto('/?p=nim-three-piles-xor');
+    await reveal(page);
+    expect(await page.locator('.tree__glyph--play').count()).toBeGreaterThan(0);
+    expect(await page.locator('.tree__node[aria-label*="chơi được"]').count()).toBeGreaterThan(0);
+
+    // Song ánh ⇒ chấm đôi.
+    await page.goto('/?p=rooks-permutation-bijection');
+    await reveal(page);
+    expect(await page.locator('.tree__glyph--pair').count()).toBeGreaterThan(0);
+    expect(
+      await page.locator('.tree__node[aria-label*="hai pane song ánh"]').count(),
+    ).toBeGreaterThan(0);
+
+    // Đổi engine ⇒ vạch trên **cạnh**, vì chuyện ấy xảy ra giữa hai bước.
+    await page.goto('/?p=catalan-first-return-gf');
+    await reveal(page);
+    expect(await page.locator('.tree__swap').count()).toBeGreaterThan(0);
+    expect(await page.locator('.tree__node[aria-label*="đổi sang hình"]').count()).toBeGreaterThan(
+      0,
+    );
+
+    // Và bài không có gì trong ba thứ ấy thì **không** mọc dấu nào — một bảng ký
+    // hiệu vẽ ở mọi chỗ là một hoa văn, không phải một tín hiệu.
+    await page.goto(CHESS);
+    await reveal(page);
+    await expect(page.locator('.tree__glyph--play')).toHaveCount(0);
+    await expect(page.locator('.tree__glyph--pair')).toHaveCount(0);
+    await expect(page.locator('.tree__swap')).toHaveCount(0);
+  });
+
+  /**
    * `role="tree"` là một lời hứa về bàn phím, không chỉ về nhãn.
    *
    * Trước lượt này mỗi node mang `tabIndex={0}`, nên một cây 11 node ăn 11 lần Tab

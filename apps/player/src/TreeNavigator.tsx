@@ -27,6 +27,29 @@ interface TreeNavigatorProps {
 }
 
 /**
+ * Ký hiệu trên node — và luật chọn chúng khắt khe hơn "trường này có thật".
+ *
+ * Kỷ luật: mỗi ký hiệu phải trỏ tới một trường có thật trong schema, **và** trường
+ * ấy phải đổi *thứ người học làm được tại bước đó*. Hai tiêu chí, không phải một —
+ * "có thật trong schema" khác "có nghĩa với người học", và bảng này từng suýt dài
+ * gấp rưỡi vì lẫn hai chuyện:
+ *
+ * - `expects_violation` (94/557 step) là **chú thích của tác giả** cho lint
+ *   sandbox: "bước này cố ý vi phạm validator X". Nó không nói gì về chỗ người học
+ *   dễ sai; nó nói về chỗ *validator* sẽ đỏ. Vẽ nó lên bản đồ điều hướng là dạy
+ *   người học săn một tín hiệu thuộc khâu soạn bài.
+ * - `claims` (89/557) là hợp đồng kiểm nội bộ của engine đại số. Người học không
+ *   làm gì khác vì nó.
+ *
+ * Bốn dấu còn lại thì có: bấm được một ván, mở được hai pane, nhánh đã đóng, và
+ * hình đổi hẳn engine. Một bảng bốn dòng nói được nhiều hơn bảng sáu dòng có hai
+ * dòng nhiễu.
+ */
+function engineOf(step: Step): string | undefined {
+  return step.scene?.engine;
+}
+
+/**
  * Độ phủ **của người đọc**, không phải hình dạng của lời giải.
  *
  * Bản đồ trước lượt này chỉ tô tổ tiên của node hiện tại, nên nó vẽ được *lời giải
@@ -268,6 +291,30 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
               />
             ))}
 
+            {/* **Đổi engine là chuyện của cạnh, không phải của node.** Nó xảy ra
+                *giữa* hai bước, nên vạch nó lên node là vạch sai một nửa: node đích
+                không "là" chỗ đổi, nó chỉ là chỗ đã đổi xong. 7/143 lời giải có
+                chuyện này, và ở chúng hình dưới tay đổi hẳn loại — người đọc xứng
+                đáng được báo trước một nhịp. */}
+            {layout.edges.map((edge, i) => {
+              if (edge.dashed) return null;
+              const from = engineOf(edge.from.step);
+              const to = engineOf(edge.to.step);
+              if (!from || !to || from === to) return null;
+              return (
+                <line
+                  key={`swap-${i}`}
+                  class="tree__swap"
+                  x1={edge.to.x - 4}
+                  y1={edge.to.y - ROW / 2}
+                  x2={edge.to.x + 4}
+                  y2={edge.to.y - ROW / 2}
+                  stroke="#7A5AB0"
+                  stroke-width="2"
+                />
+              );
+            })}
+
             {layout.nodes.map((node) => {
               const isCurrent = node.step.id === currentId;
               const closed = isClosedBranch(tree, node.step.id);
@@ -290,7 +337,7 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
                   onClick={() => onSelect(node.step.id)}
                   role="treeitem"
                   aria-selected={isCurrent}
-                  aria-label={nodeLabel(node.step, closed, left, allSeen)}
+                  aria-label={nodeLabel(node.step, closed, left, allSeen, swapsEngine(tree, node.step))}
                   {...(hasKids ? { 'aria-expanded': !collapsed.has(node.step.id) } : {})}
                   /* `tabindex` thường, **không** phải `tabIndex`. Trên phần tử SVG,
                      Preact gán prop viết hoa thành *thuộc tính JS* chứ không thành
@@ -314,18 +361,43 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
                     fill="transparent"
                   />
 
-                  <circle
-                    r={isCurrent ? 8 : 6}
-                    fill={
-                      isCurrent
-                        ? '#0072B2'
-                        : onPath.has(node.step.id)
-                          ? '#9ED9F5'
-                          : '#EDEDEA'
-                    }
-                    stroke={node.step.edge_type === 'contradiction' ? '#C5221F' : '#8A8A82'}
-                    stroke-width="1.5"
-                  />
+                  {/* Ván chơi được ⇒ **hình vuông bo góc**, không phải chấm. Khác
+                      dáng chứ không khác màu: dáng đọc được ở đuôi mắt, còn màu thì
+                      đã dùng hết cho "đang ở đây / trên đường / ngoài đường". */}
+                  {node.step.play ? (
+                    <rect
+                      class="tree__glyph tree__glyph--play"
+                      x={-(isCurrent ? 8 : 6)}
+                      y={-(isCurrent ? 8 : 6)}
+                      width={(isCurrent ? 8 : 6) * 2}
+                      height={(isCurrent ? 8 : 6) * 2}
+                      rx="2"
+                      fill={dotFill(isCurrent, onPath.has(node.step.id))}
+                      stroke="#8A8A82"
+                      stroke-width="1.5"
+                    />
+                  ) : (
+                    <circle
+                      r={isCurrent ? 8 : 6}
+                      fill={dotFill(isCurrent, onPath.has(node.step.id))}
+                      stroke={node.step.edge_type === 'contradiction' ? '#C5221F' : '#8A8A82'}
+                      stroke-width="1.5"
+                    />
+                  )}
+
+                  {/* Song ánh ⇒ **chấm đôi**: hai pane là cả nội dung của bước ấy,
+                      nên một chấm là vẽ thiếu một nửa. */}
+                  {node.step.bijection ? (
+                    <circle
+                      class="tree__glyph tree__glyph--pair"
+                      cx="5"
+                      cy="-5"
+                      r="3.5"
+                      fill={dotFill(isCurrent, onPath.has(node.step.id))}
+                      stroke="#8A8A82"
+                      stroke-width="1.2"
+                    />
+                  ) : null}
 
                   {node.step.edge_type === 'contradiction' ? (
                     <text
@@ -456,6 +528,12 @@ function round(value: number): number {
   return Math.round(value * 100) / 100 + 0;
 }
 
+/** Một nguồn cho màu nền node — chấm, ô vuông và chấm đôi phải khớp nhau. */
+function dotFill(isCurrent: boolean, onPath: boolean): string {
+  if (isCurrent) return '#0072B2';
+  return onPath ? '#9ED9F5' : '#EDEDEA';
+}
+
 /**
  * Nhãn cho screen reader — và **kênh chính** của độ phủ, không phải kênh phụ.
  *
@@ -464,15 +542,33 @@ function round(value: number): number {
  * hơn chỗ nó chiếm thì nhãn phải mang đủ, chứ không phải hình mang đủ rồi nhãn
  * chép lại một nửa.
  */
+/** Bước này có đổi engine so với bước trước không (dấu tím trên cạnh)? */
+function swapsEngine(tree: SolutionTree, step: Step): boolean {
+  const parent = step.parent ? tree.steps.get(step.parent) : undefined;
+  const from = parent ? engineOf(parent) : undefined;
+  const to = engineOf(step);
+  return Boolean(from && to && from !== to);
+}
+
 function nodeLabel(
-  step: { id: string; case_label?: { vi: string }; edge_type: string },
+  step: Step,
   closed: boolean,
   left: number,
   allSeen: boolean,
+  swaps: boolean,
 ): string {
   const base = step.case_label?.vi ?? step.id;
   const cover = left > 0 ? ` — còn ${left} nhánh chưa xem` : allSeen ? ' — đã xem hết nhánh' : '';
-  if (step.edge_type === 'contradiction') return `${base} — mâu thuẫn, nhánh đóng`;
+  // Ký hiệu trên hình phải nói lại thành lời, nếu không thì bốn dấu ấy chỉ tồn tại
+  // cho người nhìn được chúng.
+  const marks = [
+    step.play ? 'chơi được' : '',
+    step.bijection ? 'hai pane song ánh' : '',
+    swaps ? `đổi sang hình ${engineOf(step)}` : '',
+  ].filter(Boolean);
+  const tail = marks.length > 0 ? ` — ${marks.join(', ')}` : '';
+
+  if (step.edge_type === 'contradiction') return `${base} — mâu thuẫn, nhánh đóng${tail}`;
   if (step.edge_type === 'merge_ref') return `${base} — quay về bước tổng hợp`;
-  return `${closed ? `${base} — nhánh đã đóng` : base}${cover}`;
+  return `${closed ? `${base} — nhánh đã đóng` : base}${cover}${tail}`;
 }
