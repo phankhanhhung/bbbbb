@@ -1,26 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { unionBox } from '../src/BijectionPanes.jsx';
 import { renderMath } from '../src/math.js';
 
 /**
- * Phép biến hình **không** còn ở file này.
+ * Phép biến hình **không** còn tồn tại, và khung hợp đi theo nó.
  *
- * M37 dựng nó tại chỗ: đo tâm bằng cách suy ngược từ cây đã render, tự nuôi vòng
- * rAF, tự có thanh kéo. Cả ba phần đã chuyển về đúng tầng của chúng —
- * `EngineRenderer.elementBoxes` (engine tự khai hình học),
- * `applyChoreography` (nội suy thuần, có test riêng ở `packages/render`), và
- * `useChoreography` + `Timeline` (đồng hồ dùng chung với step có choreography).
- *
- * Còn lại ở đây đúng thứ chỉ file này biết: cân tỉ lệ hai pane, và khung hợp cho
- * chế độ biến hình.
+ * M37 dựng biến hình tại chỗ trong file này; các tầng dưới lần lượt nhận lại
+ * từng phần, rồi cả chế độ ấy bị thay bằng **điểm danh từng cặp** — hai pane
+ * đứng nguyên chỗ, không gộp toạ độ, nên không còn khung hợp nào để tính. Timeline
+ * mới có sổ riêng ở `bijection-rollcall.test.ts`.
  */
-describe('PRN-04 — khung hợp', () => {
-  it('chứa trọn cả hai', () => {
-    const box = unionBox({ x: 0, y: 0, width: 10, height: 4 }, { x: -6, y: 2, width: 5, height: 9 });
-
-    expect(box).toEqual({ x: -6, y: 0, width: 16, height: 11 });
-  });
-});
 
 describe('renderMath — chữ đậm ngoài công thức', () => {
   it('đổi `**…**` thành <strong>', () => {

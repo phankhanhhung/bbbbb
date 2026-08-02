@@ -150,6 +150,15 @@ export function renderMatrix(
         return;
       }
 
+      // Nền cho ô **có** cạnh, vẽ trước rồi mới phủ màu lên.
+      //
+      // Trông thừa ở khung tĩnh — ô màu che kín nó — nhưng màu ô là thứ **tắt
+      // được**: chế độ điểm danh giữ ô ở `opacity: 0` cho tới lượt cặp ấy được
+      // gọi. Không có nền thì mỗi ô chưa tới lượt là một lỗ trắng không viền, và
+      // cái lưới trông như thủng chứ không như đang chờ được điền. Nền không đeo
+      // `data-el` nên không pha nào chạm tới nó — lưới đứng yên suốt lượt.
+      nodes.push(keyed(`${matrixCellId(u, v)}__bg`, 'rect', { ...box, fill: ctx.theme.surface.neutral }));
+
       const edge = graph.edges.find((e) => e.id === cell.edge);
       // Key **duy nhất** cho từng ô, nhưng `data-el` chỉ về cùng một cạnh: ô
       // $(u,v)$ và ô $(v,u)$ là hai chỗ vẽ của một element. Trùng key thì diff

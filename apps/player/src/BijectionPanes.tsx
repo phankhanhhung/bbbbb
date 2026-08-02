@@ -2,18 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import {
   applyChoreography,
   createContext,
-  keyed,
   matchScale,
   sceneBoxStyle,
   type LabelAtlas,
   type SceneRenderer,
 } from '@combviz/render';
-import {
-  MORPH_LEFT_GROUP,
-  MORPH_RIGHT_GROUP,
-  morphChoreography,
-  prefixRightPane,
-} from './bijection-morph.js';
+import { rollcallChoreography } from './bijection-rollcall.js';
 import { useChoreography } from './useChoreography.js';
 import { Timeline } from './Timeline.jsx';
 import { patch, KEY_ATTR, ELEMENT_ATTR } from '@combviz/render/dom';
@@ -36,32 +30,6 @@ interface Props {
   readonly anchor?: string | null;
 }
 
-function prefersReducedMotion(): boolean {
-  return (
-    typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
-}
-
-/** Khung hình chữ nhật — `unionBox` làm việc trên nó. */
-interface Box {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
-
-/** Khung nhỏ nhất chứa cả hai — hệ toạ độ chung của chế độ biến hình. */
-export function unionBox(a: Box, b: Box): Box {
-  const x = Math.min(a.x, b.x);
-  const y = Math.min(a.y, b.y);
-  return {
-    x,
-    y,
-    width: Math.max(a.x + a.width, b.x + b.width) - x,
-    height: Math.max(a.y + a.height, b.y + b.height) - y,
-  };
-}
-
 /**
  * PRN-04 — hai cấu hình cạnh nhau, rê vào một bên thì bên kia sáng lên.
  *
@@ -82,12 +50,10 @@ export function BijectionPanes({
   anchor = null,
 }: Props): preact.JSX.Element | null {
   const [active, setActive] = useState<string | null>(null);
-  // PRN-04 — có đang ở chế độ biến hình không. Tiến độ thì `useChoreography` giữ.
-  const [morphing, setMorphing] = useState(false);
-  const stepwise = prefersReducedMotion();
+  // PRN-04 — có đang điểm danh không. Tiến độ thì `useChoreography` giữ.
+  const [rollcall, setRollcall] = useState(false);
   const leftRef = useRef<SVGSVGElement>(null);
   const rightRef = useRef<SVGSVGElement>(null);
-  const morphRef = useRef<SVGSVGElement>(null);
 
   const bijection = step.bijection;
 
@@ -153,84 +119,56 @@ export function BijectionPanes({
   );
 
   /**
-   * Hai cây node của chế độ biến hình, trong **một** hệ toạ độ.
+   * Timeline điểm danh, dựng từ `pairs`.
    *
-   * Không dịch pane phải về chỗ pane trái: cả kho dùng chung quy ước đơn vị
-   * (G-10), nên hai scene vốn đã nằm cùng một thước đo. Chồng chúng lên nhau
-   * trong khung hợp là đủ, và phần tử nào thật sự phải *di chuyển* thì nó di
-   * chuyển vì toạ độ của nó khác — không phải vì ta đẩy cả pane đi.
-   */
-  /**
-   * Timeline biến hình, dựng từ `pairs` và hình học do **engine khai**.
+   * Nó **không** cần hình học: không có gì dời chỗ, nên không hỏi `elementBoxes`
+   * về toạ độ. Chỉ hỏi một câu — "id này có được vẽ không" — vì gọi tên một cặp
+   * mà một đầu không có mực thì gọi xong không ai đáp.
    *
-   * Không đo ngược từ cây đã render nữa: `elementBoxes` biết chính xác chỗ mực
-   * nằm, kể cả ở những hình mà phép đoán từ thuộc tính SVG chịu thua.
-   *
-   * `null` nghĩa là quá nhiều cặp không đo được — Player **không hiện nút**. Một
-   * animation mà một phần ba số cặp đứng im còn tệ hơn hai hình đặt cạnh nhau.
+   * `null` nghĩa là quá nhiều cặp không vẽ được, và Player **không hiện nút**.
    */
   const generated = useMemo(() => {
     if (!step.scene || !bijection) return null;
     const anchor = Object.keys(step.anchors ?? {})[0];
     if (anchor === undefined) return null;
-    return morphChoreography(
-      bijection,
-      (id) => renderer.boxesOf(step.scene!, id, geomCtx),
-      (id) => renderer.boxesOf(bijection.scene, id, geomCtx),
-      {
-        anchor,
-        // Chồng lấn **bằng 0** khi bấm từng pha: `goPhase` nhảy tới
-        // `at + duration`, nên pha chồng nhau sẽ dừng ở chỗ cặp kế tiếp mới bay
-        // được nửa đường — trông như hỏng.
-        overlapMs: stepwise ? 0 : 380,
-      },
-    );
-  }, [renderer, step, bijection, geomCtx, stepwise]);
+    const drawn = (scene: NonNullable<Step['scene']>) => (id: string) =>
+      renderer.boxesOf(scene, id, geomCtx).length > 0;
+    return rollcallChoreography(bijection, drawn(step.scene), drawn(bijection.scene), { anchor });
+  }, [renderer, step, bijection, geomCtx]);
 
   const timeline = useChoreography(generated?.spec, 1);
 
   /**
-   * Hai cây gộp làm một, mỗi cây bọc trong **một nhóm có key**.
+   * **Một** effect cho cả hai pane, ở cả hai chế độ.
    *
-   * Nhóm là chỗ pha đổi vai bám vào: đặt `opacity` lên `<g>` thì cả cây mờ đi
-   * như một khối, kể cả nhãn và chú thích — thứ không thuộc cặp nào và vì thế
-   * từng nằm lại chồng lên hình bên kia.
+   * Chế độ biến hình từng cần một effect riêng và một `<svg>` thứ ba, vì nó gộp
+   * hai cây vào một hệ toạ độ. Điểm danh thì không dời gì: hai pane giữ nguyên
+   * khung, nguyên tỉ lệ, nguyên chỗ — chỉ khác ở chỗ cây nào cũng đi qua
+   * `applyChoreography` trước khi vào `patch`. Bố cục không nhúc nhích khi bấm
+   * chạy, và đó là một phần của việc đọc được: cái bảng bên phải phải nằm sẵn ở
+   * đúng chỗ ấy **trước** khi ô đầu tiên hiện ra.
    *
-   * Pane phải còn đeo tiền tố cho key: hai bên hoàn toàn có thể trùng key — ở
-   * GR-07 đồ thị và ma trận kề của nó là **cùng** một tập element vẽ hai kiểu.
+   * Spec chiếu xuống từng pane, không dùng chung: một pha `hide` nhắm vào
+   * `ev1v2` mà áp lên cây phải sẽ giấu luôn ô ma trận mang `data-el = ev1v2`.
    */
-  const morphNodes = useMemo(() => {
-    if (!step.scene || !bijection) return [];
-    return [
-      keyed(MORPH_LEFT_GROUP, 'g', {}, renderer.render(step.scene, ctx)),
-      keyed(MORPH_RIGHT_GROUP, 'g', {}, prefixRightPane(renderer.render(bijection.scene, ctx))),
-    ];
-  }, [renderer, step, bijection, ctx]);
-
   useEffect(() => {
     const left = leftRef.current;
     const right = rightRef.current;
-    if (!left || !right || !step.scene || !bijection || morphing) return;
+    if (!left || !right || !step.scene || !bijection) return;
 
-    patch(left, renderer.render(step.scene, ctx));
-    patch(right, renderer.render(bijection.scene, ctx));
-  }, [renderer, step, bijection, ctx, morphing]);
+    const leftTree = renderer.render(step.scene, ctx);
+    const rightTree = renderer.render(bijection.scene, ctx);
+    const run = rollcall && generated !== null;
 
-  useEffect(() => {
-    const container = morphRef.current;
-    if (!container || !morphing || !generated) return;
-    patch(
-      container,
-      applyChoreography(morphNodes, generated.spec, timeline.ms, { boxOf: generated.boxOf }),
-    );
-  }, [morphing, generated, morphNodes, timeline.ms]);
+    patch(left, run ? applyChoreography(leftTree, generated.left, timeline.ms) : leftTree);
+    patch(right, run ? applyChoreography(rightTree, generated.right, timeline.ms) : rightTree);
+  }, [renderer, step, bijection, ctx, rollcall, generated, timeline.ms]);
 
   if (!bijection || !step.scene) return null;
 
   const leftViewport = renderer.viewportOf(step.scene, ctx);
   const rightViewport = renderer.viewportOf(bijection.scene, ctx);
   const [leftBox, rightBox] = matchScale(leftViewport, rightViewport);
-  const morphBox = unionBox(leftViewport, rightViewport);
 
   /**
    * Leo hết chuỗi tổ tiên, lấy key **đầu tiên có cặp**, không lấy key gần nhất.
@@ -281,40 +219,8 @@ export function BijectionPanes({
     </figure>
   );
 
-  if (morphing && generated) {
-    return (
-      <div class="bijection bijection--morph">
-        <figure class="bijection__pane">
-          <svg
-            ref={morphRef}
-            viewBox={`${morphBox.x} ${morphBox.y} ${morphBox.width} ${morphBox.height}`}
-            style={sceneBoxStyle(morphBox, morphBox.width)}
-            role="img"
-            aria-label={`Biến hình từ ${bijection.label_left?.vi ?? 'cấu hình bên trái'} sang ${
-              bijection.label_right?.vi ?? 'cấu hình bên phải'
-            }`}
-          />
-          <figcaption>
-            {bijection.label_left?.vi ?? 'Bên trái'} → {bijection.label_right?.vi ?? 'Bên phải'}
-          </figcaption>
-        </figure>
-
-        {/*
-          Thanh timeline **dùng chung** với step có choreography (CHO-02), không
-          phải một bản sao riêng. Nhờ đó chế độ giảm chuyển động — bộ đếm pha,
-          bấm qua **từng cặp** — có ngay mà không viết thêm dòng nào, và nó đúng
-          là thứ SRS đòi ở PRN-04: "biến hình theo từng cặp".
-        */}
-        <Timeline spec={generated.spec} state={timeline} />
-        <nav class="timeline">
-          <button onClick={() => setMorphing(false)}>Về hai hình</button>
-        </nav>
-      </div>
-    );
-  }
-
   return (
-    <div class="bijection">
+    <div class={rollcall ? 'bijection bijection--rollcall' : 'bijection'}>
       {pane(
         'left',
         bijection.label_left?.vi ?? 'Bên trái',
@@ -333,11 +239,31 @@ export function BijectionPanes({
         'Cấu hình bên phải, ứng một-một với bên trái',
       )}
 
-      {/* Không có timeline đo được thì không hiện nút — xem `morphChoreography`. */}
+      {/*
+        Hai pane **ở nguyên đó** khi điểm danh chạy — thanh timeline chỉ mọc thêm
+        bên dưới. Chế độ biến hình từng thay cả bố cục bằng một canvas gộp, và cái
+        giá là người xem mất chỗ neo mắt đúng lúc cần nó nhất.
+
+        Thanh timeline **dùng chung** với step có choreography (CHO-02), không
+        phải một bản sao riêng. Nhờ đó chế độ giảm chuyển động — bộ đếm pha, bấm
+        qua từng nhịp — có ngay mà không viết thêm dòng nào.
+
+        Không có timeline nào dựng được thì không hiện nút; xem
+        `rollcallChoreography`.
+      */}
       {generated ? (
-        <nav class="timeline bijection__morph-toggle">
-          <button onClick={() => setMorphing(true)}>▶ Biến hình</button>
-        </nav>
+        rollcall ? (
+          <div class="bijection__timeline">
+            <Timeline spec={generated.spec} state={timeline} />
+            <nav class="timeline">
+              <button onClick={() => setRollcall(false)}>Về hai hình</button>
+            </nav>
+          </div>
+        ) : (
+          <nav class="timeline bijection__rollcall-toggle">
+            <button onClick={() => setRollcall(true)}>▶ Điểm danh từng cặp</button>
+          </nav>
+        )
       ) : null}
 
       {/*

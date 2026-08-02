@@ -97,16 +97,16 @@ body {
   align-items: center;
 }
 
-/* PRN-04 — chế độ biến hình: **một** khung, không phải hai. Hai hình chồng lên
-   nhau trong cùng hệ toạ độ là toàn bộ ý của chế độ này, nên lưới ba cột của
-   view song ánh phải nhường chỗ cho một cột. */
-.bijection--morph {
-  grid-template-columns: minmax(0, 1fr);
-  justify-items: center;
-}
+/* PRN-04 — lượt điểm danh **không** đổi bố cục: hai pane giữ nguyên khung,
+   nguyên tỉ lệ, nguyên chỗ, và thanh timeline mọc thêm bên dưới. Chế độ biến
+   hình cũ thay cả lưới bằng một cột gộp, và cái giá là người xem mất chỗ neo
+   mắt đúng lúc cần nó nhất — cái bảng bên phải phải nằm sẵn ở đó **trước** khi
+   ô đầu tiên hiện ra. Nên ở đây không có luật lưới nào cả. */
 
-/* Nút mở biến hình nằm dưới hai pane, trải hết bề ngang lưới. */
-.bijection__morph-toggle {
+/* Nút mở lượt điểm danh, và thanh timeline khi nó chạy — cùng nằm dưới hai
+   pane, trải hết bề ngang lưới. */
+.bijection__rollcall-toggle,
+.bijection__timeline {
   grid-column: 1 / -1;
   justify-content: center;
 }
@@ -259,8 +259,31 @@ body {
  * lên mọi canvas: một bàn cờ $8 \times 8$ là 64 ô, và gắn transition cho từng ô
  * ở step chẳng có pha nào là trả giá NFR-P2 để đổi lấy không gì.
  */
-.canvas [data-phase] {
+.canvas [data-phase],
+.bijection__pane [data-phase] {
   filter: drop-shadow(0 0 3px var(--halo)) drop-shadow(0 0 6px var(--halo));
+}
+
+/*
+ * Cùng vệt sáng ấy cho lượt **điểm danh từng cặp** ở view song ánh.
+ *
+ * Không thừa: `focus` gắn `data-phase` đúng như ở canvas chính, nhưng bộ chọn cũ
+ * khoá sau `.canvas`, mà pane song ánh là `.bijection__pane`. Thiếu dòng này thì
+ * pha `focus` chạy đủ thời lượng, đặt đủ thuộc tính, và **không nhìn thấy gì** —
+ * đúng cái triệu chứng "tính năng chạy mà màn hình đứng im" mà M37/M38 đã trả giá.
+ *
+ * `transition` khoá sau lượt đang chạy chứ không rải lên mọi pane: một bảng
+ * incidence là hàng chục ô, và gắn transition cho từng ô ở step chẳng có pha nào
+ * là trả giá NFR-P2 để đổi lấy không gì.
+ */
+.bijection--rollcall .bijection__pane svg * {
+  transition: filter 200ms ease-in-out, opacity 200ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bijection--rollcall .bijection__pane svg * {
+    transition: none;
+  }
 }
 
 .canvas--choreo svg * {

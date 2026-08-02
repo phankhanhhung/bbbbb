@@ -818,40 +818,46 @@ test.describe('Chuyển step: khung đầu dựng ở mốc 0 (M69)', () => {
   });
 });
 
-test.describe('Biến hình song ánh (PRN-04)', () => {
+test.describe('Điểm danh từng cặp (PRN-04)', () => {
   /**
    * Ràng buộc phân biệt "**theo từng cặp**" (SRS §257) với "đồng loạt": ở một
-   * mốc giữa timeline, cặp đầu đã dịch chỗ mà cặp cuối thì chưa.
+   * mốc giữa timeline, ảnh của cặp đầu đã hiện mà ảnh của cặp cuối thì chưa.
    *
    * Bản M37 dời tất cả cùng một `t`, và mọi test đều xanh — vì không test nào
    * hỏi câu này. Cộng thêm hai lần tính năng "chạy" mà màn hình đứng im, đây là
    * chốt canh cho đúng lớp lỗi ấy.
    */
   for (const [name, url, first, last] of [
-    ['tập con ↔ xâu nhị phân', '/?p=subsets-binary-strings', '[data-el="x1"]', '[data-el="x4"]'],
-    ['đồ thị ↔ ma trận kề', '/?p=adjacency-matrix-handshake', '[data-k="ev1v2"]', '[data-k="ev1v3"]'],
+    // Danh tính mỗi engine gắn một kiểu: `sequence` đeo `data-k`, ô ma trận của
+    // `graph` đeo `data-k` cho ô và `data-el` cho cạnh. Chốt này nhìn **ảnh bên
+    // phải**, nên nó dùng đúng thuộc tính mà engine bên ấy gắn.
+    ['tập con ↔ xâu nhị phân', '/?p=subsets-binary-strings', '[data-k="b1"]', '[data-k="b4"]'],
+    ['đồ thị ↔ ma trận kề', '/?p=adjacency-matrix-handshake', '[data-k="mx-v1-v2"]', '[data-k="mx-v1-v3"]'],
   ] as const) {
-    test(`${name}: bay theo từng cặp, không đồng loạt`, async ({ page }) => {
+    test(`${name}: điền theo từng cặp, không đồng loạt`, async ({ page }) => {
       await page.goto(url);
       await reveal(page);
-      await page.getByRole('button', { name: 'Biến hình' }).click();
+      await page.getByRole('button', { name: 'Điểm danh từng cặp' }).click();
 
       const scrub = page.getByLabel('Tua trong bước');
-      const head = page.locator(`.bijection svg ${first}`).first();
-      const tail = page.locator(`.bijection svg ${last}`).first();
+      const head = page.locator(`.bijection__pane--right svg ${first}`).first();
+      const tail = page.locator(`.bijection__pane--right svg ${last}`).first();
 
-      // $t = 0$ phải bằng đúng cây nguồn — không `translate(0 0)` nào.
+      // $t = 0$: chưa cặp nào được gọi, nên **mọi** ảnh bên phải còn ẩn.
       await scrub.fill('0');
-      await expect(head).not.toHaveAttribute('transform');
+      await expect(head).toHaveAttribute('opacity', '0');
+      await expect(tail).toHaveAttribute('opacity', '0');
 
-      // Giữa chừng: cặp đầu **đã** dịch, cặp cuối **chưa**. Chính chỗ này là
-      // khác biệt giữa "từng cặp" và "đồng loạt".
+      // Cuối lượt: tất cả đã hiện, và ảnh của cặp đầu **ở lại** chứ không tắt
+      // theo khi cặp sau được gọi.
       const total = Number(await scrub.getAttribute('max'));
-      await scrub.fill(String(Math.round(total * 0.45)));
-      await expect(head).toHaveAttribute('transform', /^translate\(/);
-      await expect(tail).not.toHaveAttribute('transform');
-
       await scrub.fill(String(total));
+      await expect(head).toHaveAttribute('opacity', '1');
+      await expect(tail).toHaveAttribute('opacity', '1');
+
+      // Hai pane **không** bị gộp lại khi chạy: bảng bên phải phải nằm sẵn đúng
+      // chỗ ấy từ khung đầu, nếu không thì ô hiện ra chẳng neo vào đâu.
+      await expect(page.locator('.bijection__pane')).toHaveCount(2);
       await expect(page.getByRole('button', { name: 'Về hai hình' })).toBeVisible();
     });
   }
@@ -859,7 +865,7 @@ test.describe('Biến hình song ánh (PRN-04)', () => {
   test('mỗi pha có nhãn riêng — bộ đếm pha đọc được (CHO-09)', async ({ page }) => {
     await page.goto('/?p=subsets-binary-strings');
     await reveal(page);
-    await page.getByRole('button', { name: 'Biến hình' }).click();
+    await page.getByRole('button', { name: 'Điểm danh từng cặp' }).click();
 
     const scrub = page.getByLabel('Tua trong bước');
     await scrub.fill('0');
@@ -1540,19 +1546,20 @@ test.describe('Anchor xuyên pane (ANC-05, M66)', () => {
     await expect.poll(() => lit(page)).toEqual(before);
   });
 
-  test('nút Biến hình chạy được xuyên engine', async ({ page }) => {
+  test('điểm danh chạy được xuyên engine', async ({ page }) => {
     await page.goto(TWO);
     await reveal(page);
 
     await expect(page.locator('.bijection__pane')).toHaveCount(2);
-    await page.getByRole('button', { name: /Biến hình/ }).click();
+    await page.getByRole('button', { name: /Điểm danh/ }).click();
 
-    // Chế độ biến hình gộp hai pane thành **một** canvas, và canvas ấy phải có mực —
-    // morph xuyên engine đi đường toạ độ scene (`boxOf`), không đường sao chép thuộc
-    // tính, nên một khung trống ở đây nghĩa là đường ấy đứt.
-    const pane = page.locator('.bijection__pane');
-    await expect(pane).toHaveCount(1);
-    expect(await pane.locator('svg *').count()).toBeGreaterThan(0);
+    // Hai pane **ở nguyên**, và cả hai phải còn mực. Phép điểm danh không hỏi
+    // hình học của engine nào cả — nó chỉ hỏi "id này có được vẽ không" — nên
+    // một pane trống ở đây nghĩa là câu hỏi ấy đang trả lời sai.
+    const panes = page.locator('.bijection__pane');
+    await expect(panes).toHaveCount(2);
+    expect(await panes.nth(0).locator('svg *').count()).toBeGreaterThan(0);
+    expect(await panes.nth(1).locator('svg *').count()).toBeGreaterThan(0);
   });
 });
 

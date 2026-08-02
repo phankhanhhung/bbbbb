@@ -121,9 +121,16 @@ describe('GR-07 — ma trận kề', () => {
   });
 
   it('ô trống **có** id ô nhưng **không** có `data-el` (GR-07)', () => {
+    // "Không `data-el`" một mình **không** còn nhận ra ô trống: ô có cạnh nay
+    // cũng có một rect nền vô danh nằm dưới, để chế độ điểm danh tắt được màu ô
+    // mà không đục thủng lưới. Nền đeo hậu tố `__bg`, và lọc nó ra ở đây là cách
+    // nói rằng hai thứ ấy khác nhau về vai.
     const blanks = nodes(MATRIX).filter(
       (n) =>
-        n.tag === 'rect' && n.attrs['data-el'] === undefined && n.attrs['fill'] !== 'none',
+        n.tag === 'rect' &&
+        n.attrs['data-el'] === undefined &&
+        n.attrs['fill'] !== 'none' &&
+        !String(n.key).endsWith('__bg'),
     );
 
     // 4×4 = 16 ô, 10 ô có cạnh ⇒ 6 ô trống (kể cả 4 ô chéo).
@@ -136,6 +143,28 @@ describe('GR-07 — ma trận kề', () => {
     // một lập luận đếm hai chiều cần chỉ ra. GR-07 đổi lại: id **ô**, và `data-el`
     // vẫn vắng vì không có cạnh nào để trỏ tới.
     expect(blanks.every((n) => typeof n.key === 'string' && n.key.startsWith('mx-'))).toBe(true);
+  });
+
+  it('mỗi ô **có cạnh** có một nền vô danh nằm ngay dưới nó', () => {
+    // Nền tồn tại vì màu ô là thứ tắt được: chế độ điểm danh giữ ô ở `opacity: 0`
+    // cho tới lượt cặp ấy được gọi. Không nền thì ô chưa tới lượt là một lỗ trắng
+    // không viền, và lưới trông như thủng chứ không như đang chờ được điền.
+    //
+    // Hai tính chất phải giữ, và cả hai đều dễ mất khi ai đó dọn dẹp:
+    // nền **không** đeo `data-el` (đeo thì nó tắt theo ô, tức là vô dụng), và nó
+    // nằm **trước** ô màu trong cây (nằm sau thì nó che mất màu).
+    const all = nodes(MATRIX).filter((n) => n.tag === 'rect');
+    const bg = all.filter((n) => String(n.key).endsWith('__bg'));
+
+    expect(bg).toHaveLength(10);
+    expect(bg.every((n) => n.attrs['data-el'] === undefined)).toBe(true);
+
+    for (const node of bg) {
+      const cellKey = String(node.key).replace(/__bg$/, '');
+      const cell = all.find((n) => n.key === cellKey);
+      expect(cell?.attrs['data-el'], cellKey).toBeTypeOf('string');
+      expect(all.indexOf(node)).toBeLessThan(all.indexOf(cell as SvgNode));
+    }
   });
 
   it('tổng hàng là bậc đỉnh, tổng cả bảng là $2|E|$', () => {
