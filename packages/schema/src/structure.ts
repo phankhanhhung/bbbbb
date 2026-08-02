@@ -177,7 +177,7 @@ function checkSolutionTree(
       checkSceneBounds(step.scene, `${path}/scene`, engines, issues);
     }
     checkBijection(step, path, engines, issues);
-    checkPlay(step, path, issues);
+    checkPlay(step, path, engines, issues);
     checkChoreography(step, path, engines, issues);
   });
 
@@ -372,7 +372,12 @@ function knownIds(scene: Scene, engines: EngineRegistry): Set<string> {
  * phiên chơi phải dựng cổng để bù. Cảnh báo ở đây để chỗ đánh đổi ấy có mặt trong bản
  * duyệt — nếu không thì nó nằm im trong một tệp script và không ai đọc lại.
  */
-function checkPlay(step: Step, path: string, issues: ValidationIssue[]): void {
+function checkPlay(
+  step: Step,
+  path: string,
+  engines: EngineRegistry,
+  issues: ValidationIssue[],
+): void {
   const play = step.play;
   if (!play) return;
 
@@ -385,6 +390,24 @@ function checkPlay(step: Step, path: string, issues: ValidationIssue[]): void {
     });
     return;
   }
+
+  const engine = engines.get(step.scene.engine);
+  const known = engine?.playRules ?? [];
+  if (!known.includes(play.rule)) {
+    issues.push({
+      code: 'play/unknown-rule',
+      severity: 'error',
+      message: `Engine "${step.scene.engine}" không có họ luật "${play.rule}"`,
+      path: `${path}/play/rule`,
+      hint:
+        known.length > 0
+          ? `Họ luật của engine này: ${known.join(', ')}`
+          : 'Engine này chưa dựng luật chơi nào — chưa chơi được',
+    });
+    return;
+  }
+
+  issues.push(...(engine?.checkPlay?.(step.scene, play, `${path}/play`) ?? []));
 
   if (play.apply === 'script') {
     issues.push({

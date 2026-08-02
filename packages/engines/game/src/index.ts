@@ -18,6 +18,7 @@ import {
 } from './solver.js';
 import { pileBands } from './render.js';
 import { GAME_VALIDATOR_IDS, resolveGameValidator } from './validators.js';
+import { checkGamePlay, GAME_PLAY_RULES } from './play.js';
 
 export * from './schema.js';
 export { gameTools } from './tools.js';
@@ -25,6 +26,7 @@ export * from './model.js';
 export * from './solver.js';
 export * from './validators.js';
 export { gameEnvironment } from './dsl.js';
+export { gamePlayRules, checkGamePlay, GAME_PLAY_RULES } from './play.js';
 export { gameRenderer } from './render.js';
 
 /**
@@ -212,6 +214,8 @@ export const gameSchemaFragment: EngineSchemaFragment = {
   bounds: { engine: 'game', limits: GAME_LIMITS },
   resolveValidator: resolveGameValidator,
   validatorIds: GAME_VALIDATOR_IDS,
+  playRules: GAME_PLAY_RULES,
+  checkPlay: checkGamePlay,
 
   /**
    * Hai view phổ sinh ô ngầm định: `pos-<n>` cho một chiều, `pos-<a>-<b>` cho hai.

@@ -68,6 +68,36 @@ export interface EngineSchemaFragment {
   resolveValidator(id: string): SceneValidator | null;
   /** Danh sách id hợp lệ, dùng trong thông báo lỗi. */
   readonly validatorIds: readonly string[];
+  /**
+   * Họ luật chơi mà engine này biết (GM-01) — tên hợp lệ cho `step.play.rule`.
+   *
+   * Cùng khuôn `validatorIds`, và cùng lý do: tầng structure không biết engine nào có
+   * họ luật gì, nên nó **hỏi** thay vì đoán. Engine không khai thì mọi `play` trỏ vào
+   * nó đều bị từ chối — đúng, vì một engine chưa dựng luật chơi thì chưa chơi được.
+   */
+  readonly playRules?: readonly string[];
+  /**
+   * Kiểm khối `play` bằng hiểu biết riêng của engine.
+   *
+   * Cần một hook riêng vì `checkBounds` chỉ nhìn thấy `scene`, mà những chuyện đáng
+   * kiểm ở đây là chuyện **giữa** `play` và `config` — engine game chẳng hạn có sẵn
+   * `config.misere` cho phần phân tích Grundy, và nó phải khớp với quy ước ván.
+   */
+  checkPlay?(scene: Scene, play: PlayBlock, path: string): ValidationIssue[];
+}
+
+/**
+ * Khối `play` như engine nhìn thấy nó.
+ *
+ * Khai lại ở đây thay vì import từ `step.ts` để tránh vòng phụ thuộc: `step.ts` import
+ * `Scene`, còn `engine-registry.ts` là thứ `Scene` đứng lên.
+ */
+export interface PlayBlock {
+  readonly rule: string;
+  readonly first?: 'left' | 'right';
+  readonly misere?: boolean;
+  readonly apply?: 'command' | 'script';
+  readonly solver_bound?: number;
 }
 
 export type EngineRegistry = ReadonlyMap<string, EngineSchemaFragment>;

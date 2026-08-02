@@ -51,6 +51,7 @@ export {
   createEngineRegistry,
   type EngineSchemaFragment,
   type EngineRegistry,
+  type PlayBlock,
 } from './engine-registry.js';
 
 export {

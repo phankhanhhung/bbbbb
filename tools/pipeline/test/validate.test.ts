@@ -552,55 +552,6 @@ describe('PRN-04 — view song ánh', () => {
   });
 
   /**
-   * GM-01/02 — khối `play` (M78).
-   *
-   * Hai chuyện, và chỉ hai. Tên họ luật **không** kiểm ở đây: danh sách họ luật là
-   * chuyện của engine chủ, cùng lý do mà `structure.ts` không biết engine nào có
-   * element gì.
-   */
-  describe('GM — khối play', () => {
-    const withPlay = (play: Record<string, unknown>): Problem => {
-      const problem = loadBijection();
-      stepOf(problem).play = play as Step['play'];
-      return problem;
-    };
-
-    it('`play` không có scene là lỗi — không có thế nào để chơi', () => {
-      const problem = withPlay({ rule: 'nim' });
-      delete stepOf(problem).scene;
-
-      expect(codes(problem)).toContain('structure/play-without-scene');
-    });
-
-    it('`play` bình thường thì im lặng', () => {
-      expect(codes(withPlay({ rule: 'nim', first: 'right', misere: true }))).not.toContain(
-        'play/script-apply',
-      );
-    });
-
-    it('khoá lạ trong `play` bị **chặn ở cửa** (DAT-20)', () => {
-      // `additionalProperties: false` ở đây không phải trang trí — cùng bài học mà
-      // `Step.anchors` đã trả giá: khoá lệch schema mặc định được thả qua cùng giá trị
-      // tuỳ ý của nó, rồi nổ ở tầng dưới. Bẻ răng M78.1 lôi ra rằng chốt canh này
-      // **không tồn tại**, dù dòng mã thì có: gỡ `additionalProperties: false` ra mà
-      // cả bộ test vẫn xanh.
-      expect(codes(withPlay({ rule: 'nim', khoa_la: 1 }))).not.toEqual([]);
-    });
-
-    it('lối `apply: "script"` **cảnh báo**, không chặn — chỗ đánh đổi phải có mặt trong bản duyệt', () => {
-      // Không phải lỗi: lối ấy hợp lệ và mạnh hơn. Nhưng nó mất ba bảo đảm mà lớp lệnh
-      // cho không, và một đánh đổi nằm im trong tệp script là một đánh đổi không ai
-      // đọc lại. Chặn thì sai; im thì tệ hơn.
-      const issue = validator
-        .validateProblem(withPlay({ rule: 'chomp', apply: 'script' }))
-        .issues.find((i) => i.code === 'play/script-apply');
-
-      expect(issue?.severity).toBe('warning');
-      expect(issue?.message).toContain('tất định');
-    });
-  });
-
-  /**
    * CHO-01..09 — dàn dựng phải neo được, trỏ được, đọc được khi tắt chuyển động.
    *
    * Dùng chính bài song ánh làm nền vì `morph` (CHO-05) sống đúng ở đây: một phần
@@ -911,5 +862,96 @@ describe('chống lệch chữ–hình — các lỗ hổng', () => {
     problem.solutions[0]!.steps[0]!.alt_text = { vi: 'Bàn {{khong_co_binding}} hàng' };
 
     expect(checker.check(problem, '').map((i) => i.code)).toContain('dsl/eval-error');
+  });
+});
+
+/**
+ * GM-01/02 — khối `play` (M78).
+ *
+ * Dùng một bài **game** làm nền, không dùng bài song ánh. Bản đầu dùng bài song ánh
+ * (engine `set`) và hai trong ba chốt canh **xanh vì lý do sai**: engine ấy không khai
+ * họ luật nào, nên `play/unknown-rule` nổ trước và `checkPlay` thoát sớm — câu khẳng
+ * định "không có cảnh báo script" đúng, nhưng đúng vì chưa ai chạy tới chỗ ấy. M78.2
+ * làm nó lộ ra khi thêm phép kiểm tên họ luật.
+ */
+describe('GM — khối play', () => {
+  const GAME_PATH = fileURLToPath(
+    new URL('../../../packages/content/problems/take-stones-one-to-three.json', import.meta.url),
+  );
+  const loadGame = (): Problem => JSON.parse(readFileSync(GAME_PATH, 'utf8')) as Problem;
+  const gameStep = (problem: Problem): NonNullable<Problem['solutions'][0]['steps'][0]> =>
+    problem.solutions[0]!.steps[0]!;
+
+  const withPlay = (play: Record<string, unknown>): Problem => {
+    const problem = loadGame();
+    gameStep(problem).play = play as Step['play'];
+    return problem;
+  };
+
+  it('`play` không có scene là lỗi — không có thế nào để chơi', () => {
+    const problem = withPlay({ rule: 'piles' });
+    delete gameStep(problem).scene;
+
+    expect(codes(problem)).toContain('structure/play-without-scene');
+  });
+
+  it('`play` hợp lệ thì **im lặng**', () => {
+    expect(validator.validateProblem(withPlay({ rule: 'piles', first: 'right' })).issues).toEqual(
+      [],
+    );
+  });
+
+  it('họ luật engine không có ⇒ lỗi, và **kể ra những họ nó có**', () => {
+    // Cùng khuôn `validatorIds`: tầng structure không đoán, nó hỏi engine. Không có
+    // gợi ý thì tác giả gõ sai một chữ và không biết tìm đâu.
+    const issue = validator
+      .validateProblem(withPlay({ rule: 'chomp' }))
+      .issues.find((i) => i.code === 'play/unknown-rule');
+
+    expect(issue?.severity).toBe('error');
+    expect(issue?.hint).toContain('piles');
+  });
+
+  it('engine **chưa dựng luật chơi** thì mọi `play` trỏ vào nó đều rớt', () => {
+    // Đúng: một engine chưa có luật chơi thì chưa chơi được, và im lặng ở đây sẽ cho
+    // xuất bản một bài "chơi được" mà bấm vào không có nước nào.
+    const problem = loadGame();
+    const step = gameStep(problem);
+    step.scene = { engine: 'set', config: { mode: 'venn', sets: ['A'] }, elements: [] } as never;
+    step.play = { rule: 'piles' } as Step['play'];
+
+    const issue = validator
+      .validateProblem(problem)
+      .issues.find((i) => i.code === 'play/unknown-rule');
+    expect(issue?.hint).toContain('chưa dựng luật chơi');
+  });
+
+  it('khoá lạ trong `play` bị **chặn ở cửa** (DAT-20)', () => {
+    // `additionalProperties: false` ở đây không phải trang trí — cùng bài học mà
+    // `Step.anchors` đã trả giá: khoá lệch schema mặc định được thả qua cùng giá trị
+    // tuỳ ý của nó, rồi nổ ở tầng dưới. Bẻ răng M78.1 lôi ra rằng chốt canh này
+    // **không tồn tại**, dù dòng mã thì có.
+    expect(codes(withPlay({ rule: 'piles', khoa_la: 1 }))).not.toEqual([]);
+  });
+
+  it('lối `apply: "script"` **cảnh báo**, không chặn — chỗ đánh đổi phải có mặt trong bản duyệt', () => {
+    // Không phải lỗi: lối ấy hợp lệ và mạnh hơn. Nhưng nó mất ba bảo đảm mà lớp lệnh
+    // cho không, và một đánh đổi nằm im trong tệp script là đánh đổi không ai đọc lại.
+    const issue = validator
+      .validateProblem(withPlay({ rule: 'piles', apply: 'script' }))
+      .issues.find((i) => i.code === 'play/script-apply');
+
+    expect(issue?.severity).toBe('warning');
+    expect(issue?.message).toContain('tất định');
+  });
+
+  it('quy ước ván lệch quy ước phân tích ⇒ lỗi (engine tự kiểm)', () => {
+    // Phép kiểm này là **của engine**, không của tầng structure: nó là chuyện giữa
+    // `play.misere` và `config.misere`, mà `checkBounds` thì chỉ thấy scene.
+    const issue = validator
+      .validateProblem(withPlay({ rule: 'piles', misere: true }))
+      .issues.find((i) => i.code === 'play/misere-mismatch');
+
+    expect(issue?.severity).toBe('error');
   });
 });
