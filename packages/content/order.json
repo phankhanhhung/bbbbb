@@ -133,13 +133,14 @@
     "catalan-first-return-gf",
     "compositions-two-power-gf",
     "partitions-bounded-parts-gf",
-    "partitions-ferrers-conjugate"
+    "partitions-ferrers-conjugate",
+    "imo-1964-p4-seventeen-people",
+    "imo-1972-p1-ten-two-digit",
+    "imo-1987-p1-fixed-points"
   ],
   "newest": [
-    "bounded-parts-inclusion-exclusion",
-    "catalan-first-return-gf",
-    "compositions-two-power-gf",
-    "partitions-bounded-parts-gf",
-    "partitions-ferrers-conjugate"
+    "imo-1964-p4-seventeen-people",
+    "imo-1972-p1-ten-two-digit",
+    "imo-1987-p1-fixed-points"
   ]
 }

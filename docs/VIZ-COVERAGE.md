@@ -98,6 +98,9 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Số sắc của chu trình / bánh xe | tô màu đỉnh | ✅ có trong kho (validator `proper-colouring[:k]`, GR-13) |
 | Tham lam đủ $\\Delta+1$ màu | tô màu đỉnh | ✅ có trong kho (`greedy-colouring-degree-bound`: cận không đổi, số màu **thật** đổi theo thứ tự duyệt) |
 | Cayley $n^{n-2}$ (mã Prüfer) | song ánh | ✅ có trong kho (GR-09: mã vẽ thành hàng ô dưới cây) |
+| $R(3,3,3) > 16$ — **IMO 1964 bài 4** | đồ thị, ba màu | ✅ có trong kho (chuồng bồ câu hai nhát; `no-mono-triangle` vốn không phân biệt màu nên chạy được ngay) |
+| Hai tập con rời nhau cùng tổng — **IMO 1972 bài 1** | chuồng bồ câu | ✅ có trong kho ($1024 > 946$; chỗ dễ trượt là bước **bỏ phần chung**, và hình chỉ ra nó) |
+| $\sum_k k\,p_n(k) = n!$ — **IMO 1987 bài 1** | đếm hai chiều | ✅ có trong kho (bảng hoán vị × vị trí, đọc theo hàng rồi theo cột) |
 | Liên hợp phân hoạch (số phần ↔ phần lớn nhất) | biểu đồ Ferrers | ✅ có trong kho (`partitions-ferrers-conjugate`: cả chứng minh là **một nhát lật**) |
 | Phân hoạch với phần bị chặn | hàm sinh | ✅ có trong kho (mỗi **cỡ phần** một thừa số; `pairs` ghim thừa số vào hàng của biểu đồ) |
 | Hợp thành của $n$ bằng $2^{n-1}$ | hàm sinh + song ánh | ✅ có trong kho ($[x^n]\frac{x}{1-2x}$; hệ số dẫn $2$ **là** hai lựa chọn ở mỗi khe) |

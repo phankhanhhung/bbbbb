@@ -1,0 +1,788 @@
+{
+  "schema_version": "1.4.0",
+  "id": "imo-1964-p4-seventeen-people",
+  "statement": {
+    "vi": "Mười bảy nhà khoa học viết thư cho nhau. Mỗi cặp trao đổi về **đúng một** trong ba chủ đề. Chứng minh có ba người mà ba lá thư giữa họ cùng bàn một chủ đề."
+  },
+  "source": {
+    "contest": "IMO",
+    "note": {
+      "vi": "Đề IMO 1964, bài 4. Đây là cận dưới $R(3,3,3) > 16$ nhìn từ phía dễ: không cần dựng hình tô $16$ đỉnh không tam giác đơn sắc, chỉ cần chuồng bồ câu hai nhát. Nhát thứ nhất trên $16$ lá thư của **một** người, nhát thứ hai là $R(3,3) = 6$ — bài đã có sẵn trong kho."
+    },
+    "slot": "P4",
+    "year": 1964
+  },
+  "topics": [
+    "graph-basics",
+    "graph-coloring"
+  ],
+  "techniques": [
+    "pigeonhole",
+    "extremal"
+  ],
+  "difficulty": {
+    "author_rating": 5,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chọn một người bất kỳ, gọi là $A$. [[a1|Mười sáu lá thư]] của $A$ mang ba màu. $16 = 3 \\cdot 5 + 1$, nên chuồng bồ câu cho: có một màu dùng **ít nhất sáu** lần. Ở hình này màu ấy là màu xanh đậm."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e0",
+                "e1",
+                "e2",
+                "e3",
+                "e4",
+                "e5",
+                "e6",
+                "e7",
+                "e8",
+                "e9",
+                "e10",
+                "e11",
+                "e12",
+                "e13",
+                "e14",
+                "e15"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -32]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [12.25, -29.56]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [22.63, -22.63]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "4",
+                "pos": [29.56, -12.25]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [32, 0]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "6",
+                "pos": [29.56, 12.25]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "7",
+                "pos": [22.63, 22.63]
+              },
+              {
+                "id": "v7",
+                "type": "vertex",
+                "label": "8",
+                "pos": [12.25, 29.56]
+              },
+              {
+                "id": "v8",
+                "type": "vertex",
+                "label": "9",
+                "pos": [0, 32]
+              },
+              {
+                "id": "v9",
+                "type": "vertex",
+                "label": "10",
+                "pos": [-12.25, 29.56]
+              },
+              {
+                "id": "v10",
+                "type": "vertex",
+                "label": "11",
+                "pos": [-22.63, 22.63]
+              },
+              {
+                "id": "v11",
+                "type": "vertex",
+                "label": "12",
+                "pos": [-29.56, 12.25]
+              },
+              {
+                "id": "v12",
+                "type": "vertex",
+                "label": "13",
+                "pos": [-32, 0]
+              },
+              {
+                "id": "v13",
+                "type": "vertex",
+                "label": "14",
+                "pos": [-29.56, -12.25]
+              },
+              {
+                "id": "v14",
+                "type": "vertex",
+                "label": "15",
+                "pos": [-22.63, -22.63]
+              },
+              {
+                "id": "v15",
+                "type": "vertex",
+                "label": "16",
+                "pos": [-12.25, -29.56]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v0"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v1"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v3"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v4"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v5"
+              },
+              {
+                "id": "e6",
+                "type": "edge",
+                "color_class": 3,
+                "u": "a",
+                "v": "v6"
+              },
+              {
+                "id": "e7",
+                "type": "edge",
+                "color_class": 3,
+                "u": "a",
+                "v": "v7"
+              },
+              {
+                "id": "e8",
+                "type": "edge",
+                "color_class": 3,
+                "u": "a",
+                "v": "v8"
+              },
+              {
+                "id": "e9",
+                "type": "edge",
+                "color_class": 3,
+                "u": "a",
+                "v": "v9"
+              },
+              {
+                "id": "e10",
+                "type": "edge",
+                "color_class": 3,
+                "u": "a",
+                "v": "v10"
+              },
+              {
+                "id": "e11",
+                "type": "edge",
+                "color_class": 4,
+                "u": "a",
+                "v": "v11"
+              },
+              {
+                "id": "e12",
+                "type": "edge",
+                "color_class": 4,
+                "u": "a",
+                "v": "v12"
+              },
+              {
+                "id": "e13",
+                "type": "edge",
+                "color_class": 4,
+                "u": "a",
+                "v": "v13"
+              },
+              {
+                "id": "e14",
+                "type": "edge",
+                "color_class": 4,
+                "u": "a",
+                "v": "v14"
+              },
+              {
+                "id": "e15",
+                "type": "edge",
+                "color_class": 4,
+                "u": "a",
+                "v": "v15"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đỉnh A ở giữa, mười sáu đỉnh quanh vòng, mười sáu cạnh chia ba màu: sáu xanh đậm, năm cam, năm lục."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giữ lại [[a1|sáu người]] nối với $A$ bằng màu xanh, bỏ hết phần còn lại. Câu hỏi thu về sáu người ấy, và nó **đổi dạng**: nếu hai người trong sáu người viết cho nhau về chủ đề xanh thì cùng với $A$ ta có ngay ba người cùng chủ đề, xong."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e0",
+                "e1",
+                "e2",
+                "e3",
+                "e4",
+                "e5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -32]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [12.25, -29.56]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [22.63, -22.63]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "4",
+                "pos": [29.56, -12.25]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [32, 0]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "6",
+                "pos": [29.56, 12.25]
+              },
+              {
+                "id": "v6",
+                "type": "vertex",
+                "label": "7",
+                "pos": [22.63, 22.63]
+              },
+              {
+                "id": "v7",
+                "type": "vertex",
+                "label": "8",
+                "pos": [12.25, 29.56]
+              },
+              {
+                "id": "v8",
+                "type": "vertex",
+                "label": "9",
+                "pos": [0, 32]
+              },
+              {
+                "id": "v9",
+                "type": "vertex",
+                "label": "10",
+                "pos": [-12.25, 29.56]
+              },
+              {
+                "id": "v10",
+                "type": "vertex",
+                "label": "11",
+                "pos": [-22.63, 22.63]
+              },
+              {
+                "id": "v11",
+                "type": "vertex",
+                "label": "12",
+                "pos": [-29.56, 12.25]
+              },
+              {
+                "id": "v12",
+                "type": "vertex",
+                "label": "13",
+                "pos": [-32, 0]
+              },
+              {
+                "id": "v13",
+                "type": "vertex",
+                "label": "14",
+                "pos": [-29.56, -12.25]
+              },
+              {
+                "id": "v14",
+                "type": "vertex",
+                "label": "15",
+                "pos": [-22.63, -22.63]
+              },
+              {
+                "id": "v15",
+                "type": "vertex",
+                "label": "16",
+                "pos": [-12.25, -29.56]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v0"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v1"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v3"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v4"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "v5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Chỉ còn A và sáu đỉnh nối với A bằng cạnh xanh đậm."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy giả sử ngược lại: [[a1|mười lăm lá thư]] giữa sáu người **không** dùng màu xanh. Chúng chỉ còn **hai** màu — mà sáu người với hai màu thì $R(3,3) = 6$ buộc phải có tam giác đơn sắc. Hình dưới là một cách tô cụ thể; bất kỳ cách nào khác cũng thế, và đó chính là nội dung của bài $R(3,3)$ trong kho."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "k01",
+                "k02",
+                "k03",
+                "k04",
+                "k05",
+                "k12",
+                "k13",
+                "k14",
+                "k15",
+                "k23",
+                "k24",
+                "k25",
+                "k34",
+                "k35",
+                "k45"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "w0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -26]
+              },
+              {
+                "id": "w1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [22.52, -13]
+              },
+              {
+                "id": "w2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [22.52, 13]
+              },
+              {
+                "id": "w3",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 26]
+              },
+              {
+                "id": "w4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-22.52, 13]
+              },
+              {
+                "id": "w5",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-22.52, -13]
+              },
+              {
+                "id": "k01",
+                "type": "edge",
+                "color_class": 4,
+                "u": "w0",
+                "v": "w1"
+              },
+              {
+                "id": "k02",
+                "type": "edge",
+                "color_class": 3,
+                "u": "w0",
+                "v": "w2"
+              },
+              {
+                "id": "k03",
+                "type": "edge",
+                "color_class": 4,
+                "u": "w0",
+                "v": "w3"
+              },
+              {
+                "id": "k04",
+                "type": "edge",
+                "color_class": 3,
+                "u": "w0",
+                "v": "w4"
+              },
+              {
+                "id": "k05",
+                "type": "edge",
+                "color_class": 4,
+                "u": "w0",
+                "v": "w5"
+              },
+              {
+                "id": "k12",
+                "type": "edge",
+                "color_class": 4,
+                "u": "w1",
+                "v": "w2"
+              },
+              {
+                "id": "k13",
+                "type": "edge",
+                "color_class": 3,
+                "u": "w1",
+                "v": "w3"
+              },
+              {
+                "id": "k14",
+                "type": "edge",
+                "color_class": 4,
+                "u": "w1",
+                "v": "w4"
+              },
+              {
+                "id": "k15",
+                "type": "edge",
+                "color_class": 3,
+                "u": "w1",
+                "v": "w5"
+              },
+              {
+                "id": "k23",
+                "type": "edge",
+                "color_class": 4,
+                "u": "w2",
+                "v": "w3"
+              },
+              {
+                "id": "k24",
+                "type": "edge",
+                "color_class": 3,
+                "u": "w2",
+                "v": "w4"
+              },
+              {
+                "id": "k25",
+                "type": "edge",
+                "color_class": 4,
+                "u": "w2",
+                "v": "w5"
+              },
+              {
+                "id": "k34",
+                "type": "edge",
+                "color_class": 4,
+                "u": "w3",
+                "v": "w4"
+              },
+              {
+                "id": "k35",
+                "type": "edge",
+                "color_class": 3,
+                "u": "w3",
+                "v": "w5"
+              },
+              {
+                "id": "k45",
+                "type": "edge",
+                "color_class": 4,
+                "u": "w4",
+                "v": "w5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sáu đỉnh, mười lăm cạnh tô hai màu cam và lục."
+          },
+          "expects_violation": [
+            "no-mono-triangle"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn nhánh kia thì ngắn hơn nữa: chỉ cần **một** lá thư xanh giữa hai trong sáu người, [[a1|tam giác xanh]] khép ngay với $A$. Hai nhánh phủ hết mọi khả năng, nên bài xong. Chỗ đáng nhớ là con số $17$ **sát**: lập luận cần một người có $\\ge 6$ láng giềng cùng màu, tức $3 \\cdot 5 + 1$ láng giềng cộng chính người ấy — không thừa một ai."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "sa0",
+                "sa1",
+                "chord"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, -18]
+              },
+              {
+                "id": "w0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -26]
+              },
+              {
+                "id": "w1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [22.52, -13]
+              },
+              {
+                "id": "w2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [22.52, 13]
+              },
+              {
+                "id": "w3",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 26]
+              },
+              {
+                "id": "w4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-22.52, 13]
+              },
+              {
+                "id": "w5",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-22.52, -13]
+              },
+              {
+                "id": "sa0",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "w0"
+              },
+              {
+                "id": "sa1",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "w1"
+              },
+              {
+                "id": "sa2",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "w2"
+              },
+              {
+                "id": "sa3",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "w3"
+              },
+              {
+                "id": "sa4",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "w4"
+              },
+              {
+                "id": "sa5",
+                "type": "edge",
+                "color_class": 1,
+                "u": "a",
+                "v": "w5"
+              },
+              {
+                "id": "chord",
+                "type": "edge",
+                "color_class": 1,
+                "u": "w0",
+                "v": "w1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đỉnh A dưới, sáu đỉnh trên vòng, sáu cạnh xanh từ A, và một cạnh xanh nối hai trong sáu đỉnh khép thành tam giác xanh."
+          },
+          "expects_violation": [
+            "no-mono-triangle"
+          ],
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "n == 6",
+    "validators": [
+      "simple-graph",
+      "no-mono-triangle"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

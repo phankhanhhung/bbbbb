@@ -259,10 +259,30 @@ bằng toạ độ.
 
 **Nợ có tên**
 
-- **validator tô màu *cạnh*** chưa dựng. Bài kinh điển của nó là xếp thời khoá
-  biểu, và chỗ ấy thuộc mạch bài thi thật (loạt 4/4) hơn mạch tô màu. Một
-  validator mới mỗi mạch giữ bán kính vụ nổ nhỏ — nhưng đây là một khoảng trống
-  có tên, không phải một khoảng lặng.
+- **validator tô màu *cạnh*** chưa dựng — **thu hẹp lại sau loạt 4/4.** Nợ này ghi
+  ở loạt 2/4 với giả định rằng bài Ramsey nhiều màu sẽ cần nó. Sai: soát lại thì
+  `no-mono-triangle` vốn **không phân biệt màu** — nó so `ab.color === bc.color ===
+  ca.color` với bất kỳ màu nào — nên $R(3,3,3)$ ba màu của IMO 1964 chạy được ngay,
+  không thêm một dòng nào. Phần còn nợ thật là **tô cạnh đúng luật** (hai cạnh chung
+  đỉnh thì khác màu), và bài kinh điển của *nó* là xếp thời khoá biểu. Nợ hẹp hơn
+  nhiều so với lúc ghi, và biết được điều đó là nhờ đi làm mạch 4/4 chứ không phải
+  nhờ suy đoán thêm.
+- **đỉnh đồ thị không mang được số.** Cạnh có `weight`, đỉnh chỉ có `label` là chuỗi,
+  và `graphEnvironment` không có binding nào đọc ra giá trị số của đỉnh. Hệ quả cụ
+  thể: **IMO 1986 bài 3** (ngũ giác, phép thao tác trên ba số liên tiếp) bị cắt khỏi
+  loạt 4/4 — đại lượng đơn điệu $\sum (x_i - x_{i+2})^2$ không khai thành
+  `invariants[]` được, và lint AUT-10 chặn đúng khi thấy tag `monovariant` mà không
+  có widget.
+
+  Ba lối vòng đều bị từ chối, ghi ra để lần sau khỏi thử lại: đổi tag sang
+  `extremal` là nói dối về kỹ thuật để qua linter; vẽ bằng engine `sequence` (item
+  có `value`, invariant kiểm được) thì ngũ giác thành một hàng, mà tính **vòng** là
+  toàn bộ hình học của phép thao tác; khai một invariant tầm thường như `n == 5` là
+  lắp một widget không phải nội dung.
+
+  Cách sửa thật: thêm trường số cho đỉnh, đối xứng với `weight` của cạnh, rồi thêm
+  binding. Đó là một lượt schema có migration, không phải phần đuôi của một mạch nội
+  dung.
 - **`five-colour-planar-sketch` bị cắt** khỏi loạt 2/4. Bài định dạy "hình phẳng
   luôn có đỉnh bậc $\le 5$" bằng Euler, nhưng `planarity(...)` trả `value?.planar`
   là `undefined` trên scene dựng tại chỗ, nên khẳng định trong narrative không có

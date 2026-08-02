@@ -1,0 +1,367 @@
+{
+  "schema_version": "1.4.0",
+  "id": "imo-1972-p1-ten-two-digit",
+  "statement": {
+    "vi": "Cho mười số **phân biệt** có hai chữ số. Chứng minh tồn tại hai tập con **rời nhau**, khác rỗng, có tổng bằng nhau."
+  },
+  "source": {
+    "contest": "IMO",
+    "note": {
+      "vi": "Đề IMO 1972, bài 1. Chuồng bồ câu ở dạng gọn nhất: đếm **tập con** rồi đếm **tổng có thể**, và $1024 > 946$. Chỗ dễ trượt là bước cuối — hai tập con cùng tổng chưa chắc rời nhau, nên phải bỏ phần chung đi, và bỏ xong vẫn còn khác rỗng."
+    },
+    "slot": "P1",
+    "year": 1972
+  },
+  "topics": [
+    "counting",
+    "set-systems"
+  ],
+  "techniques": [
+    "pigeonhole"
+  ],
+  "difficulty": {
+    "author_rating": 5,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a1|Mười số]], mỗi số từ $10$ tới $99$. Tập con của một tập mười phần tử: $2^{10} = 1024$ cái. Tổng của một tập con nằm đâu? Nhỏ nhất là $0$ (tập rỗng), lớn nhất là tổng mười số lớn nhất có thể, tức $90 + 91 + \\dots + 99 = 945$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "n0",
+                "n1",
+                "n2",
+                "n3",
+                "n4",
+                "n5",
+                "n6",
+                "n7",
+                "n8",
+                "n9"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Mười số",
+              "mode": "sequence"
+            },
+            "elements": [
+              {
+                "id": "n0",
+                "type": "item",
+                "label": "21",
+                "pos": 0,
+                "value": 21
+              },
+              {
+                "id": "n1",
+                "type": "item",
+                "label": "25",
+                "pos": 1,
+                "value": 25
+              },
+              {
+                "id": "n2",
+                "type": "item",
+                "label": "32",
+                "pos": 2,
+                "value": 32
+              },
+              {
+                "id": "n3",
+                "type": "item",
+                "label": "40",
+                "pos": 3,
+                "value": 40
+              },
+              {
+                "id": "n4",
+                "type": "item",
+                "label": "47",
+                "pos": 4,
+                "value": 47
+              },
+              {
+                "id": "n5",
+                "type": "item",
+                "label": "53",
+                "pos": 5,
+                "value": 53
+              },
+              {
+                "id": "n6",
+                "type": "item",
+                "label": "61",
+                "pos": 6,
+                "value": 61
+              },
+              {
+                "id": "n7",
+                "type": "item",
+                "label": "78",
+                "pos": 7,
+                "value": 78
+              },
+              {
+                "id": "n8",
+                "type": "item",
+                "label": "84",
+                "pos": 8,
+                "value": 84
+              },
+              {
+                "id": "n9",
+                "type": "item",
+                "label": "96",
+                "pos": 9,
+                "value": 96
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Một hàng mười số có hai chữ số."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy $1024$ tập con dồn vào nhiều nhất $946$ giá trị tổng — **hai** tập con phải trùng tổng. Đây là một cặp như thế, cùng tổng $114$: $\\{21, 32, 61\\}$ và $\\{21, 40, 53\\}$. Chuồng bồ câu chỉ hứa chúng **tồn tại**, không hứa chúng rời nhau — và ở đây chúng [[a1|dùng chung số $21$]], tô lục."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "n0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Cùng tổng, nhưng có phần chung",
+              "mode": "sequence"
+            },
+            "elements": [
+              {
+                "id": "n0",
+                "type": "item",
+                "color_class": 4,
+                "label": "21",
+                "pos": 0,
+                "value": 21
+              },
+              {
+                "id": "n1",
+                "type": "item",
+                "label": "25",
+                "pos": 1,
+                "value": 25
+              },
+              {
+                "id": "n2",
+                "type": "item",
+                "color_class": 1,
+                "label": "32",
+                "pos": 2,
+                "value": 32
+              },
+              {
+                "id": "n3",
+                "type": "item",
+                "color_class": 3,
+                "label": "40",
+                "pos": 3,
+                "value": 40
+              },
+              {
+                "id": "n4",
+                "type": "item",
+                "label": "47",
+                "pos": 4,
+                "value": 47
+              },
+              {
+                "id": "n5",
+                "type": "item",
+                "color_class": 3,
+                "label": "53",
+                "pos": 5,
+                "value": 53
+              },
+              {
+                "id": "n6",
+                "type": "item",
+                "color_class": 1,
+                "label": "61",
+                "pos": 6,
+                "value": 61
+              },
+              {
+                "id": "n7",
+                "type": "item",
+                "label": "78",
+                "pos": 7,
+                "value": 78
+              },
+              {
+                "id": "n8",
+                "type": "item",
+                "label": "84",
+                "pos": 8,
+                "value": 84
+              },
+              {
+                "id": "n9",
+                "type": "item",
+                "label": "96",
+                "pos": 9,
+                "value": 96
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng hàng số: hai số xanh, hai số cam, và số 21 tô lục vì thuộc cả hai tập."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bỏ phần chung khỏi cả hai bên: cùng trừ đi $21$ thì hai tổng vẫn bằng nhau, và [[a1|hai tập còn lại]] nay **rời nhau** — $\\{32, 61\\}$ và $\\{40, 53\\}$, cùng tổng $93$. Chúng còn khác rỗng, vì nếu một bên rỗng thì bên kia có tổng $0$, mà mọi số ở đây đều dương. Đó là bước cuối, và cũng là chỗ dễ trượt nhất."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "n2",
+                "n3",
+                "n5",
+                "n6"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Bỏ phần chung: rời nhau, vẫn cùng tổng",
+              "mode": "sequence"
+            },
+            "elements": [
+              {
+                "id": "n0",
+                "type": "item",
+                "label": "21",
+                "pos": 0,
+                "value": 21
+              },
+              {
+                "id": "n1",
+                "type": "item",
+                "label": "25",
+                "pos": 1,
+                "value": 25
+              },
+              {
+                "id": "n2",
+                "type": "item",
+                "color_class": 1,
+                "label": "32",
+                "pos": 2,
+                "value": 32
+              },
+              {
+                "id": "n3",
+                "type": "item",
+                "color_class": 3,
+                "label": "40",
+                "pos": 3,
+                "value": 40
+              },
+              {
+                "id": "n4",
+                "type": "item",
+                "label": "47",
+                "pos": 4,
+                "value": 47
+              },
+              {
+                "id": "n5",
+                "type": "item",
+                "color_class": 3,
+                "label": "53",
+                "pos": 5,
+                "value": 53
+              },
+              {
+                "id": "n6",
+                "type": "item",
+                "color_class": 1,
+                "label": "61",
+                "pos": 6,
+                "value": 61
+              },
+              {
+                "id": "n7",
+                "type": "item",
+                "label": "78",
+                "pos": 7,
+                "value": 78
+              },
+              {
+                "id": "n8",
+                "type": "item",
+                "label": "84",
+                "pos": 8,
+                "value": 84
+              },
+              {
+                "id": "n9",
+                "type": "item",
+                "label": "96",
+                "pos": 9,
+                "value": 96
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng hàng số: hai số xanh và hai số cam, số 21 đã trở về không màu."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "count == 10",
+    "validators": []
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

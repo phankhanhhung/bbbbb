@@ -1,0 +1,325 @@
+{
+  "schema_version": "1.4.0",
+  "id": "imo-1987-p1-fixed-points",
+  "statement": {
+    "vi": "Với mỗi $k$, gọi $p_n(k)$ là số hoán vị của $\\{1, \\dots, n\\}$ có **đúng $k$ điểm bất động**. Chứng minh $\\sum_{k=0}^{n} k\\, p_n(k) = n!$."
+  },
+  "source": {
+    "contest": "IMO",
+    "note": {
+      "vi": "Đề IMO 1987, bài 1. Đếm hai chiều ở dạng sạch nhất: vế trái đếm cặp (hoán vị, điểm bất động của nó) theo **hoán vị**, và đếm cùng tập ấy theo **vị trí** cho ngay $n$ lần $(n-1)!$. Không cần công thức mất trật tự, không cần bao gồm–loại trừ."
+    },
+    "slot": "P1",
+    "year": 1987
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "double-counting",
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đừng tính $p_n(k)$. Thay vào đó, đếm **tập các cặp** $(\\sigma, i)$ trong đó $\\sigma$ là một hoán vị và $i$ là một điểm bất động của nó. Bảng dưới là ca $n = 3$: [[a1|sáu hàng]] là sáu hoán vị, ba cột là ba vị trí, ô tô đậm nghĩa là \"$\\sigma$ giữ nguyên vị trí ấy\"."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-1",
+                "cell-0-2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1
+                },
+                "cell-0-1": {
+                  "color_class": 1
+                },
+                "cell-0-2": {
+                  "color_class": 1
+                },
+                "cell-1-0": {
+                  "color_class": 1
+                },
+                "cell-2-2": {
+                  "color_class": 1
+                },
+                "cell-5-1": {
+                  "color_class": 1
+                }
+              },
+              "cols": 3,
+              "rows": 6,
+              "table": {
+                "col_labels": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "row_labels": [
+                  "123",
+                  "132",
+                  "213",
+                  "231",
+                  "312",
+                  "321"
+                ],
+                "show_sums": true,
+                "sum_label": "Σ"
+              }
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bảng sáu hàng ba cột, mỗi hàng một hoán vị của 1 2 3, ô tô đậm ở các điểm bất động, có dòng và cột tổng."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đếm theo **hàng**: hàng của $\\sigma$ có đúng số ô bằng số điểm bất động của $\\sigma$. Gom các hoán vị theo số điểm bất động thì tổng tất cả các hàng chính là $\\sum_k k\\,p_n(k)$ — [[a1|vế trái]] của đề, không hơn không kém."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-1-0",
+                "cell-2-0",
+                "cell-3-0",
+                "cell-4-0",
+                "cell-5-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 3
+                },
+                "cell-0-1": {
+                  "color_class": 3
+                },
+                "cell-0-2": {
+                  "color_class": 3
+                },
+                "cell-1-0": {
+                  "color_class": 1
+                },
+                "cell-2-2": {
+                  "color_class": 1
+                },
+                "cell-5-1": {
+                  "color_class": 1
+                }
+              },
+              "cols": 3,
+              "rows": 6,
+              "table": {
+                "col_labels": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "row_labels": [
+                  "123",
+                  "132",
+                  "213",
+                  "231",
+                  "312",
+                  "321"
+                ],
+                "show_sums": true,
+                "sum_label": "Σ"
+              }
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Cùng bảng, hàng 123 tô cam: ba ô, đúng bằng ba điểm bất động của nó."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đếm theo **cột**: [[a1|cột $i$]] có bao nhiêu ô? Đúng bằng số hoán vị giữ nguyên $i$, mà những hoán vị ấy chỉ là hoán vị tuỳ ý của $n-1$ phần tử còn lại — tức $(n-1)!$ cái, **không phụ thuộc $i$**."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-1-0",
+                "cell-2-0",
+                "cell-3-0",
+                "cell-4-0",
+                "cell-5-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 3
+                },
+                "cell-0-1": {
+                  "color_class": 1
+                },
+                "cell-0-2": {
+                  "color_class": 1
+                },
+                "cell-1-0": {
+                  "color_class": 3
+                },
+                "cell-2-2": {
+                  "color_class": 1
+                },
+                "cell-5-1": {
+                  "color_class": 1
+                }
+              },
+              "cols": 3,
+              "rows": 6,
+              "table": {
+                "col_labels": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "row_labels": [
+                  "123",
+                  "132",
+                  "213",
+                  "231",
+                  "312",
+                  "321"
+                ],
+                "show_sums": true,
+                "sum_label": "Σ"
+              }
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Cùng bảng, cột 1 tô cam: đúng hai ô, tức hai hoán vị giữ nguyên vị trí thứ nhất."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Có $n$ cột, nên tổng là $n \\cdot (n-1)! = n!$. [[a1|Hai phép đếm]], một tập hợp, xong — và không chỗ nào cần biết $p_n(k)$ bằng bao nhiêu."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-0-1",
+                "cell-0-2",
+                "cell-1-0",
+                "cell-2-2",
+                "cell-5-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1
+                },
+                "cell-0-1": {
+                  "color_class": 3
+                },
+                "cell-0-2": {
+                  "color_class": 4
+                },
+                "cell-1-0": {
+                  "color_class": 1
+                },
+                "cell-2-2": {
+                  "color_class": 4
+                },
+                "cell-5-1": {
+                  "color_class": 3
+                }
+              },
+              "cols": 3,
+              "rows": 6,
+              "table": {
+                "col_labels": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "row_labels": [
+                  "123",
+                  "132",
+                  "213",
+                  "231",
+                  "312",
+                  "321"
+                ],
+                "show_sums": true,
+                "sum_label": "Σ"
+              }
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Cùng bảng, ô tô theo cột — ba màu, mỗi màu hai ô: sáu ô, bằng ba giai thừa."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "filled == 6",
+    "validators": []
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}
