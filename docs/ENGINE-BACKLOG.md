@@ -291,11 +291,27 @@ bằng toạ độ.
   Kèm một lời của chính bài: hình nay vẽ **cả năm đường chéo** bằng nét đứt, vì chúng
   là các cặp mà $S$ đo — và đó là thứ khó thấy nhất của bài, nên nó thuộc về hình chứ
   không thuộc về lời văn. Bài `imo-1986-p3-pentagon-operation`.
-- **`five-colour-planar-sketch` bị cắt** khỏi loạt 2/4. Bài định dạy "hình phẳng
-  luôn có đỉnh bậc $\le 5$" bằng Euler, nhưng `planarity(...)` trả `value?.planar`
-  là `undefined` trên scene dựng tại chỗ, nên khẳng định trong narrative không có
-  gì chống lưng. Không viết một bài mà máy không kiểm được — nợ này là **một lỗi
-  analyzer cần soát**, không phải một bài chưa soạn.
+- ~~**`five-colour-planar-sketch` bị cắt**~~ ✅ **soạn xong, và chướng ngại là ảo.**
+  Ghi chú nợ khi ấy nói `planarity(...).value?.planar` trả `undefined` và gọi đó là
+  *một lỗi analyzer cần soát*. Soát ra thì `PlanarityResult` khai **`verdict`** với ba
+  giá trị (`planar` / `not-planar` / `unknown`) và **chưa từng có** trường `planar`;
+  không dòng nào trong kho đọc `.planar` cả.
+
+  Lỗi nằm ở tay người dò, và nó sống trong sổ nợ như một lỗi của mã — đúng dạng "một
+  khẳng định mà mã không đỡ", lần này ở trong **chính sổ ghi nợ**. Thứ làm nó im lặng
+  là `?.`: đọc một trường không tồn tại qua optional chaining cho ra `undefined` y hệt
+  khi analyzer từ chối, nên hai chuyện rất khác nhau trông giống hệt.
+
+  Nay có răng khoá tên trường lại (`planarity.test.ts`), và bài đã soạn: bổ đề "hình
+  phẳng luôn có đỉnh bậc $\le 5$", chứng minh bằng đếm bậc hai chiều cộng $e \le 3v-6$,
+  **không nhìn hình cụ thể nào**. Mọi hình trong bài đều hỏi engine trước khi ship —
+  `verdict === 'planar'`, `crossings === 0`.
+
+  Kèm một bài học về hình: bát diện ở bước cuối lúc đầu vẽ với bán kính trong $13$ trên
+  ngoài $30$. Tam giác đều bán kính $R$ có bán kính nội tiếp $R/2$, mà tam giác trong
+  xoay $60°$ chĩa đỉnh **thẳng vào** cạnh ngoài — nên khoảng hở chỉ $2$ đơn vị. Engine
+  xác nhận $0$ giao điểm, tức hình **đúng**, mà mắt đọc ra một búi rối. $r = 9$ cho hở
+  $6$, và đó là khác biệt giữa "đúng" và "nhìn được".
 
 ### 2.3 `sequence` — 12 bài
 

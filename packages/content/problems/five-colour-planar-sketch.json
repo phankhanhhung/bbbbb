@@ -1,0 +1,590 @@
+{
+  "schema_version": "1.5.0",
+  "id": "five-colour-planar-sketch",
+  "statement": {
+    "vi": "Chứng minh mọi đồ thị **phẳng** đều có một đỉnh bậc không quá $5$. Đây là bổ đề mà chứng minh định lý năm màu dựa vào."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Hệ quả trực tiếp của công thức Euler, và nó **không nhìn hình cụ thể nào**: chỉ cần $e \\le 3v - 6$ rồi đếm bậc hai chiều. Chỗ đáng nhìn là cận $5$ hiếm khi bị chạm — muốn mọi đỉnh đều bậc đúng $5$ thì phải có ít nhất $12$ đỉnh, và cùng một phép đếm ấy cho ra con số $12$."
+    }
+  },
+  "topics": [
+    "graph-basics"
+  ],
+  "techniques": [
+    "double-counting",
+    "contradiction"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bánh xe năm nan, vẽ **không giao điểm** nào — nên nó phẳng, và hình chính là chứng chỉ. Badge trên mỗi đỉnh là bậc: [[a1|trục]] bậc $5$, năm đỉnh vành bậc $3$. Cận $5$ ở đây bị chạm đúng một lần, và bị chạm bởi đỉnh **cao nhất**."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "h"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "h",
+                "type": "vertex",
+                "label": "T",
+                "pos": [0, 0]
+              },
+              {
+                "id": "r0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -26]
+              },
+              {
+                "id": "r1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [24.73, -8.03]
+              },
+              {
+                "id": "r2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [15.28, 21.03]
+              },
+              {
+                "id": "r3",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-15.28, 21.03]
+              },
+              {
+                "id": "r4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-24.73, -8.03]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "r0",
+                "v": "r1"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "h",
+                "v": "r0"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "r1",
+                "v": "r2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "h",
+                "v": "r1"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "r2",
+                "v": "r3"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "h",
+                "v": "r2"
+              },
+              {
+                "id": "e6",
+                "type": "edge",
+                "u": "r3",
+                "v": "r4"
+              },
+              {
+                "id": "e7",
+                "type": "edge",
+                "u": "h",
+                "v": "r3"
+              },
+              {
+                "id": "e8",
+                "type": "edge",
+                "u": "r4",
+                "v": "r0"
+              },
+              {
+                "id": "e9",
+                "type": "edge",
+                "u": "h",
+                "v": "r4"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bánh xe năm nan, mỗi đỉnh có badge bậc: trục 5, năm đỉnh vành mỗi đỉnh 3."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đếm bậc hai chiều: $\\sum_v \\deg v = 2e$, vì mỗi cạnh góp $1$ vào bậc của đúng hai đỉnh. Còn Euler cho đồ thị phẳng đơn với $v \\ge 3$ thì [[a1|$e \\le 3v - 6$]] — mỗi mặt cần ít nhất ba cạnh, mỗi cạnh viền đúng hai mặt. Ghép lại: $\\sum_v \\deg v \\le 6v - 12$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e0",
+                "e1",
+                "e2",
+                "e3",
+                "e4",
+                "e5",
+                "e6",
+                "e7",
+                "e8",
+                "e9"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "h",
+                "type": "vertex",
+                "label": "T",
+                "pos": [0, 0]
+              },
+              {
+                "id": "r0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -26]
+              },
+              {
+                "id": "r1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [24.73, -8.03]
+              },
+              {
+                "id": "r2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [15.28, 21.03]
+              },
+              {
+                "id": "r3",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-15.28, 21.03]
+              },
+              {
+                "id": "r4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-24.73, -8.03]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r0",
+                "v": "r1"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "color_class": 1,
+                "u": "h",
+                "v": "r0"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r1",
+                "v": "r2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "color_class": 1,
+                "u": "h",
+                "v": "r1"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r2",
+                "v": "r3"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "color_class": 1,
+                "u": "h",
+                "v": "r2"
+              },
+              {
+                "id": "e6",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r3",
+                "v": "r4"
+              },
+              {
+                "id": "e7",
+                "type": "edge",
+                "color_class": 1,
+                "u": "h",
+                "v": "r3"
+              },
+              {
+                "id": "e8",
+                "type": "edge",
+                "color_class": 1,
+                "u": "r4",
+                "v": "r0"
+              },
+              {
+                "id": "e9",
+                "type": "edge",
+                "color_class": 1,
+                "u": "h",
+                "v": "r4"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng bánh xe, mười cạnh tô đậm: sáu đỉnh, mười cạnh, tổng bậc bằng hai mươi."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giờ giả sử **mọi** đỉnh đều có bậc $\\ge 6$. Thế thì $\\sum_v \\deg v \\ge 6v$, mà ta vừa có $\\sum_v \\deg v \\le 6v - 12$ — mâu thuẫn, và mâu thuẫn ấy **không nhìn một hình nào**. Vậy [[a1|phải có đỉnh bậc $\\le 5$]]. Ở bánh xe này tổng bậc là $20 \\le 6 \\cdot 6 - 12 = 24$, đúng như chặn hứa."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "r0",
+                "r1",
+                "r2",
+                "r3",
+                "r4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "h",
+                "type": "vertex",
+                "label": "T",
+                "pos": [0, 0]
+              },
+              {
+                "id": "r0",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "1",
+                "pos": [0, -26]
+              },
+              {
+                "id": "r1",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "2",
+                "pos": [24.73, -8.03]
+              },
+              {
+                "id": "r2",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "3",
+                "pos": [15.28, 21.03]
+              },
+              {
+                "id": "r3",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "4",
+                "pos": [-15.28, 21.03]
+              },
+              {
+                "id": "r4",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "5",
+                "pos": [-24.73, -8.03]
+              },
+              {
+                "id": "e0",
+                "type": "edge",
+                "u": "r0",
+                "v": "r1"
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "h",
+                "v": "r0"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "r1",
+                "v": "r2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "h",
+                "v": "r1"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "r2",
+                "v": "r3"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "h",
+                "v": "r2"
+              },
+              {
+                "id": "e6",
+                "type": "edge",
+                "u": "r3",
+                "v": "r4"
+              },
+              {
+                "id": "e7",
+                "type": "edge",
+                "u": "h",
+                "v": "r3"
+              },
+              {
+                "id": "e8",
+                "type": "edge",
+                "u": "r4",
+                "v": "r0"
+              },
+              {
+                "id": "e9",
+                "type": "edge",
+                "u": "h",
+                "v": "r4"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng bánh xe, năm đỉnh vành tô lục: mỗi đỉnh bậc ba, đều không quá năm."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cận $5$ là cận, không phải giá trị thường gặp. Bát diện dưới đây **kín cạnh** — $e = 12 = 3v - 6$, không thêm được cạnh nào mà vẫn phẳng — mà [[a1|mọi đỉnh vẫn chỉ bậc $4$]]. Muốn mọi đỉnh đúng bậc $5$ thì $5v = 2e \\le 6v - 12$, tức $v \\ge 12$: bát diện $6$ đỉnh không với tới được, và con số $12$ ra từ đúng phép đếm vừa dùng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a0",
+                "a1",
+                "a2",
+                "b0",
+                "b1",
+                "b2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "a0",
+                "type": "vertex",
+                "label": "A1",
+                "pos": [0, -30]
+              },
+              {
+                "id": "a1",
+                "type": "vertex",
+                "label": "A2",
+                "pos": [25.98, 15]
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "label": "A3",
+                "pos": [-25.98, 15]
+              },
+              {
+                "id": "b0",
+                "type": "vertex",
+                "label": "B1",
+                "pos": [7.79, -4.5]
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "label": "B2",
+                "pos": [0, 9]
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "label": "B3",
+                "pos": [-7.79, -4.5]
+              },
+              {
+                "id": "f0",
+                "type": "edge",
+                "u": "a0",
+                "v": "a1"
+              },
+              {
+                "id": "f1",
+                "type": "edge",
+                "u": "b0",
+                "v": "b1"
+              },
+              {
+                "id": "f2",
+                "type": "edge",
+                "u": "a1",
+                "v": "a2"
+              },
+              {
+                "id": "f3",
+                "type": "edge",
+                "u": "b1",
+                "v": "b2"
+              },
+              {
+                "id": "f4",
+                "type": "edge",
+                "u": "a2",
+                "v": "a0"
+              },
+              {
+                "id": "f5",
+                "type": "edge",
+                "u": "b2",
+                "v": "b0"
+              },
+              {
+                "id": "f6",
+                "type": "edge",
+                "u": "b0",
+                "v": "a0"
+              },
+              {
+                "id": "f7",
+                "type": "edge",
+                "u": "b0",
+                "v": "a1"
+              },
+              {
+                "id": "f8",
+                "type": "edge",
+                "u": "b1",
+                "v": "a1"
+              },
+              {
+                "id": "f9",
+                "type": "edge",
+                "u": "b1",
+                "v": "a2"
+              },
+              {
+                "id": "f10",
+                "type": "edge",
+                "u": "b2",
+                "v": "a2"
+              },
+              {
+                "id": "f11",
+                "type": "edge",
+                "u": "b2",
+                "v": "a0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bát diện vẽ phẳng: tam giác ngoài, tam giác trong xoay sáu mươi độ, sáu cạnh nối chúng. Mọi đỉnh có badge bậc bằng 4."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "n == 6",
+    "validators": [
+      "simple-graph",
+      "plane-drawing"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

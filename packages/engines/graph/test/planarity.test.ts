@@ -299,3 +299,42 @@ describe('GR-05 — mặt của hình phẳng', () => {
     }
   });
 });
+
+/**
+ * **Hình dạng của `PlanarityResult`** — răng chống đúng một lỗi đã xảy ra thật.
+ *
+ * Loạt bài 2/4 cắt `five-colour-planar-sketch` và ghi vào sổ nợ rằng
+ * `planarity(...).value?.planar` trả `undefined`, gọi đó là *lỗi analyzer cần soát*.
+ * Soát ra thì kết quả **chưa từng có** trường `planar`: nó khai `verdict` với ba giá
+ * trị, và không dòng nào trong kho đọc `.planar`. Lỗi nằm ở tay người dò, và nó đã sống
+ * mấy tháng trong sổ nợ như một lỗi của mã — đúng dạng "một khẳng định mà mã không đỡ",
+ * lần này ở trong chính sổ ghi nợ.
+ *
+ * `?.` là thứ làm nó im lặng: đọc một trường không tồn tại qua optional chaining cho ra
+ * `undefined` y như khi analyzer từ chối, nên hai chuyện rất khác nhau trông giống hệt.
+ * Test này khoá tên trường lại để lần sau nhầm thì đỏ chứ không im.
+ */
+describe('PlanarityResult — tên trường là hợp đồng', () => {
+  it('khai `verdict`, **không** khai `planar`', () => {
+    const square = scene(
+      { a: [0, 0], b: [10, 0], c: [10, 10], d: [0, 10] },
+      [['a', 'b'], ['b', 'c'], ['c', 'd'], ['d', 'a']],
+    );
+    const result = planarity(buildGraph(square));
+
+    expect(result.value).toBeDefined();
+    expect(result.value?.verdict).toBe('planar');
+    // Chính chỗ này. Một `?.planar` trả `undefined` **không** có nghĩa "không phẳng",
+    // cũng không có nghĩa "analyzer từ chối" — nó có nghĩa là gõ sai tên.
+    expect(Object.keys(result.value as object)).not.toContain('planar');
+    expect(Object.keys(result.value as object)).toContain('verdict');
+  });
+
+  it('ba giá trị của `verdict` đều là chuỗi, không phải boolean', () => {
+    // `unknown` là lý do nó không thể là boolean: "hình có giao điểm nhưng chặn Euler
+    // chưa loại trừ" không rút gọn được về đúng/sai.
+    const result = planarity(buildGraph(scene({ a: [0, 0], b: [10, 0] }, [['a', 'b']])));
+    expect(typeof result.value?.verdict).toBe('string');
+    expect(['planar', 'not-planar', 'unknown']).toContain(result.value?.verdict);
+  });
+});
