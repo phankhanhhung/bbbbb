@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "fibonacci-nim",
   "statement": {
     "vi": "Trên bàn có $20$ viên sỏi. Người đi đầu bốc ít nhất $1$ viên nhưng **không được bốc hết**. Từ đó trở đi, mỗi lượt được bốc ít nhất $1$ viên và **nhiều nhất gấp đôi** số viên đối thủ vừa bốc. Ai bốc viên cuối cùng thì thắng. Hỏi ai có chiến lược thắng?"

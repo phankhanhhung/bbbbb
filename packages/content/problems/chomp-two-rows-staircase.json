@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "chomp-two-rows-staircase",
   "statement": {
     "vi": "Thanh sô-cô-la $2 \\times 5$, ô góc trên trái có độc. Hai người lần lượt chọn một ô còn lại và ăn hết phần từ ô đó xuống dưới và sang phải; ai buộc phải ăn ô độc thì thua. Người đi trước thắng — nhưng **thắng bằng cách nào**?"

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "kings-domination-8x8",
   "statement": {
     "vi": "Cần ít nhất bao nhiêu quân vua để mọi ô của bàn $8\\times8$ đều bị chiếm hoặc bị khống chế?"

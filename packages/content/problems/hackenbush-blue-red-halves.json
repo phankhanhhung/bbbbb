@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "hackenbush-blue-red-halves",
   "statement": {
     "vi": "Hackenbush xanh–cam: hai người lần lượt gỡ một cạnh **màu của mình** — Người 1 gỡ cạnh xanh, Người 2 gỡ cạnh cam — và mọi phần không còn nối với mặt đất sẽ rụng. Ai không còn cạnh màu mình thì **thua**. Hình dưới có hai cạnh xanh và ba cạnh cam. Ai thắng?"

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "grouping-and-completing-square",
   "statement": {
     "vi": "Hai mẹo mà mắt phải nhìn ra chứ máy không tính ra được: **nhóm hạng tử** cho lộ nhân tử chung, và **hoàn thành bình phương** cho lộ giá trị nhỏ nhất. Cả hai đều không thêm phép tính nào — chúng chỉ đổi cách viết."

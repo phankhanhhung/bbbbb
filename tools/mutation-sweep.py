@@ -43,8 +43,12 @@ MUTANTS = [
     ('packages/engines/algebra/src/index.ts',
      "    code: 'bounds/algebra-unsound',", "    code: 'bounds/SKIP-algebra-unsound',",
      'đổi mã lỗi "bước không bảo toàn giá trị"'),
+    # Ghim **tiền tố**, không ghim con số: bản trước tìm `= '1.5.0';` nên **mọi** lần
+    # bump schema là mutant này trôi qua im lặng — đúng lớp lỗi mà chính lượt soát công
+    # cụ 2026-08-02 tìm thấy ở `bounds/algebra-unsound`. Phần đuôi cũ rơi vào một chú
+    # thích dòng, nên bản thay vẫn là TypeScript hợp lệ dù phiên bản là gì.
     ('packages/schema/src/version.ts',
-     "export const SCHEMA_VERSION = '1.5.0';", "export const SCHEMA_VERSION = '9.9.9';",
+     "export const SCHEMA_VERSION = '", "export const SCHEMA_VERSION = '9.9.9'; // ",
      'SCHEMA_VERSION nhảy lên 9.9.9 (kho lệch con dấu)'),
     ('packages/engines/graph/src/index.ts',
      "const MONO_TRIANGLE_LIMIT = 30;", "const MONO_TRIANGLE_LIMIT = 0;",

@@ -137,6 +137,19 @@ export const MIGRATIONS: readonly Migration[] = [
      */
     apply: (problem) => problem,
   },
+  {
+    from: '1.5.0',
+    to: '1.6.0',
+    summary:
+      'thêm `algebra.config.assume` (AL-22) — không đổi dữ liệu bài nào, chỉ đóng dấu phiên bản',
+    /**
+     * Đồng nhất, lần thứ sáu — và lần này trường mới **mang nghĩa logic** chứ không chỉ
+     * mang dữ liệu vẽ: nó là một giả thiết của bài. Điều đó vẫn không đổi gì ở tầng
+     * migration (bài cũ không có giả thiết nào, và không có giả thiết là đúng), nhưng
+     * đáng ghi vì nó là lần đầu một minor mở một khái niệm chứ không mở một thuộc tính.
+     */
+    apply: (problem) => problem,
+  },
 ];
 
 export interface MigrateResult {

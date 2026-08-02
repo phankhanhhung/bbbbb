@@ -16,6 +16,7 @@ import {
   nodeAt,
   nodeCount,
   normalize,
+  rel,
   replaceAt,
   same,
   substituteVar,
@@ -283,6 +284,33 @@ function resolveAt(root: Expr, at: string): { path: string } | { refusal: string
  * để một lỗi thật nằm im — bẻ hai chỗ chữa ở trên ra thì test đỏ, còn bẻ **cái lưới**
  * ra thì test vẫn xanh, và đó là bằng chứng nó đang là hàng rào chứ không phải cái nạng.
  */
+/**
+ * `after` có đúng bằng phép bóc trực tiếp của `before` không — **bản của bộ kiểm**.
+ *
+ * Đây là bản **thứ hai** của phép bóc; bản thứ nhất là `peelSameFunction` trong
+ * `rules.ts`. Chép có chủ đích, và lý do là bài học M78.3: luật và phép kiểm đi qua
+ * *một* hàm thì sai cùng nhau mà vẫn khớp, nên phép so hoá ra chỉ khẳng định rằng hàm
+ * ấy tự đồng ý với chính nó.
+ *
+ * **Chỗ hàm này *chưa* canh được, ghi ra thay vì để im.** Hôm nay `use_injective` là
+ * luật duy nhất đi hợp đồng `'assumption'`, và nó **từ chối** mọi hình dạng không bóc
+ * được — nên không có đường nào đưa một `after` sai tới đây, và lượt bẻ răng xác nhận:
+ * cho `model` tin thẳng `outcome.after` thì không test nào đỏ. Đó là một mutant **tương
+ * đương**, không phải một lỗ: hàm này là lưới cho luật *thứ hai* của hợp đồng, luật
+ * chưa tồn tại. Nên nó có chốt canh riêng gọi thẳng vào đây, chứ không dựa vào đường
+ * đi qua `readAlgebra`.
+ */
+export function peelsTo(before: Expr, after: Expr): boolean {
+  const call = (e: Expr): (Expr & { k: 'ufn' }) | null =>
+    e.k === 'ufn' && e.args.length === 1 ? e : null;
+  if (before.k !== 'rel' || before.op !== '=') return false;
+  const [left, right] = [call(before.lhs), call(before.rhs)];
+  if (left === null || right === null) return false;
+  if (left.name !== right.name || left.notation !== right.notation) return false;
+  const want = normalize(rel(new Minter(), '=', left.args[0] as Expr, right.args[0] as Expr));
+  return same(want, after);
+}
+
 export function readAlgebra(scene: Scene): AlgebraModel {
   try {
     return readAlgebraOrThrow(scene);
@@ -515,6 +543,38 @@ function readAlgebraOrThrow(scene: Scene): AlgebraModel {
             : verdict.verified
               ? ''
               : ' (chiều kéo theo chưa bốc trúng điểm nào để kiểm)'),
+      );
+    } else if (outcome.verify === 'assumption') {
+      /**
+       * Bước dựa trên một **giả thiết của bài**, và hợp đồng này ép hai thứ (AL-22).
+       *
+       * **Một — giả thiết phải có địa chỉ.** Luật khai tên giả thiết nó tiêu thụ nhưng
+       * **không thấy** `config`, nên nó không tự phê duyệt được; chỗ đối chiếu là đây.
+       * Chưa khai thì **từ chối**, không phải cảnh báo: một bước dùng giả thiết chưa ai
+       * khai là một bước sai, và sai theo cách người đọc không tự phát hiện được.
+       *
+       * **Hai — phép biến đổi phải kiểm được bằng cây.** `model` **tự bóc lại** từ dòng
+       * trước rồi so, không hỏi luật. Bài học M78.3: luật và phép kiểm đi qua *một* hàm
+       * thì sai cùng nhau mà vẫn khớp. Nên phép bóc dưới đây là bản thứ hai, viết riêng.
+       */
+      const declared = new Set((config.assume ?? []).map((a) => a.trim()));
+      const need = outcome.assumption ?? '';
+      if (!declared.has(need)) {
+        return {
+          ...empty,
+          rows,
+          refusal:
+            `bước ${i + 1} (${rule.label}): bài chưa khai giả thiết "${need}" — ` +
+            (declared.size === 0
+              ? 'thêm nó vào `assume` của scene'
+              : `scene đang khai ${[...declared].map((d) => `"${d}"`).join(', ')}`),
+        };
+      }
+
+      judge(
+        peelsTo(target, outcome.after)
+          ? { ok: true, verified: true, message: `bóc ${need} — hai vế cùng một lời gọi hàm` }
+          : { ok: false, verified: true, message: 'kết quả không bằng phép bóc trực tiếp' },
       );
     } else if (rule.id === 'substitute') {
       /**

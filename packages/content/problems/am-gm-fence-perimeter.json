@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "am-gm-fence-perimeter",
   "statement": {
     "vi": "Một mảnh vườn hình chữ nhật có diện tích $36$ m². Rào hết chu vi thì tốn ít nhất bao nhiêu mét hàng rào? Diện tích **cố định** mà chu vi thì không — và AM–GM nói đúng chỗ nó dừng."

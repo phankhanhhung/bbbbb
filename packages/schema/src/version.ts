@@ -44,8 +44,19 @@
  * vẫn phải đổi vì element schema cũng đóng `additionalProperties`. Cửa sổ đọc trượt
  * tiếp: `1.4.0` xuống n−1, `1.3.0` ra khỏi cửa sổ.
  *
+ * **`1.6.0` — `algebra.config.assume` (AL-22)**: giả thiết về một ký hiệu hàm —
+ * *"$f$ đơn ánh"* — khai cạnh phương trình hàm. Sinh ra từ nợ có tên của
+ * `ALGEBRA-COVERAGE.md` §4.2: engine giữ được chuỗi thế mà chưa giữ được điều rút ra
+ * từ chuỗi thế, nên mạch phương trình hàm không kết được. Khai ở **scene** chứ không
+ * ở từng bước, và đó chính là lý do phải bump: bước khai lấy bước dùng thì không ai
+ * đối chiếu được, còn khai một lần ở config thì `readAlgebra` từ chối mọi lượt dùng
+ * chưa được khai. Vẫn là trường optional trong config của một engine, nên vẫn minor và
+ * vẫn migration đồng nhất; con dấu vẫn phải đổi vì `AlgebraConfig` cũng khai
+ * `additionalProperties: false`. Cửa sổ đọc trượt tiếp: `1.5.0` xuống n−1, `1.4.0` ra
+ * khỏi cửa sổ.
+ *
  * Từ đây: thêm trường optional = minor + migration đồng nhất; đổi/gỡ = major.
  * Cửa sổ đọc của Player là minor hiện tại và n−1 (`isReadableVersion`), và
  * validate đứng gác ở cửa (`version/unreadable`).
  */
-export const SCHEMA_VERSION = '1.5.0';
+export const SCHEMA_VERSION = '1.6.0';

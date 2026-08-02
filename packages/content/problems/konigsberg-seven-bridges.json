@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "konigsberg-seven-bridges",
   "statement": {
     "vi": "Bảy cây cầu của Königsberg nối bốn vùng đất hai bên sông. Hỏi có thể đi một vòng dạo qua **mỗi** cây cầu đúng một lần hay không?"

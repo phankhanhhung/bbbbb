@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "cubic-by-known-root",
   "statement": {
     "vi": "Đa thức bậc ba không có công thức nghiệm nào đáng nhớ. Nhưng **đoán được một nghiệm** thì bậc tụt xuống hai, và bậc hai thì có công thức. Giải $x^3 - 3x + 2 = 0$ theo đúng mạch ấy."

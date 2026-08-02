@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "five-colour-planar-sketch",
   "statement": {
     "vi": "Chứng minh mọi đồ thị **phẳng** đều có một đỉnh bậc không quá $5$. Đây là bổ đề mà chứng minh định lý năm màu dựa vào."

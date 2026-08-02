@@ -14,7 +14,7 @@ export * from './expr.js';
 export * from './schema.js';
 export { FUNCTIONS, checkArity, isIntegerOnly, type FnSpec } from './functions.js';
 export { parse, tryParse, unparse, ParseError } from './parse.js';
-export { readAlgebra, type AlgebraModel, type AlgebraRow, type Condition } from './model.js';
+export { readAlgebra, peelsTo, type AlgebraModel, type AlgebraRow, type Condition } from './model.js';
 export { RULES, ruleById, applicableRules, ARG_RULE_PREDICATES, type Rule } from './rules.js';
 export {
   sameValue,

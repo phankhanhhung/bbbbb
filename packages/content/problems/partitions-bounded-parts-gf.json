@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "partitions-bounded-parts-gf",
   "statement": {
     "vi": "Có bao nhiêu cách viết $6$ thành tổng các số nguyên dương **không quá $3$**, không kể thứ tự? Dựng hàm sinh cho bài toán ấy."

@@ -175,9 +175,10 @@ tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mớ
 | **Chữ toán trên OG card**: `\sin` không còn bị xoá im lặng; 31 lệnh khác cũng thế | 08-02 | `PLAN-P1.md` §10.3c |
 | **Tiêu đề OG đo bề rộng thật** — đóng `PLAN-P1.md` §10.3b, `18/144 → 0` card tràn | 08-02 | `PLAN-P1.md` §10.3b |
 | **AL-21** — bất đẳng thức có tên: `am_gm`, `cauchy_schwarz` + 3 bài; đóng phần *có tên* của §4.1 | 08-02 | `ENGINE-ALGEBRA.md` §52 |
+| **AL-22** — kết luận về hàm: `config.assume` + `use_injective` + 1 bài; schema `1.6.0` | 08-02 | `ENGINE-ALGEBRA.md` §53 |
 
-Kho đi từ **114 bài → 147 bài** trong hai ngày, test từ **3459** (M78.8) lên
-**3925 / 68 tệp**, schema từ `1.0.0` lên `1.5.0` — năm minor, năm migration đồng nhất.
+Kho đi từ **114 bài → 148 bài** trong hai ngày, test từ **3459** (M78.8) lên
+**3940 / 68 tệp**, schema từ `1.0.0` lên `1.6.0` — sáu minor, sáu migration đồng nhất.
 
 > **Một cái bẫy đếm, ghi ra để lần sau không phải điều tra lại.** Con số chính thức
 > là số của `pnpm test` (`vitest run` không lọc đường dẫn) — **3843 / 67 tệp** lúc
@@ -264,8 +265,9 @@ lại vẫn phải soát tay — nhưng nay ít nhất chúng có một danh sá
   có tên* của bất đẳng thức đã đóng ở AL-21, nên nợ này hết mờ: nó không còn là "vài
   luật chưa cài" mà là **một khái niệm chưa có**. `ALGEBRA-COVERAGE.md` §4.1,
   `ENGINE-ALGEBRA.md` §52.4.
-- **Kết luận về hàm** (đơn ánh, toàn ánh, đơn điệu) — nửa sau của M73.
-  `ALGEBRA-COVERAGE.md` §4.2.
+- **Toàn ánh, đơn điệu, "$f$ là hằng"** — họ *kết luận về hàm* mới có **một** thành
+  viên (đơn ánh, AL-22). Khuôn để thêm đã có và đã chạy qua một bài thật, nên nợ này
+  nay là "điền vào khuôn" chứ không phải "dựng khuôn". `ENGINE-ALGEBRA.md` §53.
 - **Binet / $\frac{1}{1-P(x)}$ với $\deg P \ge 2$** — sau ranh giới vô tỉ mà
   `series.ts` tự vạch. `ALGEBRA-COVERAGE.md` §5.1.
 - **`point` đứng yên ở 3 bài** kể từ M36 — nội dung trước, đúng luật

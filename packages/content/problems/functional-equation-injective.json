@@ -1,0 +1,145 @@
+{
+  "schema_version": "1.6.0",
+  "id": "functional-equation-injective",
+  "statement": {
+    "vi": "Cho $f$ **đơn ánh** thoả $f(f(x) + y) = f(x + y)$ với mọi $x, y$. Chứng minh $f(x) = x$. Cả bài nằm ở một nước: đơn ánh cho phép **bóc $f$ khỏi hai vế**."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: tính đơn ánh là một **giả thiết**, không phải thứ engine rút ra. Nó khai ở scene, và engine **từ chối** bước bóc nếu bài chưa khai — nên câu \"vì $f$ đơn ánh\" không trôi qua được bằng cách viết vào lời văn. Còn bản thân phép bóc thì kiểm bằng cây: hai vế phải cùng một hàm, cùng một đối số duy nhất."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Thế, rút gọn, rồi bóc"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đẳng thức đúng với **mọi** $y$, nên thay $y := 0$ là một nước hợp lệ. Hai dấu cộng $0$ biến mất, còn lại $f(f(x)) = f(x)$ — hai vế cùng một lời gọi của cùng một hàm, nên tính đơn ánh nói [[a1|hai đối số]] phải bằng nhau.\nBỏ giả thiết ấy đi thì kết luận **sai** — hàm hằng $f \\equiv c$ cũng thoả đẳng thức gốc."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "assume": [
+                "f: đơn ánh"
+              ],
+              "caption": "thay y bởi 0, rồi bóc f",
+              "start": "f(f(x) + y) = f(x + y)",
+              "steps": [
+                {
+                  "arg": "y := 0",
+                  "at": "",
+                  "rule": "specialize"
+                },
+                {
+                  "at": "L.0",
+                  "rule": "drop_unit"
+                },
+                {
+                  "at": "R.0",
+                  "rule": "drop_unit"
+                },
+                {
+                  "at": "",
+                  "rule": "use_injective"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Năm dòng: f của (f x cộng y) bằng f của (x cộng y); thay y bằng 0; hai dấu cộng 0 biến mất, còn f của f x bằng f x; rồi bóc f khỏi hai vế, còn f x bằng x. Dòng đỏ dưới cùng: f đơn ánh."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nước đi ấy dùng lại được ở mọi chỗ hai vế cùng gọi một hàm. Bóc xong thì [[a1|dòng thứ hai]] là một phương trình bậc nhất bình thường — không còn ký hiệu hàm nào — và giải nốt bằng đại số quen thuộc.\nĐây là toàn bộ giá trị của một kết luận về hàm: nó **đưa bài ra khỏi thế giới hàm**. Trước lượt này engine giữ được chuỗi thế mà không giữ được điều rút ra từ chuỗi thế, nên mạch phương trình hàm không bao giờ kết được."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "assume": [
+                "f: đơn ánh"
+              ],
+              "start": "f(2*x) = f(x + 3)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "use_injective"
+                },
+                {
+                  "arg": "-1*x",
+                  "at": "",
+                  "rule": "add_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "collect_like"
+                },
+                {
+                  "at": "R",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Năm dòng: f của 2x bằng f của (x cộng 3); bóc f, còn 2x bằng x cộng 3; trừ x hai vế; gộp hạng tử; còn x bằng 3. Dòng đỏ: f đơn ánh."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

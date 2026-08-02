@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "divisible-2-3-5-inclusion-exclusion",
   "statement": {
     "vi": "Trong các số từ $1$ đến $30$, có bao nhiêu số không chia hết cho $2$, cho $3$, cũng không cho $5$?"

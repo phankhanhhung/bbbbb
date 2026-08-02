@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "geography-path-parity",
   "statement": {
     "vi": "Một quân cờ đứng ở đầu trái của một đường thẳng $6$ đỉnh. Hai người lần lượt đẩy quân sang đỉnh kề rồi **xoá đỉnh vừa rời đi**. Ai không còn nước đi thì thua. Ai thắng — và câu trả lời đổi thế nào khi đường có $5$ đỉnh?"

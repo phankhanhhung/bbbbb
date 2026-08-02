@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "radical-simplify",
   "statement": {
     "vi": "Rút gọn một biểu thức chứa căn nghĩa là gì, và mỗi bước được phép làm gì? Đưa thừa số chính phương ra ngoài dấu căn, gộp hai căn cùng chỉ số, và trục căn thức ở mẫu — ba thao tác cơ bản, chạy trên cả căn bậc hai lẫn căn bậc ba."

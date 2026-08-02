@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "bounded-parts-inclusion-exclusion",
   "statement": {
     "vi": "Chia $n$ cái kẹo giống nhau cho **hai** bạn, mỗi bạn nhận **nhiều nhất $4$** cái. Có bao nhiêu cách?"

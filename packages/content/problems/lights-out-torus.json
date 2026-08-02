@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "lights-out-torus",
   "statement": {
     "vi": "Bàn $4\\times4$ có mười sáu bóng đèn đang sáng, và bàn được dán mép thành **hình xuyến**: ô ở cột cuối kề ô ở cột đầu, ô ở hàng cuối kề ô ở hàng đầu. Mỗi lượt được bấm một ô; khi đó ô ấy và bốn ô kề nó đổi trạng thái sáng ↔ tắt. Chứng minh rằng tắt được hết đèn."

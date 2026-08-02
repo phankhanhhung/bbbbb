@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "chomp-poison-corner",
   "statement": {
     "vi": "Một thanh sô-cô-la $3 \\times 3$. Hai người lần lượt chọn một ô còn lại và **ăn hết** phần từ ô đó xuống dưới và sang phải. Ô góc trên trái có độc. Ai buộc phải ăn ô độc thì **thua**. Ai có chiến lược thắng?"

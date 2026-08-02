@@ -67,14 +67,14 @@ xong, và chỗ chưa xong lớn nhất vẫn là §4.1.
 
 | | Số đo | Nguồn |
 |---|---:|---|
-| Luật | **82** | `RULES.length` |
-| …đã có bài dùng | **74** | quét `config.steps[].rule` toàn kho |
+| Luật | **83** | `RULES.length` |
+| …đã có bài dùng | **75** | quét `config.steps[].rule` toàn kho |
 | …chưa bài nào dùng | **8** | xem §5 |
 | Kiểu nút `Expr` | **16** | `EXPR_KINDS.length` |
 | Sân kiểm | **4** | $\mathbb{F}_p$ · thực · nguyên · chuỗi hệ số |
 | Hợp đồng kiểm | **7** | `sameValue`, `sameSolutionSet`, `implies`, `root`, `instance`, `binding`, `claim` |
 | Hàm không-đa-thức | **9** | `binom cos exp fact ln log perm sin tan` |
-| Bài dùng engine | **42 / 147** | `engines_used` chứa `algebra` |
+| Bài dùng engine | **43 / 148** | `engines_used` chứa `algebra` |
 
 Bảng này đi từ $73$ luật lên $80$ kể từ lượt đo M70 — bảy luật, và đúng bảy: M71 thêm
 `sum_telescope` + `specialize`, M72 thêm bốn luật `coeff_*`, AL-20 thêm
@@ -89,9 +89,10 @@ mới tình cờ có bài — ba bài lượng giác soạn ra đúng để tiê
 nhịp mà §5 đòi: **năng lực trước, nội dung sau, và nội dung phải thật sự tới**.
 
 Rồi lượt bất đẳng thức (AL-21) thêm **hai** luật và tiêu **hết cả hai** trong cùng một
-commit, nên con số đứng yên ở $8$ thay vì lên $10$. Đó là lý do thứ tự hai lượt ấy được
-ghim từ đầu: soạn nội dung trước, thêm năng lực sau, và mỗi năng lực mới đi kèm bài dùng
-nó — chứ không phải cài luật rồi hy vọng.
+commit, và AL-22 thêm một, tiêu một. Nên con số đứng yên ở $8$ suốt ba lượt liền dù tập
+luật đi từ $80$ lên $83$. Đó là lý do thứ tự các lượt được ghim từ đầu: soạn nội dung
+trước, thêm năng lực sau, và mỗi năng lực mới đi kèm bài dùng nó — chứ không phải cài
+luật rồi hy vọng.
 
 Từ lượt này con số ấy **có răng**: `tools/pipeline/test/trigonometry.test.ts` quét kho
 rồi so với cả con số ở bảng trên, danh sách tên ở §5, lẫn chữ đếm trong tiêu đề §5.
@@ -179,7 +180,7 @@ Nên chiều phải quyết bằng **cấu trúc**, và bốc điểm ở lại 
 hình dạng của nợ: nó không còn là "vài luật chưa cài" mà là **một khái niệm chưa có** —
 nhánh giả thiết. Một món như thế thì lịch cho nó là một quyết định khác hẳn.
 
-### 4.2 Phương trình hàm — 20%, đã đi từ **0** lên ~25% ✅ M73
+### 4.2 Phương trình hàm — 20%, đã đi từ **0** lên ~25% ✅ M73, nửa sau ✅ AL-22
 
 Câu cũ ở đây: *"engine không có ký hiệu hàm không diễn giải, nên $f(x+y) = f(x) + f(y)$
 **viết ra cũng không được**, chứ chưa nói kiểm."* M73 đóng đúng câu ấy — nút `ufn` cho
@@ -190,7 +191,21 @@ Vì sao **~25% chứ không phải ~60%**: viết ra được và thế được
 phải cả lời giải. Mạch phương trình hàm thi đấu gần như luôn kết bằng một **kết luận
 về hàm** — đơn ánh, toàn ánh, đơn điệu, "vậy $f$ là hằng" — và engine chưa có khái
 niệm nào để giữ những kết luận ấy. Nó giữ được *chuỗi thế*, chưa giữ được *điều rút
-ra từ chuỗi thế*. Đó là hạng mục kế tiếp của họ này, và nó chưa xếp lịch.
+ra từ chuỗi thế*.
+
+**Làm rồi, 2026-08-02 (AL-22).** Tính chất của hàm khai thành **giả thiết của scene**
+(`config.assume`, schema `1.6.0`), và `use_injective` tiêu thụ nó — bóc $f$ khỏi hai vế
+một dấu bằng, kiểm bằng cây. Chi tiết ở `ENGINE-ALGEBRA.md` §53.
+
+Chỗ đáng ghi là **vì sao phải bump schema** thay vì cho luật nhận tên hàm qua `arg`:
+bước khai lấy bước dùng thì không ai đối chiếu được, nên tác giả gọi luật trên một hàm
+chẳng đơn ánh gì mà engine im lặng cho qua. Khai một lần ở scene thì `readAlgebra` **từ
+chối** mọi lượt dùng chưa được khai — luật mới có răng ở tầng **nội dung**, không chỉ
+tầng cây. Giá là một minor + một migration đồng nhất, đúng khuôn năm lần trước.
+
+Ô này chưa ước lại: một tính chất (đơn ánh) không phải cả họ *"kết luận về hàm"* — toàn
+ánh, đơn điệu, *"$f$ là hằng"* vẫn nguyên. Điều **đã** đổi là có một khuôn để thêm chúng
+vào, và khuôn ấy đã chạy qua một bài thật.
 
 ### 4.3 Engine này phục vụ ai
 

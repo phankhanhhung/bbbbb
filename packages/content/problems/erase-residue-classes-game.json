@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "erase-residue-classes-game",
   "statement": {
     "vi": "Cho $N$ nguyên dương. Geoff và Ceri chơi một trò: đầu tiên họ viết các số $1, 2, \\ldots, N$ lên bảng, rồi lần lượt đi, Geoff đi trước. Mỗi lượt, người đi chọn một cặp số nguyên $(k, n)$ với $k \\ge 0$ và $n$ là **một số đang có trên bảng**, rồi xoá mọi số $s$ trên bảng thoả $2^k \\mid n - s$. Trò chơi tiếp tục cho tới khi bảng trống, và **ai xoá số cuối cùng thì thua**. Tìm tất cả $N$ mà Geoff chắc chắn thắng, dù Ceri chơi thế nào."

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "pascal-identity-two-ways",
   "statement": {
     "vi": "Chứng minh hệ thức Pascal $\\binom{n}{k} = \\binom{n-1}{k-1} + \\binom{n-1}{k}$ bằng lập luận đếm, không dùng công thức giai thừa."

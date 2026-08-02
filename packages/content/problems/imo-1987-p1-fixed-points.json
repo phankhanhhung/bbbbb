@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "imo-1987-p1-fixed-points",
   "statement": {
     "vi": "Với mỗi $k$, gọi $p_n(k)$ là số hoán vị của $\\{1, \\dots, n\\}$ có **đúng $k$ điểm bất động**. Chứng minh $\\sum_{k=0}^{n} k\\, p_n(k) = n!$."

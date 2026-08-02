@@ -516,8 +516,8 @@ rồi mới đóng băng schema 1.0.0.~~
 **Đoạn trên đã hết hiệu lực (soát 2026-08-02).** G-C đóng ngày 2026-08-01 theo chỉ
 định chính chủ: điều kiện "soạn tay 3–5 bài" được thay bằng "Style Guide v1.0 kết
 tinh từ **số đo** trên toàn kho" — xem `PRODUCT-REQUIREMENTS.md` §9 và
-`STYLE-GUIDE.md` §2. Schema đã đóng băng `1.0.0` và nay ở `1.5.0` sau năm minor,
-mỗi minor kèm một migration. Kho có **147 bài**.
+`STYLE-GUIDE.md` §2. Schema đã đóng băng `1.0.0` và nay ở `1.6.0` sau sáu minor,
+mỗi minor kèm một migration. Kho có **148 bài**.
 
 Cảnh báo **không** hết hiệu lực là vế còn lại của nó, và nó vẫn đúng nguyên văn:
 người soạn vẫn là người duyệt. Không gate nào trong dự án chữa được chuyện ấy — nó

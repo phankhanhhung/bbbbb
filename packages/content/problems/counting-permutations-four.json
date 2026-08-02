@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "counting-permutations-four",
   "statement": {
     "vi": "Có bao nhiêu cách xếp $4$ bạn thành một hàng?"

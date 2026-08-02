@@ -146,6 +146,31 @@ export const AlgebraConfig = Type.Object(
      */
     show_sets: Type.Optional(Type.Boolean({ default: false })),
     caption: Type.Optional(Type.String({ maxLength: 48 })),
+    /**
+     * **Giả thiết về một ký hiệu hàm** — nửa sau của M73 (AL-22).
+     *
+     * `ALGEBRA-COVERAGE.md` §4.2 giải thích vì sao ô phương trình hàm dừng ở ~25% chứ
+     * không ~60%: engine giữ được *chuỗi thế*, chưa giữ được *điều rút ra từ chuỗi
+     * thế*. Mạch thi đấu gần như luôn kết bằng một **kết luận về hàm** — đơn ánh, toàn
+     * ánh, đơn điệu — và không có chỗ nào để nói câu ấy.
+     *
+     * Chỗ ấy là đây, và nó cố ý là một **giả thiết**, không phải một kết luận engine tự
+     * rút ra. Lý do đã ghi từ M73: một kết luận về hàm **không diễn giải** thì không bốc
+     * điểm được, và mọi giá trị bịa cho $f$ biến bộ kiểm thành cỗ máy nói dối. Tác giả
+     * khai *"$f$ đơn ánh"* như một dòng của đề; luật `use_injective` **tiêu thụ** nó và
+     * kiểm bằng cấu trúc.
+     *
+     * Vì sao khai ở **scene** chứ không ở từng bước: bước khai lấy bước dùng thì không
+     * ai đối chiếu được — tác giả gọi `use_injective` trên một hàm chẳng đơn ánh gì và
+     * engine im lặng cho qua. Khai một lần ở đây thì `readAlgebra` **từ chối** mọi lượt
+     * dùng chưa được khai, tức luật mới có răng ở tầng nội dung chứ không chỉ tầng cây.
+     *
+     * Cú pháp: `"f: đơn ánh"`. Chỉ một tính chất, vì chỉ một tính chất có luật tiêu thụ
+     * nó — khai sẵn "toàn ánh" khi chưa luật nào đọc là dựng một lời hứa suông.
+     */
+    assume: Type.Optional(
+      Type.Array(Type.String({ minLength: 1, maxLength: 40 }), { maxItems: 4 }),
+    ),
   },
   { additionalProperties: false },
 );

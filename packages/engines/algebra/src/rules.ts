@@ -101,8 +101,31 @@ export interface RuleOutcome {
    * `'instance'`: `after` là `before` sau khi **thế một giá trị cụ thể** vào một ẩn.
    * Không phải chuyện tập nghiệm mà là chuyện "có thế đúng không", nên kiểm bằng cấu
    * trúc. Đây cũng là đường trả nợ cho `'implies'`.
+   *
+   * `'assumption'`: `after` rút ra từ `before` nhờ một **giả thiết của bài**, không nhờ
+   * một sự thật về cây. Không bốc điểm được — đó chính là lý do M50 tầng C từ chối một
+   * luật *"chỉ biết nói chưa kiểm được"* — nên hợp đồng này đòi **hai** thứ mà tầng C
+   * ngày ấy không có:
+   *
+   *   1. Giả thiết phải được **khai ở scene** (`AlgebraConfig.assume`), và `model` từ
+   *      chối bước dùng một giả thiết chưa khai. Luật khai *tên* giả thiết nó tiêu thụ;
+   *      nó **không** thấy config, nên nó không tự phê duyệt được.
+   *   2. Phép biến đổi phải **kiểm được bằng cấu trúc**, và `model` tự bóc lại từ
+   *      `before` rồi so — không hỏi luật. Luật và phép kiểm đi qua hai đường thì sai
+   *      cùng nhau mới khớp được (M78.3).
+   *
+   * Nên nó không phải một lời "tin tôi đi": nó là một giả thiết **có địa chỉ** cộng một
+   * phép so cấu trúc **có răng**.
    */
-  readonly verify?: 'root' | 'implies' | 'instance';
+  readonly verify?: 'root' | 'implies' | 'instance' | 'assumption';
+  /**
+   * Tên giả thiết mà bước này tiêu thụ — bắt buộc khi `verify: 'assumption'`.
+   *
+   * Phải khớp **từng chữ** với một dòng của `AlgebraConfig.assume`; lệch một chữ là bị
+   * từ chối, và bị từ chối là đúng: một giả thiết viết sai tên là một giả thiết không
+   * ai khai.
+   */
+  readonly assumption?: string;
   /**
    * **Đẳng thức mà bước này khẳng định** — hợp đồng thứ bảy, và nó có vì hệ phương trình.
    *
@@ -4185,7 +4208,77 @@ const cauchySchwarz: Rule = {
   },
 };
 
+/* ---------- lớp kết luận về hàm ---------- */
+
+/**
+ * **Bóc một ký hiệu hàm khỏi hai vế** — nửa sau của M73 (AL-22).
+ *
+ * `ALGEBRA-COVERAGE.md` §4.2 nói vì sao ô phương trình hàm dừng ở ~25%: engine giữ được
+ * *chuỗi thế* mà chưa giữ được *điều rút ra từ chuỗi thế*. Mạch thi đấu gần như luôn kết
+ * bằng một kết luận về hàm — đơn ánh, toàn ánh, đơn điệu — và không có chỗ nào nói câu ấy.
+ *
+ * ## Vì sao đây không phải thứ M50 tầng C đã từ chối
+ *
+ * Tầng C từ chối một luật *"chỉ biết nói chưa kiểm được"*, và từ chối đúng. Luật này
+ * khác ở hai chỗ, và cả hai đều đo được:
+ *
+ * - **Giả thiết có địa chỉ.** *"$f$ đơn ánh"* không phải một lời thì thầm trong
+ *   narrative mà là một dòng của `AlgebraConfig.assume`, tức dữ liệu của bài, tức thứ
+ *   `combviz validate` đọc. Luật khai **tên** giả thiết nó tiêu thụ và **không thấy**
+ *   config, nên nó không tự phê duyệt được; `model` mới là chỗ đối chiếu.
+ * - **Phép biến đổi kiểm được bằng cây.** $f(A) = f(B) \to A = B$ là một phép bóc, và
+ *   `model` **tự bóc lại** từ dòng trước rồi so. Bóc sai vế, bóc nhầm hàm, bóc từ
+ *   $f(A) = g(B)$ — cả ba đều đỏ.
+ *
+ * Nên phần *"không kiểm được"* co lại đúng bằng bản thân giả thiết, và giả thiết thì
+ * người ra đề chịu trách nhiệm — đúng chỗ nó phải nằm.
+ *
+ * ## Vì sao chỉ một chiều
+ *
+ * $A = B \Rightarrow f(A) = f(B)$ đúng với **mọi** hàm, không cần giả thiết nào — nên
+ * nó không phải một nước đi đáng đặt tên, và cũng không phải chỗ khó. Chiều đáng dạy là
+ * chiều cần đơn ánh, và đó là chiều duy nhất luật này đi.
+ */
+const useInjective: Rule = {
+  id: 'use_injective',
+  label: 'dùng tính đơn ánh',
+  onRelation: true,
+  accepts: ['rel'],
+  run(m, node) {
+    const peeled = peelSameFunction(node);
+    if (typeof peeled === 'string') return no(peeled);
+    return {
+      after: rel(m, '=', peeled.lhs, peeled.rhs),
+      verify: 'assumption',
+      assumption: `${peeled.name}: đơn ánh`,
+      condition: `${peeled.name} đơn ánh`,
+    };
+  },
+};
+
+/**
+ * $f(A) = f(B)$ — bóc ra $(A, B)$, hoặc nói vì sao không bóc được.
+ *
+ * `model` có **bản riêng** của phép bóc này chứ không gọi hàm này: hai đường thì sai
+ * cùng nhau mới khớp, một đường thì luật tự chấm bài mình (M78.3).
+ */
+export function peelSameFunction(node: Expr): { name: string; lhs: Expr; rhs: Expr } | string {
+  if (node.k !== 'rel') return 'cần một đẳng thức';
+  if (node.op !== '=') return 'tính đơn ánh chỉ bóc được một dấu bằng';
+  const { lhs, rhs } = node;
+  if (lhs.k !== 'ufn' || rhs.k !== 'ufn') return 'hai vế phải cùng là một lời gọi hàm';
+  if (lhs.name !== rhs.name) {
+    return `hai vế gọi hai hàm khác nhau (${lhs.name} và ${rhs.name})`;
+  }
+  if (lhs.notation !== rhs.notation) return 'hai vế viết hai lối khác nhau';
+  if (lhs.args.length !== 1 || rhs.args.length !== 1) {
+    return 'chỉ bóc được hàm một đối số';
+  }
+  return { name: lhs.name, lhs: lhs.args[0] as Expr, rhs: rhs.args[0] as Expr };
+}
+
 export const RULES: readonly Rule[] = [
+  useInjective,
   amGm,
   cauchySchwarz,
   geometricSeries,

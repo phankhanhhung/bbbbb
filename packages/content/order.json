@@ -146,11 +146,10 @@
     "trig-sum-and-product",
     "am-gm-fence-perimeter",
     "am-gm-from-a-square",
-    "cauchy-engel-two-fractions"
+    "cauchy-engel-two-fractions",
+    "functional-equation-injective"
   ],
   "newest": [
-    "am-gm-fence-perimeter",
-    "am-gm-from-a-square",
-    "cauchy-engel-two-fractions"
+    "functional-equation-injective"
   ]
 }

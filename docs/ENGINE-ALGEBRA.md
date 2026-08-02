@@ -276,7 +276,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§52 để biết tập luật thật — **82 luật**, xếp theo mười bốn lớp:
+Xem §21–§53 để biết tập luật thật — **83 luật**, xếp theo mười bốn lớp:
 
 > **Bảng này có răng.** `engine.test.ts` đọc chính bảng dưới, gom mọi tên trong dấu
 > nháy ngược, và so với `RULES`: thừa một tên là đỏ, thiếu một tên cũng là đỏ. Lý do
@@ -300,7 +300,7 @@ Xem §21–§52 để biết tập luật thật — **82 luật**, xếp theo m
 | **hệ phương trình** (M59, §35) | `add_equations`, `scale_equation`, `substitute_from`, `drop_equation` |
 | **tập nghiệm** (M60, §36) | `abs_to_interval`, `interval_from_factors`, `merge_intervals` |
 | **hàm siêu việt** (M61, §37) | `log_product`, `log_quotient`, `log_power`, `log_change_base`, `exp_log`, `log_exp`, `log_both_sides`, `pythagorean_identity`, `double_angle`, `sum_to_product`, `product_to_sum` |
-| **phương trình hàm** (M73, §45) | `specialize` |
+| **phương trình hàm** (M73, §45; AL-22, §53) | `specialize`, `use_injective` |
 | **hàm sinh & chuỗi** (M68, §44; M72, §47; AL-20) | `geometric_series`, `coeff_of_product`, `coeff_linear`, `coeff_shift`, `coeff_repeated_geometric`, `partial_fractions` |
 | **bất đẳng thức có tên** (AL-21, §52) | `am_gm`, `cauchy_schwarz` |
 
@@ -3783,3 +3783,70 @@ vài luật nữa.
 Cũng không có chiều ngược của Cauchy — từ một phân thức đoán ra cách **tách** nó thành
 $\sum a_i^2/x_i$. Phép tách không xác định, nên đó là một phép *tìm*, và engine này
 không tìm (NG-03). Tác giả khai tổng; luật dựng ảnh rồi khớp.
+
+---
+
+## §53 — Kết luận về hàm: giả thiết có địa chỉ (AL-22, schema `1.6.0`)
+
+`ALGEBRA-COVERAGE.md` §4.2 giải thích vì sao ô phương trình hàm dừng ở **~25% chứ không
+~60%** sau M73: engine giữ được *chuỗi thế*, chưa giữ được *điều rút ra từ chuỗi thế*.
+Mạch thi đấu gần như luôn kết bằng một **kết luận về hàm** — đơn ánh, toàn ánh, đơn
+điệu, *"vậy $f$ là hằng"* — và không có chỗ nào để nói câu ấy.
+
+### §53.1 — Chỗ khó thật, và cách vòng qua nó
+
+Kết luận về một hàm **không diễn giải** thì không bốc điểm được: mọi giá trị bịa cho
+$f$ đều biến bộ kiểm thành cỗ máy nói dối — chính lý lẽ đã dựng `ufn` thành kiểu nút
+riêng ở M73. Và một luật chỉ biết nói *"chưa kiểm được"* là đúng thứ **M50 tầng C đã từ
+chối một lần**, từ chối đúng.
+
+Lối đi giữ được răng: tách làm hai, và **chỉ chiều tiêu thụ mới là luật**.
+
+| | ai làm | kiểm bằng gì |
+|---|---|---|
+| **khai** *"$f$ đơn ánh"* | tác giả, ở `config.assume` | `combviz validate` đọc như mọi dữ liệu bài khác |
+| **dùng** $f(A) = f(B) \to A = B$ | luật `use_injective` | `model` **tự bóc lại** rồi so cây |
+
+Phần *"phải tin"* co lại đúng bằng bản thân giả thiết — và giả thiết thì người ra đề
+chịu trách nhiệm, đúng chỗ nó phải nằm.
+
+### §53.2 — Vì sao khai ở **scene** chứ không ở từng bước, và vì sao phải bump
+
+Có một bản không cần đụng schema: `use_injective` nhận tên hàm qua `arg` và in
+*"với $f$ đơn ánh"* thành dòng đỏ. Bản ấy bị loại vì một lý do đo được: **bước khai lấy
+bước dùng thì không ai đối chiếu được**. Tác giả gọi luật trên một hàm chẳng đơn ánh gì
+và engine im lặng cho qua — đúng lớp lỗi mà cả mạch M77–AL-22 đi vá.
+
+Khai một lần ở `config.assume` thì `readAlgebra` **từ chối** mọi lượt dùng chưa được
+khai, kèm câu *"scene đang khai …"*. Luật khai **tên** giả thiết nó tiêu thụ và
+**không thấy** config, nên nó không tự phê duyệt được; `model` mới là chỗ đối chiếu.
+
+Giá: một minor + một migration đồng nhất, `1.5.0 → 1.6.0`, đúng khuôn năm lần trước.
+Đây là lần đầu một minor mở một **khái niệm** chứ không mở một thuộc tính vẽ.
+
+### §53.3 — Hai bản của một phép bóc, và một mutant tương đương
+
+`peelSameFunction` (trong `rules.ts`) và `peelsTo` (trong `model.ts`) làm cùng một việc
+và **cố ý không dùng chung**: bài học M78.3 nói luật và phép kiểm đi qua *một* hàm thì
+sai cùng nhau mà vẫn khớp, nên phép so hoá ra chỉ khẳng định rằng hàm ấy tự đồng ý với
+chính nó.
+
+Lượt bẻ răng ghi lại một chỗ thẳng thắn: cho `model` **tin thẳng** `outcome.after` thì
+**không test nào đỏ**. Không phải một lỗ mà một mutant **tương đương** — `use_injective`
+là luật duy nhất đi hợp đồng `'assumption'`, và nó từ chối mọi hình dạng không bóc được,
+nên không có đường nào đưa một `after` sai tới đó. `peelsTo` là lưới cho luật **thứ hai**
+của hợp đồng, luật chưa tồn tại. Nên nó có chốt canh **gọi thẳng vào nó**, không đi qua
+`readAlgebra` — sáu ca, gồm bóc nhầm vế, đảo hai vế, hai hàm khác tên, và một bất đẳng
+thức mang `after` đúng hình dạng bóc.
+
+Ghi ra thay vì im, vì một mutant sống sót không giải thích được sẽ bị đọc thành một lỗ
+ở lượt soát sau.
+
+### §53.4 — Ranh giới
+
+Chỉ **một** tính chất, và chỉ **một chiều**:
+
+- `assume` chỉ hiểu `"f: đơn ánh"`. Khai sẵn "toàn ánh" khi chưa luật nào đọc là dựng
+  một lời hứa suông — đúng thứ §51 vừa gỡ bốn cái.
+- $A = B \Rightarrow f(A) = f(B)$ đúng với **mọi** hàm, không cần giả thiết nào, nên nó
+  không phải một nước đi đáng đặt tên. Chiều đáng dạy là chiều cần đơn ánh.

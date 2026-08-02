@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "candies-three-children-gf",
   "statement": {
     "vi": "Chia $n$ cái kẹo **giống nhau** cho $3$ đứa trẻ, ai nhận bao nhiêu cũng được (kể cả không nhận). Có bao nhiêu cách? Giải bằng **hàm sinh**."

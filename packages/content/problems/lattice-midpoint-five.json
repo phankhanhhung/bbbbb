@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "lattice-midpoint-five",
   "statement": {
     "vi": "Cho $5$ điểm trên mặt phẳng, mọi toạ độ đều nguyên. Chứng minh luôn có hai điểm mà **trung điểm** của chúng cũng có toạ độ nguyên."

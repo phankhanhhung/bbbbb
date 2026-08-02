@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "am-gm-from-a-square",
   "statement": {
     "vi": "Bất đẳng thức $a + b \\ge 2\\sqrt{ab}$ không phải một câu thần chú. Nó rơi ra từ **một** sự thật duy nhất: một bình phương thì không âm. Dựng lại nó từ đó, rồi dùng nó như một nước đi có tên."

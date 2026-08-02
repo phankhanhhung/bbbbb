@@ -24,6 +24,7 @@ import {
   measure,
   nodeAt,
   parse,
+  peelsTo,
   place,
   readAlgebra,
   resolveAlgebraValidator,
@@ -448,6 +449,11 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       '10 >= a + b',
       '(a + b)^2/(x + y) >= 1',
       'a^2/x + b^2/y <= 100',
+      // `use_injective`: bộ sinh dựng `ufn`, nhưng gần như không bao giờ dựng ra **hai
+      // lời gọi cùng một hàm ở hai vế một dấu bằng**. Cùng lý do phải gieo tay như
+      // `geometric_series` (M68), `partial_fractions` (AL-20) và hai luật bất đẳng thức.
+      'f(x + 1) = f(2*y)',
+      'f(x) = f(y)',
     ];
 
     const bad: string[] = [];
@@ -3327,5 +3333,126 @@ describe('§48 — bất đẳng thức có tên', () => {
     expect(run('(a + b)^2/(x + y) >= 1', 'a/x + b/y', 'cauchy_schwarz').refusal).toContain(
       'phải là một bình phương',
     );
+  });
+});
+
+/**
+ * **Kết luận về hàm** (AL-22, §53) — và vì sao nó không phải thứ M50 tầng C đã từ chối.
+ *
+ * Tầng C từ chối một luật *"chỉ biết nói chưa kiểm được"*. Luật này khác ở hai chỗ, và
+ * cả hai đo được, nên cả hai đều có phép so riêng dưới đây:
+ *
+ * 1. **Giả thiết có địa chỉ** — khai ở `config.assume`, và `model` từ chối bước dùng
+ *    một giả thiết chưa khai. Luật không thấy config nên không tự phê duyệt được.
+ * 2. **Phép bóc kiểm bằng cây** — `model` tự bóc lại từ dòng trước rồi so. Hai đường
+ *    riêng, nên sai một bên là đỏ (M78.3).
+ */
+describe('§53 — dùng tính đơn ánh', () => {
+  const injective = (start: string, steps: AlgebraStep[], assume?: string[]) =>
+    readAlgebra(scene(start, steps, assume === undefined ? {} : { assume }));
+  const peel = [{ rule: 'use_injective', at: '' }] as AlgebraStep[];
+
+  it('khai rồi thì bóc được, và dòng đỏ nói ra giả thiết', () => {
+    const m = injective('f(x) = f(y)', peel, ['f: đơn ánh']);
+
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    expect(m.unchecked).toEqual([]);
+    expect(unparse(m.rows[1]!.expr)).toBe(unparse(parse('x = y', new Minter())));
+    expect(m.conditions.map((c) => c.text)).toEqual(['f đơn ánh']);
+  });
+
+  it('**chưa khai thì từ chối** — và đây là cả lý do phải bump schema', () => {
+    // Không có `assume` thì "vì f đơn ánh" chỉ là một câu trong narrative, và không ai
+    // đối chiếu được. Từ chối chứ không cảnh báo: một bước dùng giả thiết chưa ai khai
+    // là một bước **sai**, và sai theo cách người đọc không tự phát hiện được.
+    expect(injective('f(x) = f(y)', peel).refusal).toContain('chưa khai giả thiết "f: đơn ánh"');
+
+    // Khai nhầm hàm cũng là chưa khai, và lời từ chối **nói ra** cái đang khai.
+    const wrong = injective('f(x) = f(y)', peel, ['g: đơn ánh']);
+    expect(wrong.refusal).toContain('scene đang khai "g: đơn ánh"');
+  });
+
+  it('phép bóc kiểm bằng cây: cùng hàm, cùng lối viết, đúng một đối số', () => {
+    const two = injective('f(x) = g(y)', peel, ['f: đơn ánh']);
+    expect(two.refusal).toContain('hai hàm khác nhau');
+
+    // `a_n` và `f(n)` là **một khái niệm** (AL-18) nhưng **hai lối viết**; hai tên khác
+    // nhau thì lời từ chối gọi tên cả hai.
+    expect(injective('f(x) = a_n', peel, ['f: đơn ánh']).refusal).toContain('(f và a)');
+    // Còn một vế không phải lời gọi hàm nào thì nó nói đúng chuyện ấy.
+    expect(injective('f(x) = x', peel, ['f: đơn ánh']).refusal).toContain('cùng là một lời gọi');
+
+    // Bất đẳng thức thì không: $f(A) \le f(B)$ cần **đơn điệu**, không phải đơn ánh.
+    expect(injective('f(x) >= f(y)', peel, ['f: đơn ánh']).refusal).toContain('một dấu bằng');
+  });
+
+  it('mạch thật đi hết: thế → rút gọn → bóc → kết', () => {
+    const m = injective(
+      'f(f(x) + y) = f(x + y)',
+      [
+        { rule: 'specialize', at: '', arg: 'y := 0' },
+        { rule: 'drop_unit', at: 'L.0' },
+        { rule: 'drop_unit', at: 'R.0' },
+        { rule: 'use_injective', at: '' },
+      ] as AlgebraStep[],
+      ['f: đơn ánh'],
+    );
+
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    expect(unparse(m.rows.at(-1)!.expr)).toBe(unparse(parse('f(x) = x', new Minter())));
+  });
+
+  it('bóc xong thì hết ký hiệu hàm, và giải nốt bằng đại số thường', () => {
+    const m = injective(
+      'f(2*x) = f(x + 3)',
+      [
+        { rule: 'use_injective', at: '' },
+        { rule: 'add_both_sides', at: '', arg: '-1*x' },
+        { rule: 'collect_like', at: 'L' },
+        { rule: 'collect_like', at: 'R' },
+      ] as AlgebraStep[],
+      ['f: đơn ánh'],
+    );
+
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    expect(unparse(m.rows.at(-1)!.expr)).toBe(unparse(parse('x = 3', new Minter())));
+    // Và phép đối chiếu độc lập: $2 \cdot 3 = 3 + 3$.
+    expect(2 * 3).toBe(3 + 3);
+  });
+
+  it('`model` **tự bóc lại** — chứng cứ nói ra rằng phép so đã chạy', () => {
+    // M78.3: nếu `model` tin `outcome.after` thì luật và phép kiểm đi qua **một** đường
+    // và sai cùng nhau mà vẫn khớp. Nên `model` có bản bóc riêng, và chứng cứ của dòng
+    // là bằng chứng nó đã chạy — không phải một dòng im lặng "đã kiểm".
+    const m = injective('f(x) = f(y)', peel, ['f: đơn ánh']);
+    const evidence = m.rows[1]!.evidence;
+
+    expect(evidence?.ok).toBe(true);
+    expect(evidence?.verified).toBe(true);
+    expect(evidence?.message).toContain('hai vế cùng một lời gọi hàm');
+
+  });
+
+  it('…và bản bóc của bộ kiểm **có răng riêng**, vì đường đi qua `readAlgebra` không đủ', () => {
+    // Lượt bẻ răng đo được: cho `model` tin thẳng `outcome.after` thì **không test nào
+    // đỏ**. Không phải một lỗ mà một mutant **tương đương** — `use_injective` là luật
+    // duy nhất đi hợp đồng này và nó từ chối mọi hình dạng không bóc được, nên không có
+    // đường nào đưa một `after` sai tới đó. `peelsTo` là lưới cho luật **thứ hai**, luật
+    // chưa tồn tại, nên nó phải được hỏi thẳng chứ không hỏi qua kho.
+    const before = parse('f(x) = f(y)', new Minter());
+
+    expect(peelsTo(before, parse('x = y', new Minter()))).toBe(true);
+    expect(peelsTo(before, parse('x = x', new Minter())), 'bóc nhầm vế').toBe(false);
+    expect(peelsTo(before, parse('y = x', new Minter())), 'đảo hai vế').toBe(false);
+    expect(peelsTo(parse('f(x) = g(y)', new Minter()), parse('x = y', new Minter()))).toBe(false);
+    // Bất đẳng thức: `x >= y` hiển nhiên khác `x = y`, nên phép so **không** canh gì ở
+    // ca ấy — lượt bẻ răng bắt đúng chỗ này. Câu phải hỏi là ca luật sẽ sinh ra:
+    // `after` đúng hình dạng bóc, mà `before` lại là một bất đẳng thức.
+    expect(peelsTo(parse('f(x) >= f(y)', new Minter()), parse('x = y', new Minter()))).toBe(false);
+    expect(peelsTo(parse('f(x) >= f(y)', new Minter()), parse('x >= y', new Minter()))).toBe(false);
+    expect(peelsTo(parse('x = y', new Minter()), parse('x = y', new Minter()))).toBe(false);
   });
 });

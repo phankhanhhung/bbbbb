@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "chip-firing-abelian",
   "statement": {
     "vi": "Trên một vòng tròn gồm $5$ ô có tất cả $4$ hạt. Mỗi bước, chọn một ô có ít nhất $2$ hạt, lấy đi $2$ hạt từ ô đó và cho mỗi ô kề $1$ hạt. Chứng minh quá trình dừng sau hữu hạn bước, và cấu hình cuối **không phụ thuộc** thứ tự chọn."

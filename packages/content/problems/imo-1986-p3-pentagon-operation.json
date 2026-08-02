@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "id": "imo-1986-p3-pentagon-operation",
   "statement": {
     "vi": "Năm số nguyên đặt ở năm đỉnh một ngũ giác, tổng của chúng **dương**. Khi nào còn một đỉnh mang số âm $y$, được phép thay ba số liên tiếp $(x, y, z)$ ở đó bằng $(x + y,\\; -y,\\; z + y)$. Chứng minh sau hữu hạn bước thì không còn số âm nào."
