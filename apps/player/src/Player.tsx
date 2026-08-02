@@ -95,6 +95,20 @@ export function Player({
   const tree = useMemo(() => buildTree(solution), [solution]);
   const step = tree.steps.get(stepId) ?? (tree.root as Step);
 
+  /**
+   * Những bước người học **đã đứng qua** — nguyên liệu của độ phủ nhánh (PLY-02).
+   *
+   * Sống ở đây chứ không trong `TreeNavigator` vì hai lý do, và lý do thứ hai mới
+   * là lý do thật: (1) minimap bị tháo khỏi cây khi lời giải còn che, (2) vào
+   * Sandbox thì `Player` **return sớm** — component vẫn gắn, state vẫn còn, nhưng
+   * mọi thứ dựng bên trong nhánh JSX kia thì mất. Đặt tập này trong minimap nghĩa
+   * là "thử từ đây" xong quay lại thì người học mất sạch dấu chân.
+   */
+  const [visited, setVisited] = useState<ReadonlySet<string>>(() => new Set([initial.stepId]));
+  useEffect(() => {
+    setVisited((seen) => (seen.has(step.id) ? seen : new Set(seen).add(step.id)));
+  }, [step.id]);
+
   const svgRef = useRef<SVGSVGElement>(null);
   const previous = useRef<SvgNode[]>([]);
   const lastStepId = useRef<string | null>(null);
@@ -652,7 +666,12 @@ export function Player({
           </nav>
 
           {revealed ? (
-            <TreeNavigator tree={tree} currentId={step.id} onSelect={goTo} />
+            <TreeNavigator
+              tree={tree}
+              currentId={step.id}
+              visited={visited}
+              onSelect={goTo}
+            />
           ) : null}
 
           {diff ? (

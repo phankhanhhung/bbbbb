@@ -21,7 +21,41 @@ import { COLUMN, layoutTree, ROW } from './tree-layout.js';
 interface TreeNavigatorProps {
   tree: SolutionTree;
   currentId: string;
+  /** Bước đã đứng qua trong phiên này — xem `coverageOf`. */
+  visited: ReadonlySet<string>;
   onSelect: (stepId: string) => void;
+}
+
+/**
+ * Độ phủ **của người đọc**, không phải hình dạng của lời giải.
+ *
+ * Bản đồ trước lượt này chỉ tô tổ tiên của node hiện tại, nên nó vẽ được *lời giải
+ * đi tới đâu* mà không vẽ được *mình đã đi tới đâu*. Chỗ ấy có một lỗ có tên:
+ * **PLY-02 dừng auto-play ở mỗi điểm rẽ nhánh** để người học không lỡ nhánh nào —
+ * nhưng không có gì nói cho họ biết họ **đã** lỡ. Người học chọn "Trường hợp 1",
+ * đọc hết, tới bước tổng hợp, và không có tín hiệu nào rằng Trường hợp 2 chưa mở.
+ *
+ * Một nhánh tính là **đã xem** khi mọi bước trong nó đã được đứng qua. Nghiêm ngặt
+ * là cố ý: "đã ghé vào nhánh" và "đã đọc hết nhánh" là hai chuyện, và chuyện thứ
+ * hai mới là chuyện chứng minh đòi.
+ */
+function coverageOf(
+  tree: SolutionTree,
+  visited: ReadonlySet<string>,
+): ReadonlyMap<string, boolean> {
+  const seen = new Map<string, boolean>();
+  const walk = (step: Step): boolean => {
+    // Duyệt con **trước**, và duyệt hết. Viết
+    // `visited.has(id) && kids.every(walk)` thì phép rút gọn của `&&` bỏ qua cả
+    // cây con ngay khi node cha chưa thăm — và những node ấy biến mất khỏi bảng,
+    // nên chỗ đọc bảng nhận `undefined` chứ không nhận `false`.
+    const kidsWhole = childrenOf(tree, step.id).map((kid) => walk(kid));
+    const whole = visited.has(step.id) && kidsWhole.every(Boolean);
+    seen.set(step.id, whole);
+    return whole;
+  };
+  if (tree.root) walk(tree.root);
+  return seen;
 }
 
 /**
@@ -56,10 +90,11 @@ export const TREE_SCALE = TREE_CELL_PX / COLUMN;
 /** Trần chiều cao khung bản đồ. Vượt thì **cuộn**, không co. */
 export const TREE_MAX_PX = 260;
 
-export function TreeNavigator({ tree, currentId, onSelect }: TreeNavigatorProps) {
+export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNavigatorProps) {
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const [open, setOpen] = useState(true);
 
+  const covered = useMemo(() => coverageOf(tree, visited), [tree, visited]);
   const layout = useMemo(() => layoutTree(tree, collapsed), [tree, collapsed]);
   const crumbs = useMemo(() => breadcrumb(tree, currentId), [tree, currentId]);
   const onPath = useMemo(
@@ -150,6 +185,31 @@ export function TreeNavigator({ tree, currentId, onSelect }: TreeNavigatorProps)
     }
   };
 
+  /**
+   * Tự thu nhánh **đã xem hết**, và chỉ đúng một lần cho mỗi nhánh.
+   *
+   * Hai hàng rào, cả hai đều là chỗ tính năng này dễ thành phiền: không thu nhánh
+   * mà người học **đang đứng trong** (thu dưới chân người ta là mất chỗ đứng), và
+   * `autoDone` nhớ nhánh nào đã tự thu rồi — nếu không thì người học mở lại và
+   * effect thu ngay lập tức, tức một cái nút không bấm được.
+   */
+  const autoDone = useRef(new Set<string>());
+  useEffect(() => {
+    if (layout.shape !== 'tree') return;
+    const fresh: string[] = [];
+    for (const [id, whole] of covered) {
+      if (!whole || autoDone.current.has(id)) continue;
+      if (onPath.has(id) || childrenOf(tree, id).length === 0) continue;
+      // Chỉ nhánh, tức con của một điểm rẽ — không thu cả gốc.
+      const parent = tree.steps.get(id)?.parent;
+      if (!parent || childrenOf(tree, parent).length < 2) continue;
+      fresh.push(id);
+    }
+    if (fresh.length === 0) return;
+    for (const id of fresh) autoDone.current.add(id);
+    setCollapsed((current) => new Set([...current, ...fresh]));
+  }, [covered, onPath, tree, layout.shape]);
+
   const minX = Math.min(...layout.nodes.map((n) => n.x), 0);
   const boxWidth = layout.width + COLUMN;
   const boxHeight = layout.height;
@@ -214,6 +274,9 @@ export function TreeNavigator({ tree, currentId, onSelect }: TreeNavigatorProps)
               // Trên sợi thì **không** có nút thu gọn: xem `layoutStrip`.
               const hasKids =
                 layout.shape === 'tree' && childrenOf(tree, node.step.id).length > 0;
+              const kids = childrenOf(tree, node.step.id);
+              const left = kids.length > 1 ? kids.filter((k) => !covered.get(k.id)).length : 0;
+              const allSeen = kids.length > 1 && left === 0;
 
               return (
                 <g
@@ -227,7 +290,7 @@ export function TreeNavigator({ tree, currentId, onSelect }: TreeNavigatorProps)
                   onClick={() => onSelect(node.step.id)}
                   role="treeitem"
                   aria-selected={isCurrent}
-                  aria-label={nodeLabel(node.step, closed)}
+                  aria-label={nodeLabel(node.step, closed, left, allSeen)}
                   {...(hasKids ? { 'aria-expanded': !collapsed.has(node.step.id) } : {})}
                   /* `tabindex` thường, **không** phải `tabIndex`. Trên phần tử SVG,
                      Preact gán prop viết hoa thành *thuộc tính JS* chứ không thành
@@ -273,6 +336,34 @@ export function TreeNavigator({ tree, currentId, onSelect }: TreeNavigatorProps)
                       fill="#C5221F"
                     >
                       ✗
+                    </text>
+                  ) : null}
+
+                  {/* Độ phủ chỉ vẽ ở **điểm rẽ**, vì chỉ ở đó mới có gì để lỡ.
+                      Vẽ nó ở mọi node là biến một tín hiệu thành một hoa văn. */}
+                  {left > 0 ? (
+                    <text
+                      class="tree__left"
+                      x={COLUMN / 2 - 1}
+                      y="-6"
+                      text-anchor="end"
+                      font-size="8"
+                      font-weight="600"
+                      fill="#B26A00"
+                    >
+                      còn {left}
+                    </text>
+                  ) : null}
+                  {allSeen ? (
+                    <text
+                      class="tree__done"
+                      x={COLUMN / 2 - 1}
+                      y="-6"
+                      text-anchor="end"
+                      font-size="9"
+                      fill="#3A7D3A"
+                    >
+                      ✓
                     </text>
                   ) : null}
 
@@ -365,9 +456,23 @@ function round(value: number): number {
   return Math.round(value * 100) / 100 + 0;
 }
 
-function nodeLabel(step: { id: string; case_label?: { vi: string }; edge_type: string }, closed: boolean): string {
+/**
+ * Nhãn cho screen reader — và **kênh chính** của độ phủ, không phải kênh phụ.
+ *
+ * Chữ "còn 1" cao 8 đơn vị trên một bản đồ 260px là thứ dễ trượt khỏi mắt; câu
+ * "còn 1 nhánh chưa xem" đọc lên thì không trượt được. Chỗ nào tín hiệu quan trọng
+ * hơn chỗ nó chiếm thì nhãn phải mang đủ, chứ không phải hình mang đủ rồi nhãn
+ * chép lại một nửa.
+ */
+function nodeLabel(
+  step: { id: string; case_label?: { vi: string }; edge_type: string },
+  closed: boolean,
+  left: number,
+  allSeen: boolean,
+): string {
   const base = step.case_label?.vi ?? step.id;
+  const cover = left > 0 ? ` — còn ${left} nhánh chưa xem` : allSeen ? ' — đã xem hết nhánh' : '';
   if (step.edge_type === 'contradiction') return `${base} — mâu thuẫn, nhánh đóng`;
   if (step.edge_type === 'merge_ref') return `${base} — quay về bước tổng hợp`;
-  return closed ? `${base} — nhánh đã đóng` : base;
+  return `${closed ? `${base} — nhánh đã đóng` : base}${cover}`;
 }

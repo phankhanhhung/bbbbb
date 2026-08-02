@@ -270,6 +270,102 @@ test.describe('Cây lời giải phân nhánh (PLY-02)', () => {
   });
 
   /**
+   * Bản đồ vẽ **độ phủ của người đọc**, không chỉ hình dạng lời giải.
+   *
+   * PLY-02 dừng auto-play ở mỗi điểm rẽ để người học không lỡ nhánh nào — nhưng
+   * trước lượt này không có gì nói cho họ biết họ **đã** lỡ. Test đi đúng đường
+   * người học đi: mở một nhánh, đọc hết nó, rồi hỏi bản đồ còn nhánh nào chưa xem.
+   *
+   * Đọc bằng `aria-label` chứ không bằng chữ trên hình: nhãn là kênh chính của tín
+   * hiệu này (chữ "còn 1" cao 8 đơn vị thì trượt khỏi mắt được, câu đọc lên thì
+   * không), nên nếu nhãn im mà hình có chữ thì test này **phải** đỏ.
+   */
+  test('điểm rẽ nói còn bao nhiêu nhánh chưa xem, và ✓ khi đã xem hết', async ({ page }) => {
+    await page.goto(RAMSEY);
+    await reveal(page);
+
+    // `ramsey-3-3-six` có **hai** điểm rẽ (s1 và s2) — không khoá cứng con số ở
+    // đây, chỉ đòi có ít nhất một và nhãn nói đúng dạng.
+    const unseen = page.locator('.tree__node[aria-label*="nhánh chưa xem"]');
+    expect(await unseen.count()).toBeGreaterThan(0);
+    expect((await unseen.first().getAttribute('aria-label')) ?? '').toMatch(
+      /còn \d nhánh chưa xem/,
+    );
+    expect(await page.locator('.tree__left').count()).toBeGreaterThan(0);
+    await expect(page.locator('.tree__done')).toHaveCount(0);
+
+    /**
+     * **Ghé vào nhánh ≠ đọc hết nhánh** — phép so duy nhất phân biệt hai định
+     * nghĩa của "đã xem", và là cả lý do độ phủ này đáng có.
+     *
+     * Bấm đúng *đầu* hai nhánh của điểm rẽ ngoài cùng rồi dừng. Định nghĩa lỏng
+     * ("node này đã thăm") lúc này khai điểm rẽ **đã xem hết**; định nghĩa đang
+     * dùng ("mọi bước trong nhánh đã thăm") vẫn khai còn dở — và đó mới là câu
+     * đúng, vì người học chưa đọc một dòng nào của hai nhánh ấy.
+     *
+     * Lượt bẻ răng đầu tiên để lọt đúng chỗ này: gỡ điều kiện "con phải xem hết"
+     * mà test vẫn xanh, vì phần dưới đi qua *mọi* bước nên hai định nghĩa gặp
+     * nhau ở đích. Chú thích thì đã viết ca này; chỉ là chưa ai kiểm nó.
+     */
+    for (const head of ['Trường hợp 1', 'Trường hợp 2']) {
+      await page.locator(`.tree__node[aria-label^="${head}"]`).click();
+    }
+    expect(await page.locator('.tree__left').count()).toBeGreaterThan(0);
+    await expect(page.locator('.tree__done')).toHaveCount(0);
+
+    /**
+     * Đi qua **mọi** bước theo một thứ tự **tất định** — đúng thứ tự một người đọc
+     * đi, và cố ý chọn sao cho không bước nào bị một nhánh tự thu che mất.
+     *
+     * Bản đầu viết kiểu "bấm mọi node đang hiện, lặp tới khi cạn". Nó xanh khi
+     * chạy một mình và đỏ trong lượt e2e đầy đủ: danh sách node **co lại giữa vòng
+     * lặp** vì đúng cái tính năng nó đang canh. Một chốt canh chập chờn tệ hơn
+     * không có chốt canh — nó dạy người ta bỏ qua màu đỏ, đúng bài học M45.
+     */
+    for (const label of ['s0', 's1', 'Trường hợp 1', '1a', 'm1', '1b', 'm2', 'Trường hợp 2', 's6', 's7']) {
+      await page.locator(`.tree__node[aria-label^="${label}"]`).click();
+    }
+
+    await expect(page.locator('.tree__left')).toHaveCount(0);
+    expect(await page.locator('.tree__node[aria-label*="đã xem hết nhánh"]').count()).toBeGreaterThan(0);
+    expect(await page.locator('.tree__done').count()).toBeGreaterThan(0);
+  });
+
+  /**
+   * Nhánh tự thu khi xem xong — **trừ nhánh đang đứng trong**.
+   *
+   * Bước cuối của một nhánh cũng là bước làm nhánh ấy đủ, nên không có hàng rào
+   * này thì bản đồ thu lại **ngay lúc** người học đang đọc bước ấy: hình biến mất
+   * dưới chân, và chỗ đang đứng thành một cái nút `+`.
+   *
+   * Một lượt bẻ răng để lọt đúng chỗ này (gỡ `onPath` mà test vẫn xanh), nên nó
+   * phải có test riêng chứ không dựa vào test độ phủ ở trên.
+   */
+  test('nhánh đang đứng trong thì không tự thu, dù đã xem hết', async ({ page }) => {
+    await page.goto(RAMSEY);
+    await reveal(page);
+
+    // Đi hết nhánh "Trường hợp 2": s5 → s6 → s7. Bấm s7 xong là nhánh đủ.
+    await page.locator('.tree__node[aria-label^="Trường hợp 2"]').click();
+    await page.locator('.tree__node[aria-label="s6"]').click();
+    await page.locator('.tree__node[aria-label="s7"]').click();
+
+    // Vẫn đứng ở s7 ⇒ nhánh phải còn mở, và s7 phải còn trên bản đồ.
+    await expect(page.locator('.tree__node[aria-selected="true"]')).toHaveAttribute(
+      'aria-label',
+      's7',
+    );
+    await expect(page.locator('.tree__node[aria-label="s7"]')).toHaveCount(1);
+    await expect(
+      page.locator('.tree__node[aria-label^="Trường hợp 2"]'),
+    ).toHaveAttribute('aria-expanded', 'true');
+
+    // Rời đi thì mới được thu — và lúc ấy thu là đúng việc.
+    await page.locator('.tree__node[aria-label^="Trường hợp 1"]').click();
+    await expect(page.locator('.tree__node[aria-label="s7"]')).toHaveCount(0);
+  });
+
+  /**
    * `role="tree"` là một lời hứa về bàn phím, không chỉ về nhãn.
    *
    * Trước lượt này mỗi node mang `tabIndex={0}`, nên một cây 11 node ăn 11 lần Tab
