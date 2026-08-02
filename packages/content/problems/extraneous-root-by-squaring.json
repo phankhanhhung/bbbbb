@@ -7,7 +7,7 @@
   "source": {
     "contest": "folklore",
     "note": {
-      "vi": "Chỗ đáng nhìn: engine tự ghi dòng đỏ \"nghiệm có thể ngoại lai\" ngay khi bước bình phương chạy. Nó không suy ra từ kết quả — với phương trình, tập nghiệm mỏng tới mức bốc điểm ngẫu nhiên không bao giờ trúng — mà từ **hợp đồng kiểm** của chính luật ấy. Hộp cát bật thêm `no-vanishing-divisor`: nghịch tới đâu, chỗ chia cho một thứ có thể bằng $0$ vẫn sáng lên tới đó — kể cả những đường vòng bài không đi."
+      "vi": "Chỗ đáng nhìn: engine tự ghi dòng đỏ \"nghiệm có thể ngoại lai\" ngay khi bước bình phương chạy. Nó không suy ra từ kết quả — với phương trình, tập nghiệm mỏng tới mức bốc điểm ngẫu nhiên không bao giờ trúng — mà từ **hợp đồng kiểm** của chính luật ấy. Bài này **chưa** bật hộp cát, và đó là một kết luận đo được chứ không phải một chỗ quên: cổng \"chốt canh phải cắn được\" (`ENGINE-BACKLOG.md` §3b.3) đếm 11 thế ở độ sâu 1 và 42 ở độ sâu 2 mà `no-vanishing-divisor` **không đỏ lần nào** — đúng thôi, bài nói về phép *bình phương*, không nói về phép chia. Chốt canh cho nghiệm ngoại lai thì engine chưa có; bật một ràng buộc không dính gì tới bài là dựng đúng thứ chính bài này chê."
     }
   },
   "topics": [
@@ -28,7 +28,7 @@
     "draft-may"
   ],
   "status": "published",
-  "kind": "both",
+  "kind": "illustration",
   "created": "2026-07-31",
   "updated": "2026-07-31",
   "solutions": [
@@ -234,11 +234,6 @@
       ]
     }
   ],
-  "sandbox": {
-    "validators": [
-      "no-vanishing-divisor"
-    ]
-  },
   "og_step_ref": {
     "sol_id": "sol",
     "step_id": "s0"

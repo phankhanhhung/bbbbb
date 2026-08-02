@@ -75,7 +75,7 @@ xong, và chỗ chưa xong lớn nhất vẫn là §4.1.
 | Hợp đồng kiểm | **7** | `sameValue`, `sameSolutionSet`, `implies`, `root`, `instance`, `binding`, `claim` |
 | Hàm không-đa-thức | **9** | `binom cos exp fact ln log perm sin tan` |
 | Bài dùng engine | **45 / 150** | `engines_used` chứa `algebra` |
-| …bật hộp cát | **3** | `kind` khác `illustration` — xem `ENGINE-ALGEBRA.md` §54 |
+| …bật hộp cát | **2** | `kind` khác `illustration` — xem `ENGINE-ALGEBRA.md` §54, §54c |
 
 Bảng này đi từ $73$ luật lên $80$ kể từ lượt đo M70 — bảy luật, và đúng bảy: M71 thêm
 `sum_telescope` + `specialize`, M72 thêm bốn luật `coeff_*`, AL-20 thêm
@@ -107,6 +107,13 @@ nào bật. AL-23 đưa nó lên $3/44$, và lượt đi đầu tiên ấy tìm 
 xanh** đã sống từ AL-07 (`ENGINE-ALGEBRA.md` §54.2). Đó là lý do con số này đáng có mặt
 trong bảng dù nó không đo năng lực: **một năng lực chưa nội dung nào đi qua là một năng
 lực chưa ai kiểm.**
+
+Rồi AL-25 kéo nó xuống $2/45$, và **đi xuống ở đây là đi đúng**:
+`extraneous-root-by-squaring` trả về `illustration` vì cổng mới đếm 11 thế ở độ sâu 1 và
+42 ở độ sâu 2 mà validator của nó không đỏ lần nào — bài nói về phép *bình phương*, còn
+chốt canh nói về phép *chia*. Con số này đo **nội dung có đường tương tác nào đáng nghịch
+không**, nên nó phải giảm được; một con số chỉ biết tăng là một chỉ tiêu, không phải một
+phép đo.
 
 Cả hai con số cuối bảng đều có răng — `tools/pipeline/test/trigonometry.test.ts` quét kho
 thật rồi so với đúng chữ in ở đây.

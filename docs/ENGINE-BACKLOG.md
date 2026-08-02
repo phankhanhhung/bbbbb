@@ -634,12 +634,30 @@ Ba lượt, ba câu hỏi khác nhau, và không câu nào là "chạy lại tes
 > **Bẻ răng đo được chốt canh; nó không đo được *thiếu* chốt canh, cũng không đo được
 > chốt canh **sai tên**.** Cả hai thứ ấy chỉ lộ khi có người hỏi một câu ngoài bộ test.
 
-**Cổng cho lượt sau, và ràng buộc thiết kế của nó.** Quét mọi cặp (bài × validator) rồi
-đòi mỗi validator có ít nhất một thế đỏ. Nhưng con số phụ thuộc **bộ nhiễu loạn**, đo
-được: bộ nghèo cho 46 cặp "không đỏ được", thêm hai kiểu còn 17, thêm một kiểu nữa còn
-12. Nên cổng phải (a) dùng **tập nước thật** ở engine nào có `commands`, (b) khai từ vựng
-nhiễu loạn theo engine, và (c) **báo cáo** danh sách chưa phân loại thay vì đỏ ngay —
-một cổng đỏ cho 17 cặp mà quá nửa là lỗ hổng của chính nó thì nó bị tắt trong một tuần.
+**Cổng, dựng luôn trong cùng lượt:** `tools/pipeline/test/validator-bite.test.ts`. Quét
+mọi cặp (bài × validator) rồi đòi mỗi validator có ít nhất một thế đỏ.
+
+Ràng buộc thiết kế đến từ chính phép đo ở trên — con số phụ thuộc **bộ nhiễu loạn**, nên
+cổng phải:
+
+1. **Đại số hỏi bằng tập nước thật** (`movesAtElement` + `applyRule`), không nhiễu loạn.
+   Đó là lý do kết luận về `each-step-sound` là một *phát hiện*, còn phần còn lại là một
+   *nghi ngờ*.
+2. **Từ vựng nhiễu loạn khai theo kiểu dữ liệu, không theo engine** — khai theo engine
+   thì lại là chín bản chép tay cho một câu hỏi, đúng thứ §3b.1 vừa gỡ.
+3. **Ngoại lệ phải khai ra, và khai thừa cũng đỏ** — cùng khuôn `expects_violation`.
+   `KNOWN_QUIET` là **sổ nợ của bộ nhiễu loạn**, không phải danh sách chốt canh vô nghĩa,
+   và vế "khai thừa cũng đỏ" là thứ giữ nó ngắn lại thay vì chỉ dài ra.
+
+Lượt chạy đầu tiên trả về ba thứ, và **cả ba đều là chỗ tác giả sai chứ không phải cổng
+sai**:
+
+- `values-integer` chưa từng đỏ được vì bộ số chỉ biết cộng số nguyên. Thêm `+0.5`.
+- `extraneous-root-by-squaring` bật `no-vanishing-divisor` mà **11 thế ở độ sâu 1 và 42 ở
+  độ sâu 2** đều không đỏ — bài nói về phép *bình phương*, chốt canh nói về phép *chia*.
+  Bài trả về `illustration`. Đây là lần đầu một cổng **đổi nội dung**.
+- Và cổng bắt luôn **tác giả của chính nó**: `KNOWN_QUIET` viết tay bảy dòng theo phỏng
+  đoán, vế "khai thừa cũng đỏ" gọi tên **bốn** dòng sai. Còn ba.
 
 ## 4. Việc **không** nằm trong tài liệu này
 

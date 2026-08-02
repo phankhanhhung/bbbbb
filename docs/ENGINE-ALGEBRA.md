@@ -3935,11 +3935,18 @@ câu hỏi là chuyện kho vừa phải gỡ ở cổng đếm sandbox (`ENGINE
 |---|---|---|---|
 | `cancel-only-after-factoring` | `challenge` | `goal_expr: reaches("x + (-2)")` | bài **là** chỗ lọc nước đi: bẫy gạch $x$ bị từ chối bằng chữ |
 | `equation-moves-that-lie` | `both` | `no-vanishing-divisor` + `expects_violation` ở `s1`/`c2`/`end` | bài **nói về** chính chốt canh ấy, và khai thẳng ba bước cố ý phạm |
-| `extraneous-root-by-squaring` | `both` | `no-vanishing-divisor` | bài nói về nghiệm ngoại lai; ràng buộc sáng cả ở đường vòng bài không đi |
+| ~~`extraneous-root-by-squaring`~~ | `illustration` | — | **trả về** ở AL-25: xem dưới |
 
-> **Bảng này sai ở lượt đầu, sửa ở AL-25.** Cả ba bài ra đời với `each-step-sound` — một
-> chốt canh đo được là **không bao giờ đỏ** — và `equation-moves-that-lie` thì *chỉ* có
-> nó, tức bài về chuyện chia cho $0$ ra đời không có phản hồi nào bật được. §54c.
+> **Bảng này sai ở lượt đầu, sửa hai lần ở AL-25.** Cả ba bài ra đời với
+> `each-step-sound` — một chốt canh đo được là **không bao giờ đỏ** — và
+> `equation-moves-that-lie` thì *chỉ* có nó, tức bài về chuyện chia cho $0$ ra đời không
+> có phản hồi nào bật được (§54c.3).
+>
+> Rồi cổng mới (`ENGINE-BACKLOG.md` §3b.3) đếm **11 thế ở độ sâu 1 và 42 ở độ sâu 2** của
+> `extraneous-root-by-squaring` mà `no-vanishing-divisor` không đỏ lần nào — đúng thôi,
+> bài nói về phép **bình phương**, còn chốt canh nói về phép **chia**. Engine chưa có
+> chốt canh cho nghiệm ngoại lai, nên bài trả về `illustration` thay vì đeo một ràng buộc
+> không dính gì tới nó. **Ba bài xuống hai, và đi xuống ở đây là đi đúng.**
 
 `goal_expr` là trường của **bài**, còn scene đại số thì của **bước** — nên một đích chỉ
 có nghĩa khi bài có đúng một scene đại số. `cancel-only-after-factoring` vì thế có đúng
@@ -3959,7 +3966,7 @@ Lượt nhìn bằng mắt bắt hai chỗ, và chỗ thứ hai thành một lu�
 
 ### §54.5 — Ranh giới
 
-- Ba bài, không phải bốn mươi ba. Bật hộp cát cho một bài mà đường vòng không có nghĩa
+- Hai bài, không phải bốn mươi lăm. Bật hộp cát cho một bài mà đường vòng không có nghĩa
   thì đẻ ra đồ chơi cho đủ chỉ tiêu — đúng điều `sandbox-status.ts` từ chối làm ở phía
   cổng đếm.
 - `reaches` chỉ đọc **dòng cuối**. Một đích kiểu *"đã đi qua dạng nào đó"* cần đọc cả

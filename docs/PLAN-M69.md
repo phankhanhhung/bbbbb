@@ -181,9 +181,10 @@ tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mớ
 | **Tên phép toán ăn một đối số** — `\tan\frac{a+b}{2}` hết phẳng; kèm hai lỗ dán dính chưa ai biết | 08-02 | `PLAN-P1.md` §10.3c |
 | **AL-24** — `use_monotone`: luật thứ hai của hợp đồng `assumption`; mutant §53.3 đo lại **vẫn** tương đương, và lý do thật sắc hơn | 08-02 | `ENGINE-ALGEBRA.md` §54b |
 | **AL-25** — soát validator đại số: `each-step-sound` đỏ 0/1599 nên gỡ (bản trùng của `checkBounds`); `no-vanishing-divisor` đọc `Guard.sign`; `degree-drops` chưa từng tồn tại | 08-02 | `ENGINE-ALGEBRA.md` §54c |
+| **Cổng "chốt canh phải cắn được"** — quét 97 cặp (bài × validator); bắt 2 lỗi nội dung và 4 dòng khai thừa của chính nó | 08-02 | `ENGINE-BACKLOG.md` §3b.3 |
 
 Kho đi từ **114 bài → 150 bài** trong hai ngày, test từ **3459** (M78.8) lên
-**3974 / 69 tệp**, schema từ `1.0.0` lên `1.6.0` — sáu minor, sáu migration đồng nhất.
+**3976 / 70 tệp**, schema từ `1.0.0` lên `1.6.0` — sáu minor, sáu migration đồng nhất.
 
 > **Một cái bẫy đếm, ghi ra để lần sau không phải điều tra lại.** Con số chính thức
 > là số của `pnpm test` (`vitest run` không lọc đường dẫn) — **3843 / 67 tệp** lúc
