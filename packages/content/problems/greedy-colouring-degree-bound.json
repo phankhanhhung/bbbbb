@@ -1,0 +1,483 @@
+{
+  "schema_version": "1.4.0",
+  "id": "greedy-colouring-degree-bound",
+  "statement": {
+    "vi": "Tô màu tham lam: duyệt đỉnh theo một thứ tự, mỗi đỉnh nhận **màu nhỏ nhất chưa dùng ở hàng xóm đã tô**. Cách này dùng nhiều nhất mấy màu — và nó có luôn cho ra cách tô ít màu nhất không?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Cận $\\Delta + 1$ cho tô tham lam. Ví dụ thứ tự xấu là $K_{n,n}$ bỏ đi một ghép cặp hoàn hảo; với $n=3$ nó chính là $C_6$."
+    }
+  },
+  "topics": [
+    "graph-coloring",
+    "graph-basics"
+  ],
+  "techniques": [
+    "construction",
+    "extremal"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cận thì dễ: khi tới lượt một đỉnh, nó có nhiều nhất $\\Delta$ hàng xóm, nên trong $\\Delta + 1$ màu luôn còn một màu trống. Vậy tham lam **không bao giờ** vượt $\\Delta + 1$. Hình này mọi đỉnh [[a1|bậc $2$]], nên tham lam dùng tối đa $3$ màu."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a1",
+                "a2",
+                "a3",
+                "b1",
+                "b2",
+                "b3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a1",
+                "type": "vertex",
+                "label": "a1",
+                "pos": [0, 0]
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "label": "a2",
+                "pos": [26, 0]
+              },
+              {
+                "id": "a3",
+                "type": "vertex",
+                "label": "a3",
+                "pos": [52, 0]
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "label": "b1",
+                "pos": [0, 30]
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "label": "b2",
+                "pos": [26, 30]
+              },
+              {
+                "id": "b3",
+                "type": "vertex",
+                "label": "b3",
+                "pos": [52, 30]
+              },
+              {
+                "id": "g0",
+                "type": "edge",
+                "u": "a1",
+                "v": "b2"
+              },
+              {
+                "id": "g1",
+                "type": "edge",
+                "u": "a1",
+                "v": "b3"
+              },
+              {
+                "id": "g2",
+                "type": "edge",
+                "u": "a2",
+                "v": "b1"
+              },
+              {
+                "id": "g3",
+                "type": "edge",
+                "u": "a2",
+                "v": "b3"
+              },
+              {
+                "id": "g4",
+                "type": "edge",
+                "u": "a3",
+                "v": "b1"
+              },
+              {
+                "id": "g5",
+                "type": "edge",
+                "u": "a3",
+                "v": "b2"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Sáu đỉnh xếp hai hàng, mỗi đỉnh nối hai đỉnh khác hàng."
+          },
+          "expects_violation": [
+            "proper-colouring:2"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Duyệt theo thứ tự [[a1|$a_1, b_1, a_2, b_2, a_3, b_3$]] thì tham lam dùng hết **ba** màu: mỗi cặp $a_i b_i$ **không** kề nhau nên nhận cùng màu, rồi cặp sau bị chặn bởi cả hai cặp trước."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a1",
+                "b1",
+                "a2",
+                "b2",
+                "a3",
+                "b3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a1",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "a1",
+                "pos": [0, 0]
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "a2",
+                "pos": [26, 0]
+              },
+              {
+                "id": "a3",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "a3",
+                "pos": [52, 0]
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "b1",
+                "pos": [0, 30]
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "b2",
+                "pos": [26, 30]
+              },
+              {
+                "id": "b3",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "b3",
+                "pos": [52, 30]
+              },
+              {
+                "id": "g0",
+                "type": "edge",
+                "u": "a1",
+                "v": "b2"
+              },
+              {
+                "id": "g1",
+                "type": "edge",
+                "u": "a1",
+                "v": "b3"
+              },
+              {
+                "id": "g2",
+                "type": "edge",
+                "u": "a2",
+                "v": "b1"
+              },
+              {
+                "id": "g3",
+                "type": "edge",
+                "u": "a2",
+                "v": "b3"
+              },
+              {
+                "id": "g4",
+                "type": "edge",
+                "u": "a3",
+                "v": "b1"
+              },
+              {
+                "id": "g5",
+                "type": "edge",
+                "u": "a3",
+                "v": "b2"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng hình, tô ba màu theo từng cặp dọc."
+          },
+          "expects_violation": [
+            "proper-colouring:2"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mà [[a1|hai màu]] là đủ: tô cả hàng trên một màu, hàng dưới màu kia. Tham lam **đúng** nhưng không tối ưu, và khoảng cách ấy do **thứ tự** gây ra chứ không do đồ thị. Cận $\\Delta+1$ thì không đổi."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a1",
+                "a2",
+                "a3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a1",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "a1",
+                "pos": [0, 0]
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "a2",
+                "pos": [26, 0]
+              },
+              {
+                "id": "a3",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "a3",
+                "pos": [52, 0]
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "b1",
+                "pos": [0, 30]
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "b2",
+                "pos": [26, 30]
+              },
+              {
+                "id": "b3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "b3",
+                "pos": [52, 30]
+              },
+              {
+                "id": "g0",
+                "type": "edge",
+                "u": "a1",
+                "v": "b2"
+              },
+              {
+                "id": "g1",
+                "type": "edge",
+                "u": "a1",
+                "v": "b3"
+              },
+              {
+                "id": "g2",
+                "type": "edge",
+                "u": "a2",
+                "v": "b1"
+              },
+              {
+                "id": "g3",
+                "type": "edge",
+                "u": "a2",
+                "v": "b3"
+              },
+              {
+                "id": "g4",
+                "type": "edge",
+                "u": "a3",
+                "v": "b1"
+              },
+              {
+                "id": "g5",
+                "type": "edge",
+                "u": "a3",
+                "v": "b2"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng hình, hàng trên một màu và hàng dưới một màu."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Và đây là **cùng một đồ thị** với bài chu trình: nối $a_1 b_2 a_3 b_1 a_2 b_3$ rồi về $a_1$ thì được đúng [[a1|$C_6$]]. Hai hình khác nhau của một vật — thứ tự duyệt trông tự nhiên ở hình này lại là thứ tự xấu ở hình kia."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v0",
+                "v1",
+                "v2",
+                "v3",
+                "v4",
+                "v5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "a1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "b2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "a3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "b1",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "a2",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "b3",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "r0",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "r1",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "r2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "r3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "r4",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "r5",
+                "type": "edge",
+                "u": "v5",
+                "v": "v0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng đồ thị ấy vẽ thành lục giác, đỉnh giữ nguyên tên a1 b2 a3 b1 a2 b3."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "n == 6",
+    "validators": [
+      "simple-graph",
+      "proper-colouring:2"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

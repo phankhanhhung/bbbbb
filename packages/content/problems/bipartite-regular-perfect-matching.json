@@ -1,0 +1,363 @@
+{
+  "schema_version": "1.4.0",
+  "id": "bipartite-regular-perfect-matching",
+  "statement": {
+    "vi": "Một đồ thị hai phía trong đó **mọi đỉnh có cùng bậc $d \\ge 1$**. Chứng minh nó luôn có ghép cặp hoàn hảo — mỗi đỉnh bên trái ghép với đúng một đỉnh bên phải, và ngược lại."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Đồ thị hai phía $d$-chính quy luôn có ghép cặp hoàn hảo. Chứng minh bằng đếm hai chiều để suy ra điều kiện Hall, không cần dựng ghép cặp."
+    }
+  },
+  "topics": [
+    "matching",
+    "graph-basics"
+  ],
+  "techniques": [
+    "double-counting",
+    "extremal"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hình dưới là ca $d = 2$: [[a1|mọi đỉnh]] có đúng hai cạnh. Trước hết, hai phía **bằng nhau**: đếm số cạnh theo bên trái được $d|A|$, theo bên phải được $d|B|$, mà đó là cùng một tập cạnh."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a1",
+                "a2",
+                "a3",
+                "b1",
+                "b2",
+                "b3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a1",
+                "type": "vertex",
+                "label": "a1",
+                "pos": [0, 0]
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "label": "a2",
+                "pos": [26, 0]
+              },
+              {
+                "id": "a3",
+                "type": "vertex",
+                "label": "a3",
+                "pos": [52, 0]
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "label": "b1",
+                "pos": [0, 30]
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "label": "b2",
+                "pos": [26, 30]
+              },
+              {
+                "id": "b3",
+                "type": "vertex",
+                "label": "b3",
+                "pos": [52, 30]
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "u": "a1",
+                "v": "b1"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "a1",
+                "v": "b2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "u": "a2",
+                "v": "b2"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "a2",
+                "v": "b3"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "a3",
+                "v": "b3"
+              },
+              {
+                "id": "e6",
+                "type": "edge",
+                "u": "a3",
+                "v": "b1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đồ thị hai phía ba–ba, mỗi đỉnh có hai cạnh."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giờ lấy [[a1|một nhóm $S$ bên trái bất kỳ]]. Số cạnh mọc ra từ $S$ đúng bằng $d|S| = 4$, và **mọi** cạnh ấy đổ vào $N(S)$ — ba đỉnh dưới. Mỗi đỉnh của $N(S)$ nhận được nhiều nhất $d$ cạnh, nên $d|S| \\le d\\,|N(S)|$, tức $|N(S)| \\ge |S|$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a1",
+                "a2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "a1",
+                "pos": [0, 0]
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "a2",
+                "pos": [26, 0]
+              },
+              {
+                "id": "a3",
+                "type": "vertex",
+                "label": "a3",
+                "pos": [52, 0]
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "label": "b1",
+                "pos": [0, 30]
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "label": "b2",
+                "pos": [26, 30]
+              },
+              {
+                "id": "b3",
+                "type": "vertex",
+                "label": "b3",
+                "pos": [52, 30]
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "color_class": 2,
+                "u": "a1",
+                "v": "b1"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "color_class": 2,
+                "u": "a1",
+                "v": "b2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "color_class": 2,
+                "u": "a2",
+                "v": "b2"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "color_class": 2,
+                "u": "a2",
+                "v": "b3"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "u": "a3",
+                "v": "b3"
+              },
+              {
+                "id": "e6",
+                "type": "edge",
+                "u": "a3",
+                "v": "b1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai đỉnh trái và bốn cạnh mọc ra từ chúng được tô đậm; bốn cạnh đổ vào ba đỉnh dưới."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đó **là** điều kiện Hall, nên ghép cặp bão hoà bên trái tồn tại; hai phía bằng nhau nên nó hoàn hảo. [[a1|Một ghép cặp]] hiện ra ở đây — nhưng lập luận không hề dựng nó, nó chỉ đếm cạnh hai lần."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e1",
+                "e3",
+                "e5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a1",
+                "type": "vertex",
+                "label": "a1",
+                "pos": [0, 0]
+              },
+              {
+                "id": "a2",
+                "type": "vertex",
+                "label": "a2",
+                "pos": [26, 0]
+              },
+              {
+                "id": "a3",
+                "type": "vertex",
+                "label": "a3",
+                "pos": [52, 0]
+              },
+              {
+                "id": "b1",
+                "type": "vertex",
+                "label": "b1",
+                "pos": [0, 30]
+              },
+              {
+                "id": "b2",
+                "type": "vertex",
+                "label": "b2",
+                "pos": [26, 30]
+              },
+              {
+                "id": "b3",
+                "type": "vertex",
+                "label": "b3",
+                "pos": [52, 30]
+              },
+              {
+                "id": "e1",
+                "type": "edge",
+                "color_class": 4,
+                "u": "a1",
+                "v": "b1"
+              },
+              {
+                "id": "e2",
+                "type": "edge",
+                "u": "a1",
+                "v": "b2"
+              },
+              {
+                "id": "e3",
+                "type": "edge",
+                "color_class": 4,
+                "u": "a2",
+                "v": "b2"
+              },
+              {
+                "id": "e4",
+                "type": "edge",
+                "u": "a2",
+                "v": "b3"
+              },
+              {
+                "id": "e5",
+                "type": "edge",
+                "color_class": 4,
+                "u": "a3",
+                "v": "b3"
+              },
+              {
+                "id": "e6",
+                "type": "edge",
+                "u": "a3",
+                "v": "b1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng đồ thị, ba cạnh rời nhau được tô nổi thành ghép cặp hoàn hảo."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "matching == 3",
+    "validators": [
+      "simple-graph",
+      "bipartite",
+      "matching-saturates-left"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

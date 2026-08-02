@@ -1,0 +1,330 @@
+{
+  "schema_version": "1.4.0",
+  "id": "hall-defect-version",
+  "statement": {
+    "vi": "Ba bạn $A$, $B$, $C$ đăng ký hai suất học bổng $X$, $Y$. Điều kiện Hall hỏng — ba bạn chỉ với tới hai suất. Vậy có phải **không xếp được cho ai**? Nhiều nhất bao nhiêu bạn nhận được suất?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Định lý thiếu hụt (deficiency version) của Hall: ghép cặp lớn nhất bằng $|A| - \\max_S (|S| - |N(S)|)$. Điều kiện Hall hỏng cho biết **thiếu bao nhiêu**, không phải là hỏng hết."
+    }
+  },
+  "topics": [
+    "matching",
+    "graph-basics"
+  ],
+  "techniques": [
+    "extremal",
+    "double-counting"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Lấy $S = \\{A, B, C\\}$ thì $N(S) = $ [[a1|$\\{X, Y\\}$]], nên $|S| - |N(S)| = 1$: điều kiện Hall hỏng, và hỏng đúng **một** đơn vị. Câu hỏi là con số ấy nói lên điều gì."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "x",
+                "y"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "B",
+                "pos": [26, 0]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "C",
+                "pos": [52, 0]
+              },
+              {
+                "id": "x",
+                "type": "vertex",
+                "label": "X",
+                "pos": [13, 30]
+              },
+              {
+                "id": "y",
+                "type": "vertex",
+                "label": "Y",
+                "pos": [39, 30]
+              },
+              {
+                "id": "f1",
+                "type": "edge",
+                "u": "a",
+                "v": "x"
+              },
+              {
+                "id": "f2",
+                "type": "edge",
+                "u": "a",
+                "v": "y"
+              },
+              {
+                "id": "f3",
+                "type": "edge",
+                "u": "b",
+                "v": "x"
+              },
+              {
+                "id": "f4",
+                "type": "edge",
+                "u": "b",
+                "v": "y"
+              },
+              {
+                "id": "f5",
+                "type": "edge",
+                "u": "c",
+                "v": "x"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ba đỉnh trên nối xuống hai đỉnh dưới; C chỉ nối tới X."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nó nói **đúng số bạn phải chịu thiệt**: xếp được [[a1|hai bạn]], không hơn và không kém. Không hơn vì hai suất chỉ nhận được hai người; không kém vì hình đã chỉ ra một cách."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "f2",
+                "f3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "B",
+                "pos": [26, 0]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "C",
+                "pos": [52, 0]
+              },
+              {
+                "id": "x",
+                "type": "vertex",
+                "label": "X",
+                "pos": [13, 30]
+              },
+              {
+                "id": "y",
+                "type": "vertex",
+                "label": "Y",
+                "pos": [39, 30]
+              },
+              {
+                "id": "f1",
+                "type": "edge",
+                "u": "a",
+                "v": "x"
+              },
+              {
+                "id": "f2",
+                "type": "edge",
+                "color_class": 4,
+                "u": "a",
+                "v": "y"
+              },
+              {
+                "id": "f3",
+                "type": "edge",
+                "color_class": 4,
+                "u": "b",
+                "v": "x"
+              },
+              {
+                "id": "f4",
+                "type": "edge",
+                "u": "b",
+                "v": "y"
+              },
+              {
+                "id": "f5",
+                "type": "edge",
+                "u": "c",
+                "v": "x"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Hai cạnh rời nhau được tô nổi: A–Y và B–X."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thêm bạn $D$ cũng chỉ với tới $X$ hoặc $Y$ thì chỗ hụt của [[a1|cả bốn]] thành $4 - 2 = 2$, mà ghép cặp lớn nhất **vẫn là** $2 = |A| - 2$. Công thức chung: ghép cặp lớn nhất bằng $|A| - \\max_S\\,(|S| - |N(S)|)$. \"Hall hỏng\" không phải một câu trả lời nhị phân — nó là một phép đo, và bỏ qua nó là bỏ qua phần lời giải nói được nhiều nhất."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a",
+                "b",
+                "c",
+                "d"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "B",
+                "pos": [26, 0]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "C",
+                "pos": [52, 0]
+              },
+              {
+                "id": "d",
+                "type": "vertex",
+                "label": "D",
+                "pos": [78, 0]
+              },
+              {
+                "id": "x",
+                "type": "vertex",
+                "label": "X",
+                "pos": [19.5, 30]
+              },
+              {
+                "id": "y",
+                "type": "vertex",
+                "label": "Y",
+                "pos": [58.5, 30]
+              },
+              {
+                "id": "f1",
+                "type": "edge",
+                "u": "a",
+                "v": "x"
+              },
+              {
+                "id": "f2",
+                "type": "edge",
+                "u": "a",
+                "v": "y"
+              },
+              {
+                "id": "f3",
+                "type": "edge",
+                "u": "b",
+                "v": "x"
+              },
+              {
+                "id": "f4",
+                "type": "edge",
+                "u": "b",
+                "v": "y"
+              },
+              {
+                "id": "f5",
+                "type": "edge",
+                "color_class": 4,
+                "u": "c",
+                "v": "x"
+              },
+              {
+                "id": "f6",
+                "type": "edge",
+                "color_class": 4,
+                "u": "d",
+                "v": "y"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bốn bạn cùng chỉ với tới hai suất; hai cạnh ghép cặp được tô đậm, hai bạn không có suất."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "matching == 2",
+    "validators": [
+      "simple-graph",
+      "bipartite"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

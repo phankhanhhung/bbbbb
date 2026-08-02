@@ -110,7 +110,7 @@ bằng toạ độ.
 
 ## 2. Chi tiết theo engine
 
-### 2.1 `board` — 25 bài, engine chủ lực
+### 2.1 `board` — 34 bài, engine chủ lực
 
 > Mô tả chức năng đầy đủ của engine này: **`docs/ENGINE-BOARD.md`**. Mục dưới đây
 > chỉ ghi *hàng đợi* — cái gì đã làm, cái gì còn nợ.
@@ -182,7 +182,7 @@ bằng toạ độ.
 
 - bàn 3D / nhiều lớp; bảng số có công thức trong ô; lưới vô hạn có cửa sổ trượt.
 
-### 2.2 `graph` — 21 bài, engine chủ lực
+### 2.2 `graph` — 32 bài, engine chủ lực
 
 **Tầng A**
 
@@ -225,14 +225,51 @@ bằng toạ độ.
   "bảng", "ô $(i,j)$", "tổng theo hàng" mà **mọi** bước đều vẽ hình đỉnh–cạnh. View
   ma trận ra đời ở M12 nhưng chưa bài nào dùng.
 
+- **GR-13 ✅ (loạt bài 2/4)** — validator **`proper-colouring[:k]`**: "hai đỉnh kề
+  thì khác màu". Trước nó `GRAPH_VALIDATOR_IDS` có `bipartite` (tức tô đúng $2$
+  màu), `no-mono-triangle` (tô **cạnh**) và `face-colouring[:k]` (tô **mặt**) —
+  không cái nào trả lời câu hỏi trung tâm của tô màu đồ thị, nên mọi bài tô đỉnh
+  chỉ **minh hoạ được** chứ không **nghịch được** (SBX-02).
+
+  Khuôn lấy nguyên từ `face-colouring[:k]`, khác đúng một chỗ: quan hệ kề đọc từ
+  `graph.adjacency` thay vì `faceAdjacency`. Ba tầng trả lời theo thứ tự **đụng
+  màu → chưa tô → quá $k$ màu**, và thứ tự ấy là quyết định chứ không phải tình
+  cờ: người học đang tô dở phải nghe "chưa xong", không phải "sai".
+
+  Hai quy ước: đỉnh **chưa tô** (`color_class` vắng) là *chưa xét*, không phải
+  "màu số 0" — cùng quy ước `no-mono-triangle` đã đặt cho cạnh. Khuyên ($u = v$)
+  **không** tính là xung đột: một đỉnh không thể khác màu chính nó, và báo đỏ ở đó
+  là báo một điều vô nghĩa.
+
+  Bài: `cycle-chromatic-parity`, `greedy-colouring-degree-bound`,
+  `wheel-chromatic-number`.
+
 **Tầng B — cố ý không làm**
 
 - **kiểm tính phẳng tổng quát** (LR / PQ-tree). Đã từ chối có lý do viết ra trong
   `VIZ-COVERAGE.md` §4: hai đường hiện có đúng là hai đường mà lời giải thi đấu
   dùng thật. Giữ nguyên quyết định.
+- **analyzer số sắc** ($\chi(G)$). Tính số sắc là NP-khó, nhưng lý do từ chối
+  không phải giá: nó **thừa**. Bài "hình này cần $4$ màu" dạy được bằng đúng thủ
+  pháp `no-mono-triangle` đã dùng cho Ramsey — bài khai **cả hai** mục tiêu
+  `proper-colouring:4` (đạt được) và `proper-colouring:3` (không), rồi để người
+  học tự đâm vào bức tường. *Validator đỏ mãi **là** bài học.* Một con số do máy
+  đọc ra thì người học phải tin; một bức tường thì người học chạm được.
 - luồng cực đại / cắt nhỏ nhất — hiếm trong tổ hợp thi đấu.
 
-### 2.3 `sequence` — 13 bài
+**Nợ có tên**
+
+- **validator tô màu *cạnh*** chưa dựng. Bài kinh điển của nó là xếp thời khoá
+  biểu, và chỗ ấy thuộc mạch bài thi thật (loạt 4/4) hơn mạch tô màu. Một
+  validator mới mỗi mạch giữ bán kính vụ nổ nhỏ — nhưng đây là một khoảng trống
+  có tên, không phải một khoảng lặng.
+- **`five-colour-planar-sketch` bị cắt** khỏi loạt 2/4. Bài định dạy "hình phẳng
+  luôn có đỉnh bậc $\le 5$" bằng Euler, nhưng `planarity(...)` trả `value?.planar`
+  là `undefined` trên scene dựng tại chỗ, nên khẳng định trong narrative không có
+  gì chống lưng. Không viết một bài mà máy không kiểm được — nợ này là **một lỗi
+  analyzer cần soát**, không phải một bài chưa soạn.
+
+### 2.3 `sequence` — 12 bài
 
 **Tầng A**
 
@@ -250,7 +287,7 @@ bằng toạ độ.
 
 - dãy hai chiều; dãy vô hạn có chu kỳ; đa tập có phần tử trùng lặp lớn.
 
-### 2.4 `set` — 5 bài
+### 2.4 `set` — 6 bài
 
 - **ST-03 ✅ (M35)** — **view `dots`**: mỗi tập một cột chấm, mỗi chấm một phần
   tử. Một phần tử thuộc $d$ tập cho $d$ chấm, nên tổng chấm **là** `incidences`
@@ -286,7 +323,7 @@ thứ hai bài mới **thật sự** đòi mà engine chưa có:
 - **PT-03 [P3] MAY** — tô vùng do các đoạn chia. **SRS tự nói hoãn**: "đắt và hiếm
   bài cần; chỉ làm khi seed content P3 đòi hỏi." Giữ nguyên chữ ấy.
 
-### 2.6 `game` — 9 bài · **Tầng A đã làm xong ở M22–M25**
+### 2.6 `game` — 10 bài · **Tầng A đã làm xong ở M22–M25**
 
 Ba hạng mục dưới đây đều là **mở rộng họ luật đóng**, và tiền lệ đã có: M17b thêm
 `subtract-fraction` trong một buổi và nó biến "bốc tối đa nửa đống" từ ❌ thành ✅.
@@ -336,7 +373,7 @@ test, phổ vẽ đúng cả hai. Thứ thiếu là bài. Nay có `misere-nim-la
 **"Kiểm chứng bằng bài cụ thể"**, trong khi cái ✅ ấy dựa vào một *test*, không phải
 một *bài*. Bảng nói một đằng, kho có một nẻo.
 
-### 2.7 `derivation` — 2 bài · **nội dung trước**
+### 2.7 `derivation` — 3 bài · **nội dung trước**
 
 Dòng 🟡 duy nhất liên quan (Vandermonde) nói **"thiếu bài trong kho"**, không nói
 thiếu năng lực. Nên hạng mục đúng ở đây là **soạn bài**, không phải viết code.
@@ -348,10 +385,12 @@ thiếu năng lực. Nên hạng mục đúng ở đây là **soạn bài**, kh�
   còn thiếu là chuyển động). Lớp `CHO-05` đã có từ **M37** và `move`/`morph` gọi
   được ngay; việc còn lại là dịch quan hệ `becomes` thành pha, chưa làm.
 
-### 2.8 `algebra` — engine chưa mở · **đã có đặc tả đầy đủ**
+### 2.8 `algebra` — 31 bài · **engine đã mở (M50+)**
 
-Đặc tả: **`docs/ENGINE-ALGEBRA.md`**. Tóm tắt lý do có nó, đo bằng máy trên bài đang
-xuất bản:
+Đặc tả: **`docs/ENGINE-ALGEBRA.md`**. Phần dưới đây là **lý lẽ dựng engine, giữ
+nguyên làm hồ sơ** — nó viết ở thời engine chưa tồn tại, nên đọc nó như một bản ghi
+quyết định chứ không phải mô tả hiện trạng. Tóm tắt lý do có nó, đo bằng máy trên bài
+đang xuất bản lúc ấy:
 
 ```
 geometric-sum-doubling · hạng tử t1b: "1 + 2 + 4 + 8" → "1 + 2 + 4 + 9"

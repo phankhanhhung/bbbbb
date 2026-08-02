@@ -1,0 +1,460 @@
+{
+  "schema_version": "1.4.0",
+  "id": "wheel-chromatic-number",
+  "statement": {
+    "vi": "Bánh xe: một chu trình $n$ đỉnh làm vành, cộng một trục nối tới **mọi** đỉnh vành. Tô đỉnh sao cho hai đỉnh kề khác màu. Bánh xe vành $5$ cần mấy màu, và vành $6$ thì sao?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Số sắc của bánh xe $W_n$: $4$ khi $n$ lẻ, $3$ khi $n$ chẵn. Trục kề mọi đỉnh vành nên nó luôn tốn thêm đúng một màu so với vành."
+    }
+  },
+  "topics": [
+    "graph-coloring",
+    "graph-basics"
+  ],
+  "techniques": [
+    "parity",
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "[[a1|Trục]] kề **mọi** đỉnh vành, nên màu của nó khác màu mọi đỉnh vành. Suy ra số màu của bánh xe đúng bằng số màu của vành **cộng một** — và số màu của vành thì bài chu trình đã trả lời."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "hub"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -8.51]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [8.09, -2.63]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [5, 6.88]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "4",
+                "pos": [-5, 6.88]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8.09, -2.63]
+              },
+              {
+                "id": "hub",
+                "type": "vertex",
+                "label": "O",
+                "pos": [0, 0]
+              },
+              {
+                "id": "r0",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "r1",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "r2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "r3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "r4",
+                "type": "edge",
+                "u": "v4",
+                "v": "v0"
+              },
+              {
+                "id": "s0",
+                "type": "edge",
+                "u": "hub",
+                "v": "v0"
+              },
+              {
+                "id": "s1",
+                "type": "edge",
+                "u": "hub",
+                "v": "v1"
+              },
+              {
+                "id": "s2",
+                "type": "edge",
+                "u": "hub",
+                "v": "v2"
+              },
+              {
+                "id": "s3",
+                "type": "edge",
+                "u": "hub",
+                "v": "v3"
+              },
+              {
+                "id": "s4",
+                "type": "edge",
+                "u": "hub",
+                "v": "v4"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bánh xe vành năm đỉnh, chưa tô."
+          },
+          "expects_violation": [
+            "proper-colouring:3"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: vành 5 đỉnh"
+          },
+          "narrative": {
+            "vi": "Vành lẻ cần $3$ màu, nên bánh xe cần **$4$**. Không cách nào ít hơn: bỏ [[a1|trục]] ra thì còn $C_5$, mà $C_5$ đã tốn $3$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "hub"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "1",
+                "pos": [0, -8.51]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "2",
+                "pos": [8.09, -2.63]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "3",
+                "pos": [5, 6.88]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "4",
+                "pos": [-5, 6.88]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "5",
+                "pos": [-8.09, -2.63]
+              },
+              {
+                "id": "hub",
+                "type": "vertex",
+                "color_class": 5,
+                "label": "O",
+                "pos": [0, 0]
+              },
+              {
+                "id": "r0",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "r1",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "r2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "r3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "r4",
+                "type": "edge",
+                "u": "v4",
+                "v": "v0"
+              },
+              {
+                "id": "s0",
+                "type": "edge",
+                "u": "hub",
+                "v": "v0"
+              },
+              {
+                "id": "s1",
+                "type": "edge",
+                "u": "hub",
+                "v": "v1"
+              },
+              {
+                "id": "s2",
+                "type": "edge",
+                "u": "hub",
+                "v": "v2"
+              },
+              {
+                "id": "s3",
+                "type": "edge",
+                "u": "hub",
+                "v": "v3"
+              },
+              {
+                "id": "s4",
+                "type": "edge",
+                "u": "hub",
+                "v": "v4"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bánh xe vành năm, tô đủ bằng bốn màu."
+          },
+          "expects_violation": [
+            "proper-colouring:3"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s0",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: vành 6 đỉnh"
+          },
+          "narrative": {
+            "vi": "Vành chẵn chỉ cần $2$ màu, nên bánh xe cần **$3$**. Thêm một đỉnh vào vành làm số màu **giảm** — chuyện không xảy ra được nếu số màu chỉ phụ thuộc số đỉnh hay số cạnh. [[a1|Trục]] vẫn tốn đúng một màu, y như trường hợp kia."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "hub"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "4",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "5",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "6",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "hub",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "O",
+                "pos": [0, 0]
+              },
+              {
+                "id": "r0",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "r1",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "r2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "r3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "r4",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "r5",
+                "type": "edge",
+                "u": "v5",
+                "v": "v0"
+              },
+              {
+                "id": "s0",
+                "type": "edge",
+                "u": "hub",
+                "v": "v0"
+              },
+              {
+                "id": "s1",
+                "type": "edge",
+                "u": "hub",
+                "v": "v1"
+              },
+              {
+                "id": "s2",
+                "type": "edge",
+                "u": "hub",
+                "v": "v2"
+              },
+              {
+                "id": "s3",
+                "type": "edge",
+                "u": "hub",
+                "v": "v3"
+              },
+              {
+                "id": "s4",
+                "type": "edge",
+                "u": "hub",
+                "v": "v4"
+              },
+              {
+                "id": "s5",
+                "type": "edge",
+                "u": "hub",
+                "v": "v5"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Bánh xe vành sáu, tô đủ bằng ba màu."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "n == 7",
+    "validators": [
+      "simple-graph",
+      "proper-colouring:3"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

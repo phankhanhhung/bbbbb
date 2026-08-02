@@ -181,3 +181,93 @@ describe('validator `face-colouring`', () => {
     expect(outcome.message).toMatch(/cắt nhau|liên thông/);
   });
 });
+
+/**
+ * `proper-colouring[:k]` — tô **đỉnh** (mạch tô màu, sau M78).
+ *
+ * Trước lượt này engine không có phép kiểm nào cho khái niệm trung tâm của tô màu đồ
+ * thị: `bipartite` là tô hai màu, `no-mono-triangle` tô **cạnh**, `face-colouring` tô
+ * **mặt**. Ô màu trong thanh công cụ thì đã nối vào `graph/set-color` từ lâu — chỗ thiếu
+ * chỉ là chỗ chấm.
+ */
+describe('proper-colouring — tô đỉnh', () => {
+  /** Dựng scene với màu **trên đỉnh** (`graphOf` chỉ tô được cạnh). */
+  const coloured = (edges: readonly string[], colours: Record<string, number>): Scene => {
+    const base = graphOf(edges, Object.keys(colours));
+    return {
+      ...base,
+      elements: base.elements.map((e) =>
+        e.type === 'vertex' && colours[e.id] ? { ...e, color_class: colours[e.id] } : e,
+      ),
+    };
+  };
+  const colour = (id: string, edges: readonly string[], colours: Record<string, number>) =>
+    resolveGraphValidator(id)!.check(coloured(edges, colours));
+
+  it('hai đỉnh kề cùng màu ⇒ đỏ, và chỉ ra **đúng cặp ấy**', () => {
+    // Tô cả tam giác nhưng $a$ và $b$ trùng màu: chỉ hai đỉnh ấy hỏng, $c$ thì không.
+    const out = colour('proper-colouring', ['a-b', 'b-c', 'c-a'], { a: 1, b: 1, c: 2 });
+    expect(out.ok).toBe(false);
+    expect([...out.violations].sort()).toEqual(['a', 'b']);
+  });
+
+  it('tô đúng thì **đạt**', () => {
+    expect(colour('proper-colouring', ['a-b', 'b-c', 'c-a'], { a: 1, b: 2, c: 3 }).ok).toBe(true);
+  });
+
+  it('đỉnh chưa tô là "**chưa xong**", không phải "sai"', () => {
+    // Coi `color_class` vắng là "màu số 0" thì hai đỉnh kề chưa ai tô sẽ báo đỏ, và
+    // người học bị mắng trước khi kịp bắt đầu. Cùng quy ước mà `no-mono-triangle` đặt
+    // cho cạnh.
+    const out = colour('proper-colouring', ['a-b'], {});
+    expect(out.ok).toBe(false);
+    expect(out.message).toContain('chưa tô');
+    expect([...out.violations].sort()).toEqual(['a', 'b']);
+  });
+
+  it('đỉnh chưa tô **không** làm hàng xóm đã tô thành sai', () => {
+    const out = colour('proper-colouring', ['a-b'], { a: 1 });
+    expect(out.message).toContain('chưa tô');
+    expect([...out.violations]).toEqual(['b']);
+  });
+
+  it('khuyên **không** tính là xung đột', () => {
+    // Một đỉnh không thể khác màu chính nó, nên báo đỏ ở đó là báo một điều vô nghĩa
+    // và không sửa được — người học sẽ ngồi đổi màu mãi.
+    expect(colour('proper-colouring', ['a-a'], { a: 1 }).ok).toBe(true);
+  });
+
+  it('`:k` chặn **số màu đã dùng**', () => {
+    const path = ['a-b', 'b-c'];
+    expect(colour('proper-colouring:2', path, { a: 1, b: 2, c: 1 }).ok).toBe(true);
+    const tooMany = colour('proper-colouring:2', path, { a: 1, b: 2, c: 3 });
+    expect(tooMany.ok).toBe(false);
+    expect(tooMany.message).toContain('3 màu');
+  });
+
+  it('`:k` kiểm **sau** phép kề — hỏng luật thì nói hỏng luật trước', () => {
+    // Người đang tô sai cần biết mình tô sai, không cần một con số về số màu.
+    const out = colour('proper-colouring:9', ['a-b'], { a: 1, b: 1 });
+    expect(out.message).toContain('cùng màu');
+  });
+
+  it('chu trình lẻ **không** tô được bằng hai màu — và đó là bài học, không phải lỗi', () => {
+    // Đây là chỗ validator đỏ mãi *chính là* nội dung, đúng thủ pháp `no-mono-triangle`
+    // dùng cho $R(3,3)=6$.
+    const c5 = ['a-b', 'b-c', 'c-d', 'd-e', 'e-a'];
+    expect(colour('proper-colouring:3', c5, { a: 1, b: 2, c: 1, d: 2, e: 3 }).ok).toBe(true);
+    // Mọi cách tô $2$ màu đều đụng: thử một cách bất kỳ thì thấy.
+    expect(colour('proper-colouring:2', c5, { a: 1, b: 2, c: 1, d: 2, e: 1 }).ok).toBe(false);
+  });
+
+  it('đồ thị **rỗng** thì đạt, không phải "chưa tô"', () => {
+    expect(resolveGraphValidator('proper-colouring')!.check({
+      engine: 'graph', config: {}, elements: [],
+    } as Scene).ok).toBe(true);
+  });
+
+  it('khai trong danh sách id để Studio bày ra được', () => {
+    expect(GRAPH_VALIDATOR_IDS).toContain('proper-colouring');
+    expect(GRAPH_VALIDATOR_IDS).toContain('proper-colouring:<k>');
+  });
+});

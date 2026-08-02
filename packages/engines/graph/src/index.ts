@@ -908,6 +908,78 @@ export function resolveGraphValidator(id: string): SceneValidator | null {
   }
 
   /**
+   * `proper-colouring[:k]` — hai đỉnh **kề nhau** thì khác màu.
+   *
+   * Khái niệm trung tâm của tô màu đồ thị, và tới trước lượt này engine **không có nó**:
+   * `bipartite` là tô $2$ màu, `no-mono-triangle` tô **cạnh**, `face-colouring` tô
+   * **mặt**. Hệ quả là mọi bài tô màu đỉnh chỉ minh hoạ được chứ không nghịch được — mà
+   * nghịch được mới là thứ phân biệt nền tảng này với một trang lời giải tĩnh (SBX-02).
+   * Ô màu trong thanh công cụ thì đã nối vào `graph/set-color` từ lâu; chỗ thiếu chỉ là
+   * chỗ chấm.
+   *
+   * Ba chi tiết quyết định nó đúng hay chỉ trông đúng:
+   *
+   *   - Đỉnh **chưa tô** (`color_class` vắng hoặc $0$) là *"chưa xét"*, không phải "màu
+   *     số 0" — cùng quy ước mà `no-mono-triangle` đặt cho cạnh. Coi nó là một màu thì
+   *     hai đỉnh kề chưa ai tô sẽ báo đỏ, và người học bị mắng trước khi kịp bắt đầu.
+   *   - **Khuyên không tính.** Một đỉnh không thể khác màu chính nó, nên báo xung đột ở
+   *     đó là báo một điều vô nghĩa và không sửa được.
+   *   - Dạng có tham số chặn thêm **số màu đã dùng**. `proper-colouring:3` trên một hình
+   *     cần $4$ màu là mục tiêu **không bao giờ đạt** — và chính việc nó đỏ mãi là bài
+   *     học, đúng thủ pháp mà `no-mono-triangle` dùng cho $R(3,3)=6$.
+   */
+  if (name === 'proper-colouring') {
+    const maxColours = arg ?? null;
+    return {
+      id,
+      label:
+        maxColours === null
+          ? 'Hai đỉnh kề thì khác màu'
+          : `Tô đỉnh hợp lệ với tối đa ${maxColours} màu`,
+      check(scene) {
+        const graph = buildGraph(scene);
+        const clash = new Set<string>();
+
+        for (const vertex of graph.vertices) {
+          const mine = vertex.colorClass;
+          if (!mine) continue;
+          for (const entry of graph.adjacency.get(vertex.id) ?? []) {
+            // Khuyên: `entry.to === vertex.id`. Bỏ qua, xem chú thích trên.
+            if (entry.to === vertex.id) continue;
+            if (graph.byId.get(entry.to)?.colorClass === mine) {
+              clash.add(vertex.id);
+              clash.add(entry.to);
+            }
+          }
+        }
+
+        if (clash.size > 0) {
+          return {
+            ok: false,
+            violations: [...clash],
+            message: `${clash.size} đỉnh có hàng xóm cùng màu`,
+          };
+        }
+
+        const blank = graph.vertices.filter((v) => !v.colorClass).map((v) => v.id);
+        if (blank.length > 0) {
+          return { ok: false, violations: blank, message: `${blank.length} đỉnh chưa tô` };
+        }
+
+        const used = new Set(graph.vertices.map((v) => v.colorClass));
+        if (maxColours !== null && used.size > maxColours) {
+          return {
+            ok: false,
+            violations: [],
+            message: `Dùng ${used.size} màu, quá ${maxColours}`,
+          };
+        }
+        return { ok: true, violations: [] };
+      },
+    };
+  }
+
+  /**
    * `diameter:<k>` — cây có đường kính đúng $k$ (GR-10).
    *
    * Mục tiêu sandbox của họ bài "dựng một cây thoả …": người học kéo cạnh cho tới
@@ -967,6 +1039,8 @@ export const GRAPH_VALIDATOR_IDS: readonly string[] = [
   'diameter:<k>',
   'face-colouring',
   'face-colouring:<k>',
+  'proper-colouring',
+  'proper-colouring:<k>',
 ];
 
 // ---------------------------------------------------------------------------

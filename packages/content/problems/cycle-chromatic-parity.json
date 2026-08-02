@@ -1,0 +1,452 @@
+{
+  "schema_version": "1.4.0",
+  "id": "cycle-chromatic-parity",
+  "statement": {
+    "vi": "Tô màu các đỉnh của một chu trình sao cho hai đỉnh kề nhau luôn khác màu. Chu trình $6$ đỉnh cần ít nhất mấy màu, và chu trình $5$ đỉnh thì sao?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Số sắc của $C_n$: $2$ khi $n$ chẵn, $3$ khi $n$ lẻ. Ca nhỏ nhất mà số sắc **không** đọc được từ bậc đỉnh."
+    }
+  },
+  "topics": [
+    "graph-coloring",
+    "graph-basics"
+  ],
+  "techniques": [
+    "parity",
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Mọi đỉnh đều [[a1|bậc $2$]] — chu trình nào cũng thế, dài ngắn không đổi. Nên nếu số màu cần dùng chỉ phụ thuộc bậc thì hai chu trình dưới đây phải cần như nhau."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v0",
+                "v1",
+                "v2",
+                "v3",
+                "v4",
+                "v5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "label": "3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "label": "4",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "label": "6",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "r0",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "r1",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "r2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "r3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "r4",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "r5",
+                "type": "edge",
+                "u": "v5",
+                "v": "v0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Chu trình sáu đỉnh, chưa tô màu."
+          },
+          "expects_violation": [
+            "proper-colouring:2"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Sáu đỉnh thì **hai màu đủ**: đi vòng quanh và [[a1|xen kẽ]]. Về tới chỗ xuất phát sau một số chẵn bước, nên màu khớp lại."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v0",
+                "v1",
+                "v2",
+                "v3",
+                "v4",
+                "v5"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "1",
+                "pos": [0, -10]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "2",
+                "pos": [8.66, -5]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "3",
+                "pos": [8.66, 5]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "4",
+                "pos": [0, 10]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "5",
+                "pos": [-8.66, 5]
+              },
+              {
+                "id": "v5",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "6",
+                "pos": [-8.66, -5]
+              },
+              {
+                "id": "r0",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "r1",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "r2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "r3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "r4",
+                "type": "edge",
+                "u": "v4",
+                "v": "v5"
+              },
+              {
+                "id": "r5",
+                "type": "edge",
+                "u": "v5",
+                "v": "v0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Chu trình sáu đỉnh tô xen kẽ hai màu."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Năm đỉnh thì phép xen kẽ **gãy ở nhịp cuối**: tô được bốn đỉnh, và [[a1|đỉnh còn lại]] kề cả hai màu đã dùng. Không phải vì tô vụng — đi vòng lẻ bước thì màu không thể khớp lại."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "1",
+                "pos": [0, -8.51]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "2",
+                "pos": [8.09, -2.63]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "3",
+                "pos": [5, 6.88]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "4",
+                "pos": [-5, 6.88]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "label": "5",
+                "pos": [-8.09, -2.63]
+              },
+              {
+                "id": "r0",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "r1",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "r2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "r3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "r4",
+                "type": "edge",
+                "u": "v4",
+                "v": "v0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Chu trình năm đỉnh, bốn đỉnh xen kẽ hai màu, đỉnh cuối chưa tô."
+          },
+          "expects_violation": [
+            "proper-colouring:2"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nên $C_5$ cần [[a1|màu thứ ba]], và ba màu thì đủ. **Thêm một đỉnh vào vòng làm số màu tăng, dù bậc mọi đỉnh vẫn là $2$** — số sắc không đọc được từ bậc."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "v4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "v0",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "1",
+                "pos": [0, -8.51]
+              },
+              {
+                "id": "v1",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "2",
+                "pos": [8.09, -2.63]
+              },
+              {
+                "id": "v2",
+                "type": "vertex",
+                "color_class": 1,
+                "label": "3",
+                "pos": [5, 6.88]
+              },
+              {
+                "id": "v3",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "4",
+                "pos": [-5, 6.88]
+              },
+              {
+                "id": "v4",
+                "type": "vertex",
+                "color_class": 4,
+                "label": "5",
+                "pos": [-8.09, -2.63]
+              },
+              {
+                "id": "r0",
+                "type": "edge",
+                "u": "v0",
+                "v": "v1"
+              },
+              {
+                "id": "r1",
+                "type": "edge",
+                "u": "v1",
+                "v": "v2"
+              },
+              {
+                "id": "r2",
+                "type": "edge",
+                "u": "v2",
+                "v": "v3"
+              },
+              {
+                "id": "r3",
+                "type": "edge",
+                "u": "v3",
+                "v": "v4"
+              },
+              {
+                "id": "r4",
+                "type": "edge",
+                "u": "v4",
+                "v": "v0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Chu trình năm đỉnh tô đủ bằng ba màu."
+          },
+          "expects_violation": [
+            "proper-colouring:2"
+          ],
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "n == 6",
+    "validators": [
+      "simple-graph",
+      "proper-colouring:2"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

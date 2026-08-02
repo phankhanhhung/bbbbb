@@ -93,6 +93,10 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | $K_5$ không phẳng | đồ thị | ✅ có trong kho (chặn $e \\le 3v-6$) |
 | Định lý König (ghép cặp = phủ đỉnh) | đồ thị hai phía | ✅ có trong kho |
 | Định lý Hall | đồ thị hai phía | ✅ có trong kho (ghép cặp + đường tăng + nhân chứng Hall) |
+| Hall bản **chỗ hụt** ($|A| - \\max_S(|S|-|N(S)|)$) | đồ thị hai phía | ✅ có trong kho (`hall-defect-version`: "Hall hỏng" là một **phép đo**, không phải câu trả lời nhị phân) |
+| Hai phía **chính quy** ⇒ ghép cặp hoàn hảo | đồ thị hai phía | ✅ có trong kho (`bipartite-regular-perfect-matching`: đếm cạnh hai chiều ra Hall, **không** dựng ghép cặp) |
+| Số sắc của chu trình / bánh xe | tô màu đỉnh | ✅ có trong kho (validator `proper-colouring[:k]`, GR-13) |
+| Tham lam đủ $\\Delta+1$ màu | tô màu đỉnh | ✅ có trong kho (`greedy-colouring-degree-bound`: cận không đổi, số màu **thật** đổi theo thứ tự duyệt) |
 | Cayley $n^{n-2}$ (mã Prüfer) | song ánh | ✅ có trong kho (GR-09: mã vẽ thành hàng ô dưới cây) |
 | Đồng nhất thức Vandermonde | đếm hai chiều | 🟡 derivation viết được chuỗi biến đổi; thiếu bài trong kho |
 | Tập con ↔ xâu nhị phân ($2^n$) | song ánh | ✅ có trong kho (view song ánh) |

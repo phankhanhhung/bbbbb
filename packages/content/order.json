@@ -123,12 +123,18 @@
     "chomp-two-rows-staircase",
     "geography-path-parity",
     "hackenbush-one-stalk-half",
-    "nim-two-piles-mirror"
+    "nim-two-piles-mirror",
+    "bipartite-regular-perfect-matching",
+    "cycle-chromatic-parity",
+    "greedy-colouring-degree-bound",
+    "hall-defect-version",
+    "wheel-chromatic-number"
   ],
   "newest": [
-    "chomp-two-rows-staircase",
-    "geography-path-parity",
-    "hackenbush-one-stalk-half",
-    "nim-two-piles-mirror"
+    "bipartite-regular-perfect-matching",
+    "cycle-chromatic-parity",
+    "greedy-colouring-degree-bound",
+    "hall-defect-version",
+    "wheel-chromatic-number"
   ]
 }
