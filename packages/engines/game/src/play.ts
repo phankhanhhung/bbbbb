@@ -1,7 +1,7 @@
-import type { Move, PlayPlayer, PlayRules } from '@combviz/editor';
+import type { Move, PlayPlayer, PlayRules, SolveResult } from '@combviz/editor';
 import type { PlayBlock, Scene, ValidationIssue } from '@combviz/schema';
 import { readGame } from './model.js';
-import { allMoves, type Move as PileMove } from './solver.js';
+import { allMoves, analyzeGame, type Move as PileMove } from './solver.js';
 
 /**
  * **Bốc đống trở thành một họ luật** (GM-01, M78.2).
@@ -103,6 +103,40 @@ export function gamePlayRules(): PlayRules {
       return allMoves(counts, model.config.rule, model.config.last_take)
         .map((m) => toMove(scene, counts, m))
         .filter((m): m is Move => m !== null);
+    },
+
+    /**
+     * Đường tắt Grundy — solver chung **không** duyệt thế nào cả (M78.5).
+     *
+     * Với bốc đống, lý thuyết Sprague–Grundy trả lời trong vài phép XOR; duyệt lùi thì
+     * ra cùng một câu sau hàng trăm nghìn thế. `analyzeGame` đã làm việc ấy từ lâu và
+     * đã có răng — chỗ này chỉ dịch câu trả lời của nó sang hợp đồng chung.
+     *
+     * Nó **cũng biết nói không**: `analyzeGame` từ chối khi không gian thế quá lớn, và
+     * lời từ chối ấy đi thẳng ra ngoài chứ không bị nuốt để solver chung thử lại — thử
+     * lại là đúng cái sẽ treo máy.
+     */
+    solve(scene: Scene, _toMove: PlayPlayer, misere: boolean): SolveResult | null {
+      const model = readGame(scene);
+      const counts = model.piles.map((p) => p.count);
+      const analysis = analyzeGame(counts, model.config.rule, misere, model.config.last_take);
+
+      if (analysis.refused !== undefined) {
+        return { winner: null, winningMoves: [], states: 0, refused: analysis.refused };
+      }
+
+      const ids = analysis.winningMoves
+        .map((m) => toMove(scene, counts, m))
+        .filter((m): m is Move => m !== null)
+        .map((m) => m.id);
+
+      return {
+        winner: analysis.winning ? _toMove : _toMove === 'left' ? 'right' : 'left',
+        winningMoves: ids,
+        // Không duyệt thế nào cả — và con số $0$ nói đúng chuyện ấy.
+        states: 0,
+        refused: null,
+      };
     },
   };
 }

@@ -1,5 +1,6 @@
 import type { Scene } from '@combviz/schema';
 import { other, type Command, type CommandRegistry, type Move, type PlayPlayer } from './command.js';
+import type { SolveResult } from './solve.js';
 import { createTrail, stepTrail, type Trail } from './trail.js';
 
 /**
@@ -70,6 +71,23 @@ export interface PlayRules {
    * `null` nghĩa là nước không áp được, y hệt `CommandDef.apply`.
    */
   applyMove?(scene: Scene, move: Move): Scene | null;
+  /**
+   * Trần số thế mà solver chung được duyệt cho họ luật này (GM-03).
+   *
+   * Khai ở **họ luật** chứ không phải một hằng số toàn cục, vì con số hợp lý phụ thuộc
+   * hình dạng thế: một bàn Chomp $6\times6$ có chưa tới một nghìn thế, còn một đồ thị
+   * mười đỉnh thì có thể hàng triệu. Vắng thì dùng trần mặc định.
+   */
+  readonly solverBound?: number;
+  /**
+   * Đường tắt: họ luật **tự trả lời được** ai thắng.
+   *
+   * Có vì lý thuyết đôi khi rẻ hơn duyệt hàng trăm nghìn thế: bốc đống trả lời bằng
+   * vài phép XOR (Sprague–Grundy), còn duyệt lùi thì ra cùng một câu sau vài giây. Trả
+   * `null` nghĩa là "ca này tôi không biết" và solver chung duyệt như thường — nên một
+   * họ luật có công thức cho *một phần* các thế vẫn khai được.
+   */
+  solve?(scene: Scene, toMove: PlayPlayer, misere: boolean): SolveResult | null;
 }
 
 export interface PlayMoveRecord {
@@ -111,6 +129,17 @@ const moverAt = (first: PlayPlayer, plies: number): PlayPlayer =>
   plies % 2 === 0 ? first : other(first);
 
 /**
+ * **Quy ước kết thúc** — ai thắng khi bên sắp đi hết nước.
+ *
+ * Một dòng, và nó có tên riêng vì nó có **hai** chỗ gọi: phiên chơi ({@link settle}) và
+ * solver ({@link solveGame}). Viết nó hai lần thì hai lần ấy khớp nhau hôm nay và lệch
+ * nhau vào ngày ai đó sửa một lần — và triệu chứng sẽ là "solver bảo Left thắng, chơi
+ * thật thì Right thắng", một câu không ai lần ngược được về đây.
+ */
+export const terminalWinner = (toMove: PlayPlayer, misere: boolean): PlayPlayer =>
+  misere ? toMove : other(toMove);
+
+/**
  * Đóng ván lại nếu bên sắp đi hết nước.
  *
  * Một chỗ duy nhất biết quy ước normal/misère. Rải nó ra hai chỗ (lúc mở ván và lúc đi
@@ -129,7 +158,7 @@ function settle(
     over: true,
     // Normal play: hết nước thì **thua**. Misère: hết nước thì **thắng**, vì người
     // vừa đi mới là người lấy nước cuối cùng.
-    winner: misere ? toMove : other(toMove),
+    winner: terminalWinner(toMove, misere),
     ended: 'hết nước đi',
   };
 }
@@ -186,7 +215,7 @@ export function playMove(
     };
   }
 
-  const applied = applyOne(session.scene, move, rules, registry);
+  const applied = applyMoveTo(session.scene, move, rules, registry);
   if ('refusal' in applied) return { session, refusal: applied.refusal };
   const next = applied.scene;
 
@@ -219,8 +248,13 @@ export function playMove(
  *
  * Gom vào một hàm chứ không rải ra hai nhánh ở chỗ gọi: hai lối áp nước là hai chỗ để
  * lệch nhau, và cách rẻ nhất để chúng không lệch là chúng chỉ gặp nhau đúng ở đây.
+ *
+ * Xuất ra vì {@link solveGame} gọi thẳng nó. Solver duyệt hàng trăm nghìn cạnh và không
+ * đọc lịch sử, vết chân, hay undo — dựng nguyên một `PlaySession` cho mỗi cạnh đắt gấp
+ * bốn lần mà không dùng đến ba phần tư thứ dựng ra. Nhưng nó phải áp nước **y hệt**
+ * người chơi, kể cả cổng tất định của lối B, nên nó đi qua đúng hàm này.
  */
-function applyOne(
+export function applyMoveTo(
   scene: Scene,
   move: Move,
   rules: PlayRules,

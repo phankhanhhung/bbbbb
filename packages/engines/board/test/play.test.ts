@@ -4,6 +4,7 @@ import {
   createPlay,
   playMove,
   replayPlay,
+  solveGame,
   toDraftSteps,
   type PlayPlayer,
   type PlaySession,
@@ -162,6 +163,86 @@ describe('sự thật kinh điển — duyệt vét cạn, không phải lời',
       (m) => winnerOf(playMove(start, m.id, rules, boardCommands).session) === 'left',
     );
     expect(winning.map((m) => m.id)).toEqual(['bite-1-1']);
+  });
+});
+
+describe('solver tổng quát nói cùng một câu với phép duyệt tay (M78.5)', () => {
+  /**
+   * Hai bộ máy, một câu trả lời.
+   *
+   * `winnerOf` ở trên đi **xuôi** qua `PlaySession` thật: nó dựng phiên, đi nước, đọc
+   * `session.winner`. `solveGame` đi **lùi** trên đồ thị thế và không chạm vào phiên một
+   * lần nào. Chúng chỉ dùng chung `legalMoves`, `applyMoveTo` và quy ước
+   * `terminalWinner` — tức là chung đúng phần *là luật*, và khác nhau ở toàn bộ phần
+   * *suy luận*. Nên chúng khớp là một khẳng định, không phải một phép soi gương.
+   */
+  it('mọi bàn tới $4\\times4$, cả hai bên mở màn: **khớp từng ca**', () => {
+    for (const [rows, cols] of [
+      [1, 1],
+      [1, 2],
+      [2, 2],
+      [2, 3],
+      [3, 3],
+      [3, 4],
+      [4, 4],
+    ] as [number, number][]) {
+      for (const first of ['left', 'right'] as PlayPlayer[]) {
+        const out = solveGame(board(rows, cols), first, rules, boardCommands, { misere: true });
+        expect(out.refused, `${rows}×${cols} ${first}`).toBeNull();
+        expect(out.winner, `${rows}×${cols} ${first}`).toBe(winnerOf(play(rows, cols, first)));
+      }
+    }
+  });
+
+  it('$2\\times2$: solver chỉ ra **đúng** tập nước thắng mà phép duyệt tay chỉ ra', () => {
+    // Chốt canh ở trên đã tính tập ấy bằng tay: chỉ `bite-1-1`. Ở đây solver phải ra
+    // cùng tập — không phải "một nước thắng nào đó", mà **cả tập**.
+    const out = solveGame(board(2, 2), 'left', rules, boardCommands, { misere: true });
+    expect(out.winningMoves).toEqual(['bite-1-1']);
+  });
+
+  it('normal play đảo người thắng — misère **không** phải mặc định lặng lẽ', () => {
+    // Nếu solver bỏ qua cờ `misere` thì hai dòng này ra cùng kết quả và mọi chốt canh
+    // Chomp ở trên vẫn xanh, vì chúng đều truyền `misere: true`.
+    expect(solveGame(board(1, 1), 'left', rules, boardCommands, { misere: true }).winner).toBe(
+      'right',
+    );
+    expect(solveGame(board(1, 1), 'left', rules, boardCommands).winner).toBe('left');
+  });
+});
+
+describe('trần của Chomp là một lời hứa **đo được**', () => {
+  // Bản trước hứa "$20\,000$ cho qua mọi bàn đọc được trên màn hình". Chạy thử thì
+  // $8\times8$ mất $33$ giây — tức lời hứa ấy là một lời hứa treo máy nửa phút. Ba chốt
+  // canh dưới đây neo cả hai đầu của ranh giới, để nó không lặng lẽ trôi lại.
+
+  it('$6\\times6$ **giải được**, và số thế đúng bằng số đã đo', () => {
+    const out = solveGame(board(6, 6), 'left', rules, boardCommands, { misere: true });
+    expect(out.refused).toBeNull();
+    expect(out.winner).toBe('left');
+    // $1846$ là phép **đo**, không phải ước lượng: nó là số cặp (vị trí, bên sắp đi) tới
+    // được. Con số cụ thể ở đây để một thay đổi làm nở không gian thế bị bắt tại chỗ.
+    expect(out.states).toBe(1846);
+  });
+
+  it('bàn quá lớn **từ chối có lời**, và từ chối *nhanh*', () => {
+    const t0 = Date.now();
+    const out = solveGame(board(12, 12), 'left', rules, boardCommands, { misere: true });
+    const ms = Date.now() - t0;
+
+    expect(out.winner).toBeNull();
+    expect(out.refused).toContain('vượt trần 3000 thế');
+    // Trần đếm được **không tự biết** nó là bao nhiêu giây, nên chỗ này phải canh bằng
+    // đồng hồ. Ngưỡng để rộng ($5$ s so với $0{,}3$ s đo được) vì nó canh một hạng khác
+    // hẳn — nửa phút — chứ không canh dao động giữa hai lần chạy.
+    expect(ms).toBeLessThan(5_000);
+  });
+
+  it('trần **của Chomp** mới là trần đang chặn, không phải trần mặc định', () => {
+    // Nếu `solverBound` của họ luật bị rơi mất thì trần mặc định (5000) vẫn chặn, vẫn
+    // "từ chối có lời", và mọi chốt canh khác vẫn xanh — chỉ chậm hơn gấp đôi. Lời từ
+    // chối phải gọi đúng tên con số thì mới bắt được chuyện ấy.
+    expect(rules.solverBound).toBe(3_000);
   });
 });
 

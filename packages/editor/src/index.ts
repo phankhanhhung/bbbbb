@@ -10,6 +10,15 @@ export {
 } from './command.js';
 
 export {
+  solveGame,
+  SOLVER_STATES,
+  SOLVER_STATES_MAX,
+  SOLVER_EDGES_PER_STATE,
+  type SolveOptions,
+  type SolveResult,
+} from './solve.js';
+
+export {
   createPlay,
   playMove,
   replayPlay,

@@ -47,6 +47,25 @@ export function boardPlayRules(rule: string): PlayRules | null {
   if (rule !== 'chomp') return null;
   return {
     /**
+     * Trần riêng, và nó **đo được chứ không ước**.
+     *
+     * Số vị trí của bàn $m\times n$ là số iđêan thứ tự của lưới: $6\times6$ có
+     * $\binom{12}{6} = 924$, $8\times8$ có $\binom{16}{8} = 12\,870$. Solver đếm
+     * *(vị trí, bên sắp đi)* nên số thế xấp xỉ gấp đôi — đo thật: $6\times6$ ra
+     * $1846$ thế, $8\times8$ ra $25\,738$.
+     *
+     * Bản trước để $20\,000$ kèm câu "cho qua mọi bàn đọc được trên màn hình", và câu ấy
+     * **sai ở cả hai đầu**. Chạy thử: $8\times8$ mất $33$ giây, $7\times7$ mất $5{,}4$
+     * giây. Trần đếm thế không biết mình là bao nhiêu giây, nên một trần rộng rãi nghe
+     * thì hào phóng mà thực tế là một lời hứa treo máy nửa phút.
+     *
+     * $3000$ chọn từ số đo: $6\times6$ ($1846$ thế) giải trong dưới một giây; $7\times7$
+     * chạm trần sau chừng hai giây và **từ chối có lời**. Ranh giới ấy nói thật — bàn
+     * Chomp trong bài là $3\times3$, và bàn lớn hơn $6\times6$ thì người học không đọc
+     * nổi lời giải kể cả khi máy giải nổi.
+     */
+    solverBound: 3_000,
+    /**
      * Mọi ô còn lại là một nước — kể cả ô độc.
      *
      * Cấm ăn ô độc thì cũng ra một trò tương đương (hết nước ⇒ thua, normal play), nhưng
