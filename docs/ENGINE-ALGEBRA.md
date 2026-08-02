@@ -168,23 +168,42 @@ export const AlgebraStep = Type.Object({
   20 nút thành 60 dòng JSON, và đổi một hệ số thì diff không nói được đã đổi gì.
 - Parser **dù sao cũng phải có** cho sandbox (§13: người học gõ đích cần tới).
 
-Grammar, cố ý bé:
+Grammar, cố ý bé — **đọc lại từ `parse.ts` ở M77**:
 
 ```
-rel   := sum (('=' | '<' | '<=' | '!=') sum)?
-sum   := prod (('+' | '-') prod)*
-prod  := unary (('*' | '/') unary)*        // '*' bắt buộc, không có nhân ngầm
-unary := '-'? power
-power := atom ('^' int)?
-atom  := int | var | '(' rel ')'
-var   := letter ('_' digit)?
+top     := rel ((';' rel)* | ('hoặc' rel)*)   // hệ chỉ ở gốc, một dấu nối cho cả hệ
+rel     := sum (('<=' | '>=' | '!=' | '=' | '<' | '>') sum)?
+sum     := prod (('+' | '-') prod)*
+prod    := unary (('*' | '/') unary)*         // '*' bắt buộc, không có nhân ngầm
+unary   := '-'? power
+power   := atom '!'* ('^' unary)?             // kết hợp phải; '!' ăn trước '^'
+atom    := number | '(' rel ')'
+         | 'abs' '(' sum ')'
+         | 'sqrt' '(' sum ')' | 'root' '(' digits ',' sum ')'
+         | 'coeff' '(' name ',' sum ',' sum ')'
+         | 'rat' '(' int ',' int ')'          // chỉ `unparse` sinh — xem §51.3
+         | ('sum' | 'prod') '(' name ',' sum ',' sum ',' sum ')'
+         | ('fact'|'log'|'ln'|'exp'|'sin'|'cos'|'tan'|'C'|'A') '(' sum (',' sum)* ')'
+         | 'inf'
+         | name '(' sum (',' sum)* ')'        // ký hiệu hàm không diễn giải: f(x)
+         | name '_' (digits | '{' sum '}')    // số hạng dãy: a_1, a_{k+1}
+         | name
+name    := một chữ cái
 ```
 
 **Không có nhân ngầm.** `2x` là lỗi cú pháp, phải viết `2*x`. Nhân ngầm kéo theo
 `xy` là một biến hay hai biến nhân nhau — mơ hồ ngay ở ký tự thứ hai, và mơ hồ
-trong dữ liệu là thứ đắt nhất. `vars` khai ra rồi thì lỗi nói được tên biến gần đúng.
+trong dữ liệu là thứ đắt nhất. Ràng buộc ấy trả cổ tức về sau: `C(` chỉ có thể là
+lời gọi hàm, vì một biến không bao giờ đứng sát dấu ngoặc mở.
 
 Parse thất bại ⇒ **từ chối** (§15), không đoán.
+
+> **Khối trên từng sai suốt ~20 hạng mục.** Nó đứng nguyên ở dạng M47 —
+> `power := atom ('^' int)?`, không có `sqrt`, `fn`, `sum`, `coeff`, `ufn`, `abs`,
+> `inf`, `!`, `;` — trong khi parser đã mọc thêm ngần ấy thứ. Đây là mục **tham chiếu**
+> mà người soạn bài đọc, nên một grammar sai ở đây đắt hơn một chú thích sai trong mã:
+> nó dạy sai người đang gõ. Ghi lại thay vì lặng lẽ sửa, vì lớp lỗi này (§51.6) không
+> có chốt canh nào bắt được — chỉ có thói quen đọc lại tài liệu như đọc lại mã.
 
 ### 3.4 Đường dẫn, và danh tính — hai không gian khác nhau
 
@@ -1860,6 +1879,12 @@ Dấu **chấm phẩy** ngăn các phương trình, vì dấu phẩy đã thuộ
 và `sum(k, 1, n, …)`. Hệ chỉ ở gốc và không lồng nhau: một hệ của các hệ không phải thứ
 ai viết, và cho phép nó là mở một chiều lồng mà không luật nào biết đi trong đó.
 
+**Từ M77 còn đọc được `hoặc`** — `x < 1 hoặc x > 2` cho ra `join: 'or'`. `sys` mang hai
+lối nối từ M60 và engine **sinh** cả hai, nhưng parser thì suốt từ đó chỉ biết `;`, tức
+chỉ biết `and`: người soạn không viết được thứ engine vẽ ra được. Một hệ dùng **một** dấu
+nối; trộn hai lối thì từ chối, vì `a; b hoặc c` đọc kiểu gì cũng phải cãi nhau về độ ưu
+tiên. Xem §51.2.
+
 ### 35.2 `sameSolutionSet` là một phép kiểm **luôn xanh** — và đây là bằng chứng
 
 Bốc một điểm $(x,y)$ ngẫu nhiên thì cả hệ trước lẫn hệ sau đều **sai**, hai bên "đồng
@@ -3406,3 +3431,149 @@ thích được bằng một con số**, không phải "chắc là do đổi ngo
    nếu để lại thì lần sau ai đó sẽ tin nó thay vì đo. Sửa cả hai đầu: chú thích nói
    đúng cái `runs` giữ (số mảnh, không phải vị trí eo), và một chốt canh mới hỏi đúng
    cái ấy. **Bẻ răng không chỉ kiểm mã — nó kiểm cả lời mình viết về mã.**
+
+---
+
+## §51 — Lượt soát engine: bốn lời hứa mà mã không giữ (M77)
+
+Lượt này không thêm luật nào và không mở ngữ pháp nào đáng kể. Nó đi tìm **một lớp
+lỗi**: chỗ nào trong engine có một câu khẳng định — trong chú thích, trong tài liệu,
+trong tên một chốt canh — mà mã không đứng sau câu ấy.
+
+Lớp lỗi này khó thấy vì mọi thứ **xanh**. Không test nào đỏ, không hình nào xấu, không
+bài nào hỏng. Nó chỉ lộ ra khi đi hỏi ngược: *"câu này đúng nhờ cái gì?"*
+
+### 51.1 Nền đi cây có đúng cái bẫy mà nó được dựng lên để bịt
+
+M57 chữa `substitute` — vốn liệt kê tay `add`/`mul`/`pow`/`div`/`rel` rồi
+`default: return e`, và vì thế **chưa bao giờ** thế được vào trong một dấu căn, suốt
+năm hạng mục. Lời chữa, ghi thẳng trong mã:
+
+> Đi bằng `children`/`withChildren`, **không** bằng một `switch` viết tay. `children`
+> thì **đầy đủ theo kiến trúc**, nên nó không quên được.
+
+Câu ấy không tự đúng. `children` và `withChildren` **cũng** kết bằng `default:` — `[]`
+và `e` — tức mang đúng cái bẫy, chỉ dời xuống một tầng và dời vào chỗ mọi thứ khác
+đứng lên: `walk`, `nodeCount`, `depth`, `substituteVar`, `allPaths`, `resolveAt`,
+`reid`. Kiểu nút thứ mười bảy có con mà quên khai ở đó thì cả engine mù nó **cùng lúc**.
+
+Nay không có `default`. `Expr` là hợp rời rạc, nên thiếu một nhánh là lỗi biên dịch —
+lời hứa "không quên được" chuyển từ chú thích sang trình biên dịch, và đó là chỗ duy
+nhất nó đứng được.
+
+Anh em của nó: `substituteIndex` ở `series.ts` là **bản chép tay thứ hai** của
+`substituteVar`, đúng hình dạng vừa nói. Hai bản còn lệch nhau ở luật che tên — bản
+chép tay gặp một $\sum$ che tên thì bỏ nguyên cả nút, kể cả hai cận, vốn nằm **ngoài**
+phạm vi ràng buộc. Chỗ lệch ấy hôm nay không tới được (parser từ chối hai tổng lồng
+nhau trùng tên chỉ số), nên nó không phải một lỗi đang cắn — nó là hai câu trả lời cho
+một câu hỏi, và cái đúng hơn thì không được dùng.
+
+### 51.2 Một chốt canh né đúng chỗ nó sai
+
+`unparse` khai trong chú thích rằng nó tồn tại *"để chốt canh khứ hồi
+`parse(unparse(e)) ≡ e`"*. Chốt canh ấy có thật — nó chạy $300$ biểu thức sinh ngẫu
+nhiên — nhưng bộ sinh của nó chỉ ghép toán tử hai ngôi từ một bảng nguyên tử, nên nó
+**chưa một lần** chạm `rat`, `inf`, `rel`, `sys`, `ufn`. Ba trong năm kiểu ấy khứ hồi
+sai, và nó xanh suốt từ M60 tới M76c:
+
+| kiểu | in ra | đọc lại thành | mất gì |
+|---|---|---|---|
+| `rat(3,4)` | `(3 / 4)` | `div` | đổi **kiểu nút** |
+| `sys` nối `or` | `a; b` | `sys` nối `and` | đổi **mệnh đề** |
+
+Cái thứ hai không phải mất một dạng in. $x<1 \lor x>2$ là gần cả trục số; $x<1 \land
+x>2$ là tập rỗng. Và nó nối vào một chỗ hụt thứ hai: parser **chưa từng đọc được**
+`hoặc`, nên engine vẽ ra được một thứ mà người soạn không viết được.
+
+Chú thích của nhánh `rat` còn tự bào chữa: *"chốt canh khứ hồi không đi qua đó"*. Câu
+ấy đúng, và đó chính là vấn đề — **một chốt canh né đúng chỗ nó sai thì nó không canh
+gì cả.**
+
+Bài học không phải "thêm nguyên tử vào bảng"; bảng nào cũng thiếu. Bài học là chốt canh
+phải **hỏi được nó đã phủ hết chưa**. Nên `EXPR_KINDS` ra đời: một danh sách **chạy
+được** của mười sáu kiểu nút, mà trình biên dịch đối chiếu hai chiều với `Expr` (thiếu
+một kiểu là lỗi, thừa một tên cũng là lỗi). Chốt canh mới đi qua nó và tự đỏ khi có
+kiểu nào chưa chạm.
+
+### 51.3 `rat(p, q)` — thêm một lối viết mà không đổi lối viết cũ
+
+`3/4` vẫn đọc thành `div`, đúng như từ trước tới nay: thêm một lối viết mà đổi nghĩa
+lối viết cũ thì đó không phải thêm, là sửa. `rat(p, q)` chỉ là dạng `unparse` in ra
+cho nguyên tử hữu tỉ — dạng chuẩn mà luật sinh ra sau khi rút gọn chính xác, khác một
+phép chia chưa làm.
+
+### 51.4 `readAlgebra` trả về, không ném
+
+Fuzz $347\,000$ lượt (79 luật × đường dẫn hỏng × tham số hỏng × 21 biểu thức gốc) lôi
+ra **32 955** lượt ném lọt ra ngoài `readAlgebra`, qua hai lối:
+
+| lối | ví dụ | ai ném |
+|---|---|---|
+| `at` không phải đường dẫn | `at: "zzz"` | `segmentsOf` |
+| `arg` không đọc được | `arg: "x := (((("` | luật gọi `parse` |
+
+Cả hai đều là **chuỗi trong JSON của bài**, tức dữ liệu chứ không phải mã (NFR-S1). Đo
+được: `checkBounds` **sập cả `combviz validate`** trên một bản nháp gõ nhầm dấu ngoặc —
+đúng ca mà validator sinh ra để phục vụ. Ở sandbox thì `arg` là thứ *người học* gõ, tức
+một đường thẳng từ bàn phím tới một ngoại lệ chưa ai bắt.
+
+Chữa ở **một** chỗ chứ không vá 79 luật:
+
+- `trySegments` đứng cạnh `segmentsOf` — một luật, hai currency: ném cho mã trong
+  engine (ở đó đường dẫn hỏng là lỗi lập trình), `null` cho nội dung tác giả;
+- `ParseError` bắt quanh `rule.run`, nên luật viết sau này được che sẵn mà không phải
+  nhớ gì;
+- một lưới ngoài cùng biến mọi thứ còn lại thành lời từ chối **nói rõ là lỗi engine** —
+  nuốt im lặng thì tệ hơn ném, vì ném ít ra còn to tiếng.
+
+Sau khi chữa: $347\,000$ lượt, **0** ném, **0** lượt chạm lưới ngoài cùng. Chốt canh
+khẳng định cả hai con số. Bẻ hai chỗ chữa ra thì nó đỏ; bẻ **cái lưới** ra thì nó vẫn
+xanh — và đó là bằng chứng lưới đang là hàng rào chứ không phải cái nạng.
+
+### 51.5 Trần không răng
+
+`maxSteps`, `maxRelations`, `maxHeightCells`, `maxWidthCells` đều có chốt canh từ lâu.
+Bốn cái còn lại — `maxNodes`, `maxDepth`, `maxDegree`, `maxVars` — **không có cái nào**,
+suốt từ ngày chúng ra đời. Chúng là hàng rào cho thứ chưa xảy ra, tức đúng loại mã
+không ai chạy tới; mà mã không ai chạy tới và cũng không ai kiểm thì nó chỉ còn là một
+dòng chữ.
+
+Nay mỗi cái một cái răng, và khẳng định luôn **con số trong lời từ chối** — người soạn
+không biết phải cắt bớt bao nhiêu nếu lời từ chối không nói số. Hai ghi chú đo được:
+
+- `maxNodes` và `maxDepth` chồng nhau trên hình dạng đặc nhất (`n!!!!…`, một nút mỗi
+  ký tự), nên chốt canh khẳng định luôn **thứ tự hỏi**: số nút trước, độ sâu sau. Hai
+  câu trả lời dẫn tới hai cách sửa khác nhau.
+- `maxDegree` chỉ cắn **sau một bước**, và `Number.isFinite` ở đó không phải cho chắc:
+  $x^n$ có `totalDegree` bằng `Infinity` vì nó không phải hàm hữu tỉ. Bỏ điều kiện ấy
+  thì mọi số mũ ký hiệu bị từ chối vì "bậc vượt trần", tức M58 tự bịt lại thứ nó vừa mở.
+
+### 51.6 Tài liệu cũng là mã — và nó không có chốt canh
+
+Khối grammar ở §3.3 đứng nguyên ở dạng M47 suốt ~20 hạng mục: `power := atom ('^' int)?`,
+không có `sqrt`, `fn`, `sum`, `coeff`, `ufn`, `abs`, `inf`, `!`, `;`. Đó là mục **tham
+chiếu** mà người soạn bài đọc, nên sai ở đó đắt hơn sai trong một chú thích: nó dạy sai
+người đang gõ.
+
+Nay §3.3 đọc lại từ `parse.ts`, và có một chốt canh chạy thử **từng dòng** của grammar
+ấy. Nó không bắt được chiều "parser mọc thêm mà tài liệu quên" — chiều ấy không máy nào
+bắt được — nhưng nó bắt chiều ngược lại, và chiều ngược lại mới là chiều hay xảy ra.
+
+### 51.7 Cái đã sai trước khi đúng
+
+1. **`git checkout --` trên một tệp chưa commit, lần thứ hai.** §48.4 mục 5 ghi lỗi
+   này ở M76; hai tin nhắn trước lượt này tôi vừa giải thích lại chính nó cho người
+   dùng; rồi trong vòng bẻ răng tôi gõ đúng nó lên `engine.test.ts` và xoá sạch phần
+   test chưa commit. Dựng lại được vì nội dung còn trong ngữ cảnh, và số test khớp
+   nguyên ($337$). Kết luận không phải "cẩn thận hơn" — mà là: **vòng bẻ răng phải
+   sao lưu cả tệp test**, không chỉ tệp mã, vì bẻ răng cũng đụng vào test.
+
+2. **Một chú thích khai một chốt canh không tồn tại** (`runs` của M76c) — cùng lớp với
+   cả mục này, và nó được tìm ra bằng đúng cách: bẻ ra rồi thấy test **không** đỏ.
+
+3. **Ba probe "tìm ra lỗi" hoá ra là probe sai.** `toPlain` không khứ hồi (nó là dạng
+   in cho người đọc, không phải dạng đọc lại); `layout` nhận `AlgebraModel` chứ không
+   nhận `Scene`; `FUNCTIONS[e.name]` không thể `undefined` vì `FnName` là union đóng.
+   Ghi lại vì tỉ lệ ấy là bình thường và đáng nói ra: đi tìm lỗi thì phần lớn thứ tìm
+   được là hiểu nhầm của chính mình, và **kiểm lại trước khi sửa** rẻ hơn nhiều so với
+   sửa một thứ không hỏng.

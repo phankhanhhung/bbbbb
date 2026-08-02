@@ -229,6 +229,43 @@ describe('tầng 0 — parser và printer', () => {
     expect(() => parse('rat(x, 2)', new Minter())).toThrow(/số nguyên/);
   });
 
+  /**
+   * Mọi dòng của grammar ở `docs/ENGINE-ALGEBRA.md` §3.3 phải **đọc được thật**.
+   *
+   * Khối grammar ấy đứng nguyên ở dạng M47 suốt ~20 hạng mục: `power := atom ('^' int)?`,
+   * không có `sqrt`, `fn`, `sum`, `coeff`, `ufn`, `abs`, `inf`, `!`, `;`. Nó là mục
+   * **tham chiếu** người soạn bài đọc, nên sai ở đó đắt hơn sai trong một chú thích:
+   * nó dạy sai người đang gõ.
+   *
+   * Không chốt canh nào bắt được tài liệu lệch mã — trừ cái này. Thêm một dòng vào
+   * grammar mà quên thêm vào đây thì không ai biết; nhưng **bỏ** một thứ khỏi parser
+   * mà tài liệu còn khai thì đỏ ngay, và đó là chiều hay xảy ra hơn.
+   */
+  it('mọi cấu trúc khai ở grammar §3.3 đều parse được', () => {
+    const GRAMMAR: readonly string[] = [
+      // top
+      'x = 1; y = 2', 'x < 1 hoặc x > 2',
+      // rel — cả sáu toán tử
+      'x <= 1', 'x >= 1', 'x != 1', 'x = 1', 'x < 1', 'x > 1',
+      // sum / prod / unary / power
+      'x + 1', 'x - 1', '2*x', 'x/2', '-x', 'x^2', 'x^2^3', 'x^(n+1)', 'n!', 'n!!', 'n!^2',
+      // atom
+      '(x + 1)', 'abs(x)', 'sqrt(x)', 'root(3, x)', 'coeff(x, 2, F)', 'rat(3, 4)',
+      'sum(k, 1, n, k)', 'prod(k, 1, n, k)',
+      'fact(n)', 'log(2, x)', 'ln(x)', 'exp(x)', 'sin(x)', 'cos(x)', 'tan(x)',
+      'C(n, k)', 'A(n, 2)', 'inf', 'f(x)', 'g(x, y)', 'a_1', 'a_{k+1}', 'x',
+    ];
+    const broken = GRAMMAR.filter((src) => {
+      try {
+        parse(src, new Minter());
+        return false;
+      } catch {
+        return true;
+      }
+    });
+    expect(broken, `§3.3 khai mà parser không đọc được: ${broken.join(', ')}`).toEqual([]);
+  });
+
   it('cấm nhân ngầm — `2x` là lỗi cú pháp, không phải $2\\cdot x$', () => {
     expect(() => parse('2x')).toThrow();
     expect(() => parse('2*x')).not.toThrow();
