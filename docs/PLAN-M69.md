@@ -178,9 +178,10 @@ tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mớ
 | **AL-22** — kết luận về hàm: `config.assume` + `use_injective` + 1 bài; schema `1.6.0` | 08-02 | `ENGINE-ALGEBRA.md` §53 |
 | **Hai cổng đếm sandbox** nói ngược nhau — `coverage` đỏ 7 bài mà `validate` xanh; gộp về một vị từ | 08-02 | `ENGINE-BACKLOG.md` §3b.1 |
 | **AL-23** — hộp cát đại số: 3 bài đầu tiên đi qua đường M65; builtin `reaches`; một chốt canh luôn xanh từ AL-07 bị gỡ | 08-02 | `ENGINE-ALGEBRA.md` §54 |
+| **Tên phép toán ăn một đối số** — `\tan\frac{a+b}{2}` hết phẳng; kèm hai lỗ dán dính chưa ai biết | 08-02 | `PLAN-P1.md` §10.3c |
 
 Kho đi từ **114 bài → 149 bài** trong hai ngày, test từ **3459** (M78.8) lên
-**3953 / 69 tệp**, schema từ `1.0.0` lên `1.6.0` — sáu minor, sáu migration đồng nhất.
+**3956 / 69 tệp**, schema từ `1.0.0` lên `1.6.0` — sáu minor, sáu migration đồng nhất.
 
 > **Một cái bẫy đếm, ghi ra để lần sau không phải điều tra lại.** Con số chính thức
 > là số của `pnpm test` (`vitest run` không lọc đường dẫn) — **3843 / 67 tệp** lúc
@@ -274,10 +275,11 @@ lại vẫn phải soát tay — nhưng nay ít nhất chúng có một danh sá
   `series.ts` tự vạch. `ALGEBRA-COVERAGE.md` §5.1.
 - **`point` đứng yên ở 3 bài** kể từ M36 — nội dung trước, đúng luật
   `ENGINE-BACKLOG.md` §0.3.
-- **`\frac` ngay sau tên phép toán vẫn nhập nhằng khi làm phẳng.** `\tan\frac{a+b}{2}`
-  ra `tan(a+b)/2` trên OG card, đọc thành "tan của $a+b$, chia 2". Vòng được bằng
-  `\left(...\right)`; chữa đúng là `structures()` biết tên phép toán ăn một đối số.
-  `PLAN-P1.md` §10.3c — phần còn mở của một mục đã đóng.
+- ~~**`\frac` ngay sau tên phép toán vẫn nhập nhằng khi làm phẳng.**~~ — đóng
+  2026-08-02: `structures()` bọc cụm liền sau mười lăm tên phép toán, `\tan\frac{a+b}{2}`
+  ra `tan((a+b)/2)`, và chỗ vòng bằng `\left(...\right)` đã gỡ. Lượt dò kéo theo hai lỗ
+  **dán dính** chưa ai biết — `$\max\frac{a}{b}$` ra `/b`, `$\sin 3x\cos x$` ra
+  `sin 3xcos x` ở 6 chỗ. `PLAN-P1.md` §10.3c.
 - ~~**Bài đại số chưa bài nào có sandbox**~~ — đóng ở AL-23: `3/44` bài đại số bật hộp
   cát. Ghi lại vì cái giá của nó: lượt đi đầu tiên qua đường ấy tìm ra validator
   `reaches:` đã **luôn xanh** kể từ AL-07, và không phép bẻ răng nào bắt được vì không

@@ -140,7 +140,15 @@ export function unhandledMathCommands(math: string): string[] {
 /** Toàn bộ phép đổi, **trừ** chổi quét cuối. */
 function convert(math: string): string {
   let out = structures(math);
-  out = out.replace(SYMBOL_RE, (_whole, name: string) => SYMBOLS[name] as string);
+  out = out.replace(SYMBOL_RE, (_whole, name: string, at: number, all: string) => {
+    const word = SYMBOLS[name] as string;
+    // Cùng lỗi dán dính với `GLUES`, chỉ khác chỗ dán: một tên phép toán đi sau một
+    // **chữ cái** thì hai thứ đọc thành một. Đo trên kho: `$\sin 3x\cos x$` ra
+    // `sin 3xcos x` ở 6 chỗ. Trước một **chữ số** thì không chèn — `2sin x`, `2min(a,b)`
+    // đúng là lối viết người ta dùng, và chèn vào đó là sửa lời tác giả.
+    const glued = /^[a-z]+$/.test(word) && /[A-Za-z]/.test(all[at - 1] ?? '');
+    return glued ? ` ${word}` : word;
+  });
   out = out.replace(SPACING, '');
 
   // `x_{12}` và `x_1` — chỉ đổi khi **mọi** ký tự có bản chỉ số, để không sinh
@@ -172,7 +180,7 @@ function convert(math: string): string {
  * Chạy **trước** bảng ký hiệu, vì đối số của chúng có thể chứa ký hiệu.
  */
 function structures(math: string): string {
-  let out = math;
+  let out = applyOperators(math);
   // `\begin{cases} A \\ B \end{cases}` — hệ phương trình. Trên một dòng chữ thì
   // không có ngoặc nhọn nào để vẽ, nên viết thành "A; B": mất hình, giữ nội dung.
   out = out.replace(
@@ -194,6 +202,89 @@ function structures(math: string): string {
 
 /** Ngoặc chỉ khi cần: `1/2` đọc được, còn `1-x/2` thì đọc ra nghĩa khác. */
 const wrap = (arg: string): string => (/^[\wÀ-ɏ₀-₉⁰-⁹]+$/.test(arg) ? arg : `(${arg})`);
+
+/**
+ * Tên phép toán **ăn một đối số** — và chỉ những tên mà điều đó đúng.
+ *
+ * `\tan\frac{a+b}{2}` là *tang của cả phân số*. Làm phẳng nó thành `tan(a+b)/2` cho ra
+ * một biểu thức **khác** — đọc lên là "tang của $a+b$, chia 2" — nên đây là chữ sai
+ * chứ không phải chữ xấu, trên đúng thứ người ta thấy khi ai đó chia sẻ link.
+ *
+ * Bảng này là **tập con** của phần tên phép toán trong `SYMBOLS`, và phần bị bỏ ra là
+ * phần đáng nói: `\max`, `\gcd`, `\det`, `\lim`, `\deg` cũng là `\operatorname` của
+ * KaTeX, nhưng `\max\frac{a}{b}` không phải một lối viết ai dùng — `\max` lấy đối số
+ * qua ngoặc tròn hoặc qua một chỉ số dưới. Khai thừa ở đây không phải khai thừa vô
+ * hại: mỗi tên thêm vào là một chỗ hàm này **thêm ngoặc vào thứ nó không hiểu**.
+ */
+const UNARY_OPERATORS = [
+  'arccos', 'arcsin', 'arctan', 'cos', 'cot', 'csc', 'sec', 'sin', 'tan',
+  'cosh', 'sinh', 'tanh', 'exp', 'ln', 'log',
+];
+
+/** Lệnh sinh ra **một cụm** — thứ duy nhất mà luật trên được phép bọc. */
+const GROUPING_ARITY: Readonly<Record<string, number>> = { dfrac: 2, tfrac: 2, frac: 2, sqrt: 1 };
+
+/**
+ * `\op` **liền ngay** một cụm. Hai chỗ hẹp có chủ đích:
+ *
+ * - Chỉ `\frac`/`\sqrt`, **không** `_`/`^`. `\log_2 x` không phải "log ăn $2$" — chỉ số
+ *   là chỉ số, và bọc nó lại thành `log(2) x` là dựng ra một phép nhân không ai viết.
+ * - Chỉ khi **không có gì chen giữa**. `\tan\left(\dfrac{a+b}{2}\right)` đã có ngoặc
+ *   của tác giả rồi; `\log_2\frac{a}{b}` thì vẫn phẳng như cũ, và để nguyên vì kho
+ *   không có bài nào viết thế — thêm một nhánh cho một hình dạng chưa ai gõ là dựng
+ *   một lời hứa không ai kiểm.
+ *
+ * Hai chỗ đó **không** cần lookahead sau tên phép toán: chính đòi hỏi "một `\` ngay
+ * sau" đã là ranh giới từ rồi — `\tanh\frac…` không khớp vì sau `tan` là `h` chứ không
+ * phải `\`. Lượt bẻ răng xác nhận bỏ nó đi không test nào đỏ, nên nó bị gỡ thay vì
+ * giữ lại kèm một chú thích nói nó quan trọng. Lookahead sau **tên cụm** thì có gánh
+ * việc: thiếu nó, một lệnh lạ như `\fracture` khớp nửa đầu rồi tra `GROUPING_ARITY`
+ * bằng cả tên và nhận `undefined`.
+ */
+const OPERATOR_THEN_GROUP = new RegExp(
+  `\\\\(?:${UNARY_OPERATORS.join('|')})\\\\(?:${Object.keys(GROUPING_ARITY).join('|')})(?![a-zA-Z])`,
+);
+
+/** Bọc cụm liền sau một tên phép toán vào ngoặc, rồi để bảng ký hiệu đổi tên như thường. */
+function applyOperators(source: string): string {
+  let out = '';
+  let rest = source;
+  for (;;) {
+    const found = OPERATOR_THEN_GROUP.exec(rest);
+    if (found === null) return out + rest;
+
+    const whole = found[0];
+    const groupAt = found.index + whole.lastIndexOf('\\');
+    const group = /^\\([a-zA-Z]+)/.exec(rest.slice(groupAt))?.[1] as string;
+
+    let cursor = groupAt + group.length + 1;
+    for (let k = 0; k < (GROUPING_ARITY[group] as number); k += 1) {
+      cursor = readArg(rest, cursor).next;
+    }
+
+    // Giữ nguyên `\tan` chứ không thay bằng `tan` ngay tại đây: bảng ký hiệu là chỗ
+    // **duy nhất** biết tên nào đọc ra chữ gì, và chép lại phép đổi ấy sang đây là
+    // dựng bản thứ hai của một câu trả lời.
+    out += rest.slice(0, groupAt) + `(${structures(rest.slice(groupAt, cursor))})`;
+    rest = rest.slice(cursor);
+  }
+}
+
+/**
+ * Chỗ mà một chữ cái đứng ngay sau sẽ **bị nuốt vào** thứ đứng trước.
+ *
+ * Tìm ra khi dò luật bọc ngoặc ở trên: `\max\frac{a}{b}` ra `/b`. Phân số bung thành
+ * `a/b`, dán ngay sau `\max`, thành `\maxa/b` — một **tên lệnh khác**, không tên nào
+ * trong bảng, nên chổi quét cuối xoá sạch cả cụm. Cùng lớp với `\sin` bị xoá im lặng
+ * ở lượt trước, chỉ khác chỗ lệnh không phải do tác giả gõ mà do chính hàm này dán ra.
+ *
+ * `_`/`^` cũng dính theo cách ấy, và dính **sai nghĩa** chứ không mất chữ:
+ * `\log_2\frac{a}{b}` ra `log_2a/b`, đọc lên là "log cơ số $2a$".
+ *
+ * Kho hôm nay chưa bài nào gõ hai hình dạng đó — `unhandledMathCommands` sẽ gọi tên
+ * `\maxa` ra nếu có. Vá vì nó rẻ và vì cái răng kia chỉ canh được bài **đã** viết.
+ */
+const GLUES = /\\[a-zA-Z]+$|[_^]\{?[A-Za-z0-9]+$/;
 
 /**
  * Thay mọi `\name` cùng $n$ đối số của nó. Đối số là một nhóm `{…}` **cân ngoặc**,
@@ -221,28 +312,41 @@ function takesArgs(
     let cursor = at + token.length;
     const args: string[] = [];
     for (let k = 0; k < arity; k += 1) {
-      while (source[cursor] === ' ') cursor += 1;
-      if (source[cursor] === '{') {
-        let depth = 0;
-        const start = cursor + 1;
-        while (cursor < source.length) {
-          if (source[cursor] === '{') depth += 1;
-          else if (source[cursor] === '}' && (depth -= 1) === 0) break;
-          cursor += 1;
-        }
-        args.push(source.slice(start, cursor));
-        cursor += 1;
-      } else if (cursor < source.length) {
-        args.push(source[cursor] as string);
-        cursor += 1;
-      } else {
-        args.push('');
-      }
+      const arg = readArg(source, cursor);
+      args.push(arg.value);
+      cursor = arg.next;
     }
-    out += build(...args.map((a) => structures(a)));
+    const built = build(...args.map((a) => structures(a)));
+    out += (GLUES.test(out) && /^[A-Za-z0-9]/.test(built) ? ' ' : '') + built;
     i = cursor;
   }
   return out + source.slice(i);
+}
+
+/**
+ * Một đối số bắt đầu tại `cursor`: nhóm `{…}` **cân ngoặc**, hoặc — khi tác giả viết
+ * `\bar S`, `\pmod 4` — đúng một ký tự kế tiếp.
+ *
+ * Đếm ngoặc chứ không regex: `\frac{1}{1-x^{2}}` có ngoặc lồng, mà `\{([^{}]*)\}` thì
+ * dừng ở cái `}` đầu tiên nó gặp. Hai chỗ gọi — `takesArgs` cần **nội dung** của đối
+ * số, `applyOperators` chỉ cần biết nó **kết thúc ở đâu** — và cả hai phải trả lời
+ * giống hệt nhau, nếu không thì cụm bị bọc sẽ lệch với cụm bị thay.
+ */
+function readArg(source: string, from: number): { value: string; next: number } {
+  let cursor = from;
+  while (source[cursor] === ' ') cursor += 1;
+  if (source[cursor] === '{') {
+    let depth = 0;
+    const start = cursor + 1;
+    while (cursor < source.length) {
+      if (source[cursor] === '{') depth += 1;
+      else if (source[cursor] === '}' && (depth -= 1) === 0) break;
+      cursor += 1;
+    }
+    return { value: source.slice(start, cursor), next: cursor + 1 };
+  }
+  if (cursor < source.length) return { value: source[cursor] as string, next: cursor + 1 };
+  return { value: '', next: cursor };
 }
 
 /**

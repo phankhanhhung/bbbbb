@@ -2,7 +2,7 @@
 
 Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Đối tượng: 1 người (Owner-Author)
 
-**Trạng thái (soát lại 2026-08-02):** đang chạy · **9 engine** + lớp ván chơi (M78) · schema **`1.6.0`** (freeze `1.0.0` ngày 2026-08-01, sáu minor sau đó, mỗi minor một migration) · kho **149 bài** đã xuất bản · **3953 test** (69 tệp), e2e **148** · **G-A và G-C đã đóng** ngày 2026-08-01 (§10 ghi đóng bằng gì và rủi ro nào còn lại) · 83 luật đại số, 60 validator, 46 lệnh sandbox trên 9 engine.
+**Trạng thái (soát lại 2026-08-02):** đang chạy · **9 engine** + lớp ván chơi (M78) · schema **`1.6.0`** (freeze `1.0.0` ngày 2026-08-01, sáu minor sau đó, mỗi minor một migration) · kho **149 bài** đã xuất bản · **3956 test** (69 tệp), e2e **148** · **G-A và G-C đã đóng** ngày 2026-08-01 (§10 ghi đóng bằng gì và rủi ro nào còn lại) · 83 luật đại số, 60 validator, 46 lệnh sandbox trên 9 engine.
 
 > **Dòng trạng thái này từng đứng ở "M48 xong; schema `0.3.0`; kho 91 bài; G-C chưa
 > đóng" cho tới lượt soát 2026-08-02** — tức nó khai sai cả bốn trường, trong khi
@@ -2300,7 +2300,15 @@ Quyết định trước, để lúc gấp không phải quyết trong hoảng l
    - **Chữa cả lớp, không chữa từng lệnh.** Chữa `\sin` xong thì lệnh thứ 32 lại rơi vào chổi, và lại rơi im lặng. Nên chốt canh hỏi câu tổng — *kho còn lệnh nào chưa ai xử không?* — qua một API thật (`unhandledMathCommands`), và than kèm tên lệnh lẫn tên bài. Bài sau gõ lệnh mới thì biết lúc `pnpm test`, không phải lúc card đã lên mạng.
    - **Lệnh có đối số thì phải đọc đối số**, bằng đếm ngoặc chứ không bằng regex: `\frac{1}{1-x^{2}}` có ngoặc lồng.
    - **Và một lỗ mà cái răng ấy không thấy.** `[/\\cdot/g, '·']` đứng trước `\cdots`, nên `$a \cdots z$` ra `a ·s z` — **gặm** chứ không xoá, và với cái răng kia thì `\cdot` *đã* được xử nên không có gì để than. Cả lớp ấy chết bằng **hình dạng dữ liệu**: bảng đổi từ regex sang tên lệnh, dựng thành một alternation đóng bằng `(?![a-zA-Z])`. Kèm ba phép so riêng cho chỗ mù.
-   - **Còn mở:** `\tan\frac{a+b}{2}` làm phẳng ra `tan(a+b)/2`, đọc thành "tan của $a+b$, chia 2". Hôm nay tác giả vòng bằng `\left(...\right)`; chữa đúng là `structures()` biết tên phép toán ăn một đối số.
+   - ✅ **Phần còn mở, đóng 2026-08-02.** `\tan\frac{a+b}{2}` làm phẳng ra `tan(a+b)/2`, đọc thành "tan của $a+b$, **chia 2**" — một biểu thức khác hẳn. `structures()` nay biết mười lăm tên phép toán ăn một đối số và bọc **cụm** liền sau chúng: `tan((a+b)/2)`. Chỗ vòng bằng `\left(...\right)` trong `trig-sum-and-product.json` đã gỡ, và card vẫn đọc đúng.
+
+     Bảng tên là **tập con** của phần `\operatorname` trong bảng ký hiệu, và phần bỏ ra là phần đáng nói: `\max`, `\gcd`, `\det`, `\lim` cũng là `\operatorname` nhưng `\max\frac{a}{b}` không phải lối viết ai dùng. Mỗi tên khai thừa là một chỗ hàm này **thêm ngoặc vào thứ nó không hiểu**.
+
+   - **Hai lỗ dán dính, tìm ra khi dò luật trên — cùng lớp với chổi quét cuối, chỉ khác chỗ lệnh không do tác giả gõ mà do chính hàm này dán ra.**
+     - `$\max\frac{a}{b}$` ra **`/b`**: phân số bung thành `a/b` dán ngay sau `\max` thành `\maxa`, một tên lệnh không có trong bảng, và chổi xoá sạch. `$\log_2\frac{a}{b}$` thì không mất chữ mà **sai nghĩa** — `log_2a` đọc là "log cơ số $2a$".
+     - `$\sin 3x\cos x$` ra **`sin 3xcos x`** ở 6 chỗ trong kho: một tên phép toán dán vào chữ cái đứng trước thì hai thứ đọc thành một tên biến. Trước một **chữ số** thì không chèn — `2\sin x`, `2\min(a,b)` đúng là lối viết người ta dùng, và chèn vào đó là sửa lời tác giả.
+
+     Cả hai chưa bài nào chạm tới lúc tìm ra; vá vì nó rẻ, và vì `unhandledMathCommands` chỉ canh được bài **đã** viết.
 4. ✅ **Label atlas cho nhãn LaTeX trong canvas** (GR-08, D-07) — **xong ở M18**. Engine derivation dùng nó; các engine khác vẫn vẽ nhãn text thuần, và đó là đủ cho nội dung hiện có.
 5. ⬜ Pilot ≥10 học sinh + 2 GV (DoD §15.5).
 6. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.

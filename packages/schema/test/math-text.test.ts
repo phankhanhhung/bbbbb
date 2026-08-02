@@ -169,6 +169,54 @@ describe('lệnh có đối số giữ được đối số', () => {
     expect(toReadableMath('$\\log_2 x$')).toBe('log₂ x');
     expect(toReadableMath('$\\max(a,b) \\ge \\min(a,b)$')).toBe('max(a,b) ≥ min(a,b)');
   });
+
+  it('tên phép toán ăn **cả cụm** liền sau nó', () => {
+    // Làm phẳng cho ra một biểu thức khác hẳn: `tan(a+b)/2` đọc lên là "tang của
+    // $a+b$, **chia 2**". Tác giả từng phải vòng bằng `\left(...\right)`.
+    expect(toReadableMath('$\\tan\\frac{a+b}{2}$')).toBe('tan((a+b)/2)');
+    expect(toReadableMath('$\\cos\\sqrt{x+1}$')).toBe('cos(√(x+1))');
+    expect(toReadableMath('$2\\sin\\frac{a+b}{2}\\cos\\frac{a-b}{2}$'))
+      .toBe('2sin((a+b)/2)cos((a-b)/2)');
+
+    // Và **chỉ** cụm. Chỉ số là chỉ số, không phải đối số: bọc `\log_2` lại thành
+    // `log(2) x` là dựng ra một phép nhân không ai viết.
+    expect(toReadableMath('$\\log_2 x$')).toBe('log₂ x');
+    expect(toReadableMath('$\\sin x + 1$')).toBe('sin x + 1');
+    // Ngoặc của tác giả thì để yên — không bọc chồng lên.
+    expect(toReadableMath('$\\tan\\left(\\dfrac{a+b}{2}\\right)$')).toBe('tan((a+b)/2)');
+    // Tên cụm phải khớp **trọn**. Khớp nửa đầu thì `GROUPING_ARITY` được tra bằng cả
+    // tên (`fracture`) và trả `undefined`, nên vòng đọc đối số chạy **không lần nào** —
+    // luật bọc luôn cái tên lệnh thay vì bọc đối số, ra `tan(\fracture)ab`. Đúng thì
+    // luật không khớp, lệnh lạ đi nguyên vẹn xuống chổi quét cuối như mọi lệnh chưa ai
+    // xử, và `unhandledMathCommands` gọi tên nó ra ở chốt canh quét kho bên dưới.
+    expect(toReadableMath('$\\tan\\fracture{a}{b}$')).toBe('tan');
+    expect(unhandledMathCommands('\\tan\\fracture{a}{b}')).toEqual(['\\fractureab']);
+  });
+
+  it('cụm bung ra **không dán dính** vào tên lệnh đứng trước', () => {
+    // Lỗi tìm ra lúc dò luật trên. `\max` không phải hàm một đối số nên không được bọc
+    // — nhưng phân số bung thành `a/b` rồi dán ngay sau, thành `\maxa/b`, một tên lệnh
+    // không có trong bảng, và chổi quét cuối xoá sạch: kết quả là `/b`.
+    expect(toReadableMath('$\\max\\frac{a}{b}$')).toBe('max a/b');
+    // Chỉ số dính thì không mất chữ mà **sai nghĩa**: `log_2a` đọc là "log cơ số $2a$".
+    expect(toReadableMath('$\\log_2\\frac{a}{b}$')).toBe('log₂ a/b');
+    expect(toReadableMath('$x^2\\frac{a}{b}$')).toBe('x² a/b');
+    // Và không chèn khoảng trắng vào chỗ không cần.
+    expect(toReadableMath('$\\frac{1}{2}\\frac{3}{4}$')).toBe('1/23/4');
+  });
+
+  it('tên phép toán không dán vào chữ cái đứng trước — nhưng vẫn dán vào chữ số', () => {
+    // Đo trên kho: sáu chỗ ra `sin 3xcos x` / `2sin xcos x`, đọc thành một tên biến.
+    expect(toReadableMath('$\\sin 3x\\cos x$')).toBe('sin 3x cos x');
+    expect(toReadableMath('$a\\bmod b$')).toBe('a mod b');
+    // Trước một **chữ số** thì `2sin x`, `2min(a,b)` đúng là lối viết người ta dùng;
+    // chèn khoảng vào đó là sửa lời tác giả chứ không phải sửa lỗi.
+    expect(toReadableMath('$2\\sin x\\cos x$')).toBe('2sin x cos x');
+    expect(toReadableMath('$2\\min(a,b)$')).toBe('2min(a,b)');
+    // Ký hiệu **một glyph** thì không bao giờ chèn — `2π`, `n≥2` là đúng như thế.
+    expect(toReadableMath('$2\\pi$')).toBe('2π');
+    expect(toReadableMath('$n \\ge 2$')).toBe('n ≥ 2');
+  });
 });
 
 /**
