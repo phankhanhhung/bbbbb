@@ -44,6 +44,7 @@ import {
   seriesOf,
 } from '../src/series.js';
 import { evalReal, hasBoundUninterpreted, sameValueReal } from '../src/check.js';
+import { SERIES_TERMS, sameValueSeries } from '../src/series.js';
 import { walk as walkExpr, same } from '../src/expr.js';
 import { toPlain } from '../src/parse.js';
 
@@ -1572,5 +1573,56 @@ describe('M72 — trích hệ số và tích chập', () => {
       ).toContain('m nguyên ≥ 1');
       expect(run('1 + x', [{ rule: 'coeff_linear', at: '' }]).refusal).toContain('trích hệ số');
     });
+  });
+});
+
+/**
+ * **Độ sâu của sân chuỗi là một chốt canh, và nó từng không có răng nào.**
+ *
+ * Lượt bẻ răng hàng loạt lộ ra: đặt `SERIES_TERMS = 1` — tức chỉ so hệ số bậc $0$ và
+ * $1$ — mà **toàn bộ 3792 test vẫn xanh**. Sân kiểm thứ tư là thứ gác cho mọi đồng nhất
+ * thức hàm sinh trong kho, và độ sâu của nó có thể bị hạ xuống gần như không mà không
+ * ai biết. Cổng vẫn xanh, chỉ là không còn gác gì.
+ *
+ * Ba khẳng định dưới đây pin đúng ba chuyện khác nhau, và chúng phải đi cùng nhau:
+ * lệch **sâu** thì bắt được, lệch **nông** thì tất nhiên bắt được, và chỗ sân này
+ * **thôi không nhìn nữa** phải nói ra thành một con số chứ không phải một cảm giác.
+ */
+describe('SERIES_TERMS — độ sâu của sân kiểm chuỗi', () => {
+  const P = (src: string) => parse(src, new Minter());
+
+  it('lệch ở bậc **ngay dưới trần** vẫn bắt được', () => {
+    // $\frac{1}{1-x}$ và nó cộng $x^{11}$: khớp từng hệ số tới bậc $10$, lệch ở $11$.
+    // Với `SERIES_TERMS = 12` thì bắt; hạ trần xuống dưới $11$ thì lọt.
+    const out = sameValueSeries(P('1/(1 - x)'), P('1/(1 - x) + x^11'));
+    expect(out.ok).toBe(false);
+    expect(out.verified).toBe(true);
+    expect(out.message).toContain('11');
+  });
+
+  it('lệch nông thì bắt, và **nói rõ hệ số nào**', () => {
+    const out = sameValueSeries(P('1/(1 - x)'), P('1/(1 - 2*x)'));
+    expect(out.ok).toBe(false);
+    // Chỗ sân này dạy được nhiều nhất: nói hệ số của $x^1$ là $2$ chứ không phải $1$.
+    expect(out.message).toMatch(/1/);
+  });
+
+  it('bằng nhau thật thì khớp, không báo động giả', () => {
+    expect(sameValueSeries(P('1/(1 - x)'), P('1/(1 - x)')).ok).toBe(true);
+    expect(sameValueSeries(P('1/((1 - x)*(1 - x))'), P('1/(1 - x)^2')).ok).toBe(true);
+  });
+
+  /**
+   * **Trần là trần, và nó phải nói ra.**
+   *
+   * Hai chuỗi khớp tới bậc $12$ rồi lệch ở bậc $13$ thì sân này nói "khớp" — đúng theo
+   * hợp đồng của nó ("chính xác tuyệt đối **tới bậc $N$**"), nhưng đó là một giới hạn
+   * thật, và một giới hạn không viết thành test là một giới hạn sẽ bị quên. Test này
+   * **khoá con số $12$**: đổi nó thì đây đỏ, và người đổi buộc phải nghĩ.
+   */
+  it('không nhìn quá bậc `SERIES_TERMS` — giới hạn có thật, viết ra chứ không giấu', () => {
+    expect(SERIES_TERMS).toBe(12);
+    const beyond = sameValueSeries(P('1/(1 - x)'), P('1/(1 - x) + x^13'));
+    expect(beyond.ok).toBe(true);
   });
 });

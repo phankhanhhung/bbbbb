@@ -5,6 +5,7 @@ import {
   matchScale,
   PREFERRED_SCALE,
   UNITS_PER_CELL,
+  MAX_CANVAS_VH,
   sceneBoxStyle,
   widestWidth,
 } from '../src/scale.js';
@@ -148,5 +149,41 @@ describe('PRN-04 — cân tỉ lệ hai pane', () => {
 
     expect(a).toEqual(tall);
     expect(b).toEqual(tall);
+  });
+});
+
+/**
+ * **Trần chiều cao canvas** — chốt canh này từng không có răng nào.
+ *
+ * Lượt bẻ răng hàng loạt lộ ra: nới `MAX_CANVAS_VH` từ $72$ lên $9999$ mà **toàn bộ
+ * test vẫn xanh**. Nó là hàng rào duy nhất trên trục dọc — trục ngang đã do `width` và
+ * `maxWidth` khoá — nên bỏ nó đi thì một scene rất cao (bảng incidence nhiều phần tử)
+ * đẩy narrative ra khỏi màn hình, và người học mất chính thứ cần đọc **cùng** hình.
+ *
+ * Đây là loại hỏng không test nào khác bắt được: hình vẫn đúng, tỉ lệ vẫn đúng, golden
+ * vẫn khớp từng byte. Chỉ có bố cục hỏng, và bố cục thì phải hỏi thẳng.
+ */
+describe('trần chiều cao canvas', () => {
+  it('`maxHeight` luôn có mặt và luôn tính theo **viewport**, không theo pixel', () => {
+    // `vh` chứ không phải `px`: trần phải co theo màn hình. Một trần pixel cố định thì
+    // đúng trên máy bàn và sai trên điện thoại, mà điện thoại là chỗ nó cần nhất.
+    for (const box of [
+      { x: 0, y: 0, width: 40, height: 40 },
+      { x: 0, y: 0, width: 40, height: 400 },
+      { x: 0, y: 0, width: 400, height: 40 },
+    ]) {
+      const style = sceneBoxStyle(box, 400);
+      expect(style.maxHeight, JSON.stringify(box)).toMatch(/^\d+vh$/);
+    }
+  });
+
+  it('trần ấy phải **chừa chỗ cho chữ** — không được quá 80% viewport', () => {
+    // Con số cụ thể là quyết định thiết kế; điều test này khoá là *có* một trần và nó
+    // để lại đủ chỗ cho narrative. Nới lên $9999$vh thì đây đỏ, và đó chính là mutant
+    // đã sống sót.
+    expect(MAX_CANVAS_VH).toBeGreaterThan(0);
+    expect(MAX_CANVAS_VH).toBeLessThanOrEqual(80);
+    const style = sceneBoxStyle({ x: 0, y: 0, width: 40, height: 4000 }, 40);
+    expect(Number.parseInt(style.maxHeight, 10)).toBeLessThanOrEqual(80);
   });
 });
