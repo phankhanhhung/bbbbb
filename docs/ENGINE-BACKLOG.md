@@ -71,6 +71,7 @@ họ mới cho hai engine dựng ngoài roadmap SRS nên chưa có họ nào:
 | `DV-*` | derivation |
 | `LD-*` | longdiv (chia dọc) |
 | `AL-*` | algebra (biến đổi biểu thức) — **chưa mở**, xem `docs/ENGINE-ALGEBRA.md` |
+| `EU-*` | euclid (hình học phẳng dựng được) — **chưa mở**, xem `docs/ENGINE-EUCLID.md`. Yêu cầu mẹ là `DOM-03`; `PT-*` giữ nguyên cho engine `point` |
 
 ---
 
