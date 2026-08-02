@@ -1,0 +1,596 @@
+{
+  "schema_version": "1.5.0",
+  "id": "imo-1986-p3-pentagon-operation",
+  "statement": {
+    "vi": "Năm số nguyên đặt ở năm đỉnh một ngũ giác, tổng của chúng **dương**. Khi nào còn một đỉnh mang số âm $y$, được phép thay ba số liên tiếp $(x, y, z)$ ở đó bằng $(x + y,\\; -y,\\; z + y)$. Chứng minh sau hữu hạn bước thì không còn số âm nào."
+  },
+  "source": {
+    "contest": "IMO",
+    "note": {
+      "vi": "Đề IMO 1986, bài 3. Bài đơn điệu kinh điển, và nó dạy đúng chỗ khó của \"đơn điệu\": tổng **không** đổi, số đỉnh âm thì lúc tăng lúc giảm — hai phỏng đoán hiển nhiên nhất đều hỏng. Thứ giảm là $\\sum (x_i - x_{i+2})^2$, một đại lượng không đọc ra được từ đề, và tìm ra nó chính là cả bài."
+    },
+    "slot": "P3",
+    "year": 1986
+  },
+  "topics": [
+    "sequences"
+  ],
+  "techniques": [
+    "monovariant",
+    "invariant"
+  ],
+  "difficulty": {
+    "author_rating": 6,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "invariants": [
+    {
+      "expr": "sum(vertices, v => v.value)",
+      "id": "inv-tong",
+      "label": {
+        "vi": "Tổng năm số"
+      }
+    },
+    {
+      "expr": "sum(filter(edges, e => e.color_class == 2), e => e.gap * e.gap)",
+      "id": "inv-tan",
+      "label": {
+        "vi": "Độ tản S"
+      },
+      "monotone": "non-increasing"
+    }
+  ],
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thế xuất phát $2, -3, 4, -1, 1$, tổng $= 3 > 0$. Hai đỉnh âm; chọn [[a1|đỉnh $-3$]] để thao tác. Nhận xét đầu tiên, và nó **không** dẫn tới đâu: tổng năm số không đổi sau mỗi bước, vì $(x+y) + (-y) + (z+y) = x + y + z$. Một bất biến thì không chứng minh được sự dừng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "p0",
+                "type": "vertex",
+                "label": "2",
+                "pos": [0, -28],
+                "value": 2
+              },
+              {
+                "id": "p1",
+                "type": "vertex",
+                "color_class": 3,
+                "label": "-3",
+                "pos": [26.63, -8.65],
+                "value": -3
+              },
+              {
+                "id": "p2",
+                "type": "vertex",
+                "label": "4",
+                "pos": [16.46, 22.65],
+                "value": 4
+              },
+              {
+                "id": "p3",
+                "type": "vertex",
+                "label": "-1",
+                "pos": [-16.46, 22.65],
+                "value": -1
+              },
+              {
+                "id": "p4",
+                "type": "vertex",
+                "label": "1",
+                "pos": [-26.63, -8.65],
+                "value": 1
+              },
+              {
+                "id": "q0",
+                "type": "edge",
+                "u": "p0",
+                "v": "p1"
+              },
+              {
+                "id": "q1",
+                "type": "edge",
+                "u": "p1",
+                "v": "p2"
+              },
+              {
+                "id": "q2",
+                "type": "edge",
+                "u": "p2",
+                "v": "p3"
+              },
+              {
+                "id": "q3",
+                "type": "edge",
+                "u": "p3",
+                "v": "p4"
+              },
+              {
+                "id": "q4",
+                "type": "edge",
+                "u": "p4",
+                "v": "p0"
+              },
+              {
+                "id": "d0",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p0",
+                "v": "p2"
+              },
+              {
+                "id": "d1",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p1",
+                "v": "p3"
+              },
+              {
+                "id": "d2",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p2",
+                "v": "p4"
+              },
+              {
+                "id": "d3",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p3",
+                "v": "p0"
+              },
+              {
+                "id": "d4",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p4",
+                "v": "p1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ngũ giác mang năm số 2, âm 3, 4, âm 1, 1; đỉnh âm ba được đánh dấu. Năm đường chéo vẽ nét đứt."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Sau một bước: $-1, 3, 1, -1, 1$. Đỉnh vừa thao tác đã dương, nhưng [[a1|một đỉnh khác]] hoá âm — nên \"đếm số đỉnh âm\" cũng **không** đơn điệu. Hai phỏng đoán hiển nhiên nhất đều hỏng, và đó là lý do bài này ở vị trí bài $3$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "p0",
+                "type": "vertex",
+                "color_class": 3,
+                "label": "-1",
+                "pos": [0, -28],
+                "value": -1
+              },
+              {
+                "id": "p1",
+                "type": "vertex",
+                "label": "3",
+                "pos": [26.63, -8.65],
+                "value": 3
+              },
+              {
+                "id": "p2",
+                "type": "vertex",
+                "label": "1",
+                "pos": [16.46, 22.65],
+                "value": 1
+              },
+              {
+                "id": "p3",
+                "type": "vertex",
+                "label": "-1",
+                "pos": [-16.46, 22.65],
+                "value": -1
+              },
+              {
+                "id": "p4",
+                "type": "vertex",
+                "label": "1",
+                "pos": [-26.63, -8.65],
+                "value": 1
+              },
+              {
+                "id": "q0",
+                "type": "edge",
+                "u": "p0",
+                "v": "p1"
+              },
+              {
+                "id": "q1",
+                "type": "edge",
+                "u": "p1",
+                "v": "p2"
+              },
+              {
+                "id": "q2",
+                "type": "edge",
+                "u": "p2",
+                "v": "p3"
+              },
+              {
+                "id": "q3",
+                "type": "edge",
+                "u": "p3",
+                "v": "p4"
+              },
+              {
+                "id": "q4",
+                "type": "edge",
+                "u": "p4",
+                "v": "p0"
+              },
+              {
+                "id": "d0",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p0",
+                "v": "p2"
+              },
+              {
+                "id": "d1",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p1",
+                "v": "p3"
+              },
+              {
+                "id": "d2",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p2",
+                "v": "p4"
+              },
+              {
+                "id": "d3",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p3",
+                "v": "p0"
+              },
+              {
+                "id": "d4",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p4",
+                "v": "p1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ngũ giác mang âm một, 3, 1, âm một, 1; đỉnh âm một đầu tiên được đánh dấu."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thứ thật sự giảm là $S = \\sum_i (x_i - x_{i+2})^2$ — tổng bình phương hiệu trên [[a1|năm đường chéo]] vẽ nét đứt, chứ không phải trên năm cạnh. Một phép tính thẳng cho $\\Delta S = 2yT$ với $T$ là tổng năm số; $T > 0$ và $y < 0$ nên $S$ giảm **hẳn** mỗi bước, không chỉ không tăng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "d0",
+                "d1",
+                "d2",
+                "d3",
+                "d4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "p0",
+                "type": "vertex",
+                "label": "1",
+                "pos": [0, -28],
+                "value": 1
+              },
+              {
+                "id": "p1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [26.63, -8.65],
+                "value": 2
+              },
+              {
+                "id": "p2",
+                "type": "vertex",
+                "label": "1",
+                "pos": [16.46, 22.65],
+                "value": 1
+              },
+              {
+                "id": "p3",
+                "type": "vertex",
+                "color_class": 3,
+                "label": "-1",
+                "pos": [-16.46, 22.65],
+                "value": -1
+              },
+              {
+                "id": "p4",
+                "type": "vertex",
+                "label": "0",
+                "pos": [-26.63, -8.65],
+                "value": 0
+              },
+              {
+                "id": "q0",
+                "type": "edge",
+                "u": "p0",
+                "v": "p1"
+              },
+              {
+                "id": "q1",
+                "type": "edge",
+                "u": "p1",
+                "v": "p2"
+              },
+              {
+                "id": "q2",
+                "type": "edge",
+                "u": "p2",
+                "v": "p3"
+              },
+              {
+                "id": "q3",
+                "type": "edge",
+                "u": "p3",
+                "v": "p4"
+              },
+              {
+                "id": "q4",
+                "type": "edge",
+                "u": "p4",
+                "v": "p0"
+              },
+              {
+                "id": "d0",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p0",
+                "v": "p2"
+              },
+              {
+                "id": "d1",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p1",
+                "v": "p3"
+              },
+              {
+                "id": "d2",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p2",
+                "v": "p4"
+              },
+              {
+                "id": "d3",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p3",
+                "v": "p0"
+              },
+              {
+                "id": "d4",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p4",
+                "v": "p1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ngũ giác sau hai bước: 1, 2, 1, âm một, 0; đỉnh âm được đánh dấu."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "$S$ là số nguyên **không âm**, và mỗi bước nó giảm đi ít nhất $1$ — nên không giảm mãi được. Đó là toàn bộ chứng minh. Ở ván này quá trình dừng sau bốn bước: [[a1|không đỉnh nào còn âm]], và $S$ đã đi $42 \\to 24 \\to 18 \\to 12 \\to 6$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "p0",
+                "p1",
+                "p2",
+                "p3",
+                "p4"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {},
+            "elements": [
+              {
+                "id": "p0",
+                "type": "vertex",
+                "label": "0",
+                "pos": [0, -28],
+                "value": 0
+              },
+              {
+                "id": "p1",
+                "type": "vertex",
+                "label": "2",
+                "pos": [26.63, -8.65],
+                "value": 2
+              },
+              {
+                "id": "p2",
+                "type": "vertex",
+                "label": "0",
+                "pos": [16.46, 22.65],
+                "value": 0
+              },
+              {
+                "id": "p3",
+                "type": "vertex",
+                "label": "0",
+                "pos": [-16.46, 22.65],
+                "value": 0
+              },
+              {
+                "id": "p4",
+                "type": "vertex",
+                "label": "1",
+                "pos": [-26.63, -8.65],
+                "value": 1
+              },
+              {
+                "id": "q0",
+                "type": "edge",
+                "u": "p0",
+                "v": "p1"
+              },
+              {
+                "id": "q1",
+                "type": "edge",
+                "u": "p1",
+                "v": "p2"
+              },
+              {
+                "id": "q2",
+                "type": "edge",
+                "u": "p2",
+                "v": "p3"
+              },
+              {
+                "id": "q3",
+                "type": "edge",
+                "u": "p3",
+                "v": "p4"
+              },
+              {
+                "id": "q4",
+                "type": "edge",
+                "u": "p4",
+                "v": "p0"
+              },
+              {
+                "id": "d0",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p0",
+                "v": "p2"
+              },
+              {
+                "id": "d1",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p1",
+                "v": "p3"
+              },
+              {
+                "id": "d2",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p2",
+                "v": "p4"
+              },
+              {
+                "id": "d3",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p3",
+                "v": "p0"
+              },
+              {
+                "id": "d4",
+                "type": "edge",
+                "color_class": 2,
+                "style": "dashed",
+                "u": "p4",
+                "v": "p1"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Ngũ giác ở thế cuối: 0, 2, 0, 0, 1 — không số nào âm."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

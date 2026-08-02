@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "candies-with-minimum",
   "statement": {
     "vi": "Chia $10$ chiếc kẹo cho $4$ bạn sao cho **mỗi bạn nhận ít nhất $1$ chiếc**. Hỏi có bao nhiêu cách?"

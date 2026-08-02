@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "bipartite-regular-perfect-matching",
   "statement": {
     "vi": "Một đồ thị hai phía trong đó **mọi đỉnh có cùng bậc $d \\ge 1$**. Chứng minh nó luôn có ghép cặp hoàn hảo — mỗi đỉnh bên trái ghép với đúng một đỉnh bên phải, và ngược lại."

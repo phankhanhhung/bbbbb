@@ -21,6 +21,14 @@ export interface Vertex {
   readonly colorClass: number;
   readonly shape: string;
   readonly emphasis: string | undefined;
+  /**
+   * Số mang trên đỉnh (GR-14), hoặc `undefined` khi bài không khai.
+   *
+   * **`undefined` chứ không phải `0`**: cùng quy ước mà `colorClass` đã đặt cho "chưa
+   * tô". Một bài đặt số $0$ lên một đỉnh là chuyện có thật, và trộn nó với "đỉnh này
+   * không mang số nào" sẽ làm mọi tổng đọc sai một cách im lặng.
+   */
+  readonly value: number | undefined;
 }
 
 export interface Edge {
@@ -102,6 +110,7 @@ function toVertex(element: SceneElement): Vertex {
     colorClass: Number(element.color_class ?? 0),
     shape: String(element['shape'] ?? 'circle'),
     emphasis: element.emphasis,
+    value: typeof element['value'] === 'number' ? element['value'] : undefined,
   };
 }
 

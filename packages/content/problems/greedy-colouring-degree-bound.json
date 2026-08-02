@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "greedy-colouring-degree-bound",
   "statement": {
     "vi": "Tô màu tham lam: duyệt đỉnh theo một thứ tự, mỗi đỉnh nhận **màu nhỏ nhất chưa dùng ở hàng xóm đã tô**. Cách này dùng nhiều nhất mấy màu — và nó có luôn cho ra cách tô ít màu nhất không?"

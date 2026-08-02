@@ -124,6 +124,19 @@ export const MIGRATIONS: readonly Migration[] = [
      */
     apply: (problem) => problem,
   },
+  {
+    from: '1.4.0',
+    to: '1.5.0',
+    summary:
+      'thêm `vertex.value` (GR-14) — không đổi dữ liệu bài nào, chỉ đóng dấu phiên bản',
+    /**
+     * Đồng nhất, lần thứ năm. Trường mới nằm trên một **element** chứ không phải trên
+     * `Step` hay trong config engine, và điều đó vẫn không đổi gì: `defineElement` cũng
+     * sinh ra schema đóng, nên một bài mang `value` mà đóng dấu `1.4.0` sẽ bị chính bộ
+     * đọc `1.4.0` từ chối.
+     */
+    apply: (problem) => problem,
+  },
 ];
 
 export interface MigrateResult {

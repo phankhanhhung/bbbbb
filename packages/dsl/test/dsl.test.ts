@@ -182,3 +182,37 @@ describe('compile dùng lại được', () => {
     expect(tryEvaluate('((((', env).ok).toBe(false);
   });
 });
+
+/**
+ * `filter` — mảnh còn thiếu giữa `count` và `sum` (GR-14).
+ *
+ * `count(list, pred)` đếm được phần thoả điều kiện; `sum(list, f)` cộng **mọi** phần
+ * tử. Không có cách nào cộng $f$ chỉ trên phần thoả điều kiện, và chỗ hổng ấy chặn
+ * đúng một đại lượng đơn điệu thật (IMO 1986 bài 3, tổng bình phương hiệu **chỉ trên
+ * đường chéo**).
+ */
+describe('filter — lọc rồi mới tổng hợp', () => {
+
+  it('trả về **danh sách**, nên ghép được với mọi hàm tổng hợp đã có', () => {
+    expect(run('count(filter(cells, c => c.color_class == 1))')).toBe(2);
+    // Hai ô lớp 1 nằm ở hàng 0 và hàng 1 ⇒ tổng 1.
+    expect(run('sum(filter(cells, c => c.color_class == 1), c => c.row)')).toBe(1);
+    // Không lọc thì `sum` cộng cả bốn ⇒ 0 + 0 + 1 + 1 = 2. Đây là chỗ `filter` khác
+    // `sum` trần, và cũng là lý do nó phải có: hai con số khác nhau thật.
+    expect(run('sum(cells, c => c.row)')).toBe(2);
+  });
+
+  it('lọc rỗng trả danh sách rỗng, không phải lỗi', () => {
+    expect(run('count(filter(cells, c => c.color_class == 9))')).toBe(0);
+    expect(run('sum(filter(cells, c => c.color_class == 9), c => c.row)')).toBe(0);
+  });
+
+  it('lồng được, và giữ đúng thứ tự nguồn', () => {
+    expect(run('count(filter(filter(cells, c => c.color_class == 1), c => c.covered))')).toBe(1);
+  });
+
+  it('đối số sai kiểu thì báo lỗi có chữ, không đoán', () => {
+    expect(() => run('filter(3, c => true)')).toThrow(DslError);
+    expect(() => run('filter(cells, 3)')).toThrow(DslError);
+  });
+});

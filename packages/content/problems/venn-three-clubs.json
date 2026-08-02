@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "venn-three-clubs",
   "statement": {
     "vi": "Một lớp $18$ bạn tham gia ba câu lạc bộ. Biết số bạn trong từng câu lạc bộ và từng phần giao, hãy đếm số bạn không tham gia câu lạc bộ nào."

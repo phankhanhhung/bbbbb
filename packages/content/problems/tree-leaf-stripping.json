@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "tree-leaf-stripping",
   "statement": {
     "vi": "Chứng minh rằng một cây có $n$ đỉnh thì có đúng $n-1$ cạnh."

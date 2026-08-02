@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "subsets-binary-strings",
   "statement": {
     "vi": "Chứng minh rằng tập $\\{1,2,\\dots,n\\}$ có đúng $2^n$ tập con."

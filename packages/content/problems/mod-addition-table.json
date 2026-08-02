@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "mod-addition-table",
   "statement": {
     "vi": "Trong bảng cộng theo modulo $5$, chứng minh mỗi giá trị xuất hiện đúng $5$ lần."

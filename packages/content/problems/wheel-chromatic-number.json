@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "wheel-chromatic-number",
   "statement": {
     "vi": "Bánh xe: một chu trình $n$ đỉnh làm vành, cộng một trục nối tới **mọi** đỉnh vành. Tô đỉnh sao cho hai đỉnh kề khác màu. Bánh xe vành $5$ cần mấy màu, và vành $6$ thì sao?"

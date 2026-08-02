@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "mono-rectangle-3x7",
   "statement": {
     "vi": "Tô mỗi ô của lưới $3\\times7$ bằng một trong hai màu. Chứng minh luôn tồn tại một hình chữ nhật có bốn ô góc cùng màu."

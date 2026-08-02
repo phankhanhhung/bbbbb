@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "identity-roles-in-colour",
   "statement": {
     "vi": "Một hằng đẳng thức là một **cái khuôn**: $(a+b)^2$ đúng với $a, b$ là bất cứ thứ gì. Xem cái khuôn ấy hoạt động bằng cách tô mỗi vai một màu và nhìn màu đi từ vế này sang vế kia."

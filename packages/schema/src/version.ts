@@ -36,8 +36,16 @@
  * dấu `1.3.0` sẽ bị chính bộ đọc `1.3.0` từ chối. Cửa sổ đọc trượt tiếp: `1.3.0` xuống
  * n−1, `1.2.0` ra khỏi cửa sổ.
  *
+ * **`1.5.0` — `vertex.value` (GR-14)**: đỉnh đồ thị mang được **số**, đối xứng với
+ * `weight` vốn có của cạnh. Sinh ra từ một nợ có tên: cả họ bài "đặt số lên đỉnh rồi
+ * thao tác" — IMO 1986 bài 3 là ca điển hình — không khai được đại lượng bất biến hay
+ * đơn điệu nào, vì `label` là **chuỗi** và không binding nào đọc ra số từ nó. Vẫn là
+ * trường optional trên một element, nên vẫn minor và vẫn migration đồng nhất; con dấu
+ * vẫn phải đổi vì element schema cũng đóng `additionalProperties`. Cửa sổ đọc trượt
+ * tiếp: `1.4.0` xuống n−1, `1.3.0` ra khỏi cửa sổ.
+ *
  * Từ đây: thêm trường optional = minor + migration đồng nhất; đổi/gỡ = major.
  * Cửa sổ đọc của Player là minor hiện tại và n−1 (`isReadableVersion`), và
  * validate đứng gác ở cửa (`version/unreadable`).
  */
-export const SCHEMA_VERSION = '1.4.0';
+export const SCHEMA_VERSION = '1.5.0';

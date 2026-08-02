@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "merge-piles-sum-of-products",
   "statement": {
     "vi": "Có $6$ đống sỏi, mỗi đống $1$ viên. Mỗi bước gộp hai đống và ghi lên bảng **tích** số sỏi của hai đống đó. Chứng minh khi chỉ còn một đống, tổng các số đã ghi luôn bằng $15$, bất kể gộp theo thứ tự nào."

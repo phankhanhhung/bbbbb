@@ -66,6 +66,12 @@ function derive(scene: Scene): GraphDerived {
       side: parts.bipartite ? (parts.side.get(v.id) ?? 0) : 0,
       x: v.x,
       y: v.y,
+      /**
+       * Số mang trên đỉnh (GR-14). **Vắng mặt** khi bài không khai, không phải $0$:
+       * một invariant `sum(vertices, v => v.value)` phải hỏng ồn ào trên đồ thị không
+       * mang số, chứ không lặng lẽ trả $0$ như thể tổng ấy có nghĩa.
+       */
+      ...(v.value === undefined ? {} : { value: v.value }),
       ...(prufer ? { in_code: prufer.occurrences.get(v.id) ?? 0 } : {}),
       ...(tree
         ? {
@@ -80,11 +86,23 @@ function derive(scene: Scene): GraphDerived {
     }),
   );
 
+  const byId = new Map(graph.vertices.map((v) => [v.id, v]));
   const edges = graph.edges.map((e) =>
     element(e.id, {
       color_class: e.colorClass,
       directed: e.directed,
       weight: e.weight ?? 0,
+      /**
+       * **Hiệu số của hai đầu mút** (GR-14), khi cả hai đỉnh đều mang `value`.
+       *
+       * Suy ra chứ không do tác giả gõ: một hiệu số gõ tay sẽ lệch ngay lần đầu bài đổi
+       * một con số, và lệch **im lặng**. Vắng mặt khi một trong hai đầu không mang số —
+       * cùng quy ước với `value` của đỉnh, và cùng lý do: $0$ ở đây đọc nhầm thành "hai
+       * đầu bằng nhau".
+       */
+      ...(byId.get(e.u)?.value === undefined || byId.get(e.v)?.value === undefined
+        ? {}
+        : { gap: (byId.get(e.u) as { value: number }).value - (byId.get(e.v) as { value: number }).value }),
       loop: e.u === e.v,
       multi_index: e.multiIndex,
     }),

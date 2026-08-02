@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "cayley-prufer-bijection",
   "statement": {
     "vi": "Có bao nhiêu **cây có nhãn** trên $n$ đỉnh $1, 2, \\dots, n$? Chứng minh rằng số ấy bằng $n^{n-2}$ (công thức Cayley)."

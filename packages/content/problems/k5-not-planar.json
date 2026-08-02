@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "k5-not-planar",
   "statement": {
     "vi": "Chứng minh rằng $K_5$ — năm đỉnh đôi một nối nhau — không vẽ được trên mặt phẳng mà không có cạnh nào cắt nhau."

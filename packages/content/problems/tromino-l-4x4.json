@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "tromino-l-4x4",
   "statement": {
     "vi": "Bàn $4\\times4$ bỏ đi một ô bất kỳ. Chứng minh phần còn lại luôn phủ kín được bằng $5$ quân tromino chữ L."

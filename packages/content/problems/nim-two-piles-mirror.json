@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "nim-two-piles-mirror",
   "statement": {
     "vi": "Hai đống sỏi, mỗi đống $7$ viên. Hai người lần lượt bốc bất kì số viên dương từ **một** đống. Ai bốc viên cuối cùng thì thắng. Ai có chiến lược thắng, và chiến lược ấy là gì?"

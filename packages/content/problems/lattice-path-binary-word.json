@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "lattice-path-binary-word",
   "statement": {
     "vi": "Trên lưới $3 \\times 3$, mỗi bước chỉ được sang phải hoặc lên trên. Có bao nhiêu đường đi từ góc dưới trái tới góc trên phải?"

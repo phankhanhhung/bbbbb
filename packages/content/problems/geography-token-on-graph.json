@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "geography-token-on-graph",
   "statement": {
     "vi": "Một quân cờ đứng ở đỉnh $A$ của đồ thị bên dưới. Hai người lần lượt đẩy quân theo một cạnh sang đỉnh kề, rồi **xoá đỉnh vừa rời đi** (cùng mọi cạnh của nó). Ai không còn nước đi thì **thua**. Ai có chiến lược thắng?"

@@ -32,6 +32,25 @@ export const VertexElement = defineElement('vertex', {
   shape: Type.Optional(
     Type.Union([Type.Literal('circle'), Type.Literal('square'), Type.Literal('diamond')]),
   ),
+  /**
+   * **Số mang trên đỉnh**, đối xứng với `weight` của cạnh (GR-14).
+   *
+   * Sinh ra từ một chỗ hổng có tên: cạnh mang được số từ đầu, đỉnh thì không, nên cả
+   * họ bài "đặt số lên đỉnh rồi thao tác" — IMO 1986 bài 3 là ca điển hình — không
+   * khai được đại lượng bất biến hay đơn điệu nào. `label` không thay được: nó là
+   * **chuỗi**, và một binding phải đoán xem `"−3"` có phải số không thì sớm muộn cũng
+   * đoán sai ở một bài dùng nhãn chữ.
+   *
+   * Tách khỏi `label` chứ không gộp, vì hai thứ trả lời hai câu khác nhau: `label`
+   * hỏi *"vẽ chữ gì lên đỉnh"*, `value` hỏi *"đỉnh này mang giá trị bao nhiêu"*. Bài
+   * thường muốn cả hai bằng nhau, nhưng ép chúng là một sẽ chặn ngay bài đầu tiên
+   * muốn ghi $x_1$ trên một đỉnh mang giá trị $2$.
+   *
+   * **Không** vẽ ra gì cả: renderer đọc `label`, không đọc `value`. Muốn số hiện lên
+   * hình thì ghi nó vào `label`; muốn máy đọc được thì ghi vào `value`; muốn cả hai
+   * thì ghi cả hai, và đó là điều gần như bài nào cũng làm.
+   */
+  value: Type.Optional(Type.Number()),
 });
 
 export const EdgeElement = defineElement('edge', {

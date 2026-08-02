@@ -267,22 +267,30 @@ bằng toạ độ.
   đỉnh thì khác màu), và bài kinh điển của *nó* là xếp thời khoá biểu. Nợ hẹp hơn
   nhiều so với lúc ghi, và biết được điều đó là nhờ đi làm mạch 4/4 chứ không phải
   nhờ suy đoán thêm.
-- **đỉnh đồ thị không mang được số.** Cạnh có `weight`, đỉnh chỉ có `label` là chuỗi,
-  và `graphEnvironment` không có binding nào đọc ra giá trị số của đỉnh. Hệ quả cụ
-  thể: **IMO 1986 bài 3** (ngũ giác, phép thao tác trên ba số liên tiếp) bị cắt khỏi
-  loạt 4/4 — đại lượng đơn điệu $\sum (x_i - x_{i+2})^2$ không khai thành
-  `invariants[]` được, và lint AUT-10 chặn đúng khi thấy tag `monovariant` mà không
-  có widget.
+- ~~**đỉnh đồ thị không mang được số**~~ ✅ **trả xong (GR-14).** Nợ này ghi ở loạt
+  4/4 khi IMO 1986 bài 3 bị cắt: cạnh có `weight`, đỉnh chỉ có `label` là chuỗi, nên
+  đại lượng đơn điệu $\sum (x_i - x_{i+2})^2$ không khai thành `invariants[]` được và
+  lint AUT-10 chặn đúng.
 
-  Ba lối vòng đều bị từ chối, ghi ra để lần sau khỏi thử lại: đổi tag sang
-  `extremal` là nói dối về kỹ thuật để qua linter; vẽ bằng engine `sequence` (item
-  có `value`, invariant kiểm được) thì ngũ giác thành một hàng, mà tính **vòng** là
-  toàn bộ hình học của phép thao tác; khai một invariant tầm thường như `n == 5` là
-  lắp một widget không phải nội dung.
+  Trả bằng **ba mảnh nhỏ**, không phải một mảnh to:
 
-  Cách sửa thật: thêm trường số cho đỉnh, đối xứng với `weight` của cạnh, rồi thêm
-  binding. Đó là một lượt schema có migration, không phải phần đuôi của một mạch nội
-  dung.
+  1. `vertex.value` — số trên đỉnh, đối xứng với `weight` của cạnh. Tách khỏi `label`
+     chứ không gộp: `label` hỏi *"vẽ chữ gì"*, `value` hỏi *"mang giá trị bao nhiêu"*,
+     và ép chúng là một sẽ chặn ngay bài đầu tiên muốn ghi $x_1$ trên đỉnh mang giá
+     trị $2$. Schema `1.4.0 → 1.5.0`, migration đồng nhất, kho re-stamp.
+  2. `edge.gap` — hiệu số hai đầu mút, **suy ra** chứ không gõ tay. Một hiệu số gõ tay
+     lệch ngay lần đầu bài đổi một con số, và lệch im lặng.
+  3. `filter(list, pred)` trong DSL — mảnh còn thiếu giữa `count` và `sum`. `count` có
+     vị ngữ, `sum` thì cộng **mọi** phần tử, nên không cách nào cộng $f$ chỉ trên phần
+     thoả điều kiện. Trả về **danh sách** chứ không nhét thêm tham số vào `sum`: thế
+     thì nó ghép được với mọi hàm tổng hợp đã có, kể cả hàm chưa viết.
+
+  Cả ba đều **vắng mặt** thay vì trả $0$ khi không có dữ liệu — một đỉnh mang số $0$ là
+  chuyện có thật, và trộn nó với "đỉnh không mang số" làm mọi tổng đọc sai im lặng.
+
+  Kèm một lời của chính bài: hình nay vẽ **cả năm đường chéo** bằng nét đứt, vì chúng
+  là các cặp mà $S$ đo — và đó là thứ khó thấy nhất của bài, nên nó thuộc về hình chứ
+  không thuộc về lời văn. Bài `imo-1986-p3-pentagon-operation`.
 - **`five-colour-planar-sketch` bị cắt** khỏi loạt 2/4. Bài định dạy "hình phẳng
   luôn có đỉnh bậc $\le 5$" bằng Euler, nhưng `planarity(...)` trả `value?.planar`
   là `undefined` trên scene dựng tại chỗ, nên khẳng định trong narrative không có

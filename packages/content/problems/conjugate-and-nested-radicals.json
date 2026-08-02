@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "conjugate-and-nested-radicals",
   "statement": {
     "vi": "Trục căn thức ở mẫu khi mẫu là một **tổng** chứa căn: nhân cả tử lẫn mẫu với liên hợp, để hiệu hai bình phương xoá dấu căn đi. Rồi làm chuyện ngược lại — khử một căn nằm **trong** căn, bằng cách nhận ra biểu thức dưới căn là một bình phương."

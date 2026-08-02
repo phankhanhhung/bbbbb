@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "compositions-two-power-gf",
   "statement": {
     "vi": "Viết $n$ thành tổng các số nguyên dương, **có kể thứ tự** ($2+1$ khác $1+2$). Có bao nhiêu cách?"

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "partitions-ferrers-conjugate",
   "statement": {
     "vi": "Viết $7 = 4 + 2 + 1$ thành một biểu đồ Ferrers rồi **lật** nó theo đường chéo. Hình mới là phân hoạch nào của $7$, và phép lật ấy chứng minh điều gì?"

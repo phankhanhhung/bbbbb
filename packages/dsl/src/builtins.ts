@@ -25,6 +25,26 @@ export const CORE_BUILTINS: Readonly<Record<string, CoreBuiltin>> = {
     return total;
   },
 
+  /**
+   * **Lọc một danh sách** — mảnh còn thiếu giữa `count` và `sum`.
+   *
+   * `count(list, pred)` đếm được phần tử thoả điều kiện, nhưng `sum(list, f)` thì cộng
+   * **mọi** phần tử: không có cách nào cộng $f$ chỉ trên phần thoả điều kiện. Chỗ hổng
+   * ấy lộ ra ở IMO 1986 bài 3, nơi đại lượng đơn điệu là tổng bình phương hiệu **chỉ
+   * trên các đường chéo** của ngũ giác, còn hình thì vẽ cả cạnh lẫn đường chéo.
+   *
+   * Cách vá rẻ hơn là cho `sum` nhận thêm một vị ngữ, nhưng thế thì `sum` có hai chữ ký
+   * và thứ tự tham số đọc nhập nhằng. `filter` trả về một **danh sách**, nên nó ghép
+   * được với mọi hàm tổng hợp đã có — kể cả những hàm chưa viết.
+   */
+  filter(expr, ctx) {
+    const list = expectList(expr, ctx, 0, 'filter');
+    const predicate = expectLambda(expr, ctx, 1, 'filter');
+    return list.filter((item) =>
+      asBoolean(applyLambda(predicate, item, ctx), expr.pos, 'filter'),
+    );
+  },
+
   sum(expr, ctx) {
     const list = expectList(expr, ctx, 0, 'sum');
     const project = expectLambda(expr, ctx, 1, 'sum');

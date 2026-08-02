@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "id": "polynomial-long-division",
   "statement": {
     "vi": "Cho hai đa thức $A$ và $B \\ne 0$ hệ số nguyên. Mô tả thuật toán tìm **thương** $Q$ và **dư** $R$ sao cho $A = B \\cdot Q + R$ với $\\deg R < \\deg B$, giải thích vì sao thuật toán dừng, và chạy nó trên năm ví dụ đủ các trường hợp hay gặp."
