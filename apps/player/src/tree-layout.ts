@@ -27,6 +27,23 @@ export interface TreeEdge {
 }
 
 /**
+ * Con **vẽ ra**, tức bỏ `merge_ref`.
+ *
+ * `merge_ref` là một con trỏ, không phải một bước: schema đã ép nó là lá, có
+ * `merge_target`, và **không mang scene**. Vẽ nó thành một chấm riêng là vẽ một ngõ
+ * cụt cho một thứ mà cả nội dung là "đi tiếp ở chỗ kia" — `polynomial-long-division`
+ * ra 11 chấm, trong đó **4 chấm là ngõ cụt mang ↰**, cộng 4 đường bezier phình sang
+ * phải, để diễn tả đúng một điểm hội tụ. Nay 7 chấm + 4 ray chụm vào ga.
+ *
+ * Đây là thay đổi **bố cục thuần**: schema giữ nguyên, `merge_ref` vẫn là lá trong
+ * dữ liệu, `pathTo`/`breadcrumb` vẫn thấy nó. Chỉ bản đồ thôi không vẽ nó thành một
+ * đích đến — vì nó chưa bao giờ là một đích đến.
+ */
+export function drawnChildren(tree: SolutionTree, id: string): readonly Step[] {
+  return childrenOf(tree, id).filter((kid) => kid.edge_type !== 'merge_ref');
+}
+
+/**
  * **Sợi** hay **cây** — quyết định theo hình dạng lời giải, không theo sở thích.
  *
  * Đo trên kho: **122/143 lời giải không có điểm rẽ nhánh nào**, 20 có một, 1 có
@@ -60,7 +77,7 @@ const ROW = 30;
  */
 export function treeShape(tree: SolutionTree): TreeShape {
   const forks = (step: Step): boolean => {
-    const kids = childrenOf(tree, step.id);
+    const kids = drawnChildren(tree, step.id);
     return kids.length > 1 || kids.some(forks);
   };
   return tree.root && forks(tree.root) ? 'tree' : 'strip';
@@ -120,7 +137,7 @@ function layoutBranching(tree: SolutionTree, collapsed: ReadonlySet<string>): Tr
   let nextLeafColumn = 0;
 
   const place = (step: Step, depth: number): TreeNode => {
-    const kids = collapsed.has(step.id) ? [] : childrenOf(tree, step.id);
+    const kids = collapsed.has(step.id) ? [] : drawnChildren(tree, step.id);
 
     let x: number;
     if (kids.length === 0) {
@@ -147,13 +164,17 @@ function layoutBranching(tree: SolutionTree, collapsed: ReadonlySet<string>): Tr
       const parent = byId.get(node.step.parent);
       if (parent) edges.push({ from: parent, to: node, dashed: false });
     }
+  }
 
-    // Cạnh merge_ref vẽ **sau** và đứt nét: nó nối ngược lên một node đã đặt, nên
-    // nó là thứ duy nhất trong hình có thể đi lên chứ không đi xuống.
-    if (node.step.edge_type === 'merge_ref' && node.step.merge_target) {
-      const target = byId.get(node.step.merge_target);
-      if (target) edges.push({ from: node, to: target, dashed: true });
-    }
+  // **Đường ray tới ga.** `merge_ref` không có node, nên ray chạy từ *cha* của nó —
+  // tức đầu mút của nhánh — thẳng tới node tổng hợp. Đúng thứ G-03 đã chốt ("cạnh
+  // đứt nét từ leaf quay về node tổng hợp"), chỉ khác là leaf không còn phải mọc
+  // thêm một cái chấm để làm điểm xuất phát.
+  for (const step of tree.steps.values()) {
+    if (step.edge_type !== 'merge_ref' || !step.merge_target || !step.parent) continue;
+    const from = byId.get(step.parent);
+    const to = byId.get(step.merge_target);
+    if (from && to && from !== to) edges.push({ from, to, dashed: true });
   }
 
   return { ...box(nodes), nodes, edges, shape: 'tree' };

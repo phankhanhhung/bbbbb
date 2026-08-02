@@ -155,7 +155,34 @@ interface Engine {
 |---|---|---|
 | **G-01** | REN-02 nói "chính chủ chọn step tiêu biểu trong Studio" nhưng §4.2 **không có field** lưu lựa chọn đó | Thêm `og_step_ref: {sol_id, step_id}` vào Problem, optional, fallback = step cuối của nhánh chính. Sửa schema **trước** M6 |
 | **G-02** | GR-08 (nhãn LaTeX trong canvas) mâu thuẫn tiềm tàng với REN-01 headless | D-07: label atlas MathJax build-time. Hệ quả: nhãn canvas dùng **subset LaTeX** (không `\begin{array}`, không macro tự định nghĩa) — ghi vào Style Guide (AUT-10) |
-| **G-03** | `merge_ref` render thế nào trong tree navigator (PLY-02) chưa định nghĩa | ✅ Chốt: minimap vẽ cạnh **đứt nét** từ leaf quay về node tổng hợp; node tổng hợp vẽ khác dạng (viên thuốc) để phân biệt với step thường; navigation coi merge_ref như một bước `seq` và breadcrumb reset về nhánh chính. Schema đã enforce: merge_ref là leaf, có `merge_target` trỏ tới step tồn tại, **không** mang scene riêng |
+| **G-03** | `merge_ref` render thế nào trong tree navigator (PLY-02) chưa định nghĩa | ✅ Chốt: minimap vẽ cạnh **đứt nét** từ leaf quay về node tổng hợp; node tổng hợp vẽ khác dạng (viên thuốc) để phân biệt với step thường; navigation coi merge_ref như một bước `seq` và breadcrumb reset về nhánh chính. Schema đã enforce: merge_ref là leaf, có `merge_target` trỏ tới step tồn tại, **không** mang scene riêng · **Sửa 2026-08-02, xem dưới** |
+
+> **G-03 sửa lại (2026-08-02), và lý do phải ghi ra chứ không sửa lén.**
+>
+> Chốt gốc có hai nửa. Nửa đầu — cạnh đứt nét — đã dựng từ đầu. **Nửa sau — "node
+> tổng hợp vẽ khác dạng (viên thuốc)" — chưa bao giờ được dựng**, và không có gì
+> đỏ suốt hơn bảy mươi hạng mục. Một quyết định đã ghi mà không ai thi hành thì nó
+> không khác gì một quyết định chưa có; nay nó có mã và có chốt canh.
+>
+> Chỗ **đổi** so với chốt gốc: `merge_ref` **không còn được vẽ thành một node**.
+> Chốt gốc không nói thẳng là phải vẽ, nhưng mã đã vẽ, và hệ quả đo được:
+> `polynomial-long-division` ra 11 chấm trong đó **4 chấm là ngõ cụt mang `↰`**,
+> cộng 4 đường bezier phình sang phải — tất cả để diễn tả đúng *một* điểm hội tụ.
+> Nay ray đứt nét chạy thẳng từ đầu mút mỗi nhánh vào ga: **11 chấm → 7**.
+>
+> Ba hệ quả phải nói rõ, vì chúng là thứ chốt gốc đang che:
+>
+> - **Schema không đổi.** `merge_ref` vẫn là leaf trong dữ liệu, vẫn mang
+>   `merge_target`, `pathTo`/`breadcrumb` vẫn thấy nó. Đây là thay đổi **bố cục
+>   thuần** — không migration, không bump minor.
+> - **Đứng ở một bước `merge_ref` thì bản đồ sáng ở ga.** Không có luật này thì tới
+>   một `merge_ref` bằng deep-link làm bản đồ không sáng ở đâu cả, tức nó thôi trả
+>   lời đúng câu duy nhất nó phải trả lời.
+> - **`merge_ref` không tính vào độ phủ nhánh.** Nó không mang scene, nên "đã đọc
+>   nó" không phải một sự kiện có thật; phần đọc được của nó nằm ở ga.
+>
+> G-04 (sparkline "bỏ qua merge_ref") **không đụng tới** — nó vốn đã nói cùng một
+> điều theo hướng ngược lại.
 | **G-04** | PLY-06 nói sparkline "theo tiến trình nhánh đang xem" — với `merge_ref` thì "nhánh" là gì | Định nghĩa: đường đi từ root tới step hiện tại theo `parent`, bỏ qua merge_ref. Ghi vào schema doc |
 | **G-05** | DAT-02 nói Player đọc được version hiện tại và n−1 minor, nhưng schema sẽ churn dữ dội trong 5 bài đầu | Đặt **schema freeze gate**: schema là `0.x` (không hứa tương thích) tới hết M5; sau 5 bài soạn tay, freeze `1.0.0`, từ đó mọi thay đổi đi kèm migrate CLI. Viết `migrate` CLI ngay tại lúc freeze, không hoãn |
 | **G-06** | AUT-KPI đo "median 5 bài cuối pilot" nhưng AUT-08 (công cụ đo) là **P2** | Cần một bản đo tối thiểu ở P1: `combviz stats` đọc log thời gian thủ công (file CSV owner tự ghi) — 2 giờ công, đủ để gate có răng |

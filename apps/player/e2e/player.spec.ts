@@ -322,7 +322,7 @@ test.describe('Cây lời giải phân nhánh (PLY-02)', () => {
      * lặp** vì đúng cái tính năng nó đang canh. Một chốt canh chập chờn tệ hơn
      * không có chốt canh — nó dạy người ta bỏ qua màu đỏ, đúng bài học M45.
      */
-    for (const label of ['s0', 's1', 'Trường hợp 1', '1a', 'm1', '1b', 'm2', 'Trường hợp 2', 's6', 's7']) {
+    for (const label of ['s0', 's1', 'Trường hợp 1', '1a', '1b', 'Trường hợp 2', 's6', 's7']) {
       await page.locator(`.tree__node[aria-label^="${label}"]`).click();
     }
 
@@ -405,6 +405,35 @@ test.describe('Cây lời giải phân nhánh (PLY-02)', () => {
     await expect(page.locator('.tree__glyph--play')).toHaveCount(0);
     await expect(page.locator('.tree__glyph--pair')).toHaveCount(0);
     await expect(page.locator('.tree__swap')).toHaveCount(0);
+  });
+
+  /**
+   * `merge_ref` là một **cái ga**, không phải bốn cái lá cụt.
+   *
+   * `polynomial-long-division` có 11 step, trong đó **4 là `merge_ref`** — bốn chấm
+   * ngõ cụt mang `↰` cộng bốn đường bezier phình sang phải, để diễn tả đúng một
+   * điểm hội tụ. Nay bốn chấm ấy biến mất và bốn ray đứt nét chụm thẳng vào node
+   * tổng hợp: 11 chấm → **7**.
+   *
+   * Kèm nửa sau của chốt G-03 ("node tổng hợp vẽ khác dạng — viên thuốc"), chốt từ
+   * tuần 1 và chưa bao giờ được dựng.
+   */
+  test('merge_ref chụm vào một cái ga, và ga vẽ thành viên thuốc (G-03)', async ({ page }) => {
+    await page.goto('/?p=polynomial-long-division');
+    await reveal(page);
+
+    // 11 step, 4 trong số đó là merge_ref ⇒ 7 node.
+    await expect(page.locator('.tree__node')).toHaveCount(7);
+    await expect(page.locator('.tree__glyph--station')).toHaveCount(1);
+    // Bốn ray đứt nét, và **không** node nào còn mang mũi tên quay lại.
+    await expect(page.locator('.tree__canvas path[stroke-dasharray]')).toHaveCount(4);
+    await expect(page.locator('.tree__node[aria-label*="quay về bước tổng hợp"]')).toHaveCount(0);
+
+    // Bài không có merge_ref thì không có ga — viên thuốc là tín hiệu, không phải
+    // một kiểu vẽ node thứ hai.
+    await page.goto(CHESS);
+    await reveal(page);
+    await expect(page.locator('.tree__glyph--station')).toHaveCount(0);
   });
 
   /**

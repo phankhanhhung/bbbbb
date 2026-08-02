@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import {
   breadcrumb,
-  childrenOf,
   isClosedBranch,
   isMergeTarget,
   pathTo,
   type SolutionTree,
   type Step,
 } from '@combviz/schema';
-import { COLUMN, layoutTree, ROW } from './tree-layout.js';
+import { COLUMN, drawnChildren, layoutTree, ROW } from './tree-layout.js';
 
 /**
  * Tree navigator (PLY-02).
@@ -72,7 +71,7 @@ function coverageOf(
     // `visited.has(id) && kids.every(walk)` thì phép rút gọn của `&&` bỏ qua cả
     // cây con ngay khi node cha chưa thăm — và những node ấy biến mất khỏi bảng,
     // nên chỗ đọc bảng nhận `undefined` chứ không nhận `false`.
-    const kidsWhole = childrenOf(tree, step.id).map((kid) => walk(kid));
+    const kidsWhole = drawnChildren(tree, step.id).map((kid) => walk(kid));
     const whole = visited.has(step.id) && kidsWhole.every(Boolean);
     seen.set(step.id, whole);
     return whole;
@@ -117,6 +116,20 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const [open, setOpen] = useState(true);
 
+  /**
+   * `merge_ref` không có node, nên chỗ đứng của nó là **ga** mà nó trỏ tới.
+   *
+   * Không có dòng này thì đứng ở một bước `merge_ref` (tới bằng phím Bước sau, hay
+   * bằng deep-link) làm bản đồ không sáng ở đâu cả — người học nhìn một hình không
+   * có "mình đang ở đây", đúng câu duy nhất mà bản đồ phải trả lời được.
+   */
+  const selectedId = useMemo(() => {
+    const step = tree.steps.get(currentId);
+    return step?.edge_type === 'merge_ref' && step.merge_target
+      ? step.merge_target
+      : currentId;
+  }, [tree, currentId]);
+
   const covered = useMemo(() => coverageOf(tree, visited), [tree, visited]);
   const layout = useMemo(() => layoutTree(tree, collapsed), [tree, collapsed]);
   const crumbs = useMemo(() => breadcrumb(tree, currentId), [tree, currentId]);
@@ -138,10 +151,10 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
   // Một tab stop cho cả cây (roving tabindex). Trước đây mỗi node là một tab stop,
   // nên một cây 11 node ăn 11 lần Tab của người dùng bàn phím — trong khi
   // `role="tree"` đã hứa ngược lại với screen reader.
-  const [focusId, setFocusId] = useState(currentId);
+  const [focusId, setFocusId] = useState(selectedId);
   const refs = useRef(new Map<string, SVGGElement>());
 
-  useEffect(() => setFocusId(currentId), [currentId]);
+  useEffect(() => setFocusId(selectedId), [selectedId]);
 
   // Focus **sau khi** danh sách node đã đổi: bấm ← để thu gọn làm node con biến
   // mất, và nếu focus đang ở đó thì focus rơi về `<body>` — người dùng bàn phím
@@ -162,7 +175,7 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
 
   const onKeyDown = (event: KeyboardEvent, step: Step): void => {
     const at = order.indexOf(step.id);
-    const kids = childrenOf(tree, step.id);
+    const kids = drawnChildren(tree, step.id);
     const isCollapsed = collapsed.has(step.id);
     // Trên sợi, ←/→ **đi dọc sợi** thay vì thu/mở — và điều đó rơi ra miễn phí từ
     // luật của `role="tree"`: "→ đi xuống con đầu" trên một node có đúng một con
@@ -222,10 +235,10 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
     const fresh: string[] = [];
     for (const [id, whole] of covered) {
       if (!whole || autoDone.current.has(id)) continue;
-      if (onPath.has(id) || childrenOf(tree, id).length === 0) continue;
+      if (onPath.has(id) || drawnChildren(tree, id).length === 0) continue;
       // Chỉ nhánh, tức con của một điểm rẽ — không thu cả gốc.
       const parent = tree.steps.get(id)?.parent;
-      if (!parent || childrenOf(tree, parent).length < 2) continue;
+      if (!parent || drawnChildren(tree, parent).length < 2) continue;
       fresh.push(id);
     }
     if (fresh.length === 0) return;
@@ -316,12 +329,13 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
             })}
 
             {layout.nodes.map((node) => {
-              const isCurrent = node.step.id === currentId;
+              const isCurrent = node.step.id === selectedId;
+              const isStation = isMergeTarget(tree, node.step.id);
               const closed = isClosedBranch(tree, node.step.id);
               // Trên sợi thì **không** có nút thu gọn: xem `layoutStrip`.
               const hasKids =
-                layout.shape === 'tree' && childrenOf(tree, node.step.id).length > 0;
-              const kids = childrenOf(tree, node.step.id);
+                layout.shape === 'tree' && drawnChildren(tree, node.step.id).length > 0;
+              const kids = drawnChildren(tree, node.step.id);
               const left = kids.length > 1 ? kids.filter((k) => !covered.get(k.id)).length : 0;
               const allSeen = kids.length > 1 && left === 0;
 
@@ -372,6 +386,24 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
                       width={(isCurrent ? 8 : 6) * 2}
                       height={(isCurrent ? 8 : 6) * 2}
                       rx="2"
+                      fill={dotFill(isCurrent, onPath.has(node.step.id))}
+                      stroke="#8A8A82"
+                      stroke-width="1.5"
+                    />
+                  ) : isStation ? (
+                    /* **Ga** — node tổng hợp mọi nhánh, vẽ thành viên thuốc. Đây là
+                       nửa sau của chốt G-03 ("node tổng hợp vẽ khác dạng (viên
+                       thuốc) để phân biệt với step thường"), chốt từ tuần 1 và
+                       **chưa bao giờ được dựng**: mã chỉ làm nửa đầu (cạnh đứt nét).
+                       Một quyết định đã ghi mà không ai thi hành thì nó không khác
+                       gì một quyết định chưa có. */
+                    <rect
+                      class="tree__glyph tree__glyph--station"
+                      x={-11}
+                      y={-(isCurrent ? 8 : 6)}
+                      width={22}
+                      height={(isCurrent ? 8 : 6) * 2}
+                      rx={isCurrent ? 8 : 6}
                       fill={dotFill(isCurrent, onPath.has(node.step.id))}
                       stroke="#8A8A82"
                       stroke-width="1.5"
@@ -439,17 +471,9 @@ export function TreeNavigator({ tree, currentId, visited, onSelect }: TreeNaviga
                     </text>
                   ) : null}
 
-                  {node.step.edge_type === 'merge_ref' ? (
-                    <text
-                      y="0.5"
-                      text-anchor="middle"
-                      dominant-baseline="central"
-                      font-size="8"
-                      fill="#6A6A62"
-                    >
-                      ↰
-                    </text>
-                  ) : null}
+                  {/* Chỗ này từng vẽ `↰` cho node `merge_ref`. Nay `merge_ref`
+                      không có node nữa (xem `drawnChildren`), nên nhánh ấy là mã
+                      chết — xoá thay vì để lại một điều kiện không bao giờ đúng. */}
 
                   {/* Không phải một tab stop riêng, và đó là **đúng chuẩn** chứ
                       không phải bỏ sót: `role="tree"` quy định thu/mở đi bằng ←/→
@@ -518,7 +542,7 @@ function visibleOrder(tree: SolutionTree, collapsed: ReadonlySet<string>): reado
   const walk = (step: Step): void => {
     out.push(step.id);
     if (collapsed.has(step.id)) return;
-    for (const child of childrenOf(tree, step.id)) walk(child);
+    for (const child of drawnChildren(tree, step.id)) walk(child);
   };
   if (tree.root) walk(tree.root);
   return out;
@@ -569,6 +593,5 @@ function nodeLabel(
   const tail = marks.length > 0 ? ` — ${marks.join(', ')}` : '';
 
   if (step.edge_type === 'contradiction') return `${base} — mâu thuẫn, nhánh đóng${tail}`;
-  if (step.edge_type === 'merge_ref') return `${base} — quay về bước tổng hợp`;
   return `${closed ? `${base} — nhánh đã đóng` : base}${cover}${tail}`;
 }
