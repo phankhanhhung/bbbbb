@@ -1,0 +1,168 @@
+{
+  "schema_version": "1.5.0",
+  "id": "trig-sum-and-product",
+  "statement": {
+    "vi": "Một công thức, đọc được hai chiều. Chứng minh $\\dfrac{\\sin a + \\sin b}{\\cos a + \\cos b} = \\tan\\left(\\dfrac{a+b}{2}\\right)$, rồi đọc ngược đúng công thức ấy để đưa $\\sin 3x\\cos x$ về một **tổng**."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: tổng và tích không phải hai công thức mà là **một** công thức đi hai chiều, và mỗi chiều gỡ một loại bế tắc khác nhau. Chiều tổng → tích tạo ra thừa số chung để rút; chiều tích → tổng phá tích ra để cộng dồn. Engine có cả hai chiều thành hai luật rời, nên hình cho thấy chúng là hai nước đi chứ không phải một mẹo."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Hai chiều của một công thức"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tử và mẫu đều là tổng hai hàm lượng giác, và chưa có gì rút được — một tổng không có thừa số. Biến **cả hai** thành tích thì tình thế đổi hẳn: cùng nửa tổng $\\frac{a+b}{2}$, cùng nửa hiệu $\\frac{a-b}{2}$, nên [[a1|hai dòng giữa]] để lộ thừa số chung."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1",
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(sin(a) + sin(b))/(cos(a) + cos(b))",
+              "steps": [
+                {
+                  "at": "0",
+                  "note": "tử: sin + sin",
+                  "rule": "sum_to_product"
+                },
+                {
+                  "at": "1",
+                  "note": "mẫu: cos + cos",
+                  "rule": "sum_to_product"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: phân số (sin a cộng sin b) trên (cos a cộng cos b); rồi tử thành 2 sin nửa tổng nhân cos nửa hiệu; rồi mẫu thành 2 cos nửa tổng nhân cos nửa hiệu."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Rút hai thừa số chung, và chú ý engine xử hai cái **khác nhau**: rút $2$ thì im lặng, rút $\\cos\\frac{a-b}{2}$ thì [[a1|kèm một dòng đỏ]]. Nó nói đúng điều phải nói — $2$ chắc chắn khác $0$, còn $\\cos\\frac{a-b}{2}$ thì không, và chỗ nó bằng $0$ là chỗ mẫu ban đầu cũng bằng $0$.\nCòn lại $\\dfrac{\\sin\\frac{a+b}{2}}{\\cos\\frac{a+b}{2}}$, tức đúng $\\tan\\frac{a+b}{2}$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(2*sin((a + b)/2)*cos((a + (-1)*b)/2))/(2*cos((a + b)/2)*cos((a + (-1)*b)/2))",
+              "steps": [
+                {
+                  "arg": "2",
+                  "at": "",
+                  "rule": "cancel_common"
+                },
+                {
+                  "arg": "cos((a + (-1)*b)/2)",
+                  "at": "",
+                  "rule": "cancel_common"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: phân số hai tích; rồi bỏ thừa số 2 ở cả tử và mẫu; rồi bỏ cos nửa hiệu, kèm dòng điều kiện cos nửa hiệu khác 0. Còn lại sin nửa tổng trên cos nửa tổng."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chiều ngược lại. $\\sin 3x\\cos x$ là một **tích**, mà tích thì không cộng dồn được với gì — muốn tính $\\sin x\\cos x + \\sin 3x\\cos x + \\dots$ thì phải phá tích ra trước. Luật tích thành tổng làm đúng việc ấy: nó sinh ra hai góc $3x + x$ và $3x - x$, rồi [[a1|hai bước gộp]] rút chúng thành $4x$ và $2x$.\nKết quả $\\sin 3x\\cos x = \\frac{1}{2}(\\sin 4x + \\sin 2x)$ — cùng công thức với nhánh trên, chỉ đọc từ phải sang trái."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2",
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "sin(3*x)*cos(x)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "product_to_sum"
+                },
+                {
+                  "at": "@3*x + x",
+                  "note": "3x + x",
+                  "rule": "collect_like"
+                },
+                {
+                  "at": "@3*x + (-1)*x",
+                  "note": "3x − x",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bốn dòng: sin 3x nhân cos x; rồi tổng sin(3x cộng x) cộng sin(3x trừ x), tất cả chia 2; rồi góc thứ nhất gộp thành 4x; rồi góc thứ hai gộp thành 2x."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

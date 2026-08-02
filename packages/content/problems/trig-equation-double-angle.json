@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.5.0",
+  "id": "trig-equation-double-angle",
+  "statement": {
+    "vi": "Giải $\\sin 2x = \\sin x$. Hai vế đều là $\\sin$, nhưng **khác góc** — và chừng nào còn hai góc khác nhau thì không phép biến đổi đại số nào chạm tới được."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: nước đi đầu tiên không phải một phép tính mà là một phép **đổi góc**. Bung $\\sin 2x$ ra thành $2\\sin x\\cos x$ thì cả phương trình chỉ còn góc $x$, và từ đó nó là một phương trình tích tầm thường. Đây là lý do công thức góc nhân đôi được dạy trước phương trình lượng giác chứ không phải sau."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Đưa về một góc, rồi đưa về tích"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Bung góc nhân đôi ở vế trái: [[a1|cả phương trình]] còn đúng một góc $x$. Rồi chuyển hết về một vế và đặt $\\sin x$ làm nhân tử chung — dòng cuối là một phương trình tích, và tích bằng $0$ khi một thừa số bằng $0$.\nVậy $\\sin x = 0$ hoặc $\\cos x = \\frac12$. Chú ý chỗ dễ mất điểm: chia hai vế cho $\\sin x$ ngay từ đầu thì gọn hơn thật, nhưng nó **vứt mất** cả họ nghiệm $\\sin x = 0$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "sin(2*x) = sin(x)",
+              "steps": [
+                {
+                  "at": "L",
+                  "rule": "double_angle"
+                },
+                {
+                  "arg": "(-1)*sin(x)",
+                  "at": "",
+                  "rule": "add_both_sides"
+                },
+                {
+                  "at": "R",
+                  "rule": "collect_like"
+                },
+                {
+                  "arg": "sin(x)",
+                  "at": "L",
+                  "rule": "factor"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Năm dòng: sin 2x bằng sin x; rồi 2 sin x cos x bằng sin x; rồi trừ sin x hai vế; rồi vế phải gộp thành 0; rồi vế trái thành sin x nhân (2 cos x trừ 1) bằng 0."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

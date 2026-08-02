@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.5.0",
+  "id": "trig-square-of-sum",
+  "statement": {
+    "vi": "Rút gọn $(\\sin x + \\cos x)^2$. Bài này không cần mẹo nào — nó cần **một** hằng đẳng thức, và chỗ đáng nhìn là hằng đẳng thức ấy nuốt đúng hai hạng tử rồi để lại một con số."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: khai triển ra ba hạng tử, mà $\\sin^2 x + \\cos^2 x = 1$ chỉ bắt **hai** trong ba. Engine giữ nguyên hạng tử giữa và thay hai hạng tử kia bằng $1$ — nên hình cho thấy rõ phép rút gọn là một phép **thay chỗ**, không phải một phép tính lại cả dòng."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 1,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Khai triển rồi gọi tên"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Khai triển cho ba hạng tử: $\\sin^2 x$, $2\\sin x\\cos x$, $\\cos^2 x$. Hằng đẳng thức lượng giác cơ bản chỉ nhận **hai** trong ba — nó tìm $\\sin^2$ và $\\cos^2$ của **cùng một góc**, và hạng tử giữa không thuộc cặp ấy. [[a1|Dòng cuối]] vì thế còn đúng hai thứ: hạng tử giữa nguyên vẹn, và một số $1$ thế chỗ hai hạng tử kia."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(sin(x) + cos(x))^2",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "expand_square"
+                },
+                {
+                  "at": "",
+                  "rule": "pythagorean_identity"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: (sin x cộng cos x) tất cả bình phương; rồi sin bình x cộng 2 sin x cos x cộng cos bình x; rồi 2 sin x cos x cộng 1."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Còn $2\\sin x\\cos x$ thì viết gọn được nữa: nó **là** $\\sin 2x$. Kiểm bằng chính engine — đặt hai vế cạnh nhau rồi bung góc nhân đôi ở vế phải, và [[a1|dòng sau]] cho hai vế trùng nhau từng ký hiệu. Vậy $(\\sin x + \\cos x)^2 = 1 + \\sin 2x$.\nĐọc ngược, dòng ấy nói một điều đáng nhớ: $\\sin 2x$ nhận giá trị trong $[-1,1]$, nên $(\\sin x + \\cos x)^2$ không bao giờ vượt $2$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2*sin(x)*cos(x) = sin(2*x)",
+              "steps": [
+                {
+                  "at": "R",
+                  "rule": "double_angle"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: 2 sin x cos x bằng sin 2x; rồi 2 sin x cos x bằng 2 sin x cos x — hai vế giống hệt nhau."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

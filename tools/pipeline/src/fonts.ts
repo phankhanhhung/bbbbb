@@ -128,6 +128,104 @@ export function katexFontFiles(): string[] {
   return cached;
 }
 
+/** Bảng của một file TrueType: tên bốn ký tự → offset. */
+function tableDirectory(font: Buffer): Map<string, number> {
+  const tables = new Map<string, number>();
+  const count = font.readUInt16BE(4);
+  for (let i = 0; i < count; i += 1) {
+    const at = 12 + i * 16;
+    tables.set(font.toString('latin1', at, at + 4), font.readUInt32BE(at + 8));
+  }
+  return tables;
+}
+
+/**
+ * Bề rộng thật của chữ giao diện — **nửa còn lại của phép đo** (`PLAN-P1.md` §10.3b).
+ *
+ * `titleLines` ngắt dòng bằng cách **đếm ký tự** với một hằng số `FONT * 0.5`, tức nó
+ * giả định mọi ký tự rộng nửa em. Chú thích của chính nó thừa nhận: *"render headless
+ * thì không đo được bề rộng chữ"*, và chọn cắt sớm cho an toàn. Nhưng giả định ấy sai
+ * theo **cả hai** chiều — `i` hẹp hơn nhiều, `ằ`/`ữ` rộng hơn — nên nó vừa cắt sớm ở
+ * chỗ này vừa để tràn ở chỗ kia. Đo được: 17/141 card có mực chạm mép phải.
+ *
+ * Câu *"không đo được"* đúng cho tới lượt nhúng phông. Từ khi kho **mang theo**
+ * `DejaVuSans.ttf` thì bảng `hmtx` của đúng mặt chữ resvg sắp vẽ nằm ngay trong
+ * `node_modules` — và đó chính là lý lẽ đã dựng phần KaTeX của tệp này: *"phông không
+ * phải chuyện trang trí ở đây: nó là **một nửa của phép đo**"*. Với KaTeX nửa kia là
+ * `textWidth`; với chữ giao diện thì nửa kia là hàm dưới đây.
+ *
+ * Không dựng shaping engine: không kerning, không ligature, không chữ Ả Rập. Đề tiếng
+ * Việt là một chuỗi glyph rời, và tổng advance là **đúng** bề rộng của nó.
+ */
+let metrics: { advance: (code: number) => number; unitsPerEm: number } | null = null;
+
+export function uiTextWidth(text: string, fontSize: number): number {
+  if (metrics === null) metrics = readMetrics(readFileSync(uiFontFiles()[0] as string));
+  let total = 0;
+  for (const char of text) total += metrics.advance(char.codePointAt(0) as number);
+  return (total * fontSize) / metrics.unitsPerEm;
+}
+
+function readMetrics(font: Buffer): { advance: (code: number) => number; unitsPerEm: number } {
+  const tables = tableDirectory(font);
+  const head = tables.get('head') as number;
+  const unitsPerEm = font.readUInt16BE(head + 18);
+  const numHMetrics = font.readUInt16BE((tables.get('hhea') as number) + 34);
+  const hmtx = tables.get('hmtx') as number;
+
+  const cmap = tables.get('cmap') as number;
+  const subtables = new Map<number, number>();
+  for (let i = 0; i < font.readUInt16BE(cmap + 2); i += 1) {
+    const at = cmap + 4 + i * 8;
+    const off = cmap + font.readUInt32BE(at + 4);
+    subtables.set(font.readUInt16BE(off), off);
+  }
+
+  const glyphOf = pickCmap(font, subtables);
+
+  return {
+    unitsPerEm,
+    // Glyph sau `numberOfHMetrics` dùng chung advance với cái cuối — đúng đặc tả, và
+    // đó là cách file nén một dãy dài glyph cùng bề rộng (chữ CJK chẳng hạn).
+    advance: (code) => {
+      const glyph = glyphOf(code);
+      return font.readUInt16BE(hmtx + Math.min(glyph, numHMetrics - 1) * 4);
+    },
+  };
+}
+
+/**
+ * Bảng con `cmap` **định dạng 12** — và chỉ định dạng ấy.
+ *
+ * DejaVu có năm bảng con, hai trong đó khai `platform 3`: `(3,1)` định dạng 4 và
+ * `(3,10)` định dạng 12. Bản đầu của hàm gọi lọc theo platform rồi giữ cái **cuối
+ * cùng** khớp — tức luôn vớ phải định dạng 12 — rồi đọc nó theo bố cục của định dạng
+ * 4. Không nổ, không báo lỗi: nó trả glyph $0$ cho mọi ký tự, và `.notdef` có advance
+ * thật, nên `iiiiiiiiii` và `MMMMMMMMMM` ra **cùng một** bề rộng. Một phép đo sai đều
+ * nhìn như một phép đo đúng — cùng họ với ô tofu ở lượt nhúng phông.
+ *
+ * Nên chọn theo **định dạng**, không theo platform. Và chỉ viết bộ đọc cho định dạng
+ * 12 chứ không viết cả hai: mặt chữ này ghim trong `package.json`, nó *có* định dạng
+ * 12, nên một bộ đọc định dạng 4 là hai chục dòng không lượt chạy nào đi qua — lượt
+ * bẻ răng xác nhận đúng thế, ép nhánh kia chạy thì không test nào đỏ. Thiếu bảng con
+ * ấy thì **ném**, vì đó là lúc mặt chữ đã đổi thành thứ khác hẳn.
+ */
+function pickCmap(font: Buffer, subtables: ReadonlyMap<number, number>): (code: number) => number {
+  const wide = subtables.get(12);
+  if (wide === undefined) throw new Error('mặt chữ giao diện không có cmap định dạng 12');
+
+  const groups = font.readUInt32BE(wide + 12);
+  return (code) => {
+    for (let g = 0; g < groups; g += 1) {
+      const at = wide + 16 + g * 12;
+      if (font.readUInt32BE(at) > code) return 0; // nhóm sắp tăng dần
+      if (font.readUInt32BE(at + 4) < code) continue;
+      return font.readUInt32BE(at + 8) + (code - font.readUInt32BE(at));
+    }
+    return 0;
+  };
+}
+
 /** Kiểu chữ suy từ đuôi tên file, đúng như `@font-face` của KaTeX khai. */
 function styleOf(name: string): { bold: boolean; italic: boolean } {
   const suffix = name.slice(name.indexOf('-') + 1, -4);
@@ -137,12 +235,7 @@ function styleOf(name: string): { bold: boolean; italic: boolean } {
 function restyle(font: Buffer, name: string): Buffer {
   const { bold, italic } = styleOf(name);
   const out = Buffer.from(font);
-  const tables = new Map<string, number>();
-  const count = out.readUInt16BE(4);
-  for (let i = 0; i < count; i += 1) {
-    const at = 12 + i * 16;
-    tables.set(out.toString('latin1', at, at + 4), out.readUInt32BE(at + 8));
-  }
+  const tables = tableDirectory(out);
 
   const os2 = tables.get('OS/2');
   if (os2 !== undefined) {

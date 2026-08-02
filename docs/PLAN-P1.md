@@ -2,7 +2,7 @@
 
 Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Đối tượng: 1 người (Owner-Author)
 
-**Trạng thái (soát lại 2026-08-02):** đang chạy · **9 engine** + lớp ván chơi (M78) · schema **`1.5.0`** (freeze `1.0.0` ngày 2026-08-01, năm minor sau đó, mỗi minor một migration) · kho **141 bài** đã xuất bản · **3843 test** (67 tệp), e2e **128** · **G-A và G-C đã đóng** ngày 2026-08-01 (§10 ghi đóng bằng gì và rủi ro nào còn lại) · 80 luật đại số, 60 validator, 46 lệnh sandbox trên 9 engine.
+**Trạng thái (soát lại 2026-08-02):** đang chạy · **9 engine** + lớp ván chơi (M78) · schema **`1.5.0`** (freeze `1.0.0` ngày 2026-08-01, năm minor sau đó, mỗi minor một migration) · kho **144 bài** đã xuất bản · **3890 test** (68 tệp), e2e **146** · **G-A và G-C đã đóng** ngày 2026-08-01 (§10 ghi đóng bằng gì và rủi ro nào còn lại) · 80 luật đại số, 60 validator, 46 lệnh sandbox trên 9 engine.
 
 > **Dòng trạng thái này từng đứng ở "M48 xong; schema `0.3.0`; kho 91 bài; G-C chưa
 > đóng" cho tới lượt soát 2026-08-02** — tức nó khai sai cả bốn trường, trong khi
@@ -2286,7 +2286,21 @@ Quyết định trước, để lúc gấp không phải quyết trong hoảng l
    - **Test quân cờ của G-09 xanh trên một ô tofu.** Nó chỉ hỏi `mực > 0.005`, mà một ký tự **thiếu** không vẽ ra khoảng trắng — nó vẽ ra `.notdef`, và ô ấy có mực. Nay phép so là với chính mực của `.notdef`.
    - **Bốn mutant, bốn lỗ.** Bẻ răng lượt này bắt được: bật lại `loadSystemFonts` mà toàn bộ test vẫn xanh (máy chạy test *có* DejaVu — đúng lý do món này tồn tại); đổi bundle sang `DejaVuSerif` mà vẫn xanh vì hai vế của phép so **cùng suy biến**; và bỏ mặt **Bold** mà 2473 test vẫn xanh, dù `font-weight: 600` được watermark, board và set renderer phát ra thật.
 
-3b. ⬜ **Tiêu đề OG tràn mép phải trên 17/141 card.** `titleLines` ngắt dòng bằng **đếm ký tự** với một hằng số `FONT * 0.5` — nó giả định mọi ký tự rộng nửa em, mà tiếng Việt có dấu thì không. Đo được: 17 card có mực ở cột 8px sát mép phải trong vùng tiêu đề. **Không phải do lượt nhúng phông**: đo lại với cấu hình cũ (phông hệ thống) ra **đúng 17**, nên nó có sẵn từ trước. Chữa đúng là đo bề rộng thật thay vì đếm ký tự.
+3b. ✅ **Tiêu đề OG tràn mép phải — xong 2026-08-02.** ~~`titleLines` ngắt dòng bằng **đếm ký tự** với một hằng số `FONT * 0.5` — nó giả định mọi ký tự rộng nửa em, mà tiếng Việt có dấu thì không. Đo được: 17 card có mực ở cột 8px sát mép phải trong vùng tiêu đề.~~ Chữa đúng như dòng gạch đã nói: **đo bề rộng thật**. `18/144 → 0`.
+
+   - **Câu tự bào chữa của `titleLines` hết đúng ở lượt trước.** Nó viết: *"render headless thì không đo được bề rộng chữ"*, và điều ấy đúng cho tới khi kho **mang theo** `DejaVuSans.ttf` ở §10.3. Bảng `hmtx` của đúng mặt chữ resvg sắp vẽ nay nằm trong `node_modules`, nên `uiTextWidth` cộng advance thật. Cùng lý lẽ đã dựng phần KaTeX của `fonts.ts`: bundle phông là **một nửa** của phép đo, và nửa kia là hàm đo — hai món của §10 hoá ra là một món chẻ đôi.
+   - **Giả định "nửa em" sai theo cả hai chiều**, nên "thà cắt sớm cho an toàn" không hề an toàn: ở cỡ 34px, `iiiiiiiiii` rộng 94,5px chứ không 170, còn `MMMMMMMMMM` rộng 293,3.
+   - **Một lỗi sai *đều* nhìn như một lỗi không có.** Bản đầu chọn bảng con `cmap` theo platform và vớ phải bảng định dạng 12, rồi đọc nó theo bố cục định dạng 4 — trả glyph 0 cho mọi ký tự, mà `.notdef` có advance thật, nên chữ hẹp và chữ rộng ra **cùng một** bề rộng. Cùng họ với ô tofu ở §10.3, và cùng cách bắt: ép hai thứ phải khác nhau nói khác nhau.
+   - **Chốt canh đo trên chuỗi SVG, không trên PNG** — nhanh gấp trăm lần nên chạy hết 144 bài chứ không lấy mẫu, và nó hỏi đúng tính chất muốn giữ.
+
+3c. ✅ **Chữ toán trên card bị xoá im lặng — xong 2026-08-02.** Tìm ra ở lượt nhìn ảnh của bài lượng giác đầu tiên: tiêu đề `$(\sin x + \cos x)^2$` hiện lên card thành **`( x + x)²`**. Không phải chữ xấu mà chữ **sai**, trên đúng kênh mà §11 gọi là kênh growth chính.
+
+   Thủ phạm là câu cuối của `toReadableMath`: `.replace(/\\[a-zA-Z]+/g, '')` — vứt mọi lệnh LaTeX còn sót. Nó đọc như một lưới an toàn, nhưng nó **không phân biệt** lệnh trình bày với lệnh mang nội dung. Quét kho: **31 lệnh** rơi vào đó, gồm `\sqrt` (49 lần), `\frac` (49), `\ne` (13 — bảng chỉ khai `\neq`), `\begin{cases}`, `\text`, `\pmod`.
+
+   - **Chữa cả lớp, không chữa từng lệnh.** Chữa `\sin` xong thì lệnh thứ 32 lại rơi vào chổi, và lại rơi im lặng. Nên chốt canh hỏi câu tổng — *kho còn lệnh nào chưa ai xử không?* — qua một API thật (`unhandledMathCommands`), và than kèm tên lệnh lẫn tên bài. Bài sau gõ lệnh mới thì biết lúc `pnpm test`, không phải lúc card đã lên mạng.
+   - **Lệnh có đối số thì phải đọc đối số**, bằng đếm ngoặc chứ không bằng regex: `\frac{1}{1-x^{2}}` có ngoặc lồng.
+   - **Và một lỗ mà cái răng ấy không thấy.** `[/\\cdot/g, '·']` đứng trước `\cdots`, nên `$a \cdots z$` ra `a ·s z` — **gặm** chứ không xoá, và với cái răng kia thì `\cdot` *đã* được xử nên không có gì để than. Cả lớp ấy chết bằng **hình dạng dữ liệu**: bảng đổi từ regex sang tên lệnh, dựng thành một alternation đóng bằng `(?![a-zA-Z])`. Kèm ba phép so riêng cho chỗ mù.
+   - **Còn mở:** `\tan\frac{a+b}{2}` làm phẳng ra `tan(a+b)/2`, đọc thành "tan của $a+b$, chia 2". Hôm nay tác giả vòng bằng `\left(...\right)`; chữa đúng là `structures()` biết tên phép toán ăn một đối số.
 4. ✅ **Label atlas cho nhãn LaTeX trong canvas** (GR-08, D-07) — **xong ở M18**. Engine derivation dùng nó; các engine khác vẫn vẽ nhãn text thuần, và đó là đủ cho nội dung hiện có.
 5. ⬜ Pilot ≥10 học sinh + 2 GV (DoD §15.5).
 6. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
@@ -2306,7 +2320,7 @@ là người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp th
 bài) đã cũ hai lần. Nó nằm đó qua cả lượt viết mục 2. Bản đúng, tại lượt soát
 2026-08-02:
 
-- Kho có **141 bài**. G-C đóng, schema `1.5.0`.
+- Kho có **144 bài**. G-C đóng, schema `1.5.0`.
 - **Không engine tổ hợp mới nào được mở** kể từ đó, và đó là quyết định chứ không
   phải quán tính: `PRD-07` cấm thêm engine chỉ để tăng coverage. Việc đã chạy là
   **làm sâu engine đã có** — `algebra` từ 73 lên 80 luật, `graph` thêm ba validator,

@@ -45,7 +45,7 @@ export {
   type ValueSpan,
 } from './value-markup.js';
 
-export { stripBoldMarkup, toReadableMath, toSearchableText } from './math-text.js';
+export { stripBoldMarkup, toReadableMath, toSearchableText, unhandledMathCommands } from './math-text.js';
 
 export {
   createEngineRegistry,

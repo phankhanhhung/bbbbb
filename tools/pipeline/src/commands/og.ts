@@ -22,7 +22,7 @@ import {
   type Viewport,
 } from '@combviz/schema';
 import { loadAtlas } from '../atlas.js';
-import { fontOptions } from '../fonts.js';
+import { fontOptions, uiTextWidth } from '../fonts.js';
 import { ENGINE_RENDERERS } from '../engines.js';
 
 /**
@@ -261,21 +261,32 @@ function composeCard(
 /**
  * Đề bài xuống dòng thủ công.
  *
- * SVG không tự ngắt dòng, và render headless thì không đo được bề rộng chữ. Ước
- * lượng theo số ký tự: thà cắt hơi sớm còn hơn để chữ tràn ra khỏi card — tràn
- * thì hỏng hẳn, ngắn thì chỉ là thừa chỗ.
+ * SVG không tự ngắt dòng, nên chỗ này phải tự ngắt — và phải **đo** để ngắt.
+ *
+ * Bản trước ước lượng theo **số ký tự** với hằng `FONT * 0.5`, kèm một lời tự bào
+ * chữa: *"render headless thì không đo được bề rộng chữ… thà cắt hơi sớm còn hơn
+ * để chữ tràn"*. Cả hai vế đều không đứng được:
+ *
+ * - Nó **không** cắt sớm một cách an toàn. Giả định "mọi ký tự rộng nửa em" sai
+ *   theo hai chiều cùng lúc — ở cỡ $34$px thì `iiiiiiiiii` rộng $94{,}5$px chứ
+ *   không $170$, còn `MMMMMMMMMM` rộng $293{,}3$. Đo được: **17/141** card có mực
+ *   chạm cột $8$px sát mép phải.
+ * - Câu *"không đo được"* hết đúng kể từ lượt nhúng phông. Kho nay mang theo
+ *   `DejaVuSans.ttf` — đúng mặt chữ resvg sắp vẽ — nên `uiTextWidth` cộng advance
+ *   từ bảng `hmtx` của chính file ấy. Cùng lý lẽ đã dựng phần KaTeX của `fonts.ts`:
+ *   bundle phông là **một nửa** của phép đo, và nửa kia là hàm đo.
  */
 function titleLines(problem: Problem, x: number, width: number): SvgNode[] {
   const FONT = 34;
-  const perLine = Math.floor(width / (FONT * 0.5));
   // resvg không có KaTeX. Không đổi ký hiệu sang Unicode ở đây thì card — thứ
   // duy nhất người ta thấy khi ai đó chia sẻ link — hiện thẳng "5\times5".
   const words = toReadableMath(stripBoldMarkup(stripAnchorMarkup(problem.statement.vi))).split(/\s+/);
+  const fits = (line: string): boolean => uiTextWidth(line, FONT) <= width;
 
   const lines: string[] = [];
   let current = '';
   for (const word of words) {
-    if (current.length + word.length + 1 > perLine) {
+    if (current !== '' && !fits(`${current} ${word}`)) {
       lines.push(current);
       current = word;
       if (lines.length === 5) break;
@@ -284,7 +295,13 @@ function titleLines(problem: Problem, x: number, width: number): SvgNode[] {
     }
   }
   if (current && lines.length < 5) lines.push(current);
-  if (lines.length === 5) lines[4] = `${(lines[4] as string).slice(0, perLine - 1)}…`;
+  // Dòng thứ năm bị cắt thì cắt tới chỗ **vừa khung** kể cả dấu `…`, chứ không cắt
+  // theo số ký tự rồi hy vọng. Một từ dài hơn cả khung cũng rơi vào đây.
+  if (lines.length === 5 || !fits(lines.at(-1) ?? '')) {
+    let last = lines.at(-1) as string;
+    while (last.length > 1 && !fits(`${last}…`)) last = last.slice(0, -1);
+    lines[lines.length - 1] = lines.length === 5 ? `${last}…` : last;
+  }
 
   return lines.map((line, i) =>
     text(

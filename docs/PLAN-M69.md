@@ -171,12 +171,16 @@ tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mớ
 | **Soát tài liệu** — đối chiếu cả 11 tệp `docs/` với mã và kho tại HEAD; 12 chỗ khai sai | 08-02 | mục "Soát tài liệu" ngay dưới |
 | **Soát minimap** — bảy ý: khoá tỉ lệ, bàn phím, sợi/cây, độ phủ nhánh, glyph, ga hội tụ, nhánh ma + xương sống | 08-02 | `PLAN-P1.md` §G-03 (lượt sửa chốt) |
 | **Nhúng phông vào raster** — đóng `PLAN-P1.md` §10.3, món cuối của §10 mà máy làm được | 08-02 | `PLAN-P1.md` §10.3 |
+| **Ba bài lượng giác** — tiêu bốn luật đã dựng mà chưa bài nào dùng; §5 tụt 12 → 8 | 08-02 | `ALGEBRA-COVERAGE.md` §5 |
+| **Chữ toán trên OG card**: `\sin` không còn bị xoá im lặng; 31 lệnh khác cũng thế | 08-02 | `PLAN-P1.md` §10.3c |
+| **Tiêu đề OG đo bề rộng thật** — đóng `PLAN-P1.md` §10.3b, `18/144 → 0` card tràn | 08-02 | `PLAN-P1.md` §10.3b |
 
-Kho đi từ **114 bài → 141 bài** trong hai ngày, test từ **3459** (M78.8) lên
-**3843**, schema từ `1.0.0` lên `1.5.0` — năm minor, năm migration đồng nhất.
+Kho đi từ **114 bài → 144 bài** trong hai ngày, test từ **3459** (M78.8) lên
+**3890 / 68 tệp**, schema từ `1.0.0` lên `1.5.0` — năm minor, năm migration đồng nhất.
 
 > **Một cái bẫy đếm, ghi ra để lần sau không phải điều tra lại.** Con số chính thức
-> là số của `pnpm test` (`vitest run` không lọc đường dẫn): **3843 / 67 tệp**. Còn
+> là số của `pnpm test` (`vitest run` không lọc đường dẫn) — **3843 / 67 tệp** lúc
+> ghi dòng này. Còn
 > `tools/mutation-sweep.py` chạy `vitest run packages tools/pipeline/test` — hẹp
 > hơn — và cho **3803 / 63 tệp**. Hai con số cùng đúng, chỉ khác phạm vi quét.
 > Chênh lệch $40$ test ấy nằm gọn trong **bốn tệp của `apps/`**:
@@ -262,13 +266,15 @@ lại vẫn phải soát tay — nhưng nay ít nhất chúng có một danh sá
   `ALGEBRA-COVERAGE.md` §4.2.
 - **Binet / $\frac{1}{1-P(x)}$ với $\deg P \ge 2$** — sau ranh giới vô tỉ mà
   `series.ts` tự vạch. `ALGEBRA-COVERAGE.md` §5.1.
-- **Bốn luật lượng giác** đã dựng mà chưa bài nào dùng. `ALGEBRA-COVERAGE.md` §5.
 - **`point` đứng yên ở 3 bài** kể từ M36 — nội dung trước, đúng luật
   `ENGINE-BACKLOG.md` §0.3.
-- **Tiêu đề OG tràn mép phải trên 17/141 card.** `titleLines` ngắt dòng bằng *đếm
-  ký tự* với hằng số `FONT * 0.5`, tức giả định mọi ký tự rộng nửa em — tiếng Việt
-  có dấu thì không. Đo lại với cấu hình phông cũ ra **đúng 17**, nên đây là lỗi có
-  sẵn chứ không phải hệ quả của lượt nhúng phông. `PLAN-P1.md` §10.3b.
+- **`\frac` ngay sau tên phép toán vẫn nhập nhằng khi làm phẳng.** `\tan\frac{a+b}{2}`
+  ra `tan(a+b)/2` trên OG card, đọc thành "tan của $a+b$, chia 2". Vòng được bằng
+  `\left(...\right)`; chữa đúng là `structures()` biết tên phép toán ăn một đối số.
+  `PLAN-P1.md` §10.3c — phần còn mở của một mục đã đóng.
+- **Bài đại số chưa bài nào có sandbox** — 39/39 là `illustration`, dù M65 đã dựng
+  panel "Nước đi tại đây" cho engine ấy. Năng lực có, nội dung chưa gọi tới. Cùng
+  khuôn với dòng `point` ngay trên.
 
 ---
 

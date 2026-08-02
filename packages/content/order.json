@@ -140,9 +140,14 @@
     "imo-1986-p3-pentagon-operation",
     "five-colour-planar-sketch",
     "timetable-edge-colouring",
-    "hanoi-generating-function"
+    "hanoi-generating-function",
+    "trig-equation-double-angle",
+    "trig-square-of-sum",
+    "trig-sum-and-product"
   ],
   "newest": [
-    "hanoi-generating-function"
+    "trig-equation-double-angle",
+    "trig-square-of-sum",
+    "trig-sum-and-product"
   ]
 }

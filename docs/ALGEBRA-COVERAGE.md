@@ -2,7 +2,7 @@
 
 Trạng thái: **ước lượng chuyên gia, không phải điều tra** · Viết: 2026-08-01 (M70,
 sau freeze schema `1.0.0`) · Đo lại: 2026-08-02 (sau M71–M73, loạt bài hàm sinh,
-AL-20) · Nợ này có tên từ `ENGINE-ALGEBRA.md` §19 mục 3.
+AL-20, loạt bài lượng giác) · Nợ này có tên từ `ENGINE-ALGEBRA.md` §19 mục 3.
 
 > **Đọc con số ở đây đúng cách.**
 >
@@ -68,20 +68,30 @@ xong, và chỗ chưa xong lớn nhất vẫn là §4.1.
 | | Số đo | Nguồn |
 |---|---:|---|
 | Luật | **80** | `RULES.length` |
-| …đã có bài dùng | **68** | quét `config.steps[].rule` toàn kho |
-| …chưa bài nào dùng | **12** | xem §5 |
+| …đã có bài dùng | **72** | quét `config.steps[].rule` toàn kho |
+| …chưa bài nào dùng | **8** | xem §5 |
 | Kiểu nút `Expr` | **16** | `EXPR_KINDS.length` |
 | Sân kiểm | **4** | $\mathbb{F}_p$ · thực · nguyên · chuỗi hệ số |
 | Hợp đồng kiểm | **7** | `sameValue`, `sameSolutionSet`, `implies`, `root`, `instance`, `binding`, `claim` |
 | Hàm không-đa-thức | **9** | `binom cos exp fact ln log perm sin tan` |
-| Bài dùng engine | **36 / 141** | `engines_used` chứa `algebra` |
+| Bài dùng engine | **39 / 144** | `engines_used` chứa `algebra` |
 
 Bảng này đi từ $73$ luật lên $80$ kể từ lượt đo M70 — bảy luật, và đúng bảy: M71 thêm
 `sum_telescope` + `specialize`, M72 thêm bốn luật `coeff_*`, AL-20 thêm
-`partial_fractions`. Số luật **chưa bài nào dùng** vẫn tụt $13 \to 12$ (`sum_const`
-rời danh sách ở loạt bài hàm sinh). Đó là con số đáng nhìn nhất trong bảng, vì nó là
-con số duy nhất **có thể xấu đi** trong khi mọi con số khác đẹp lên: mỗi luật thêm vào
-mà không có bài dùng thì nó tăng, và nó đã không tăng.
+`partial_fractions`. Số luật **chưa bài nào dùng** tụt $13 \to 12$ ở loạt bài hàm sinh
+(`sum_const` rời danh sách), rồi $12 \to 8$ ở loạt bài lượng giác. Đó là con số đáng
+nhìn nhất trong bảng, vì nó là con số duy nhất **có thể xấu đi** trong khi mọi con số
+khác đẹp lên: mỗi luật thêm vào mà không có bài dùng thì nó tăng.
+
+Lượt $12 \to 8$ là lượt đầu tiên con số ấy tụt vì **nội dung** chứ không vì một luật
+mới tình cờ có bài — ba bài lượng giác soạn ra đúng để tiêu bốn năng lực §5 đã chỉ mặt
+đặt tên, và không luật nào thêm vào ở lượt ấy. Nên đây là phép đo sạch nhất của cái
+nhịp mà §5 đòi: **năng lực trước, nội dung sau, và nội dung phải thật sự tới**.
+
+Từ lượt này con số ấy **có răng**: `tools/pipeline/test/trigonometry.test.ts` quét kho
+rồi so với cả con số ở bảng trên, danh sách tên ở §5, lẫn chữ đếm trong tiêu đề §5.
+Trước đó nó là một khẳng định tự khai *"đo bằng máy"* mà không máy nào đo lại — đúng
+lớp lỗi mà lượt soát tài liệu tìm thấy mười hai lần trong cùng ngày.
 
 Trần cứng đáng nhớ khi đọc bảng §3: `maxSteps: 12` (một scene tối đa 12 bước),
 `maxVars: 6`, `maxRelations: 4`, `maxDegree: 64`.
@@ -164,7 +174,7 @@ ra từ chuỗi thế*. Đó là hạng mục kế tiếp của họ này, và n
 
 ### 4.3 Engine này phục vụ ai
 
-Cột "phổ thông" cho ~88%, và **36/141 bài** của kho đang dùng nó. Nếu bộ mặt của
+Cột "phổ thông" cho ~88%, và **39/144 bài** của kho đang dùng nó. Nếu bộ mặt của
 kho là chuyên đề bắc cầu phổ thông → chuyên, thì engine đã gần xong việc và ba mục
 M71–M73 là mở rộng biên, không phải lấp lỗ. Nếu bộ mặt là olympiad thuần, thì
 §4.1 là việc lớn nhất còn lại của cả dự án, và §4.2 là việc lớn thứ hai — nhưng
@@ -175,27 +185,46 @@ lựa chọn có giá đọc được.
 
 ---
 
-## 5. Mười hai luật chưa bài nào dùng
+## 5. Tám luật chưa bài nào dùng
 
 Đo bằng máy, và nó là một danh sách đáng đọc chứ không phải rác: mỗi luật ở đây là
 một năng lực **đã trả tiền** mà chưa thu về nội dung nào.
 
 ```
-double_angle  log_exp  log_quotient  pow_add  pow_mul  pow_split
-power_to_root  product_to_sum  pythagorean_identity  root_to_power
-split_fraction  sum_to_product
+log_exp log_quotient pow_add pow_mul pow_split power_to_root root_to_power split_fraction
 ```
 
-Ba nhóm, và ba cách xử khác nhau:
+Sau lượt lượng giác thì danh sách chỉ còn **một** nhóm, và đó là nhóm không cần chữa:
 
 - **Anh em của luật đã dùng** (`pow_add`/`pow_mul`/`pow_split`, `root_to_power` ↔
   `power_to_root`, `log_quotient`, `log_exp`, `split_fraction`): có vì bộ luật
   phải **đóng** — thiếu chiều ngược thì người học đi tới mà không đi lui được.
   Không cần bài riêng.
-- **Lượng giác** (`double_angle`, `product_to_sum`, `sum_to_product`,
-  `pythagorean_identity`): bốn luật, **không** bài nào. Đây là chỗ đáng soạn nội
-  dung nhất trong danh sách — năng lực có sẵn, chỉ thiếu bài.
 - Không luật nào ở đây là luật chết cần gỡ.
+
+**Bốn luật lượng giác rời danh sách** (2026-08-02): `double_angle`, `product_to_sum`,
+`sum_to_product`, `pythagorean_identity` — đúng nhóm mà bản trước của mục này gọi là
+*"chỗ đáng soạn nội dung nhất trong danh sách"*. Ba bài tiêu chúng:
+
+| bài | luật tiêu được |
+|---|---|
+| `trig-square-of-sum` | `pythagorean_identity`, `double_angle` |
+| `trig-sum-and-product` | `sum_to_product`, `product_to_sum` |
+| `trig-equation-double-angle` | `double_angle` — chỗ nó **làm việc**, không chỉ minh hoạ |
+
+Hai chỗ đáng ghi, vì cả hai là ràng buộc thật của engine chứ không phải lựa chọn thẩm mỹ:
+
+- **Cả bốn luật chỉ đi một chiều, và là cùng một chiều.** `pythagorean_identity` chỉ
+  nuốt $\sin^2 + \cos^2 \to 1$; `double_angle` chỉ bung $\sin 2x \to 2\sin x\cos x$.
+  Nên bài phải soạn *xuôi theo dòng*: không dựng được lời giải nào cần gấp $2\sin x\cos
+  x$ ngược lại thành $\sin 2x$. Chỗ ấy đi vòng bằng một **phép kiểm đẳng thức** — đặt
+  hai vế cạnh nhau rồi bung vế phải cho tới khi hai vế trùng nhau từng ký hiệu, đúng như
+  bước 2 của `trig-square-of-sum`. Cách vòng ấy không phải một mẹo che: nó **đúng hơn**,
+  vì thứ hiện ra trên hình là một phép kiểm chứ không phải một phép biến đổi giả vờ.
+- **`cancel_common` nhận một thừa số mỗi lần.** Rút $2\cos\frac{a-b}{2}$ trong một lượt
+  bị từ chối; phải hai bước — và hai bước ấy hoá ra **dạy được**: bước rút $2$ im lặng,
+  bước rút $\cos\frac{a-b}{2}$ kèm một dòng điều kiện đỏ, nên người học nhìn thấy ngay
+  vì sao chỉ một trong hai cần điều kiện.
 
 **`sum_const` rời danh sách** ở loạt bài hàm sinh (2026-08-02) — bảy luật mới vào từ
 lượt M70 mà danh sách này ngắn đi một, không dài ra. Cách duy nhất giữ được nhịp ấy
