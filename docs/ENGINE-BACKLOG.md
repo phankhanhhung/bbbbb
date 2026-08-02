@@ -259,14 +259,28 @@ bằng toạ độ.
 
 **Nợ có tên**
 
-- **validator tô màu *cạnh*** chưa dựng — **thu hẹp lại sau loạt 4/4.** Nợ này ghi
-  ở loạt 2/4 với giả định rằng bài Ramsey nhiều màu sẽ cần nó. Sai: soát lại thì
-  `no-mono-triangle` vốn **không phân biệt màu** — nó so `ab.color === bc.color ===
-  ca.color` với bất kỳ màu nào — nên $R(3,3,3)$ ba màu của IMO 1964 chạy được ngay,
-  không thêm một dòng nào. Phần còn nợ thật là **tô cạnh đúng luật** (hai cạnh chung
-  đỉnh thì khác màu), và bài kinh điển của *nó* là xếp thời khoá biểu. Nợ hẹp hơn
-  nhiều so với lúc ghi, và biết được điều đó là nhờ đi làm mạch 4/4 chứ không phải
-  nhờ suy đoán thêm.
+- ~~**validator tô màu *cạnh***~~ ✅ **trả xong (GR-15): `proper-edge-colouring[:k]`.**
+
+  Nợ này ghi ở loạt 2/4 với giả định bài Ramsey nhiều màu sẽ cần nó. Sai, và loạt 4/4
+  chỉ ra chỗ sai: `no-mono-triangle` vốn **không phân biệt màu** — nó so
+  `ab.color === bc.color === ca.color` với bất kỳ màu nào — nên $R(3,3,3)$ ba màu chạy
+  được ngay, không thêm một dòng. Phần thật sự còn thiếu chỉ là tô cạnh **đúng luật**,
+  và biết được điều đó là nhờ đi làm chứ không nhờ suy đoán thêm.
+
+  Song sinh với `proper-colouring`, và **cố ý** giống hệt: cùng ba tầng trả lời (đụng
+  màu → chưa tô → quá $k$ màu), cùng quy ước "chưa tô là *chưa xét*, không phải màu số
+  $0$". Hai validator đọc như một cặp thì tác giả học một lần dùng được cả hai.
+
+  Khác đúng một chỗ, và chỗ ấy là bản chất: quan hệ "kề" của **cạnh** là *chung một đầu
+  mút*, không phải `graph.adjacency`. Nên khuyên ($u = v$) ở đây **không** được bỏ qua
+  như bên tô đỉnh — một cạnh chung đầu mút với chính nó là câu vô nghĩa, nên luật từ
+  chối thẳng thay vì giả vờ chấm được.
+
+  Bài trả tiền: `timetable-edge-colouring`. Xếp thời khoá biểu **là** tô màu cạnh —
+  tiết học là cạnh, ca học là màu, "không dạy hai chỗ cùng lúc" đúng là "hai cạnh chung
+  đỉnh khác màu". Đáp số bằng $\Delta$, nhưng **chỉ vì** đồ thị hai phía: bỏ điều kiện
+  ấy thì tam giác cần $3$ ca dù mọi đỉnh chỉ bậc $2$, và bước ấy khai
+  `expects_violation` để bức tường **là** bài học.
 - ~~**đỉnh đồ thị không mang được số**~~ ✅ **trả xong (GR-14).** Nợ này ghi ở loạt
   4/4 khi IMO 1986 bài 3 bị cắt: cạnh có `weight`, đỉnh chỉ có `label` là chuỗi, nên
   đại lượng đơn điệu $\sum (x_i - x_{i+2})^2$ không khai thành `invariants[]` được và

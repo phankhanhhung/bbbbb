@@ -271,3 +271,73 @@ describe('proper-colouring — tô đỉnh', () => {
     expect(GRAPH_VALIDATOR_IDS).toContain('proper-colouring:<k>');
   });
 });
+
+/**
+ * `proper-edge-colouring[:k]` (GR-15) — nợ có tên từ loạt bài 2/4.
+ *
+ * Song sinh với `proper-colouring`, và test cũng cố ý song sinh: cùng ba tầng trả lời,
+ * cùng quy ước "chưa tô là chưa xét". Khác đúng chỗ bản chất — quan hệ kề của **cạnh**
+ * là *chung một đầu mút*.
+ */
+describe('proper-edge-colouring — tô cạnh', () => {
+  const check = (id: string, edges: readonly string[]) =>
+    resolveGraphValidator(id)!.check(graphOf(edges));
+
+  it('hai cạnh chung đỉnh cùng màu ⇒ đỏ, và chỉ ra **đúng cặp cạnh**', () => {
+    // e0 = a-b, e1 = b-c: chung đỉnh b, cùng màu 1.
+    const out = check('proper-edge-colouring', ['a-b:1', 'b-c:1', 'c-d:2']);
+    expect(out.ok).toBe(false);
+    expect([...out.violations].sort()).toEqual(['e0', 'e1']);
+  });
+
+  it('cùng màu mà **không** chung đỉnh thì hợp lệ — đó là cả điểm của tô cạnh', () => {
+    // a-b và c-d rời nhau: dùng lại màu 1 là đúng, không phải sai.
+    expect(check('proper-edge-colouring', ['a-b:1', 'c-d:1']).ok).toBe(true);
+  });
+
+  it('cạnh chưa tô là **chưa xét**, không phải "cùng màu 0"', () => {
+    // Hai cạnh chung đỉnh, cả hai chưa tô: phải nói "chưa tô", không nói "đụng màu".
+    const out = check('proper-edge-colouring', ['a-b', 'b-c']);
+    expect(out.ok).toBe(false);
+    expect(out.message).toContain('chưa tô');
+    expect([...out.violations].sort()).toEqual(['e0', 'e1']);
+
+    // Và một cạnh đã tô cạnh một cạnh chưa tô thì **không** phải xung đột.
+    const half = check('proper-edge-colouring', ['a-b:1', 'b-c']);
+    expect(half.message).toContain('chưa tô');
+  });
+
+  it('`:k` chặn số màu, và chỉ chặn sau khi đã tô xong', () => {
+    // Đường đi 3 cạnh cần 2 màu; tô đúng 2 thì `:2` đạt.
+    expect(check('proper-edge-colouring:2', ['a-b:1', 'b-c:2', 'c-d:1']).ok).toBe(true);
+    // Tô 3 màu tuy hợp lệ vẫn quá trần.
+    const over = check('proper-edge-colouring:2', ['a-b:1', 'b-c:2', 'c-d:3']);
+    expect(over.ok).toBe(false);
+    expect(over.message).toContain('quá 2');
+  });
+
+  it('tam giác cần **ba** màu dù mọi đỉnh chỉ bậc $2$ — khoảng hở Vizing', () => {
+    // $\Delta = 2$ nhưng $\chi' = 3$: con số hiển nhiên trả lời sai.
+    expect(check('proper-edge-colouring:2', ['a-b:1', 'b-c:2', 'a-c:1']).ok).toBe(false);
+    expect(check('proper-edge-colouring:3', ['a-b:1', 'b-c:2', 'a-c:3']).ok).toBe(true);
+  });
+
+  it('khuyên bị **từ chối thẳng**, không giả vờ chấm được', () => {
+    // Một cạnh chung đầu mút với chính nó là câu vô nghĩa; nói ra thay vì đoán.
+    const out = check('proper-edge-colouring', ['a-a:1', 'a-b:2']);
+    expect(out.ok).toBe(false);
+    expect(out.message).toContain('khuyên');
+    expect(out.violations).toContain('e0');
+  });
+
+  it('đồ thị không cạnh nào thì đạt', () => {
+    expect(resolveGraphValidator('proper-edge-colouring')!.check(graphOf([], ['a', 'b'])).ok).toBe(
+      true,
+    );
+  });
+
+  it('có tên trong danh sách đóng', () => {
+    expect(GRAPH_VALIDATOR_IDS).toContain('proper-edge-colouring');
+    expect(GRAPH_VALIDATOR_IDS).toContain('proper-edge-colouring:<k>');
+  });
+});

@@ -1,0 +1,424 @@
+{
+  "schema_version": "1.5.0",
+  "id": "timetable-edge-colouring",
+  "statement": {
+    "vi": "Ba giáo viên, ba lớp, bảy tiết đã phân công. Hai tiết chung giáo viên hoặc chung lớp thì **không** xếp cùng một ca. Cần ít nhất bao nhiêu ca?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Xếp thời khoá biểu **là** tô màu cạnh: tiết học là cạnh, ca học là màu, và \"không dạy hai chỗ cùng lúc\" đúng là \"hai cạnh chung đỉnh khác màu\". Đáp số bằng $\\Delta$ — nhưng chỉ vì đồ thị **hai phía**; bỏ điều kiện ấy đi thì tam giác cần $3$ ca dù mọi đỉnh chỉ bậc $2$."
+    }
+  },
+  "topics": [
+    "graph-coloring",
+    "matching"
+  ],
+  "techniques": [
+    "construction",
+    "extremal"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "both",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vẽ mỗi tiết thành một cạnh nối giáo viên với lớp. Badge trên đỉnh là số tiết của người/lớp ấy: [[a1|thầy $T_1$]] dạy cả ba lớp, nên $\\Delta = 3$. Ba ca là **cận dưới** hiển nhiên — ba tiết của $T_1$ đôi một xung khắc."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "t0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "t0",
+                "type": "vertex",
+                "color_class": 2,
+                "label": "T1",
+                "pos": [-22, -16]
+              },
+              {
+                "id": "t1",
+                "type": "vertex",
+                "label": "T2",
+                "pos": [0, -16]
+              },
+              {
+                "id": "t2",
+                "type": "vertex",
+                "label": "T3",
+                "pos": [22, -16]
+              },
+              {
+                "id": "c0",
+                "type": "vertex",
+                "label": "L1",
+                "pos": [-22, 16]
+              },
+              {
+                "id": "c1",
+                "type": "vertex",
+                "label": "L2",
+                "pos": [0, 16]
+              },
+              {
+                "id": "c2",
+                "type": "vertex",
+                "label": "L3",
+                "pos": [22, 16]
+              },
+              {
+                "id": "g0",
+                "type": "edge",
+                "u": "t0",
+                "v": "c0"
+              },
+              {
+                "id": "g1",
+                "type": "edge",
+                "u": "t0",
+                "v": "c1"
+              },
+              {
+                "id": "g2",
+                "type": "edge",
+                "u": "t0",
+                "v": "c2"
+              },
+              {
+                "id": "g3",
+                "type": "edge",
+                "u": "t1",
+                "v": "c0"
+              },
+              {
+                "id": "g4",
+                "type": "edge",
+                "u": "t1",
+                "v": "c1"
+              },
+              {
+                "id": "g5",
+                "type": "edge",
+                "u": "t2",
+                "v": "c1"
+              },
+              {
+                "id": "g6",
+                "type": "edge",
+                "u": "t2",
+                "v": "c2"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đồ thị hai phía ba giáo viên trên, ba lớp dưới, bảy cạnh; T1 được đánh dấu và có badge bậc 3."
+          },
+          "expects_violation": [
+            "proper-edge-colouring:3"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Và ba ca là **đủ**. Đây là một cách xếp: [[a1|mỗi màu là một ca]], và không hai cạnh nào chung đỉnh mà cùng màu. Không có mẹo nào ở đây — đồ thị hai phía thì $\\Delta$ ca **luôn** đủ, đó là định lý König cho tô cạnh."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "g0",
+                "g1",
+                "g2",
+                "g3",
+                "g4",
+                "g5",
+                "g6"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "t0",
+                "type": "vertex",
+                "label": "T1",
+                "pos": [-22, -16]
+              },
+              {
+                "id": "t1",
+                "type": "vertex",
+                "label": "T2",
+                "pos": [0, -16]
+              },
+              {
+                "id": "t2",
+                "type": "vertex",
+                "label": "T3",
+                "pos": [22, -16]
+              },
+              {
+                "id": "c0",
+                "type": "vertex",
+                "label": "L1",
+                "pos": [-22, 16]
+              },
+              {
+                "id": "c1",
+                "type": "vertex",
+                "label": "L2",
+                "pos": [0, 16]
+              },
+              {
+                "id": "c2",
+                "type": "vertex",
+                "label": "L3",
+                "pos": [22, 16]
+              },
+              {
+                "id": "g0",
+                "type": "edge",
+                "color_class": 1,
+                "u": "t0",
+                "v": "c0"
+              },
+              {
+                "id": "g1",
+                "type": "edge",
+                "color_class": 3,
+                "u": "t0",
+                "v": "c1"
+              },
+              {
+                "id": "g2",
+                "type": "edge",
+                "color_class": 4,
+                "u": "t0",
+                "v": "c2"
+              },
+              {
+                "id": "g3",
+                "type": "edge",
+                "color_class": 3,
+                "u": "t1",
+                "v": "c0"
+              },
+              {
+                "id": "g4",
+                "type": "edge",
+                "color_class": 4,
+                "u": "t1",
+                "v": "c1"
+              },
+              {
+                "id": "g5",
+                "type": "edge",
+                "color_class": 1,
+                "u": "t2",
+                "v": "c1"
+              },
+              {
+                "id": "g6",
+                "type": "edge",
+                "color_class": 3,
+                "u": "t2",
+                "v": "c2"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Cùng đồ thị, bảy cạnh tô ba màu; không hai cạnh chung đỉnh nào cùng màu."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Điều kiện **hai phía** không phải trang trí. Tam giác dưới đây có mọi đỉnh bậc $2$, nên $\\Delta = 2$ — mà [[a1|hai màu không đủ]]: ba cạnh đôi một chung đỉnh, nên đôi một phải khác màu. Cần $3$, tức $\\Delta + 1$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "h0",
+                "h2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "vertex",
+                "label": "A1",
+                "pos": [0, -20]
+              },
+              {
+                "id": "p1",
+                "type": "vertex",
+                "label": "A2",
+                "pos": [17.32, 10]
+              },
+              {
+                "id": "p2",
+                "type": "vertex",
+                "label": "A3",
+                "pos": [-17.32, 10]
+              },
+              {
+                "id": "h0",
+                "type": "edge",
+                "color_class": 1,
+                "u": "p0",
+                "v": "p1"
+              },
+              {
+                "id": "h1",
+                "type": "edge",
+                "color_class": 3,
+                "u": "p1",
+                "v": "p2"
+              },
+              {
+                "id": "h2",
+                "type": "edge",
+                "color_class": 1,
+                "u": "p2",
+                "v": "p0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tam giác ba cạnh, hai cạnh cùng màu xanh chung một đỉnh — cách tô hai màu này hỏng."
+          },
+          "expects_violation": [
+            "bipartite",
+            "proper-edge-colouring:3"
+          ],
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ba màu thì xong. Vizing nói khoảng hở chỉ có thế: [[a1|mọi đồ thị]] cần $\\Delta$ hoặc $\\Delta + 1$ màu, không bao giờ hơn — và hai phía thì luôn rơi vào vế đầu. Nên câu hỏi \"cần bao nhiêu ca\" có đáp số ngay khi biết đồ thị hai phía."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "h0",
+                "h1",
+                "h2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "show_degrees": true
+            },
+            "elements": [
+              {
+                "id": "p0",
+                "type": "vertex",
+                "label": "A1",
+                "pos": [0, -20]
+              },
+              {
+                "id": "p1",
+                "type": "vertex",
+                "label": "A2",
+                "pos": [17.32, 10]
+              },
+              {
+                "id": "p2",
+                "type": "vertex",
+                "label": "A3",
+                "pos": [-17.32, 10]
+              },
+              {
+                "id": "h0",
+                "type": "edge",
+                "color_class": 1,
+                "u": "p0",
+                "v": "p1"
+              },
+              {
+                "id": "h1",
+                "type": "edge",
+                "color_class": 3,
+                "u": "p1",
+                "v": "p2"
+              },
+              {
+                "id": "h2",
+                "type": "edge",
+                "color_class": 4,
+                "u": "p2",
+                "v": "p0"
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Tam giác ba cạnh tô ba màu khác nhau."
+          },
+          "expects_violation": [
+            "bipartite"
+          ],
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "sandbox": {
+    "goal_expr": "m == 7",
+    "validators": [
+      "simple-graph",
+      "bipartite",
+      "proper-edge-colouring:3"
+    ]
+  },
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

@@ -96,6 +96,10 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Hall bản **chỗ hụt** ($|A| - \\max_S(|S|-|N(S)|)$) | đồ thị hai phía | ✅ có trong kho (`hall-defect-version`: "Hall hỏng" là một **phép đo**, không phải câu trả lời nhị phân) |
 | Hai phía **chính quy** ⇒ ghép cặp hoàn hảo | đồ thị hai phía | ✅ có trong kho (`bipartite-regular-perfect-matching`: đếm cạnh hai chiều ra Hall, **không** dựng ghép cặp) |
 | Số sắc của chu trình / bánh xe | tô màu đỉnh | ✅ có trong kho (validator `proper-colouring[:k]`, GR-13) |
+| Xếp thời khoá biểu (König cho tô cạnh) | tô màu **cạnh** | ✅ có trong kho (validator `proper-edge-colouring[:k]`, GR-15; hai phía ⇒ đúng $\\Delta$ ca) |
+| Khoảng hở Vizing ($\\Delta$ hay $\\Delta+1$) | tô màu cạnh | ✅ có trong kho (tam giác cần $3$ dù $\\Delta = 2$ — điều kiện hai phía không phải trang trí) |
+| Bổ đề bậc $\\le 5$ của hình phẳng | công thức Euler | ✅ có trong kho (`five-colour-planar-sketch`: đếm bậc hai chiều, **không nhìn hình cụ thể nào**) |
+| Ngũ giác đổi dấu dừng sau hữu hạn bước — **IMO 1986 bài 3** | đại lượng đơn điệu | ✅ có trong kho (tổng bất biến **không** chứng minh được gì; $\\sum(x_i-x_{i+2})^2$ mới là thứ giảm) |
 | Tham lam đủ $\\Delta+1$ màu | tô màu đỉnh | ✅ có trong kho (`greedy-colouring-degree-bound`: cận không đổi, số màu **thật** đổi theo thứ tự duyệt) |
 | Cayley $n^{n-2}$ (mã Prüfer) | song ánh | ✅ có trong kho (GR-09: mã vẽ thành hàng ô dưới cây) |
 | $R(3,3,3) > 16$ — **IMO 1964 bài 4** | đồ thị, ba màu | ✅ có trong kho (chuồng bồ câu hai nhát; `no-mono-triangle` vốn không phân biệt màu nên chạy được ngay) |

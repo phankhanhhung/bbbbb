@@ -980,6 +980,95 @@ export function resolveGraphValidator(id: string): SceneValidator | null {
   }
 
   /**
+   * `proper-edge-colouring[:k]` — **hai cạnh chung đỉnh thì khác màu** (GR-15).
+   *
+   * Nợ có tên từ loạt bài 2/4, và lúc trả thì nó hẹp hơn lúc ghi: `no-mono-triangle`
+   * vốn không phân biệt màu nên Ramsey nhiều màu chưa bao giờ cần cái này. Phần thật
+   * sự còn thiếu là tô cạnh **đúng luật**, và bài kinh điển của nó là xếp thời khoá
+   * biểu — mỗi tiết học là một cạnh, hai tiết chung giáo viên hoặc chung lớp thì không
+   * xếp cùng ca được.
+   *
+   * Song sinh với `proper-colouring`, và cố ý giống hệt: cùng ba tầng trả lời (đụng
+   * màu → chưa tô → quá $k$ màu), cùng quy ước "chưa tô là **chưa xét**, không phải
+   * màu số 0". Hai validator đọc như một cặp thì tác giả học một lần dùng được cả hai.
+   *
+   * Khác đúng một chỗ, và chỗ ấy là bản chất: quan hệ "kề" của **cạnh** là *chung một
+   * đầu mút*, không phải `graph.adjacency`. Nên **khuyên** ($u = v$) ở đây không được
+   * bỏ qua như bên tô đỉnh: một khuyên chung đầu mút với chính nó là chuyện vô nghĩa,
+   * nên luật từ chối thẳng đồ thị có khuyên thay vì giả vờ chấm được.
+   */
+  if (name === 'proper-edge-colouring') {
+    const maxColours = arg ?? null;
+    return {
+      id,
+      label:
+        maxColours === null
+          ? 'Hai cạnh chung đỉnh thì khác màu'
+          : `Tô cạnh hợp lệ với tối đa ${maxColours} màu`,
+      check(scene) {
+        const graph = buildGraph(scene);
+
+        const loops = graph.edges.filter((e) => e.u === e.v).map((e) => e.id);
+        if (loops.length > 0) {
+          return {
+            ok: false,
+            violations: loops,
+            message: `${loops.length} khuyên: tô cạnh không có nghĩa trên khuyên`,
+          };
+        }
+
+        // Gom cạnh theo **đầu mút**: hai cạnh cùng có mặt trong một nhóm là hai cạnh kề.
+        const atVertex = new Map<string, { id: string; colour: number }[]>();
+        for (const edge of graph.edges) {
+          for (const end of [edge.u, edge.v]) {
+            const list = atVertex.get(end) ?? [];
+            list.push({ id: edge.id, colour: edge.colorClass });
+            atVertex.set(end, list);
+          }
+        }
+
+        const clash = new Set<string>();
+        for (const list of atVertex.values()) {
+          for (let i = 0; i < list.length; i += 1) {
+            for (let j = i + 1; j < list.length; j += 1) {
+              const a = list[i] as { id: string; colour: number };
+              const b = list[j] as { id: string; colour: number };
+              if (!a.colour || !b.colour) continue;
+              if (a.colour === b.colour) {
+                clash.add(a.id);
+                clash.add(b.id);
+              }
+            }
+          }
+        }
+
+        if (clash.size > 0) {
+          return {
+            ok: false,
+            violations: [...clash],
+            message: `${clash.size} cạnh trùng màu với một cạnh chung đỉnh`,
+          };
+        }
+
+        const blank = graph.edges.filter((e) => !e.colorClass).map((e) => e.id);
+        if (blank.length > 0) {
+          return { ok: false, violations: blank, message: `${blank.length} cạnh chưa tô` };
+        }
+
+        const used = new Set(graph.edges.map((e) => e.colorClass));
+        if (maxColours !== null && used.size > maxColours) {
+          return {
+            ok: false,
+            violations: [],
+            message: `Dùng ${used.size} màu, quá ${maxColours}`,
+          };
+        }
+        return { ok: true, violations: [] };
+      },
+    };
+  }
+
+  /**
    * `diameter:<k>` — cây có đường kính đúng $k$ (GR-10).
    *
    * Mục tiêu sandbox của họ bài "dựng một cây thoả …": người học kéo cạnh cho tới
@@ -1041,6 +1130,8 @@ export const GRAPH_VALIDATOR_IDS: readonly string[] = [
   'face-colouring:<k>',
   'proper-colouring',
   'proper-colouring:<k>',
+  'proper-edge-colouring',
+  'proper-edge-colouring:<k>',
 ];
 
 // ---------------------------------------------------------------------------
