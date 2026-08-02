@@ -98,6 +98,11 @@ chỗ đó — đây là phần **kiểm chứng được** của tài liệu.
 | Số sắc của chu trình / bánh xe | tô màu đỉnh | ✅ có trong kho (validator `proper-colouring[:k]`, GR-13) |
 | Tham lam đủ $\\Delta+1$ màu | tô màu đỉnh | ✅ có trong kho (`greedy-colouring-degree-bound`: cận không đổi, số màu **thật** đổi theo thứ tự duyệt) |
 | Cayley $n^{n-2}$ (mã Prüfer) | song ánh | ✅ có trong kho (GR-09: mã vẽ thành hàng ô dưới cây) |
+| Liên hợp phân hoạch (số phần ↔ phần lớn nhất) | biểu đồ Ferrers | ✅ có trong kho (`partitions-ferrers-conjugate`: cả chứng minh là **một nhát lật**) |
+| Phân hoạch với phần bị chặn | hàm sinh | ✅ có trong kho (mỗi **cỡ phần** một thừa số; `pairs` ghim thừa số vào hàng của biểu đồ) |
+| Hợp thành của $n$ bằng $2^{n-1}$ | hàm sinh + song ánh | ✅ có trong kho ($[x^n]\frac{x}{1-2x}$; hệ số dẫn $2$ **là** hai lựa chọn ở mỗi khe) |
+| Truy hồi Catalan $C = 1 + xC^2$ | hàm sinh | ✅ có trong kho (nhát cắt = **lần chạm trục đầu tiên**; tích chập Cauchy ra hệ thức) |
+| Bao gồm–loại trừ cho trần trên | hàm sinh | ✅ có trong kho (rơi ra từ $(1-x^5)^2$; engine tự kèm điều kiện $n \ge 5$, $n \ge 10$) |
 | Đồng nhất thức Vandermonde | đếm hai chiều | 🟡 derivation viết được chuỗi biến đổi; thiếu bài trong kho |
 | Tập con ↔ xâu nhị phân ($2^n$) | song ánh | ✅ có trong kho (view song ánh) |
 | Quy tắc nhân, hoán vị, tổ hợp, Pascal, đường đi lưới | đếm cơ bản | ✅ mười bài trong kho |

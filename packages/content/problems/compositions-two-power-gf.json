@@ -1,0 +1,277 @@
+{
+  "schema_version": "1.4.0",
+  "id": "compositions-two-power-gf",
+  "statement": {
+    "vi": "Viết $n$ thành tổng các số nguyên dương, **có kể thứ tự** ($2+1$ khác $1+2$). Có bao nhiêu cách?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Đáp số $2^{n-1}$ nhìn thấy ngay bằng \"cắt hay không cắt\" ở $n-1$ khe. Chỗ đáng nhìn là hàm sinh cho ra đúng con số ấy qua một đường hoàn toàn khác: $\\frac{x}{1-2x}$, và hệ số dẫn $2$ trong mẫu **chính là** hai lựa chọn ở mỗi khe. Trước loạt bài này engine không đi được dòng ấy — luật chuỗi hình học chỉ nhận biến trần."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "generating-function",
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra",
+    "sequence"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Xếp $n$ đơn vị thành một hàng thì có $n-1$ khe giữa chúng. Mỗi [[a1|khe]] cắt hoặc không cắt, độc lập nhau, và mỗi bộ lựa chọn cho đúng một hợp thành. Vậy đáp số là $2^{n-1}$ — xong, không cần hàm sinh nào."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "k1",
+                "k3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "sequence",
+            "config": {
+              "caption": "Thanh 5 ô, cắt ở 2 khe",
+              "mode": "sequence"
+            },
+            "elements": [
+              {
+                "id": "u0",
+                "type": "item",
+                "color_class": 1,
+                "label": "1",
+                "pos": 0,
+                "value": 1
+              },
+              {
+                "id": "u1",
+                "type": "item",
+                "color_class": 1,
+                "label": "1",
+                "pos": 1,
+                "value": 1
+              },
+              {
+                "id": "u2",
+                "type": "item",
+                "color_class": 1,
+                "label": "1",
+                "pos": 2,
+                "value": 1
+              },
+              {
+                "id": "u3",
+                "type": "item",
+                "color_class": 1,
+                "label": "1",
+                "pos": 3,
+                "value": 1
+              },
+              {
+                "id": "u4",
+                "type": "item",
+                "color_class": 1,
+                "label": "1",
+                "pos": 4,
+                "value": 1
+              },
+              {
+                "id": "k1",
+                "type": "cut",
+                "before": 1
+              },
+              {
+                "id": "k3",
+                "type": "cut",
+                "before": 3
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Thanh năm ô, cắt sau ô thứ nhất và sau ô thứ ba: hợp thành 1 cộng 2 cộng 2."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giờ đi lại bằng cỗ máy, vì cỗ máy còn chạy được khi phép đếm tay hết đường. Một phần cỡ $\\ge 1$ là $x + x^2 + \\cdots = \\frac{x}{1-x}$; nhiều phần nối nhau cho $\\sum_{k\\ge1}\\left(\\frac{x}{1-x}\\right)^k$, cộng lại đúng bằng [[a1|$\\frac{x}{1-2x}$]]. Hệ số dẫn $2$ ở mẫu là hai lựa chọn ở mỗi khe — cùng một sự thật, viết bằng đại số."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "mở lại 1/(1 − 2x) thành chuỗi",
+              "start": "1/(1-2*x)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "geometric_series"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: một trên một trừ hai x, bằng tổng theo k từ 0 tới vô cùng của hai x tất cả mũ k. Điều kiện hội tụ là trị tuyệt đối của x nhỏ hơn một phần hai."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đọc lấy hệ số của $x^n$: thừa số $x$ dịch bậc xuống $n-1$, rồi $\\frac{1}{1-2x}$ trả [[a1|$2^{n-1}$]]. Hai đường, một đáp số — và đường thứ hai không cần ai nhìn ra cái khe nào cả."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "đọc hệ số của x mũ n",
+              "start": "coeff(x, n, (x) * (1/(1-2*x)))",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "coeff_shift"
+                },
+                {
+                  "at": "",
+                  "rule": "coeff_repeated_geometric"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "x · 1/(1 − 2x)"
+            },
+            "label_right": {
+              "vi": "Ô đầu, rồi n − 1 khe"
+            },
+            "pairs": [
+              [
+                "r0-e12",
+                "u0"
+              ],
+              [
+                "r0-e11",
+                "k1"
+              ],
+              [
+                "r0-e10",
+                "k3"
+              ]
+            ],
+            "scene": {
+              "engine": "sequence",
+              "config": {
+                "caption": "Thanh 5 ô, cắt ở 2 khe",
+                "mode": "sequence"
+              },
+              "elements": [
+                {
+                  "id": "u0",
+                  "type": "item",
+                  "color_class": 1,
+                  "label": "1",
+                  "pos": 0,
+                  "value": 1
+                },
+                {
+                  "id": "u1",
+                  "type": "item",
+                  "color_class": 1,
+                  "label": "1",
+                  "pos": 1,
+                  "value": 1
+                },
+                {
+                  "id": "u2",
+                  "type": "item",
+                  "color_class": 1,
+                  "label": "1",
+                  "pos": 2,
+                  "value": 1
+                },
+                {
+                  "id": "u3",
+                  "type": "item",
+                  "color_class": 1,
+                  "label": "1",
+                  "pos": 3,
+                  "value": 1
+                },
+                {
+                  "id": "u4",
+                  "type": "item",
+                  "color_class": 1,
+                  "label": "1",
+                  "pos": 4,
+                  "value": 1
+                },
+                {
+                  "id": "k1",
+                  "type": "cut",
+                  "before": 1
+                },
+                {
+                  "id": "k3",
+                  "type": "cut",
+                  "before": 3
+                }
+              ]
+            }
+          },
+          "alt_text": {
+            "vi": "Ba dòng: hệ số của x mũ n trong x nhân một trên một trừ hai x, thành hệ số của x mũ n trừ một, rồi thành hai mũ n trừ một."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

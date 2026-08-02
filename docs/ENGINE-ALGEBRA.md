@@ -2781,15 +2781,31 @@ và trả về một xấp xỉ nào đó ở chỗ ấy là bịa.
 
 ### 44.3 Một luật, cố ý hẹp
 
-`geometric_series` đi **hai chiều** và chỉ nhận đúng một hình: cơ số là biến trần, cận
-dưới là $0$, số mũ là chính chỉ số. Không nhận $\sum(2x)^k$, không nhận
-$\sum_{k=1}^{\infty}$, không nhận $\sum a r^k$.
+`geometric_series` đi **hai chiều**. Bản M68 chỉ nhận đúng một hình — cơ số là biến
+trần, cận dưới là $0$, số mũ là chính chỉ số — và **loạt bài 3/4 đã nới nó** đúng một
+nấc: cơ số nay là $a\,x$ với $a$ **hằng nguyên khác $0$**, nên $\sum(2x)^k =
+\frac{1}{1-2x}$ đi được cả hai chiều. Vẫn không nhận $\sum_{k=1}^{\infty}$, không nhận
+$\sum c\,r^k$ với $c$ đứng ngoài, và không nhận mẫu bậc $\ge 2$.
 
-Hẹp vì mỗi lần nới là một lần phải kể lại chuyện hội tụ: $\sum_{k\ge1} x^k$ bằng
-$\frac{x}{1-x}$, $\sum(2x)^k$ bằng $\frac{1}{1-2x}$ với $|x|<\frac12$ — mỗi biến thể một
-điều kiện khác, và một luật nhận cả họ sẽ in ra một điều kiện đúng cho ca này và **sai
-cho ca kia**. Ai cần biến thể thì đi qua `sum_shift` và `sum_linear`, và mỗi bước ấy hiện
-ra trên hình.
+Lập luận cũ cho chỗ hẹp — *"mỗi lần nới là một lần phải kể lại chuyện hội tụ"* — đúng,
+và cách trả lời nó không phải là từ chối nới mà là **in đúng điều kiện của ca đang
+chạy**: `convergenceOf` cho ra $|x| < 1/|a|$, nên $\sum(2x)^k$ nói $|x| < 1/2$ chứ không
+nói $|x| < 1$. Đó là răng chính của lượt nới, và có test riêng.
+
+> **Một chú thích từng nói dối.** Bản trước viết: *"Ai cần biến thể thì đi qua
+> `sum_shift` và `sum_linear`, và mỗi bước ấy hiện ra trên hình."* Không đúng — thử cả
+> ba lối (`pow_split`, `sum_linear`, `sum_shift`) trên $\sum(2x)^k$ thì cả ba đều từ
+> chối. Câu ấy là một đường thoát chưa ai đi, và nó đứng đó từ M68 tới loạt bài 3/4.
+> Hệ quả thật: $[x^n]\frac{1}{1-2x} = 2^n$ — sự thật cơ bản nhất của hàm sinh sau chuỗi
+> hình học — **không đi được**, trong khi `series.ts` lấy đúng $\frac{1}{1-2x}$ với hệ số
+> $2^k$ làm ví dụ mở đầu giải thích vì sao nó phải dùng `bigint`. Bộ kiểm làm được từ
+> lâu; chỉ luật viết lại là hẹp. Nới không phải mở một cửa mới — nó là nối một cửa đã
+> xây xong với hành lang.
+
+**Vì sao dừng ở $1 - ax$.** Bậc $\ge 2$ là một chuyện khác hẳn: $\frac{1}{1-x-x^2}$ cần
+phân thức riêng phần trên $\mathbb{Q}(\sqrt5)$ và nhị thức tổng quát $\binom{1/2}{n}$ —
+đúng ranh giới `series.ts` đã tự vạch (*"`fn`, `root`, `abs` → `null`"*). **Nợ có tên:**
+Fibonacci/Binet qua hàm sinh, và $\frac{1}{1-P(x)}$ với $\deg P \ge 2$.
 
 Điều kiện $|x| < 1$ là **chữ**, không phải `Guard` — và chỗ khác biệt ấy chính là phần
 dạy học: nó nói về khi nào đẳng thức **số học** có nghĩa, trong khi thứ engine vừa kiểm
@@ -3102,10 +3118,23 @@ trả một xấp xỉ ở đó là bịa.
   `guard` chứ không chỉ bằng chữ. Dưới ngưỡng ấy vế trái bằng $0$ còn vế phải là một bậc
   âm, thứ không tồn tại — nên bộ kiểm phải **bỏ** đúng những điểm ấy, không phải lặng lẽ
   trượt qua chúng.
-- **`coeff_repeated_geometric`** — $[x^n]\frac{1}{(1-x)^m} = \binom{n+m-1}{m-1}$: bài
-  chia kẹo viết bằng hàm sinh. $m$ phải là **hằng nguyên** $\ge 1$; với $m$ ký hiệu thì
-  không khai chuỗi được ở bất kỳ bậc nào, và dựng một dòng mà bộ kiểm chỉ biết nói "chưa
-  kiểm được" là dựng một vệt vàng.
+- **`coeff_repeated_geometric`** — $[x^n]\frac{1}{(1-ax)^m} = a^n\binom{n+m-1}{m-1}$:
+  bài chia kẹo viết bằng hàm sinh. $m$ phải là **hằng nguyên** $\ge 1$ và $a$ **hằng
+  nguyên khác $0$**; với ký hiệu thì không khai chuỗi được ở bất kỳ bậc nào, và dựng một
+  dòng mà bộ kiểm chỉ biết nói "chưa kiểm được" là dựng một vệt vàng.
+
+  Hai chi tiết hiển thị, cả hai đều là quyết định chứ không phải tình cờ. Một, $a = 1$
+  **không** in thừa số $1^n$ — ca cũ phải ra đúng cây cũ, không thì 129 bài đang xuất
+  bản churn vì một dòng rác. Hai, $m = 1$ nay **không** in $\binom{n}{0}$ nữa: nó là
+  hằng số $1$, và để nó lại thì dòng chốt của cả chuyên đề đọc thành $2^n\binom{n}{0}$
+  — chôn kết quả dưới một thừa số vô nghĩa. Chỗ này churn một golden cũ
+  (`candies-three-children-gf`), có chủ ý, và bài ấy sạch hơn sau đó.
+
+  Một cái bẫy phát hiện lúc soát golden: `Minter` phát id theo **thứ tự gọi**, nên đúc
+  sẵn một nút rồi vứt đi — hoặc nhấc một lời gọi ra biến trung gian — làm cả hàng bị
+  đánh số lại. Hình y hệt, `data-el` đổi, mà đó chính là thứ `anchors` và
+  `bijection.pairs` trỏ tới. Một golden "chỉ đổi id" là quả mìn hẹn giờ cho bài neo vào
+  id ấy.
 
 Chỉ số chạy của `coeff_of_product` phải khác **cả biến chuỗi**, và chỗ ấy suýt sai:
 `varsOf` không kể biến bị ràng buộc, nên `freshIndex` trên một nút $[k^n]\dots$ vui vẻ

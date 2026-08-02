@@ -1,0 +1,269 @@
+{
+  "schema_version": "1.4.0",
+  "id": "catalan-first-return-gf",
+  "statement": {
+    "vi": "Gọi $C_n$ là số đường đi Dyck độ dài $2n$ (mỗi bước lên hoặc xuống, không bao giờ xuống dưới trục). Dựng hệ thức truy hồi cho $C_n$ bằng hàm sinh."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Nhát cắt là **lần chạm trục đầu tiên**. Trước nó là một đường Dyck nằm gọn trong một bước lên và một bước xuống; sau nó là một đường Dyck nữa. Hai mảnh, hai chữ $C$, và phương trình $C = 1 + xC^2$ ra thẳng từ hình. Tích chập Cauchy biến phép nhân ấy thành $C_{n+1} = \\sum_k C_k C_{n-k}$ — đúng phép đếm \"chia $n$ thành hai phần\"."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "generating-function",
+    "bijection"
+  ],
+  "difficulty": {
+    "author_rating": 4,
+    "slot_proxy": "P3"
+  },
+  "engines_used": [
+    "algebra",
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một đường Dyck khác rỗng bắt đầu bằng một bước lên, và **có** lúc chạm lại trục. Nhìn [[a1|lần chạm đầu tiên]]: nó cắt đường thành hai mảnh, và cả hai mảnh lại là đường Dyck — mảnh trong nằm giữa bước lên đầu và bước xuống chạm trục, mảnh sau là phần còn lại."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "d0",
+                "d1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cols": 6,
+              "rows": 5
+            },
+            "elements": [
+              {
+                "id": "d0",
+                "type": "piece",
+                "color_class": 1,
+                "glyph": "↑",
+                "kind": "custom",
+                "pos": [3, 0]
+              },
+              {
+                "id": "d1",
+                "type": "piece",
+                "color_class": 1,
+                "glyph": "↓",
+                "kind": "custom",
+                "pos": [3, 1]
+              },
+              {
+                "id": "d2",
+                "type": "piece",
+                "color_class": 1,
+                "glyph": "↑",
+                "kind": "custom",
+                "pos": [3, 2]
+              },
+              {
+                "id": "d3",
+                "type": "piece",
+                "color_class": 1,
+                "glyph": "↑",
+                "kind": "custom",
+                "pos": [2, 3]
+              },
+              {
+                "id": "d4",
+                "type": "piece",
+                "color_class": 1,
+                "glyph": "↓",
+                "kind": "custom",
+                "pos": [2, 4]
+              },
+              {
+                "id": "d5",
+                "type": "piece",
+                "color_class": 1,
+                "glyph": "↓",
+                "kind": "custom",
+                "pos": [3, 5]
+              }
+            ]
+          },
+          "alt_text": {
+            "vi": "Đường Dyck sáu bước: lên, xuống, lên, lên, xuống, xuống, tất cả cùng một màu."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Dịch sang đại số: một bước lên và một bước xuống góp $x$, mảnh trong góp $C$, mảnh sau góp $C$ nữa. Cộng cả đường rỗng thì $C = 1 + xC^2$. [[a1|Hai chữ $C$]] ấy là hai mảnh, không phải hai lần cùng một thứ — pane phải chỉ rõ mảnh nào là mảnh nào."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "tích chập của hai mảnh",
+              "start": "coeff(x, n, (C) * (C))",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "coeff_of_product"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "C · C"
+            },
+            "label_right": {
+              "vi": "Hai mảnh của đường"
+            },
+            "pairs": [
+              [
+                "r0-e2",
+                "d0"
+              ],
+              [
+                "r0-e3",
+                "d2"
+              ]
+            ],
+            "scene": {
+              "engine": "board",
+              "config": {
+                "cols": 6,
+                "rows": 5
+              },
+              "elements": [
+                {
+                  "id": "d0",
+                  "type": "piece",
+                  "color_class": 1,
+                  "glyph": "↑",
+                  "kind": "custom",
+                  "pos": [3, 0]
+                },
+                {
+                  "id": "d1",
+                  "type": "piece",
+                  "color_class": 1,
+                  "glyph": "↓",
+                  "kind": "custom",
+                  "pos": [3, 1]
+                },
+                {
+                  "id": "d2",
+                  "type": "piece",
+                  "color_class": 4,
+                  "glyph": "↑",
+                  "kind": "custom",
+                  "pos": [3, 2]
+                },
+                {
+                  "id": "d3",
+                  "type": "piece",
+                  "color_class": 4,
+                  "glyph": "↑",
+                  "kind": "custom",
+                  "pos": [2, 3]
+                },
+                {
+                  "id": "d4",
+                  "type": "piece",
+                  "color_class": 4,
+                  "glyph": "↓",
+                  "kind": "custom",
+                  "pos": [2, 4]
+                },
+                {
+                  "id": "d5",
+                  "type": "piece",
+                  "color_class": 4,
+                  "glyph": "↓",
+                  "kind": "custom",
+                  "pos": [3, 5]
+                }
+              ]
+            }
+          },
+          "alt_text": {
+            "vi": "Hai dòng: hệ số của x mũ n trong C nhân C, thành tổng theo k từ 0 tới n của hệ số thứ k nhân hệ số thứ n trừ k."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thêm thừa số $x$ của cặp lên–xuống rồi đọc hệ số: dịch bậc một nấc, tích chập một lần, ra [[a1|$C_n = \\sum_{k=0}^{n-1} C_k C_{n-1-k}$]]. Vế trái là một phép đại số, vế phải là \"chia $n-1$ thành hai phần\" — và chúng là **một**. Điều kiện $n \\ge 1$ engine tự kèm: đường rỗng không có lần chạm nào để cắt."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "truy hồi Catalan",
+              "start": "coeff(x, n, (x) * ((C) * (C)))",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "coeff_shift"
+                },
+                {
+                  "at": "",
+                  "rule": "coeff_of_product"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: hệ số của x mũ n trong x nhân C nhân C, dịch bậc xuống n trừ một, rồi thành tổng tích chập theo k từ 0 tới n trừ một."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s2"
+  }
+}

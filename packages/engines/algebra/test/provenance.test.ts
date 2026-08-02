@@ -680,14 +680,106 @@ describe('luật chuỗi hình học', () => {
   it('cố ý **hẹp**: từ chối mọi biến thể, có lời', () => {
     for (const [src, why] of [
       ['sum(k, 1, inf, x^k)', 'cận dưới phải là 0'],
-      ['sum(k, 0, inf, (2*x)^k)', 'cơ số phải là một biến'],
       ['sum(k, 0, inf, x^(2*k))', 'số mũ phải là chính chỉ số'],
       ['sum(k, 0, 5, x^k)', 'cận trên phải là ∞'],
       ['2/(1 - x)', 'tử phải là 1'],
-      ['1/(1 - 2*x)', 'mẫu phải có dạng 1 − x'],
+      // Ranh giới thật của lượt nới: bậc $\ge 2$ ở mẫu. $\frac{1}{1-x-x^2}$ cần phân
+      // thức riêng phần trên $\mathbb{Q}(\sqrt5)$ — đó là viết một CAS, không phải nới
+      // một luật.
+      ['1/(1 - x - x^2)', 'mẫu phải có dạng 1 − a·x'],
+      ['1/(1 - x^2)', 'mẫu phải có dạng 1 − a·x'],
+      ['sum(k, 0, inf, (x*y)^k)', 'cơ số phải là một biến'],
     ] as [string, string][]) {
       expect(run(src, [{ rule: 'geometric_series', at: '' }]).refusal, src).toContain(why);
     }
+  });
+
+  /**
+   * Hệ số dẫn $a$ (loạt bài 3/4).
+   *
+   * Bản M68 chỉ nhận biến trần, và chú thích của nó **hứa** một đường vòng qua
+   * `sum_shift`/`sum_linear` cho các biến thể. Đường ấy không tồn tại — cả ba luật đều
+   * từ chối $\sum(2x)^k$ — nên $[x^n]\frac{1}{1-2x} = 2^n$ không đi được, dù
+   * `series.ts` lấy đúng chuỗi ấy làm ví dụ mở đầu cho việc nó phải dùng `bigint`.
+   */
+  describe('hệ số dẫn a', () => {
+    it('hai chiều với $a$ hằng nguyên, và **điều kiện hội tụ theo $a$**', () => {
+      const fwd = run('sum(k, 0, inf, (2*x)^k)', [{ rule: 'geometric_series', at: '' }]);
+      expect(fwd.refusal).toBeNull();
+      expect(toPlain(fwd.rows[1]!.expr)).toBe('1/(1 − 2x)');
+      // Răng chính của lượt nới: $\sum(2x)^k$ hội tụ khi $|x| < 1/2$, **không** phải
+      // $|x| < 1$. In câu chung là nới xong rồi nói dối ngay dòng vừa nới.
+      expect(fwd.conditions.map((c) => c.text)).toEqual(['|x| < 1/2']);
+      expect(fwd.unsound).toEqual([]);
+      expect(fwd.unchecked).toEqual([]);
+
+      const rev = run('1/(1 - 3*x)', [{ rule: 'geometric_series', at: '' }]);
+      expect(rev.refusal).toBeNull();
+      expect(rev.conditions.map((c) => c.text)).toEqual(['|x| < 1/3']);
+      expect(rev.unsound).toEqual([]);
+
+      // $|a| = 1$ thì $1/|a| = 1$, và không ai viết "|x| < 1/1".
+      const minus = run('1/(1 + x)', [{ rule: 'geometric_series', at: '' }]);
+      expect(minus.refusal).toBeNull();
+      expect(minus.conditions.map((c) => c.text)).toEqual(['|x| < 1']);
+      expect(minus.unsound).toEqual([]);
+    });
+
+    it('$a = 1$ dựng **đúng cây cũ** — 129 bài đang xuất bản không đổi một byte', () => {
+      const fwd = run('sum(k, 0, inf, x^k)', [{ rule: 'geometric_series', at: '' }]);
+      expect(unparse(fwd.rows[1]!.expr)).toBe('(1 / (1 + ((-1) * x)))');
+      const rev = run('1/(1 - x)', [{ rule: 'geometric_series', at: '' }]);
+      expect(unparse(rev.rows[1]!.expr)).toBe('sum(k, 0, inf, (x)^(k))');
+    });
+
+    it('$[x^n]\\frac{1}{(1-ax)^m} = a^n\\dbinom{n+m-1}{m-1}$, và bộ kiểm **có** kiểm', () => {
+      const one = run('coeff(x, n, 1/(1 - 2*x))', [{ rule: 'coeff_repeated_geometric', at: '' }]);
+      expect(toPlain(one.rows[1]!.expr)).toBe('2^n');
+      expect(one.unsound).toEqual([]);
+      // Nới luật mà sân chuỗi im thì là nới hỏng: dòng mới phải được **kiểm**, không
+      // phải được cho qua.
+      expect(one.unchecked).toEqual([]);
+
+      const three = run('coeff(x, n, 1/(1 - 2*x)^3)', [
+        { rule: 'coeff_repeated_geometric', at: '' },
+      ]);
+      expect(toPlain(three.rows[1]!.expr)).toBe('2^nC(n + 2,2)');
+      expect(three.unsound).toEqual([]);
+      expect(three.unchecked).toEqual([]);
+
+      const neg = run('coeff(x, n, 1/(1 + x)^2)', [{ rule: 'coeff_repeated_geometric', at: '' }]);
+      expect(toPlain(neg.rows[1]!.expr)).toBe('(−1)^nC(n + 1,1)');
+      expect(neg.unsound).toEqual([]);
+      expect(neg.unchecked).toEqual([]);
+    });
+
+    /**
+     * Lộ ra ở đúng ca $a = -1$: `toPlain` in $(-1)^n$ thành `−1^n`, đọc thành
+     * $-(1^n) = -1$ — **sai giá trị**, không phải xấu. `PLAIN_PREC` hỏi kiểu nút, mà
+     * `int(−1)` có ưu tiên cao nhất nên không được ngoặc.
+     *
+     * `typeset.ts` (đường **vẽ**) đã đúng từ trước — nó hỏi dấu của hằng số, không hỏi
+     * bảng ưu tiên. Nên hình thì đúng còn chữ thì sai, và chữ ấy là thứ đi vào
+     * `alt_text`: người đọc bằng mắt thấy đúng, người dùng screen reader nghe sai.
+     */
+    it('cơ số âm có ngoặc trong `toPlain` — `−1^n` là một giá trị **khác**', () => {
+      const P = (src: string) => parse(src, new Minter());
+      expect(toPlain(P('(-1)^n'))).toBe('(−1)^n');
+      expect(toPlain(P('(-2)^3'))).toBe('(−2)^3');
+      // Không ngoặc thừa cho cơ số dương.
+      expect(toPlain(P('2^n'))).toBe('2^n');
+      expect(toPlain(P('x^n'))).toBe('x^n');
+    });
+
+    it('$a$ ký hiệu ⇒ từ chối; $a = 0$ ⇒ từ chối', () => {
+      expect(
+        run('coeff(x, n, 1/(1 - a*x))', [{ rule: 'coeff_repeated_geometric', at: '' }]).refusal,
+      ).toContain('a nguyên ≠ 0');
+      // $1 - 0\cdot x = 1$: không còn là chuỗi hình học, và $\frac11$ chẳng cần luật nào.
+      expect(
+        run('coeff(x, n, 1/(1 - 0*x))', [{ rule: 'coeff_repeated_geometric', at: '' }]).refusal,
+      ).toContain('a nguyên ≠ 0');
+    });
   });
 
   it('`sum_expand` **từ chối** vô hạn, và lời từ chối là nội dung', () => {
@@ -1339,13 +1431,14 @@ describe('M72 — trích hệ số và tích chập', () => {
       expect(toPlain(m.rows[1]!.expr)).toBe('C(n + 2,2)');
       expect(m.unsound).toEqual([]);
       expect(m.unchecked).toEqual([]);
-      // $m = 1$ thì không ai viết `+ 0`.
+      // $m = 1$: $\binom{n}{0}$ **là** hằng số $1$, nên in nó ra là để lại trên hình
+      // một thứ người đọc phải tự biết mà bỏ đi.
       expect(
         toPlain(
           run('coeff(x, n, 1/(1 - x))', [{ rule: 'coeff_repeated_geometric', at: '' }]).rows[1]!
             .expr,
         ),
-      ).toBe('C(n,0)');
+      ).toBe('1');
     });
 
     it('mỗi luật từ chối có lời khi hình dạng không khớp', () => {

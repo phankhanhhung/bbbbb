@@ -149,7 +149,7 @@
             "elements": []
           },
           "alt_text": {
-            "vi": "Bốn dòng: hệ số của x mũ n trong tích hai hàm sinh, thành tổng theo i từ 0 tới n của hai hệ số nhân nhau, rồi mỗi hệ số thay bằng một tổ hợp."
+            "vi": "Bốn dòng: hệ số của x mũ n trong tích hai hàm sinh, thành tổng theo k từ 0 tới n của hai hệ số nhân nhau; hệ số thứ nhất bằng 1, hệ số thứ hai thành một tổ hợp."
           },
           "verified": true
         }

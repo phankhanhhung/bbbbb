@@ -128,13 +128,18 @@
     "cycle-chromatic-parity",
     "greedy-colouring-degree-bound",
     "hall-defect-version",
-    "wheel-chromatic-number"
+    "wheel-chromatic-number",
+    "bounded-parts-inclusion-exclusion",
+    "catalan-first-return-gf",
+    "compositions-two-power-gf",
+    "partitions-bounded-parts-gf",
+    "partitions-ferrers-conjugate"
   ],
   "newest": [
-    "bipartite-regular-perfect-matching",
-    "cycle-chromatic-parity",
-    "greedy-colouring-degree-bound",
-    "hall-defect-version",
-    "wheel-chromatic-number"
+    "bounded-parts-inclusion-exclusion",
+    "catalan-first-return-gf",
+    "compositions-two-power-gf",
+    "partitions-bounded-parts-gf",
+    "partitions-ferrers-conjugate"
   ]
 }

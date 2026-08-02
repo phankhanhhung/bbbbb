@@ -1,0 +1,211 @@
+{
+  "schema_version": "1.4.0",
+  "id": "partitions-bounded-parts-gf",
+  "statement": {
+    "vi": "Có bao nhiêu cách viết $6$ thành tổng các số nguyên dương **không quá $3$**, không kể thứ tự? Dựng hàm sinh cho bài toán ấy."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Mỗi **cỡ phần** cho một thừa số, và số mũ trong thừa số ấy đếm xem cỡ ấy dùng bao nhiêu lần. Chỗ đáng nhìn: thừa số $\\frac{1}{1-x^2}$ không phải \"hai phần\" mà là \"phần cỡ $2$, dùng bao nhiêu lần cũng được\" — và bậc của nó nhảy hai một, đúng vì mỗi lần dùng thì tổng tăng $2$."
+    }
+  },
+  "topics": [
+    "counting"
+  ],
+  "techniques": [
+    "generating-function"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra",
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Một cỡ phần, một thừa số. Phần cỡ $1$ dùng $k$ lần thì góp $k$ vào tổng, nên cả cỡ ấy gói lại thành [[a1|một tổng vô hạn]] có dạng đóng $\\frac{1}{1-x}$. Cùng khuôn ấy, cỡ $2$ cho $\\frac{1}{1-x^2}$ và cỡ $3$ cho $\\frac{1}{1-x^3}$ — bậc nhảy $2$ một, $3$ một, đúng vì mỗi lần dùng thì tổng tăng bấy nhiêu."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "cỡ phần 1, một thừa số",
+              "start": "sum(k, 0, inf, x^k)",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "geometric_series"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: tổng theo k từ 0 tới vô cùng của x mũ k, bằng một trên một trừ x."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Ba cỡ phần là ba thừa số, nên hàm sinh là $\\frac{1}{(1-x)(1-x^2)(1-x^3)}$, và [[a1|tích chập]] biến câu hỏi đếm thành phép nhân. Pane phải là một trong bảy phân hoạch: mỗi hàng mang màu của **cỡ** nó, và cỡ ấy chính là thừa số đã sinh ra nó."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "caption": "ba cỡ phần, ba thừa số",
+              "start": "coeff(x, n, (1/(1-x)) * (1/(1-x^2)) * (1/(1-x^3)))",
+              "steps": [
+                {
+                  "at": "",
+                  "rule": "coeff_of_product"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "bijection": {
+            "label_left": {
+              "vi": "Ba thừa số"
+            },
+            "label_right": {
+              "vi": "6 = 3 + 2 + 1"
+            },
+            "pairs": [
+              [
+                "r0-e8",
+                "cell-2-0"
+              ],
+              [
+                "r0-e17",
+                "cell-1-0"
+              ],
+              [
+                "r0-e27",
+                "cell-0-0"
+              ]
+            ],
+            "scene": {
+              "engine": "board",
+              "config": {
+                "cell_overrides": {
+                  "cell-0-0": {
+                    "color_class": 1
+                  },
+                  "cell-0-1": {
+                    "color_class": 1
+                  },
+                  "cell-0-2": {
+                    "color_class": 1
+                  },
+                  "cell-1-0": {
+                    "color_class": 2
+                  },
+                  "cell-1-1": {
+                    "color_class": 2
+                  },
+                  "cell-2-0": {
+                    "color_class": 4
+                  }
+                },
+                "cols": 3,
+                "holes": [[1, 2], [2, 1], [2, 2]],
+                "rows": 3
+              },
+              "elements": []
+            }
+          },
+          "alt_text": {
+            "vi": "Hai dòng: hệ số của x mũ n trong tích ba hàm sinh, thành tổng theo k của hai hệ số nhân nhau."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Với $n = 6$ đáp số là $7$: $3{+}3$, $3{+}2{+}1$, $3{+}1{+}1{+}1$, $2{+}2{+}2$, $2{+}2{+}1{+}1$, $2{+}1^4$, $1^6$. Đếm tay bảy cách thì được; đếm tay cho $n = 60$ thì không, mà [[a1|cỗ máy]] thì không đổi một dòng nào."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0",
+                "cell-1-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 1
+                },
+                "cell-0-1": {
+                  "color_class": 1
+                },
+                "cell-0-2": {
+                  "color_class": 1
+                },
+                "cell-1-0": {
+                  "color_class": 1
+                },
+                "cell-1-1": {
+                  "color_class": 1
+                },
+                "cell-1-2": {
+                  "color_class": 1
+                }
+              },
+              "cols": 3,
+              "rows": 2
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Biểu đồ Ferrers của 3 cộng 3: hai hàng ba ô."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

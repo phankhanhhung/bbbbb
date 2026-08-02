@@ -585,8 +585,15 @@ export function toPlain(e: Expr): string {
     }
     case 'div':
       return `${wrap(e.num)}/${wrap(e.den, true)}`;
-    case 'pow':
-      return `${wrap(e.base, true)}^${wrap(e.exp, true)}`;
+    case 'pow': {
+      // Cơ số âm phải có ngoặc, và `PLAIN_PREC` **không** biết điều đó: nó hỏi kiểu
+      // nút, mà `int(−1)` có độ ưu tiên cao nhất. Chuỗi in ra thì bắt đầu bằng dấu
+      // trừ, và `−1^n` đọc thành $-(1^n) = -1$ — sai hẳn giá trị, không phải xấu.
+      // Cùng bài học mà nhánh `mul` ngay trên đã học: hỏi **chuỗi đã in**, đừng hỏi
+      // kiểu nút, vì kiểu nút không biết mình bắt đầu bằng gì.
+      const base = wrap(e.base, true);
+      return `${base.startsWith('−') ? `(${base})` : base}^${wrap(e.exp, true)}`;
+    }
     case 'root':
       return e.index === 2 ? `√(${toPlain(e.arg)})` : `căn bậc ${e.index} của (${toPlain(e.arg)})`;
     case 'abs':

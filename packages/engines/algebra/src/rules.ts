@@ -3530,25 +3530,79 @@ function constExp(e: Expr): number | null {
 }
 
 /**
- * $\dfrac{1}{(1-v)^m}$ với $m \ge 1$ nguyên — nhận dạng dùng chung.
+ * **Hệ số dẫn của một thừa số tuyến tính**: $1 - a\,v$ ⇒ trả $a$, ngược lại `null`.
  *
- * Trả `m`, hoặc `null`. Nhận cả dạng không có số mũ ($m = 1$).
+ * $a$ phải là **hằng nguyên khác $0$**. Ký hiệu thì không khai chuỗi được ở bất kỳ
+ * bậc nào (`series.ts` trả `null`), nên nhận nó là dựng một dòng mà bộ kiểm chỉ biết
+ * nói "chưa kiểm được" — thứ M50 tầng C đã từ chối một lần. $a = 0$ thì $1 - 0v = 1$,
+ * không còn là một chuỗi hình học, và $\frac{1}{1}$ chẳng cần luật nào.
+ *
+ * Ba hình dạng cùng một vật, vì engine không có nút `sub` (§3.1) và không viết hệ số
+ * $1$ ra: $1 - v$ là `add[1, mul[-1, v]]` ($a = 1$); $1 + v$ là `add[1, v]`
+ * ($a = -1$); $1 - 3v$ là `add[1, mul[-3, v]]` ($a = 3$).
  */
-function repeatedGeometric(e: Expr, v: string): number | null {
+/** $c \cdot x$ với $c$ hằng nguyên và $x$ một biến trần — trả $\{c, x\}$, hoặc `null`. */
+function scaledVar(e: Expr): { c: number; x: Expr & { k: 'var' } } | null {
+  if (e.k === 'var') return { c: 1, x: e };
+  if (e.k !== 'mul') return null;
+  const vars = e.args.filter((a): a is Expr & { k: 'var' } => a.k === 'var');
+  if (vars.length !== 1) return null;
+  let c = 1;
+  for (const arg of e.args) {
+    if (arg === vars[0]) continue;
+    const k = constExp(arg);
+    if (k === null) return null;
+    c *= k;
+  }
+  return { c, x: vars[0] as Expr & { k: 'var' } };
+}
+
+/**
+ * $1 - a\,x$ ⇒ $\{a, x\}$; $a$ nguyên $\ne 0$. Ngược lại `null`.
+ *
+ * Tên dài vì `linearFactor` đã có chủ ở dòng 829 — nó **dựng** $px + q$, còn cái này
+ * **đọc** mẫu của một chuỗi hình học. Hai việc ngược chiều nhau, đừng để chung tên.
+ */
+function geometricDenominator(base: Expr): { a: number; x: Expr & { k: 'var' } } | null {
+  if (base.k !== 'add' || base.args.length !== 2) return null;
+  const [p, q] = base.args as [Expr, Expr];
+  const rest = constExp(p) === 1 ? q : constExp(q) === 1 ? p : null;
+  if (rest === null) return null;
+  const scaled = scaledVar(rest);
+  if (scaled === null) return null;
+  const a = -scaled.c;
+  return a === 0 ? null : { a, x: scaled.x };
+}
+
+function leadingCoefficient(base: Expr, v: string): number | null {
+  const found = geometricDenominator(base);
+  return found !== null && found.x.name === v ? found.a : null;
+}
+
+/**
+ * $\dfrac{1}{(1-a v)^m}$ với $m \ge 1$ nguyên và $a$ hằng nguyên $\ne 0$ — nhận dạng
+ * dùng chung.
+ *
+ * Trả `{m, a}`, hoặc `null`. Nhận cả dạng không có số mũ ($m = 1$).
+ */
+function repeatedGeometric(e: Expr, v: string): { m: number; a: number } | null {
   if (e.k !== 'div') return null;
   if (constExp(e.num) !== 1) return null;
   const [base, m] = e.den.k === 'pow' ? [e.den.base, constExp(e.den.exp)] : [e.den, 1];
   if (m === null || m < 1) return null;
-  // $1 - v$ dựng bằng `add[1, (-1)·v]` — engine không có nút `sub` (§3.1).
-  if (base.k !== 'add' || base.args.length !== 2) return null;
-  const [p, q] = base.args as [Expr, Expr];
-  const one = constExp(p) === 1 ? q : constExp(q) === 1 ? p : null;
-  if (one === null) return null;
-  if (one.k !== 'mul' || one.args.length !== 2) return null;
-  const [c, x] = one.args as [Expr, Expr];
-  if (!(c.k === 'int' && c.v === -1)) return null;
-  return x.k === 'var' && x.name === v ? m : null;
+  const a = leadingCoefficient(base, v);
+  return a === null ? null : { m, a };
 }
+
+/**
+ * Điều kiện hội tụ **của ca đang chạy**, không phải một câu chung.
+ *
+ * Đây là chỗ mà việc nới luật dễ hỏng nhất: $\sum (2x)^k$ hội tụ khi $|x| < 1/2$, chứ
+ * không phải $|x| < 1$. In một điều kiện đúng cho $a = 1$ và sai cho mọi $a$ khác thì
+ * luật vừa nới xong đã nói dối — và nói dối ở đúng dòng mà người học được yêu cầu tin.
+ */
+const convergenceOf = (a: number, x: string): string =>
+  Math.abs(a) === 1 ? `|${x}| < 1` : `|${x}| < 1/${Math.abs(a)}`;
 
 /**
  * **Tích chập Cauchy**: $[x^n](F \cdot G) = \sum_{i=0}^{n} \bigl([x^i]F\bigr)
@@ -3696,35 +3750,79 @@ const coeffShift: Rule = {
  *
  * $m$ phải là **hằng nguyên** $\ge 1$: với $m$ ký hiệu thì không khai chuỗi được ở
  * bất kỳ bậc nào, và luật sẽ dựng một dòng mà bộ kiểm chỉ biết nói "chưa kiểm được".
+ *
+ * **Hệ số dẫn $a$** (loạt bài 3/4): $[x^n]\dfrac{1}{(1-ax)^m} = a^n\dbinom{n+m-1}{m-1}$.
+ * Ca $m = 1$ cho $[x^n]\frac{1}{1-2x} = 2^n$ — sự thật cơ bản nhất của hàm sinh sau
+ * chuỗi hình học, và trước lượt này nó **không đi được**, dù `series.ts` lấy đúng
+ * $\frac{1}{1-2x}$ làm ví dụ mở đầu cho việc nó phải dùng `bigint`. Bộ kiểm làm được
+ * từ lâu; chỗ hẹp nằm ở luật viết lại.
+ *
+ * $a = 1$ **không** in ra thừa số $1^n$: đó là một dòng rác, và giữ nguyên hành vi cũ
+ * cho ca cũ là điều kiện để 129 bài đang xuất bản không đổi một byte.
  */
 const coeffRepeatedGeometric: Rule = {
   id: 'coeff_repeated_geometric',
-  label: 'hệ số của 1/(1−x)^m',
+  label: 'hệ số của 1/(1−ax)^m',
   run(m, node) {
     if (node.k !== 'coeff') return no('cần một chỗ trích hệ số');
-    const deg = repeatedGeometric(node.of, node.v);
-    if (deg === null) return no(`thân phải có dạng 1/(1 − ${node.v})^m với m nguyên ≥ 1`);
-    // $m = 1$ cho $\binom{n+0}{0}$ — đúng, và không ai viết `+ 0`. Dựng thẳng.
-    const upper =
-      deg === 1 ? freshCopy(m, node.at).copy : add(m, [freshCopy(m, node.at).copy, int(m, deg - 1)]);
-    return { after: fn(m, 'binom', [upper, int(m, deg - 1)]) };
+    const found = repeatedGeometric(node.of, node.v);
+    if (found === null) {
+      return no(`thân phải có dạng 1/(1 − a·${node.v})^m với m nguyên ≥ 1, a nguyên ≠ 0`);
+    }
+    const { m: deg, a } = found;
+    // Chỉ đúc $a^n$ **khi dùng tới**: `Minter` phát id theo thứ tự gọi, nên đúc sẵn một
+    // nút rồi vứt đi làm cả hàng bị đánh số lại, và `data-el` là thứ `anchors` trỏ vào.
+    const power = (): Expr => pow(m, int(m, a), freshCopy(m, node.at).copy);
+
+    // $m = 1$: $\binom{n}{0}$ **là** hằng số $1$, và in một hằng số $1$ ra màn hình là
+    // để lại trên hình một thứ người đọc phải tự biết mà bỏ đi. Trước lượt này nó chỉ
+    // hơi thừa; với hệ số dẫn thì dòng chốt của cả chuyên đề — $[x^n]\frac{1}{1-2x}$ —
+    // đọc thành $2^n\binom{n}{0}$, tức là chôn kết quả dưới một thừa số vô nghĩa.
+    if (deg === 1) return { after: a === 1 ? int(m, 1) : power() };
+
+    const upper = add(m, [freshCopy(m, node.at).copy, int(m, deg - 1)]);
+    const binomial = fn(m, 'binom', [upper, int(m, deg - 1)]);
+    if (a === 1) return { after: binomial };
+    return { after: mul(m, [power(), binomial]) };
   },
 };
 
 /**
- * $\sum_{k=0}^{\infty} x^k = \dfrac{1}{1-x}$ — **hai chiều** (M68, AL-16).
+ * $\sum_{k=0}^{\infty} (ax)^k = \dfrac{1}{1-ax}$ — **hai chiều** (M68, AL-16; hệ số
+ * dẫn $a$ thêm ở loạt bài 3/4).
  *
- * Luật duy nhất của mục này, và nó cố ý hẹp: cơ số phải là **một biến trần**, cận dưới
- * phải là $0$, số mũ phải là **chính chỉ số**. Không nhận $\sum (2x)^k$, không nhận
- * $\sum_{k=1}^{\infty}$, không nhận $\sum a r^k$.
+ * Luật vẫn hẹp, và ranh giới nay là: cơ số phải là **một biến trần nhân một hằng
+ * nguyên khác $0$**, cận dưới phải là $0$, số mũ phải là **chính chỉ số**. Không nhận
+ * $\sum_{k=1}^{\infty}$, không nhận $\sum c\,r^k$ với $c$ đứng ngoài, không nhận
+ * $\dfrac{1}{1-x-x^2}$ hay bất kỳ mẫu nào bậc $\ge 2$.
  *
- * Hẹp vì mỗi lần nới là một lần phải kể lại chuyện hội tụ. $\sum_{k=1}^{\infty} x^k$
- * bằng $\dfrac{x}{1-x}$, $\sum (2x)^k$ bằng $\dfrac{1}{1-2x}$ với $|x| < \frac12$ —
- * mỗi biến thể một điều kiện khác, và một luật nhận cả họ sẽ in ra một điều kiện đúng
- * cho ca này và sai cho ca kia. Người học cần biến thể khác thì đi qua `sum_shift` và
- * `sum_linear`, và mỗi bước ấy **hiện ra trên hình**.
+ * ## Vì sao nới, và vì sao dừng ở đây
  *
- * Điều kiện $|x| < 1$ là **chữ**, không phải `Guard`: sân chuỗi không bốc điểm nào nên
+ * Bản M68 chỉ nhận biến trần. Lập luận khi ấy — *"mỗi lần nới là một lần phải kể lại
+ * chuyện hội tụ"* — đúng, và cách trả lời nó không phải là từ chối nới mà là **in
+ * đúng điều kiện của ca đang chạy** (`convergenceOf`). $\sum(2x)^k$ hội tụ khi
+ * $|x| < 1/2$, và dòng ấy nay nói đúng thế.
+ *
+ * Chỗ nới này không mở một cửa mới: `series.ts` lấy chính $\frac{1}{1-2x}$ với hệ số
+ * $2^k$ làm **ví dụ mở đầu** giải thích vì sao nó phải dùng `bigint`. Bộ kiểm làm
+ * được từ lâu; chỉ luật viết lại là hẹp, nên $[x^n]\frac{1}{1-2x} = 2^n$ — sự thật cơ
+ * bản nhất của hàm sinh sau chuỗi hình học — không đi được. Nới là nối một cửa đã xây
+ * xong với hành lang.
+ *
+ * Dừng ở $1 - ax$ vì bậc $\ge 2$ là một chuyện khác hẳn: $\frac{1}{1-x-x^2}$ cần phân
+ * thức riêng phần trên $\mathbb{Q}(\sqrt5)$ và nhị thức tổng quát $\binom{1/2}{n}$ —
+ * đúng ranh giới `series.ts` đã tự vạch (*"`fn`, `root`, `abs` → `null`"*). Ghi thành
+ * nợ có tên, không lặng lẽ bỏ.
+ *
+ * ## Một chú thích từng nói dối
+ *
+ * Bản trước viết: *"Người học cần biến thể khác thì đi qua `sum_shift` và
+ * `sum_linear`."* Không đúng — cả `pow_split`, `sum_linear` lẫn `sum_shift` đều từ
+ * chối $\sum(2x)^k$, thử rồi. Câu ấy là một đường thoát chưa ai đi. Nay thay bằng lời
+ * từ chối thật ở trên: cái gì nhận thì nói, cái gì không thì nói, và **không trỏ tới
+ * đường vòng nào chưa thử**.
+ *
+ * Điều kiện hội tụ là **chữ**, không phải `Guard`: sân chuỗi không bốc điểm nào nên
  * không có điểm nào để loại. Nó là một phát biểu về *khi nào đẳng thức số học có nghĩa*,
  * trong khi thứ engine vừa kiểm là đẳng thức **hình thức** — hai chuyện khác nhau, và
  * nói rõ chỗ khác nhau ấy chính là phần dạy học.
@@ -3733,40 +3831,48 @@ const geometricSeries: Rule = {
   id: 'geometric_series',
   label: 'chuỗi hình học',
   run(m, node) {
-    // Chiều xuôi: $\sum_{k=0}^{\infty} x^k \to \dfrac{1}{1-x}$.
+    // Chiều xuôi: $\sum_{k=0}^{\infty} (ax)^k \to \dfrac{1}{1-ax}$.
     if (node.k === 'big') {
       if (node.op !== 'sum') return no('cần một tổng, không phải một tích');
       if (node.to.k !== 'inf') return no('cận trên phải là ∞');
       if (!(node.from.k === 'int' && node.from.v === 0)) return no('cận dưới phải là 0');
       if (node.body.k !== 'pow') return no('thân phải là một luỹ thừa');
-      if (node.body.base.k !== 'var') return no('cơ số phải là một biến');
+      const scaled = scaledVar(node.body.base);
+      if (scaled === null) return no('cơ số phải là một biến, hoặc một hằng nguyên nhân biến');
+      if (scaled.c === 0) return no('hệ số dẫn phải khác 0');
       if (!(node.body.exp.k === 'var' && node.body.exp.name === node.v)) {
         return no(`số mũ phải là chính chỉ số ${node.v}`);
       }
-      const x = node.body.base;
+      const { c: a, x } = scaled;
+      // $a = 1$ dựng đúng cây cũ (`1 + (−1)·x`) — ca cũ không được đổi một byte.
+      //
+      // Dựng **thẳng trong biểu thức**, không tách ra biến trung gian: `Minter` phát id
+      // theo thứ tự gọi, nên nhấc `negate` ra trước làm cả hàng bị đánh số lại. Hình vẽ
+      // y hệt, nhưng `data-el` đổi — mà đó chính là thứ `anchors` và `bijection.pairs`
+      // trỏ tới. Một golden "chỉ đổi id" là một quả mìn hẹn giờ cho bài neo vào id ấy.
       return {
-        after: div(m, int(m, 1), add(m, [int(m, 1), negate(m, x)])),
-        condition: `|${toPlain(x)}| < 1`,
+        after: div(
+          m,
+          int(m, 1),
+          add(m, [int(m, 1), a === 1 ? negate(m, x) : mul(m, [int(m, -a), x])]),
+        ),
+        condition: convergenceOf(a, toPlain(x)),
       };
     }
 
-    // Chiều ngược: $\dfrac{1}{1-x} \to \sum_{k=0}^{\infty} x^k$.
+    // Chiều ngược: $\dfrac{1}{1-ax} \to \sum_{k=0}^{\infty} (ax)^k$.
     if (node.k !== 'div') return no('cần một tổng vô hạn hoặc một phân số');
     if (!(node.num.k === 'int' && node.num.v === 1)) return no('tử phải là 1');
-    const den = node.den;
-    if (den.k !== 'add' || den.args.length !== 2) return no('mẫu phải có dạng 1 − x');
-    const [one, rest] = den.args as [Expr, Expr];
-    if (!(one.k === 'int' && one.v === 1)) return no('mẫu phải bắt đầu bằng 1');
-    if (!(rest.k === 'mul' && rest.args.length === 2)) return no('mẫu phải có dạng 1 − x');
-    const [neg, x] = rest.args as [Expr, Expr];
-    if (!(neg.k === 'int' && neg.v === -1)) return no('mẫu phải có dạng 1 − x');
-    if (x.k !== 'var') return no('phải là 1 − (một biến)');
+    const found = geometricDenominator(node.den);
+    if (found === null) return no('mẫu phải có dạng 1 − a·x với a nguyên khác 0');
+    const { a, x } = found;
 
     // Chỉ số mới: một tên chưa dùng, để không che biến nào (bài học M57).
     const k = freshIndex(x);
+    const base = a === 1 ? x : mul(m, [int(m, a), x]);
     return {
-      after: big(m, 'sum', k, int(m, 0), infinity(m), pow(m, x, variable(m, k))),
-      condition: `|${toPlain(x)}| < 1`,
+      after: big(m, 'sum', k, int(m, 0), infinity(m), pow(m, base, variable(m, k))),
+      condition: convergenceOf(a, toPlain(x)),
     };
   },
 };
