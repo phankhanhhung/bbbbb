@@ -1,0 +1,163 @@
+{
+  "schema_version": "1.5.0",
+  "id": "bezout-coprime-divides-coefficient",
+  "statement": {
+    "vi": "Cho $\\gcd(p,q) = 1$. Nếu $q$ chia hết $a p^3$ thì vì sao $q$ phải chia hết chính $a$? Bézout trả lời bằng một phép khai triển."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bổ đề Euclid, dạng cần cho định lý nghiệm hữu tỉ. Engine kiểm phần đại số — phép khai triển; phần chia hết nằm ở lời kể, vì engine này không có khái niệm chia hết."
+    }
+  },
+  "topics": [
+    "number-theory",
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "$\\gcd(p,q) = 1$ nên có $u, v$ nguyên với $up + vq = 1$ — đó là Bézout. Lập phương [[a1|hai vế]]: vế phải vẫn là $1$, còn vế trái nở ra bốn hạng tử."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(u*p + v*q)^3 = 1",
+              "steps": [
+                {
+                  "at": "L",
+                  "rule": "expand_cube"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Lập phương của u p cộng v q bằng một, khai triển thành bốn hạng tử."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nhân cả hai vế với $a$ — hệ số đầu của một đa thức bậc ba nên $a \\neq 0$, đúng điều kiện engine in đỏ. Nhìn [[a1|bốn hạng tử]] bên trái: hạng tử đầu mang $p^3$, ba hạng tử sau đều mang một thừa số $q$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(u*p + v*q)^3 = 1",
+              "steps": [
+                {
+                  "at": "L",
+                  "rule": "expand_cube"
+                },
+                {
+                  "arg": "a",
+                  "at": "",
+                  "rule": "mul_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "distribute"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bốn hạng tử nhân thêm a; hạng tử đầu chứa lập phương của u p."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giả thiết cho $q \\mid a p^3$, nên $q$ chia hết hạng tử đầu. Ba hạng tử còn lại có sẵn thừa số $q$. Vậy $q$ chia hết cả [[a1|vế trái]], mà vế trái bằng $a$ — nên $q \\mid a$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(u*p + v*q)^3 = 1",
+              "steps": [
+                {
+                  "at": "L",
+                  "rule": "expand_cube"
+                },
+                {
+                  "arg": "a",
+                  "at": "",
+                  "rule": "mul_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "distribute"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Cùng bốn hạng tử ấy, nay đọc theo tính chia hết cho q."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

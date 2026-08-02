@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.5.0",
+  "id": "rational-root-candidates-and-factor",
+  "statement": {
+    "vi": "Phân tích $2x^3 - 3x^2 - 3x + 2$. Định lý nghiệm hữu tỉ thu danh sách ứng viên xuống còn sáu số; thử vài số là xong."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Định lý nghiệm hữu tỉ dùng vào việc. Nó không tìm ra nghiệm — nó **chặn** chỗ phải tìm, và đó là toàn bộ giá trị của nó."
+    }
+  },
+  "topics": [
+    "number-theory",
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Hệ số đầu $2$, hệ số tự do $2$, nên nghiệm hữu tỉ tối giản $p/q$ có $p \\mid 2$ và $q \\mid 2$: chỉ sáu ứng viên $\\pm 1, \\pm 2, \\pm \\tfrac{1}{2}$. Thử $x = 1$ trước — [[a1|ra $-2$]], không phải $0$, nên loại."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2*x^3 - 3*x^2 - 3*x + 2 = 0",
+              "steps": [
+                {
+                  "arg": "x := 1",
+                  "at": "",
+                  "rule": "evaluate_at"
+                },
+                {
+                  "at": "L",
+                  "rule": "eval_int"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Thay x bằng một vào vế trái, rút về âm hai bằng không — một khẳng định sai, nên x bằng một bị loại."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thử $x = 2$: thay vào rồi [[a1|tính ra số]] được $0$. Vậy $2$ là nghiệm, và $x - 2$ là một nhân tử."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2*x^3 - 3*x^2 - 3*x + 2 = 0",
+              "steps": [
+                {
+                  "arg": "x := 2",
+                  "at": "",
+                  "rule": "evaluate_at"
+                },
+                {
+                  "at": "L",
+                  "rule": "eval_int"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Thay x bằng hai vào vế trái, rút về không bằng không."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chia cho nhân tử vừa tìm được: còn lại [[a1|một tam thức bậc hai]]. Từ đây không cần định lý nữa — tam thức thì phân tích thẳng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2*x^3 - 3*x^2 - 3*x + 2 = 0",
+              "steps": [
+                {
+                  "arg": "x - 2",
+                  "at": "L",
+                  "rule": "divide_by_linear_factor"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Vế trái thành x trừ hai nhân với hai x bình cộng x trừ một."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Phân tích nốt tam thức: [[a1|ba nhân tử tuyến tính]], tức ba nghiệm $2$, $-1$ và $\\tfrac{1}{2}$. Cả ba đều nằm trong danh sách sáu ứng viên ở bước đầu, và nghiệm $\\tfrac{1}{2}$ có mẫu số $2$ — đúng bằng hệ số đầu."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2*x^3 - 3*x^2 - 3*x + 2 = 0",
+              "steps": [
+                {
+                  "arg": "x - 2",
+                  "at": "L",
+                  "rule": "divide_by_linear_factor"
+                },
+                {
+                  "at": "L.1",
+                  "rule": "factor_quadratic"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Vế trái thành tích ba nhân tử x trừ hai, x cộng một, hai x trừ một."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s3"
+  }
+}

@@ -140,9 +140,16 @@
     "imo-1986-p3-pentagon-operation",
     "five-colour-planar-sketch",
     "timetable-edge-colouring",
-    "hanoi-generating-function"
+    "hanoi-generating-function",
+    "bezout-coprime-divides-coefficient",
+    "bezout-euclid-back-substitution",
+    "rational-root-candidates-and-factor",
+    "rational-root-two-groupings"
   ],
   "newest": [
-    "hanoi-generating-function"
+    "bezout-coprime-divides-coefficient",
+    "bezout-euclid-back-substitution",
+    "rational-root-candidates-and-factor",
+    "rational-root-two-groupings"
   ]
 }

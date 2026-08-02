@@ -1,0 +1,155 @@
+{
+  "schema_version": "1.5.0",
+  "id": "bezout-euclid-back-substitution",
+  "statement": {
+    "vi": "Thuật toán Euclid cho $\\gcd(a,b)$ chỉ trả về một số. Đi ngược lại chuỗi phép chia thì nó trả về nhiều hơn: một cách **viết** số ấy thành $ua + vb$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Đẳng thức Bézout, dựng bằng phép thế ngược. Chỗ đáng nhìn: không có bước nào đoán $u$ và $v$ — chúng rơi ra từ chính các phép chia đã làm."
+    }
+  },
+  "topics": [
+    "number-theory",
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chia $a$ cho $b$ dư $r$, rồi chia $b$ cho $r$ dư $s$ — hai phép chia của thuật toán Euclid. Thế dòng trên vào dòng dưới thì $r$ biến mất, và $s$ [[a1|chỉ còn nói về $a$ và $b$]]."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "r = a - 3*b; s = b - 2*r",
+              "steps": [
+                {
+                  "arg": "0,1",
+                  "at": "",
+                  "rule": "substitute_from"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hệ hai dòng; dòng dưới thay r bằng biểu thức theo a và b."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Khai triển rồi gộp lại: $s$ hiện ra dưới dạng [[a1|$7b - 2a$]]. Không bước nào đoán hai hệ số ấy — chúng là thương của chính hai phép chia vừa làm."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "r = a - 3*b; s = b - 2*r",
+              "steps": [
+                {
+                  "arg": "0,1",
+                  "at": "",
+                  "rule": "substitute_from"
+                },
+                {
+                  "at": "1.R.1",
+                  "rule": "distribute"
+                },
+                {
+                  "at": "1.R",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Dòng dưới rút dần từ b trừ hai lần a trừ ba b, tới bảy b trừ hai a."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thay số vào: $1 = 7 \\cdot 5 - 2 \\cdot 17$. Vế phải [[a1|bằng đúng $1$]], nên $\\gcd(17,5) = 1$ viết được thành một tổ hợp nguyên của $17$ và $5$. Đó là đẳng thức Bézout."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "7*5 - 2*17 = 1",
+              "steps": [
+                {
+                  "at": "L",
+                  "rule": "eval_int"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bảy nhân năm trừ hai nhân mười bảy rút về một bằng một."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "schema_version": "1.5.0",
+  "id": "rational-root-two-groupings",
+  "statement": {
+    "vi": "Nghiệm hữu tỉ $p/q$ tối giản của $ax^3 + bx^2 + cx + d = 0$ cho một đẳng thức nguyên. Nhóm nó **hai cách** thì ra hai kết luận khác nhau về $p$ và về $q$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Định lý nghiệm hữu tỉ. Cùng một đẳng thức, hai cách nhóm — cùng kỹ thuật đọc hai chiều mà kho đã dùng cho bổ đề bắt tay."
+    }
+  },
+  "topics": [
+    "number-theory",
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Lời giải"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thay $x = p/q$ rồi nhân hai vế với $q^3$ được một đẳng thức nguyên. Nhóm cách thứ nhất: đặt $p$ ra ngoài ba hạng tử đầu — [[a1|khai triển rồi gộp số mũ]] cho về đúng đẳng thức ấy, nên dạng nhóm không thêm giả thiết nào."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "p*(a*p^2 + b*p*q + c*q^2) + d*q^3 = 0",
+              "steps": [
+                {
+                  "at": "L.0",
+                  "rule": "distribute"
+                },
+                {
+                  "at": "L.0",
+                  "rule": "pow_add"
+                },
+                {
+                  "at": "L.1",
+                  "rule": "pow_add"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "p nhân một tổng ba hạng tử, cộng d q mũ ba; khai triển rồi gộp số mũ về bốn hạng tử."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Tổng bằng $0$ nên $dq^3$ bằng phần còn lại, mà phần ấy chia hết cho $p$. Vậy $p \\mid dq^3$; kết hợp $\\gcd(p,q) = 1$ được [[a1|$p \\mid d$]] — tử số chia hết hệ số tự do."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "p*(a*p^2 + b*p*q + c*q^2) + d*q^3 = 0",
+              "steps": [
+                {
+                  "at": "L.0",
+                  "rule": "distribute"
+                },
+                {
+                  "at": "L.0",
+                  "rule": "pow_add"
+                },
+                {
+                  "at": "L.1",
+                  "rule": "pow_add"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Cùng đẳng thức ấy, đọc theo tính chia hết cho p."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Cách nhóm thứ hai trên **cùng** đẳng thức: đặt $q$ ra ngoài ba hạng tử cuối. Lần này [[a1|$ap^3$]] là hạng tử đứng riêng, nên $q \\mid ap^3$, và với $\\gcd(p,q) = 1$ thì $q \\mid a$ — mẫu số chia hết hệ số đầu."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a*p^3 + q*(b*p^2 + c*p*q + d*q^2) = 0",
+              "steps": [
+                {
+                  "at": "L.1",
+                  "rule": "distribute"
+                },
+                {
+                  "at": "L.2",
+                  "rule": "pow_add"
+                },
+                {
+                  "at": "L.3",
+                  "rule": "pow_add"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "a p mũ ba cộng q nhân một tổng ba hạng tử; khai triển rồi gộp số mũ về bốn hạng tử."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}
