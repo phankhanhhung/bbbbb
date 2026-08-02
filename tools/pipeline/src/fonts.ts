@@ -54,6 +54,52 @@ const KATEX_ROOT = dirname(require.resolve('katex/package.json'));
 /** Thư mục `dist/fonts` của katex — cùng bộ file mà Player nạp qua `@font-face`. */
 export const KATEX_FONT_DIR = join(KATEX_ROOT, 'dist', 'fonts');
 
+/**
+ * Mặt chữ **giao diện**, bundle chứ không mượn của máy — nửa còn lại của G-09.
+ *
+ * ## Vì sao đây là một lỗ chứ không phải một chi tiết
+ *
+ * Bộ KaTeX ở trên bundle từ M62, nhưng chữ giao diện — tiêu đề card, nhãn luật,
+ * caption — vẫn đi `loadSystemFonts: true` với `defaultFontFamily: 'DejaVu Sans'`,
+ * mà DejaVu là phông **của máy**, không của kho. Máy build thiếu nó thì resvg
+ * không báo lỗi, nó chỉ **bỏ chữ đi**: một card 1200×630 bố cục hoàn hảo, hình
+ * đẹp, không một chữ nào — rồi nó lên Twitter. `PLAN-P1.md` §10.3 ghi món này từ
+ * lâu và nói đúng chỗ đau: đã có test đếm mực **chặn** kiểu lỗi ấy, nhưng
+ * **chặn ≠ chữa**, vì test cũng chạy trên máy *có* phông.
+ *
+ * ## Vì sao DejaVu chứ không phải Inter, dù theme khai Inter trước
+ *
+ * Lý lẽ "bundle đúng mặt Player nạp" là lý lẽ của **KaTeX**, và nó không mang sang
+ * đây được. Với KaTeX nó đúng vì `typeset.ts` đo bề rộng bằng **bảng metric của
+ * KaTeX** — hai bên phải cùng một bộ file thì phép đo mới khớp. Chữ giao diện thì
+ * **không có bảng metric nào**: resvg tự dàn chữ, không ai đo trước. Nên tiêu chí
+ * duy nhất còn lại là **phủ ký tự**.
+ *
+ * Và ở tiêu chí ấy Inter trượt, đo được: `♞` (U+265E), `♟` (U+265F) và một
+ * codepoint chắc chắn không tồn tại (U+2FFFF) render ra **cùng một lượng mực**
+ * trong Inter — tức cả ba là ô `.notdef`. Board renderer phát `♛ ♜ ♞` cho quân cờ,
+ * nên bundle Inter là biến mọi quân cờ trên mọi card thành một ô vuông rỗng.
+ * DejaVu cho ba con số khác nhau, và phủ luôn `∑ ∏ × − ≤ ∞` cùng dấu tiếng Việt.
+ *
+ * Chỗ này cũng lộ ra một cổng xanh không canh gì: test quân cờ của G-09 chỉ hỏi
+ * `mực > 0`, mà **một ô tofu cũng có mực**. Nay nó so với mực của `.notdef`.
+ */
+const DEJAVU_ROOT = dirname(require.resolve('dejavu-fonts-ttf/package.json'));
+
+/**
+ * Đúng hai mặt, không phải cả bộ 22 file.
+ *
+ * Card dùng `font-weight: 500` và mặc định; `Oblique`/`Condensed`/`Serif`/`Mono`
+ * không chỗ nào gọi. Nạp thừa không sai nhưng nó làm `fontFiles` thành một danh
+ * sách không ai giải thích được, và mỗi file thừa là một mặt resvg có thể bốc
+ * nhầm khi một family không khớp.
+ */
+export function uiFontFiles(): string[] {
+  return ['DejaVuSans.ttf', 'DejaVuSans-Bold.ttf'].map((name) =>
+    join(DEJAVU_ROOT, 'ttf', name),
+  );
+}
+
 const KATEX_VERSION = (JSON.parse(readFileSync(join(KATEX_ROOT, 'package.json'), 'utf8')) as {
   version: string;
 }).version;
@@ -119,11 +165,15 @@ function restyle(font: Buffer, name: string): Buffer {
 /**
  * Tuỳ chọn phông cho `Resvg`.
  *
- * `loadSystemFonts` vẫn bật cho phông giao diện (nhãn luật, caption). `sansSerifFamily`
- * khai tường minh vì `theme.type.uiFamily` kết thúc bằng `sans-serif`, mà mặc định của
- * resvg cho khoá ấy là `Arial` — không có trên máy Linux nào, và khi cả chuỗi trượt
- * hết thì resvg bốc "phông hệ thống đầu tiên", tức là một cái tên do thứ tự thư mục
- * quyết định. Tên nào không có thì resvg vẫn trượt tiếp như cũ, nên khai thừa vô hại.
+ * `loadSystemFonts` **tắt** — và đó là cả nội dung của lượt này. Còn bật thì máy *có*
+ * phông vẫn che mất lỗi của máy *không có*: chốt canh chạy xanh trên CI, card trống
+ * trơn trên máy khác. Tắt nó biến "chặn" thành "chữa" (`PLAN-P1.md` §10.3).
+ *
+ * `sansSerifFamily` khai tường minh vì `theme.type.uiFamily` kết thúc bằng
+ * `sans-serif`, mà mặc định của resvg cho khoá ấy là `Arial` — không có trong danh
+ * sách bundle, và khi cả chuỗi trượt hết thì resvg bốc mặt đầu tiên nó nạp được, tức
+ * một cái tên do thứ tự file quyết định. Tên nào không có thì resvg vẫn trượt tiếp
+ * như cũ, nên khai thừa vô hại.
  */
 export function fontOptions(): {
   loadSystemFonts: boolean;
@@ -133,8 +183,8 @@ export function fontOptions(): {
   sansSerifFamily: string;
 } {
   return {
-    loadSystemFonts: true,
-    fontFiles: katexFontFiles(),
+    loadSystemFonts: false,
+    fontFiles: [...katexFontFiles(), ...uiFontFiles()],
     /**
      * ## Lỗi thứ ba: phông **mặc định** không khai thì resvg bốc bừa (M69)
      *

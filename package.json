@@ -27,6 +27,7 @@
     "@playwright/test": "1.62.0",
     "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^22.10.2",
+    "dejavu-fonts-ttf": "^2.37.3",
     "eslint": "^9.17.0",
     "playwright": "^1.62.0",
     "tsx": "^4.19.2",
@@ -38,6 +39,5 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ]
-  },
-  "dependencies": {}
+  }
 }

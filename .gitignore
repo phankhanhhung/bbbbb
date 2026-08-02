@@ -13,6 +13,11 @@ packages/content/.index/
 packages/content/index.json
 packages/content/taxonomy.json
 packages/content/og/
+# `combviz og` ghi vào `.og/`, không phải `og/` — dòng trên khai một thư mục mà
+# lệnh chưa bao giờ dùng. README nói OG asset là artifact sinh lúc build và không
+# commit; thiếu dòng này thì lần đầu ai chạy `og --png` là 141 PNG hiện ra trong
+# `git status`, và cách sửa nhanh nhất lúc ấy là commit chúng.
+packages/content/.og/
 schema.json
 
 .DS_Store

@@ -169,6 +169,8 @@ tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mớ
 | **AL-20** — phân thức riêng phần (nghiệm hữu tỉ phân biệt) + mô hình sai số nhận biết triệt tiêu | 08-02 | `ENGINE-ALGEBRA.md` §44 |
 | **Soát chốt canh bằng bẻ răng hàng loạt** — 19 mutant, 16 chết, **3 sống sót** | 08-02 | `ENGINE-BACKLOG.md` §3b |
 | **Soát tài liệu** — đối chiếu cả 11 tệp `docs/` với mã và kho tại HEAD; 12 chỗ khai sai | 08-02 | mục "Soát tài liệu" ngay dưới |
+| **Soát minimap** — bảy ý: khoá tỉ lệ, bàn phím, sợi/cây, độ phủ nhánh, glyph, ga hội tụ, nhánh ma + xương sống | 08-02 | `PLAN-P1.md` §G-03 (lượt sửa chốt) |
+| **Nhúng phông vào raster** — đóng `PLAN-P1.md` §10.3, món cuối của §10 mà máy làm được | 08-02 | `PLAN-P1.md` §10.3 |
 
 Kho đi từ **114 bài → 141 bài** trong hai ngày, test từ **3459** (M78.8) lên
 **3843**, schema từ `1.0.0` lên `1.5.0` — năm minor, năm migration đồng nhất.
@@ -263,6 +265,10 @@ lại vẫn phải soát tay — nhưng nay ít nhất chúng có một danh sá
 - **Bốn luật lượng giác** đã dựng mà chưa bài nào dùng. `ALGEBRA-COVERAGE.md` §5.
 - **`point` đứng yên ở 3 bài** kể từ M36 — nội dung trước, đúng luật
   `ENGINE-BACKLOG.md` §0.3.
+- **Tiêu đề OG tràn mép phải trên 17/141 card.** `titleLines` ngắt dòng bằng *đếm
+  ký tự* với hằng số `FONT * 0.5`, tức giả định mọi ký tự rộng nửa em — tiếng Việt
+  có dấu thì không. Đo lại với cấu hình phông cũ ra **đúng 17**, nên đây là lỗi có
+  sẵn chứ không phải hệ quả của lượt nhúng phông. `PLAN-P1.md` §10.3b.
 
 ---
 

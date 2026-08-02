@@ -20,6 +20,9 @@ importers:
       '@types/node':
         specifier: ^22.10.2
         version: 22.20.1
+      dejavu-fonts-ttf:
+        specifier: ^2.37.3
+        version: 2.37.3
       eslint:
         specifier: ^9.17.0
         version: 9.39.5
@@ -1605,6 +1608,9 @@ packages:
   deep-is@0.1.4:
     resolution: {integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==}
 
+  dejavu-fonts-ttf@2.37.3:
+    resolution: {integrity: sha512-f1hd7jJbeQa1VWcw+K2KrTXS50zTMaHpVC4XIKJpNcDeYR5ajMtj/iLlQDYNvLOKamUB3ARVVCf79lNwNVztSQ==}
+
   dom-serializer@2.0.0:
     resolution: {integrity: sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg==}
 
@@ -3119,6 +3125,8 @@ snapshots:
   deep-eql@5.0.2: {}
 
   deep-is@0.1.4: {}
+
+  dejavu-fonts-ttf@2.37.3: {}
 
   dom-serializer@2.0.0:
     dependencies:

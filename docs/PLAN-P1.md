@@ -2280,7 +2280,13 @@ Quyết định trước, để lúc gấp không phải quyết trong hoảng l
 
 ~~G-11~~, ~~G-12~~, ~~raster OG sang PNG~~ đã đóng ở vòng trau chuốt. Còn lại:
 
-3. ⬜ **Nhúng phông vào bản raster.** PNG hiện dùng phông **hệ thống**; máy thiếu phông thì resvg *âm thầm bỏ chữ* và ra một card đẹp, trống trơn. Đã có test đếm mực chặn kiểu lỗi đó, nhưng chặn ≠ chữa — card giống hệt nhau trên mọi máy thì phải bundle phông.
+3. ✅ **Nhúng phông vào bản raster — xong 2026-08-02.** ~~PNG hiện dùng phông **hệ thống**; máy thiếu phông thì resvg *âm thầm bỏ chữ* và ra một card đẹp, trống trơn. Đã có test đếm mực chặn kiểu lỗi đó, nhưng chặn ≠ chữa — card giống hệt nhau trên mọi máy thì phải bundle phông.~~ Kho nay mang theo `dejavu-fonts-ttf` (Regular + Bold) và `loadSystemFonts` **tắt**. Ba chỗ đáng ghi:
+
+   - **Không bundle Inter dù theme khai Inter trước.** Lý lẽ "bundle đúng mặt Player nạp" là lý lẽ của **KaTeX** và không mang sang được: với KaTeX nó đúng vì `typeset.ts` đo bề rộng bằng chính bảng metric KaTeX, còn chữ giao diện thì **không có bảng metric nào** — resvg tự dàn chữ. Tiêu chí còn lại là **phủ ký tự**, và ở đó Inter trượt: `♞`, `♟` và một codepoint chưa gán (U+2FFFF) render ra **cùng một lượng mực** trong Inter, tức cả ba là ô `.notdef`. Board renderer phát `♛ ♜ ♞`, nên bundle Inter là biến mọi quân cờ trên mọi card thành ô vuông rỗng.
+   - **Test quân cờ của G-09 xanh trên một ô tofu.** Nó chỉ hỏi `mực > 0.005`, mà một ký tự **thiếu** không vẽ ra khoảng trắng — nó vẽ ra `.notdef`, và ô ấy có mực. Nay phép so là với chính mực của `.notdef`.
+   - **Bốn mutant, bốn lỗ.** Bẻ răng lượt này bắt được: bật lại `loadSystemFonts` mà toàn bộ test vẫn xanh (máy chạy test *có* DejaVu — đúng lý do món này tồn tại); đổi bundle sang `DejaVuSerif` mà vẫn xanh vì hai vế của phép so **cùng suy biến**; và bỏ mặt **Bold** mà 2473 test vẫn xanh, dù `font-weight: 600` được watermark, board và set renderer phát ra thật.
+
+3b. ⬜ **Tiêu đề OG tràn mép phải trên 17/141 card.** `titleLines` ngắt dòng bằng **đếm ký tự** với một hằng số `FONT * 0.5` — nó giả định mọi ký tự rộng nửa em, mà tiếng Việt có dấu thì không. Đo được: 17 card có mực ở cột 8px sát mép phải trong vùng tiêu đề. **Không phải do lượt nhúng phông**: đo lại với cấu hình cũ (phông hệ thống) ra **đúng 17**, nên nó có sẵn từ trước. Chữa đúng là đo bề rộng thật thay vì đếm ký tự.
 4. ✅ **Label atlas cho nhãn LaTeX trong canvas** (GR-08, D-07) — **xong ở M18**. Engine derivation dùng nó; các engine khác vẫn vẽ nhãn text thuần, và đó là đủ cho nội dung hiện có.
 5. ⬜ Pilot ≥10 học sinh + 2 GV (DoD §15.5).
 6. ⬜ Kiểm domain `combviz.*` + handle YouTube/TikTok.
