@@ -3577,3 +3577,22 @@ bắt được — nhưng nó bắt chiều ngược lại, và chiều ngược
    Ghi lại vì tỉ lệ ấy là bình thường và đáng nói ra: đi tìm lỗi thì phần lớn thứ tìm
    được là hiểu nhầm của chính mình, và **kiểm lại trước khi sửa** rẻ hơn nhiều so với
    sửa một thứ không hỏng.
+
+### 51.8 Một chốt canh được trích dẫn bằng tên mà không tồn tại
+
+`choreography.ts` và `provenance.ts` cùng giải thích một quyết định thiết kế — lọc id
+qua mực thật thay vì dựng tên từ `TermId` — bằng câu *"đúng loại lỗi mà chốt canh
+`element-identity` sinh ra để chặn"*.
+
+Không có chốt canh nào tên như thế. Không ở `structure.ts`, không ở test nào, không ở
+đâu trong repo. Hai chốt canh **thật** cho chuyện ấy tên khác hẳn:
+
+| phía | chốt canh thật |
+|---|---|
+| anchor tác giả khai | `anchor/undrawn-element` (`schema/structure.ts`) |
+| choreography sinh lúc chạy | test *"mọi đích của mọi pha đều là danh tính có mực"* |
+
+Trích dẫn sai một cái tên đắt đúng bằng không trích dẫn gì: người đọc sau đi tìm, không
+thấy, rồi mất niềm tin vào cả đoạn chú thích — kể cả những câu trong đó vốn đúng. Và nó
+là biến thể khó thấy nhất của cả §51: không phải mã sai, không phải lời hứa suông, mà
+**một con trỏ trỏ vào chỗ trống**.

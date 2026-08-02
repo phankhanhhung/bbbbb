@@ -78,8 +78,17 @@ function termsIn(e: Expr): Set<TermId> {
  *
  * Lọc qua `boxes` chứ không dựng tên từ `TermId`: nút có trong cây mà không có mực
  * (hệ số $1$ bị bỏ ở tầng hiển thị chẳng hạn) thì tên nó không trỏ vào đâu, và một
- * pha nhắm vào đó là một pha im lặng không làm gì — đúng loại lỗi mà chốt canh
- * `element-identity` sinh ra để chặn.
+ * pha nhắm vào đó là một pha im lặng không làm gì — chạy đủ thời lượng, màn hình
+ * đứng im.
+ *
+ * Chốt canh của chuyện ấy là *"mọi đích của mọi pha đều là danh tính **có mực**"*
+ * trong `test/engine.test.ts`. Nó **phải** nằm ở đó chứ không ở `structure.ts`, vì
+ * choreography này sinh lúc chạy nên không có gì trong scene để soi.
+ *
+ * (Bản trước gọi nó là chốt canh `element-identity`. Không có chốt canh nào tên như
+ *  thế, ở đâu trong repo cả — M77 đi tìm mới biết. Trích dẫn sai một cái tên thì đắt
+ *  đúng bằng không có gì: người đọc sau đi tìm, không thấy, và mất niềm tin vào cả
+ *  đoạn chú thích.)
  */
 function drawnAmong(box: Layout, rowIndex: number, terms: ReadonlySet<TermId>): string[] {
   const drawn = new Set(idsOfRow(box, rowIndex));

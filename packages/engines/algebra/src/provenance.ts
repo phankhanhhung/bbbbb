@@ -133,7 +133,12 @@ export function lineageOf(
  *
  * Lọc qua `drawnIds`: một nút có trong cây mà không có mực (hệ số $1$ bị bỏ ở tầng
  * hiển thị) thì tên nó không trỏ vào đâu, và đưa vào `highlight` là đưa một id chết —
- * đúng loại lỗi mà chốt canh `element-identity` sinh ra để chặn.
+ * cùng lớp với lỗi mà `anchor/undrawn-element` (`schema/structure.ts`) chặn ở phía
+ * anchor tác giả khai, và với chốt canh *"mọi đích của mọi pha đều là danh tính có
+ * mực"* ở phía choreography sinh lúc chạy.
+ *
+ * (Bản trước gọi cả hai là chốt canh `element-identity` — một cái tên không tồn tại ở
+ *  đâu trong repo. Xem `choreography.ts` và §51.8.)
  */
 export function algebraLineage(scene: Scene, drawnId: string): ReadonlySet<string> | null {
   const at = parseElementId(drawnId);
