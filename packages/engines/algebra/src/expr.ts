@@ -174,6 +174,44 @@ export type Expr =
   | ({ readonly k: 'sys'; readonly join: 'and' | 'or'; readonly rels: readonly Expr[] } & WithId);
 
 /**
+ * Danh sách **chạy được** của mọi kiểu nút, để chốt canh tự soát được độ phủ của nó.
+ *
+ * Một hợp rời rạc chỉ sống ở tầng kiểu, nên không test nào hỏi được *"tôi đã chạm hết
+ * mười sáu kiểu chưa"* — nó chỉ chạm được những kiểu mà bộ sinh của nó tình cờ dựng
+ * ra. Hậu quả đo được ở M77: chốt canh khứ hồi của tầng 0 chạy $300$ biểu thức mà
+ * chưa **một lần** chạm `rat`, `inf`, `rel`, `sys`, `ufn` — vì bộ sinh chỉ ghép toán
+ * tử hai ngôi. Ba trong năm kiểu ấy khứ hồi **sai**, và chốt canh xanh suốt.
+ *
+ * Hai dòng `_EXHAUSTIVE` dưới đây bắt trình biên dịch đối chiếu hai chiều: thiếu một
+ * kiểu là lỗi biên dịch, thừa một tên cũng là lỗi biên dịch. Nên danh sách này không
+ * lệch khỏi `Expr` được, và chốt canh nào đi qua nó thì **không bỏ sót được**.
+ */
+export const EXPR_KINDS = [
+  'int',
+  'rat',
+  'var',
+  'inf',
+  'add',
+  'mul',
+  'pow',
+  'div',
+  'root',
+  'abs',
+  'fn',
+  'ufn',
+  'big',
+  'coeff',
+  'rel',
+  'sys',
+] as const;
+
+export type ExprKind = (typeof EXPR_KINDS)[number];
+type _EXHAUSTIVE_A = Expr['k'] extends ExprKind ? true : ['thiếu kiểu nút trong EXPR_KINDS'];
+type _EXHAUSTIVE_B = ExprKind extends Expr['k'] ? true : ['EXPR_KINDS có tên không phải kiểu nút'];
+const _exhaustive: [_EXHAUSTIVE_A, _EXHAUSTIVE_B] = [true, true];
+void _exhaustive;
+
+/**
  * Tên hàm engine biết — **đóng**, và mở rộng bằng cách thêm một dòng ở `functions.ts`.
  *
  * M56 đăng ký ba hàm tổ hợp. Với một nền tảng nhắm Olympiad Combinatorics thì $n!$ và
@@ -381,6 +419,24 @@ export function negate(m: Minter, e: Expr): Expr {
 
 /* ---------- đi trong cây ---------- */
 
+/**
+ * Hai hàm dưới đây là **nền** của mọi phép đi cây trong engine.
+ *
+ * `substitute` từng liệt kê tay `add`/`mul`/`pow`/`div`/`rel` rồi `default: return e`,
+ * nên nó im lặng bỏ qua `abs`, `root`, `fn`, `big` — suốt năm hạng mục. Lời chữa là
+ * *"đi bằng `children`/`withChildren`, đừng viết `switch` tay, vì `children` đầy đủ
+ * theo kiến trúc nên nó không quên được"* (xem `substitute` ở `rules.ts`).
+ *
+ * Câu ấy **không tự đúng**. Bản trước của chính hai hàm này kết bằng `default:` —
+ * `[]` và `e` — tức đúng cái bẫy mà chúng được dựng lên để bịt, chỉ dời xuống một
+ * tầng và dời vào chỗ mọi thứ khác đứng lên. Kiểu nút thứ mười bảy có con mà quên khai
+ * ở đây thì **cả engine** mù nó cùng lúc: `walk`, `nodeCount`, `depth`, `substituteVar`,
+ * `allPaths`, `resolveAt`, `reid`.
+ *
+ * Nay không có `default`. `Expr` là hợp rời rạc, nên thiếu một nhánh là **lỗi biên
+ * dịch** — lời hứa "không quên được" chuyển từ chú thích sang trình biên dịch, và đó
+ * là chỗ duy nhất nó đứng được.
+ */
 export function children(e: Expr): readonly Expr[] {
   switch (e.k) {
     case 'add':
@@ -406,7 +462,11 @@ export function children(e: Expr): readonly Expr[] {
       return [e.lhs, e.rhs];
     case 'sys':
       return e.rels;
-    default:
+    // Lá thật — khai từng cái một, **không** gom vào `default`.
+    case 'int':
+    case 'rat':
+    case 'var':
+    case 'inf':
       return [];
   }
 }
@@ -436,7 +496,10 @@ export function withChildren(e: Expr, kids: readonly Expr[]): Expr {
       return { ...e, lhs: kids[0] as Expr, rhs: kids[1] as Expr };
     case 'sys':
       return { ...e, rels: kids };
-    default:
+    case 'int':
+    case 'rat':
+    case 'var':
+    case 'inf':
       return e;
   }
 }

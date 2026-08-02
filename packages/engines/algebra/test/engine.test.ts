@@ -9,6 +9,7 @@ import {
   algebraRenderer,
   algebraSchemaFragment,
   algebraChoreography,
+  EXPR_KINDS,
   allPaths,
   drawnIds,
   elementId,
@@ -28,6 +29,7 @@ import {
   sameValueReal,
   substituteVar,
   varsOf,
+  walk,
   same,
   glyphBox,
   shrink,
@@ -140,6 +142,91 @@ describe('tầng 0 — parser và printer', () => {
     }
 
     expect(broken, broken.join('\n')).toEqual([]);
+  });
+
+  /**
+   * Khứ hồi trên **cả mười sáu kiểu nút**, và tự soát rằng nó đã đi qua cả mười sáu.
+   *
+   * Chốt canh ngay trên chạy $300$ biểu thức mà chưa một lần chạm `rat`, `inf`, `rel`,
+   * `sys`, `ufn` — bộ sinh của nó chỉ ghép toán tử hai ngôi, nên năm kiểu ấy không có
+   * đường vào. Ba trong số đó khứ hồi **sai**, và nó xanh suốt từ M60 tới M76c:
+   *
+   * - `rat(3,4)` in ra `(3 / 4)`, đọc lại thành một `div` — đổi kiểu nút;
+   * - `sys` nối bằng `hoặc` in ra `;`, đọc lại thành nối bằng `và` — **đổi mệnh đề**,
+   *   từ gần cả trục số thành tập rỗng;
+   * - và `hoặc` thì parser không đọc được, nên engine vẽ ra được một thứ mà người soạn
+   *   không viết được.
+   *
+   * Bài học không phải "thêm nguyên tử vào bảng" — bảng nào cũng thiếu. Bài học là
+   * chốt canh phải **hỏi được nó đã phủ hết chưa**, và `EXPR_KINDS` là chỗ trả lời.
+   */
+  it('khứ hồi đủ **mười sáu kiểu nút**, và chốt canh tự soát độ phủ', () => {
+    const m = new Minter();
+    const SAMPLES: readonly string[] = [
+      '3',
+      '-3',
+      'rat(3, 4)',
+      'rat(-1, 8)',
+      'x',
+      'inf',
+      'x + 1',
+      '2*x',
+      'x^2',
+      'x/2',
+      'sqrt(x)',
+      'root(3, x)',
+      'abs(x)',
+      'C(n, k)',
+      'fact(n)',
+      'ln(x)',
+      'f(x)',
+      'a_{n+1}',
+      'sum(k, 1, n, k)',
+      'prod(k, 1, n, k)',
+      'coeff(x, n, F)',
+      'x = 1',
+      'x <= 1',
+      'x != 1',
+      'x = 1; y = 2',
+      'x < 1 hoặc x > 2',
+    ];
+
+    const seen = new Set<string>();
+    const broken: string[] = [];
+    for (const src of SAMPLES) {
+      const tree = parse(src, m);
+      walk(tree, (n) => seen.add(n.k));
+      if (!same(tree, parse(unparse(tree), m))) broken.push(`${src} → ${unparse(tree)}`);
+    }
+
+    expect(broken, broken.join('\n')).toEqual([]);
+    // Chỗ này là cả điểm: thiếu kiểu nút nào thì **chốt canh tự đỏ**, thay vì lặng lẽ
+    // không kiểm nó.
+    expect([...EXPR_KINDS].filter((k) => !seen.has(k))).toEqual([]);
+  });
+
+  it('`hoặc` đọc được, và nó **không** cùng nghĩa với `;`', () => {
+    // $x<1 \lor x>2$ là gần cả trục số; $x<1 \land x>2$ là tập rỗng. Một dạng in đổi
+    // cái này thành cái kia không phải mất dáng, là mất mệnh đề.
+    const or = parse('x < 1 hoặc x > 2', new Minter()) as Extract<Expr, { k: 'sys' }>;
+    const and = parse('x < 1; x > 2', new Minter()) as Extract<Expr, { k: 'sys' }>;
+    expect(or.join).toBe('or');
+    expect(and.join).toBe('and');
+    expect(same(or, and)).toBe(false);
+  });
+
+  it('một hệ dùng **một** dấu nối — trộn hai lối thì từ chối có lời', () => {
+    // Đọc kiểu gì cũng phải cãi nhau về độ ưu tiên, và một hệ hỗn hợp không phải thứ
+    // chương trình phổ thông viết.
+    expect(() => parse('x = 1; y = 2 hoặc z = 3', new Minter())).toThrow(/một dấu nối/);
+  });
+
+  it('`rat(p, q)` chỉ là dạng in — `3/4` vẫn đọc thành `div` như trước', () => {
+    // Thêm một lối viết mà đổi nghĩa lối viết cũ thì đó không phải thêm, là sửa.
+    expect(parse('3/4', new Minter()).k).toBe('div');
+    expect(parse('rat(3, 4)', new Minter()).k).toBe('rat');
+    expect(() => parse('rat(3, 0)', new Minter())).toThrow(/mẫu bằng 0/);
+    expect(() => parse('rat(x, 2)', new Minter())).toThrow(/số nguyên/);
   });
 
   it('cấm nhân ngầm — `2x` là lỗi cú pháp, không phải $2\\cdot x$', () => {
@@ -647,6 +734,65 @@ describe('bound', () => {
     expect(issues.map((i) => i.code)).toContain('bounds/algebra-refused');
     expect(issues[0]!.message).toContain('vị trí');
   });
+
+  /**
+   * **Mọi trần đều phải có răng** (M77).
+   *
+   * `maxSteps`, `maxRelations`, `maxHeightCells`, `maxWidthCells` đều có chốt canh từ
+   * lâu. Bốn cái còn lại — `maxNodes`, `maxDepth`, `maxDegree`, `maxVars` — thì
+   * **không có cái nào**, suốt từ ngày chúng ra đời. Chúng là hàng rào cho thứ chưa
+   * xảy ra, tức đúng loại mã không ai chạy tới; và mã không ai chạy tới mà lại không
+   * ai kiểm thì nó chỉ còn là một dòng chữ.
+   *
+   * Bốn chốt canh dưới đây hỏi hai chuyện mỗi cái: trần có **cắn**, và lời từ chối có
+   * **nói ra con số** — vì một lời từ chối không nói số thì người soạn không biết phải
+   * cắt bớt bao nhiêu.
+   */
+  describe('trần', () => {
+    const refusalOf = (config: Record<string, unknown>): string | null =>
+      readAlgebra({ engine: 'algebra', config, elements: [] } as never).refusal;
+
+    it('`maxNodes` cắn ở biểu thức gốc, và nói số nút', () => {
+      // Giai thừa là hậu tố một ký tự, nên nó là cách đặc nhất để nhồi nút vào trong
+      // `maxSourceLength`: một nút mỗi ký tự.
+      //
+      // Hình dạng ấy vượt **cả hai** trần cùng lúc, nên khẳng định ở đây gồm luôn thứ
+      // tự hỏi: số nút trước, độ sâu sau. Không phải chi tiết vụn — lời từ chối nói
+      // cho người soạn biết phải cắt cái gì, và hai câu trả lời dẫn tới hai cách sửa
+      // khác nhau.
+      expect(refusalOf({ start: `n${'!'.repeat(130)}` })).toBe('biểu thức có 131 nút, quá 120');
+    });
+
+    it('`maxDepth` cắn **riêng** — cây ít nút mà sâu vẫn bị chặn', () => {
+      // Đây là ca cô lập được: $31$ nút thì lọt trần nút, mà $31$ tầng thì không lọt
+      // trần sâu. Không có nó thì `maxDepth` chỉ là một dòng chữ nằm sau `maxNodes`.
+      expect(refusalOf({ start: `n${'!'.repeat(30)}` })).toBe('cây sâu 31 tầng, quá 24');
+      expect(refusalOf({ start: `n${'!'.repeat(20)}` })).toBeNull();
+    });
+
+    it('`maxDegree` cắn **sau một bước**, và số mũ ký hiệu thì không bị phạt', () => {
+      // `Number.isFinite` ở đó không phải cho chắc: $x^n$ có `totalDegree` bằng
+      // `Infinity` vì nó không phải hàm hữu tỉ. Bỏ điều kiện ấy thì mọi số mũ ký hiệu
+      // bị từ chối vì "bậc vượt trần" — tức M58 tự bịt lại thứ nó vừa mở ra.
+      expect(refusalOf({ start: 'x^70 * x^70', steps: [{ rule: 'pow_add', at: '' }] })).toBe(
+        'sau bước 1 bậc vượt 64',
+      );
+      expect(refusalOf({ start: 'x^n * x^n', steps: [{ rule: 'pow_add', at: '' }] })).toBeNull();
+    });
+
+    it('`maxVars` cắn ở validator, không ở model', () => {
+      const issues = algebraSchemaFragment.checkBounds(scene('a + b + c + d + e + f + g'), '');
+      const hit = issues.find((i) => i.code === 'bounds/algebra-vars');
+
+      expect(hit?.severity).toBe('error');
+      expect(hit?.message).toBe('7 biến, quá trần 6');
+      expect(
+        algebraSchemaFragment
+          .checkBounds(scene('a + b + c + d + e + f'), '')
+          .some((i) => i.code === 'bounds/algebra-vars'),
+      ).toBe(false);
+    });
+  });
 });
 
 describe('lồng sâu và số mũ biểu thức', () => {
@@ -894,7 +1040,15 @@ describe('tập luật mở rộng — quy đồng, nhóm, hoàn thành bình ph
     const m = run('2*x^2 + 3*x + 1', [{ rule: 'complete_square', at: '' }]);
     expect(m.unsound).toEqual([]);
     expect(sameValue(m.rows[1]!.expr, tree('2*x^2 + 3*x + 1')).ok).toBe(true);
-    expect(unparse(m.rows[1]!.expr)).toContain('3 / 4');
+    // Hỏi **nút**, không hỏi dạng in: cái đáng canh là hệ số $\frac34$ đúng là một
+    // nguyên tử hữu tỉ chính xác, chứ không phải `unparse` đánh vần nó ra sao. Bản
+    // trước hỏi chuỗi có chứa `"3 / 4"`, nên nó đỏ khi M77 đổi cách in `rat` — đỏ vì
+    // một chuyện không liên quan gì tới thứ nó canh.
+    const rats: Array<{ p: number; q: number }> = [];
+    walk(m.rows[1]!.expr, (n) => {
+      if (n.k === 'rat') rats.push({ p: n.p, q: n.q });
+    });
+    expect(rats).toEqual([{ p: 3, q: 4 }, { p: -1, q: 8 }]);
 
     // Bình phương đúng thì **không** còn phần dư lủng lẳng `+ 0`.
     expect(same(run('x^2 + 4*x + 4', [{ rule: 'complete_square', at: '' }]).rows[1]!.expr,

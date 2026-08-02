@@ -1833,7 +1833,13 @@ const substitute: Rule = {
     // thế được vào trong một dấu căn — từ M47b, năm hạng mục liền — và lời từ chối còn
     // nói sai hẳn ("không thấy biến x") trong khi biến nằm ngay đó. Không ai gặp vì
     // chưa bài nào thế vào trong căn; M57 làm nó lộ ra vì `big` là kiểu nút thứ tư bị
-    // bỏ quên. `children` thì **đầy đủ theo kiến trúc**, nên nó không quên được.
+    // bỏ quên.
+    //
+    // `children` thì đầy đủ — nhưng M77 mới làm câu ấy **thành thật**. Tới lúc ấy
+    // `children` vẫn kết bằng `default: return []`, tức mang đúng cái bẫy nó được gọi
+    // tới để bịt; nó đúng chỉ vì chưa ai thêm kiểu nút thứ mười bảy. Nay nó không có
+    // `default`, nên "không quên được" là chuyện của trình biên dịch chứ không của
+    // lòng tin.
     const go = (e: Expr): Expr => {
       if (e.k === 'var' && e.name === name) {
         found = true;

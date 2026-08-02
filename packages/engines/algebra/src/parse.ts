@@ -13,6 +13,7 @@ import {
   negate,
   abs,
   pow,
+  rat,
   rel,
   root,
   sys,
@@ -99,14 +100,44 @@ class Parser {
     private readonly m: Minter,
   ) {}
 
+  /**
+   * **Hệ chỉ ở gốc.** Dấu chấm phẩy ngăn các phương trình — dấu phẩy đã thuộc về
+   * `root(3, x)`, `C(n, k)` và `sum(k, 1, n, …)`. Không cho `sys` lồng `sys`: một hệ
+   * của các hệ không phải thứ ai viết, và cho phép nó là mở một chiều lồng vô hạn mà
+   * không luật nào biết đi trong đó.
+   *
+   * ## `hoặc` đọc được từ M77
+   *
+   * `sys` có hai lối nối từ M60, và engine **sinh** cả hai: một bất phương trình chứa
+   * trị tuyệt đối tách ra thành $x < 1$ **hoặc** $x > 2$, hiện đúng chữ ấy trên hình,
+   * và `toPlain` in đúng chữ ấy. Nhưng parser thì chỉ biết `;`, tức chỉ biết `and`.
+   *
+   * Hai hậu quả, và cái thứ hai mới đau:
+   *
+   * 1. Người soạn **không viết được** thứ engine vẽ ra được. Muốn một bài mở đầu bằng
+   *    hợp hai khoảng thì phải bắt đầu từ chỗ khác rồi đi tới nó bằng một luật.
+   * 2. `unparse` in hệ `or` bằng `;` — tức **đổi phép hội thành phép tuyển**. Đó không
+   *    phải mất một dạng in, đó là mất một mệnh đề: $x<1 \lor x>2$ là gần cả trục số,
+   *    $x<1 \land x>2$ là tập rỗng. Chú thích của `unparse` khai một chốt canh khứ hồi
+   *    `parse(unparse(e)) ≡ e`; chốt ấy chưa từng tồn tại, và nếu có thì nó đã đỏ ngay
+   *    ở đây.
+   *
+   * Không trộn hai dấu nối trong một hệ: `a; b hoặc c` đọc kiểu gì cũng phải cãi nhau
+   * về độ ưu tiên, và một hệ hỗn hợp không phải thứ chương trình phổ thông viết.
+   */
   parse(): Expr {
-    // **Hệ chỉ ở gốc.** Dấu chấm phẩy ngăn các phương trình — dấu phẩy đã thuộc về
-    // `root(3, x)`, `C(n, k)` và `sum(k, 1, n, …)`. Không cho `sys` lồng `sys`: một hệ
-    // của các hệ không phải thứ ai viết, và cho phép nó là mở một chiều lồng vô hạn mà
-    // không luật nào biết đi trong đó.
     const first = this.rel();
     const rels: Expr[] = [first];
-    while (this.eat(';')) rels.push(this.rel());
+    let join: 'and' | 'or' | null = null;
+    for (;;) {
+      const next = this.eat(';') ? 'and' : this.eat('hoặc') ? 'or' : null;
+      if (next === null) break;
+      if (join !== null && join !== next) {
+        throw new ParseError('một hệ dùng một dấu nối: hoặc toàn ";", hoặc toàn "hoặc"', this.i);
+      }
+      join = next;
+      rels.push(this.rel());
+    }
 
     this.ws();
     if (this.i < this.src.length) {
@@ -116,7 +147,7 @@ class Parser {
     for (const r of rels) {
       if (r.k !== 'rel') throw new ParseError('mỗi dòng của hệ phải là một quan hệ', this.i);
     }
-    return sys(this.m, 'and', rels);
+    return sys(this.m, join ?? 'and', rels);
   }
 
   private ws(): void {
@@ -327,6 +358,27 @@ class Parser {
       } finally {
         this.bound.pop();
       }
+    }
+
+    /**
+     * `rat(p, q)` — dạng viết của **nguyên tử hữu tỉ** (M77).
+     *
+     * Không ai soạn bài gõ nó, và đó là chủ ý: `3/4` vẫn đọc thành `div`, đúng như từ
+     * trước tới nay. Nó có mặt vì `unparse` cần in được `rat`, và bản trước in ra
+     * `(3 / 4)` — đọc lại thành một `div`, tức **đổi kiểu nút**. `rat` là dạng chuẩn
+     * mà luật sinh ra sau khi rút gọn chính xác; `div` là một phép chia chưa làm. Hai
+     * thứ ấy cùng giá trị nhưng `same` phân biệt chúng, nên chốt canh khứ hồi mà
+     * `unparse` khai là có thì đỏ ở mọi phân số rút gọn.
+     */
+    if (this.src.startsWith('rat', this.i) && this.src[this.i + 3] === '(') {
+      this.i += 4;
+      const p = this.sum();
+      if (!this.eat(',')) throw new ParseError('rat cần dấu ","', this.i);
+      const q = this.sum();
+      if (!this.eat(')')) throw new ParseError('thiếu dấu ")"', this.i);
+      if (p.k !== 'int' || q.k !== 'int') throw new ParseError('rat cần hai số nguyên', this.i);
+      if (q.v === 0) throw new ParseError('rat có mẫu bằng 0', this.i);
+      return rat(this.m, p.v, q.v);
     }
 
     // $\sum$ và $\prod$: `sum(k, 1, n, k^2)`. Đối số **đầu là một tên**, không phải một
@@ -608,9 +660,11 @@ export function unparse(e: Expr): string {
       // khứ hồi đổi cấu trúc. Ngoặc để nó an toàn ở mọi vị trí.
       return e.v < 0 ? `(-${-e.v})` : String(e.v);
     case 'rat':
-      // Parser không bao giờ sinh `rat` (nó sinh `div`), nên nhánh này chỉ gặp trên
-      // cây do luật `eval_int` dựng ra — và chốt canh khứ hồi không đi qua đó.
-      return `(${e.p} / ${e.q})`;
+      // `rat(p, q)`, **không** `(p / q)`: dạng sau đọc lại thành một `div`, tức khứ
+      // hồi đổi kiểu nút. Bản trước in `(p / q)` và tự bào chữa bằng câu "chốt canh
+      // khứ hồi không đi qua đó" — đúng, và đó chính là vấn đề: một chốt canh né đúng
+      // chỗ nó sai thì nó không canh gì cả. Nay nó đi qua đủ mười sáu kiểu nút.
+      return `rat(${e.p}, ${e.q})`;
     case 'var':
       return e.name;
     case 'inf':
@@ -647,6 +701,10 @@ export function unparse(e: Expr): string {
       return `(${unparse(e.lhs)} ${e.op} ${unparse(e.rhs)})`;
     case 'sys':
       // Không bọc ngoặc: hệ chỉ ở gốc, nên không có vị trí nào cần dấu gộp.
-      return e.rels.map(unparse).join('; ');
+      //
+      // In **đúng dấu nối**. Bản trước luôn dùng `;`, tức in một phép tuyển ra thành
+      // một phép hội — xem chú thích ở `parse()`. Đó là chỗ duy nhất trong tệp này
+      // mà một dạng in làm sai *nghĩa* chứ không chỉ sai *dáng*.
+      return e.rels.map(unparse).join(e.join === 'and' ? '; ' : ' hoặc ');
   }
 }

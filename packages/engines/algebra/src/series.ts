@@ -1,4 +1,4 @@
-import { children, intExp, varsOf, withChildren, type Expr } from './expr.js';
+import { children, intExp, substituteVar, varsOf, withChildren, type Expr, type TermId } from './expr.js';
 import { evalReal, type SoundnessResult } from './check.js';
 
 /**
@@ -297,53 +297,29 @@ function constInt(e: Expr): number | null {
   return v !== null && Number.isInteger(v) ? v : null;
 }
 
-/** Thay chỉ số bằng một số nguyên cụ thể. Không mint id: cây này chỉ để tính. */
+/**
+ * Thay chỉ số bằng một số nguyên cụ thể.
+ *
+ * Uỷ quyền cho `substituteVar` thay vì tự đi cây. Bản trước là một `switch` chép tay
+ * liệt kê cả mười hai kiểu nút có con — tức đúng hình dạng mà `rules.ts` ghi là đã
+ * làm `substitute` mù bốn kiểu nút suốt năm hạng mục. Nó **đang** đủ, nhưng "đang đủ"
+ * là thứ hết hạn lặng lẽ.
+ *
+ * Và hai bản **lệch nhau** ở luật che tên: gặp một $\sum$ che đúng tên ấy, bản cũ trả
+ * về cả nút không đụng gì — kể cả hai cận, vốn nằm **ngoài** phạm vi ràng buộc và
+ * hoàn toàn có thể chứa chỉ số ngoài. `substituteVar` thay trong hai cận rồi dừng ở
+ * thân, đúng nghĩa của "che tên".
+ *
+ * Chỗ lệch ấy hôm nay **không tới được**: parser từ chối thẳng hai tổng lồng nhau
+ * trùng tên chỉ số, và `sum_shift` đổi tên bằng `freshIndex`. Nên đây không phải một
+ * lỗi đang cắn — nó là hai lời giải khác nhau cho cùng một câu hỏi, nằm ở hai tệp,
+ * và cái đúng hơn thì không được dùng. Gộp lại là để lần sau chỉ còn một câu trả lời.
+ *
+ * Không mint id: cây này chỉ để tính chuỗi, không ai vẽ nó. Nút số dùng lại `id` của
+ * chỗ nó thay vào — cùng lối bản cũ.
+ */
 function substituteIndex(e: Expr, name: string, value: number): Expr {
-  if (e.k === 'var' && e.name === name) return { k: 'int', v: value, id: e.id };
-  if (e.k === 'big' && e.v === name) return e; // chỉ số bị che
-  switch (e.k) {
-    case 'add':
-    case 'mul':
-    case 'fn':
-    case 'ufn':
-      return { ...e, args: e.args.map((a) => substituteIndex(a, name, value)) };
-    case 'coeff':
-      return e.v === name
-        ? { ...e, at: substituteIndex(e.at, name, value) }
-        : { ...e, at: substituteIndex(e.at, name, value), of: substituteIndex(e.of, name, value) };
-    case 'pow':
-      return {
-        ...e,
-        base: substituteIndex(e.base, name, value),
-        exp: substituteIndex(e.exp, name, value),
-      };
-    case 'div':
-      return {
-        ...e,
-        num: substituteIndex(e.num, name, value),
-        den: substituteIndex(e.den, name, value),
-      };
-    case 'root':
-    case 'abs':
-      return { ...e, arg: substituteIndex(e.arg, name, value) };
-    case 'big':
-      return {
-        ...e,
-        from: substituteIndex(e.from, name, value),
-        to: substituteIndex(e.to, name, value),
-        body: substituteIndex(e.body, name, value),
-      };
-    case 'rel':
-      return {
-        ...e,
-        lhs: substituteIndex(e.lhs, name, value),
-        rhs: substituteIndex(e.rhs, name, value),
-      };
-    case 'sys':
-      return { ...e, rels: e.rels.map((r) => substituteIndex(r, name, value)) };
-    default:
-      return e;
-  }
+  return substituteVar(e, name, { k: 'int', v: value, id: `#idx.${value}` as TermId });
 }
 
 /**
