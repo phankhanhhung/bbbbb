@@ -206,10 +206,31 @@ nên $t = -b/|\vec v|^2 \in \mathbb{Q}$.
 
 Đó chính là dạng `giao(..., khác: A)` mà §6 nói là dạng gặp nhiều nhất.
 
-**`point_on(đường tròn)` cũng hữu tỉ được.** Chiếu nổi từ một điểm hữu tỉ đã biết
-trên đường tròn: mọi đường thẳng hệ số góc hữu tỉ qua điểm ấy cắt đường tròn lần nữa
-tại một điểm hữu tỉ. Nên tham số tự do của `point_on` là **một số hữu tỉ**, và mọi
-điểm nó sinh ra cũng hữu tỉ.
+**`point_on(đường tròn)` hữu tỉ được — nhưng có điều kiện, và điều kiện ấy không hiển
+nhiên.** Chiếu nổi từ một điểm hữu tỉ đã biết trên đường tròn: mọi đường thẳng hệ số
+góc hữu tỉ qua điểm ấy cắt đường tròn lần nữa tại một điểm hữu tỉ. Nên tham số tự do
+của `point_on` là **một số hữu tỉ**.
+
+Điều kiện: **phải có sẵn một điểm hữu tỉ trên đường tròn để làm gốc chiếu.** Phương
+trình đường tròn hữu tỉ là **không đủ** — $x^2 + y^2 = 3$ có hệ số hữu tỉ và không có
+một điểm hữu tỉ nào.
+
+Nên tính hữu tỉ ở đây không đến từ đường tròn, mà đến từ **lịch sử dựng ra nó**:
+
+| dựng bằng | gốc chiếu hữu tỉ | `point_on` |
+|---|---|:-:|
+| `circumcircle(A,B,C)` | $A$, $B$, $C$ | ✓ |
+| `circle(tâm, điểm-trên)` | chính điểm ấy | ✓ |
+| `diameter_circle(P,Q)` | $P$, $Q$ | ✓ |
+| `nine_point_circle(A,B,C)` | ba trung điểm cạnh | ✓ |
+| `circle_r2(tâm, r²)` | **không có** | ✗ float |
+| `incircle`, `excircle` | tâm đã vô tỉ | ✗ float |
+
+Hệ quả cài đặt: đối tượng `circle` **mang theo một điểm hữu tỉ trên nó** khi biết,
+và `point_on` đọc trường ấy. Không có thì rơi float và `exact-arithmetic` báo đỏ.
+
+Cùng lý do ấy áp cho `intersect(line, circle)` với `pick: other_than` — điểm được
+`other_than` trỏ tới **chính là** gốc chiếu, nên hai cơ chế dùng chung một điều kiện.
 
 **Giao hai đường tròn có chung một điểm đã biết** cũng hữu tỉ: trục đẳng phương là
 đường thẳng hữu tỉ đi qua điểm ấy, rồi áp Vieta.
@@ -263,7 +284,7 @@ Ba mươi tư phép. Cột **Q** = đóng kín trong $\mathbb{Q}$; cột **↔**
 | op | args | ra | dof | Q |
 |---|---|---|---:|:-:|
 | `given` | — | point | 2 | ✓ |
-| `point_on` | line \| segment \| circle \| arc | point | 1 | ✓ |
+| `point_on` | line \| segment \| circle \| arc | point | 1 | ✓* |
 | `length_given` | — | scalar | 1 | ✓ |
 
 ### 5.2 Thẳng
@@ -288,7 +309,7 @@ Ba mươi tư phép. Cột **Q** = đóng kín trong $\mathbb{Q}$; cột **↔**
 | op | args | ra | ↔ | Q |
 |---|---|---|:-:|:-:|
 | `circle` | tâm, điểm-trên | circle | 1 | ✓ |
-| `circle_r2` | tâm, r² | circle | 1 | ✓ |
+| `circle_r2` | tâm, r² | circle | 1 | ✓† |
 | `circumcircle` | P, Q, R | circle | 1 | ✓ |
 | `diameter_circle` | P, Q | circle | 1 | ✓ |
 | `incircle` | P, Q, R | circle | 1 | ✗ |
@@ -302,7 +323,12 @@ Ba mươi tư phép. Cột **Q** = đóng kín trong $\mathbb{Q}$; cột **↔**
 | `tangent_from` | P, circle | line | **2** | ✗ |
 | `tangent_at` | P-trên-circle, circle | line | 1 | ✓ |
 
-`✓*` = hữu tỉ **khi** một giao điểm đã biết (§4.2). Không thì rơi float.
+`✓*` = hữu tỉ **khi** đường tròn mang theo một điểm hữu tỉ đã biết (§4.2) — với
+`intersect` thì đó là điểm mà `pick: other_than` trỏ tới, với `point_on` thì đó là gốc
+chiếu nổi. Không có thì rơi float.
+
+`✓†` = **bản thân đường tròn** hữu tỉ, nhưng nó không mang điểm hữu tỉ nào, nên
+`point_on` và `intersect` trên nó rơi float. Xem bảng ở §4.2.
 
 ### 5.4 Điểm đặc biệt của tam giác
 
@@ -386,7 +412,8 @@ sai, và engine chỉ ra được cấu hình phản ví dụ.
 Với mỗi bậc tự do:
 
 - `given` → hai số hữu tỉ trong $[-100, 100]$, mẫu số bị chặn.
-- `point_on(circle)` → **một** tham số hữu tỉ, qua chiếu nổi (§4.2).
+- `point_on(circle)` → **một** tham số hữu tỉ, qua chiếu nổi từ điểm gốc mà đường
+  tròn mang theo (§4.2); đường tròn không có điểm gốc thì bốc bằng float.
 - `point_on(line)` / `point_on(segment)` → một tham số hữu tỉ, `segment` thì trong $(0,1)$.
 - `point_on(arc)` → một tham số hữu tỉ, kèm kiểm nằm trong cung.
 - `length_given` → một số hữu tỉ dương.
