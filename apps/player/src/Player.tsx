@@ -30,6 +30,7 @@ import { Narrative } from './Narrative.jsx';
 import { InvariantStrip } from './InvariantStrip.jsx';
 import { TreeNavigator } from './TreeNavigator.jsx';
 import { GraphFacts } from './GraphFacts.jsx';
+import { PlayBoard } from './PlayBoard.jsx';
 import { Sandbox } from './Sandbox.jsx';
 import { BijectionPanes } from './BijectionPanes.jsx';
 import { renderMath } from './math.js';
@@ -65,6 +66,16 @@ export function Player({
   /** AL-14 — điểm vi phạm của điều kiện vừa chạm. */
   const [incident, setIncident] = useState<string | null>(null);
   const [forkedScene, setForkedScene] = useState<Scene | null>(null);
+  /**
+   * GM-02 — đang **chơi** thế của step nào (M78.7).
+   *
+   * Tách khỏi `forkedScene` chứ không dùng chung một cờ: sandbox và bàn chơi là hai chế
+   * độ khác nhau về cả ba mặt (nước hợp lệ, undo, lượt), và một biến mang hai nghĩa là
+   * chỗ để chúng lẫn nhau vào ngày ai đó mở cái này trong lúc cái kia còn bật.
+   */
+  const [played, setPlayed] = useState<{ scene: Scene; play: NonNullable<Step['play']> } | null>(
+    null,
+  );
   // CMS-03: lời giải **che mặc định**. Trang bài mở ra là đề bài và sandbox —
   // người học nên có cơ hội tự nghĩ trước khi thấy lời giải, và một cú bấm là
   // ranh giới đủ để biến việc xem lời giải thành một lựa chọn có ý thức.
@@ -172,7 +183,17 @@ export function Player({
     setPlaying(false);
     setTapped(null);
     setIncident(null);
+    setPlayed(null);
     setForkedScene(scene);
+  }, []);
+
+  /** Mở bàn chơi. Dọn nhà y hệt `fork`, và cùng lý do. */
+  const startPlay = useCallback((scene: Scene, play: NonNullable<Step['play']>) => {
+    setPlaying(false);
+    setTapped(null);
+    setIncident(null);
+    setForkedScene(null);
+    setPlayed({ scene, play });
   }, []);
 
   const goPrev = useCallback(() => {
@@ -412,6 +433,24 @@ export function Player({
     [engine, problem],
   );
 
+  if (played && engine) {
+    return (
+      <div class="player">
+        <header class="player__head">
+          <h1 dangerouslySetInnerHTML={{ __html: renderMath(problem.statement.vi) }} />
+          <p class="source">Ván chơi từ bước {step.id} — hai người luân phiên trên cùng một máy</p>
+        </header>
+        <PlayBoard
+          scene={played.scene}
+          engine={engine}
+          play={played.play}
+          labels={atlas}
+          onClose={() => setPlayed(null)}
+        />
+      </div>
+    );
+  }
+
   if (forkedScene && engine) {
     return (
       <div class="player">
@@ -458,6 +497,14 @@ export function Player({
       {!revealed ? (
         <div class="reveal">
           <p>Thử tự nghĩ hoặc nghịch sandbox trước đã.</p>
+          {step.play && step.scene ? (
+            <button
+              class="try"
+              onClick={() => step.scene && step.play && startPlay(step.scene, step.play)}
+            >
+              Chơi thử
+            </button>
+          ) : null}{' '}
           <button class="try" onClick={() => step.scene && fork(step.scene)}>
             Mở sandbox
           </button>{' '}
@@ -577,6 +624,18 @@ export function Player({
           </nav>
 
           <nav class="controls">
+            {/* Bài chơi được thì **chơi** là đường chính, không phải sandbox: cả M78
+                sinh ra để câu "thử đi" có nghĩa là chơi một ván chứ không phải nghịch
+                một hình. */}
+            {step.play && step.scene ? (
+              <button
+                class="try"
+                onClick={() => step.scene && step.play && startPlay(step.scene, step.play)}
+                disabled={!engine}
+              >
+                Chơi thử từ đây
+              </button>
+            ) : null}
             <button
               class="try"
               onClick={() => step.scene && fork(step.scene)}

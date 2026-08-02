@@ -93,6 +93,9 @@ function geography(): PlayRules {
 function hackenbush(): PlayRules {
   return {
     solverBound: 8_000,
+    // Ở đây "Người 1" là chưa đủ: một bên **là** cạnh xanh, và không nói ra thì người
+    // chơi phải bấm thử mới biết mình gỡ được cái gì.
+    sideName: (player) => (player === 'left' ? 'cạnh xanh' : 'cạnh cam'),
     legalMoves(scene: Scene, player: PlayPlayer): readonly Move[] {
       if (configOf(scene).ground === undefined) return [];
       const mine = player === 'left' ? HACKENBUSH_LEFT : HACKENBUSH_RIGHT;

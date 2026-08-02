@@ -1198,3 +1198,115 @@ test.describe('Anchor xuyên pane (ANC-05, M66)', () => {
     expect(await pane.locator('svg *').count()).toBeGreaterThan(0);
   });
 });
+
+/**
+ * GM-02/03/04 — chơi một ván bằng chuột (M78.7).
+ *
+ * Chỗ này e2e trả tiền: sáu lượt trước dựng đủ bộ máy để chơi mà không lượt nào chứng
+ * minh được rằng **người ta bấm được**. Ba thứ chỉ tồn tại trong browser thật — hit-test
+ * trên SVG đã scale, Worker của solver, và cái nút tải draft — nên unit test không với
+ * tới, đúng như `moves`/anchor của những lượt trước.
+ */
+const CHOMP = '/?p=chomp-poison-corner';
+
+test.describe('Ván chơi (GM-02/03/04, M78.7)', () => {
+  async function open(page: Page): Promise<void> {
+    await page.goto(CHOMP);
+    await page.getByRole('button', { name: 'Chơi thử', exact: true }).click();
+    await expect(page.locator('.play__canvas')).toBeVisible();
+  }
+
+  test('chơi hết một ván bằng **chuột trên hình**, đúng lượt, và hiện người thắng', async ({
+    page,
+  }) => {
+    await open(page);
+    // Bàn $3\times3$ ⇒ chín ô còn lại là chín nước.
+    await expect(page.locator('.moves__item')).toHaveCount(9);
+    await expect(page.locator('.turn__chip--on')).toHaveText(/Người 1/);
+
+    const canvas = page.locator('.play__canvas');
+    const box = (await canvas.boundingBox())!;
+    // Ăn ô góc dưới–phải: một ô, nên bàn còn tám.
+    await page.mouse.click(box.x + box.width * 0.83, box.y + box.height * 0.83);
+
+    await expect(page.locator('.moves__item')).toHaveCount(8);
+    // Đổi lượt — và đây là chỗ `first` + số nước phải khớp với thứ hiện ra.
+    await expect(page.locator('.turn__chip--on')).toHaveText(/Người 2/);
+    await expect(page.locator('.play__log-item')).toHaveCount(1);
+
+    // Đi bừa cho tới hết ván bằng bảng nước đi.
+    for (let i = 0; i < 12; i += 1) {
+      const items = page.locator('.moves__item');
+      if ((await items.count()) === 0) break;
+      await items.first().click();
+    }
+
+    // Hết nước ⇒ băng người thắng, và **Chomp là misère**: người ăn ô độc thua.
+    const winner = page.locator('.play__winner');
+    await expect(winner).toBeVisible();
+    await expect(winner).toContainText('thắng');
+    await expect(page.locator('.moves__item')).toHaveCount(0);
+  });
+
+  test('rê trên hình thì **đúng một ô** sáng lên', async ({ page }) => {
+    // Bản đầu sáng mọi nước hợp lệ cùng lúc, và cả bàn hoá một khối vàng — "sáng" mà
+    // không phân biệt được gì thì không phải một tín hiệu.
+    await open(page);
+    const canvas = page.locator('.play__canvas');
+    const box = (await canvas.boundingBox())!;
+
+    const halo = `.play__canvas [stroke="${defaultTheme.emphasis.anchorHalo}"]`;
+    await expect(page.locator(halo)).toHaveCount(0);
+
+    await page.mouse.move(box.x + box.width * 0.83, box.y + box.height * 0.83);
+    await expect(page.locator(halo)).toHaveCount(1);
+  });
+
+  test('Lùi một nước trả lại đúng thế trước đó, Chơi lại về đầu', async ({ page }) => {
+    await open(page);
+    const canvas = page.locator('.play__canvas');
+    const box = (await canvas.boundingBox())!;
+    await page.mouse.click(box.x + box.width * 0.83, box.y + box.height * 0.83);
+    await expect(page.locator('.moves__item')).toHaveCount(8);
+
+    await page.getByRole('button', { name: '↶ Lùi một nước' }).click();
+    await expect(page.locator('.moves__item')).toHaveCount(9);
+    await expect(page.locator('.turn__chip--on')).toHaveText(/Người 1/);
+    await expect(page.locator('.play__log-item')).toHaveCount(0);
+
+    await page.mouse.click(box.x + box.width * 0.83, box.y + box.height * 0.83);
+    await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.17);
+    await expect(page.locator('.play__log-item')).toHaveCount(2);
+    await page.getByRole('button', { name: '⟲ Chơi lại' }).click();
+    await expect(page.locator('.moves__item')).toHaveCount(9);
+    await expect(page.locator('.play__log-item')).toHaveCount(0);
+  });
+
+  test('"Ai thắng thế này?" chạy trong Worker và đánh dấu nước thắng', async ({ page }) => {
+    // Solver M78.5 chạy trong Worker (M78.6). Nó không tồn tại trong unit test, và đây
+    // là chốt canh duy nhất nói được rằng đường Worker thật sự nối tới màn hình.
+    await open(page);
+    await page.getByRole('button', { name: 'Ai thắng thế này?' }).click();
+    await expect(page.locator('.play__advice')).toBeVisible({ timeout: 15_000 });
+    // Bàn $3\times3$: người đi trước thắng, và nước thắng duy nhất là ăn ô $(1,1)$.
+    await expect(page.locator('.play__advice')).toContainText('Bạn thắng');
+    await expect(page.locator('.moves__item--win')).toHaveCount(1);
+    await expect(page.locator('.moves__item--win')).toContainText('(1, 1)');
+
+    // Đi một nước thì lời khuyên **tắt**: nó nói về thế cũ, và một câu trả lời đúng cho
+    // thế cũ là một câu sai cho thế đang xem.
+    //
+    // Đi **nước thắng**, không phải nước đầu danh sách: nước đầu là "Ăn ô độc", và nó
+    // kết thúc ván ngay — lúc ấy không có nút hỏi nào để mà kiểm, đúng như thiết kế.
+    await page.locator('.moves__item--win').click();
+    await expect(page.locator('.play__advice')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Ai thắng thế này?' })).toBeVisible();
+  });
+
+  test('bài **không** khai `play` thì không có nút chơi', async ({ page }) => {
+    // Nút chơi hiện ra ở một bài không chơi được là một lời hứa hão: bấm vào rồi mới
+    // biết engine không có họ luật nào.
+    await page.goto(CHESS);
+    await expect(page.getByRole('button', { name: 'Chơi thử', exact: true })).toHaveCount(0);
+  });
+});

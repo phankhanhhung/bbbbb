@@ -1,6 +1,6 @@
 import type { EngineRenderer, LabelAtlas } from '@combviz/render';
 import type { DslEnvironment } from '@combviz/dsl';
-import type { CommandRegistry, HitTest, SandboxToolsFn } from '@combviz/editor';
+import type { CommandRegistry, HitTest, PlayRules, SandboxToolsFn } from '@combviz/editor';
 import type { Choreography, Scene, SceneValidator } from '@combviz/schema';
 
 /**
@@ -25,6 +25,17 @@ export interface LoadedEngine {
    * công cụ bàn cờ và bấm cái nào cũng im lặng.
    */
   readonly sandboxTools: SandboxToolsFn;
+  /**
+   * GM-01 — luật chơi của một họ luật engine này khai (M78.7).
+   *
+   * Tra **theo tên** và trả `null` khi không nhận, cùng chữ ký ở cả ba engine có ván.
+   * Nhờ vậy Player không phải biết engine nào có bao nhiêu họ luật: nó đọc `step.play.rule`
+   * rồi hỏi, và câu trả lời `null` là một câu trả lời hợp lệ ("engine này không chơi
+   * kiểu ấy") chứ không phải một sự cố.
+   *
+   * Vắng mặt nghĩa là engine chưa có ván nào — bốn trong bảy engine đang ở tình trạng ấy.
+   */
+  readonly playRules?: (rule: string) => PlayRules | null;
   environment(scene: Scene): DslEnvironment;
   resolveValidator(id: string): SceneValidator | null;
   /**
@@ -104,6 +115,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
     return {
       renderer: module.boardRenderer,
       commands: module.boardCommands,
+      playRules: module.boardPlayRules,
       hitTest: module.boardHitTest,
       sandboxTools: module.boardTools,
       environment: module.boardEnvironment,
@@ -118,6 +130,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
     return {
       renderer: module.graphRenderer,
       commands: module.graphCommands,
+      playRules: module.graphPlayRules,
       hitTest: module.graphHitTest,
       sandboxTools: module.graphTools,
       environment: module.graphEnvironment,
@@ -166,6 +179,7 @@ const LOADERS: Record<string, () => Promise<LoadedEngine>> = {
     return {
       renderer: module.gameRenderer,
       commands: module.gameCommands,
+      playRules: module.gamePlayRules,
       hitTest: module.gameHitTest,
       sandboxTools: module.gameTools,
       environment: module.gameEnvironment,

@@ -88,6 +88,18 @@ export interface PlayRules {
    * họ luật có công thức cho *một phần* các thế vẫn khai được.
    */
   solve?(scene: Scene, toMove: PlayPlayer, misere: boolean): SolveResult | null;
+  /**
+   * Bên này **là ai**, nói bằng lời của trò chơi.
+   *
+   * Giao diện gọi hai bên là "Người 1"/"Người 2" và với game impartial thì thế là đủ.
+   * Với Hackenbush thì không: một bên *là* cạnh xanh và bên kia *là* cạnh cam, và người
+   * chơi cần đọc ra điều đó ở chỗ chỉ lượt chứ không phải suy từ việc bấm thử.
+   *
+   * Câu ấy **phải** đến từ họ luật, không từ CSS: `styles.css` viết thẳng rằng nó *"chỉ
+   * được nói về khung, không được nói về hình"*, và màu quân là chuyện của hình. Vắng
+   * thì giao diện chỉ hiện "Người 1"/"Người 2".
+   */
+  sideName?(player: PlayPlayer): string;
 }
 
 export interface PlayMoveRecord {

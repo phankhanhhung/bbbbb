@@ -23,6 +23,21 @@ export default defineConfig({
     port: 4173,
     strictPort: true,
   },
+  /**
+   * Worker đóng gói thành **ES module**, không phải IIFE.
+   *
+   * `play.worker.ts` nạp engine bằng `import()` động, cùng lý do với `engines.ts`: một
+   * bài Chomp không việc gì phải tải cả engine đồ thị lẫn engine bốc đống. Nhưng
+   * `import()` nghĩa là code-splitting, và Vite mặc định đóng worker thành IIFE — một
+   * định dạng **không** chia mã được. Kết quả là bản build đổ, còn dev server thì im,
+   * đúng lớp khác biệt mà `playwright.config.ts` đã ghi là lý do e2e chạy trên bản build
+   * thật.
+   *
+   * Cả hai worker vốn đã được tạo bằng `new Worker(…, { type: 'module' })`, nên dòng này
+   * chỉ làm bản đóng gói khớp với lời khai sẵn có ở chỗ gọi. Module worker có từ Safari
+   * 15, dưới mốc `es2022` mà build đã nhắm.
+   */
+  worker: { format: 'es' },
   build: {
     target: 'es2022',
     // NFR-P3: bundle Player ≤ 300KB gzip. Báo động sớm hơn ngưỡng để còn kịp xoay

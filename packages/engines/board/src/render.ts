@@ -309,9 +309,12 @@ function renderCells(config: BoardConfig, ctx: RenderContext): SvgNode[] {
               width: CELL,
               height: CELL,
               fill: isHole ? ctx.theme.surface.void : fillForClass(ctx, colorClassIndex),
+              // Halo **không** ở đây — xem `cellHalos`. `decorationAttrs` với một ô
+              // (không `emphasis`) chỉ trả về halo, nên bỏ nó đi không mất gì khác, và
+              // giữ nó lại thì ô được nhấn có **hai** vòng: một vòng nửa chìm nửa nổi
+              // do chính nét này, cộng vòng của lớp sau.
               stroke: ctx.theme.surface.guide,
               'stroke-width': ctx.theme.stroke.hairline,
-              ...decorationAttrs(ctx, cellId(r, c)),
             })
           : keyed(cellId(r, c), 'polygon', {
               points: cellPolygon(lattice, config.rows, config.cols, r, c)
@@ -320,7 +323,6 @@ function renderCells(config: BoardConfig, ctx: RenderContext): SvgNode[] {
               fill: isHole ? ctx.theme.surface.void : fillForClass(ctx, colorClassIndex),
               stroke: ctx.theme.surface.guide,
               'stroke-width': ctx.theme.stroke.hairline,
-              ...decorationAttrs(ctx, cellId(r, c)),
             });
 
       nodes.push(shape);
@@ -393,6 +395,63 @@ function renderCells(config: BoardConfig, ctx: RenderContext): SvgNode[] {
           }),
         );
       }
+    }
+  }
+
+  return [...nodes, ...cellHalos(config, ctx)];
+}
+
+/**
+ * Halo của ô, vẽ thành **lượt riêng sau tất cả các ô**.
+ *
+ * Halo là một nét *nằm giữa* biên ô, nên một nửa bề dày của nó rơi ra ngoài ô — và ô vẽ
+ * sau đó tô đè lên đúng nửa ấy. Trên bàn cờ liền mạch, ô được nhấn hiện ra thành một
+ * chữ **L**: cạnh trên và cạnh trái còn halo, cạnh dưới và cạnh phải bị hai ô kế đè mất.
+ *
+ * Lỗi này có từ M12 và nằm im tới M78.7, vì tới lúc ấy anchor mới thường trỏ vào một ô
+ * đơn lẻ giữa những ô không được nhấn — chỗ mà nửa halo bị mất không ai để ý. Bàn chơi
+ * thì nhấn đúng một ô giữa tám ô liền kề, và nó lộ ngay ở lượt nhìn đầu tiên.
+ *
+ * Cùng cách chữa mà `renderArrow` của engine đồ thị đã dùng cho mũi tên: thứ bị đè thì
+ * tách thành lớp riêng vẽ sau, đừng cố xếp lại thứ tự của thứ đè lên nó.
+ */
+function cellHalos(config: BoardConfig, ctx: RenderContext): SvgNode[] {
+  const lattice = latticeOf(config);
+  const nodes: SvgNode[] = [];
+
+  for (let r = 0; r < config.rows; r += 1) {
+    for (let c = 0; c < cellsInRow(lattice, config.cols, r); c += 1) {
+      const id = cellId(r, c);
+      if (!ctx.highlight.has(id) && !ctx.invalid.has(id)) continue;
+      const attrs = decorationAttrs(ctx, id);
+      // Không `key` và không `data-el`: node này là **cùng một ô** với `<rect>` bên
+      // dưới, và hai node cùng danh tính thì auto-diff (DAT-12) không phân biệt được.
+      // Nó thuần trang trí, sinh ra và biến mất theo `highlight`.
+      const common = { fill: 'none', ...attrs };
+      // Thụt vào **nửa bề dày nét**, để vòng halo nằm trọn trong ô. Vẽ đúng trên biên
+      // thì một nửa nét rơi ra ngoài, và ở ô sát mép bàn nó thò hẳn ra nền — trông như
+      // một khung vẽ đè lên bàn cờ chứ không như "ô này đang được chọn".
+      const inset = Number(attrs['stroke-width'] ?? 0) / 2;
+      nodes.push(
+        lattice === 'square'
+          ? el('rect', {
+              x: round(c * CELL + inset),
+              y: round(r * CELL + inset),
+              width: round(CELL - inset * 2),
+              height: round(CELL - inset * 2),
+              ...common,
+            })
+          : // Lưới tam giác và lục giác **không** thụt: thụt một đa giác đều là co nó
+            // về tâm, mà tâm hình học của ô tam giác không nằm ở chỗ mắt đọc là giữa —
+            // vòng halo sẽ lệch. Ở hai lưới ấy ô không lấp kín một hình chữ nhật nên
+            // nét thừa cũng không đè lên ai.
+            el('polygon', {
+              points: cellPolygon(lattice, config.rows, config.cols, r, c)
+                .map((p) => `${round(p.x)},${round(p.y)}`)
+                .join(' '),
+              ...common,
+            }),
+      );
     }
   }
 

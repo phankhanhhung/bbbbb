@@ -401,7 +401,22 @@ body {
   min-height: 44px;
   width: 100%;
   text-align: left;
+  /* Cùng vẻ với `.tool`, không phải nút trần của trình duyệt. Trước đây bảng nước đi
+     mang nút xám mặc định ngay cạnh thanh công cụ dùng `.tool`, nên hai loại nút cùng
+     bấm được lại trông khác hẳn nhau — và loại xám thì đọc ra như đang bị vô hiệu. */
+  padding: 0 0.7rem;
+  font: inherit;
   font-size: 0.85rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.moves__item:hover,
+.moves__item:focus-visible {
+  border-color: var(--accent);
 }
 
 .moves__arg {
@@ -898,3 +913,201 @@ body {
   text-align: center;
 }
 .reveal p { margin: 0 0 0.6rem; color: var(--ink-soft); font-size: 0.9rem; }
+
+/* --- Bàn chơi (GM-02/03/04, M78.7) ---------------------------------------
+   Cùng khung với Sandbox — `.sandbox__body`, `.canvas`, `.tools`, `.moves__*`
+   dùng lại nguyên. Chỉ những gì ván chơi **có mà sandbox không có** mới có tên
+   riêng ở đây: lượt, lịch sử nước, băng người thắng. */
+
+.play__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.play__canvas {
+  /* Cả bàn là một vùng bấm, nên con trỏ phải nói ra điều đó ngay khi rê vào. */
+  cursor: pointer;
+  touch-action: none;
+}
+
+/* Đến lượt ai — câu hỏi trung tâm, nên nó là thứ đậm nhất trong thanh trên. */
+.turn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.turn__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 0.7rem;
+  font-size: 0.82rem;
+  /* Chip **chưa** tới lượt vẫn đọc được, chỉ nhạt đi: ở ván partizan người chơi
+     cần thấy bên kia là ai, không chỉ thấy mình. */
+  color: var(--ink-soft);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+}
+
+.turn__chip--on {
+  color: var(--ink);
+  font-weight: 600;
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.turn__chip--won {
+  color: var(--ink);
+  font-weight: 600;
+  border-color: var(--halo);
+  background: #fdf6e0;
+}
+
+/* Chấm nhận dạng bên chơi. Hai bên khác nhau ở **hình** chứ không chỉ ở màu:
+   NFR-A1, và ở một ván thì không phân biệt được nghĩa là không chơi được. */
+.turn__pip {
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1.5px solid currentColor;
+}
+
+.turn__pip--left {
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.turn__pip--right {
+  border-radius: 2px;
+  background: transparent;
+}
+
+.play__moves h3,
+.play__history h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.play__moves {
+  margin-bottom: 1rem;
+}
+
+/* Nước thắng, **sau khi người chơi hỏi**. Viền chứ không phải nền: nó là một ghi
+   chú lên nước đi, không phải một loại nước khác. */
+.moves__item--win {
+  border-color: var(--halo);
+  box-shadow: inset 0 0 0 1px var(--halo);
+}
+
+.play__star {
+  float: right;
+  color: var(--halo);
+}
+
+.play__ask {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.play__hint {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.play__advice {
+  margin: 0 0 1rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.85rem;
+  border-left: 3px solid var(--line);
+  background: #f7f7f4;
+}
+
+.play__advice--mine {
+  border-left-color: var(--halo);
+}
+
+/* Băng kết thúc. To hơn mọi thứ khác trong cột vì nó là câu trả lời của cả ván. */
+.play__winner {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.8rem;
+  font-size: 1rem;
+  border: 1px solid var(--halo);
+  border-radius: 8px;
+  background: #fdf6e0;
+}
+
+.play__winner-why {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.play__log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.82rem;
+}
+
+.play__log-item {
+  display: grid;
+  /* Ba cột cố định: số, ai, làm gì. Nhãn nước dài ngắn khác nhau, và để chúng tự
+     co thì cột "ai" nhảy từng dòng — mắt mất chỗ bám khi đọc dọc. */
+  grid-template-columns: 1.4rem minmax(0, auto) minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.play__log-no {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.play__log-who {
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.play__log-item--left .play__log-who {
+  color: var(--accent);
+}
+
+.play__log-what {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Bàn chơi lấp đầy cột, chặn ở một trần đọc được. Mỗi ô ở đây là một nút bấm chứ
+   không phải một minh hoạ, nên $44$px một ô — cỡ của hình trong lời giải — là quá
+   nhỏ để ngắm và bấm. */
+.play__stage {
+  max-width: 28rem;
+  margin-inline: auto;
+}
+
+.play__stage .play__canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Ngôi sao không được rơi xuống một dòng của riêng nó: một ký hiệu đứng lẻ trông
+   như lỗi sắp chữ, và nó là thứ câu văn đang trỏ tới. */
+.play__nowrap {
+  white-space: nowrap;
+}
