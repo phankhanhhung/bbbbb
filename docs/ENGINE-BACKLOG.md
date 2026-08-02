@@ -1,13 +1,13 @@
 # CombViz — Checklist làm mạnh từng engine
 
-**Ngày:** 2026-07-30 · **Trạng thái:** backlog có bằng chứng, **không phải kế hoạch chạy ngay** · `GM-05/06/07/08/09`, `BD-07`, `SQ-01/02` và `GR-09` **đã làm ở M22–M28**
+**Ngày:** 2026-07-30 · **Soát lại:** 2026-08-02 · **Trạng thái:** hàng đợi **mở** kể từ khi G-C đóng (§0.1) — đã và đang được lấy việc, không còn là danh sách chờ · `GM-05/06/07/08/09`, `BD-07`, `SQ-01/02`, `GR-09` làm ở M22–M28; `GM-01..04` đóng ở M78; `GR-13/14/15` và `AL-20` ở lượt 2026-08-02
 
 ## 0. Đọc checklist này đúng cách
 
 ### 0.1 Nó không được chạy trước G-C
 
 > **G-C đã đóng 2026-08-01** (schema freeze 1.0.0, theo chỉ định chính chủ; nay
-> đã ở `1.1.0` sau minor đầu tiên của M74 — hồ sơ đóng
+> nay đã ở `1.5.0` sau năm minor, minor đầu tiên là của M74 — hồ sơ đóng
 > và rủi ro còn lại ở `PLAN-P1.md` §10). Điều kiện chặn của mục này vì thế đã
 > hết hiệu lực: danh sách dưới đây từ nay là hàng đợi **mở**, lấy theo thứ tự
 > đề xuất §1 hoặc theo chỉ định. `PRD-07` vẫn nguyên: không thêm engine chỉ để
@@ -44,21 +44,26 @@ nhất để lặp lại chuyện đó.
 
 ### 0.3 Với bốn engine mỏng bài, **nội dung đi trước năng lực**
 
-Đo trên 73 bài đã xuất bản (56 lúc dựng tài liệu này, cộng mười bảy bài của M22–M36):
+Đo lại **2026-08-02** trên **141 bài** đã xuất bản, đếm bằng `engines_used` (một bài
+dùng hai engine thì đếm ở cả hai, nên tổng cột lớn hơn 141). Cột "M36" giữ số đo cũ
+để thấy engine nào thật sự được nội dung kéo lên:
 
-| Engine | Số bài | Đọc con số này thế nào |
-|---:|---:|---|
-| `board` | 22 | Chủ lực. Khoảng trống ở đây là khoảng trống **thật sự cảm thấy được**. |
-| `graph` | 19 | Chủ lực. Cùng loại. |
-| `sequence` | 13 | Đủ để tin. |
-| `game` | 6 | Tầng A ở §2.6 **đã làm hết** (M22–M23): ba luật mới kèm ba bài kinh điển, cộng phổ hai chiều. |
-| `point` | 3 | Nội dung trước. Engine chưa bị dùng đủ để biết nó thiếu gì. |
-| `set` | 3 | Nội dung trước. |
-| `derivation` | 2 | Nội dung trước — và dòng 🟡 duy nhất của nó nói **thiếu bài**, không thiếu năng lực. Nhưng xem §2.8: nó **không kiểm được đại số**, và chỗ đó không phải thiếu bài. |
-| `longdiv` | 1 | Mới ở M46. Chưa bị dùng đủ để biết nó thiếu gì. |
+| Engine | Số bài | M36 | Đọc con số này thế nào |
+|---:|---:|---:|---|
+| `board` | **40** | 22 | Chủ lực. Khoảng trống ở đây là khoảng trống **thật sự cảm thấy được**. |
+| `algebra` | **36** | — | Mở ở M47, và đã lên ngang chủ lực trong một tháng. §2.8. |
+| `graph` | **36** | 19 | Chủ lực. Cùng loại. Ba hạng mục GR-13/14/15 của lượt 2026-08-02 sinh ra từ đây. |
+| `sequence` | **19** | 13 | Đủ để tin. |
+| `game` | **10** | 6 | Tầng A ở §2.6 đã làm hết ở M22–M23; **M78 đóng nốt GM-01..04** — ván chơi thật, solver, ngữ pháp `moves`. |
+| `set` | **6** | 3 | Vẫn mỏng, nhưng đã gấp đôi. Nội dung trước. |
+| `point` | **3** | 3 | Nội dung trước — và là engine **duy nhất không nhích một bài nào** kể từ M36. |
+| `derivation` | **3** | 2 | Nội dung trước. Xem §2.8: nó **không kiểm được đại số**, và chỗ đó không phải thiếu bài. |
+| `longdiv` | **1** | 1 | Mới ở M46. Chưa bị dùng đủ để biết nó thiếu gì. |
 
-Bốn engine cuối cộng lại có **14 bài**, và $6$ trong số đó là của `game`. Thêm năng lực cho một engine mới 2–3 bài là
-đoán, không phải đáp ứng.
+Bốn engine mỏng nhất (`set`, `point`, `derivation`, `longdiv`) cộng lại có **13 bài**
+trên 141. Luật §0.3 giữ nguyên và nay có thêm bằng chứng: `game` đi từ 6 lên 10 bài
+**rồi** M78 mới mở GM-01..04, còn `point` đứng yên ở 3 bài và cũng đứng yên ở năng
+lực — thêm năng lực cho một engine mới 3 bài vẫn là đoán, không phải đáp ứng.
 
 ### 0.4 Họ ID
 
@@ -70,7 +75,7 @@ họ mới cho hai engine dựng ngoài roadmap SRS nên chưa có họ nào:
 | `SQ-*` | sequence / multiset |
 | `DV-*` | derivation |
 | `LD-*` | longdiv (chia dọc) |
-| `AL-*` | algebra (biến đổi biểu thức) — **chưa mở**, xem `docs/ENGINE-ALGEBRA.md` |
+| `AL-*` | algebra (biến đổi biểu thức) — **đã mở từ M47**, chạy tới `AL-20`; xem `docs/ENGINE-ALGEBRA.md` |
 
 ---
 
@@ -110,7 +115,7 @@ bằng toạ độ.
 
 ## 2. Chi tiết theo engine
 
-### 2.1 `board` — 34 bài, engine chủ lực
+### 2.1 `board` — 40 bài, engine chủ lực
 
 > Mô tả chức năng đầy đủ của engine này: **`docs/ENGINE-BOARD.md`**. Mục dưới đây
 > chỉ ghi *hàng đợi* — cái gì đã làm, cái gì còn nợ.
@@ -182,7 +187,7 @@ bằng toạ độ.
 
 - bàn 3D / nhiều lớp; bảng số có công thức trong ô; lưới vô hạn có cửa sổ trượt.
 
-### 2.2 `graph` — 32 bài, engine chủ lực
+### 2.2 `graph` — 36 bài, engine chủ lực
 
 **Tầng A**
 
@@ -327,7 +332,7 @@ bằng toạ độ.
   xác nhận $0$ giao điểm, tức hình **đúng**, mà mắt đọc ra một búi rối. $r = 9$ cho hở
   $6$, và đó là khác biệt giữa "đúng" và "nhìn được".
 
-### 2.3 `sequence` — 12 bài
+### 2.3 `sequence` — 19 bài
 
 **Tầng A**
 
@@ -443,7 +448,7 @@ thiếu năng lực. Nên hạng mục đúng ở đây là **soạn bài**, kh�
   còn thiếu là chuyển động). Lớp `CHO-05` đã có từ **M37** và `move`/`morph` gọi
   được ngay; việc còn lại là dịch quan hệ `becomes` thành pha, chưa làm.
 
-### 2.8 `algebra` — 31 bài · **engine đã mở (M50+)**
+### 2.8 `algebra` — 36 bài · **engine đã mở (M50+)**
 
 Đặc tả: **`docs/ENGINE-ALGEBRA.md`**. Phần dưới đây là **lý lẽ dựng engine, giữ
 nguyên làm hồ sơ** — nó viết ở thời engine chưa tồn tại, nên đọc nó như một bản ghi
@@ -499,7 +504,29 @@ mutant **sống sót** nghĩa là cổng vẫn xanh nhưng không gác gì.
 | `MAX_CANVAS_VH = 9999` | Hàng rào duy nhất trên trục dọc. Bỏ nó thì scene cao đẩy narrative ra khỏi màn hình — hình đúng, tỉ lệ đúng, golden khớp từng byte, chỉ **bố cục** hỏng | 2 test: trần phải tính theo **viewport** chứ không theo pixel; và phải chừa chỗ cho chữ |
 | mã lỗi `bounds/algebra-unsound` | Cổng cuối trước khi **toán sai** lên trang. Ba anh em của nó đều có test khẳng định đúng mã; riêng nó thì không | tách `unsoundIssue()` thành hàm có tên + 4 test: mã, **mức** (`error` chứ không `warning`), hint trỏ đúng engine, và phần **nối** vào `checkBounds` |
 
-Hai điều đáng giữ lại từ lượt này.
+**Chạy lại ở lượt soát tài liệu (2026-08-02): cả ba mutant nay đều chết** — 1, 2 và 1
+test đỏ theo thứ tự bảng trên. Cột "răng đã lắp" là một *lời khai*; ba con số này là
+*bằng chứng*, và khoảng cách giữa hai thứ ấy đúng bằng khoảng cách mà cả mục §3b này
+sinh ra để đo. Không lượt lắp răng nào được coi là xong cho tới khi mutant chết.
+
+Lượt chạy lại còn lôi ra **hai lỗi của chính công cụ soát**, cùng một hình dạng với
+thứ nó đi tìm:
+
+- **Phạm vi quét hẹp hơn `pnpm test`.** Nó chạy `vitest run packages tools/pipeline/test`,
+  thiếu đúng bốn tệp của `apps/` ($40$ test: `player/test/bijection-morph`,
+  `player/test/bijection`, `player/test/play-host`, `studio/test/edits`). Mutant nào chỉ
+  bị tầng Player/Studio bắt thì báo cáo in ra "SỐNG SÓT" — dương tính giả, và nó lái
+  người soát đi lắp răng vào chỗ đã có răng.
+- **Bỏ qua trong im lặng.** Chuỗi tìm lệch khỏi mã thì công cụ in "BỎ QUA" rồi chạy
+  tiếp; trong một báo cáo 19 dòng, dòng ấy trông y hệt một mutant không có trong danh
+  sách. Và nó **đã** xảy ra: mục `bounds/algebra-unsound` giữ thụt lề cũ từ trước lúc
+  `unsoundIssue()` được tách thành hàm, nên nó im lặng không chạy kể từ đó — tức chính
+  cái mutant khó nhất trong ba cái đã không được kiểm lại lần nào.
+
+Cả hai đã sửa: quét đúng lệnh của `pnpm test`, đếm số mục bỏ qua, in đậm ở tổng kết,
+và **thoát với mã khác 0** khi có mục bỏ qua. "Chạy xong" phải khác "chạy đủ".
+
+Hai điều đáng giữ lại từ lượt đầu.
 
 **Một — cái sống sót thứ ba thoát vì một lý do có cấu trúc.** Nhánh ấy chỉ chạy khi *một
 luật của engine sai*, mà mọi luật đều đúng: không đầu vào nào dựng ra `unsound` không

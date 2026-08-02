@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { applyChoreography, createContext, createRenderer, CELL_PX } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
@@ -267,6 +268,52 @@ describe('tầng 0 — parser và printer', () => {
       }
     });
     expect(broken, `§3.3 khai mà parser không đọc được: ${broken.join(', ')}`).toEqual([]);
+  });
+
+  /**
+   * Bảng phân lớp luật ở `docs/ENGINE-ALGEBRA.md` §20 phải khai **đúng** tập `RULES`.
+   *
+   * Cùng lý lẽ với chốt canh grammar ngay trên, và cùng một lỗ đã há ra thật: lượt soát
+   * tài liệu 2026-08-02 tìm thấy **tám** luật có trong mã mà bảng không khai
+   * (`geometric_series`, bốn `coeff_*`, `partial_fractions`, `specialize`,
+   * `sum_telescope`), trong khi câu dẫn ngay trên bảng vẫn viết "79 luật … mười một
+   * lớp". Con số ấy được đếm tay một lần rồi không ai đếm lại; bảng thì chưa ai đếm bao
+   * giờ. Một mục tham chiếu mà người soạn bài đọc để biết engine **có gì** thì lệch ở
+   * đó đắt hơn lệch trong một chú thích: nó không làm sai một dòng mã, nó làm người
+   * gõ bỏ qua một năng lực đã có.
+   *
+   * Hai chiều đều đỏ, và chiều **thiếu** mới là chiều hay xảy ra: thêm luật thì nhớ
+   * thêm vào tài liệu là việc phải nhớ, còn xoá luật thì mã tự nhắc.
+   */
+  it('bảng phân lớp §20 khai đúng tập RULES, và con số trong câu dẫn khớp', () => {
+    const doc = readFileSync(new URL('../../../../docs/ENGINE-ALGEBRA.md', import.meta.url), 'utf8');
+    const lines = doc.split('\n');
+
+    const lead = lines.findIndex((l) => l.includes('Xem §21–§47 để biết tập luật thật'));
+    expect(lead, 'không tìm thấy câu dẫn của bảng phân lớp §20').toBeGreaterThan(-1);
+
+    // Con số trong câu dẫn — đây đúng là chỗ đã lệch, nên nó phải là một khẳng định
+    // máy giữ chứ không phải một con số gõ tay.
+    const stated = /\*\*(\d+) luật\*\*/.exec(lines[lead] as string);
+    expect(stated, 'câu dẫn §20 không còn khai "**N luật**"').not.toBeNull();
+    expect(Number((stated as RegExpExecArray)[1])).toBe(RULES.length);
+
+    const header = lines.findIndex((l, i) => i > lead && l.startsWith('| lớp |'));
+    expect(header, 'không tìm thấy đầu bảng phân lớp').toBeGreaterThan(-1);
+
+    // Bỏ dòng gạch ngang, gom mọi tên trong nháy ngược của **cột luật** cho tới khi
+    // hết bảng. Cột lớp không có nháy ngược nên không cần tách cột.
+    const listed = new Set<string>();
+    for (let i = header + 2; i < lines.length && (lines[i] as string).startsWith('|'); i += 1) {
+      for (const m of (lines[i] as string).matchAll(/`([a-z_0-9]+)`/g)) listed.add(m[1] as string);
+    }
+
+    const ids = new Set(RULES.map((r) => r.id));
+    const missing = [...ids].filter((id) => !listed.has(id)).sort();
+    const ghosts = [...listed].filter((id) => !ids.has(id)).sort();
+
+    expect(missing, `§20 thiếu luật có thật: ${missing.join(', ')}`).toEqual([]);
+    expect(ghosts, `§20 khai luật không tồn tại: ${ghosts.join(', ')}`).toEqual([]);
   });
 
   it('cấm nhân ngầm — `2x` là lỗi cú pháp, không phải $2\\cdot x$', () => {

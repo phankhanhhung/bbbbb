@@ -1,6 +1,6 @@
 # SRS — Nền tảng minh họa tương tác lời giải Tổ hợp Olympiad
 
-Working name: **CombViz** (OPQ-1 — giờ là quyết định brand, không chỉ là đặt tên) · Phiên bản 1.0 · 2026-07-29 · Trạng thái: baseline P1
+Working name: **CombViz** (OPQ-1 — giờ là quyết định brand, không chỉ là đặt tên) · Phiên bản 1.0 · 2026-07-29 · Soát lại: 2026-08-02 · Trạng thái: baseline P1
 
 > **Changelog v1.0 (từ 0.9-draft)** — Đổi operating model: **single-author brand engine** (mô hình manim/3Blue1Brown): engine là xưởng in riêng của một tác giả; brand nằm ở corpus + taste, không phải platform đa tác giả. Hệ quả: **gỡ** no-code cho tác giả ngoài (AUT-07), review UI (CMS-04), contribution cộng đồng (CMS-07), toàn bộ accounts/backend (USR-01..05, NFR-S3, NFR-D3). **Thêm**: draft pipeline LLM → validate → duyệt tay (AUT-09), Editorial Style Guide + lint (AUT-10), nhóm REN (OG card, video render), nhóm LOC (dữ liệu người học client-side), siết brand-lock style (DAT-20). AUT-KPI 4h → **1.5h/bài** qua pipeline. ID bị gỡ giữ nguyên số và đánh dấu *Removed v1.0* để truy vết.
 
@@ -300,7 +300,7 @@ Triết lý: nguyên lý **sống bên trong problem player và sandbox**, khôn
 ## 8. FR nhóm SBX — Sandbox & Validation
 
 - **SBX-01 [P1] MUST** — Hai cửa vào: sandbox độc lập per engine (không cần problem, từ menu chính) và sandbox theo problem (khởi tạo từ scene đề bài, nạp sẵn validator + invariant của bài; cửa thứ ba là PLY-05).
-  - **Bảng nước đi tại chỗ chọn (M65)** — engine nào có khái niệm "nước đi tại một phần tử" thì sandbox hiện danh sách ấy cạnh chỗ chạm, **đã lọc** còn những nước áp được tại đúng nút đó; nước cần tham số mở một ô nhập; không áp được thì hiện **nguyên văn** lời từ chối của engine. Thực hiện đầu tiên: `algebra` (79 luật, một lệnh `apply_rule`). Không có nút "gợi ý bước tiếp theo" — engine không có bộ giải (NG-03).
+  - **Bảng nước đi tại chỗ chọn (M65)** — engine nào có khái niệm "nước đi tại một phần tử" thì sandbox hiện danh sách ấy cạnh chỗ chạm, **đã lọc** còn những nước áp được tại đúng nút đó; nước cần tham số mở một ô nhập; không áp được thì hiện **nguyên văn** lời từ chối của engine. Thực hiện đầu tiên: `algebra` (80 luật, một lệnh `algebra/apply-rule`). Không có nút "gợi ý bước tiếp theo" — engine không có bộ giải (NG-03).
 - **SBX-02 [P1] MUST** — Validator live: vi phạm hiển thị tức thời (element vi phạm đánh dấu đỏ + message cụ thể); danh sách constraint đang áp dụng, bật/tắt từng cái để "nới luật" khi thí nghiệm.
 - **SBX-03 [P2] SHOULD** — **Challenge mode**: problem có thể yêu cầu người học *xây* cấu hình (một cách phủ, một cách tô, một phản ví dụ); hệ thống chấm bằng validator + `goal_expr`; attempt lưu client-side (LOC-02). Khai báo rõ trong metadata: problem thuộc loại minh họa / challenge / cả hai.
 - **SBX-04 [P2] SHOULD** — Chia sẻ trạng thái sandbox bằng URL (state nén trong fragment, không cần backend); người nhận mở ra đúng cấu hình để tranh luận phản ví dụ với nhau.

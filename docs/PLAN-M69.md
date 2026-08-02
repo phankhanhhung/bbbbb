@@ -95,7 +95,7 @@ Không code. Quy mô: nhỏ-vừa. Không cắt — nó rẻ và nó lái các m
 > *"không mất tổng quát"* thì không. Và **bốn luật lượng giác** đã dựng mà chưa
 > bài nào dùng — năng lực đã trả tiền, chỉ thiếu nội dung.
 
-## M71 — Dãy số: chỉ số là `Expr` (`a_n`), `sum_telescope`, truy hồi
+## M71 — Dãy số: chỉ số là `Expr` (`a_n`), `sum_telescope`, truy hồi — ✅ **XONG 2026-08-01**
 
 Món M49 hoãn lần ba, giờ đủ đồ nghề: `big` + biến ràng buộc (M57), sân chuỗi
 (M68). Ba việc một mạch: (1) `a_{n}` với chỉ số là `Expr` — `a_{k+1}` viết được,
@@ -107,7 +107,7 @@ mẹo Schwartz–Zippel của mọi sân; khứ hồi telescope; quét ngẫu nh
 Đụng schema engine (element mới trong config algebra? — không: `a_n` là nút
 `fn`/`var` mở rộng trong DSL biểu thức, file bài không đổi shape). Quy mô: nặng.
 
-## M72 — Hàm sinh tầng hai: tích chập, và hệ số như toán tử
+## M72 — Hàm sinh tầng hai: tích chập, và hệ số như toán tử — ✅ **XONG 2026-08-01**
 
 Vương miện thật của AL-16, hoãn từ M68 có chủ đích: (1) `series_product` — nhân
 hai chuỗi, hệ số Cauchy $c_n = \sum a_k b_{n-k}$, choreography **đan hệ số** (pha
@@ -118,7 +118,7 @@ kiểm. *Chuyện kiểm:* so với khai triển trực tiếp trên sân chuỗ
 
 Quy mô: nặng. Chờ M70 xác nhận độ phủ đáng giá (dự đoán: 🟡 to nhất của miền).
 
-## M73 — Ký hiệu hàm không diễn giải (phương trình hàm Cauchy)
+## M73 — Ký hiệu hàm không diễn giải (phương trình hàm Cauchy) — ✅ **XONG 2026-08-01**
 
 `f` như ký hiệu **không diễn giải**: `f(x+y) = f(x) + f(y)` viết được, thế được,
 đánh giá tại điểm **không** được (không có gì để đánh giá — và bộ kiểm phải nói
@@ -128,7 +128,7 @@ olympiad lớn nhất mà kho chưa chạm.
 
 Quy mô: vừa-nặng. Chờ số của M70.
 
-## M74 — Board: element `path` hạng nhất
+## M74 — Board: element `path` hạng nhất — ✅ **XONG 2026-08-01**
 
 Thay hack piece-glyph mũi tên (`lattice-path-binary-word` đang dùng): element
 `path` đi qua dãy ô, vẽ nét liền có bo góc, id neo được từng đoạn. **Đụng
@@ -138,7 +138,7 @@ region label (món M69.4 nếu đã cắt).
 
 Quy mô: vừa.
 
-## M75 — Bản đồ sandbox: vết chân người học
+## M75 — Bản đồ sandbox: vết chân người học — ✅ **XONG 2026-08-01**
 
 Ghi lại đường đi trong sandbox (dãy command đã chạy) thành một minimap nhỏ —
 không solver, không gợi ý, đúng ranh giới §4/NG-03 đã giữ. Người học nhìn thấy
@@ -146,6 +146,123 @@ mình đã thử gì; giáo viên nhìn thấy lớp đã thử gì. *Chuyện k
 thuần của command log; hai người chạy cùng dãy lệnh thấy cùng bản đồ.
 
 Quy mô: vừa. Cắt được nếu M71/M72 tràn.
+
+---
+
+## M76 → 2026-08-02 — việc đã chạy **sau** khi danh sách trên cạn
+
+Danh sách M69–M75 hết ở đây, và việc thì không dừng. Mục này ghi lại phần chạy
+tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mới biết dự án đang ở
+đâu. **Chi tiết kỹ thuật nằm ở tài liệu engine tương ứng** — mục này chỉ là bản đồ.
+
+| Hạng mục | Ngày | Hồ sơ đầy đủ |
+|---|---|---|
+| **M76 / M76b / M76c** — sắp chữ: thước đo lại bằng máy, dấu gộp vẽ bằng path, thang bậc font, ngoặc vuông vào thang | 08-01 | `ENGINE-ALGEBRA.md` §48–§50 |
+| **M77.1–M77.5** — lượt soát engine đại số: **bốn lời hứa mà mã không giữ**, `readAlgebra` trả về thay vì ném, grammar §3.3 có răng, bốn export chết | 08-02 | `ENGINE-ALGEBRA.md` §51 |
+| **M78.1–M78.8** — lớp ván chơi: hợp đồng nước đi, nim thành họ luật, Chomp trên board, solver tổng quát, ngữ pháp `moves` + Worker + ngân sách, geography & Hackenbush partizan, UX bàn chơi. Đóng `GM-01..04` | 08-02 | `ENGINE-GAME.md` (cả tài liệu) |
+| **Loạt bài 1/4** — chiến lược thắng | 08-02 | `VIZ-COVERAGE.md` §2 |
+| **Loạt bài 2/4** — tô màu & ghép cặp; kèm `GR-13` (`proper-colouring[:k]`) | 08-02 | `ENGINE-BACKLOG.md` §2.2 |
+| **Loạt bài 3/4** — hàm sinh; nới `geometric_series`/`coeff_repeated_geometric` sang hệ số dẫn $a$ nguyên | 08-02 | `ENGINE-ALGEBRA.md` §44, §47 |
+| **Loạt bài 4/4** — ba đề IMO có nguồn đầy đủ | 08-02 | `VIZ-COVERAGE.md` §2 |
+| **GR-14** — đỉnh đồ thị mang được số; IMO 1986 bài 3 quay lại | 08-02 | `ENGINE-BACKLOG.md` §2.2 |
+| **GR-15** — `proper-edge-colouring[:k]`, nợ cuối của mạch đồ thị | 08-02 | `ENGINE-BACKLOG.md` §2.2 |
+| **AL-20** — phân thức riêng phần (nghiệm hữu tỉ phân biệt) + mô hình sai số nhận biết triệt tiêu | 08-02 | `ENGINE-ALGEBRA.md` §44 |
+| **Soát chốt canh bằng bẻ răng hàng loạt** — 19 mutant, 16 chết, **3 sống sót** | 08-02 | `ENGINE-BACKLOG.md` §3b |
+| **Soát tài liệu** — đối chiếu cả 11 tệp `docs/` với mã và kho tại HEAD; 12 chỗ khai sai | 08-02 | mục "Soát tài liệu" ngay dưới |
+
+Kho đi từ **114 bài → 141 bài** trong hai ngày, test từ **3459** (M78.8) lên
+**3843**, schema từ `1.0.0` lên `1.5.0` — năm minor, năm migration đồng nhất.
+
+> **Một cái bẫy đếm, ghi ra để lần sau không phải điều tra lại.** Con số chính thức
+> là số của `pnpm test` (`vitest run` không lọc đường dẫn): **3843 / 67 tệp**. Còn
+> `tools/mutation-sweep.py` chạy `vitest run packages tools/pipeline/test` — hẹp
+> hơn — và cho **3803 / 63 tệp**. Hai con số cùng đúng, chỉ khác phạm vi quét.
+> Chênh lệch $40$ test ấy nằm gọn trong **bốn tệp của `apps/`**:
+> `player/test/bijection-morph`, `player/test/bijection`, `player/test/play-host`,
+> `studio/test/edits`. Chúng từng nằm ngoài tầm với của `tools/mutation-sweep.py`,
+> nên mutant nào chỉ bị bốn tệp ấy bắt sẽ hiện ra là "sống sót". Đã sửa — công cụ
+> nay quét đúng lệnh của `pnpm test`; xem `ENGINE-BACKLOG.md` §3b.
+
+### Bốn chuyện đáng giữ từ đoạn này
+
+1. **Lỗi trội của dự án không đổi: "một khẳng định mà mã không đỡ".** M77 tìm
+   thấy bốn cái, lượt soát tài liệu 2026-08-02 tìm thêm năm cái nữa ở tầng
+   `docs/`. Cùng một hình dạng ở hai tầng khác nhau.
+2. **Bẻ răng lên quy mô.** `tools/mutation-sweep.py` bẻ từng chốt canh một, chạy
+   cả bộ test, so số test hỏng với mốc, rồi khôi phục. Kết luận không phải "test
+   yếu" mà là **phân bố**: 16 mutant chết to (39, 148, 14 test đỏ), 3 chỗ không
+   răng nằm rải rác — chỉ quét mới tìm ra.
+3. **`expects_violation`.** Một step khai rằng nó **cố ý** vi phạm một validator
+   sandbox. Không có nó thì "validator đỏ mãi" là một lỗi phải giấu; có nó thì
+   validator đỏ mãi **là** bài học.
+4. **Dò trước khi soạn.** Mọi suy diễn đại số chạy qua `readAlgebra` và phải cho
+   `refusal === null`, `unsound === []`, `unchecked === []` **trước khi** một chữ
+   narrative nào được viết. Bị từ chối thì đổi bài, không đổi narrative.
+
+### Soát tài liệu (2026-08-02) — mười hai chỗ `docs/` khai sai thực tế
+
+`PRODUCT-REQUIREMENTS.md` PRD-06 nói thẳng rằng đồng bộ số liệu **không phải một
+task mà là một luật thường trực**: *"con số trong tài liệu phải khớp kho ở **mỗi**
+commit đổi kho."* Luật ấy đã trượt. Lượt này đối chiếu cả 11 tệp `docs/` với mã và
+kho tại HEAD, đo bằng máy chứ không bằng trí nhớ.
+
+**Nguyên tắc phân loại, vì nó quyết định cái gì được sửa:** tài liệu của kho này
+vừa là *sổ ghi chép lịch sử* vừa là *mô tả hiện trạng*. Một dòng ghi "2948 test
+xanh, 111 bài validate sạch" ở mục M62 là **đúng** — nó là biên bản của khoảnh khắc
+ấy, và sửa nó thành số hôm nay là làm sai lịch sử. Chỉ những câu ở **thì hiện tại**
+mới bị đối chiếu. Ranh giới ấy được giữ ở từng chỗ sửa.
+
+| # | Chỗ | Khai | Thực tế |
+|---:|---|---|---|
+| 1 | `PLAN-P1.md` dòng trạng thái | "M48 xong; schema `0.3.0`; kho 91 bài; G-C chưa đóng" | sai cả bốn trường — và §10 của **chính tài liệu ấy** đã ghi G-C đóng từ hôm trước |
+| 2 | `PLAN-P1.md` §10 đoạn cuối | "Kho có 73 bài … việc còn nợ là G-C" | mâu thuẫn với mục 2 cách đó mười lăm dòng |
+| 3 | `ENGINE-ALGEBRA.md` §20 | "**79 luật**, xếp theo mười một lớp" | **80 luật**, và bảng chỉ khai **72** — tám luật có trong mã mà không có trong bảng |
+| 4 | `ENGINE-ALGEBRA.md` §21.1 | "hai sân, chọn theo `hasRadical`" | `needsRealEval` — và lượt đổi tên ghi ở **§22.2 của chính tài liệu ấy**, cách chín mươi dòng |
+| 5 | `ALGEBRA-COVERAGE.md` §3 | "làm cùng phép tính với cột phổ thông cho **~88**" | làm thật ra **~65** (số M70), **~68** (số nay). Bảng có một cột "Phủ" cho **hai** miền |
+| 6 | `ALGEBRA-COVERAGE.md` §2, §5 | 73 luật · 60 dùng · 13 chưa dùng · 14 kiểu nút · 28/114 bài | 80 · 68 · 12 · 16 · 36/141 |
+| 7 | `STYLE-GUIDE.md` mở đầu | "Kho **hiện có 2 bài**, cả hai là fixture kỹ thuật" | ba dòng dưới một tiêu đề khai "đã kết tinh trên **114 bài**" |
+| 8 | `VIZ-COVERAGE.md` §8 | "kho 66 bài … việc còn nợ là G-C, rồi mới đóng băng schema `1.0.0`" | G-C đóng, schema `1.5.0`, kho 141 bài |
+| 9 | `PRODUCT-REQUIREMENTS.md` §3.1 | "**Bảy** engine, đúng số đang chạy trong repo" | **chín** — thiếu `longdiv` và `algebra` |
+| 10 | `SRS-v1.0.md` SBX | "`algebra` (79 luật, một lệnh `apply_rule`)" | 80 luật, và tên lệnh thật là `algebra/apply-rule` |
+| 11 | `ENGINE-BOARD.md` §1, §12, §15 | 83 bài / 30 board / 100 trên 353 scene · "13 lệnh" · sáu dòng đếm sai | 141 / 40 / 137 trên 562 · **14** lệnh (thiếu `board/chomp-bite` của M78.3) · đếm lại cả bảng |
+| 12 | `ENGINE-BACKLOG.md` §0.1, §0.4 | schema "`1.1.0`" · "`AL-*` — **chưa mở**" | `1.5.0` · đã chạy tới `AL-20` |
+
+Cộng thêm hai lỗi của **chính công cụ soát** (`tools/mutation-sweep.py`), ghi ở
+`ENGINE-BACKLOG.md` §3b: phạm vi quét hẹp hơn `pnpm test` đúng bốn tệp, và bỏ qua
+mutant trong im lặng khi chuỗi tìm lệch — mà nó **đã** bỏ qua thật một mutant kể từ
+lượt tách `unsoundIssue()`.
+
+**Hai hình dạng, và cả hai đều không có gì đỏ khi chúng sai.**
+
+*Một — tài liệu tự mâu thuẫn với chính nó.* Bốn trong mười hai chỗ (số 1, 2, 4, 7)
+không phải quên ghi: chỗ đúng nằm ngay trong cùng tệp, có khi cách vài dòng. Tức
+lỗi không nằm ở chỗ *biết*, mà ở chỗ **sửa một nơi rồi coi là xong**. Dòng trạng
+thái ở đầu tệp là nạn nhân điển hình — nó là thứ người ta đọc đầu tiên và sửa cuối
+cùng.
+
+*Hai — đổi tên là kiểu mục nát êm nhất.* `hasRadical → needsRealEval` không làm
+hỏng gì, không đỏ ở đâu, chỉ để lại một cái tên `grep` không ra. Test không bắt
+được, người đọc không nghi ngờ, và nó sống hơn ba mươi hạng mục.
+
+**Cái được lắp thay vì chỉ được sửa.** Một trong mười hai chỗ nay có răng:
+`engine.test.ts` đọc bảng phân lớp §20 của `ENGINE-ALGEBRA.md`, gom mọi tên trong
+nháy ngược, so với `RULES`, và so luôn con số trong câu dẫn — thừa một tên đỏ,
+thiếu một tên đỏ, lệch con số đỏ. Nó đứng cạnh chốt canh grammar §3.3 vốn đã có từ
+M77.3, và hai cái đó là **toàn bộ** phần tài liệu mà máy giữ được. Mười một chỗ còn
+lại vẫn phải soát tay — nhưng nay ít nhất chúng có một danh sách và một ngày.
+
+### Nợ có tên còn mở sau đoạn này
+
+- **Bất đẳng thức olympiad** — họ lớn nhất (35% đề đại số), engine phủ 5%. Phần
+  *luật có tên* (AM–GM, Cauchy) vừa khuôn kiến trúc; phần *"không mất tổng quát"*
+  đòi một khái niệm chưa có — nhánh giả thiết. `ALGEBRA-COVERAGE.md` §4.1.
+- **Kết luận về hàm** (đơn ánh, toàn ánh, đơn điệu) — nửa sau của M73.
+  `ALGEBRA-COVERAGE.md` §4.2.
+- **Binet / $\frac{1}{1-P(x)}$ với $\deg P \ge 2$** — sau ranh giới vô tỉ mà
+  `series.ts` tự vạch. `ALGEBRA-COVERAGE.md` §5.1.
+- **Bốn luật lượng giác** đã dựng mà chưa bài nào dùng. `ALGEBRA-COVERAGE.md` §5.
+- **`point` đứng yên ở 3 bài** kể từ M36 — nội dung trước, đúng luật
+  `ENGINE-BACKLOG.md` §0.3.
 
 ---
 
@@ -175,5 +292,5 @@ nói không.
 
 ```bash
 pnpm check      # index && typecheck && lint && test && validate && labels
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome pnpm e2e
+CHROMIUM_PATH=/opt/pw-browsers/chromium pnpm e2e
 ```

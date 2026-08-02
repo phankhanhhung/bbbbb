@@ -1,6 +1,20 @@
 # CombViz — Kế hoạch triển khai Phase 1
 
-Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Trạng thái: **đang chạy, M48 xong (9 engine — `algebra` giữ cây biểu thức và **kiểm được tính đúng của từng bước**; mọi element trong kho neo được); schema `0.3.0`; kho 91 bài đã xuất bản — nhưng do tôi soạn và tôi tự duyệt, G-C chưa đóng** · Đối tượng: 1 người (Owner-Author)
+Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Đối tượng: 1 người (Owner-Author)
+
+**Trạng thái (soát lại 2026-08-02):** đang chạy · **9 engine** + lớp ván chơi (M78) · schema **`1.5.0`** (freeze `1.0.0` ngày 2026-08-01, năm minor sau đó, mỗi minor một migration) · kho **141 bài** đã xuất bản · **3843 test** (67 tệp), e2e **128** · **G-A và G-C đã đóng** ngày 2026-08-01 (§10 ghi đóng bằng gì và rủi ro nào còn lại) · 80 luật đại số, 60 validator, 46 lệnh sandbox trên 9 engine.
+
+> **Dòng trạng thái này từng đứng ở "M48 xong; schema `0.3.0`; kho 91 bài; G-C chưa
+> đóng" cho tới lượt soát 2026-08-02** — tức nó khai sai cả bốn trường, trong khi
+> §10 ngay trong tài liệu này đã ghi G-C đóng từ hôm trước. Dòng đầu là thứ người ta
+> đọc để biết dự án đang ở đâu, và nó là thứ ít ai sửa nhất vì không có gì đỏ khi nó
+> sai. Giữ ghi chú này ở đây làm lời nhắc: **sửa dòng này trước, không phải sau.**
+>
+> **Nhật ký milestone ở §6 dừng ở M48**, có chủ đích và không đổi: từ M49 trở đi mỗi
+> hạng mục có hồ sơ dày ở tài liệu engine của nó. Bản đồ để tra:
+> `ENGINE-ALGEBRA.md` §21–§51 (M47–M77, `AL-*`), `ENGINE-GAME.md` (M78, `GM-01..04`),
+> `ENGINE-BOARD.md` (`BD-*`), `ENGINE-BACKLOG.md` §2 (hàng đợi từng engine) và
+> `PLAN-M69.md` (M69→nay, gồm bảng "M76 → 2026-08-02").
 
 > **Các quyết định đã chốt (2026-07-29)** — xem §12 để biết đầy đủ.
 > Quỹ thời gian **35h/tuần** → lịch 16 tuần bên dưới giữ nguyên, không cắt scope.
@@ -2250,9 +2264,24 @@ phủ khoảng **85%** đề tổ hợp thi đấu (board + graph một mình l�
 gian** (xác suất, hàm sinh, tiệm cận), và với chúng, vẽ một cái hình đẹp không gánh
 lập luận là đường duy nhất phải tránh.
 
-Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới. Kho có 73 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng là
-người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.
+~~Nhưng thứ tự thì AUT-KPI đã quy định: trượt KPI thì dồn sửa pipeline **trước khi**
+mở engine mới. Kho có 73 bài, **chưa bài nào do chính chủ soạn** và người duyệt cũng
+là người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp theo.~~
+
+Đoạn gạch trên **mâu thuẫn với chính mục 2 ở đầu §10 này** — G-C đóng ngày
+2026-08-01, còn đoạn ấy vẫn kết luận "việc còn nợ là G-C" trên một con số kho (73
+bài) đã cũ hai lần. Nó nằm đó qua cả lượt viết mục 2. Bản đúng, tại lượt soát
+2026-08-02:
+
+- Kho có **141 bài**. G-C đóng, schema `1.5.0`.
+- **Không engine tổ hợp mới nào được mở** kể từ đó, và đó là quyết định chứ không
+  phải quán tính: `PRD-07` cấm thêm engine chỉ để tăng coverage. Việc đã chạy là
+  **làm sâu engine đã có** — `algebra` từ 73 lên 80 luật, `graph` thêm ba validator,
+  `board` thêm `path` và `chomp-bite`, cộng lớp ván chơi M78 (một *lớp*, không phải
+  một engine).
+- Vế của AUT-KPI vẫn nguyên và vẫn chưa trả: **người soạn vẫn là người duyệt.**
+  Thứ thay được cho người duyệt thứ hai, ở dự án một người, là máy — và sổ chốt
+  canh dài ra đúng vì lý do đó. Xem `VIZ-COVERAGE.md` §8.
 
 **Cách chạy tiếp content sprint** (đã có đường ray, cứ lặp):
 

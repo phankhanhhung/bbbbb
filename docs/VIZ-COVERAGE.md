@@ -1,6 +1,13 @@
 # CombViz — Kho bài tổ hợp: visualize được bao nhiêu phần trăm?
 
-Trạng thái: **ước lượng chuyên gia, không phải điều tra** · Cập nhật: 2026-07-29 (sau M18 — derivation engine + label atlas; hàng đợi §7 đã cạn)
+Trạng thái: **ước lượng chuyên gia, không phải điều tra** · Cập nhật: 2026-07-29 (sau M18 — derivation engine + label atlas; hàng đợi §7 đã cạn) · Soát lại: 2026-08-02 — §2 nhận thêm dòng định lý của bốn loạt bài (chiến lược thắng, tô màu & ghép cặp, hàm sinh, đề thi thật) và của `GR-13/14/15`, `AL-20`; §8 hết hiệu lực, xem chỗ gạch
+
+> **Con số ~85% / ~97% ở §1 chưa được đo lại sau bốn loạt bài ấy, và cố ý chưa.**
+> Chúng là ước lượng phủ trên **đề thi tổ hợp nói chung**, không phải trên kho —
+> soạn thêm bài không nhích chúng, chỉ **thêm năng lực** mới nhích. Bốn loạt bài
+> 2026-08-02 thêm ba năng lực có thể nhích (`proper-colouring`, `proper-edge-colouring`,
+> `value` trên đỉnh đồ thị), và cả ba đều nằm trong họ đã tính 🟢 ở §2. Muốn con số
+> đổi thì phải đo theo §5, không phải cộng nhẩm.
 
 > **Đọc con số ở đây đúng cách.**
 >
@@ -501,10 +508,22 @@ không, và không phải vì thiếu công sức.
 ## 8. Cảnh báo về thứ tự
 
 **AUT-KPI là gate có răng:** *trượt KPI thì dồn sửa pipeline **trước khi** mở
-engine mới* (SRS §9, AUT-KPI). Kho hôm nay có **66 bài** — nhưng **không bài nào do chính
-chủ soạn**, và người duyệt cũng là người soạn. Theo đúng luật của chính dự án,
-việc còn nợ không phải engine nào trong bảng §7, mà là **soạn tay 3–5 bài**
-(G-C), rồi mới đóng băng schema 1.0.0.
+engine mới* (SRS §9, AUT-KPI). ~~Kho hôm nay có **66 bài** — nhưng **không bài nào do
+chính chủ soạn**, và người duyệt cũng là người soạn. Theo đúng luật của chính dự án,
+việc còn nợ không phải engine nào trong bảng §7, mà là **soạn tay 3–5 bài** (G-C),
+rồi mới đóng băng schema 1.0.0.~~
+
+**Đoạn trên đã hết hiệu lực (soát 2026-08-02).** G-C đóng ngày 2026-08-01 theo chỉ
+định chính chủ: điều kiện "soạn tay 3–5 bài" được thay bằng "Style Guide v1.0 kết
+tinh từ **số đo** trên toàn kho" — xem `PRODUCT-REQUIREMENTS.md` §9 và
+`STYLE-GUIDE.md` §2. Schema đã đóng băng `1.0.0` và nay ở `1.5.0` sau năm minor,
+mỗi minor kèm một migration. Kho có **141 bài**.
+
+Cảnh báo **không** hết hiệu lực là vế còn lại của nó, và nó vẫn đúng nguyên văn:
+người soạn vẫn là người duyệt. Không gate nào trong dự án chữa được chuyện ấy — nó
+là hệ quả của mô hình single-author, đã ghi trong SRS §1.3. Cái thay được cho một
+người duyệt thứ hai là **máy**: chốt canh, validator, golden, và lượt bẻ răng ở
+`ENGINE-BACKLOG.md` §3b. Đó là lý do sổ chốt canh của dự án dài hơn sổ tính năng.
 
 *(Ghi chú dọn dẹp 2026-07-29: chỗ này trước đây còn sót lại một bảng hàng đợi cũ
 từ thời kho mới có 8 bài — số liệu mâu thuẫn với §7 và tiêu đề bảng thì hỏng.

@@ -1,7 +1,7 @@
 # CombViz — Product Requirements
 
 **Phiên bản:** 1.1
-**Ngày:** 2026-07-29
+**Ngày:** 2026-07-29 · **Soát lại:** 2026-08-02 (§3.1 số engine, §8 bảng minor thật)
 **Trạng thái:** hợp nhất định hướng sản phẩm và các khoảng trống ưu tiên
 
 ## 0. Vị trí của tài liệu này — đọc trước khi dùng nó
@@ -83,10 +83,10 @@ dưới đây chỉ nhắc lại phần liên quan tới các đề xuất mới
 
 ### 3.1 Engine hiện có
 
-Bảy engine, đúng số đang chạy trong repo. Bản 1.0 liệt kê sáu mục và trộn lẫn
-engine với view — `point` và `game` bị bỏ khỏi danh sách engine trong khi §3.2
-lại bàn về năng lực của chúng, còn "permutation/poset" thực chất là **layout +
-analyzer trên graph engine**, không phải engine riêng:
+**Chín engine** (soát 2026-08-02), đúng số đang chạy trong repo. Bản 1.0 liệt kê
+sáu mục và trộn lẫn engine với view — `point` và `game` bị bỏ khỏi danh sách engine
+trong khi §3.2 lại bàn về năng lực của chúng, còn "permutation/poset" thực chất là
+**layout + analyzer trên graph engine**, không phải engine riêng:
 
 | Engine | Phạm vi |
 |---|---|
@@ -97,6 +97,18 @@ analyzer trên graph engine**, không phải engine riêng:
 | `point` | điểm/đoạn, bao lồi, thẳng hàng, giao điểm, lưới điểm (PT-01..02) |
 | `game` | game bốc đống: Grundy, misère, phổ thắng-thua (một phần GM-02..04) |
 | `derivation` | chuỗi biến đổi đại số, hạng tử có danh tính (+ label atlas D-07/GR-08) |
+| `longdiv` | bảng chia đa thức có dư — một **bố cục**, không phải một họ bài (M46, `LD-*`) |
+| `algebra` | cây biểu thức + **kiểm tính đúng của từng bước** trên bốn sân kiểm; 80 luật (M47+, `AL-*`) |
+
+Hai dòng cuối mở **ngoài** hàng đợi `VIZ-COVERAGE.md` §7, theo chỉ định trực tiếp
+của chính chủ, và cả hai đóng góp $0$ vào con số phủ *tổ hợp* — miền chúng phục vụ
+có bảng đo riêng ở `ALGEBRA-COVERAGE.md`. Ghi bằng $0$ thay vì lặng lẽ cộng vào là
+cách giữ cho con số còn nghĩa.
+
+Ngoài chín engine còn một **lớp ván chơi** (M78, `GM-01..04`) — nó nằm *ngang qua*
+ba engine (`game`, `board`, `graph`) chứ không phải một engine thứ mười, và
+`ENGINE-GAME.md` mở đầu bằng đúng lời phân biệt ấy. Đếm nó thành engine là lặp lại
+chính lỗi "trộn engine với view" mà mục này sinh ra để sửa.
 
 Ranh giới "cố ý không làm" của từng engine nằm trong `README.md` và
 `docs/VIZ-COVERAGE.md` §4; tài liệu này không nhân bản nó.
@@ -303,6 +315,26 @@ không nói chúng đụng nhau. Cách gỡ, và nó phải được viết ra c
 1. Freeze `1.0.0` chốt **tập trường hiện có**, không chốt "sẽ không thêm gì".
 2. `choreography` và `experiment` vào dưới dạng **trường optional, thêm mới**, ở
    `1.1.0` và `1.2.0`. Bài cũ không khai chúng thì đọc y nguyên.
+
+   *Thực tế đã đi đúng cơ chế này nhưng khác nội dung, và ghi lại vì **cơ chế** mới
+   là thứ mục này cam kết:*
+
+   | | trường thêm | hạng mục |
+   |---|---|---|
+   | `1.1.0` | element `path` của board | BD-11 (M74) |
+   | `1.2.0` | khối `step.play` | GM-01/02 (M78.1) |
+   | `1.3.0` | `play.script` | DSL-03 (M78.6) |
+   | `1.4.0` | `graph.config.token`, `graph.config.ground` | GM-01 |
+   | `1.5.0` | `vertex.value` | GR-14 |
+
+   **Cả năm migration đều đồng nhất** — `apply: (problem) => problem`, không file cũ
+   nào phải sửa một ký tự — mà con dấu vẫn phải đổi, vì `additionalProperties: false`
+   nghĩa là một file dùng trường mới mà mang dấu cũ sẽ bị chính bộ đọc cũ từ chối.
+   Đó là lý do "đồng nhất" **không** đồng nghĩa với "bỏ qua được".
+
+   `choreography` vào trước freeze, nên nó không nằm trong bảng. `experiment` chưa
+   làm. Cửa sổ đọc của Player là minor hiện tại + n−1 (DAT-02), nên `1.3.0` trở về
+   trước nay đã ra khỏi cửa sổ.
 3. Mỗi minor bump đi kèm một bước `combviz migrate` chạy được và một test
    round-trip; DAT-02 (Player đọc được version hiện tại và n−1 minor) vẫn giữ.
 4. Bất kỳ thay đổi **phá vỡ** trường đã freeze là `2.0.0`, và cần lý do viết ra,

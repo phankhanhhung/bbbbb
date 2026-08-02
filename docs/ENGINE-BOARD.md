@@ -1,6 +1,6 @@
 # CombViz — Board engine: mô tả chức năng
 
-Trạng thái: **mô tả code đang chạy**, không phải đặc tả mong muốn · Cập nhật: 2026-07-30 (sau M42)
+Trạng thái: **mô tả code đang chạy**, không phải đặc tả mong muốn · Cập nhật: 2026-07-30 (sau M42) · Soát lại số đo: 2026-08-02 (§1, §15)
 Nguồn yêu cầu: `docs/SRS-v1.0.md` §`BD-01..06` · Hàng đợi: `docs/ENGINE-BACKLOG.md` (`BD-07/08/09/10` đã xong)
 Mã nguồn: `packages/engines/board/`
 
@@ -21,8 +21,11 @@ Board là engine **vẽ một lưới ô và những thứ đặt lên lưới �
 lớn nhất của kho: lát hình, tô màu, đếm hai chiều, quân cờ không ăn nhau, lan
 truyền trên bàn, bất biến kiểu "lật một hàng".
 
-Trong 83 bài đã xuất bản, **30 bài** dùng board, trên **100 / 353** scene — engine
-được dùng nhiều nhất.
+Trong **141 bài** đã xuất bản (đo 2026-08-02), **40 bài** dùng board, trên
+**137 / 562** scene — engine được dùng nhiều nhất. Ở lượt đo trước (83 bài, M42) tỉ
+lệ là 30 bài / 100 scene: kho gần gấp đôi mà **tỉ trọng** của board gần như đứng yên
+($36\% \to 28\%$ theo bài), và phần bị chia bớt chảy sang `algebra` — engine mở sau
+board hơn bốn mươi hạng mục.
 
 | Dùng để nói điều gì | Ví dụ trong kho |
 |---|---|
@@ -611,6 +614,14 @@ và khi ấy **không** sinh mục lịch sử. Không lệnh nào sinh id, đ�
 | `board/draw-region` | `id`, `cells[]`, `label?` | Gộp ô trùng |
 | `board/toggle-cross` | `cell`, `rule?`, `classes?` | Lights-out (BD-08) |
 | `board/flip-line` | `axis`, `index`, `classes?` | Chỉ lưới vuông (G-11) |
+| `board/chomp-bite` | `at` | Chomp (M78.3). Khoét **cả góc phần tư** dưới-phải của ô chạm. Chỉ lưới vuông — "mọi ô hàng $\ge r$, cột $\ge c$" trên lưới tam giác không phải một hình vẽ ra được |
+
+`chomp-bite` là chỗ đáng đọc kỹ nhất trong bảng, vì nó phá một quy ước ngầm của
+mười ba lệnh kia: **nhãn nước đi sống ở lệnh, không ở họ luật.** Ô $(0,0)$ ăn xong
+là xoá cả bàn, tức đó là nước thua, và người học cần đọc ra điều ấy *trước khi* bấm.
+Nhãn "Ăn ô độc" từng nằm trong `boardPlayRules`, nên bảng nước đi và lịch sử undo
+gọi cùng một nước bằng hai tên khác nhau. Gom về lệnh thì mọi chỗ đọc một tên, và
+một họ luật thứ hai được thừa hưởng mà không phải chép lại.
 
 ### 12.1 Nguyên tắc: lệnh không chặn cái mà validator báo
 
@@ -800,18 +811,18 @@ hiện.
 
 | File | Dòng | Nội dung |
 |---|---|---|
-| `schema.ts` | 238 | Hợp đồng dữ liệu: `BoardConfig`, `PieceElement`, `TileElement`, `RegionElement`, `BOARD_LIMITS` |
+| `schema.ts` | 272 | Hợp đồng dữ liệu: `BoardConfig`, `PieceElement`, `TileElement`, `RegionElement`, `BOARD_LIMITS` |
 | `lattice.ts` | 534 | **Toàn bộ hình học của ba lưới**: đa giác, tâm, chạm, kề, hướng, dán mép, hình của lưới phi vuông |
 | `geometry.ts` | 177 | Polyomino: `TILE_SHAPES`, xoay/lật, đường bao; và `cellColorClass` (preset + override) |
-| `render.ts` | 778 | `Scene → SvgNode[]`, `defaultViewport`, `elementBoxes` |
-| `commands.ts` | 621 | 13 lệnh sandbox + `coverage` + `colorSummary` |
+| `render.ts` | 1085 | `Scene → SvgNode[]`, `defaultViewport`, `elementBoxes` |
+| `commands.ts` | 699 | **14** lệnh sandbox + `coverage` + `colorSummary` |
 | `validators.ts` | 332 | 9 validator (5 cố định + 4 có tham số) |
-| `dsl.ts` | 304 | Trạng thái dẫn xuất, biến và builtin |
+| `dsl.ts` | 319 | Trạng thái dẫn xuất, biến và builtin |
 | `attacks.ts` | 113 | Luật đi quân — một cài đặt, ba nơi dùng |
-| `index.ts` | 444 | `EngineSchemaFragment`: id ngầm định + toàn bộ `checkBounds` |
+| `index.ts` | 528 | `EngineSchemaFragment`: id ngầm định + toàn bộ `checkBounds` |
 | `tools.ts` | 186 | Thanh công cụ sandbox, bày theo lưới |
 | `hit-test.ts` | 110 | Điểm → element, và bóng xem trước |
-| `ids.ts` | 41 | `cellId` / `parseCellId`, `strikeId` / `parseStrikeId` |
+| `ids.ts` | 58 | `cellId` / `parseCellId`, `strikeId` / `parseStrikeId` |
 
 Test: `test/lattice.test.ts` (938 dòng) là lớn nhất — nó ép các bất biến hình học
 mà không phần nào của code tự phát biểu được (kề là đối xứng, đi–về là quay lại,

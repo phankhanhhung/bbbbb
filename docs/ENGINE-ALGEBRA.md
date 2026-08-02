@@ -1,6 +1,6 @@
 # CombViz — Algebra engine: đặc tả
 
-Trạng thái: **đã dựng — đủ cả bốn tầng** (tầng 4 sandbox nối ở M65, §41) · Viết: 2026-07-31 (sau M46), dựng: M47
+Trạng thái: **đã dựng — đủ cả bốn tầng** (tầng 4 sandbox nối ở M65, §41) · Viết: 2026-07-31 (sau M46), dựng: M47 · Soát lại: 2026-08-02 (§20 bảng phân lớp — nay **có răng**; §21.1 tên hàm)
 Mã nguồn: `packages/engines/algebra/` · Bài đầu tiên: `equation-moves-that-lie`
 Nguồn yêu cầu: chưa có trong `docs/SRS-v1.0.md` — họ ID mới `AL-*` (xem `ENGINE-BACKLOG.md` §0.4)
 Tiền lệ gần nhất: `packages/engines/longdiv/` (M46), `packages/engines/derivation/` (M18)
@@ -276,7 +276,16 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§37 để biết tập luật thật — **79 luật** (kể bốn luật trích hệ số của §47), xếp theo mười một lớp:
+Xem §21–§47 để biết tập luật thật — **80 luật**, xếp theo mười ba lớp:
+
+> **Bảng này có răng.** `engine.test.ts` đọc chính bảng dưới, gom mọi tên trong dấu
+> nháy ngược, và so với `RULES`: thừa một tên là đỏ, thiếu một tên cũng là đỏ. Lý do
+> nó cần răng chứ không cần sự cẩn thận: bảng phân lớp là mục **tham chiếu** người
+> soạn bài đọc để biết engine có gì, nên nó lệch thì nó dạy sai người đang gõ — cùng
+> lý lẽ với grammar §3.3. Và nó **đã** lệch một lần: lượt soát 2026-08-02 tìm thấy
+> tám luật có trong mã mà không có trong bảng (`geometric_series`, bốn `coeff_*`,
+> `partial_fractions`, `specialize`, `sum_telescope`), trong khi dòng ngay trên vẫn
+> khai "79 luật … mười một lớp". Con số thì đếm tay, còn bảng thì không ai đếm.
 
 | lớp | luật |
 |---|---|
@@ -286,11 +295,13 @@ Xem §21–§37 để biết tập luật thật — **79 luật** (kể bốn l
 | **phương trình có điều kiện (★)** | `add_both_sides`, `mul_both_sides`, `pow_both_sides`, `abs_case`, `evaluate_at`, `set_variable`, `substitute`, `quadratic_formula` |
 | **chia đa thức** | `divide_by_linear_factor` |
 | **tổ hợp** (M56, §32) | `factorial_step`, `binom_to_factorial`, `binom_symmetry`, `pascal`, `binom_absorb` |
-| **tổng và tích** (M57, §33) | `sum_const`, `sum_linear`, `sum_split`, `sum_shift`, `sum_expand`, `prod_telescope` |
+| **tổng và tích** (M57, §33; M71, §46) | `sum_const`, `sum_linear`, `sum_split`, `sum_shift`, `sum_expand`, `prod_telescope`, `sum_telescope` |
 | **số mũ ký hiệu** (M58, §34) | `pow_split` (và `pow_add`/`pow_mul` vốn đã chạy từ M49) |
 | **hệ phương trình** (M59, §35) | `add_equations`, `scale_equation`, `substitute_from`, `drop_equation` |
 | **tập nghiệm** (M60, §36) | `abs_to_interval`, `interval_from_factors`, `merge_intervals` |
 | **hàm siêu việt** (M61, §37) | `log_product`, `log_quotient`, `log_power`, `log_change_base`, `exp_log`, `log_exp`, `log_both_sides`, `pythagorean_identity`, `double_angle`, `sum_to_product`, `product_to_sum` |
+| **phương trình hàm** (M73, §45) | `specialize` |
+| **hàm sinh & chuỗi** (M68, §44; M72, §47; AL-20) | `geometric_series`, `coeff_of_product`, `coeff_linear`, `coeff_shift`, `coeff_repeated_geometric`, `partial_fractions` |
 
 **Hai điều luật này cố ý không có:**
 
@@ -760,7 +771,18 @@ $\sqrt{\cdot}$ không phải hàm hữu tỉ, nên §6 không dùng được: tr
 $\sqrt a$ chỉ tồn tại khi $a$ là thặng dư bậc hai, và khi tồn tại thì có **hai**
 nghiệm không có nhánh chính tắc. Biểu thức có căn chuyển sang **đánh giá trên
 $\mathbb{R}$** với sai số tương đối $10^{-9}$; biểu thức hữu tỉ vẫn đi đường
-$\mathbb{F}_p$ chính xác tuyệt đối. Hai sân, chọn theo `hasRadical`.
+$\mathbb{F}_p$ chính xác tuyệt đối. Hai sân, chọn theo `needsRealEval`.
+
+> Hàm ấy tên là `hasRadical` khi M47b viết ra, và câu trên khai đúng tên ấy suốt hơn
+> ba mươi hạng mục sau khi nó **đổi tên**. Chỗ đáng lưu ý: lượt đổi được ghi ở **§22.2
+> của chính tài liệu này**, cách đây chín mươi dòng — nên đây không phải chuyện quên
+> ghi, mà là chuyện ghi ở một chỗ rồi không sửa chỗ kia. Đổi tên là kiểu mục nát êm
+> nhất: không có gì đỏ, không có gì hỏng, chỉ có một cái tên tra `grep` không ra.
+>
+> Trần sai số thì cũng đã hẹp lại từ đó: nay là
+> $\max(10^{-9} \times \text{thang kết quả},\; 10^{-15} \times \text{giá trị trung
+> gian lớn nhất})$ — xem §44, mục AL-20. Đo bằng thang kết quả thôi thì một biểu thức
+> triệt tiêu mạnh bị gọi nhầm là sai.
 
 **Và bộ lấy mẫu phải bốc cả số âm.** Bản đầu bốc trong $[0{,}3, 4)$ cho căn bậc chẵn
 luôn xác định — nhưng thế thì $\sqrt{x^2} = x$ **qua được**, dù nó sai với mọi

@@ -1,6 +1,6 @@
 # CombViz — Editorial Style Guide
 
-Trạng thái: **v1.0 — đã kết tinh trên 114 bài (G-C, 2026-08-01)** · Deliverable của AUT-10
+Trạng thái: **v1.0 — đã kết tinh trên 114 bài (G-C, 2026-08-01)** · Deliverable của AUT-10 · Đo lại trên 141 bài: 2026-08-02 (§2)
 
 > **Đọc phần này trước.**
 >
@@ -8,14 +8,21 @@ Trạng thái: **v1.0 — đã kết tinh trên 114 bài (G-C, 2026-08-01)** · 
 > thực tế, rồi mới bật pipeline AUT-09 — Style Guide viết trước khi soạn bài nào
 > là Style Guide bịa."*
 >
-> Kho hiện có 2 bài, cả hai là **fixture kỹ thuật** dựng để thử engine, không
-> phải bài do chính chủ soạn. Vì vậy tài liệu này cố ý chỉ chứa hai loại nội dung:
+> ~~Kho hiện có 2 bài, cả hai là **fixture kỹ thuật** dựng để thử engine, không phải
+> bài do chính chủ soạn.~~ Câu ấy đúng lúc tài liệu này dựng lên, và **sai từ G-C**
+> (2026-08-01) — nó vẫn nằm đây ba dòng dưới một tiêu đề khai "đã kết tinh trên 114
+> bài", tức tài liệu tự mâu thuẫn với chính nó. Gạch đi thay vì xoá, vì nó là lý do
+> §2 có hình dạng như bây giờ.
+>
+> Kho tại lượt soát 2026-08-02 có **141 bài**. Hai loại nội dung của tài liệu này
+> giữ nguyên, nhưng loại thứ hai đã đổi nghĩa:
 >
 > - **Phần đã chốt** — những quy ước đã bị *code* ép, nên chúng đã là sự thật rồi,
 >   viết ra chỉ là ghi lại.
-> - **Phần bỏ ngỏ** — những quyết định biên tập chỉ trả lời được sau khi soạn thật.
->   Chúng để trống có chủ đích. Điền bừa vào đây tệ hơn để trống, vì một quy ước
->   bịa vẫn sẽ được lint enforce và sẽ định hình 25 bài.
+> - ~~**Phần bỏ ngỏ**~~ → **Phần đã kết tinh** (§2) — những quyết định biên tập chỉ
+>   trả lời được sau khi soạn thật. Chúng từng để trống có chủ đích; nay chúng được
+>   **đo trên kho**, và mỗi con số ở §2 ghi rõ đo trên bao nhiêu bài. Điền bừa vào
+>   đây vẫn tệ hơn để trống, vì một quy ước bịa vẫn sẽ được lint enforce.
 
 ---
 
@@ -136,19 +143,48 @@ cũng kêu.
 ## 2. ~~Phần bỏ ngỏ — chờ 5 bài soạn tay~~ Phần đã kết tinh (G-C, 2026-08-01)
 
 Các câu hỏi dưới đây để ngỏ từ v0.1, chờ "soạn thật rồi nhìn lại". Kho nay có **114
-bài / 462 step**, soạn qua pipeline AUT-09 và duyệt liên tục bởi chính chủ qua từng
+bài / 462 step** (đo lại 2026-08-02: **141 bài / 557 step** — xem bảng dưới), soạn qua pipeline AUT-09 và duyệt liên tục bởi chính chủ qua từng
 mốc; chính chủ chỉ định đóng G-C trên corpus này. Mỗi câu trả lời dưới đây là **số đo
 trên cả kho**, không phải quyết định bịa — đúng điều kiện mà v0.1 đặt ra để được điền.
 
 > Số liệu 6 bài draft máy (M7) từng đứng ở đây đã bị thay: bảng dưới đo trên 114 bài.
 
+> **Đo lại trên 141 bài / 557 step (2026-08-02).** Kho lớn thêm $24\%$ kể từ lúc kết
+> tinh, nên câu đáng hỏi là *chuẩn này có giữ được không, hay nó chỉ mô tả một corpus
+> đã đông cứng*. Số đo trả lời: **giữ được, và giữ gần như từng chữ số.**
+>
+> | | 114 bài (G-C) | 141 bài (nay) |
+> |---|---:|---:|
+> | step · narrative `vi` | 462 · 445 | 557 · 540 |
+> | ký tự/narrative — trung vị · p90 · max | 166 · 295 · 415 | **175 · 299 · 415** |
+> | câu/step — trung vị · p90 · max | 2 · 3 · 4 | **2 · 3 · 4** |
+> | step/bài — trung vị · max | 4 · 11 | **4 · 11** |
+> | anchor/step — trung vị · max | 1 · 5 | **1 · 5** |
+> | step không anchor | 20 | **20** |
+> | bài có invariant strip | 53/114 (46%) | 55/141 (39%) |
+> | không xưng hô · "ta" · "chúng ta" | 428 · 17 · 0 | **522 · 18 · 0** |
+> | câu hỏi tu từ | 15 (3%) | 18 (3%) |
+> | "dễ thấy rằng" | 0 | **0** |
+>
+> Ba chỗ đáng đọc. **Max không nhích một đơn vị nào** ở bốn hàng có max — cùng bài
+> $415$ ký tự, cùng bài 11 step, cùng 5 anchor. Trần không phải do lint chặn (cảnh
+> báo ở 420 và 4 câu); corpus tự dừng dưới trần. **Số step không anchor đứng nguyên
+> ở 20** trong khi kho thêm 95 step: 20 ấy là các step `m1`/`m2` của lớp ván chơi —
+> nước đi, không có narrative — chứ không phải step quên neo. Và **`invariant` tụt
+> từ 46% xuống 39%**: hai mươi bảy bài mới phần lớn là đại số và hàm sinh, nơi bất
+> biến không phải công cụ chính. Đó là dịch chuyển **thành phần kho**, không phải
+> chuẩn biên tập lỏng đi — và là con số duy nhất trong bảng cần nhìn lại nếu kho
+> tiếp tục nghiêng về đại số.
+>
+> Các mục §2.1–§2.5 dưới đây giữ nguyên chữ; chỉ những chỗ số đổi mới được chú thích.
+
 ### 2.1 Độ dài một step — chốt
 
 | | trung vị | p90 | max | lint hiện tại |
 |---|---:|---:|---:|---|
-| ký tự / narrative | 166 | 295 | 415 | cảnh báo 420 — **giữ**, corpus tựa sát trần mà không chạm |
+| ký tự / narrative | 166 | 295 | 415 | cảnh báo 420 — **giữ**, corpus tựa sát trần mà không chạm (141 bài: 175 · 299 · **415**) |
 | câu / step | 2 | 3 | 4 | cảnh báo 4 — **giữ** |
-| step / bài | 4 | 5 | 11 | — |
+| step / bài | 4 | 5 | 11 | — (141 bài: 4 · 5 · **11**) |
 
 "Một ý một step" trong thực tế = **một phép biến đổi hoặc một bổ đề**, và corpus giữ
 được nó tới trung vị 4 step/bài. Giả định 15–25 step của AUT-KPI cho bài IMO **chưa
@@ -170,13 +206,15 @@ hoặc hình đã nói thay, hoặc phải viết ra.
 ### 2.3 Anchor — chốt
 
 Trung vị **1 anchor/step**, max 5; 20/462 step không có anchor (đa số là step mở đầu
-chỉ bày cấu hình). Chốt: mỗi step có ≥ 1 anchor trừ khi hình *là* toàn bộ nội dung.
+chỉ bày cấu hình). Đo lại trên 557 step: vẫn **đúng 20**, và nay chúng là các step
+nước đi `m1`/`m2` của lớp ván chơi — không có narrative để neo vào. Chốt: mỗi step có ≥ 1 anchor trừ khi hình *là* toàn bộ nội dung.
 Neo vào **danh từ có hình** ("đỉnh $v$", "ô $C_5^2$") là chính; neo cả mệnh đề khi
 mệnh đề ấy trỏ vào một *tập* element ("ba cạnh cùng màu" → ba id).
 
 ### 2.4 Invariant — chốt
 
-53/114 bài có invariant strip. Đặt tên theo **đại lượng đo được** ("Số cặp kề khác
+53/114 bài có invariant strip (đo lại: **55/141**, tức $46\% \to 39\%$ — kho nghiêng
+sang đại số chứ chuẩn không lỏng đi; xem bảng đầu §2). Đặt tên theo **đại lượng đo được** ("Số cặp kề khác
 màu"), không theo ý nghĩa ("Chướng ngại"); ý nghĩa thuộc về narrative. Bài nào strip
 chỉ lặp lại một hằng số suốt mọi step mà narrative không nhắc tới nó → nhiễu, bỏ.
 
