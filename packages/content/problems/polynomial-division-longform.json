@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "id": "polynomial-division-longform",
   "statement": {
     "vi": "Chia đa thức $A$ cho $B \\ne 0$ theo **cách viết dọc**: đặt số chia bên trái, số bị chia trong ngoặc, thương trên vạch, rồi lặp chia–nhân–trừ–hạ cho tới khi bậc phần còn lại nhỏ hơn $\\deg B$. Chạy thuật toán trên năm phép chia đủ các trường hợp hay gặp, và giải thích vì sao nó luôn dừng."

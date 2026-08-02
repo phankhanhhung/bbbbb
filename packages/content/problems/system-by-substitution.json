@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "id": "system-by-substitution",
   "statement": {
     "vi": "Cùng một hệ, cách khác: cô lập một ẩn ở một phương trình rồi **thế** vào phương trình kia. Engine chỉ cho thế khi phương trình nguồn đã thật sự có dạng $x = \\dots$."

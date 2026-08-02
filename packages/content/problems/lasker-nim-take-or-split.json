@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "id": "lasker-nim-take-or-split",
   "statement": {
     "vi": "Ba đống sỏi có $1$, $2$ và $3$ viên. Mỗi lượt, người đi **hoặc** bốc bất kì số viên dương từ một đống, **hoặc** chia một đống thành hai đống khác rỗng mà không bốc viên nào. Ai bốc viên cuối cùng thì thắng. Hỏi ai có chiến lược thắng?"

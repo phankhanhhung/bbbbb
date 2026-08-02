@@ -945,6 +945,41 @@ describe('GM — khối play', () => {
     expect(issue?.message).toContain('tất định');
   });
 
+  it('họ luật `script` mà **không có thân** ⇒ lỗi, kèm ví dụ viết được', () => {
+    // Cửa thoát cho tác giả (M78.6) mà thiếu thân thì mở ra một ván không nước nào —
+    // và triệu chứng ấy giống hệt một thế đã kết thúc, tức là im lặng.
+    const issue = validator
+      .validateProblem(withPlay({ rule: 'script' }))
+      .issues.find((i) => i.code === 'play/script-missing');
+
+    expect(issue?.severity).toBe('error');
+    expect(issue?.hint).toContain('moves {');
+  });
+
+  it('có thân mà họ luật **không phải** `script` ⇒ lỗi, vì đoạn luật ấy chết', () => {
+    // Chiều ngược lại cũng im lặng nếu không bắt: script nằm trong file, không ai chạy,
+    // và tác giả sửa nó mãi mà bảng nước đi không đổi.
+    const issue = validator
+      .validateProblem(
+        withPlay({ rule: 'piles', script: 'moves { for p in piles : move game/take(pile: p, count: 1) }' }),
+      )
+      .issues.find((i) => i.code === 'play/script-unused');
+
+    expect(issue?.severity).toBe('error');
+    expect(issue?.message).toContain('không bao giờ chạy');
+  });
+
+  it('cặp đủ đôi thì **im lặng**', () => {
+    expect(
+      codes(
+        withPlay({
+          rule: 'script',
+          script: 'moves { for p in piles : move game/take(pile: p, count: 1) }',
+        }),
+      ),
+    ).toEqual([]);
+  });
+
   it('quy ước ván lệch quy ước phân tích ⇒ lỗi (engine tự kiểm)', () => {
     // Phép kiểm này là **của engine**, không của tầng structure: nó là chuyện giữa
     // `play.misere` và `config.misere`, mà `checkBounds` thì chỉ thấy scene.

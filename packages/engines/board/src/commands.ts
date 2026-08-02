@@ -240,9 +240,19 @@ const toggleHoles = defineCommand<{ cells: readonly string[] }>({
  */
 const chompBite = defineCommand<{ at: string }>({
   type: 'board/chomp-bite',
+  /**
+   * Ô $(0,0)$ có tên riêng, và tên ấy sống **ở đây** chứ không ở họ luật.
+   *
+   * Ăn ô góc trên trái xoá cả bàn, nên nó là nước thua — và người học cần đọc ra điều
+   * đó *trước khi* bấm. Nhãn ấy từng nằm trong `boardPlayRules`, tức lệnh và họ luật gọi
+   * cùng một nước bằng hai tên: bảng nước đi nói "Ăn ô độc", lịch sử undo và draft step
+   * nói "Ăn từ (0, 0)". Gom về lệnh thì mọi chỗ đọc một tên, và một họ luật thứ hai
+   * (script của tác giả chẳng hạn) được thừa hưởng mà không phải chép lại.
+   */
   label: (params) => {
     const cell = parseCellId(params.at);
-    return cell ? `Ăn từ (${cell.row}, ${cell.col})` : 'Ăn một góc';
+    if (!cell) return 'Ăn một góc';
+    return cell.row === 0 && cell.col === 0 ? 'Ăn ô độc' : `Ăn từ (${cell.row}, ${cell.col})`;
   },
 
   apply(scene, params) {

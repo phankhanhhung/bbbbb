@@ -369,6 +369,19 @@ Thiết bị chuẩn đo: iPad Gen 9 (A13) / Safari, và laptop i5 thế hệ 8 
 
 - **NFR-S1 [P1] MUST** — Nội dung problem là **dữ liệu, không phải code**: không eval JS từ file problem; DSL đi qua interpreter riêng (DSL-02); KaTeX render với `trust: false` (chặn `\href` javascript và tương tự); asset chỉ nhận định dạng ảnh whitelist. Draft sinh từ pipeline (AUT-09) là nội dung *không tin cậy* như mọi nội dung khác: đi qua đúng validator và sandbox DSL, không có đường tắt trust.
 - **NFR-S2 [P3] MUST** — Khi có script (GM-01, PRN-06): chạy trong Web Worker cách ly, không DOM/không network, budget 100ms/lượt gọi và 64MB; vượt budget → kill + báo lỗi hiển thị. Giữ nguyên dù single-author: script do chính chủ viết hay máy draft thì bug vẫn treo máy người học — cách ly là vệ sinh, không phải chống ác ý.
+  - **Đạt ở M78.6, với một chỗ đi khác điều khoản và ba chỗ đạt mạnh hơn nó.**
+    *"Không DOM, không network"* đạt ở **tầng ngữ pháp** chứ không ở hộp cách ly: DSL
+    không có node nào nói ra chúng và `call.callee` phải là builtin có tên, nên chúng bị
+    chặn lúc **parse**, không phải lúc chạy. *"Budget 100ms"* có hai lớp: đồng hồ trong
+    tiến trình (`interpreter.ts`) là lớp thứ nhất, `terminate()` từ luồng chính
+    (`play-host.ts`) là lớp thứ hai — và lớp thứ hai mới là lớp có răng, vì lớp thứ nhất
+    chỉ soát hạn mỗi 2048 bước nên mã không hợp tác lọt qua nó. *"64MB"* **không ép
+    được**: không trình duyệt nào cho một Worker đọc heap của chính nó theo chuẩn nào
+    (`performance.memory` chỉ có ở Chromium và đo cả tab). Thay bằng ba thứ đo được và
+    cùng nhau chặn đúng cái mà 64MB muốn chặn — trần số bước (`maxSteps`), trần số nước
+    trả ra (`MOVES_LIMIT`), và đồng hồ ngoài giết được cả khi hai trần kia không soát
+    tới. Không có chốt canh nào giả vờ kiểm 64MB: một cái răng không cắn được thì không
+    lắp.
 - **NFR-S3** — *Removed v1.0*: không có backend trong phạm vi 3 phase (NG-08).
 
 ### 13.6 Độ bền dữ liệu
@@ -445,7 +458,7 @@ Khung phân bố:
 | ID | Rủi ro | Khả năng / Ảnh hưởng | Đối sách |
 |---|---|---|---|
 | R-1 | Content bottleneck: engine xong mà kho lèo tèo | Cao / Cao | AUT-KPI 1.5h làm gate; pipeline AUT-09 là hạng mục P1, không phải để sau; cắt engine trước khi cắt content |
-| R-2 | DSL phình thành ngôn ngữ lập trình | Vừa / Cao | Grammar đóng (DSL-01); script có trạng thái cách ly ở DSL-03 |
+| R-2 | DSL phình thành ngôn ngữ lập trình | Vừa / Cao | Grammar đóng (DSL-01); script có trạng thái cách ly ở DSL-03. **Đã mở tới đâu (M78.6):** đúng **một** dạng cú pháp `moves { for … where … : move … }`, và nó nằm ở `editor/src/script.ts` **chứ không** trong `@combviz/dsl` — ngôn ngữ biểu thức không đổi một dòng, nên invariant strip và guard đại số vẫn không có đường sinh ra nước đi. Không vòng lặp lồng, không `let`, không nhánh, không đệ quy. **Vì sao dừng ở đó:** bốn game của M78 đều viết được bằng dạng ấy, nên dạng thứ hai sẽ là mở cửa cho một nhu cầu chưa có |
 | R-3 | Perf iPad Safari (SVG + KaTeX dày) | Vừa / Vừa | Budget đo từ tuần 2; pre-render KaTeX lúc build; đường lùi Canvas sau render interface |
 | R-4 | Anchor rot khi sửa scene | Cao / Thấp | ANC-02 chặn lúc validate; "find usages" trước khi xóa element |
 | R-5 | Bản quyền: chép lời giải sách/AoPS | Vừa / Cao | Solution tự viết hoặc verify từng step; checklist nguồn; ghi nguồn statement đầy đủ |

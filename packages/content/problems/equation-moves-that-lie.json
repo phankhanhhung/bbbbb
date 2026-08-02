@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "id": "equation-moves-that-lie",
   "statement": {
     "vi": "Biến đổi một đẳng thức thì được phép làm gì? Cộng cùng một lượng vào hai vế luôn giữ nguyên tập nghiệm, nhưng **nhân** hai vế thì không phải lúc nào cũng vậy. Tìm chỗ hỏng trong chuỗi biến đổi dẫn từ $a = b$ tới một đẳng thức vô nghĩa, và phát biểu điều kiện làm phép nhân trở nên hợp lệ."

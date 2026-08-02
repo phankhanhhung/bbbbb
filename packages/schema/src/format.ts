@@ -72,7 +72,7 @@ const KEY_ORDER: Readonly<Record<string, readonly string[]>> = {
   // căn bệnh mà M66 chữa ở lớp kiểm.
   bijection: ['label_left', 'label_right', 'pairs', 'scene'],
   // Thứ tự đọc của một ván: luật nào, ai đi trước, quy ước gì, áp bằng gì, trần bao nhiêu.
-  play: ['rule', 'first', 'misere', 'apply', 'solver_bound'],
+  play: ['rule', 'first', 'misere', 'apply', 'solver_bound', 'script'],
   choreography: ['phases'],
   // Thứ tự đọc của một pha: nó là gì, tác động lên ai, đi đâu/từ đâu, lúc nào,
   // rồi mới tới phần trang trí. Trước đây phase rơi vào shape null → `anchor`

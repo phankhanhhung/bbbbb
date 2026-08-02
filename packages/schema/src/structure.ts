@@ -407,6 +407,30 @@ function checkPlay(
     return;
   }
 
+  // **Cặp `script`.** Danh sách họ luật vẫn đóng — `"script"` phải nằm trong đó, engine
+  // khai nó như mọi cái tên khác — nhưng cái tên ấy là cửa thoát cho tác giả, và cửa
+  // thoát mà thiếu thân thì mở ra một ván không có nước nào, còn thân mà không có cửa
+  // thì tác giả viết luật xong không ai chạy nó. Hai chiều đều **im lặng** nếu không
+  // bắt, nên bắt cả hai.
+  if (play.rule === 'script' && play.script === undefined) {
+    issues.push({
+      code: 'play/script-missing',
+      severity: 'error',
+      message: 'Họ luật "script" cần `play.script` — luật chơi viết ở đâu?',
+      path: `${path}/play/script`,
+      hint: 'Ví dụ: moves { for c in cells where !hole(c) : move board/chomp-bite(at: c) }',
+    });
+  }
+  if (play.rule !== 'script' && play.script !== undefined) {
+    issues.push({
+      code: 'play/script-unused',
+      severity: 'error',
+      message: `Có \`play.script\` nhưng họ luật là "${play.rule}", nên script không bao giờ chạy`,
+      path: `${path}/play/script`,
+      hint: 'Đổi `rule` thành "script", hoặc bỏ `script` đi — giữ cả hai là để lại một đoạn luật chết trong bài',
+    });
+  }
+
   issues.push(...(engine?.checkPlay?.(step.scene, play, `${path}/play`) ?? []));
 
   if (play.apply === 'script') {

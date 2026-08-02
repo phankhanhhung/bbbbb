@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "id": "sign-flip-4x4",
   "statement": {
     "vi": "Bảng $4\\times4$ ghi số $1$ ở mọi ô, trừ đúng một ô ghi $-1$. Mỗi bước được đổi dấu toàn bộ một hàng hoặc một cột. Chứng minh không bao giờ đưa được bảng về toàn số $1$."

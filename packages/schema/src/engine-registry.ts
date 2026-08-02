@@ -98,6 +98,7 @@ export interface PlayBlock {
   readonly misere?: boolean;
   readonly apply?: 'command' | 'script';
   readonly solver_bound?: number;
+  readonly script?: string;
 }
 
 export type EngineRegistry = ReadonlyMap<string, EngineSchemaFragment>;

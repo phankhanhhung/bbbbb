@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "id": "counting-inclusion-exclusion",
   "statement": {
     "vi": "Lớp có $30$ học sinh: $18$ bạn chơi bóng đá, $15$ bạn chơi bóng rổ, $8$ bạn chơi cả hai. Hỏi bao nhiêu bạn không chơi môn nào?"

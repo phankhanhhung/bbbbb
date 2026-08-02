@@ -24,8 +24,13 @@
  * lời hứa nào, nên minor và migration đồng nhất. Cửa sổ đọc trượt tiếp: `1.1.0`
  * xuống n−1, `1.0.0` ra khỏi cửa sổ.
  *
+ * **`1.3.0` — `play.script` (DSL-03, M78.6)**: tác giả khai được luật chơi của riêng
+ * mình bằng phép duyệt `moves { … }`, không phải đợi ai sửa mã engine. Vẫn là một
+ * trường optional, nên vẫn minor và vẫn migration đồng nhất. Cửa sổ đọc trượt tiếp:
+ * `1.2.0` xuống n−1, `1.1.0` ra khỏi cửa sổ.
+ *
  * Từ đây: thêm trường optional = minor + migration đồng nhất; đổi/gỡ = major.
  * Cửa sổ đọc của Player là minor hiện tại và n−1 (`isReadableVersion`), và
  * validate đứng gác ở cửa (`version/unreadable`).
  */
-export const SCHEMA_VERSION = '1.2.0';
+export const SCHEMA_VERSION = '1.3.0';

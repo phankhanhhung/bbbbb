@@ -29,7 +29,8 @@ import { allMoves, analyzeGame, type Move as PileMove } from './solver.js';
  * chỗ có thể lệch nhau.
  */
 
-export const GAME_PLAY_RULES = ['piles'] as const;
+/** `'script'` là cửa thoát cho tác giả — xem `BOARD_PLAY_RULES`. */
+export const GAME_PLAY_RULES = ['piles', 'script'] as const;
 
 /** Nhãn một nước, cùng cách gọi tên mà thanh công cụ dùng. */
 function labelOf(counts: readonly number[], move: PileMove): string {
@@ -95,7 +96,11 @@ function toMove(scene: Scene, counts: readonly number[], move: PileMove): Move |
  * sót: cả tám thành viên đều impartial — hai bên cùng tập nước. Tham số vẫn có trong
  * chữ ký vì Hackenbush sẽ cần nó, và thêm một tham số về sau nghĩa là sửa mọi chỗ gọi.
  */
-export function gamePlayRules(): PlayRules {
+export function gamePlayRules(rule: string = 'piles'): PlayRules | null {
+  // Cùng chữ ký với `boardPlayRules`: một hàm tra theo tên, trả `null` khi không nhận.
+  // Nhờ vậy chỗ gọi chung (Worker, và Sandbox ở .7) không phải biết engine nào có bao
+  // nhiêu họ luật — nó chỉ hỏi và nghe câu trả lời.
+  if (rule !== 'piles') return null;
   return {
     legalMoves(scene: Scene, _player: PlayPlayer): readonly Move[] {
       const model = readGame(scene);

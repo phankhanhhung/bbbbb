@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "id": "distribute-and-group-in-colour",
   "statement": {
     "vi": "Nhân phân phối và nhóm hạng tử là hai chiều của **một** thao tác. Nhìn chúng cạnh nhau thì thấy rõ: cái này rải một thừa số ra, cái kia gom nó lại."

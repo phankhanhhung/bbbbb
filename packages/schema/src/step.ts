@@ -124,6 +124,19 @@ export const Play = Type.Object(
      * thế thật chứ không phải con số tác giả gõ.
      */
     solver_bound: Type.Optional(Type.Integer({ minimum: 1, maximum: 1_000_000 })),
+    /**
+     * Luật chơi **do tác giả viết** — phép duyệt `moves { … }` (DSL-03, M78.6).
+     *
+     * Có mặt **khi và chỉ khi** `rule === "script"`, và `structure.ts` ép cặp ấy. Nhờ
+     * vậy danh sách họ luật của engine vẫn đóng: cửa thoát cho tác giả có một cái tên
+     * nằm trong danh sách chứ không phải một lỗ hổng ngầm mà `checkPlay` phải đoán ra.
+     *
+     * Đây là NFR-S1 đọc cho lớp ván — nội dung là **dữ liệu**, không phải code. Không
+     * có trường này thì "thêm một game" luôn có nghĩa là "phát hành một phiên bản".
+     * Grammar đóng (một dạng, không vòng lặp, không đệ quy) là điều kiện để câu ấy
+     * không mở lại R-2 bằng cửa sau; xem `editor/src/script.ts`.
+     */
+    script: Type.Optional(Type.String({ minLength: 1, maxLength: 2_000 })),
   },
   { additionalProperties: false },
 );
@@ -363,6 +376,8 @@ export interface Step {
     misere?: boolean;
     apply?: 'command' | 'script';
     solver_bound?: number;
+    /** Phép duyệt `moves { … }` của tác giả; có mặt ⇔ `rule === "script"`. */
+    script?: string;
   };
   alt_text?: { vi: string; en?: string };
   author_notes?: string;

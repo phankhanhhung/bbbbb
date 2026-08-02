@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "id": "degree-with-loops",
   "statement": {
     "vi": "Trong một đồ thị cho phép khuyên và cạnh bội, bậc của một đỉnh được tính thế nào? Chứng minh tổng mọi bậc vẫn bằng hai lần số cạnh."

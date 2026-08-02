@@ -33,7 +33,7 @@ const scene = (counts: readonly number[], rule: GameRule, extra: Record<string, 
   }) as never;
 
 const NIM: GameRule = { type: 'subtract', min: 1 };
-const rules = gamePlayRules();
+const rules = gamePlayRules()!;
 
 const countsOf = (s: Scene): number[] =>
   s.elements.filter((e) => e.type === 'pile').map((e) => (e as unknown as { count: number }).count);
@@ -184,10 +184,17 @@ describe('tất định và ghi ván', () => {
 });
 
 describe('khai báo với tầng schema', () => {
-  it('engine khai **một** họ luật, tên `piles`', () => {
+  it('engine khai **một** họ luật dựng sẵn, tên `piles` — cộng cửa thoát `script`', () => {
     // Tám thành viên `GameRule` là tham số của cùng một cách chơi, không phải tám họ.
     // Khai tám tên là bắt tác giả gõ cùng một thứ hai lần, ở hai chỗ có thể lệch nhau.
-    expect([...GAME_PLAY_RULES]).toEqual(['piles']);
+    //
+    // `'script'` (M78.6) là chuyện khác: nó không phải một trò chơi mà là câu "luật nằm
+    // ở `play.script`". Nó **có tên trong danh sách** chứ không đi vòng qua danh sách,
+    // vì một cửa thoát ngầm là thứ `checkPlay` phải đoán ra — và đoán là chỗ mà mọi
+    // danh sách đóng thôi đóng.
+    expect([...GAME_PLAY_RULES]).toEqual(['piles', 'script']);
+    // Và engine **không** tự dựng nó: thân luật đến từ bài, không từ mã.
+    expect(gamePlayRules('script')).toBeNull();
   });
 
   it('quy ước ván lệch quy ước phân tích ⇒ **lỗi**, không phải cảnh báo', () => {

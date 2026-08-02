@@ -13,6 +13,15 @@ export { parse } from './parser.js';
 export { tokenize, type Token } from './tokenizer.js';
 export {
   evaluate,
+  /**
+   * Đánh giá với một `EvalContext` **có sẵn**.
+   *
+   * `evaluate` dựng ngân sách mới mỗi lần gọi, và đó đúng cho một biểu thức đứng một
+   * mình. Chỗ cần cái này là chỗ chạy *nhiều* biểu thức mà chúng phải chia **một** ngân
+   * sách: phép duyệt `moves { … }` của lớp ván chạy vị ngữ một lần cho mỗi phần tử, và
+   * "mỗi lần 50ms" thì trần 100ms của NFR-S2 không nói lên điều gì.
+   */
+  evalExpr,
   applyLambda,
   DEFAULT_BUDGET,
   DETERMINISTIC_BUDGET,

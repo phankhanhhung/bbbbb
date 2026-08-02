@@ -1,5 +1,6 @@
 import type { Move, PlayPlayer, PlayRules } from '@combviz/editor';
 import type { PlayBlock, Scene, ValidationIssue } from '@combviz/schema';
+import { boardCommands } from './commands.js';
 import { cellId } from './ids.js';
 import type { BoardConfig } from './schema.js';
 import { latticeOf } from './geometry.js';
@@ -27,7 +28,15 @@ import { latticeOf } from './geometry.js';
  * riêng — đúng như M78.1 đặt cược.
  */
 
-export const BOARD_PLAY_RULES = ['chomp'] as const;
+/**
+ * Họ luật của engine bàn cờ.
+ *
+ * `'script'` là **cửa thoát cho tác giả**, không phải một trò chơi: nó nói "luật nằm ở
+ * `play.script`, không nằm trong mã". Nó có tên trong danh sách đóng chứ không đi vòng
+ * qua danh sách, vì một cửa thoát ngầm là thứ mà `checkPlay` phải đoán ra — và đoán là
+ * chỗ mà mọi danh sách đóng thôi đóng.
+ */
+export const BOARD_PLAY_RULES = ['chomp', 'script'] as const;
 
 const boardConfig = (scene: Scene): BoardConfig => scene.config as BoardConfig;
 
@@ -80,10 +89,15 @@ export function boardPlayRules(rule: string): PlayRules | null {
       if (latticeOf(config) !== 'square') return [];
       return remaining(config).map(({ row, col }) => {
         const id = cellId(row, col);
+        const command = { type: 'board/chomp-bite', params: { at: id } } as const;
         return {
           id: `bite-${row}-${col}`,
-          label: row === 0 && col === 0 ? 'Ăn ô độc' : `Ăn từ (${row}, ${col})`,
-          command: { type: 'board/chomp-bite', params: { at: id } },
+          // Nhãn **hỏi lệnh**, không tự viết. Bản trước tự viết, và ô $(0,0)$ đọc là
+          // "Ăn ô độc" ở bảng nước đi mà "Ăn từ (0, 0)" ở lịch sử undo — cùng một nước,
+          // hai tên, và không chốt canh nào bắt được vì hai chỗ ấy không bao giờ gặp
+          // nhau. Chúng gặp nhau lần đầu khi họ luật thứ hai (script) ra đời.
+          label: boardCommands[command.type]!.label(command.params, scene),
+          command,
           // **Chỉ ô được chạm**, không phải cả góc phần tư bị ăn. `targets` trả lời
           // câu "chạm vào đâu thì được nước này", không phải câu "nước này ăn những
           // gì" — trộn hai câu thì chạm một ô sẽ ra mọi nước có góc phủ nó.

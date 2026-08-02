@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "id": "tournament-has-king",
   "statement": {
     "vi": "Trong một giải đấu vòng tròn (hai đấu thủ bất kỳ gặp nhau đúng một lần, không có hoà), chứng minh luôn tồn tại một đấu thủ $V$ sao cho mọi đấu thủ khác hoặc thua trực tiếp $V$, hoặc thua một người mà $V$ đã thắng."

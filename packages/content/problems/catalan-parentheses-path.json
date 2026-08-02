@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "id": "catalan-parentheses-path",
   "statement": {
     "vi": "Có bao nhiêu dãy gồm $3$ dấu ngoặc mở và $3$ dấu ngoặc đóng sao cho đọc từ trái sang phải, số dấu mở luôn không ít hơn số dấu đóng?"

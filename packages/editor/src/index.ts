@@ -10,6 +10,15 @@ export {
 } from './command.js';
 
 export {
+  parseMoves,
+  runMoves,
+  scriptPlayRules,
+  MOVES_LIMIT,
+  type MovesOutcome,
+  type MovesScript,
+} from './script.js';
+
+export {
   solveGame,
   SOLVER_STATES,
   SOLVER_STATES_MAX,

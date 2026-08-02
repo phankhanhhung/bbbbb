@@ -99,6 +99,18 @@ export const MIGRATIONS: readonly Migration[] = [
      */
     apply: (problem) => problem,
   },
+  {
+    from: '1.2.0',
+    to: '1.3.0',
+    summary: 'thêm `play.script` (DSL-03) — không đổi dữ liệu bài nào, chỉ đóng dấu phiên bản',
+    /**
+     * Đồng nhất, lần thứ ba và cùng một lý do: `script` là trường **optional** bên trong
+     * một khối vốn đã optional, nên không file cũ nào cần sửa. Con dấu vẫn phải đổi, vì
+     * `additionalProperties: false` trên `Play` nghĩa là một file có `script` mà mang
+     * dấu `1.2.0` sẽ bị chính schema `1.2.0` từ chối.
+     */
+    apply: (problem) => problem,
+  },
 ];
 
 export interface MigrateResult {
