@@ -220,6 +220,59 @@ const toggleHoles = defineCommand<{ cells: readonly string[] }>({
 });
 
 /**
+ * **Ăn một góc phần tư** — nước đi của Chomp (GM-01, M78.3).
+ *
+ * Chạm ô $(r, c)$ thì mọi ô $(r', c')$ với $r' \ge r$ và $c' \ge c$ biến mất cùng lúc.
+ * Đây là **một** nước, không phải một vệt quét nhiều ô: người chơi chọn một ô, và cái
+ * bị ăn là hệ quả của luật chứ không phải của thao tác. Ghép nó thành nhiều lần
+ * `toggle-holes` sẽ cho undo hoàn tác từng ô một — tức hoàn tác một thứ chưa từng xảy ra.
+ *
+ * ## Vì sao là một primitive chứ không phải một script
+ *
+ * Đây đúng chỗ mà lời reviewer *"bộ primitive đóng cho board/graph trước khi cho script
+ * tổng quát"* trả tiền. Phép biến đổi này thuần, có nghịch ảnh rõ ràng, replay được, và
+ * `validate` đọc được kết quả của nó. Một script tự dựng scene mới thì cả bốn thứ ấy
+ * phải dựng cổng để bù (xem `editor/play.ts`).
+ *
+ * Ô đã bị ăn thì **không** ăn lại được: trả `null`, và lớp ván biến `null` thành một lời
+ * từ chối có chữ. Ăn ô $(0,0)$ thì cả bàn biến mất — đó là ô độc, và ván Chomp là ván
+ * **misère** đúng vì thế: người ăn nó là người đi nước cuối cùng.
+ */
+const chompBite = defineCommand<{ at: string }>({
+  type: 'board/chomp-bite',
+  label: (params) => {
+    const cell = parseCellId(params.at);
+    return cell ? `Ăn từ (${cell.row}, ${cell.col})` : 'Ăn một góc';
+  },
+
+  apply(scene, params) {
+    const config = boardConfig(scene);
+    // Góc phần tư chỉ có nghĩa trên lưới vuông. Lưới tam giác/lục giác thì "mọi ô
+    // hàng ≥ r, cột ≥ c" không phải một hình mà ai vẽ được.
+    if (latticeOf(config) !== 'square') return null;
+
+    const cell = parseCellId(params.at);
+    if (!cell) return null;
+    if (!inBoard('square', config.rows, config.cols, cell.row, cell.col)) return null;
+
+    const holes = new Set((config.holes ?? []).map(([r, c]) => `${r},${c}`));
+    if (holes.has(`${cell.row},${cell.col}`)) return null;
+
+    for (let r = cell.row; r < config.rows; r += 1) {
+      for (let c = cell.col; c < config.cols; c += 1) holes.add(`${r},${c}`);
+    }
+
+    // Sắp thứ tự vì cùng lý do `toggle-holes` sắp: `holes` là một **tập**, còn file là
+    // một mảng, và một tập ghi ra hai thứ tự là hai diff git cho cùng một trạng thái.
+    const next: [number, number][] = [...holes]
+      .map((key) => key.split(',').map(Number) as [number, number])
+      .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+    return withConfig(scene, { ...config, holes: next });
+  },
+});
+
+/**
  * BD-05 — khoanh một vùng hình **tuỳ ý** bằng cách quét qua các ô.
  *
  * Region đã nhận danh sách ô bất kỳ từ P1; thiếu là cái **tay** để vẽ nó. "Vùng
@@ -567,6 +620,7 @@ export const boardCommands: CommandRegistry = {
   [flipLine.type]: flipLine,
   [toggleCross.type]: toggleCross,
   [toggleHoles.type]: toggleHoles,
+  [chompBite.type]: chompBite,
   [drawRegion.type]: drawRegion,
   [paintCells.type]: paintCells,
   [setPreset.type]: setPreset,

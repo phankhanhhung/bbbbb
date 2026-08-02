@@ -25,6 +25,7 @@ import {
   type LatticeShape,
 } from './lattice.js';
 import { BOARD_VALIDATOR_IDS, resolveBoardValidator } from './validators.js';
+import { BOARD_PLAY_RULES, checkBoardPlay } from './play.js';
 
 export * from './schema.js';
 export { boardTools } from './tools.js';
@@ -36,6 +37,7 @@ export * from './dsl.js';
 export * from './validators.js';
 export * from './commands.js';
 export * from './hit-test.js';
+export { boardPlayRules, checkBoardPlay, BOARD_PLAY_RULES } from './play.js';
 
 export function isHole(config: BoardConfigType, row: number, col: number): boolean {
   return (config.holes ?? []).some(([r, c]) => r === row && c === col);
@@ -67,6 +69,8 @@ export const boardSchemaFragment: EngineSchemaFragment = {
   bounds: { engine: 'board', limits: BOARD_LIMITS },
   resolveValidator: resolveBoardValidator,
   validatorIds: BOARD_VALIDATOR_IDS,
+  playRules: BOARD_PLAY_RULES,
+  checkPlay: checkBoardPlay,
 
   /**
    * Ô khuyết **vẫn nằm trong** tập này.

@@ -116,10 +116,10 @@
     "geometric-series-gf",
     "functional-equation-cauchy",
     "arithmetic-sequence-by-telescoping",
-    "candies-three-children-gf"
+    "candies-three-children-gf",
+    "chomp-poison-corner"
   ],
   "newest": [
-    "candies-three-children-gf",
-    "arithmetic-sequence-by-telescoping"
+    "chomp-poison-corner"
   ]
 }

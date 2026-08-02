@@ -216,6 +216,19 @@ describe('AUT-10 — lint biên tập', () => {
     expect(draft).not.toContain('lint/no-sandbox');
   });
 
+  it('bài **chơi được** được miễn sandbox — ván cờ là thao tác có nghĩa (GM-01)', () => {
+    // Không có dòng miễn này thì bài Chomp đầu tiên bị đòi thêm một sandbox bên cạnh
+    // một ván chơi hoàn chỉnh, và hai lối cùng bảo người học "nghịch đi" ở hai chỗ
+    // khác nhau. Đúng cái bẫy mà `illustration` đã được miễn để tránh: một luật cảnh
+    // báo về thứ tác giả **cố ý** làm là luật sắp bị bỏ qua.
+    const problem = loadExample();
+    delete problem.sandbox;
+    expect(codes(problem)).toContain('lint/no-sandbox');
+
+    problem.solutions[0]!.steps[0]!.play = { rule: 'chomp', misere: true };
+    expect(codes(problem)).not.toContain('lint/no-sandbox');
+  });
+
   it('mọi vấn đề đều là cảnh báo — lint không chặn', () => {
     const problem = loadExample();
     problem.statement.vi += ' pigeonhole';

@@ -350,13 +350,23 @@ function checkPublishReadiness(problem: Problem): ValidationIssue[] {
    * đây không phải cửa lách: `illustration` là tuyên bố rằng bài này không có
    * thao tác nào có nghĩa, và ép sandbox lên nó chỉ đẻ ra đồ chơi cho đủ chỉ tiêu.
    */
-  if (!problem.sandbox && (problem.kind ?? 'illustration') !== 'illustration') {
+  /**
+   * Bài **chơi được** (GM-01) cũng có thao tác có nghĩa — thao tác ấy là *ván cờ*.
+   *
+   * Không có dòng này thì bài Chomp đầu tiên bị đòi thêm một sandbox bên cạnh một ván
+   * chơi hoàn chỉnh, và hai lối cùng đòi người học "nghịch đi" ở hai chỗ khác nhau.
+   * Đúng cái bẫy mà chú thích ngay trên đã gọi tên ở ca `illustration`: một luật cảnh
+   * báo về thứ tác giả **cố ý** làm là luật sắp bị bỏ qua.
+   */
+  const playable = problem.solutions.some((s) => s.steps.some((step) => step.play !== undefined));
+
+  if (!problem.sandbox && !playable && (problem.kind ?? 'illustration') !== 'illustration') {
     issues.push({
       code: 'lint/no-sandbox',
       severity: 'warning',
       message: 'Bài published nhưng không có sandbox',
       path: '/sandbox',
-      hint: 'DoD Phase 1: 100% bài có sandbox + validator; bài không có thao tác nào có nghĩa thì khai `kind: "illustration"`',
+      hint: 'DoD Phase 1: 100% bài có sandbox + validator; bài chơi được (`step.play`) hoặc không có thao tác nào có nghĩa (`kind: "illustration"`) thì được miễn',
     });
   }
 

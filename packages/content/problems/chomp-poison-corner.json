@@ -1,0 +1,262 @@
+{
+  "schema_version": "1.2.0",
+  "id": "chomp-poison-corner",
+  "statement": {
+    "vi": "Một thanh sô-cô-la $3 \\times 3$. Hai người lần lượt chọn một ô còn lại và **ăn hết** phần từ ô đó xuống dưới và sang phải. Ô góc trên trái có độc. Ai buộc phải ăn ô độc thì **thua**. Ai có chiến lược thắng?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chomp (Gale, 1974). Với mọi thanh khác 1×1, người đi trước thắng — chứng minh kinh điển là trộm chiến lược, tức phi kiến thiết."
+    }
+  },
+  "topics": [
+    "games"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "board"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Ăn ô chéo, rồi soi gương"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Thanh đủ $9$ ô. [[a1|Ô góc trên trái]] có độc: ai buộc phải ăn nó thì thua. Chín nước mở màn — chỉ **một** nước thắng, và nó không phải nước ăn ít nhất."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 8
+                },
+                "cell-0-1": {
+                  "color_class": 3
+                },
+                "cell-0-2": {
+                  "color_class": 3
+                },
+                "cell-1-0": {
+                  "color_class": 3
+                },
+                "cell-1-1": {
+                  "color_class": 3
+                },
+                "cell-1-2": {
+                  "color_class": 3
+                },
+                "cell-2-0": {
+                  "color_class": 3
+                },
+                "cell-2-1": {
+                  "color_class": 3
+                },
+                "cell-2-2": {
+                  "color_class": 3
+                }
+              },
+              "cols": 3,
+              "rows": 3
+            },
+            "elements": []
+          },
+          "play": {
+            "rule": "chomp",
+            "first": "left",
+            "misere": true
+          },
+          "alt_text": {
+            "vi": "Thanh sô-cô-la ba nhân ba, còn nguyên."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Người 1 ăn [[a1|ô chéo]] — mất luôn bốn ô. Còn lại một hình chữ **L**: một tay ngang, một tay dọc, **dài bằng nhau**, chung nhau ô độc."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-1-1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 8
+                },
+                "cell-0-1": {
+                  "color_class": 3
+                },
+                "cell-0-2": {
+                  "color_class": 3
+                },
+                "cell-1-0": {
+                  "color_class": 3
+                },
+                "cell-2-0": {
+                  "color_class": 3
+                }
+              },
+              "cols": 3,
+              "holes": [[1, 1], [1, 2], [2, 1], [2, 2]],
+              "rows": 3
+            },
+            "elements": []
+          },
+          "play": {
+            "rule": "chomp",
+            "first": "right",
+            "misere": true
+          },
+          "alt_text": {
+            "vi": "Chỉ còn hàng trên cùng và cột ngoài cùng bên trái."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Người 2 ăn cụt [[a1|tay ngang]]; Người 1 **chép y hệt** sang [[a2|tay dọc]]. Hai tay lại bằng nhau — thế đối xứng quay về, và nó luôn quay về được."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-2"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "cell-2-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 8
+                },
+                "cell-0-1": {
+                  "color_class": 3
+                },
+                "cell-1-0": {
+                  "color_class": 3
+                }
+              },
+              "cols": 3,
+              "holes": [
+                [0, 2],
+                [1, 1],
+                [1, 2],
+                [2, 0],
+                [2, 1],
+                [2, 2]
+              ],
+              "rows": 3
+            },
+            "elements": []
+          },
+          "play": {
+            "rule": "chomp",
+            "first": "right",
+            "misere": true
+          },
+          "alt_text": {
+            "vi": "Chữ L còn ba ô: ô độc và một ô mỗi tay."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Phép soi gương không bao giờ hết nước, nên người cạn nước là Người 2 — và nước cuối cùng của họ là [[a1|ô độc]]. Chú ý lời giải này **chỉ ra** nước thắng; lời giải cho thanh $m \\times n$ bất kỳ thì không, nó chỉ chứng minh nước ấy tồn tại."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "cell-0-0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "board",
+            "config": {
+              "cell_overrides": {
+                "cell-0-0": {
+                  "color_class": 8
+                }
+              },
+              "cols": 3,
+              "holes": [
+                [0, 1],
+                [0, 2],
+                [1, 0],
+                [1, 1],
+                [1, 2],
+                [2, 0],
+                [2, 1],
+                [2, 2]
+              ],
+              "rows": 3
+            },
+            "elements": []
+          },
+          "play": {
+            "rule": "chomp",
+            "first": "right",
+            "misere": true
+          },
+          "alt_text": {
+            "vi": "Chỉ còn ô độc ở góc trên trái."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}
