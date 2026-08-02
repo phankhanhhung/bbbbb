@@ -75,10 +75,7 @@
     }
   ],
   "sandbox": {
-    "goal_expr": "reaches(\"x + (-2)\")",
-    "validators": [
-      "each-step-sound"
-    ]
+    "goal_expr": "reaches(\"x + (-2)\")"
   },
   "og_step_ref": {
     "sol_id": "sol",

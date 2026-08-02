@@ -1,7 +1,8 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { Problem } from '@combviz/schema';
+import type { Problem, Scene, SceneValidator } from '@combviz/schema';
+import { resolveAlgebraValidator } from '@combviz/engine-algebra';
 import { lintProblem, sandboxStatus } from '@combviz/check';
 import { measure } from '../src/commands/coverage.js';
 
@@ -90,5 +91,67 @@ describe('hai cổng đếm sandbox', () => {
     // ai chấm, tức đúng thứ DoD §15.1 muốn tránh. Kho hôm nay không có bài nào như thế
     // nên hợp nhất không đổi kết quả bài nào — nhưng luật thì phải nói ra.
     expect(sandboxStatus({ ...base, kind: 'challenge', sandbox: {} } as Problem)).toBe('missing');
+  });
+});
+
+/**
+ * **`no-vanishing-divisor` cắn đúng chỗ nó mang tên** (AL-25).
+ *
+ * Hai chuyện được đo ở đây, và cả hai là lỗi đã có thật trong kho:
+ *
+ * 1. `equation-moves-that-lie` — bài *nói về* chuyện nhân/chia cho thứ có thể bằng $0$ —
+ *    ra đời (AL-23) với **chỉ** `each-step-sound`, một chốt canh đo được là không bao giờ
+ *    đỏ. Validator duy nhất cắn được ở đúng bài nó sinh ra để phục vụ thì không được bật.
+ * 2. Bản cũ của `no-vanishing-divisor` hỏi `conditions.length === 0`, nên nó đỏ vì **mọi**
+ *    điều kiện — kể cả `f tăng ngặt`, một giả thiết không dính gì tới mẫu số. Nay nó đọc
+ *    `Guard.sign === '!=0'`, tức hỏi thẳng thứ nó mang tên.
+ */
+describe('AL-25 — no-vanishing-divisor đỏ đúng chỗ, xanh đúng chỗ', () => {
+  const nvd = resolveAlgebraValidator('no-vanishing-divisor');
+
+  const scenesOf = async (id: string): Promise<Array<[string, Scene]>> => {
+    const problem = JSON.parse(
+      await readFile(join('packages/content/problems', `${id}.json`), 'utf8'),
+    ) as Problem;
+    const out: Array<[string, Scene]> = [];
+    for (const sol of problem.solutions) {
+      for (const step of sol.steps) {
+        if (step.scene?.engine === 'algebra') out.push([step.id, step.scene]);
+      }
+    }
+    return out;
+  };
+
+  it('đỏ ở đúng ba bước chia của `equation-moves-that-lie`', async () => {
+    const red = (await scenesOf('equation-moves-that-lie'))
+      .filter(([, scene]) => !(nvd as SceneValidator).check(scene).ok)
+      .map(([id]) => id);
+
+    expect(red).toEqual(['s1', 'c2', 'end']);
+  });
+
+  it('…và bài khai thẳng ba bước ấy bằng `expects_violation`', async () => {
+    // Chỗ cố ý phạm luật thì phải viết ra — nếu không, `combviz validate` cảnh báo, và
+    // một cảnh báo thường trực là thứ người ta học cách bỏ qua (bài học M45).
+    const problem = JSON.parse(
+      await readFile(join('packages/content/problems', 'equation-moves-that-lie.json'), 'utf8'),
+    ) as Problem;
+    const declared = problem.solutions
+      .flatMap((s) => s.steps)
+      .filter((s) => (s.expects_violation ?? []).includes('no-vanishing-divisor'))
+      .map((s) => s.id);
+
+    expect(declared).toEqual(['s1', 'c2', 'end']);
+  });
+
+  it('**xanh** ở bước chỉ mang giả thiết về hàm — điều kiện không phải mẫu số', async () => {
+    // Bản cũ đỏ ở cả hai bài dưới: chúng có `f tăng ngặt` / `f đơn ánh` trong
+    // `conditions`, và không có phân số nào. Một chốt canh mang tên một thứ mà kiểm một
+    // thứ khác thì mỗi lần nó đỏ, người đọc học sai lý do.
+    for (const id of ['monotone-peels-an-inequality', 'functional-equation-injective']) {
+      for (const [stepId, scene] of await scenesOf(id)) {
+        expect((nvd as SceneValidator).check(scene).ok, `${id}/${stepId} đỏ oan`).toBe(true);
+      }
+    }
   });
 });

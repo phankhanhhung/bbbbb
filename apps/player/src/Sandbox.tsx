@@ -580,27 +580,38 @@ export function Sandbox({
             </section>
           ) : null}
 
-          {/* SBX-02: ràng buộc đang áp, bật/tắt được để "nới luật" khi thí nghiệm. */}
-          <section class="constraints">
-            <h3>Ràng buộc</h3>
-            {state.validators.map(({ validator, enabled, outcome }) => (
-              <label key={validator.id} class="constraint">
-                <input
-                  type="checkbox"
-                  checked={enabled}
-                  onChange={() => sandbox.toggleValidator(validator.id)}
-                />
-                <span class="constraint__label">{validator.label}</span>
-                <span
-                  class={`constraint__state${
-                    !enabled ? ' is-off' : outcome.ok ? ' is-ok' : ' is-bad'
-                  }`}
-                >
-                  {!enabled ? 'tắt' : outcome.ok ? '✓' : (outcome.message ?? '✗')}
-                </span>
-              </label>
-            ))}
-          </section>
+          {/*
+           * SBX-02: ràng buộc đang áp, bật/tắt được để "nới luật" khi thí nghiệm.
+           *
+           * **Không có ràng buộc thì không có mục** (AL-25). Trước lượt này cả hai mục
+           * dưới in tiêu đề rồi để trống, và chuyện ấy chỉ lộ ra khi
+           * `cancel-only-after-factoring` thành bài đầu tiên chạy bằng **mỗi** `goal_expr`:
+           * hai chữ "RÀNG BUỘC" và "ĐẾM" đứng chơ vơ, hứa một danh sách không có. Một
+           * tiêu đề rỗng tệ hơn không có tiêu đề — nó bảo người học rằng ở đây *đáng lẽ*
+           * có gì đó, rồi bắt họ tự đoán vì sao không.
+           */}
+          {state.validators.length > 0 ? (
+            <section class="constraints">
+              <h3>Ràng buộc</h3>
+              {state.validators.map(({ validator, enabled, outcome }) => (
+                <label key={validator.id} class="constraint">
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={() => sandbox.toggleValidator(validator.id)}
+                  />
+                  <span class="constraint__label">{validator.label}</span>
+                  <span
+                    class={`constraint__state${
+                      !enabled ? ' is-off' : outcome.ok ? ' is-ok' : ' is-bad'
+                    }`}
+                  >
+                    {!enabled ? 'tắt' : outcome.ok ? '✓' : (outcome.message ?? '✗')}
+                  </span>
+                </label>
+              ))}
+            </section>
+          ) : null}
 
           {/* PRN-01: đại lượng bất biến chạy live *trong lúc* người học nghịch. */}
           {state.invariantValues.length > 0 ? (
@@ -619,26 +630,28 @@ export function Sandbox({
           ) : null}
 
           {/* BD-06 + BD-03: đếm theo màu và độ phủ, cập nhật theo từng thao tác. */}
-          <section class="constraints">
-            <h3>Đếm</h3>
-            {cover ? (
-              <div class="constraint">
-                <span class="constraint__label">Đã phủ</span>
-                <span class="constraint__value">
-                  {cover.covered} / {cover.total}
-                </span>
-              </div>
-            ) : null}
-            {[...summary.entries()].sort(([a], [b]) => a - b).map(([index, count]) => (
-              <div key={index} class="constraint">
-                <span class="constraint__label">
-                  <span class="dot" style={{ background: colorClass(index).fill }} /> màu{' '}
-                  {index}
-                </span>
-                <span class="constraint__value">{count}</span>
-              </div>
-            ))}
-          </section>
+          {cover || summary.size > 0 ? (
+            <section class="constraints">
+              <h3>Đếm</h3>
+              {cover ? (
+                <div class="constraint">
+                  <span class="constraint__label">Đã phủ</span>
+                  <span class="constraint__value">
+                    {cover.covered} / {cover.total}
+                  </span>
+                </div>
+              ) : null}
+              {[...summary.entries()].sort(([a], [b]) => a - b).map(([index, count]) => (
+                <div key={index} class="constraint">
+                  <span class="constraint__label">
+                    <span class="dot" style={{ background: colorClass(index).fill }} /> màu{' '}
+                    {index}
+                  </span>
+                  <span class="constraint__value">{count}</span>
+                </div>
+              ))}
+            </section>
+          ) : null}
 
           <TrailMap trail={state.trail} onJump={sandbox.jumpTo} />
 

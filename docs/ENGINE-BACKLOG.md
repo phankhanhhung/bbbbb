@@ -606,6 +606,41 @@ Hai điều đáng mang đi:
   `reaches:` ở đây). Chỗ nào sắp dùng bốc điểm để phân biệt hai đẳng thức thì phải đổi
   sang so **cấu trúc** — và ba lần là đủ để coi đây là một luật, không phải ba tai nạn.
 
+### 3b.3 Lượt thứ ba: câu hỏi của chính chủ rẻ hơn cả hai lượt trên (2026-08-02)
+
+Không tìm ra bằng bẻ răng, cũng không bằng "chạy hết mọi lệnh soát", mà bằng **một câu
+hỏi của chính chủ**: *"sao không bật tất sandbox lên?"* — và quyết định đo thay vì trả
+lời bằng cảm giác.
+
+Kết quả: `each-step-sound` đỏ **0 / 1599** thế mà người học tới được. Không phải tình cờ
+mà cấu trúc — `applyRule` đã từ chối 3814/4128 nước, và `unsound` theo định nghĩa là lỗi
+*engine*. Nó lại còn là **bản trùng**: `checkBounds` đã đẩy `unsoundIssue` với
+`severity: 'error'` cho cả 45 bài đại số. Ba bài bật nó chỉ là một bản yếu hơn chạy ít
+hơn. Chi tiết ở `ENGINE-ALGEBRA.md` §54c.
+
+Và nó lôi theo hai cái nữa, cả hai thuộc lớp *"tên nói một đằng, mã làm một nẻo"*:
+`no-vanishing-divisor` đỏ vì **mọi** điều kiện chứ không riêng mẫu số (nên bài
+`monotone-peels-an-inequality` vi phạm một luật về mẫu số dù không có phân số nào), và
+bảng §12 khai một validator `degree-drops` **chưa bao giờ tồn tại** trong engine này.
+
+Ba lượt, ba câu hỏi khác nhau, và không câu nào là "chạy lại test":
+
+| lượt | câu hỏi | tìm ra |
+|---|---|---|
+| §3b | *bẻ răng thì có đỏ không?* | 19 mutant, 3 sống sót |
+| §3b.1 | *cổng nào không nằm trong `pnpm check`?* | hai cổng đếm nói ngược nhau |
+| §3b.2 / §3b.3 | *năng lực nào chưa nội dung nào đi qua?* | hai chốt canh luôn xanh |
+
+> **Bẻ răng đo được chốt canh; nó không đo được *thiếu* chốt canh, cũng không đo được
+> chốt canh **sai tên**.** Cả hai thứ ấy chỉ lộ khi có người hỏi một câu ngoài bộ test.
+
+**Cổng cho lượt sau, và ràng buộc thiết kế của nó.** Quét mọi cặp (bài × validator) rồi
+đòi mỗi validator có ít nhất một thế đỏ. Nhưng con số phụ thuộc **bộ nhiễu loạn**, đo
+được: bộ nghèo cho 46 cặp "không đỏ được", thêm hai kiểu còn 17, thêm một kiểu nữa còn
+12. Nên cổng phải (a) dùng **tập nước thật** ở engine nào có `commands`, (b) khai từ vựng
+nhiễu loạn theo engine, và (c) **báo cáo** danh sách chưa phân loại thay vì đỏ ngay —
+một cổng đỏ cho 17 cặp mà quá nửa là lỗ hổng của chính nó thì nó bị tắt trong một tuần.
+
 ## 4. Việc **không** nằm trong tài liệu này
 
 Ba thứ hay bị nhầm là "làm engine mạnh hơn":

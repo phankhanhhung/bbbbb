@@ -236,7 +236,6 @@
   ],
   "sandbox": {
     "validators": [
-      "each-step-sound",
       "no-vanishing-divisor"
     ]
   },

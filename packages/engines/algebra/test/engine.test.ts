@@ -32,6 +32,7 @@ import {
   applyRule,
   reachesTarget,
   algebraEnvironment,
+  ALGEBRA_VALIDATOR_IDS,
   resolveAlgebraValidator,
   ROW,
   RULES,
@@ -345,6 +346,45 @@ describe('tầng 0 — parser và printer', () => {
 
     expect(missing, `§20 thiếu luật có thật: ${missing.join(', ')}`).toEqual([]);
     expect(ghosts, `§20 khai luật không tồn tại: ${ghosts.join(', ')}`).toEqual([]);
+  });
+
+  /**
+   * Bảng validator ở §12 phải khai **đúng** `ALGEBRA_VALIDATOR_IDS` — cùng khuôn với
+   * bảng phân lớp ngay trên, và cùng một lỗ đã há ra thật.
+   *
+   * Lượt AL-25 tìm thấy bảng ấy sai **hai** dòng cùng lúc, cả hai theo hướng hứa thừa:
+   * `degree-drops` chưa bao giờ tồn tại trong engine này (thứ có thật là
+   * `remainder-degree-drops`, và nó thuộc `longdiv`), còn `each-step-sound` thì tồn tại
+   * mà **không bao giờ đỏ được**. Một bảng tham chiếu hứa hai validator không dùng được
+   * thì nó không làm sai một dòng mã nào — nó làm người soạn bài gõ một id rồi nhận
+   * lint, hoặc bật một chốt canh không canh gì.
+   */
+  it('bảng validator §12 khai đúng `ALGEBRA_VALIDATOR_IDS`', () => {
+    const doc = readFileSync(new URL('../../../../docs/ENGINE-ALGEBRA.md', import.meta.url), 'utf8');
+    const lines = doc.split('\n');
+
+    const head = lines.findIndex((l) => l.startsWith('## 12. Validator built-in'));
+    expect(head, 'không tìm thấy §12').toBeGreaterThan(-1);
+    const header = lines.findIndex((l, i) => i > head && l.startsWith('| Id |'));
+    expect(header, 'không tìm thấy đầu bảng §12').toBeGreaterThan(-1);
+
+    const listed: string[] = [];
+    for (let i = header + 2; i < lines.length && (lines[i] as string).startsWith('|'); i += 1) {
+      const cell = /^\|\s*`([^`]+)`/.exec(lines[i] as string);
+      if (cell) listed.push(cell[1] as string);
+    }
+
+    expect(listed.sort()).toEqual([...ALGEBRA_VALIDATOR_IDS].sort());
+
+    // Và mỗi id khai ra phải **giải được thật** — trừ chỗ giữ chỗ `<expr>`, thứ mà
+    // `reaches:` thay bằng một biểu thức thật. Không có phép này thì bảng đúng tên mà
+    // sai chính tả vẫn qua.
+    for (const id of ALGEBRA_VALIDATOR_IDS) {
+      const real = id.replace('<expr>', 'x = 3');
+      expect(resolveAlgebraValidator(real), `§12 khai "${id}" mà engine không giải được`)
+        .not.toBeNull();
+    }
+    expect(resolveAlgebraValidator('each-step-sound'), 'gỡ ở AL-25 — xem §54c').toBeNull();
   });
 
   it('cấm nhân ngầm — `2x` là lỗi cú pháp, không phải $2\\cdot x$', () => {

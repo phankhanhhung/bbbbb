@@ -517,12 +517,19 @@ tăng qua mỗi bước" nói được thành biểu thức.
 
 | Id | Kiểm |
 |---|---|
-| `each-step-sound` | mọi bước rewrite qua được §6 |
 | `no-vanishing-divisor` | không bước nào nhân/chia bởi thứ có thể bằng $0$ mà không khai điều kiện |
-| `reaches:<expr>` | dòng cuối đồng nhất bằng `<expr>` |
-| `degree-drops` | bậc giảm ngặt qua mỗi bước |
+| `reaches:<expr>` | dòng cuối **đồng nhất** bằng `<expr>` — cấu trúc, không bốc điểm (§54.2) |
 
 `reaches:` là validator của chế độ thử thách: *"biến vế trái thành vế phải"*.
+
+> **Bảng này có răng** từ AL-25 — `engine.test.ts` so nó với `ALGEBRA_VALIDATOR_IDS`.
+> Nó cần răng vì nó đã sai **hai** dòng cùng lúc, và cả hai đều sai theo hướng hứa thừa:
+>
+> - `degree-drops` chưa bao giờ tồn tại trong engine này. Thứ có thật là
+>   `remainder-degree-drops`, và nó thuộc engine **`longdiv`**. Một tác giả đọc bảng này
+>   rồi gõ `degree-drops` sẽ nhận một dòng lint, chứ không nhận cái họ đọc thấy.
+> - `each-step-sound` gỡ ở AL-25 vì nó **không bao giờ đỏ được** (0/1599 thế tới được) và
+>   vì phép kiểm ấy đã chạy sẵn cho cả 45 bài trong `checkBounds`. Xem §54c.
 
 ---
 
@@ -3866,7 +3873,7 @@ Chỉ **một** tính chất, và chỉ **một chiều**:
 M65 dựng trọn đường tương tác của engine này: lệnh `APPLY_RULE`, ba hàm
 `applyRule` / `moveRefusal` / `movesAtElement` trong `commands.ts`, panel *"Nước đi tại
 đây"* trong `Sandbox.tsx`, và ba validator (`each-step-sound`, `no-vanishing-divisor`,
-`reaches:<expr>`). §41 khai một câu rất chắc về nó:
+`reaches:<expr>` — còn **hai** từ AL-25, xem §54c). §41 khai một câu rất chắc về nó:
 
 > *"chạm một cây con thì thấy đúng những luật áp được tại đó; chính chỗ lọc ấy là phần
 > dạy học."*
@@ -3926,9 +3933,13 @@ câu hỏi là chuyện kho vừa phải gỡ ở cổng đếm sandbox (`ENGINE
 
 | bài | `kind` | hộp cát bật gì | vì sao đúng bài ấy |
 |---|---|---|---|
-| `cancel-only-after-factoring` | `challenge` | `goal_expr: reaches("x + (-2)")` + `each-step-sound` | bài **là** chỗ lọc nước đi: bẫy gạch $x$ bị từ chối bằng chữ |
-| `equation-moves-that-lie` | `both` | `each-step-sound` | bài **nói về** chính chốt canh ấy |
-| `extraneous-root-by-squaring` | `both` | `each-step-sound`, `no-vanishing-divisor` | bài nói về nghiệm ngoại lai; ràng buộc thứ hai sáng cả ở đường vòng bài không đi |
+| `cancel-only-after-factoring` | `challenge` | `goal_expr: reaches("x + (-2)")` | bài **là** chỗ lọc nước đi: bẫy gạch $x$ bị từ chối bằng chữ |
+| `equation-moves-that-lie` | `both` | `no-vanishing-divisor` + `expects_violation` ở `s1`/`c2`/`end` | bài **nói về** chính chốt canh ấy, và khai thẳng ba bước cố ý phạm |
+| `extraneous-root-by-squaring` | `both` | `no-vanishing-divisor` | bài nói về nghiệm ngoại lai; ràng buộc sáng cả ở đường vòng bài không đi |
+
+> **Bảng này sai ở lượt đầu, sửa ở AL-25.** Cả ba bài ra đời với `each-step-sound` — một
+> chốt canh đo được là **không bao giờ đỏ** — và `equation-moves-that-lie` thì *chỉ* có
+> nó, tức bài về chuyện chia cho $0$ ra đời không có phản hồi nào bật được. §54c.
 
 `goal_expr` là trường của **bài**, còn scene đại số thì của **bước** — nên một đích chỉ
 có nghĩa khi bài có đúng một scene đại số. `cancel-only-after-factoring` vì thế có đúng
@@ -4032,3 +4043,104 @@ viết.
   khai riêng, và chưa bài nào cần.
 - **Không có "$f$ đơn điệu"** chung chung. Không biết chiều thì không biết dấu, và một
   luật trả về *"chưa kiểm được"* là đúng thứ M50 tầng C đã từ chối một lần.
+
+---
+
+## §54c — Hai chốt canh đại số, và lượt soát bắt đầu từ một câu hỏi của chính chủ (AL-25)
+
+Câu hỏi là *"sao không bật tất sandbox lên?"*. Trả lời được bằng cảm giác — *"bật bừa thì
+đẻ ra đồ chơi"* — nhưng câu ấy đã nằm sẵn ở `sandbox-status.ts` từ AL-23 mà chưa ai đo.
+Lượt này đo, và phép đo bác chính lượt trước.
+
+### §54c.1 — `each-step-sound`: 0 / 1599, và **hai** lý do gỡ
+
+Duyệt đúng tập nước mà panel *"Nước đi tại đây"* bày ra, trên mọi cây con của mọi scene
+đại số trong kho, rồi đi tiếp một tầng nữa:
+
+```
+nước bày ra: 4128   →   đi được: 314   |   bị từ chối: 3814
+thế tới được (sâu ≤2): 1599
+  each-step-sound        đỏ    0 / 1599
+  no-vanishing-divisor   đỏ  633 / 1599     (bản cũ — xem §54c.2)
+```
+
+**Lý do thứ nhất: nó không thể đỏ.** `applyRule` dựng scene mới rồi cho `readAlgebra`
+chạy lại, và nước nào guard của luật không cho thì bị từ chối ngay — 3814 trên 4128, tức
+chỗ lọc ấy làm gần hết việc. Còn `unsound` theo định nghĩa của `model.ts` là **lỗi của
+engine, không phải lỗi của người học**. Nên validator này đo engine chứ không đo người
+học, và nó không có đường nào để nói với người học một câu nào.
+
+**Lý do thứ hai, và là lý do gọn hơn: phép kiểm ấy đã chạy sẵn.** `checkBounds` đẩy
+`unsoundIssue` với `severity: 'error'` cho **mọi** scene đại số — 45 bài, chặn publish.
+Bản trong danh sách validator là bản chép tay thứ hai, yếu hơn (cảnh báo trong sandbox,
+không chặn gì) và chạy cho 3 bài. Cùng hình dạng với hai cổng đếm sandbox
+(`ENGINE-BACKLOG.md` §3b.1), và cùng kết luận: **bản chạy ít hơn là bản không ai nhớ.**
+
+Nên đây không phải "chuyển chỗ" mà là **xoá một bản trùng**. Chỗ đến đã có sẵn.
+
+### §54c.2 — `no-vanishing-divisor` mang tên một thứ và kiểm một thứ khác
+
+Bản cũ hỏi `model.conditions.length === 0` — đỏ khi chuỗi tích luỹ *bất kỳ* điều kiện
+nào. Quét kho, điều kiện có guard gồm:
+
+| dấu | ví dụ trong kho | có phải mẫu số triệt tiêu không |
+|---|---|---|
+| `'!=0'` | `x + 2 ≠ 0`, `a − b ≠ 0`, `cos((a−b)/2) ≠ 0` | **có** |
+| `'>=0'` / `'<=0'` | `n ≥ 1` (7 lần), `x > 0, y > 0`, `0 ≤ k ≤ n` | không |
+| không guard | `f đơn ánh`, `f tăng ngặt`, `|x| < 1` | không |
+
+Hai dòng dưới đều làm nó đỏ, và dòng cuối là chỗ đau nhất: AL-22/AL-24 thêm điều kiện
+**giả thiết về hàm**, nên `monotone-peels-an-inequality` vi phạm một luật nói về mẫu số
+trong khi nó không có phân số nào. Một chốt canh mang tên một thứ mà kiểm một thứ khác
+thì mỗi lần nó đỏ, người đọc học sai lý do — và nó đỏ đúng lúc người ta ít ngờ nhất.
+
+`Guard.sign` đã phân biệt sẵn ba dấu (`check.ts:287`), nên phép hỏi đúng là hỏi thẳng cái
+dấu ấy: **cấu trúc, không khớp chuỗi trên chữ đã sắp**. Đo lại sau khi sửa: **31/1599**
+thế đỏ (bản cũ 633), đỏ ở đúng ba bước chia của `equation-moves-that-lie`, xanh ở mọi
+bước giả thiết.
+
+### §54c.3 — Bài nói về mẫu số mà không bật chốt canh về mẫu số
+
+`equation-moves-that-lie` ra đời ở AL-23 với **chỉ** `each-step-sound`. Mà
+`no-vanishing-divisor` đỏ ở đúng ba bước của chính nó:
+
+| bước | `s0` | `s1` | `c1` | `c2` | `end` |
+|---|---|---|---|---|---|
+| điều kiện | — | `a − b ≠ 0` | — | `x + 2 ≠ 0` | `x + 2 ≠ 0` |
+
+Nên bài *nói về* chuyện nhân/chia cho thứ có thể bằng $0$ ra đời **không có phản hồi nào
+bật được**, trong khi validator duy nhất cắn được nằm ngay đó. Gán ngược, và gán ngược
+trong đúng commit viết `ENGINE-BACKLOG.md` §3b.2 — cái mục cấm chuyện này.
+
+Chữa không phải bằng cách tắt cảnh báo mà bằng cách **khai ra**: `expects_violation:
+["no-vanishing-divisor"]` ở `s1`, `c2`, `end`. Cơ chế có sẵn từ trước
+(`packages/check/src/semantics.ts:285`), và lời khai ấy **là nội dung** — bài tuyên bố
+chính xác bước nào cố ý phạm luật, thay vì để một cảnh báo thường trực mà người ta học
+cách bỏ qua (bài học M45).
+
+### §54c.4 — Còn một con số **không** đáng tin, ghi ra vì suýt tin
+
+Quét toàn kho 97 cặp (bài × validator) bằng nhiễu loạn scene:
+
+| bộ nhiễu loạn | cặp "không đỏ được" |
+|---|---|
+| xoá element · $+1$ số · lật boolean | **46** |
+| \+ nhân đôi element · trỏ id sang element khác | **17** |
+| \+ phủ định số | 12 (`values-non-negative` rời danh sách) |
+
+Con số ấy **đo bộ nhiễu loạn nhiều hơn đo chốt canh**. `simple-graph` (11 cặp) nằm trong
+46 chỉ vì bộ đầu không biết nhân đôi một cạnh; thêm đúng một kiểu là nó đỏ. Nên danh
+sách "chưa nhiễu loạn nào làm đỏ" là **danh sách phân loại**, không phải danh sách lỗi —
+và đó là ràng buộc thiết kế cho cổng ở `ENGINE-BACKLOG.md` §3b.3.
+
+Riêng `each-step-sound` thì không phải suy đoán: nó đo trên **đúng tập nước sandbox bày
+ra**, không phải nhiễu loạn lấy mẫu. Đó là khác biệt giữa một phát hiện và một nghi ngờ.
+
+### §54c.5 — Ranh giới
+
+- Vẫn **hai** validator, không thêm. `no-lost-roots` (chiều thu hẹp tập nghiệm) là món
+  tiếp theo và nó phải đọc cấu trúc, không bốc điểm — §52.2 và §54.2 đã đo hai lần rằng
+  bốc điểm không phân biệt được hai đẳng thức.
+- `cancel-only-after-factoring` nay chỉ có `goal_expr`, không validator. Đúng như §54.4
+  đã ghi: nước cuối của nó *phải* kèm $x + 2 \ne 0$, nên bật `no-vanishing-divisor` lên
+  là dựng một ràng buộc mà lời giải đúng vi phạm.

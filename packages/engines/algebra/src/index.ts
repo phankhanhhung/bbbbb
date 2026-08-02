@@ -2,7 +2,7 @@ import type { HitTest, ScenePoint } from '@combviz/editor';
 import { SELECT_TOOL, type SandboxTool } from '@combviz/editor';
 import type { EngineSchemaFragment, Scene, SceneValidator, ValidationIssue } from '@combviz/schema';
 import { DslError, element, type DslEnvironment } from '@combviz/dsl';
-import { sameValue } from './check.js';
+import { guardList, sameValue } from './check.js';
 import { allPaths, nodeAt, normalize, same, totalDegree, varsOf, Minter } from './expr.js';
 import { boxOf, drawnIds, layout } from './layout.js';
 import { readAlgebra, type AlgebraModel } from './model.js';
@@ -93,7 +93,30 @@ export function unsoundIssue(bad: string, path: string): ValidationIssue {
   };
 }
 
-export const ALGEBRA_VALIDATOR_IDS = ['each-step-sound', 'no-vanishing-divisor', 'reaches:<expr>'] as const;
+/**
+ * **Hai** validator, không phải ba — `each-step-sound` gỡ ở AL-25, và vì sao đáng ghi.
+ *
+ * Nó hỏi `model.unsound.length === 0`. Đo bằng cách duyệt đúng tập nước mà panel *"Nước
+ * đi tại đây"* bày ra, trên mọi cây con của mọi scene đại số trong kho:
+ *
+ * ```
+ * nước bày ra: 4128  →  đi được: 314  |  bị từ chối: 3814
+ * thế tới được (sâu ≤2): 1599   →   each-step-sound đỏ  0 / 1599
+ * ```
+ *
+ * Không phải tình cờ mà **cấu trúc**. `applyRule` dựng scene mới rồi cho `readAlgebra`
+ * chạy lại; nước nào guard của luật không cho thì bị từ chối ngay (3814/4128 — và chỗ
+ * lọc ấy *là* phần dạy học, đúng như §41 khai). Còn `unsound` theo định nghĩa của
+ * `model.ts` là **lỗi của engine, không phải lỗi của người học**. Nên nó đo engine chứ
+ * không đo người học, và một validator không bao giờ đỏ được là một chốt canh không có.
+ *
+ * Và nó **đã có chỗ đúng** từ trước: `checkBounds` ngay dưới đẩy `unsoundIssue` với
+ * `severity: 'error'` cho **mọi** scene đại số — 45 bài, chặn publish. Bản trong danh
+ * sách validator là bản chép tay thứ hai, yếu hơn (chỉ cảnh báo trong sandbox) và chạy
+ * cho 3 bài. Cùng hình dạng với hai cổng đếm sandbox ở `ENGINE-BACKLOG.md` §3b.1: hai mã
+ * cho một câu hỏi, và bản chạy ít hơn là bản không ai nhớ.
+ */
+export const ALGEBRA_VALIDATOR_IDS = ['no-vanishing-divisor', 'reaches:<expr>'] as const;
 
 export const algebraSchemaFragment: EngineSchemaFragment = {
   id: 'algebra',
@@ -356,38 +379,40 @@ export function movesAt(scene: Scene, path: string): readonly { id: string; labe
 }
 
 export function resolveAlgebraValidator(id: string): SceneValidator | null {
-  if (id === 'each-step-sound') {
-    return {
-      id,
-      label: 'Mọi bước bảo toàn giá trị',
-      check(scene: Scene) {
-        const model = readAlgebra(scene);
-        if (model.refusal !== null) return { ok: false, violations: [], message: model.refusal };
-        return {
-          ok: model.unsound.length === 0,
-          violations: [],
-          message:
-            model.unsound.length === 0
-              ? `${model.rows.length - 1} bước đều khớp trên điểm ngẫu nhiên`
-              : (model.unsound[0] as string),
-        };
-      },
-    };
-  }
-
   if (id === 'no-vanishing-divisor') {
     return {
       id,
       label: 'Không nhân/chia bởi thứ có thể bằng 0',
       check(scene: Scene) {
-        const model = readAlgebra(scene);
+        /**
+         * Đọc **dấu của guard**, không đọc số điều kiện — sửa ở AL-25.
+         *
+         * Bản cũ hỏi `model.conditions.length === 0`, tức nó đỏ khi chuỗi tích luỹ
+         * *bất kỳ* điều kiện nào. Quét kho thì điều kiện có guard gồm `n ≥ 1` (7 lần),
+         * `x > 0, y > 0`, `a ≥ 0, b ≥ 0`, `0 ≤ k ≤ n` — không cái nào là một mẫu số có
+         * thể triệt tiêu. Tệ hơn, AL-22/AL-24 thêm điều kiện **giả thiết**
+         * (`f đơn ánh`, `f tăng ngặt`) không mang guard nào, và bản cũ vẫn đỏ lên vì
+         * chúng: bài `monotone-peels-an-inequality` vi phạm một luật nói về mẫu số
+         * trong khi nó không có phân số nào.
+         *
+         * Một chốt canh mang tên một thứ mà kiểm một thứ khác thì mỗi lần nó đỏ, người
+         * đọc học sai lý do. `Guard.sign` đã phân biệt sẵn `'!=0'` với `'>=0'`/`'<=0'`
+         * (`check.ts:287`), nên phép hỏi đúng là hỏi thẳng cái dấu ấy — cấu trúc, không
+         * phải khớp chuỗi trên chữ đã sắp.
+         *
+         * Đo sau khi sửa: đỏ **31/1599** thế tới được (bản cũ 633), và đỏ ở đúng ba bước
+         * chia của `equation-moves-that-lie`, xanh ở mọi bước giả thiết.
+         */
+        const vanishing = readAlgebra(scene).conditions.filter((c) =>
+          guardList(c.guard).some((g) => g.sign === '!=0'),
+        );
         return {
-          ok: model.conditions.length === 0,
+          ok: vanishing.length === 0,
           violations: [],
           message:
-            model.conditions.length === 0
-              ? 'Không bước nào cần điều kiện'
-              : `Cần điều kiện: ${model.conditions.map((c) => c.text).join(', ')}`,
+            vanishing.length === 0
+              ? 'Không bước nào chia cho thứ có thể bằng 0'
+              : `Cần điều kiện: ${vanishing.map((c) => c.text).join(', ')}`,
         };
       },
     };

@@ -7,7 +7,7 @@
   "source": {
     "contest": "folklore",
     "note": {
-      "vi": "Nguỵ biện quen thuộc, ở đây do **máy** dựng chứ không do người gõ: engine áp từng luật rồi tự ghi điều kiện, nên chỗ hỏng hiện ra thành một dòng đỏ thay vì thành một câu văn nhắc nhở. Bài này **nói về** chốt canh `each-step-sound`, nên hộp cát bật đúng nó: mọi nước bạn tự đi cũng đi qua bộ kiểm ấy, và một nước dối trá bị bắt không phải bằng một dấu tích mà bằng **một điểm cụ thể**."
+      "vi": "Nguỵ biện quen thuộc, ở đây do **máy** dựng chứ không do người gõ: engine áp từng luật rồi tự ghi điều kiện, nên chỗ hỏng hiện ra thành một dòng đỏ thay vì thành một câu văn nhắc nhở. Hộp cát bật `no-vanishing-divisor` — chốt canh **duy nhất** cắn được ở đúng chuyện bài kể. Ba bước của chính bài vi phạm nó, và bài khai thẳng điều ấy bằng `expects_violation`: chỗ cố ý phạm luật thì phải viết ra, chứ không im lặng cho qua. Nghịch tới đâu, mỗi nước nhân hay chia cho một thứ có thể bằng $0$ đều sáng lên tới đó."
     }
   },
   "topics": [
@@ -126,6 +126,9 @@
           "alt_text": {
             "vi": "Chuỗi từ a = b, nhân hai vế với a−b rồi khai triển; dưới cùng là dòng đỏ ghi điều kiện a−b khác 0."
           },
+          "expects_violation": [
+            "no-vanishing-divisor"
+          ],
           "verified": true
         },
         {
@@ -218,6 +221,9 @@
           "alt_text": {
             "vi": "Chuỗi rút gọn (2x+4)/(x+2) thành 2, kèm dòng đỏ ghi điều kiện x+2 khác 0."
           },
+          "expects_violation": [
+            "no-vanishing-divisor"
+          ],
           "verified": true
         },
         {
@@ -256,6 +262,9 @@
           "alt_text": {
             "vi": "Lặp lại hình rút gọn, nhấn vào dòng điều kiện màu đỏ ở dưới cùng."
           },
+          "expects_violation": [
+            "no-vanishing-divisor"
+          ],
           "verified": true
         }
       ]
@@ -263,7 +272,7 @@
   ],
   "sandbox": {
     "validators": [
-      "each-step-sound"
+      "no-vanishing-divisor"
     ]
   },
   "og_step_ref": {
