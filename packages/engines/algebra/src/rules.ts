@@ -1825,15 +1825,73 @@ const mulBothSides: Rule = {
     // có thể bằng 0 không bảo toàn tập nghiệm; đó là đường đi của mọi "chứng minh
     // 1 = 2". Engine không chặn — nó **ghi điều kiện ra**, vì bước ấy vẫn hợp lệ khi
     // điều kiện đúng, và vì chỗ này chính là nội dung đáng dạy.
-    const safe = definitelyNonZero(term);
+    const risky = zeroRisks(term).filter((part) => !definitelyNonZero(part));
     const { copy } = freshCopy(m, term);
     return {
       after: { ...node, lhs: mul(m, [node.lhs, term]), rhs: mul(m, [node.rhs, copy]) },
-      condition: safe ? undefined : conditionText(arg),
-      guard: safe ? undefined : guardOf('!=0', () => term),
+      condition: risky.length === 0 ? undefined : conditionOf(risky),
+      guard:
+        risky.length === 0
+          ? undefined
+          : risky.map((p) => guardOf('!=0', () => p)),
     };
   },
 };
+
+/**
+ * Những cây con **phải khác $0$** để phép nhân với `term` giữ nguyên tập nghiệm.
+ *
+ * ## Vì sao không phải chỉ mình `term`
+ *
+ * Chia hai vế cho $\sin x$ viết ra là *nhân với $\frac{1}{\sin x}$*, và bản trước ghi
+ * điều kiện cho **cả** cái phân số ấy: **"$1/\sin x \ne 0$"**. Câu ấy **luôn đúng** — một
+ * nghịch đảo không bao giờ bằng $0$. Đo được: trên 400 điểm mà $1/\sin x$ xác định, nó
+ * bằng $0$ ở **0** điểm.
+ *
+ * Nên dòng đỏ người học đọc nói một điều không có nội dung, trong khi chỗ nguy hiểm thật
+ * — $\sin x = 0$, tức đúng hai nghiệm $x = 0$ và $x = \pi$ của $\sin 2x = \sin x$ —
+ * không ai nhắc. Đây là lớp lỗi quen của mạch này: **một khẳng định mà mã không đỡ**, chỉ
+ * lần này nó nằm trong chữ engine tự sinh chứ không trong chú thích ai đó gõ.
+ *
+ * ## Hai chiều, hai lý do, và cùng một dấu
+ *
+ * Nhân với $\frac{p}{q}$ đòi **hai** thứ khác nhau:
+ *
+ * | phần | cần | hỏng thì sao |
+ * |---|---|---|
+ * | $p \ne 0$ | để không nhân hai vế với $0$ | **thêm** nghiệm giả |
+ * | $q \ne 0$ | để chính cái thừa số ấy xác định | **mất** nghiệm thật |
+ *
+ * Hai chiều ngược nhau mà cùng mang dấu `'!=0'`, nên `no-vanishing-divisor` bắt cả hai —
+ * và đó là lý do lượt này **không** dựng thêm một validator `no-lost-roots`: đo trên
+ * `mul_both_sides` thì chia cho $\sin x$, nhân với $\sin x$, và nhân với $\frac12$ cho ba
+ * kết quả khác nhau đúng như mong đợi (điều kiện · điều kiện · không gì), tức chốt canh
+ * đang có đã phân biệt được. Thêm một cái nữa chỉ là đặt tên thứ hai cho cùng một dấu.
+ */
+function zeroRisks(term: Expr): readonly Expr[] {
+  return term.k === 'div' ? [term.num, term.den] : [term];
+}
+
+/**
+ * Chữ của điều kiện — **một đường**, và lượt bẻ răng là thứ chọn ra nó.
+ *
+ * Bản đầu giữ nguyên chuỗi tác giả gõ khi không có gì để tách, và dựng lại bằng
+ * `toPlain` chỉ ở ca phân số. Bẻ răng cái nhánh ấy đi thì **không test nào đỏ** — nên đo
+ * xem hai đường khác nhau ở đâu:
+ *
+ * | tác giả gõ | `conditionText(arg)` | `toPlain` |
+ * |---|---|---|
+ * | `a - b` | `a − b` | `a − b` |
+ * | `2*x - 1` | `2*x − 1` | `2x − 1` |
+ *
+ * Chúng chỉ khác ở dấu nhân, và bản `toPlain` **đúng hơn**: dòng điều kiện nằm ngay cạnh
+ * công thức đã sắp chữ, mà ở đó $2x$ mới là lối viết, còn `2*x` là cú pháp nhập. Nên
+ * nhánh kia bị gỡ chứ không giữ lại kèm một chú thích nói nó quan trọng — cùng cách xử
+ * đã dùng cho phép sắp "dài trước ngắn" ở `math-text.ts` và cho lookahead thừa ở §10.3c.
+ */
+function conditionOf(risky: readonly Expr[]): string {
+  return risky.map((p) => conditionText(toPlain(p))).join(', ');
+}
 
 const substitute: Rule = {
   id: 'substitute',

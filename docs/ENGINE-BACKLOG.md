@@ -659,6 +659,30 @@ sai**:
 - Và cổng bắt luôn **tác giả của chính nó**: `KNOWN_QUIET` viết tay bảy dòng theo phỏng
   đoán, vế "khai thừa cũng đỏ" gọi tên **bốn** dòng sai. Còn ba.
 
+### 3b.4 Một chốt canh **không** dựng, và vì sao đó cũng là một kết quả (2026-08-02)
+
+Kế hoạch đặt tên `no-lost-roots` cho chiều **thu hẹp** tập nghiệm — chia hai vế cho một
+biểu thức chứa ẩn rồi mất một họ nghiệm. Đo trên `mul_both_sides` trước khi viết một dòng
+nào, và ba ca cho ba kết quả khác nhau đúng như mong đợi:
+
+| nước đi | điều kiện engine ghi | chiều |
+|---|---|---|
+| nhân $\frac{1}{\sin x}$ (**chia** cho $\sin x$) | có, dấu `'!=0'` | mất nghiệm |
+| nhân $\sin x$ | có, dấu `'!=0'` | thêm nghiệm |
+| nhân $\frac12$ | không | an toàn |
+
+Hai chiều ngược nhau mà **cùng dấu**, nên `no-vanishing-divisor` đã phân biệt được cả ba.
+Một validator mới sẽ đỏ ở đúng cùng tập thế — tức chỉ là tên thứ hai cho một dấu, và cổng
+§3b.3 vừa dựng ra để bắt đúng loại ấy sẽ không bắt được nó (nó *có* cắn, chỉ là cắn trùng).
+
+Nhưng lượt dò tìm ra thứ khác, và thứ ấy đáng hơn: điều kiện cho phép **chia** ghi ra là
+`1/sin(x) ≠ 0` — **một câu luôn đúng**, vì nghịch đảo không bao giờ bằng $0$ (đo: $0$ điểm
+trên $400$ chỗ xác định). Dòng đỏ người học đọc không có nội dung, còn chỗ nguy hiểm thật
+thì không ai nhắc. `ENGINE-ALGEBRA.md` §54d.
+
+> **Một hạng mục bị huỷ vì phép đo không phải một hạng mục thất bại.** Cái đáng ghi là
+> lượt dò ấy vẫn trả về một lỗi thật — chỉ không phải lỗi mà kế hoạch đoán.
+
 ## 4. Việc **không** nằm trong tài liệu này
 
 Ba thứ hay bị nhầm là "làm engine mạnh hơn":

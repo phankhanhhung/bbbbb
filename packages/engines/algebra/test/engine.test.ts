@@ -3711,3 +3711,73 @@ describe('§54b — dùng tính đơn điệu', () => {
     expect(-4 < 3).toBe(true);
   });
 });
+
+/**
+ * **Điều kiện phải gọi tên đúng chỗ nguy hiểm** (AL-26).
+ *
+ * Chia hai vế cho $\sin x$ viết ra là *nhân với $1/\sin x$*, và bản trước ghi điều kiện
+ * cho **cả** phân số ấy: `1/sin(x) ≠ 0` — một câu **luôn đúng**, vì nghịch đảo không bao
+ * giờ bằng $0$. Dòng đỏ nói một điều không có nội dung, trong khi $\sin x = 0$ — đúng
+ * hai nghiệm $x = 0$, $x = \pi$ của $\sin 2x = \sin x$ — không ai nhắc.
+ *
+ * Cùng lớp với mọi lỗi của mạch này: **một khẳng định mà mã không đỡ**. Khác chỗ nó nằm
+ * trong chữ engine tự sinh, nên không lượt soát tài liệu nào với tới.
+ */
+describe('§54d — điều kiện của phép nhân gọi tên đúng chỗ hỏng', () => {
+  const conditions = (start: string, arg: string): string[] =>
+    readAlgebra(scene(start, [{ rule: 'mul_both_sides', at: '', arg }] as AlgebraStep[]))
+      .conditions.map((c) => c.text);
+
+  it('chia cho $\\sin x$ ⇒ điều kiện nói **$\\sin x$**, không nói $1/\\sin x$', () => {
+    expect(conditions('sin(2*x) = sin(x)', '1/sin(x)')).toEqual(['sin(x) ≠ 0']);
+  });
+
+  it('…và câu cũ **vô nghĩa**: một nghịch đảo không bao giờ bằng 0', () => {
+    // Đối chiếu độc lập, không hỏi engine: quét 400 điểm, đếm chỗ $1/\sin x$ bằng 0.
+    let defined = 0;
+    let zero = 0;
+    for (let i = 1; i <= 400; i += 1) {
+      const s = Math.sin(i * 0.0157);
+      if (Math.abs(s) < 1e-12) continue;
+      defined += 1;
+      if (Math.abs(1 / s) < 1e-9) zero += 1;
+    }
+    expect(defined).toBeGreaterThan(390);
+    expect(zero, 'nếu con số này > 0 thì cả lý lẽ của §54d sai').toBe(0);
+
+    // Còn chỗ nguy hiểm thật thì **có** nghiệm của phương trình gốc nằm đúng ở đó.
+    for (const x of [0, Math.PI]) {
+      expect(Math.abs(Math.sin(x)), `sin bằng 0 tại ${x}`).toBeLessThan(1e-9);
+      expect(Math.abs(Math.sin(2 * x) - Math.sin(x)), `và đó là nghiệm thật`).toBeLessThan(1e-9);
+    }
+  });
+
+  it('nhân với $\\sin x$ — chiều ngược lại, cùng một dấu `!=0`', () => {
+    // Chia thì **mất** nghiệm, nhân thì **thêm** nghiệm giả. Hai chiều ngược nhau mà
+    // cùng mang dấu `'!=0'`, nên `no-vanishing-divisor` bắt cả hai — và đó là lý do
+    // lượt này **không** dựng thêm một validator `no-lost-roots`: nó sẽ đỏ ở đúng cùng
+    // một tập thế, tức chỉ là tên thứ hai cho một dấu.
+    expect(conditions('2*cos(x) = 1', 'sin(x)')).toEqual(['sin(x) ≠ 0']);
+  });
+
+  it('nhân với một hằng thì **không** điều kiện nào — cả tử lẫn mẫu đều khác 0', () => {
+    expect(conditions('2*x = 6', '1/2')).toEqual([]);
+    expect(conditions('2*x = 6', '3')).toEqual([]);
+  });
+
+  it('**tử số** cũng là chỗ nguy hiểm — chiều thêm nghiệm, không phải chiều mất nghiệm', () => {
+    // Bẻ răng bắt được chỗ này: chỉ lấy mẫu số thì không test nào đỏ, vì `1/sin(x)` có
+    // tử là `1` và `definitelyNonZero` lọc nó đi. Ca phân biệt được là ca tử **cũng**
+    // triệt tiêu được.
+    expect(conditions('x = 1', 'sin(y)/2')).toEqual(['sin(y) ≠ 0']);
+    expect(conditions('x = 1', '(a - b)/(c - d)')).toEqual(['a − b ≠ 0, c − d ≠ 0']);
+  });
+
+  it('chữ điều kiện đi **một** đường, và đó là lối viết cạnh công thức', () => {
+    // `conditionText(arg)` giữ nguyên chuỗi nhập, `toPlain` dựng lại theo lối in. Hai
+    // đường chỉ khác ở dấu nhân, và bản in đúng hơn vì dòng này nằm cạnh công thức đã
+    // sắp chữ — ở đó $2x$ là lối viết, còn `2*x` là cú pháp nhập.
+    expect(conditions('a = b', 'a - b')).toEqual(['a − b ≠ 0']);
+    expect(conditions('a = b', '2*x - 1')).toEqual(['2x − 1 ≠ 0']);
+  });
+});

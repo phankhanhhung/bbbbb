@@ -4151,3 +4151,68 @@ ra**, không phải nhiễu loạn lấy mẫu. Đó là khác biệt giữa m�
 - `cancel-only-after-factoring` nay chỉ có `goal_expr`, không validator. Đúng như §54.4
   đã ghi: nước cuối của nó *phải* kèm $x + 2 \ne 0$, nên bật `no-vanishing-divisor` lên
   là dựng một ràng buộc mà lời giải đúng vi phạm.
+
+---
+
+## §54d — Điều kiện gọi tên đúng chỗ hỏng, và một validator **không** dựng (AL-26)
+
+### §54d.1 — Kế hoạch nói dựng `no-lost-roots`. Phép đo nói nó là bản trùng.
+
+Kế hoạch của lượt này đặt tên một validator mới cho **chiều thu hẹp** tập nghiệm — chia
+hai vế cho một biểu thức chứa ẩn rồi mất một họ nghiệm, đúng cái bẫy mà
+`trig-equation-double-angle` kể. Đo trên `mul_both_sides` trước khi viết một dòng nào:
+
+| nước đi | điều kiện engine ghi | chiều |
+|---|---|---|
+| nhân với $\frac{1}{\sin x}$ (tức **chia** cho $\sin x$) | có, dấu `'!=0'` | **mất** nghiệm |
+| nhân với $\sin x$ | có, dấu `'!=0'` | **thêm** nghiệm |
+| nhân với $\frac12$ | không có | an toàn |
+
+Hai chiều ngược nhau mà **cùng mang dấu `'!=0'`**, và ca an toàn thì im. Nên
+`no-vanishing-divisor` đã phân biệt được cả ba, và một `no-lost-roots` sẽ đỏ ở đúng cùng
+một tập thế — tức chỉ là **tên thứ hai cho một dấu**. Không dựng.
+
+Lần thứ tư trong sáu lượt một mệnh đề của kế hoạch bị phép đo bác (§52.2 · §54b.3 · món 1
+của mạch này · đây). Bốn lần ấy không phải kế hoạch dở — chúng là lý do mỗi lượt **đo lại
+thay vì tin câu đã viết**.
+
+### §54d.2 — Nhưng lượt dò tìm ra một dòng đỏ **nói một điều luôn đúng**
+
+Chia cho $\sin x$ viết ra là *nhân với $\frac{1}{\sin x}$*, và bản trước ghi điều kiện cho
+**cả** phân số ấy:
+
+> với $1/\sin x \ne 0$
+
+Câu ấy **luôn đúng** — một nghịch đảo không bao giờ bằng $0$. Đo được: trên $400$ điểm mà
+$1/\sin x$ xác định, nó bằng $0$ ở **$0$** điểm. Nên dòng đỏ người học đọc không có nội
+dung, trong khi chỗ nguy hiểm thật — $\sin x = 0$, tức đúng hai nghiệm $x = 0$ và
+$x = \pi$ của $\sin 2x = \sin x$ — không ai nhắc.
+
+Cùng lớp với mọi lỗi của mạch này: **một khẳng định mà mã không đỡ**. Khác ở chỗ nó nằm
+trong chữ engine **tự sinh**, nên không lượt soát tài liệu nào với tới nó, và bẻ răng
+cũng không: dòng ấy vẫn hiện ra, vẫn đỏ, vẫn đúng cú pháp.
+
+**Chữa:** nhân với $\frac{p}{q}$ đòi **hai** thứ khác nhau, và engine nay ghi cả hai.
+
+| phần | cần | hỏng thì sao |
+|---|---|---|
+| $p \ne 0$ | để không nhân hai vế với $0$ | **thêm** nghiệm giả |
+| $q \ne 0$ | để chính thừa số ấy xác định | **mất** nghiệm thật |
+
+Kho hôm nay chưa bài nào chia bằng lối viết `1/…`, nên đây là một lỗ **tiềm ẩn** — cùng
+hạng với hai lỗ dán dính ở `PLAN-P1.md` §10.3c. Vá vì nó rẻ, và vì thứ nó sinh ra là một
+dòng chữ **sai** trên hình, không phải một cảnh báo ai đó bỏ qua được.
+
+### §54d.3 — Và bẻ răng chọn hộ một quyết định trình bày
+
+Bản đầu giữ nguyên chuỗi tác giả gõ khi không có gì để tách, dựng lại bằng `toPlain` chỉ
+ở ca phân số. Bẻ nhánh ấy đi thì **không test nào đỏ**, nên đo xem hai đường khác nhau ở
+đâu: chúng chỉ khác ở **dấu nhân** — `2*x − 1` với `2x − 1`.
+
+Bản `toPlain` đúng hơn: dòng điều kiện nằm ngay cạnh công thức đã sắp chữ, mà ở đó $2x$
+là lối viết còn `2*x` là cú pháp nhập. Nên nhánh kia bị **gỡ**, không giữ lại kèm một chú
+thích nói nó quan trọng — cùng cách xử đã dùng cho phép sắp "dài trước ngắn" ở
+`math-text.ts` và cho lookahead thừa ở `PLAN-P1.md` §10.3c.
+
+Một mutant sống sót không phải lúc nào cũng đòi thêm một phép so. Đôi khi nó chỉ ra rằng
+**có hai đường cho một câu trả lời**, và việc phải làm là bỏ một đường.
