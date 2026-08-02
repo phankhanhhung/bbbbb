@@ -40,6 +40,10 @@ const LOADERS: Record<string, () => Promise<PlayEngine>> = {
     const m = await import('@combviz/engine-game');
     return { playRules: m.gamePlayRules, environment: m.gameEnvironment, commands: m.gameCommands };
   },
+  graph: async () => {
+    const m = await import('@combviz/engine-graph');
+    return { playRules: m.graphPlayRules, environment: m.graphEnvironment, commands: m.graphCommands };
+  },
 };
 
 async function handle(request: PlayRequest): Promise<PlayResponse['result']> {

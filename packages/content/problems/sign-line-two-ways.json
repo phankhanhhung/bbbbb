@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "id": "sign-line-two-ways",
   "statement": {
     "vi": "Giải $x^2 - 3x + 2 > 0$ và $x^2 - 3x + 2 < 0$. **Cùng** hai nghiệm $1$ và $2$, hai tập nghiệm ngược nhau — nhìn trên trục số thì chỗ khác nhau hiện ra ngay."

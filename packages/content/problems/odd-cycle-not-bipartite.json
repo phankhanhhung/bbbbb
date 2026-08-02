@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "id": "odd-cycle-not-bipartite",
   "statement": {
     "vi": "Chứng minh đồ thị chứa một chu trình độ dài lẻ thì không thể chia đỉnh thành hai nhóm sao cho mọi cạnh nối hai nhóm khác nhau."

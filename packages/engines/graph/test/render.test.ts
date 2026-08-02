@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createContext, createRenderer } from '@combviz/render';
 import { defaultTheme } from '@combviz/theme';
 import type { Scene } from '@combviz/schema';
-import { graphRenderer } from '../src/index.js';
+import { graphRenderer, VERTEX_RADIUS } from '../src/index.js';
 
 const renderer = createRenderer([graphRenderer]);
 const ctx = createContext(defaultTheme);
@@ -155,5 +155,56 @@ describe('hàng mã Prüfer (GR-09)', () => {
       elements: [...cyclic.elements, { id: 'e4', type: 'edge', u: '1', v: '5' } as never],
     };
     expect(renderer.toSvg(withCycle, ctx)).toContain('Không phải cây');
+  });
+});
+
+describe('trạng thái ván **vẽ ra được** (GM-01, M78.4)', () => {
+  const play = (config: Record<string, unknown>): Scene => ({
+    engine: 'graph',
+    config: { show_labels: false, ...config },
+    elements: [
+      { id: 'g', type: 'vertex', pos: [0, 20] },
+      { id: 'a', type: 'vertex', pos: [0, 0] },
+      { id: 'e', type: 'edge', u: 'g', v: 'a', color_class: 1 },
+    ] as never,
+  });
+
+  it('quân hiện ra ở đúng đỉnh đang giữ nó', () => {
+    // Không vẽ thì `config.token` là trạng thái **vô hình**: luật đúng, chốt canh xanh,
+    // và người chơi không biết mình đang đứng ở đâu.
+    const svg = renderer.toSvg(play({ token: 'a' }), ctx);
+    expect(svg).toContain('cv-play-token');
+    const token = /class="cv-play-token"><circle[^>]*>/.exec(svg)?.[0] ?? '';
+    expect(token).toContain('cy="0"');
+  });
+
+  it('quân đủ to để **nhìn ra**, không phải một dấu chấm câu', () => {
+    // Bản đầu để `r = 0.52 · bán kính đỉnh` với viền dày `stroke.base` ($1{,}2$, hơn nửa
+    // bán kính quân): nét vẽ nằm giữa đường tròn nên nó ăn mất một nửa, và đĩa hiện ra
+    // còn một phần tư đường kính đỉnh. Không test nào nói được — hai lượt nhìn PNG mới ra.
+    const svg = renderer.toSvg(play({ token: 'a' }), ctx);
+    const token = /class="cv-play-token"><circle[^>]*>/.exec(svg)?.[0] ?? '';
+    const r = Number(/\br="([\d.]+)"/.exec(token)?.[1] ?? 0);
+    const width = Number(/stroke-width="([\d.]+)"/.exec(token)?.[1] ?? 0);
+    // Phần tô **nhìn thấy được** — trừ nửa bề dày viền — phải còn ít nhất $40\%$ bán
+    // kính đỉnh. Đo phần thấy được chứ không đo `r`: `r` lớn mà viền dày thì vẫn là chấm.
+    expect(r - width / 2).toBeGreaterThanOrEqual(VERTEX_RADIUS * 0.4);
+  });
+
+  it('mặt đất là một nét gạch **dưới cùng**, không phải một vật nữa', () => {
+    const svg = renderer.toSvg(play({ ground: 'g' }), ctx);
+    expect(svg).toContain('cv-ground');
+    // Dưới cùng ⇒ xuất hiện **trước** lớp cạnh trong chuỗi SVG.
+    expect(svg.indexOf('cv-ground')).toBeLessThan(svg.indexOf('cv-edges'));
+  });
+
+  it('không khai thì **không vẽ gì** — hai lớp này không đụng vào 23 bài đồ thị cũ', () => {
+    const svg = renderer.toSvg(play({}), ctx);
+    expect(svg).not.toContain('cv-ground');
+    expect(svg).not.toContain('cv-play-token');
+  });
+
+  it('quân trỏ vào đỉnh không có thì im, không vẽ một đĩa lơ lửng', () => {
+    expect(renderer.toSvg(play({ token: 'khong-co' }), ctx)).not.toContain('cv-play-token');
   });
 });

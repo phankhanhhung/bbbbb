@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "id": "mutilated-chessboard",
   "statement": {
     "vi": "Bàn cờ $8\\times8$ bỏ hai ô góc đối nhau. Chứng minh không thể phủ kín phần còn lại bằng $31$ quân domino $1\\times2$."

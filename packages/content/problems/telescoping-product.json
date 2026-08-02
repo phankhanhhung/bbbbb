@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "id": "telescoping-product",
   "statement": {
     "vi": "Tích $\\prod_{k=1}^{n} \\frac{k+1}{k}$ có $n$ thừa số, mà kết quả chỉ là $n+1$. Mọi thứ ở giữa triệt tiêu theo dây chuyền — và engine nhận ra chuyện ấy bằng **cấu trúc**, không bằng cách nhìn mặt chữ."

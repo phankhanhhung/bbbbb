@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "id": "pascal-triangle-identity",
   "statement": {
     "vi": "Mỗi ô trong tam giác Pascal bằng tổng hai ô ngay trên nó. Viết thành công thức thì đó là $C_n^k = C_{n-1}^{k-1} + C_{n-1}^k$. Xem nó **là** cái gì, và vì sao nó đúng khi nhìn qua giai thừa."

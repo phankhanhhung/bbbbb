@@ -111,6 +111,19 @@ export const MIGRATIONS: readonly Migration[] = [
      */
     apply: (problem) => problem,
   },
+  {
+    from: '1.3.0',
+    to: '1.4.0',
+    summary:
+      'thêm `graph.config.token` và `graph.config.ground` (GM-01) — không đổi dữ liệu bài nào, chỉ đóng dấu phiên bản',
+    /**
+     * Đồng nhất, lần thứ tư. Lần này trường mới nằm trong **config của một engine** chứ
+     * không phải trên `Step`, và điều đó không đổi gì: `GraphConfig` cũng khai
+     * `additionalProperties: false`, nên con dấu vẫn là thứ duy nhất nói cho người đọc
+     * file biết nó cần bộ đọc nào.
+     */
+    apply: (problem) => problem,
+  },
 ];
 
 export interface MigrateResult {

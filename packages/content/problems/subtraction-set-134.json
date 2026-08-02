@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "id": "subtraction-set-134",
   "statement": {
     "vi": "Một đống $20$ viên sỏi. Hai người lần lượt bốc **đúng** $1$, $3$ hoặc $4$ viên (không được bốc $2$). Ai không còn nước đi thì thua. Hỏi người đi trước thắng hay thua, và quy luật chung là gì?"

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "id": "euler-formula-faces",
   "statement": {
     "vi": "Vẽ một đồ thị liên thông trên mặt phẳng sao cho không cạnh nào cắt cạnh nào. Gọi $v$ là số đỉnh, $e$ số cạnh, $f$ số **mặt** (kể cả mặt vô hạn bên ngoài). Chứng tỏ trên một hình cụ thể rằng $v - e + f = 2$, và chỉ ra vì sao mặt ngoài phải được đếm."

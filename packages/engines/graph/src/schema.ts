@@ -120,6 +120,27 @@ export const GraphConfig = Type.Object(
      * Mặt ngoài mang id `face-outer` và tô được như mọi mặt khác: trong bài tô bản
      * đồ thì "biển" cũng là một vùng phải tô.
      */
+    /**
+     * GM-01 — đỉnh đang giữ **quân**, trong ván geography (M78.4).
+     *
+     * Đây là *trạng thái*, không phải tham số: mỗi nước đi đổi nó. Nằm ở `config` cùng
+     * chỗ và cùng lý do với `holes` của Chomp — thế cờ là scene, và scene thì gồm cả
+     * config. Một trường riêng ngoài scene sẽ là thứ `positionKey` không thấy, và solver
+     * sẽ gộp hai thế khác nhau làm một.
+     *
+     * **Vì sao không suy từ màu hay hình đỉnh:** suy ngầm thì một bài tô màu bình thường
+     * bỗng thành một ván cờ, và tác giả không có cách nào nói "đỉnh này chỉ là màu xanh
+     * thôi". Trạng thái phải gọi được tên.
+     */
+    token: Type.Optional(EntityId),
+    /**
+     * GM-01 — đỉnh **mặt đất** của Hackenbush (M78.4).
+     *
+     * Ngược lại với `token`: đây là tham số, không đổi suốt ván. Gỡ một cạnh xong thì
+     * mọi thứ không còn nối về đây sẽ **rụng** — và không có trường này thì "rụng" không
+     * định nghĩa được, vì mặt đất trong sách là một nét vẽ chứ không phải một đỉnh.
+     */
+    ground: Type.Optional(EntityId),
     face_colors: Type.Optional(
       Type.Record(
         Type.String({ pattern: '^face-(\\d+|outer)$' }),

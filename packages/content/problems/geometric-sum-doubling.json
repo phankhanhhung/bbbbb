@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "id": "geometric-sum-doubling",
   "statement": {
     "vi": "Tính $1 + 2 + 4 + 8$ bằng mẹo nhân đôi rồi trừ, và tổng quát cho $1 + 2 + \\dots + 2^{n-1}$."

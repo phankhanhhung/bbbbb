@@ -360,7 +360,11 @@ export const graphRenderer: EngineRenderer = {
     // GR-05 — nền mặt, vẽ dưới cùng: nó là **nền**, không phải một vật nữa.
     const faces = config.show_faces ? renderFaces(graph, config, ctx) : [];
 
+    // Đất vẽ **dưới cùng** — nó là nền, không phải một vật nữa.
+    const ground = renderGround(graph, ctx, config.ground);
+
     return [
+      ...(ground.length > 0 ? [el('g', { class: 'cv-ground' }, ground)] : []),
       ...(faces.length > 0 ? [el('g', { class: 'cv-faces' }, faces)] : []),
       ...(config.show_prufer ? [el('g', { class: 'cv-prufer' }, renderPrufer(scene, ctx))] : []),
       ...(spine.length > 0 ? [el('g', { class: 'cv-diameter' }, spine)] : []),
@@ -442,6 +446,11 @@ export const graphRenderer: EngineRenderer = {
           return nodes;
         }),
       ),
+      // Quân vẽ **trên** đỉnh, không thay đỉnh: nhãn đỉnh vẫn phải đọc được.
+      ...(() => {
+        const token = renderToken(graph, ctx, config.token);
+        return token.length > 0 ? [el('g', { class: 'cv-play-token' }, token)] : [];
+      })(),
     ];
   },
 };
@@ -580,6 +589,89 @@ function frameOf(graph: GraphModel): { x: number; y: number; width: number; heig
  * Không phải cây thì **không vẽ gì**: hình im lặng chứ không vẽ một đường đi
  * trông có vẻ đúng trong một đồ thị mà "đường kính" chưa được định nghĩa.
  */
+/**
+ * **Quân** đang đứng ở đâu, trong ván geography (GM-01, M78.4).
+ *
+ * `config.token` là *trạng thái* của ván — mỗi nước đi đổi nó — nên không vẽ nó ra là
+ * ship một trò chơi mà người chơi không thấy mình đang ở đâu. Đây đúng là hạng lỗi mà
+ * mọi lượt từ M47 tới M76c đều lộ ở phần **nhìn** chứ không ở test: `legalMoves` đúng,
+ * `apply` đúng, chốt canh xanh, và hình thì câm.
+ *
+ * Vẽ thành một đĩa đặc **nhỏ hơn** đỉnh, đè lên nó: quân đứng *trên* một đỉnh chứ không
+ * thay thế đỉnh ấy, và giữ đỉnh nhìn thấy được là giữ nhãn của nó đọc được. Kênh phân
+ * biệt là **hình** (một đĩa đặc ở giữa), không phải màu — NFR-A1, và ở một ván thì
+ * "không phân biệt được" nghĩa là không chơi được, không phải là hình xấu.
+ */
+function renderToken(graph: GraphModel, ctx: RenderContext, id: string | undefined): SvgNode[] {
+  const vertex = id === undefined ? undefined : graph.byId.get(id);
+  if (!vertex) return [];
+  return [
+    keyed('play-token', 'circle', {
+      cx: round(vertex.x),
+      cy: round(vertex.y),
+      // Bán kính **cộng** nửa bề dày viền, không trừ: nét vẽ nằm giữa đường tròn, nên
+      // phần tô nhìn thấy được nhỏ hơn `r` đúng nửa bề dày. Bản đầu để `r` bằng $0{,}52$
+      // bán kính đỉnh với viền `stroke.base` — mà `base` là $1{,}2$, hơn nửa bán kính
+      // quân — nên đĩa hiện ra chỉ còn một phần tư đường kính đỉnh: một dấu chấm câu,
+      // không phải một quân cờ. Hai lần nhìn PNG mới ra, và không test nào nói được.
+      r: round(VERTEX_RADIUS * 0.5 + ctx.theme.stroke.link / 2),
+      fill: ctx.theme.emphasis.focusHalo,
+      // Viền màu nền là để quân **không biến mất** trên đỉnh đã tô màu đậm: một đĩa
+      // sẫm trên nền sẫm thì không có ở đó cũng thế. Dùng nét **mảnh** (`link`) chứ
+      // không phải `base`: viền dày ở đây không viền gì cả, nó ăn mất vật được viền.
+      stroke: ctx.theme.surface.canvas,
+      'stroke-width': ctx.theme.stroke.link,
+    }),
+  ];
+}
+
+/**
+ * **Mặt đất** của Hackenbush (GM-01, M78.4).
+ *
+ * Trong sách, đất là một nét gạch ngang mà cả hình treo lên; ở đây nó phải là một *đỉnh*
+ * vì "rụng" định nghĩa bằng liên thông. Nét gạch này nối hai cách nói ấy lại — không có
+ * nó, người học nhìn hình và không có cách nào biết cành nào sẽ rụng khi cạnh nào đứt.
+ *
+ * Kéo dài hết bề ngang hình cộng lề, và vẽ **dưới cùng**: nó là nền, không phải một vật
+ * nữa. Vạch chéo là quy ước vẽ đất, và nó cũng là kênh thứ hai ngoài màu.
+ */
+function renderGround(graph: GraphModel, ctx: RenderContext, id: string | undefined): SvgNode[] {
+  const vertex = id === undefined ? undefined : graph.byId.get(id);
+  if (!vertex || graph.vertices.length === 0) return [];
+
+  const xs = graph.vertices.map((v) => v.x);
+  const left = Math.min(...xs) - VERTEX_RADIUS * 2;
+  const right = Math.max(...xs) + VERTEX_RADIUS * 2;
+  const y = round(vertex.y);
+
+  const ticks: SvgNode[] = [];
+  const step = VERTEX_RADIUS * 1.4;
+  for (let x = left, i = 0; x < right; x += step, i += 1) {
+    ticks.push(
+      keyed(`ground-tick-${i}`, 'line', {
+        x1: round(x),
+        y1: y,
+        x2: round(x - step * 0.55),
+        y2: round(y + step * 0.55),
+        stroke: ctx.theme.surface.guide,
+        'stroke-width': ctx.theme.stroke.base,
+      }),
+    );
+  }
+
+  return [
+    keyed('ground-line', 'line', {
+      x1: round(left),
+      y1: y,
+      x2: round(right),
+      y2: y,
+      stroke: ctx.theme.surface.guide,
+      'stroke-width': ctx.theme.stroke.link,
+    }),
+    ...ticks,
+  ];
+}
+
 function renderDiameter(graph: GraphModel, ctx: RenderContext): SvgNode[] {
   const shape = treeShape(graph).value;
   if (!shape || shape.diameterPath.length < 2) return [];

@@ -21,6 +21,7 @@ import {
   planarity,
 } from './analyzers.js';
 import { analyzePoset } from './poset.js';
+import { checkGraphPlay, GRAPH_PLAY_RULES } from './play.js';
 import { matrixCellAt, matrixCellId } from './matrix.js';
 
 /**
@@ -41,6 +42,13 @@ export * from './analyzers.js';
 export * from './poset.js';
 export * from './dsl.js';
 export { graphRenderer } from './render.js';
+export {
+  graphPlayRules,
+  checkGraphPlay,
+  GRAPH_PLAY_RULES,
+  HACKENBUSH_LEFT,
+  HACKENBUSH_RIGHT,
+} from './play.js';
 
 // ---------------------------------------------------------------------------
 // Command (ENG-01, GR-01/GR-02)
@@ -288,7 +296,95 @@ const removeElements = defineCommand<{ ids: readonly string[] }>({
   },
 });
 
+/** Cấu hình đồ thị, đọc ra khỏi scene. */
+const graphConfig = (scene: Scene): { token?: string; ground?: string } =>
+  scene.config as { token?: string; ground?: string };
+
+const withConfig = (scene: Scene, config: Record<string, unknown>): Scene =>
+  ({ ...scene, config } as Scene);
+
+/**
+ * **Geography**: đẩy quân theo một cạnh, và **xoá đỉnh vừa rời** (GM-01, M78.4).
+ *
+ * Một lệnh chứ không phải hai, và đó là điều kiện để nó là một *nước đi*: `Move.command`
+ * mang đúng một lệnh, và undo một nước phải trả lại đúng thế trước nước ấy. Tách thành
+ * "dời quân" rồi "xoá đỉnh" thì có một khoảnh khắc scene ở giữa hai lệnh — hợp lệ về
+ * schema, vô nghĩa về luật, và undo dừng đúng ở đó.
+ *
+ * Xoá đỉnh vừa rời chính là chỗ luật "chỉ đi tới đỉnh **chưa thăm**" tự lo được: đỉnh
+ * đã thăm không còn trên đồ thị nên không cần một danh sách `visited` song song — mà một
+ * danh sách như thế lại là trạng thái thứ hai để lệch với đồ thị thật.
+ */
+const moveToken = defineCommand<{ to: string }>({
+  type: 'graph/move-token',
+  label: (p, scene) => {
+    const target = scene.elements.find((e) => e.id === p.to);
+    return `Đi tới ${target?.['label'] ?? p.to}`;
+  },
+  apply(scene, params) {
+    const from = graphConfig(scene).token;
+    if (from === undefined) return null;
+
+    const graph = buildGraph(scene);
+    if (!graph.byId.has(params.to) || params.to === from) return null;
+    // Đi được ⇔ có cạnh nối. Hỏi cấu trúc kề chứ không tự dò `elements`: cạnh song song
+    // và khuyên đã được `buildGraph` xử lý đúng, và dò tay ở đây là cài lại luật kề.
+    if (!(graph.adjacency.get(from) ?? []).some((entry) => entry.to === params.to)) return null;
+
+    const elements = scene.elements.filter(
+      (e) => e.id !== from && !(e.type === 'edge' && (e['u'] === from || e['v'] === from)),
+    );
+    return withConfig(
+      { ...scene, elements },
+      { ...((scene.config ?? {}) as Record<string, unknown>), token: params.to },
+    );
+  },
+});
+
+/**
+ * **Hackenbush**: gỡ một cạnh, rồi mọi thứ không còn nối về đất **rụng** (GM-01, M78.4).
+ *
+ * Đây là ca chứng minh vì sao `apply` nên là một lệnh đóng chứ không phải script tự do.
+ * "Rụng" là một phép tính trên toàn đồ thị — tìm thành phần liên thông chứa đất, xoá
+ * phần còn lại — và để tác giả viết nó bằng tay nghĩa là mỗi bài Hackenbush có một bản
+ * cài đặt riêng của cùng một luật, sai theo những kiểu khác nhau.
+ */
+const removeEdgePrune = defineCommand<{ edge: string }>({
+  type: 'graph/remove-edge-prune',
+  label: (p, scene) => {
+    const edge = scene.elements.find((e) => e.id === p.edge);
+    return `Gỡ cạnh ${edge?.['label'] ?? p.edge}`;
+  },
+  apply(scene, params) {
+    const ground = graphConfig(scene).ground;
+    if (ground === undefined) return null;
+    if (!scene.elements.some((e) => e.type === 'edge' && e.id === params.edge)) return null;
+
+    const cut = { ...scene, elements: scene.elements.filter((e) => e.id !== params.edge) };
+    const graph = buildGraph(cut);
+    if (!graph.byId.has(ground)) return null;
+
+    // Thành phần liên thông chứa đất — thứ **không** ở trong đó thì rụng.
+    const attached = new Set<string>([ground]);
+    const queue = [ground];
+    for (let head = 0; head < queue.length; head += 1) {
+      for (const entry of graph.adjacency.get(queue[head] as string) ?? []) {
+        if (attached.has(entry.to)) continue;
+        attached.add(entry.to);
+        queue.push(entry.to);
+      }
+    }
+
+    const elements = cut.elements.filter((e) =>
+      e.type === 'edge' ? attached.has(String(e['u'])) && attached.has(String(e['v'])) : attached.has(e.id),
+    );
+    return { ...cut, elements };
+  },
+});
+
 export const graphCommands: CommandRegistry = {
+  [moveToken.type]: moveToken,
+  [removeEdgePrune.type]: removeEdgePrune,
   [addVertex.type]: addVertex,
   [addEdge.type]: addEdge,
   [setColorClass.type]: setColorClass,
@@ -884,6 +980,8 @@ export const graphSchemaFragment: EngineSchemaFragment = {
   bounds: { engine: 'graph', limits: GRAPH_LIMITS },
   resolveValidator: resolveGraphValidator,
   validatorIds: GRAPH_VALIDATOR_IDS,
+  playRules: GRAPH_PLAY_RULES,
+  checkPlay: checkGraphPlay,
 
   /**
    * Đỉnh và cạnh đều nằm trong file; **ô mã Prüfer** thì không (GR-09).
