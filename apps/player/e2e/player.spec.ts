@@ -205,8 +205,14 @@ test.describe('Cây lời giải phân nhánh (PLY-02)', () => {
    * đáng lẽ giấu vài node đi.
    */
   test('chấm trên bản đồ luôn cùng một cỡ — khác bài, và sau khi thu gọn', async ({ page }) => {
+    // Node **không** được chọn: node hiện tại cố ý to hơn ($r = 8$ thay vì $6$),
+    // nên lấy `.tree__node circle` đầu tiên là so hai bán kính khác nhau — và tuỳ
+    // bố cục mà node đầu danh sách là gốc (sợi) hay một lá (cây).
     const dotWidth = async (): Promise<number> => {
-      const box = await page.locator('.tree__node circle').first().boundingBox();
+      const box = await page
+        .locator('.tree__node[aria-selected="false"] circle')
+        .first()
+        .boundingBox();
       expect(box).not.toBeNull();
       return Math.round((box as { width: number }).width);
     };
@@ -227,6 +233,40 @@ test.describe('Cây lời giải phân nhánh (PLY-02)', () => {
     // đường kính đo được là $(2r + \text{stroke}) \times$ hệ số, không phải $2r$ —
     // chép công thức thiếu nét viền thì test đỏ ở một con số đúng.
     expect(onRamsey).toBe(Math.round(((2 * 6 + 1.5) * 44) / 26));
+  });
+
+  /**
+   * **122/143 lời giải không có nhánh nào**, và với chúng bản đồ phải là một sợi.
+   *
+   * Đo chiều cao **thật trên màn hình** chứ không đếm hàng: cái mua được ở đây là
+   * chỗ trong một aside rộng 22rem, nên nếu một ngày ai đó dựng sợi bằng bốn hàng
+   * chồng lên nhau thì test này phải đỏ dù `shape` vẫn khai `'strip'`.
+   *
+   * `mutilated-chessboard` thẳng, `ramsey-3-3-six` phân nhánh — cùng luật, hai hình.
+   */
+  test('lời giải thẳng vẽ thành sợi, không thành cây', async ({ page }) => {
+    const mapHeight = async (): Promise<number> => {
+      const box = await page.locator('.tree__canvas svg').boundingBox();
+      expect(box).not.toBeNull();
+      return (box as { height: number }).height;
+    };
+
+    await page.goto(CHESS);
+    await reveal(page);
+    await expect(page.locator('.tree--strip')).toHaveCount(1);
+    // Sợi là **một** hàng: đúng một ô cao, cộng không gì khác.
+    const strip = await mapHeight();
+    expect(strip).toBeLessThanOrEqual(60);
+    // Và không có nút thu gọn nào — thu gọn một sợi là tự giấu phần chưa đọc.
+    await expect(page.locator('.tree__collapse')).toHaveCount(0);
+    await expect(page.locator('.tree__toggle')).toContainText('Các bước');
+
+    await page.goto(RAMSEY);
+    await reveal(page);
+    await expect(page.locator('.tree--tree')).toHaveCount(1);
+    expect(await mapHeight()).toBeGreaterThan(strip * 2);
+    await expect(page.locator('.tree__collapse').first()).toBeVisible();
+    await expect(page.locator('.tree__toggle')).toContainText('Cấu trúc');
   });
 
   /**

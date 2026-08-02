@@ -106,6 +106,10 @@ export function TreeNavigator({ tree, currentId, onSelect }: TreeNavigatorProps)
     const at = order.indexOf(step.id);
     const kids = childrenOf(tree, step.id);
     const isCollapsed = collapsed.has(step.id);
+    // Trên sợi, ←/→ **đi dọc sợi** thay vì thu/mở — và điều đó rơi ra miễn phí từ
+    // luật của `role="tree"`: "→ đi xuống con đầu" trên một node có đúng một con
+    // chính là "đi sang bước sau". Chỉ phải chặn một chỗ: ← không được thu gọn.
+    const canCollapse = layout.shape === 'tree' && kids.length > 0;
 
     switch (event.key) {
       case 'Enter':
@@ -125,13 +129,13 @@ export function TreeNavigator({ tree, currentId, onSelect }: TreeNavigatorProps)
         // Luật của `role="tree"`: đang thu thì mở, đang mở thì đi xuống con đầu.
         event.preventDefault();
         if (kids.length === 0) return;
-        if (isCollapsed) toggle(step.id);
+        if (canCollapse && isCollapsed) toggle(step.id);
         else moveFocus((kids[0] as Step).id);
         return;
       case 'ArrowLeft':
         // Đối xứng: đang mở thì thu, đang thu (hoặc là lá) thì lên cha.
         event.preventDefault();
-        if (kids.length > 0 && !isCollapsed) toggle(step.id);
+        if (canCollapse && !isCollapsed) toggle(step.id);
         else if (step.parent) moveFocus(step.parent);
         return;
       case 'Home':
@@ -151,14 +155,19 @@ export function TreeNavigator({ tree, currentId, onSelect }: TreeNavigatorProps)
   const boxHeight = layout.height;
 
   return (
-    <section class="tree" aria-label="Cấu trúc lời giải">
+    <section
+      class={`tree tree--${layout.shape}`}
+      aria-label={
+        layout.shape === 'strip' ? 'Các bước của lời giải' : 'Cấu trúc lời giải'
+      }
+    >
       <header class="tree__head">
         <button
           class="tree__toggle"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
         >
-          {open ? '▾' : '▸'} Cấu trúc
+          {open ? '▾' : '▸'} {layout.shape === 'strip' ? 'Các bước' : 'Cấu trúc'}
         </button>
 
         {/* Breadcrumb luôn hiện, kể cả khi minimap đã thu: nó rẻ về chỗ và trả lời
@@ -181,6 +190,11 @@ export function TreeNavigator({ tree, currentId, onSelect }: TreeNavigatorProps)
                vừa khung và mọi thứ ở trên thành vô nghĩa. */
             width={round(boxWidth * TREE_SCALE)}
             height={round(boxHeight * TREE_SCALE)}
+            /* Sợi vẫn khai `tree`, không đổi sang `list`: một dây chuyền là một cây
+               hợp lệ, và mọi ngữ nghĩa đang dùng (`aria-selected`, roving focus,
+               ↑↓ đi node) vẫn đúng nguyên. Thứ `tree` hứa mà sợi không có là thu/mở
+               — và `aria-expanded` chỉ gắn khi node **có** con để mở, nên lời hứa ấy
+               không được phát ra. */
             role="tree"
           >
             {layout.edges.map((edge, i) => (
@@ -197,7 +211,9 @@ export function TreeNavigator({ tree, currentId, onSelect }: TreeNavigatorProps)
             {layout.nodes.map((node) => {
               const isCurrent = node.step.id === currentId;
               const closed = isClosedBranch(tree, node.step.id);
-              const hasKids = childrenOf(tree, node.step.id).length > 0;
+              // Trên sợi thì **không** có nút thu gọn: xem `layoutStrip`.
+              const hasKids =
+                layout.shape === 'tree' && childrenOf(tree, node.step.id).length > 0;
 
               return (
                 <g

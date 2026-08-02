@@ -26,17 +26,95 @@ export interface TreeEdge {
   readonly dashed: boolean;
 }
 
+/**
+ * **Sợi** hay **cây** — quyết định theo hình dạng lời giải, không theo sở thích.
+ *
+ * Đo trên kho: **122/143 lời giải không có điểm rẽ nhánh nào**, 20 có một, 1 có
+ * hai. Với 122 lời giải ấy, một cái cây đứng tiêu bốn năm hàng để nói đúng một
+ * điều — "không có nhánh nào" — trong khi chú thích của chính component khai rằng
+ * nó tồn tại để trả lời *"còn bao nhiêu nhánh nữa"*. Vẽ cây cho một lời giải thẳng
+ * là vẽ một câu trả lời rỗng bằng cỡ chữ lớn nhất trang.
+ *
+ * Đổi hình thì cái cây **có nghĩa trở lại**: thấy cây tức là bài này thật sự xét
+ * trường hợp.
+ */
+export type TreeShape = 'strip' | 'tree';
+
 export interface TreeLayout {
   readonly nodes: readonly TreeNode[];
   readonly edges: readonly TreeEdge[];
   readonly width: number;
   readonly height: number;
+  readonly shape: TreeShape;
 }
 
 const COLUMN = 26;
 const ROW = 30;
 
+/**
+ * Hình dạng đọc từ **cây đầy đủ**, không phải từ cây đang hiện.
+ *
+ * Nếu đọc từ cây đã thu gọn thì thu gọn nhánh cuối cùng sẽ biến cây thành sợi và
+ * bản đồ nhảy sang một bố cục khác giữa chừng — người học bấm một nút "giấu bớt"
+ * và nhận lại một hình không nhận ra.
+ */
+export function treeShape(tree: SolutionTree): TreeShape {
+  const forks = (step: Step): boolean => {
+    const kids = childrenOf(tree, step.id);
+    return kids.length > 1 || kids.some(forks);
+  };
+  return tree.root && forks(tree.root) ? 'tree' : 'strip';
+}
+
 export function layoutTree(tree: SolutionTree, collapsed: ReadonlySet<string>): TreeLayout {
+  if (treeShape(tree) === 'strip') return layoutStrip(tree);
+  return layoutBranching(tree, collapsed);
+}
+
+/**
+ * Bố cục sợi: một hàng, đi từ trái sang phải theo thứ tự bước.
+ *
+ * Không có `collapsed` ở đây, và đó là chủ đích: "thu gọn" trên một sợi nghĩa là
+ * giấu phần đuôi, mà phần đuôi của một lời giải thẳng chính là phần chưa đọc. Nút
+ * ấy sẽ là một nút để tự giấu chỗ mình đang đi tới.
+ */
+function layoutStrip(tree: SolutionTree): TreeLayout {
+  const nodes: TreeNode[] = [];
+  const byId = new Map<string, TreeNode>();
+
+  let step: Step | undefined = tree.root;
+  for (let i = 0; step; i += 1) {
+    const node: TreeNode = { step, x: i * COLUMN, y: 0 };
+    nodes.push(node);
+    byId.set(step.id, node);
+    step = childrenOf(tree, step.id)[0];
+  }
+
+  const edges: TreeEdge[] = [];
+  for (const node of nodes) {
+    const parent = node.step.parent ? byId.get(node.step.parent) : undefined;
+    if (parent) edges.push({ from: parent, to: node, dashed: false });
+  }
+
+  // Khung đọc từ **toạ độ node thật**, không tính lại từ `nodes.length`. Bản đầu
+  // viết `height: ROW` cho gọn, và một lượt bẻ răng bắt được ngay: đổi sợi sang xếp
+  // dọc (`y: i * ROW`) thì node chạy ra ngoài khung mà khung vẫn khai một hàng —
+  // hình sai, chốt canh xanh. Khung là một *khẳng định về node*, nên nó phải đọc
+  // từ node.
+  return { ...box(nodes), nodes, edges, shape: 'strip' };
+}
+
+function box(nodes: readonly TreeNode[]): { width: number; height: number } {
+  if (nodes.length === 0) return { width: 0, height: 0 };
+  const xs = nodes.map((n) => n.x);
+  const ys = nodes.map((n) => n.y);
+  return {
+    width: Math.max(...xs) - Math.min(...xs) + COLUMN,
+    height: Math.max(...ys) - Math.min(...ys) + ROW,
+  };
+}
+
+function layoutBranching(tree: SolutionTree, collapsed: ReadonlySet<string>): TreeLayout {
   const nodes: TreeNode[] = [];
   const byId = new Map<string, TreeNode>();
   let nextLeafColumn = 0;
@@ -78,15 +156,7 @@ export function layoutTree(tree: SolutionTree, collapsed: ReadonlySet<string>): 
     }
   }
 
-  const xs = nodes.map((n) => n.x);
-  const ys = nodes.map((n) => n.y);
-
-  return {
-    nodes,
-    edges,
-    width: nodes.length === 0 ? 0 : Math.max(...xs) - Math.min(...xs) + COLUMN,
-    height: nodes.length === 0 ? 0 : Math.max(...ys) + ROW,
-  };
+  return { ...box(nodes), nodes, edges, shape: 'tree' };
 }
 
 export { COLUMN, ROW };
