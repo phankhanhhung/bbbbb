@@ -1310,3 +1310,52 @@ test.describe('Ván chơi (GM-02/03/04, M78.7)', () => {
     await expect(page.getByRole('button', { name: 'Chơi thử', exact: true })).toHaveCount(0);
   });
 });
+
+/**
+ * Partizan đi hết stack tới màn hình (GM-01, M78.4 + M78.7).
+ *
+ * `player` đi qua bốn tầng — `legalMoves` → `settle` → `playMove` → giao diện. Unit test
+ * kiểm ba tầng đầu; chỉ chỗ này nói được rằng tầng thứ tư **hiện đúng tập nước của đúng
+ * bên**. Và Hackenbush là họ luật duy nhất mà câu ấy có nội dung: ở ba họ impartial kia,
+ * nối `player` sai vẫn cho ra một bảng nước đi trông hợp lệ.
+ */
+test.describe('Hackenbush: hai bên **hai tập nước** (M78.4)', () => {
+  test('đổi lượt thì bảng nước đi đổi hẳn, không chỉ đổi nhãn', async ({ page }) => {
+    await page.goto('/?p=hackenbush-blue-red-halves');
+    await page.getByRole('button', { name: 'Chơi thử', exact: true }).click();
+    await expect(page.locator('.play__canvas')).toBeVisible();
+
+    // Người 1 gỡ cạnh xanh: hai cạnh xanh ⇒ hai nước.
+    await expect(page.locator('.turn__chip--on')).toContainText('cạnh xanh');
+    await expect(page.locator('.moves__item')).toHaveCount(2);
+    const cua1 = await page.locator('.moves__item').allTextContents();
+
+    await page.locator('.moves__item').first().click();
+
+    // Tới lượt Người 2 — và tập nước là **của cam**, không phải của xanh.
+    await expect(page.locator('.turn__chip--on')).toContainText('cạnh cam');
+    const cua2 = await page.locator('.moves__item').allTextContents();
+    expect(cua2).not.toEqual(cua1);
+    // Gỡ cạnh xanh dưới cùng làm cả nhánh rụng, nên Người 2 còn hai cạnh cam.
+    await expect(page.locator('.moves__item')).toHaveCount(2);
+  });
+});
+
+/**
+ * Geography: bàn chơi đọc được `config.token`, và **quân vẽ ra được**.
+ *
+ * Trạng thái vô hình là hạng lỗi mà cả M78.4 lẫn M78.7 đều vấp: luật đúng, chốt canh
+ * xanh, và hình thì câm.
+ */
+test('Geography: quân hiện trên hình và nước đi theo cạnh', async ({ page }) => {
+  await page.goto('/?p=geography-token-on-graph');
+  await page.getByRole('button', { name: 'Chơi thử', exact: true }).click();
+  await expect(page.locator('.play__canvas .cv-play-token')).toBeVisible();
+  // Đỉnh $A$ chỉ có một cạnh ⇒ đúng một nước, và đó là cả nội dung của step đầu.
+  await expect(page.locator('.moves__item')).toHaveCount(1);
+
+  await page.locator('.moves__item').click();
+  // Sau khi sang $B$: hai lối, và quân vẫn vẽ ra.
+  await expect(page.locator('.moves__item')).toHaveCount(2);
+  await expect(page.locator('.play__canvas .cv-play-token')).toBeVisible();
+});

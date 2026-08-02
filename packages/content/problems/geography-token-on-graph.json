@@ -1,0 +1,425 @@
+{
+  "schema_version": "1.4.0",
+  "id": "geography-token-on-graph",
+  "statement": {
+    "vi": "Một quân cờ đứng ở đỉnh $A$ của đồ thị bên dưới. Hai người lần lượt đẩy quân theo một cạnh sang đỉnh kề, rồi **xoá đỉnh vừa rời đi** (cùng mọi cạnh của nó). Ai không còn nước đi thì **thua**. Ai có chiến lược thắng?"
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Vertex geography. Bên đi trước thắng ⟺ mọi ghép cặp lớn nhất đều phủ đỉnh xuất phát (Fraenkel–Simonson). Trò chơi này là PSPACE-đầy đủ trên đồ thị có hướng."
+    }
+  },
+  "topics": [
+    "games",
+    "graph-basics",
+    "matching"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "graph"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "challenge",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Quân đứng ở [[a1|đỉnh $A$]], mà $A$ chỉ có **một** cạnh — nên nước mở màn không phải một lựa chọn. Người 1 buộc phải đi sang $B$, và $A$ biến mất khỏi đồ thị cùng cạnh của nó."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "a"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "token": "a"
+            },
+            "elements": [
+              {
+                "id": "a",
+                "type": "vertex",
+                "label": "A",
+                "pos": [0, 0]
+              },
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "B",
+                "pos": [22, 0]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "C",
+                "pos": [44, 0]
+              },
+              {
+                "id": "d",
+                "type": "vertex",
+                "label": "D",
+                "pos": [66, 0]
+              },
+              {
+                "id": "e",
+                "type": "vertex",
+                "label": "E",
+                "pos": [22, 22]
+              },
+              {
+                "id": "ab",
+                "type": "edge",
+                "u": "a",
+                "v": "b"
+              },
+              {
+                "id": "bc",
+                "type": "edge",
+                "u": "b",
+                "v": "c"
+              },
+              {
+                "id": "cd",
+                "type": "edge",
+                "u": "c",
+                "v": "d"
+              },
+              {
+                "id": "be",
+                "type": "edge",
+                "u": "b",
+                "v": "e"
+              }
+            ]
+          },
+          "play": {
+            "rule": "geography",
+            "first": "left"
+          },
+          "alt_text": {
+            "vi": "Đồ thị năm đỉnh: đường A–B–C–D, cộng đỉnh E treo ở B. Quân ở A."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Giờ Người 2 chọn: đi tiếp dọc [[a1|đường dài]], hay rẽ vào [[a2|đỉnh treo $E$]]. Đường dài trông hào phóng hơn — nó còn hai đỉnh phía trước — và đó chính là cái bẫy."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "c",
+                "d"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "e"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "token": "b"
+            },
+            "elements": [
+              {
+                "id": "b",
+                "type": "vertex",
+                "label": "B",
+                "pos": [22, 0]
+              },
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "C",
+                "pos": [44, 0]
+              },
+              {
+                "id": "d",
+                "type": "vertex",
+                "label": "D",
+                "pos": [66, 0]
+              },
+              {
+                "id": "e",
+                "type": "vertex",
+                "label": "E",
+                "pos": [22, 22]
+              },
+              {
+                "id": "bc",
+                "type": "edge",
+                "u": "b",
+                "v": "c"
+              },
+              {
+                "id": "cd",
+                "type": "edge",
+                "u": "c",
+                "v": "d"
+              },
+              {
+                "id": "be",
+                "type": "edge",
+                "u": "b",
+                "v": "e"
+              }
+            ]
+          },
+          "play": {
+            "rule": "geography",
+            "first": "right"
+          },
+          "alt_text": {
+            "vi": "A đã bị xoá. Quân ở B, còn hai lối: sang C hoặc lên E."
+          },
+          "verified": true
+        },
+        {
+          "id": "s2",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 1: Người 2 đi tiếp vào đường dài"
+          },
+          "narrative": {
+            "vi": "Đi vào đường dài thì Người 2 **thua**: Người 1 chỉ việc đẩy quân tới [[a1|$D$]], và $D$ không còn cạnh nào. Đỉnh $E$ nằm chỏng chơ ở đó, không nối vào quân nữa nên nó không cứu được ai."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "d"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "token": "c"
+            },
+            "elements": [
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "C",
+                "pos": [44, 0]
+              },
+              {
+                "id": "d",
+                "type": "vertex",
+                "label": "D",
+                "pos": [66, 0]
+              },
+              {
+                "id": "e",
+                "type": "vertex",
+                "label": "E",
+                "pos": [22, 22]
+              },
+              {
+                "id": "cd",
+                "type": "edge",
+                "u": "c",
+                "v": "d"
+              }
+            ]
+          },
+          "play": {
+            "rule": "geography",
+            "first": "left"
+          },
+          "alt_text": {
+            "vi": "Quân ở C, còn mỗi cạnh C–D. E đứng rời."
+          },
+          "verified": true
+        },
+        {
+          "id": "s3",
+          "parent": "s2",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Người 2 hết nước ở [[a1|$D$]] — ván xong, Người 1 thắng. Nhưng đây là ván mà Người 2 **đã chơi hỏng**, không phải câu trả lời cho đề bài."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "d"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "token": "d"
+            },
+            "elements": [
+              {
+                "id": "d",
+                "type": "vertex",
+                "label": "D",
+                "pos": [66, 0]
+              },
+              {
+                "id": "e",
+                "type": "vertex",
+                "label": "E",
+                "pos": [22, 22]
+              }
+            ]
+          },
+          "play": {
+            "rule": "geography",
+            "first": "right"
+          },
+          "alt_text": {
+            "vi": "Chỉ còn D mang quân và E đứng rời. Không nước nào đi được."
+          },
+          "verified": true
+        },
+        {
+          "id": "s4",
+          "parent": "s1",
+          "edge_type": "case",
+          "case_label": {
+            "vi": "Trường hợp 2: Người 2 rẽ vào đỉnh treo"
+          },
+          "narrative": {
+            "vi": "Rẽ vào [[a1|đỉnh treo]] thì $B$ biến mất, và quân đứng ở một đỉnh **không còn cạnh nào**. Người 1 hết nước ngay lập tức: Người 2 thắng. Đường dài $C$–$D$ vẫn còn nguyên trên hình, và hoàn toàn vô dụng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "token": "e"
+            },
+            "elements": [
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "C",
+                "pos": [44, 0]
+              },
+              {
+                "id": "d",
+                "type": "vertex",
+                "label": "D",
+                "pos": [66, 0]
+              },
+              {
+                "id": "e",
+                "type": "vertex",
+                "label": "E",
+                "pos": [22, 22]
+              },
+              {
+                "id": "cd",
+                "type": "edge",
+                "u": "c",
+                "v": "d"
+              }
+            ]
+          },
+          "play": {
+            "rule": "geography",
+            "first": "left"
+          },
+          "alt_text": {
+            "vi": "Quân ở E, đứng một mình. C và D còn đó nhưng đã rời khỏi quân."
+          },
+          "verified": true
+        },
+        {
+          "id": "s5",
+          "parent": "s4",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Nên **Người 2 thắng**. Câu trả lời tổng quát là một định lý về ghép cặp: bên đi trước thắng khi và chỉ khi **mọi** ghép cặp lớn nhất đều phủ đỉnh xuất phát. Ở đây ghép cặp $\\{BE,\\;CD\\}$ có kích thước $2$ — lớn nhất — mà bỏ sót đúng $A$, nên $A$ là thế thua. Chỗ quân [[a1|dừng lại]] không phải chỗ xa nhất, và đó là lý do đếm số đỉnh hay độ dài đường đi đều không trả lời được câu này."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "e"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "graph",
+            "config": {
+              "token": "e"
+            },
+            "elements": [
+              {
+                "id": "c",
+                "type": "vertex",
+                "label": "C",
+                "pos": [44, 0]
+              },
+              {
+                "id": "d",
+                "type": "vertex",
+                "label": "D",
+                "pos": [66, 0]
+              },
+              {
+                "id": "e",
+                "type": "vertex",
+                "label": "E",
+                "pos": [22, 22]
+              },
+              {
+                "id": "cd",
+                "type": "edge",
+                "u": "c",
+                "v": "d"
+              }
+            ]
+          },
+          "play": {
+            "rule": "geography",
+            "first": "left"
+          },
+          "alt_text": {
+            "vi": "Vẫn thế cuối: quân ở E, không nước đi."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

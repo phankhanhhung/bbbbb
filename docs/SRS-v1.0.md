@@ -226,9 +226,36 @@ Element: `token` (phần tử ground set), `set` (container), quan hệ thuộc.
 Mô hình: `state` = Scene; `move` = command hợp lệ theo rule script (DSL-03); `turn`; điều kiện kết thúc + người thắng.
 
 - **GM-01 [P3] MUST** — Định nghĩa game bằng rule script sandboxed: `legal_moves(state, player)`, `apply(state, move)`, `terminal(state) → winner`.
+  - **Đạt ở M78** (`docs/ENGINE-GAME.md`), với hai chỗ đi khác câu chữ và cả hai chặt hơn
+    nó. `terminal` **không** phải script mà là **quy ước** CGT đóng — hết nước ⇒ bên đang
+    đi thua (normal) hoặc thắng (misère) — vì quy ước ấy phủ trọn cả bốn họ luật, và cho
+    tác giả viết một hàm `terminal` riêng là mở một cửa chưa game nào cần đi qua. `apply`
+    mặc định **không** phải script mà là một `Command` đóng của engine chủ; lối script vẫn
+    có (`PlayRules.applyMove`) và validate cảnh báo nó mất ba bảo đảm nào.
+  - Bốn họ luật trên ba substrate: `piles` (game), `chomp` (board), `geography` và
+    `hackenbush` (graph) — cái cuối là **partizan thật**, hai bên hai tập nước.
 - **GM-02 [P3] MUST** — Hai người chơi local (pass-and-play) trên cùng thiết bị.
+  - **Đạt ở M78.7** (`apps/player/src/PlayBoard.tsx`): chọn nước **trên hình** qua
+    `hitTest` + `Move.targets`, chip lượt, lịch sử nước, băng người thắng, Lùi/Chơi lại.
+    Ván **luân phiên nghiêm ngặt** — không có nước "pass", hệ quả của việc lượt được *suy
+    ra* từ `first` + số nước chứ không nằm trong scene (§16).
 - **GM-03 [P3] SHOULD** — "AI" theo hai đường, tuyên bố rõ với tác giả: (a) **strategy script** do tác giả viết (khuyến nghị mặc định — winning strategy của bài toán *chính là* nội dung sư phạm); (b) solver tự động (retrograde/minimax + memo) chỉ khi ước lượng state space ≤ 10⁶ (Studio có công cụ ước lượng; vượt bound thì chỉ còn đường (a)). **Không hứa AI tổng quát** — đây là chỗ hồ sơ yêu cầu gốc mâu thuẫn với no-code, spec này chọn giải pháp trên.
+  - **Đạt ở M78.5/M78.6, với một chỗ đi khác điều khoản.** Đường (a) là `play.script`
+    (ngữ pháp `moves { … }`, DSL-03). Đường (b) là duyệt lùi trên `positionKey | toMove`.
+  - **Không ước lượng không gian thế — đo thật.** Ước lượng đúng cho đa tập số và **sai
+    cho bàn cờ**: số thế của Chomp $m\times n$ là số iđêan thứ tự, không phải $2^{mn}$
+    ($3\times3$ có $20$ vị trí chứ không phải $512$). Ước dôi thì từ chối bài giải được
+    ngon lành; ước hụt thì treo máy. Solver duyệt và **đếm**, chạm trần thì dừng.
+  - **Trần hạ từ $10^6$ xuống $10^5$ thế.** Số đo: một thế tốn khoảng $0{,}3$ ms công
+    thật, nên $10^6$ thế là **năm phút** đứng hình — một trần cho phép treo năm phút thì
+    không phải là trần. Trần đếm bằng **số thế cộng số cạnh**, không bằng thời gian: trần
+    thời gian làm solver không tất định, và thế thì chốt canh, golden lẫn CHO-08 mất nghĩa.
+  - Họ luật có công thức thì khai `solve()` và solver chung đứng ngoài: bốc đống vẫn trả
+    lời bằng Sprague–Grundy, không duyệt một thế nào.
 - **GM-04 [P3] SHOULD** — Ghi lại ván chơi thành chuỗi step nháp để tác giả chuyển thử nghiệm thành minh họa lời giải.
+  - **Đạt ở M78.1/M78.7** — `toDraftSteps` + nút "Ghi ván thành draft". Narrative là
+    **nháp** (nhãn nước + tên bên đi), không phải câu hoàn chỉnh: bịa ra một câu nghe như
+    đã viết xong là cách chắc nhất để nó được xuất bản mà không ai đọc lại.
 
 ---
 

@@ -117,9 +117,12 @@
     "functional-equation-cauchy",
     "arithmetic-sequence-by-telescoping",
     "candies-three-children-gf",
-    "chomp-poison-corner"
+    "chomp-poison-corner",
+    "geography-token-on-graph",
+    "hackenbush-blue-red-halves"
   ],
   "newest": [
-    "chomp-poison-corner"
+    "geography-token-on-graph",
+    "hackenbush-blue-red-halves"
   ]
 }
