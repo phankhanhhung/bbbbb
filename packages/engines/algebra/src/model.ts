@@ -13,6 +13,7 @@ import {
   allPaths,
   boundAlong,
   depth,
+  flipOp,
   nodeAt,
   nodeCount,
   normalize,
@@ -292,23 +293,50 @@ function resolveAt(root: Expr, at: string): { path: string } | { refusal: string
  * *một* hàm thì sai cùng nhau mà vẫn khớp, nên phép so hoá ra chỉ khẳng định rằng hàm
  * ấy tự đồng ý với chính nó.
  *
- * **Chỗ hàm này *chưa* canh được, ghi ra thay vì để im.** Hôm nay `use_injective` là
- * luật duy nhất đi hợp đồng `'assumption'`, và nó **từ chối** mọi hình dạng không bóc
- * được — nên không có đường nào đưa một `after` sai tới đây, và lượt bẻ răng xác nhận:
- * cho `model` tin thẳng `outcome.after` thì không test nào đỏ. Đó là một mutant **tương
- * đương**, không phải một lỗ: hàm này là lưới cho luật *thứ hai* của hợp đồng, luật
- * chưa tồn tại. Nên nó có chốt canh riêng gọi thẳng vào đây, chứ không dựa vào đường
- * đi qua `readAlgebra`.
+ * **Mutant tương đương của AL-22, hết tương đương ở AL-24.** Lúc `use_injective` là luật
+ * duy nhất của hợp đồng, cho `model` tin thẳng `outcome.after` thì không test nào đỏ:
+ * luật ấy **từ chối** mọi hình dạng không bóc được, nên không có đường nào đưa một
+ * `after` sai tới đây. §53.3 ghi lại nguyên văn. `use_monotone` là luật thứ hai, và nó
+ * **quyết định dấu** — nên từ đây hàm này gánh một việc mà không ai khác gánh: kiểm rằng
+ * dấu quan hệ đúng thứ giả thiết hứa, chứ không phải thứ luật nói.
+ *
+ * ## Nó đọc `assumption` chứ không nhận sẵn một hướng
+ *
+ * Hướng suy ra **từ tên giả thiết** — cùng chuỗi mà `readAlgebra` vừa đối chiếu với
+ * `config.assume`. Nếu hàm này nhận sẵn một cờ `flip` do luật truyền sang thì luật lại
+ * tự chấm bài mình, đúng thứ M78.3 dựng bản thứ hai để tránh. Tên hàm cũng phải khớp:
+ * khai *"$f$ tăng ngặt"* rồi bóc một lời gọi $g$ là bóc bằng một giả thiết không có.
  */
-export function peelsTo(before: Expr, after: Expr): boolean {
+export function peelsTo(before: Expr, after: Expr, assumption: string): boolean {
+  const at = assumption.indexOf(':');
+  if (at === -1) return false;
+  const [name, property] = [assumption.slice(0, at).trim(), assumption.slice(at + 1).trim()];
+
   const call = (e: Expr): (Expr & { k: 'ufn' }) | null =>
     e.k === 'ufn' && e.args.length === 1 ? e : null;
-  if (before.k !== 'rel' || before.op !== '=') return false;
+  if (before.k !== 'rel') return false;
+
+  // `đơn ánh` chỉ nói về dấu bằng; `tăng ngặt` giữ dấu; `giảm ngặt` lật. Không tính chất
+  // nào nói gì về `!=` — chiều ấy đúng với mọi hàm và không cần giả thiết nào.
+  const want =
+    property === 'đơn ánh'
+      ? before.op === '='
+        ? '='
+        : null
+      : before.op === '!='
+        ? null
+        : property === 'tăng ngặt'
+          ? before.op
+          : property === 'giảm ngặt'
+            ? flipOp(before.op)
+            : null;
+  if (want === null) return false;
+
   const [left, right] = [call(before.lhs), call(before.rhs)];
   if (left === null || right === null) return false;
   if (left.name !== right.name || left.notation !== right.notation) return false;
-  const want = normalize(rel(new Minter(), '=', left.args[0] as Expr, right.args[0] as Expr));
-  return same(want, after);
+  if (left.name !== name) return false;
+  return same(normalize(rel(new Minter(), want, left.args[0] as Expr, right.args[0] as Expr)), after);
 }
 
 export function readAlgebra(scene: Scene): AlgebraModel {
@@ -350,6 +378,34 @@ function readAlgebraOrThrow(scene: Scene): AlgebraModel {
   const stepCount = (config.steps ?? []).length;
   if (stepCount > ALGEBRA_LIMITS.maxSteps) {
     return { ...empty, refusal: `${stepCount} bước, quá trần ${ALGEBRA_LIMITS.maxSteps}` };
+  }
+
+  /**
+   * **Giả thiết mâu thuẫn thì chứng minh được mọi thứ** (AL-24).
+   *
+   * `assume` là lời khai của tác giả, và tới AL-22 thì mỗi lời khai chỉ *mở* thêm một
+   * nước đi — khai thừa cũng chỉ tốn một dòng đỏ. Hai tính chất đơn điệu thì khác: khai
+   * cả *"$f$ tăng ngặt"* lẫn *"$f$ giảm ngặt"* cho **cùng một hàm** là khai một hàm
+   * không tồn tại, và từ đó $f(A) < f(B)$ suy ra được cả $A < B$ lẫn $A > B$ — hai dòng
+   * cùng "đã kiểm ✓" mà mâu thuẫn nhau.
+   *
+   * Bắt ở đây chứ không ở lint: `readAlgebra` là chỗ duy nhất mọi đường vào đều qua,
+   * kể cả sandbox và scene dựng tại chỗ.
+   */
+  const monotone = new Map<string, string>();
+  for (const claim of config.assume ?? []) {
+    const at = claim.indexOf(':');
+    if (at === -1) continue;
+    const [who, what] = [claim.slice(0, at).trim(), claim.slice(at + 1).trim()];
+    if (what !== 'tăng ngặt' && what !== 'giảm ngặt') continue;
+    const already = monotone.get(who);
+    if (already !== undefined && already !== what) {
+      return {
+        ...empty,
+        refusal: `scene khai "${who}" vừa ${already} vừa ${what} — không hàm nào như thế`,
+      };
+    }
+    monotone.set(who, what);
   }
 
   const parsed = tryParse(config.start ?? '', m);
@@ -572,7 +628,7 @@ function readAlgebraOrThrow(scene: Scene): AlgebraModel {
       }
 
       judge(
-        peelsTo(target, outcome.after)
+        peelsTo(target, outcome.after, need)
           ? { ok: true, verified: true, message: `bóc ${need} — hai vế cùng một lời gọi hàm` }
           : { ok: false, verified: true, message: 'kết quả không bằng phép bóc trực tiếp' },
       );

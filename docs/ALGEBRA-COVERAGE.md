@@ -67,14 +67,14 @@ xong, và chỗ chưa xong lớn nhất vẫn là §4.1.
 
 | | Số đo | Nguồn |
 |---|---:|---|
-| Luật | **83** | `RULES.length` |
-| …đã có bài dùng | **75** | quét `config.steps[].rule` toàn kho |
+| Luật | **84** | `RULES.length` |
+| …đã có bài dùng | **76** | quét `config.steps[].rule` toàn kho |
 | …chưa bài nào dùng | **8** | xem §5 |
 | Kiểu nút `Expr` | **16** | `EXPR_KINDS.length` |
 | Sân kiểm | **4** | $\mathbb{F}_p$ · thực · nguyên · chuỗi hệ số |
 | Hợp đồng kiểm | **7** | `sameValue`, `sameSolutionSet`, `implies`, `root`, `instance`, `binding`, `claim` |
 | Hàm không-đa-thức | **9** | `binom cos exp fact ln log perm sin tan` |
-| Bài dùng engine | **44 / 149** | `engines_used` chứa `algebra` |
+| Bài dùng engine | **45 / 150** | `engines_used` chứa `algebra` |
 | …bật hộp cát | **3** | `kind` khác `illustration` — xem `ENGINE-ALGEBRA.md` §54 |
 
 Bảng này đi từ $73$ luật lên $80$ kể từ lượt đo M70 — bảy luật, và đúng bảy: M71 thêm
@@ -90,8 +90,8 @@ mới tình cờ có bài — ba bài lượng giác soạn ra đúng để tiê
 nhịp mà §5 đòi: **năng lực trước, nội dung sau, và nội dung phải thật sự tới**.
 
 Rồi lượt bất đẳng thức (AL-21) thêm **hai** luật và tiêu **hết cả hai** trong cùng một
-commit, và AL-22 thêm một, tiêu một. Nên con số đứng yên ở $8$ suốt ba lượt liền dù tập
-luật đi từ $80$ lên $83$. Đó là lý do thứ tự các lượt được ghim từ đầu: soạn nội dung
+commit; AL-22 thêm một, tiêu một; AL-24 cũng thế. Nên con số đứng yên ở $8$ suốt bốn lượt
+liền dù tập luật đi từ $80$ lên $84$. Đó là lý do thứ tự các lượt được ghim từ đầu: soạn nội dung
 trước, thêm năng lực sau, và mỗi năng lực mới đi kèm bài dùng nó — chứ không phải cài
 luật rồi hy vọng.
 
@@ -192,7 +192,7 @@ Nên chiều phải quyết bằng **cấu trúc**, và bốc điểm ở lại 
 hình dạng của nợ: nó không còn là "vài luật chưa cài" mà là **một khái niệm chưa có** —
 nhánh giả thiết. Một món như thế thì lịch cho nó là một quyết định khác hẳn.
 
-### 4.2 Phương trình hàm — 20%, đã đi từ **0** lên ~25% ✅ M73, nửa sau ✅ AL-22
+### 4.2 Phương trình hàm — 20%, đã đi từ **0** lên ~25% ✅ M73, nửa sau ✅ AL-22/AL-24
 
 Câu cũ ở đây: *"engine không có ký hiệu hàm không diễn giải, nên $f(x+y) = f(x) + f(y)$
 **viết ra cũng không được**, chứ chưa nói kiểm."* M73 đóng đúng câu ấy — nút `ufn` cho
@@ -215,13 +215,19 @@ chẳng đơn ánh gì mà engine im lặng cho qua. Khai một lần ở scene 
 chối** mọi lượt dùng chưa được khai — luật mới có răng ở tầng **nội dung**, không chỉ
 tầng cây. Giá là một minor + một migration đồng nhất, đúng khuôn năm lần trước.
 
-Ô này chưa ước lại: một tính chất (đơn ánh) không phải cả họ *"kết luận về hàm"* — toàn
-ánh, đơn điệu, *"$f$ là hằng"* vẫn nguyên. Điều **đã** đổi là có một khuôn để thêm chúng
-vào, và khuôn ấy đã chạy qua một bài thật.
+**Và nửa sau của nửa sau, 2026-08-02 (AL-24).** `use_monotone` là thành viên thứ hai:
+`"f: tăng ngặt"` giữ dấu, `"f: giảm ngặt"` **lật** dấu, và cả hai bóc được mọi quan hệ
+trừ `!=`. Nó không đụng một dòng nào của hạ tầng AL-22 — chỉ thêm hai chuỗi vào bảng
+tính chất và một mệnh đề lật dấu — nên đây là phép thử xác nhận khuôn kia thật là khuôn.
+`ENGINE-ALGEBRA.md` §54b.
+
+Ô này chưa ước lại: hai tính chất (đơn ánh, đơn điệu ngặt) chưa phải cả họ *"kết luận về
+hàm"* — toàn ánh và *"$f$ là hằng"* vẫn nguyên. Điều **đã** đổi là khuôn để thêm chúng
+vào nay đã chạy qua **hai** luật và hai bài thật, tức nó không còn là một khuôn suy đoán.
 
 ### 4.3 Engine này phục vụ ai
 
-Cột "phổ thông" cho ~88%, và **42/147 bài** của kho đang dùng nó. Nếu bộ mặt của
+Cột "phổ thông" cho ~88%, và **45/150 bài** của kho đang dùng nó. Nếu bộ mặt của
 kho là chuyên đề bắc cầu phổ thông → chuyên, thì engine đã gần xong việc và ba mục
 M71–M73 là mở rộng biên, không phải lấp lỗ. Nếu bộ mặt là olympiad thuần, thì
 §4.1 là việc lớn nhất còn lại của cả dự án, và §4.2 là việc lớn thứ hai — nhưng

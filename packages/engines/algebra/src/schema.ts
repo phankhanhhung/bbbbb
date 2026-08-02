@@ -165,8 +165,13 @@ export const AlgebraConfig = Type.Object(
      * engine im lặng cho qua. Khai một lần ở đây thì `readAlgebra` **từ chối** mọi lượt
      * dùng chưa được khai, tức luật mới có răng ở tầng nội dung chứ không chỉ tầng cây.
      *
-     * Cú pháp: `"f: đơn ánh"`. Chỉ một tính chất, vì chỉ một tính chất có luật tiêu thụ
-     * nó — khai sẵn "toàn ánh" khi chưa luật nào đọc là dựng một lời hứa suông.
+     * Cú pháp: `"f: đơn ánh"`, `"f: tăng ngặt"`, `"f: giảm ngặt"`. Ba tính chất, và
+     * **đúng ba** — mỗi cái có một luật tiêu thụ nó (`use_injective`, `use_monotone`).
+     * Khai sẵn "toàn ánh" khi chưa luật nào đọc là dựng một lời hứa suông.
+     *
+     * Hai tính chất đơn điệu cho **cùng một hàm** thì `readAlgebra` từ chối cả scene
+     * (AL-24): giả thiết mâu thuẫn chứng minh được mọi thứ, và ở đây nó chứng minh
+     * được cả $A < B$ lẫn $A > B$ với hai dòng cùng khai "đã kiểm ✓".
      */
     assume: Type.Optional(
       Type.Array(Type.String({ minLength: 1, maxLength: 40 }), { maxItems: 4 }),

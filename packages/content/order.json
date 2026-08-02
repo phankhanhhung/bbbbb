@@ -148,9 +148,10 @@
     "am-gm-from-a-square",
     "cauchy-engel-two-fractions",
     "functional-equation-injective",
-    "cancel-only-after-factoring"
+    "cancel-only-after-factoring",
+    "monotone-peels-an-inequality"
   ],
   "newest": [
-    "cancel-only-after-factoring"
+    "monotone-peels-an-inequality"
   ]
 }

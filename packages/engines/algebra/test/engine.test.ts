@@ -112,6 +112,9 @@ const ARGS: Readonly<Record<string, ArgMaker>> = {
    */
   am_gm: (_p, node) => amGmCluster(node) ?? 'y',
   cauchy_schwarz: () => 'a^2/x + b^2/y',
+  // Hướng đơn điệu là **tham số của bước**, không đọc được từ nút — luật chỉ dịch nó
+  // thành tên một giả thiết, còn `model` mới đối chiếu với `assume`.
+  use_monotone: () => 'tăng',
   factor_by_grouping: (_p, node) => {
     const n = node.args?.length ?? 0;
     if (n < 2) return '0|1';
@@ -3442,23 +3445,29 @@ describe('§53 — dùng tính đơn ánh', () => {
   });
 
   it('…và bản bóc của bộ kiểm **có răng riêng**, vì đường đi qua `readAlgebra` không đủ', () => {
-    // Lượt bẻ răng đo được: cho `model` tin thẳng `outcome.after` thì **không test nào
-    // đỏ**. Không phải một lỗ mà một mutant **tương đương** — `use_injective` là luật
-    // duy nhất đi hợp đồng này và nó từ chối mọi hình dạng không bóc được, nên không có
-    // đường nào đưa một `after` sai tới đó. `peelsTo` là lưới cho luật **thứ hai**, luật
-    // chưa tồn tại, nên nó phải được hỏi thẳng chứ không hỏi qua kho.
-    const before = parse('f(x) = f(y)', new Minter());
+    // Lượt bẻ răng của AL-22 đo được: cho `model` tin thẳng `outcome.after` thì **không
+    // test nào đỏ** — một mutant **tương đương**, vì `use_injective` khi ấy là luật duy
+    // nhất đi hợp đồng này và nó từ chối mọi hình dạng không bóc được. AL-24 thêm
+    // `use_monotone`, luật **quyết định dấu**, nên mutant kia hết tương đương; phép so
+    // dưới đây vẫn hỏi thẳng, và §54b hỏi thêm qua kho.
+    const p = (s: string) => parse(s, new Minter());
+    const before = p('f(x) = f(y)');
 
-    expect(peelsTo(before, parse('x = y', new Minter()))).toBe(true);
-    expect(peelsTo(before, parse('x = x', new Minter())), 'bóc nhầm vế').toBe(false);
-    expect(peelsTo(before, parse('y = x', new Minter())), 'đảo hai vế').toBe(false);
-    expect(peelsTo(parse('f(x) = g(y)', new Minter()), parse('x = y', new Minter()))).toBe(false);
+    expect(peelsTo(before, p('x = y'), 'f: đơn ánh')).toBe(true);
+    expect(peelsTo(before, p('x = x'), 'f: đơn ánh'), 'bóc nhầm vế').toBe(false);
+    expect(peelsTo(before, p('y = x'), 'f: đơn ánh'), 'đảo hai vế').toBe(false);
+    expect(peelsTo(p('f(x) = g(y)'), p('x = y'), 'f: đơn ánh')).toBe(false);
     // Bất đẳng thức: `x >= y` hiển nhiên khác `x = y`, nên phép so **không** canh gì ở
     // ca ấy — lượt bẻ răng bắt đúng chỗ này. Câu phải hỏi là ca luật sẽ sinh ra:
     // `after` đúng hình dạng bóc, mà `before` lại là một bất đẳng thức.
-    expect(peelsTo(parse('f(x) >= f(y)', new Minter()), parse('x = y', new Minter()))).toBe(false);
-    expect(peelsTo(parse('f(x) >= f(y)', new Minter()), parse('x >= y', new Minter()))).toBe(false);
-    expect(peelsTo(parse('x = y', new Minter()), parse('x = y', new Minter()))).toBe(false);
+    expect(peelsTo(p('f(x) >= f(y)'), p('x = y'), 'f: đơn ánh')).toBe(false);
+    expect(peelsTo(p('f(x) >= f(y)'), p('x >= y'), 'f: đơn ánh')).toBe(false);
+    expect(peelsTo(p('x = y'), p('x = y'), 'f: đơn ánh')).toBe(false);
+
+    // **Tên hàm phải khớp tên trong giả thiết.** Khai "f tăng ngặt" rồi bóc một lời gọi
+    // `g` là bóc bằng một giả thiết không có — và `readAlgebra` không bắt được, vì nó
+    // chỉ hỏi chuỗi giả thiết có được khai hay không.
+    expect(peelsTo(p('g(x) = g(y)'), p('x = y'), 'f: đơn ánh')).toBe(false);
   });
 });
 
@@ -3559,5 +3568,106 @@ describe('§54 — hộp cát đại số', () => {
     // Và một nước hợp lệ thì **không** có chữ nào — hai cửa cùng một hàm `applyRule`,
     // nên chúng không lệch nhau được.
     expect(moveRefusal(start, { at: '0', rule: 'factor_diff_squares' })).toBeNull();
+  });
+});
+
+/**
+ * **Đơn điệu ngặt: luật thứ hai của hợp đồng `'assumption'`** (AL-24).
+ *
+ * §53.3 ghi lại một mutant **tương đương**: cho `model` tin thẳng `outcome.after` thì
+ * không test nào đỏ, vì `use_injective` là luật duy nhất của hợp đồng và nó từ chối mọi
+ * hình dạng không bóc được. Luật này **quyết định dấu**, nên từ đây `peelsTo` gánh một
+ * việc không ai khác gánh — và khối này là chỗ chứng minh nó gánh thật.
+ */
+describe('§54b — dùng tính đơn điệu', () => {
+  const mono = (start: string, way: string, assume?: string[]) =>
+    readAlgebra(
+      scene(
+        start,
+        [{ rule: 'use_monotone', at: '', arg: way }] as AlgebraStep[],
+        assume === undefined ? {} : { assume },
+      ),
+    );
+
+  it('tăng ngặt **giữ** dấu, giảm ngặt **lật** dấu', () => {
+    const up = mono('f(2*x) < f(x + 3)', 'tăng', ['f: tăng ngặt']);
+    expect(up.refusal).toBeNull();
+    expect(up.unsound).toEqual([]);
+    expect(unparse(up.rows[1]!.expr)).toBe(unparse(parse('2*x < x + 3', new Minter())));
+    expect(up.conditions.map((c) => c.text)).toEqual(['f tăng ngặt']);
+
+    const down = mono('f(2*x) < f(x + 3)', 'giảm', ['f: giảm ngặt']);
+    expect(down.refusal).toBeNull();
+    expect(down.unsound).toEqual([]);
+    expect(unparse(down.rows[1]!.expr)).toBe(unparse(parse('2*x > x + 3', new Minter())));
+    expect(down.conditions.map((c) => c.text)).toEqual(['f giảm ngặt']);
+  });
+
+  it('mệnh đề lật dấu **có gánh việc** ở cả hai tầng, không chỉ ở luật', () => {
+    // Bẻ răng: bỏ `flipOp` khỏi luật ⇒ dòng trên đỏ. Bỏ `flipOp` khỏi `peelsTo` ⇒ ca
+    // này đỏ, vì bộ kiểm khi ấy chấp nhận đúng thứ luật *đáng lẽ* không được sinh ra.
+    // Hai tầng phải cùng biết, và phải biết **riêng** — đó là cả lý do có hai bản.
+    const p = (s: string) => parse(s, new Minter());
+    const before = p('f(a) < f(b)');
+
+    expect(peelsTo(before, p('a > b'), 'f: giảm ngặt')).toBe(true);
+    expect(peelsTo(before, p('a < b'), 'f: giảm ngặt'), 'giảm mà giữ dấu').toBe(false);
+    expect(peelsTo(before, p('a < b'), 'f: tăng ngặt')).toBe(true);
+    expect(peelsTo(before, p('a > b'), 'f: tăng ngặt'), 'tăng mà lật dấu').toBe(false);
+
+    // Và `đơn ánh` **không** bóc được một bất đẳng thức, dù `after` đúng hình dạng.
+    expect(peelsTo(before, p('a < b'), 'f: đơn ánh')).toBe(false);
+    // Còn `!=` thì không tính chất nào nói gì — chiều ấy đúng với **mọi** hàm.
+    expect(peelsTo(p('f(a) != f(b)'), p('a != b'), 'f: tăng ngặt')).toBe(false);
+    // Tính chất lạ thì từ chối, không đoán.
+    expect(peelsTo(p('f(a) = f(b)'), p('a = b'), 'f: toàn ánh')).toBe(false);
+  });
+
+  it('đơn điệu **kéo theo** đơn ánh — dấu bằng đi được, và ghi ra vì sao cho phép', () => {
+    // Trùng việc với `use_injective`, có chủ đích: bắt tác giả khai thêm "f đơn ánh"
+    // bên cạnh "f tăng ngặt" là bắt họ nói thừa một câu mà câu kia đã hàm ý.
+    const m = mono('f(2*x) = f(x + 3)', 'tăng', ['f: tăng ngặt']);
+    expect(m.refusal).toBeNull();
+    expect(unparse(m.rows[1]!.expr)).toBe(unparse(parse('2*x = x + 3', new Minter())));
+  });
+
+  it('chưa khai thì **từ chối**, và `arg` phải nói rõ hướng', () => {
+    expect(mono('f(x) < f(y)', 'tăng', []).refusal).toContain('chưa khai giả thiết "f: tăng ngặt"');
+    // Khai hướng này mà dùng hướng kia cũng là chưa khai — chuỗi phải khớp.
+    expect(mono('f(x) < f(y)', 'giảm', ['f: tăng ngặt']).refusal).toContain('f: giảm ngặt');
+    expect(mono('f(x) < f(y)', '', ['f: tăng ngặt']).refusal).toContain('`tăng` hoặc `giảm`');
+    expect(mono('f(x) != f(y)', 'tăng', ['f: tăng ngặt']).refusal).toContain('không cần tới tính đơn điệu');
+  });
+
+  it('hai tính chất đơn điệu cho **cùng một hàm** thì cả scene bị từ chối', () => {
+    // Giả thiết mâu thuẫn chứng minh được mọi thứ: từ `f(A) < f(B)` ra được cả `A < B`
+    // lẫn `A > B`, hai dòng cùng khai "đã kiểm ✓". Bắt ở `readAlgebra` vì đó là chỗ
+    // duy nhất mọi đường vào đều qua, kể cả sandbox.
+    expect(mono('f(x) < f(y)', 'tăng', ['f: tăng ngặt', 'f: giảm ngặt']).refusal)
+      .toContain('vừa tăng ngặt vừa giảm ngặt');
+    // Hai **hàm khác nhau** thì không mâu thuẫn gì.
+    expect(mono('f(x) < f(y)', 'tăng', ['f: tăng ngặt', 'g: giảm ngặt']).refusal).toBeNull();
+  });
+
+  it('bài `monotone-peels-an-inequality` — đối chiếu bằng phép tính viết riêng', () => {
+    // M78.3: không hỏi engine xem engine có đúng không. Chọn một hàm tăng ngặt cụ thể
+    // và một hàm giảm ngặt cụ thể, rồi quét: `f(2x) < f(x+3)` có đúng tương đương
+    // `x < 3` (tăng) và `x > 3` (giảm) không.
+    const up = (t: number) => t ** 3 + t; // tăng ngặt trên toàn R
+    const down = (t: number) => -(t ** 3) - t; // giảm ngặt trên toàn R
+
+    let checked = 0;
+    for (let i = -60; i <= 60; i += 1) {
+      const x = 3 + i * 0.17; // lưới không chạm đúng x = 3
+      checked += 1;
+      expect(up(2 * x) < up(x + 3), `tăng tại x = ${x}`).toBe(x < 3);
+      expect(down(2 * x) < down(x + 3), `giảm tại x = ${x}`).toBe(x > 3);
+    }
+    expect(checked).toBe(121);
+
+    // Và phép so **biết nói không**: một hàm *không* đơn điệu thì tương đương ấy hỏng.
+    const wobbly = (t: number) => t ** 2;
+    expect(wobbly(2 * -4) < wobbly(-4 + 3)).toBe(false);
+    expect(-4 < 3).toBe(true);
   });
 });

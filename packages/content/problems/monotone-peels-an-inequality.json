@@ -1,0 +1,148 @@
+{
+  "schema_version": "1.6.0",
+  "id": "monotone-peels-an-inequality",
+  "statement": {
+    "vi": "Cho $f$ **tăng ngặt** và $f(2x) < f(x+3)$. Tìm $x$. Chỗ đáng nhìn: engine không biết $f$ là hàm nào — nó chỉ biết **một dòng giả thiết**, và một dòng ấy đủ để bỏ được cái vỏ $f$."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: nước đầu **không tính gì cả** — nó bỏ $f$ ở cả hai vế. Bỏ được vì $f$ tăng ngặt, và engine đòi giả thiết ấy phải nằm trong `assume` của scene trước khi cho đi; chưa khai thì nó từ chối kèm câu \"bài chưa khai giả thiết\". Bước hai của bài đổi đúng **một** chữ trong giả thiết — tăng thành giảm — và kết luận lật ngược. Hai lời giải cùng một phương trình, cùng một luật, khác nhau ở một dòng đề bài: đó là toàn bộ nội dung của tính đơn điệu."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Bỏ vỏ hàm, rồi giải phần còn lại"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "$f$ tăng ngặt nghĩa là thứ tự **đi qua được** $f$: $A < B$ khi và chỉ khi $f(A) < f(B)$. Nên [[a1|dòng thứ hai]] bỏ $f$ ở cả hai vế và **giữ nguyên** dấu — nước ấy không tính gì, nó tiêu một dòng của đề.\nEngine không biết $f$ là hàm nào, và không cần biết: nó chỉ hỏi bài **đã khai** giả thiết chưa, rồi tự bóc lại để so. Ba nước cuối là chuyển vế rút gọn, ra $x < 3$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "assume": [
+                "f: tăng ngặt"
+              ],
+              "caption": "tăng ngặt: dấu giữ nguyên",
+              "start": "f(2*x) < f(x + 3)",
+              "steps": [
+                {
+                  "arg": "tăng",
+                  "at": "",
+                  "rule": "use_monotone"
+                },
+                {
+                  "arg": "-1*x",
+                  "at": "",
+                  "rule": "add_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "collect_like"
+                },
+                {
+                  "at": "R",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Năm dòng: f(2x) nhỏ hơn f(x cộng 3); rồi 2x nhỏ hơn x cộng 3; rồi cộng trừ x vào hai vế; rồi x nhỏ hơn 3."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đổi **một** chữ của đề: $f$ **giảm** ngặt. Cùng phương trình, cùng luật, mà [[a1|dòng thứ hai]] nay mang dấu ngược, và kết luận lật theo: $x > 3$.\nEngine không đoán chiều từ hình dạng phương trình — nó đọc chiều từ đúng dòng giả thiết bài khai. Nên *chiều* không phải một chi tiết của đề, nó **là** đề."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "assume": [
+                "f: giảm ngặt"
+              ],
+              "caption": "giảm ngặt: dấu lật",
+              "start": "f(2*x) < f(x + 3)",
+              "steps": [
+                {
+                  "arg": "giảm",
+                  "at": "",
+                  "rule": "use_monotone"
+                },
+                {
+                  "arg": "-1*x",
+                  "at": "",
+                  "rule": "add_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "collect_like"
+                },
+                {
+                  "at": "R",
+                  "rule": "collect_like"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Năm dòng: f(2x) nhỏ hơn f(x cộng 3); rồi 2x lớn hơn x cộng 3; rồi cộng trừ x vào hai vế; rồi x lớn hơn 3."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

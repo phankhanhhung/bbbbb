@@ -179,9 +179,10 @@ tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mớ
 | **Hai cổng đếm sandbox** nói ngược nhau — `coverage` đỏ 7 bài mà `validate` xanh; gộp về một vị từ | 08-02 | `ENGINE-BACKLOG.md` §3b.1 |
 | **AL-23** — hộp cát đại số: 3 bài đầu tiên đi qua đường M65; builtin `reaches`; một chốt canh luôn xanh từ AL-07 bị gỡ | 08-02 | `ENGINE-ALGEBRA.md` §54 |
 | **Tên phép toán ăn một đối số** — `\tan\frac{a+b}{2}` hết phẳng; kèm hai lỗ dán dính chưa ai biết | 08-02 | `PLAN-P1.md` §10.3c |
+| **AL-24** — `use_monotone`: luật thứ hai của hợp đồng `assumption`; mutant §53.3 đo lại **vẫn** tương đương, và lý do thật sắc hơn | 08-02 | `ENGINE-ALGEBRA.md` §54b |
 
-Kho đi từ **114 bài → 149 bài** trong hai ngày, test từ **3459** (M78.8) lên
-**3956 / 69 tệp**, schema từ `1.0.0` lên `1.6.0` — sáu minor, sáu migration đồng nhất.
+Kho đi từ **114 bài → 150 bài** trong hai ngày, test từ **3459** (M78.8) lên
+**3970 / 69 tệp**, schema từ `1.0.0` lên `1.6.0` — sáu minor, sáu migration đồng nhất.
 
 > **Một cái bẫy đếm, ghi ra để lần sau không phải điều tra lại.** Con số chính thức
 > là số của `pnpm test` (`vitest run` không lọc đường dẫn) — **3843 / 67 tệp** lúc
@@ -268,9 +269,10 @@ lại vẫn phải soát tay — nhưng nay ít nhất chúng có một danh sá
   có tên* của bất đẳng thức đã đóng ở AL-21, nên nợ này hết mờ: nó không còn là "vài
   luật chưa cài" mà là **một khái niệm chưa có**. `ALGEBRA-COVERAGE.md` §4.1,
   `ENGINE-ALGEBRA.md` §52.4.
-- **Toàn ánh, đơn điệu, "$f$ là hằng"** — họ *kết luận về hàm* mới có **một** thành
-  viên (đơn ánh, AL-22). Khuôn để thêm đã có và đã chạy qua một bài thật, nên nợ này
-  nay là "điền vào khuôn" chứ không phải "dựng khuôn". `ENGINE-ALGEBRA.md` §53.
+- **Toàn ánh và "$f$ là hằng"** — họ *kết luận về hàm* nay có **hai** thành viên (đơn
+  ánh AL-22, đơn điệu ngặt AL-24). Khuôn đã chạy qua hai luật và hai bài thật mà không
+  phải sửa dòng hạ tầng nào, nên nợ này chắc chắn là "điền vào khuôn".
+  `ENGINE-ALGEBRA.md` §53, §54b.
 - **Binet / $\frac{1}{1-P(x)}$ với $\deg P \ge 2$** — sau ranh giới vô tỉ mà
   `series.ts` tự vạch. `ALGEBRA-COVERAGE.md` §5.1.
 - **`point` đứng yên ở 3 bài** kể từ M36 — nội dung trước, đúng luật

@@ -276,7 +276,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§53 để biết tập luật thật — **83 luật**, xếp theo mười bốn lớp:
+Xem §21–§54b để biết tập luật thật — **84 luật**, xếp theo mười bốn lớp:
 
 > **Bảng này có răng.** `engine.test.ts` đọc chính bảng dưới, gom mọi tên trong dấu
 > nháy ngược, và so với `RULES`: thừa một tên là đỏ, thiếu một tên cũng là đỏ. Lý do
@@ -300,7 +300,7 @@ Xem §21–§53 để biết tập luật thật — **83 luật**, xếp theo m
 | **hệ phương trình** (M59, §35) | `add_equations`, `scale_equation`, `substitute_from`, `drop_equation` |
 | **tập nghiệm** (M60, §36) | `abs_to_interval`, `interval_from_factors`, `merge_intervals` |
 | **hàm siêu việt** (M61, §37) | `log_product`, `log_quotient`, `log_power`, `log_change_base`, `exp_log`, `log_exp`, `log_both_sides`, `pythagorean_identity`, `double_angle`, `sum_to_product`, `product_to_sum` |
-| **phương trình hàm** (M73, §45; AL-22, §53) | `specialize`, `use_injective` |
+| **phương trình hàm** (M73, §45; AL-22, §53; AL-24, §54b) | `specialize`, `use_injective`, `use_monotone` |
 | **hàm sinh & chuỗi** (M68, §44; M72, §47; AL-20) | `geometric_series`, `coeff_of_product`, `coeff_linear`, `coeff_shift`, `coeff_repeated_geometric`, `partial_fractions` |
 | **bất đẳng thức có tên** (AL-21, §52) | `am_gm`, `cauchy_schwarz` |
 
@@ -3824,7 +3824,7 @@ khai, kèm câu *"scene đang khai …"*. Luật khai **tên** giả thiết nó
 Giá: một minor + một migration đồng nhất, `1.5.0 → 1.6.0`, đúng khuôn năm lần trước.
 Đây là lần đầu một minor mở một **khái niệm** chứ không mở một thuộc tính vẽ.
 
-### §53.3 — Hai bản của một phép bóc, và một mutant tương đương
+### §53.3 — Hai bản của một phép bóc, và một mutant tương đương (lý do sửa ở §54b.3)
 
 `peelSameFunction` (trong `rules.ts`) và `peelsTo` (trong `model.ts`) làm cùng một việc
 và **cố ý không dùng chung**: bài học M78.3 nói luật và phép kiểm đi qua *một* hàm thì
@@ -3841,6 +3841,12 @@ thức mang `after` đúng hình dạng bóc.
 
 Ghi ra thay vì im, vì một mutant sống sót không giải thích được sẽ bị đọc thành một lỗ
 ở lượt soát sau.
+
+> **Sửa 2026-08-02 (AL-24).** Lý do in nghiêng ở trên — *"luật duy nhất"* — **không phải
+> lý do thật**. `use_monotone` là luật thứ hai của hợp đồng, và mutant kia đo lại vẫn
+> **tương đương**. Nguyên nhân thật là cấu trúc chứ không phải số lượng: mọi luật của
+> hợp đồng đều tính `after` bằng đúng phép bóc mà nó khai, nên không đường nào đưa một
+> `after` sai tới `peelsTo`. Chi tiết ở §54b.3.
 
 ### §53.4 — Ranh giới
 
@@ -3947,3 +3953,82 @@ Lượt nhìn bằng mắt bắt hai chỗ, và chỗ thứ hai thành một lu�
   cổng đếm.
 - `reaches` chỉ đọc **dòng cuối**. Một đích kiểu *"đã đi qua dạng nào đó"* cần đọc cả
   chuỗi, và chưa bài nào cần — nên chưa dựng.
+
+---
+
+## §54b — Đơn điệu ngặt: luật thứ hai của hợp đồng, và một mutant **vẫn** tương đương (AL-24)
+
+### §54b.1 — Điền vào khuôn, không dựng khuôn
+
+AL-22 dựng cả đường cho *kết luận về hàm*: `config.assume` là lời khai của tác giả,
+`verify: 'assumption'` là hợp đồng, `peelsTo` là bản kiểm thứ hai. Rồi họ ấy có đúng
+**một** thành viên. Luật thứ hai là phép thử xem khuôn có thật là khuôn không, và câu
+trả lời là có — `use_monotone` không đụng một dòng nào của hạ tầng, chỉ thêm hai chuỗi
+vào bảng tính chất và một mệnh đề lật dấu.
+
+| tính chất | luật | dấu $\lhd$ |
+|---|---|---|
+| `"f: đơn ánh"` | `use_injective` | chỉ `=` |
+| `"f: tăng ngặt"` | `use_monotone` (`arg: "tăng"`) | giữ nguyên, mọi dấu trừ `!=` |
+| `"f: giảm ngặt"` | `use_monotone` (`arg: "giảm"`) | **lật** |
+
+Hướng đọc từ **`arg` của bước**, không từ `config`. Đó là cả thiết kế AL-22: luật không
+thấy `config` nên nó không tự phê duyệt được, và `model` mới là chỗ hỏi *"bài có khai
+giả thiết ấy không"*. Nếu luật đọc thẳng `config.assume` để tự chọn hướng thì bước khai
+lại lấy bước dùng, đúng thứ §53.2 loại bỏ.
+
+**`!=` bị từ chối**, và đó là một ranh giới chứ không phải một thiếu sót:
+$f(A) \ne f(B) \Rightarrow A \ne B$ đúng với **mọi** hàm — nó là phản đảo của
+$A = B \Rightarrow f(A) = f(B)$. Một nước đi không cần giả thiết thì không được đội tên
+một giả thiết.
+
+**Dấu `=` thì trùng việc với `use_injective`, và cho phép.** Đơn điệu ngặt kéo theo đơn
+ánh; bắt tác giả khai thêm *"$f$ đơn ánh"* bên cạnh *"$f$ tăng ngặt"* là bắt họ nói thừa
+một câu mà câu kia đã hàm ý. Giả thiết mạnh hơn làm được nhiều hơn — đó là điều đúng,
+không phải một chỗ chồng chéo cần dọn.
+
+### §54b.2 — Giả thiết mâu thuẫn: chỗ duy nhất `assume` cần một luật riêng
+
+Tới AL-22, mỗi dòng `assume` chỉ **mở** thêm một nước đi, nên khai thừa cũng chỉ tốn một
+dòng đỏ. Hai tính chất đơn điệu thì khác: khai cả *"$f$ tăng ngặt"* lẫn *"$f$ giảm ngặt"*
+cho **cùng một hàm** là khai một hàm không tồn tại, và từ $f(A) < f(B)$ suy ra được cả
+$A < B$ lẫn $A > B$ — hai dòng cùng mang chứng cứ xanh mà mâu thuẫn nhau.
+
+`readAlgebra` từ chối cả scene. Bắt ở đó chứ không ở `lint` vì `readAlgebra` là chỗ
+**mọi** đường vào đều qua: `combviz validate`, sandbox, và scene dựng tại chỗ.
+
+### §54b.3 — Kế hoạch nói mutant §53.3 sẽ chết. Phép đo nói **không**.
+
+Kế hoạch của lượt này viết rằng luật thứ hai *"xoá đúng chỗ ấy"* — chỗ ấy là mutant
+tương đương ghi ở §53.3: cho `model` tin thẳng `outcome.after` thay vì gọi `peelsTo` thì
+không test nào đỏ. Đo lại sau khi `use_monotone` có mặt, có bài dùng, và có bảy phép so
+mới:
+
+> **Vẫn không test nào đỏ. Mutant vẫn tương đương.**
+
+Lý do §53.3 đưa ra — *"`use_injective` là luật **duy nhất** đi hợp đồng `'assumption'`"* —
+hoá ra không phải lý do thật, chỉ là một hệ quả trùng khớp. Lý do thật sắc hơn và không
+co lại khi thêm luật:
+
+> **Mọi luật của hợp đồng đều tính `after` bằng đúng phép bóc mà nó khai.** Nên không
+> đường nào đưa một `after` *sai* tới `peelsTo`, và một cái lưới không bao giờ có gì rơi
+> vào thì gỡ nó ra cũng không ai thấy.
+
+Đây là một tính chất **cấu trúc** của hợp đồng, không phải một tai nạn về số lượng. Luật
+thứ ba, thứ tư cũng sẽ thế, chừng nào chúng còn được viết theo khuôn này. `peelsTo` là
+lưới cho một luật **viết sai** — nó gánh việc thật, chỉ là việc ấy chưa bao giờ tới qua
+đường kho. Nên nó có bảy phép so **gọi thẳng vào nó**, và bốn trong bảy phép so ấy chết
+khi bỏ mệnh đề lật dấu, bỏ kiểm tên hàm, hay cho nó trả `true`.
+
+Ghi lại vì hai chuyện. Một: §53.3 nay có một lời giải thích **đúng** thay cho một lời
+giải thích tình cờ đúng số. Hai: lần thứ ba trong bốn lượt, một mệnh đề của kế hoạch bị
+phép đo bác (§52.2 là lần trước) — và đó là lý do mỗi lượt đo lại thay vì tin vào câu đã
+viết.
+
+### §54b.4 — Ranh giới
+
+- **Chỉ đơn điệu ngặt**, không đơn điệu không ngặt. $f(A) \le f(B)$ với $f$ tăng *không
+  ngặt* chỉ cho $A \le B$ khi $f$ đơn ánh nữa — một điều kiện thứ hai mà `assume` phải
+  khai riêng, và chưa bài nào cần.
+- **Không có "$f$ đơn điệu"** chung chung. Không biết chiều thì không biết dấu, và một
+  luật trả về *"chưa kiểm được"* là đúng thứ M50 tầng C đã từ chối một lần.

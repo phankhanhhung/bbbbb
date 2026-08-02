@@ -4257,14 +4257,70 @@ const useInjective: Rule = {
 };
 
 /**
- * $f(A) = f(B)$ — bóc ra $(A, B)$, hoặc nói vì sao không bóc được.
+ * **Đơn điệu ngặt: bóc được mọi dấu, và dấu có thể lật** (AL-24).
+ *
+ * `use_injective` mở hợp đồng `'assumption'`; luật này là **luật thứ hai** đi qua nó, và
+ * đó là nửa lý do nó đáng làm ngay: `peelsTo` trong `model.ts` chốt cứng `op === '='`,
+ * một mệnh đề chưa gánh gì cho tới khi có luật đọc dấu khác. §53.3 ghi lại rằng cho
+ * `model` tin thẳng `outcome.after` thì không test nào đỏ — một mutant **tương đương**
+ * vì `use_injective` là luật duy nhất của hợp đồng. Luật này xoá đúng chỗ ấy.
+ *
+ * ## Hướng đọc từ `arg`, chứ không từ `config`
+ *
+ * Luật **không thấy** `config` — đó là cả thiết kế của AL-22: bước khai lấy bước dùng
+ * thì không ai đối chiếu được. Nên hướng ("tăng" hay "giảm") là **tham số của bước**,
+ * và luật chỉ dịch nó thành tên một giả thiết. `model` mới là chỗ hỏi "bài có khai giả
+ * thiết ấy không", rồi **tự bóc lại** để so.
+ *
+ * ## Dấu `=` trùng việc với `use_injective` — cho phép, và ghi ra vì sao
+ *
+ * Đơn điệu ngặt **kéo theo** đơn ánh, nên $f(A) = f(B) \to A = B$ đi được bằng cả hai
+ * luật. Bắt tác giả khai thêm *"$f$ đơn ánh"* bên cạnh *"$f$ tăng ngặt"* là bắt họ nói
+ * thừa một câu mà câu kia đã hàm ý. Giả thiết mạnh hơn thì làm được nhiều hơn — đó là
+ * điều đúng, không phải một chỗ chồng chéo cần dọn.
+ */
+const useMonotone: Rule = {
+  id: 'use_monotone',
+  label: 'dùng tính đơn điệu',
+  onRelation: true,
+  accepts: ['rel'],
+  needsArg: true,
+  run(m, node, arg) {
+    const way = (arg ?? '').trim();
+    if (way !== 'tăng' && way !== 'giảm') {
+      return no('cần biết hàm tăng hay giảm — `arg` phải là `tăng` hoặc `giảm`');
+    }
+    const peeled = peelSameFunction(node, { anyOp: true });
+    if (typeof peeled === 'string') return no(peeled);
+
+    const property = way === 'tăng' ? 'tăng ngặt' : 'giảm ngặt';
+    return {
+      after: rel(m, way === 'giảm' ? flipOp(peeled.op) : peeled.op, peeled.lhs, peeled.rhs),
+      verify: 'assumption',
+      assumption: `${peeled.name}: ${property}`,
+      condition: `${peeled.name} ${property}`,
+    };
+  },
+};
+
+/**
+ * $f(A) \lhd f(B)$ — bóc ra $(A, B)$ cùng dấu $\lhd$, hoặc nói vì sao không bóc được.
  *
  * `model` có **bản riêng** của phép bóc này chứ không gọi hàm này: hai đường thì sai
  * cùng nhau mới khớp, một đường thì luật tự chấm bài mình (M78.3).
  */
-export function peelSameFunction(node: Expr): { name: string; lhs: Expr; rhs: Expr } | string {
-  if (node.k !== 'rel') return 'cần một đẳng thức';
-  if (node.op !== '=') return 'tính đơn ánh chỉ bóc được một dấu bằng';
+export function peelSameFunction(
+  node: Expr,
+  opts: { anyOp?: boolean } = {},
+): { name: string; op: RelOp; lhs: Expr; rhs: Expr } | string {
+  if (node.k !== 'rel') return 'cần một quan hệ';
+  if (node.op !== '=') {
+    if (opts.anyOp !== true) return 'tính đơn ánh chỉ bóc được một dấu bằng';
+    // $f(A) \ne f(B) \Rightarrow A \ne B$ đúng với **mọi** hàm — đó là phản đảo của
+    // "$A = B$ thì $f(A) = f(B)$", không cần giả thiết nào. Một nước đi không cần giả
+    // thiết thì không được đội tên một giả thiết.
+    if (node.op === '!=') return 'dấu khác không cần tới tính đơn điệu';
+  }
   const { lhs, rhs } = node;
   if (lhs.k !== 'ufn' || rhs.k !== 'ufn') return 'hai vế phải cùng là một lời gọi hàm';
   if (lhs.name !== rhs.name) {
@@ -4274,11 +4330,12 @@ export function peelSameFunction(node: Expr): { name: string; lhs: Expr; rhs: Ex
   if (lhs.args.length !== 1 || rhs.args.length !== 1) {
     return 'chỉ bóc được hàm một đối số';
   }
-  return { name: lhs.name, lhs: lhs.args[0] as Expr, rhs: rhs.args[0] as Expr };
+  return { name: lhs.name, op: node.op, lhs: lhs.args[0] as Expr, rhs: rhs.args[0] as Expr };
 }
 
 export const RULES: readonly Rule[] = [
   useInjective,
+  useMonotone,
   amGm,
   cauchySchwarz,
   geometricSeries,
