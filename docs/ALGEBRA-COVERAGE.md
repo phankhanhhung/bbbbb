@@ -67,14 +67,14 @@ xong, và chỗ chưa xong lớn nhất vẫn là §4.1.
 
 | | Số đo | Nguồn |
 |---|---:|---|
-| Luật | **80** | `RULES.length` |
-| …đã có bài dùng | **72** | quét `config.steps[].rule` toàn kho |
+| Luật | **82** | `RULES.length` |
+| …đã có bài dùng | **74** | quét `config.steps[].rule` toàn kho |
 | …chưa bài nào dùng | **8** | xem §5 |
 | Kiểu nút `Expr` | **16** | `EXPR_KINDS.length` |
 | Sân kiểm | **4** | $\mathbb{F}_p$ · thực · nguyên · chuỗi hệ số |
 | Hợp đồng kiểm | **7** | `sameValue`, `sameSolutionSet`, `implies`, `root`, `instance`, `binding`, `claim` |
 | Hàm không-đa-thức | **9** | `binom cos exp fact ln log perm sin tan` |
-| Bài dùng engine | **39 / 144** | `engines_used` chứa `algebra` |
+| Bài dùng engine | **42 / 147** | `engines_used` chứa `algebra` |
 
 Bảng này đi từ $73$ luật lên $80$ kể từ lượt đo M70 — bảy luật, và đúng bảy: M71 thêm
 `sum_telescope` + `specialize`, M72 thêm bốn luật `coeff_*`, AL-20 thêm
@@ -87,6 +87,11 @@ Lượt $12 \to 8$ là lượt đầu tiên con số ấy tụt vì **nội dung
 mới tình cờ có bài — ba bài lượng giác soạn ra đúng để tiêu bốn năng lực §5 đã chỉ mặt
 đặt tên, và không luật nào thêm vào ở lượt ấy. Nên đây là phép đo sạch nhất của cái
 nhịp mà §5 đòi: **năng lực trước, nội dung sau, và nội dung phải thật sự tới**.
+
+Rồi lượt bất đẳng thức (AL-21) thêm **hai** luật và tiêu **hết cả hai** trong cùng một
+commit, nên con số đứng yên ở $8$ thay vì lên $10$. Đó là lý do thứ tự hai lượt ấy được
+ghim từ đầu: soạn nội dung trước, thêm năng lực sau, và mỗi năng lực mới đi kèm bài dùng
+nó — chứ không phải cài luật rồi hy vọng.
 
 Từ lượt này con số ấy **có răng**: `tools/pipeline/test/trigonometry.test.ts` quét kho
 rồi so với cả con số ở bảng trên, danh sách tên ở §5, lẫn chữ đếm trong tiêu đề §5.
@@ -139,7 +144,7 @@ mười ô, bằng đúng cách §6 mô tả. Cho tới lúc ấy: **~33% là s�
 
 ## 4. Ba quyết định mà bảng này ép phải đối mặt
 
-### 4.1 Bất đẳng thức — họ lớn nhất, và engine đang phủ 5%
+### 4.1 Bất đẳng thức — họ lớn nhất, phần **có tên** đã đóng ✅ AL-21
 
 Đây là con số quan trọng nhất trong tài liệu. Một phần ba đề đại số olympiad là
 bất đẳng thức, và engine hôm nay chỉ làm được phần **biến đổi tương đương**: nhân
@@ -157,7 +162,22 @@ Cái **không** nằm gọn là "không mất tổng quát giả sử $a \ge b \
 bước về *cấu trúc chứng minh*, không phải một phép biến đổi cây. Nó đòi một khái
 niệm mà engine chưa có — nhánh giả thiết — và đó mới là chỗ đắt.
 
-Chưa xếp lịch. Ghi ra đây để lần sau bàn thì bàn trên số, không trên cảm giác.
+**Làm rồi, 2026-08-02.** `am_gm` và `cauchy_schwarz` (dạng Engel) vào engine đúng
+khuôn đoán ở trên: `verify: 'implies'`, `Guard` có cấu trúc, dòng đỏ điều kiện. Ba bài
+dùng chúng. Chi tiết ở `ENGINE-ALGEBRA.md` §52.
+
+Một chỗ **đoán sai**, và nó đáng ghi vì nó là bài học chứ không phải một chi tiết: đoạn
+trên nói bất đẳng thức có tên *"kiểm được bằng bốc điểm"*. Đúng cho Cauchy, **sai cho
+AM–GM**. Đề xuất chiều sai — từ $a+b \ge 1$ suy ra $2\sqrt{ab} \ge 1$ — rồi hỏi
+`impliesSolutionSet`: *"kéo theo đúng trên 205 điểm"*. Phản ví dụ cần $ab < \tfrac14$
+kèm $a+b \ge 1$, tức một số lớn và một số rất nhỏ, mà bộ lấy mẫu cố ý tránh lân cận $0$.
+Nên chiều phải quyết bằng **cấu trúc**, và bốc điểm ở lại làm lưới thứ hai. §52.2 ghi
+đủ; ở đây chỉ cần nhớ một câu: *một chốt canh luôn xanh là chốt canh không có*.
+
+Ô "Phủ" của họ này chưa ước lại — phần *có tên* đã đóng, nhưng phần
+*"không mất tổng quát"* vẫn nguyên, và ước lại mà không đếm là bịa. Điều **đã** đổi là
+hình dạng của nợ: nó không còn là "vài luật chưa cài" mà là **một khái niệm chưa có** —
+nhánh giả thiết. Một món như thế thì lịch cho nó là một quyết định khác hẳn.
 
 ### 4.2 Phương trình hàm — 20%, đã đi từ **0** lên ~25% ✅ M73
 
@@ -174,7 +194,7 @@ ra từ chuỗi thế*. Đó là hạng mục kế tiếp của họ này, và n
 
 ### 4.3 Engine này phục vụ ai
 
-Cột "phổ thông" cho ~88%, và **39/144 bài** của kho đang dùng nó. Nếu bộ mặt của
+Cột "phổ thông" cho ~88%, và **42/147 bài** của kho đang dùng nó. Nếu bộ mặt của
 kho là chuyên đề bắc cầu phổ thông → chuyên, thì engine đã gần xong việc và ba mục
 M71–M73 là mở rộng biên, không phải lấp lỗ. Nếu bộ mặt là olympiad thuần, thì
 §4.1 là việc lớn nhất còn lại của cả dự án, và §4.2 là việc lớn thứ hai — nhưng

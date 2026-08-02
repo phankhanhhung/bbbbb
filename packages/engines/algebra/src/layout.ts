@@ -227,6 +227,26 @@ function leadWidth(row: AlgebraRow): number {
   return row.expr.k === 'rel' ? measure(toBox(row.expr.lhs)).w : 0;
 }
 
+/**
+ * Món nợ một chiều nói gì — và nó **không** nói cùng một câu cho mọi bước.
+ *
+ * Dòng cũ luôn là *"nghiệm có thể ngoại lai — phải thử lại"*, viết cho ca sinh ra nó:
+ * bình phương hai vế một **phương trình**. Với bất đẳng thức thì câu ấy sai theo cách
+ * tệ nhất — nó dặn người học đi làm một việc **không tồn tại**. Bước AM–GM không sinh
+ * nghiệm lạ nào để thử lại; nó chỉ đi một chiều, và nghĩa vụ duy nhất là **đừng suy
+ * ngược**.
+ *
+ * Lộ ra ở lượt nhìn ảnh của bài Cauchy đầu tiên (AL-21), đúng chỗ mọi lỗi hiển thị từ
+ * M47 tới nay đều lộ.
+ */
+function oneWayNote(model: AlgebraModel): string {
+  const relations = model.rows.map((r) => r.expr).filter((e) => e.k === 'rel');
+  const allStrictOrder = relations.every((e) => e.op !== '=' && e.op !== '!=');
+  return relations.length > 0 && allStrictOrder
+    ? 'bước một chiều — không suy ngược được'
+    : 'nghiệm có thể ngoại lai — phải thử lại';
+}
+
 export function layout(model: AlgebraModel): Layout {
   const rows = model.rows;
   const maxLead = Math.max(0, ...rows.map(leadWidth));
@@ -308,7 +328,7 @@ export function layout(model: AlgebraModel): Layout {
     y += COND_SIZE * 1.6;
   };
   if (model.conditions.length > 0) pushNote(`với ${model.conditions.map((c) => c.text).join(', ')}`);
-  if (model.extraneous.length > 0) pushNote('nghiệm có thể ngoại lai — phải thử lại');
+  if (model.extraneous.length > 0) pushNote(oneWayNote(model));
 
   return {
     lines: withLabels,

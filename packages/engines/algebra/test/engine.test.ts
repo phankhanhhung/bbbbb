@@ -18,6 +18,7 @@ import {
   drawnIds,
   elementId,
   explainIds,
+  guardList,
   impliesSolutionSet,
   layout,
   measure,
@@ -95,6 +96,16 @@ const ARGS: Readonly<Record<string, ArgMaker>> = {
   // Phân hoạch phải **vừa với nút gặp phải**: `add` làm phẳng nên số hạng tử thay đổi
   // theo từng biểu thức, và một `arg` cố định `"0,1|2,3"` chỉ áp được cho tổng đúng
   // bốn hạng tử — tức là hầu như không bao giờ.
+  /**
+   * Bất đẳng thức có tên: `arg` đọc **từ chính nút**, không phải một chuỗi cố định.
+   *
+   * Một `arg` cố định như `"a + b"` chỉ khớp đúng một hạt giống, nên luật sẽ "được
+   * quét" bằng một lượt duy nhất và mọi hình dạng khác trôi qua. Đọc từ nút thì mọi
+   * bất đẳng thức có hình dạng AM–GM nhận đều được thử — kể cả những cái bộ sinh tình
+   * cờ dựng ra.
+   */
+  am_gm: (_p, node) => amGmCluster(node) ?? 'y',
+  cauchy_schwarz: () => 'a^2/x + b^2/y',
   factor_by_grouping: (_p, node) => {
     const n = node.args?.length ?? 0;
     if (n < 2) return '0|1';
@@ -103,6 +114,17 @@ const ARGS: Readonly<Record<string, ArgMaker>> = {
     return `${idx.slice(0, half).join(',')}|${idx.slice(half).join(',')}`;
   },
 };
+
+/** Vế nào của một quan hệ mang hình dạng AM–GM nhận — tổng, hoặc $n\sqrt[n]{\cdot}$. */
+function amGmCluster(node: { k: string }): string | null {
+  const e = node as Expr;
+  if (e.k !== 'rel') return null;
+  for (const side of [e.lhs, e.rhs]) {
+    if (side.k === 'add') return unparse(side);
+    if (side.k === 'mul' && side.args.some((a) => a.k === 'root')) return unparse(side);
+  }
+  return null;
+}
 
 /** Chuỗi biến đổi dùng đi dùng lại: khai triển rồi gộp. */
 const EXPAND = scene('(x + 1)^2 + 3*x', [
@@ -289,7 +311,7 @@ describe('tầng 0 — parser và printer', () => {
     const doc = readFileSync(new URL('../../../../docs/ENGINE-ALGEBRA.md', import.meta.url), 'utf8');
     const lines = doc.split('\n');
 
-    const lead = lines.findIndex((l) => l.includes('Xem §21–§47 để biết tập luật thật'));
+    const lead = lines.findIndex((l) => l.includes('để biết tập luật thật'));
     expect(lead, 'không tìm thấy câu dẫn của bảng phân lớp §20').toBeGreaterThan(-1);
 
     // Con số trong câu dẫn — đây đúng là chỗ đã lệch, nên nó phải là một khẳng định
@@ -414,6 +436,18 @@ describe('tầng 1 — máy luật và phép kiểm đúng', () => {
       '1/((1 - x)*(1 - 2*x))',
       '1/((1 - 2*x)*(1 - 3*x))',
       '1/((1 - x)*(1 - 2*x)*(1 - 3*x))',
+      // Bất đẳng thức có tên: bộ sinh dựng quan hệ, nhưng không bao giờ dựng ra
+      // $2\sqrt{ab}$ hay $\frac{(a+b)^2}{x+y}$ — tức hai luật mới sẽ **chưa từng áp
+      // được lần nào** nếu không gieo tay. Đã xảy ra đúng thế với `geometric_series`
+      // (M68) và `partial_fractions` (AL-20); chốt canh độ phủ ở cuối bắt nó.
+      //
+      // Bốn hạt cho bốn ca: hai chiều của AM–GM, hai chiều của Cauchy. Cả bốn đều là
+      // chiều **hợp lệ** — chiều sai thì `oneWay` từ chối, và một hạt luôn bị từ chối
+      // không nuôi được phép quét.
+      '2*sqrt(a*b) >= 1',
+      '10 >= a + b',
+      '(a + b)^2/(x + y) >= 1',
+      'a^2/x + b^2/y <= 100',
     ];
 
     const bad: string[] = [];
@@ -3127,5 +3161,171 @@ describe('bước không bảo toàn giá trị — hợp đồng của cổng c
     // vẫn thủng.
     const source = algebraSchemaFragment.checkBounds.toString();
     expect(source).toContain('unsoundIssue');
+  });
+});
+
+/**
+ * **Bất đẳng thức có tên** (AL-21, §48) — và chốt canh này canh đúng chỗ dễ hỏng nhất.
+ *
+ * Kế hoạch của lượt này viết rằng luật chỉ cần *đề xuất* phép thay còn `impliesSolutionSet`
+ * sẽ *từ chối* chiều sai. Đo ra thì câu ấy **sai cho AM–GM**: đề xuất chiều sai rồi hỏi
+ * bộ kiểm, nó trả *"kéo theo đúng trên 205 điểm"*. Vùng phản ví dụ cần $a+b \ge 1$ **và**
+ * $ab < 1/4$ — một số lớn kèm một số rất nhỏ — mà `relationSampler` cố ý tránh lân cận
+ * $0$. Nên chiều được quyết bằng **cấu trúc** (`oneWay`), và mọi phép so dưới đây hỏi
+ * đúng cái quyết định ấy.
+ */
+describe('§48 — bất đẳng thức có tên', () => {
+  const run = (start: string, arg: string, rule = 'am_gm') =>
+    readAlgebra(scene(start, [{ rule, at: '', arg }]));
+
+  it('AM–GM đi được **chiều hợp lệ**, cả hai bản', () => {
+    // $2\sqrt{ab} \ge 1 \Rightarrow a + b \ge 1$: cụm ở vế trái của "≥", phép thay nâng.
+    const up = run('2*sqrt(a*b) >= 1', '2*sqrt(a*b)');
+    expect(up.refusal).toBeNull();
+    expect(up.unsound).toEqual([]);
+    expect(unparse(up.rows[1]!.expr)).toBe(unparse(parse('a + b >= 1', new Minter())));
+
+    // $10 \ge a+b \Rightarrow 10 \ge 2\sqrt{ab}$: cụm ở vế phải, phép thay hạ.
+    const down = run('10 >= a + b', 'a + b');
+    expect(down.refusal).toBeNull();
+    expect(down.unsound).toEqual([]);
+    expect(unparse(down.rows[1]!.expr)).toBe(
+      unparse(parse('10 >= 2*sqrt(a*b)', new Minter())),
+    );
+  });
+
+  it('AM–GM ba số cũng đi, và hệ số phải khớp bậc căn', () => {
+    const ok = run('3*root(3, a*b*c) >= 1', '3*root(3, a*b*c)');
+    expect(ok.refusal).toBeNull();
+    expect(unparse(ok.rows[1]!.expr)).toBe(unparse(parse('a + b + c >= 1', new Minter())));
+
+    // $2\sqrt[3]{abc}$ **không** phải AM–GM của bất cứ bộ nào — hệ số phải bằng bậc.
+    expect(run('2*root(3, a*b*c) >= 1', '2*root(3, a*b*c)').refusal).toContain('đều phải là 3');
+  });
+
+  it('**chiều sai bị chặn bằng cấu trúc** — vì bộ bốc điểm không chặn nổi', () => {
+    const wrong = run('a + b >= 1', 'a + b');
+    expect(wrong.refusal).toContain('phải làm vế lớn lên');
+    expect(run('1 <= a + b', 'a + b').refusal).toContain('phải làm vế lớn lên');
+  });
+
+  it('…và **phép kiểm bằng điểm thật sự bất lực ở đây** — đo, không đoán', () => {
+    // Đây là lý do `oneWay` tồn tại. Bỏ phép so này đi thì chú thích của `oneWay` là
+    // một khẳng định không ai kiểm — đúng lớp lỗi mà cả mạch này đi tìm.
+    const before = parse('a + b >= 1', new Minter());
+    const after = parse('2*sqrt(a*b) >= 1', new Minter());
+    const nonNeg = (name: string) => ({ expr: parse(name, new Minter()), sign: '>=0' as const });
+
+    const verdict = impliesSolutionSet(before, after, [nonNeg('a'), nonNeg('b')], 1);
+    expect(verdict.ok, 'bộ bốc điểm nay bắt được chiều sai — `oneWay` có thể mỏng đi').toBe(true);
+
+    // Mà phản ví dụ thì có thật, và tầm thường: $a = 1$, $b = 0{,}01$.
+    expect(1 + 0.01).toBeGreaterThanOrEqual(1);
+    expect(2 * Math.sqrt(1 * 0.01)).toBeLessThan(1);
+  });
+
+  it('đẳng thức thì **từ chối**, và cụm nằm chỗ không đơn điệu cũng thế', () => {
+    expect(run('a + b = 1', 'a + b').refusal).toContain('không áp lên một đẳng thức');
+    expect(run('1/(a + b) >= 1', 'a + b').refusal).toContain('không đơn điệu');
+  });
+
+  it('điều kiện $a \\ge 0$ là `Guard` có cấu trúc **và** một dòng chữ trên hình', () => {
+    const m = run('2*sqrt(a*b) >= 1', '2*sqrt(a*b)');
+    expect(m.refusal).toBeNull();
+
+    // Dòng chữ: thứ người học nhìn thấy. Thiếu nó thì bước AM–GM hiện ra như một phép
+    // biến đổi vô điều kiện, mà điều kiện không âm chính là chỗ nó bị áp bừa nhiều nhất.
+    expect(m.conditions.map((c) => c.text)).toEqual(['a ≥ 0, b ≥ 0']);
+
+    // `Guard` có cấu trúc: thứ trả lời được *"thì sao nếu $a < 0$"*. Hỏi thẳng luật,
+    // vì ở hạt giống này bộ bốc điểm của `model` **không** bắt được ca thiếu guard —
+    // nên một phép so đầu-cuối sẽ xanh cả khi guard biến mất.
+    const rule = RULES.find((r) => r.id === 'am_gm') as (typeof RULES)[number];
+    const out = rule.run(new Minter(), parse('2*sqrt(a*b) >= 1', new Minter()), '2*sqrt(a*b)');
+    expect('refusal' in out).toBe(false);
+    const attached = guardList(('guard' in out ? out.guard : null) ?? null);
+    expect(attached.map((g) => g.sign)).toEqual(['>=0', '>=0']);
+    expect(attached.map((g) => toPlain(g.expr))).toEqual(['a', 'b']);
+
+    // Không phải chữ: bỏ điều kiện đi thì bộ kiểm bốc trúng điểm âm và kết tội **đúng**
+    // — $\sqrt{(-1)(-4)} = 2$ nên vế trước đúng, mà $-1 + -4 = -5 < 1$.
+    const before = parse('2*sqrt(a*b) >= 1', new Minter());
+    const after = parse('a + b >= 1', new Minter());
+    expect(impliesSolutionSet(before, after, null, 7).ok).toBe(false);
+
+    // Và có điều kiện thì nó xanh — cùng phép kiểm, cùng hạt giống, chỉ khác `Guard`.
+    const nonNeg = (name: string) => ({ expr: parse(name, new Minter()), sign: '>=0' as const });
+    expect(impliesSolutionSet(before, after, [nonNeg('a'), nonNeg('b')], 7).ok).toBe(true);
+  });
+
+  it('…và **cả hai nhánh** của AM–GM kèm điều kiện, không chỉ nhánh được test', () => {
+    // Lượt bẻ răng bắt đúng chỗ này: phép so ở trên chỉ đi qua nhánh *nghịch*
+    // ($n\sqrt[n]{\cdot} \to$ tổng), nên bỏ `guard` khỏi nhánh *xuôi* mà 224 test vẫn
+    // xanh. Một luật hai nhánh cần hai phép so — danh sách nhánh, không danh sách luật.
+    const forward = run('10 >= a + b', 'a + b');
+    expect(forward.refusal).toBeNull();
+    expect(forward.conditions.map((c) => c.text)).toEqual(['a ≥ 0, b ≥ 0']);
+
+    const rule = RULES.find((r) => r.id === 'am_gm') as (typeof RULES)[number];
+    const out = rule.run(new Minter(), parse('10 >= a + b', new Minter()), 'a + b');
+    expect('refusal' in out).toBe(false);
+    const attached = guardList(('guard' in out ? out.guard : null) ?? null);
+    expect(attached.map((g) => g.sign)).toEqual(['>=0', '>=0']);
+    expect(attached.map((g) => toPlain(g.expr))).toEqual(['a', 'b']);
+  });
+
+  it('Cauchy–Schwarz: ảnh → tổng đi được, tổng → ảnh bị chặn', () => {
+    const ok = run('(a + b)^2/(x + y) >= 1', 'a^2/x + b^2/y', 'cauchy_schwarz');
+    expect(ok.refusal).toBeNull();
+    expect(ok.unsound).toEqual([]);
+    expect(unparse(ok.rows[1]!.expr)).toBe(
+      unparse(parse('a^2/x + b^2/y >= 1', new Minter())),
+    );
+
+    expect(run('a^2/x + b^2/y >= 1', 'a^2/x + b^2/y', 'cauchy_schwarz').refusal).toContain(
+      'phải làm vế lớn lên',
+    );
+
+    // Mẫu **dương** hiện ra thành chữ, không chỉ nằm trong `Guard`. Dạng Engel bị áp
+    // bừa lên mẫu âm nhiều đúng bằng AM–GM bị áp bừa lên số âm.
+    expect(ok.conditions.map((c) => c.text)).toEqual(['x > 0, y > 0']);
+  });
+
+  it('Cauchy ba số, và mẫu **dương** chứ không chỉ khác 0', () => {
+    const three = run('(a + b + c)^2/(x + y + z) >= 1', 'a^2/x + b^2/y + c^2/z', 'cauchy_schwarz');
+    expect(three.refusal).toBeNull();
+    expect(three.unsound).toEqual([]);
+
+    // $\frac{1}{-1} = -1$ nhỏ hơn mọi thứ, nên "khác 0" không đủ: bỏ vế $\ge 0$ đi thì
+    // bộ kiểm bốc trúng mẫu âm và bác — đây là phép đo của chính câu ấy.
+    const before = parse('(a + b)^2/(x + y) >= 1', new Minter());
+    const after = parse('a^2/x + b^2/y >= 1', new Minter());
+    const nonZero = (n: string) => ({ expr: parse(n, new Minter()), sign: '!=0' as const });
+    const positive = (n: string) => [
+      { expr: parse(n, new Minter()), sign: '>=0' as const },
+      nonZero(n),
+    ];
+
+    expect(impliesSolutionSet(before, after, [nonZero('x'), nonZero('y')], 3).ok).toBe(false);
+    expect(impliesSolutionSet(before, after, [...positive('x'), ...positive('y')], 3).ok).toBe(true);
+  });
+
+  it('dòng đỏ nói **đúng** món nợ: bất đẳng thức không có nghiệm ngoại lai', () => {
+    // Lộ ra ở lượt nhìn ảnh: card của bài Cauchy hiện "nghiệm có thể ngoại lai — phải
+    // thử lại", một câu dặn người học đi làm việc **không tồn tại**. Bước AM–GM không
+    // sinh nghiệm lạ nào; nghĩa vụ duy nhất là đừng suy ngược.
+    const ineq = layout(run('2*sqrt(a*b) >= 6', '2*sqrt(a*b)'));
+    expect(ineq.notes.map((n) => n.text)).toContain('bước một chiều — không suy ngược được');
+
+    // Và ca cũ **không đổi**: bình phương hai vế một phương trình thì vẫn là món nợ
+    // thử lại, vì ở đó nghiệm ngoại lai có thật.
+    const eq = layout(readAlgebra(scene('sqrt(x) = x + (-2)', [{ rule: 'pow_both_sides', at: '', arg: '2' }])));
+    expect(eq.notes.map((n) => n.text)).toContain('nghiệm có thể ngoại lai — phải thử lại');
+  });
+
+  it('tử không phải bình phương thì từ chối — Engel là Engel', () => {
+    expect(run('(a + b)^2/(x + y) >= 1', 'a/x + b/y', 'cauchy_schwarz').refusal).toContain(
+      'phải là một bình phương',
+    );
   });
 });

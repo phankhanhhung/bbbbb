@@ -276,7 +276,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§47 để biết tập luật thật — **80 luật**, xếp theo mười ba lớp:
+Xem §21–§52 để biết tập luật thật — **82 luật**, xếp theo mười bốn lớp:
 
 > **Bảng này có răng.** `engine.test.ts` đọc chính bảng dưới, gom mọi tên trong dấu
 > nháy ngược, và so với `RULES`: thừa một tên là đỏ, thiếu một tên cũng là đỏ. Lý do
@@ -302,6 +302,7 @@ Xem §21–§47 để biết tập luật thật — **80 luật**, xếp theo m
 | **hàm siêu việt** (M61, §37) | `log_product`, `log_quotient`, `log_power`, `log_change_base`, `exp_log`, `log_exp`, `log_both_sides`, `pythagorean_identity`, `double_angle`, `sum_to_product`, `product_to_sum` |
 | **phương trình hàm** (M73, §45) | `specialize` |
 | **hàm sinh & chuỗi** (M68, §44; M72, §47; AL-20) | `geometric_series`, `coeff_of_product`, `coeff_linear`, `coeff_shift`, `coeff_repeated_geometric`, `partial_fractions` |
+| **bất đẳng thức có tên** (AL-21, §52) | `am_gm`, `cauchy_schwarz` |
 
 **Hai điều luật này cố ý không có:**
 
@@ -3699,3 +3700,86 @@ còn `ALGEBRA_RULE_LABELS` **có** hứa — chú thích của nó nói *"để 
 đọc chung một nguồn"* — nhưng không tài liệu nào và không giao diện nào đọc nó. Một
 nguồn chung mà chỉ có một đầu thì không phải nguồn chung; `RULES` vẫn export, ai cần
 bảng ấy dựng lại mất một dòng.
+
+---
+
+## §52 — Bất đẳng thức có tên, và một lời hứa của kế hoạch mà mã không giữ (AL-21)
+
+`ALGEBRA-COVERAGE.md` §4.1 gọi đây là con số quan trọng nhất của cả bảng: bất đẳng thức
+là **35% đề đại số olympiad** mà engine phủ **5%** — nó chỉ làm phần *biến đổi tương
+đương*, nên bước mang nội dung (*"AM–GM cho ba số này"*) phải viết thành một
+`add_both_sides` nào đó và **lời giải mất đúng câu đáng dạy**.
+
+Hai luật đóng phần *có tên* của lỗ ấy:
+
+| luật | phát biểu | điều kiện |
+|---|---|---|
+| `am_gm` | $a_1 + \dots + a_n \ge n\sqrt[n]{a_1 \cdots a_n}$ | mọi $a_i \ge 0$ |
+| `cauchy_schwarz` | $\sum \dfrac{a_i^2}{x_i} \ge \dfrac{(\sum a_i)^2}{\sum x_i}$ (dạng Engel) | mọi $x_i > 0$ |
+
+### §52.1 — Bốn mảnh đã có sẵn, không mảnh nào dựng riêng cho lượt này
+
+| cần gì | đã có từ |
+|---|---|
+| điều kiện $a \ge 0$ | `Guard` — M50 tầng B |
+| **nhiều** điều kiện cùng lúc | `Guards` — dựng cho `sum_split`, đây là chỗ thứ hai cần |
+| bước một chiều | `verify: 'implies'` — `pow_both_sides` |
+| phép kiểm chiều | `impliesSolutionSet` — bốc điểm, trả nhân chứng |
+
+Cả hai luật nhận trọn nút `rel` (`at: ""`), không nhận cây con — vì `impliesSolutionSet`
+so hai **quan hệ**, và hỏi nó về một cây con là hỏi sai câu. Cụm cần thay thì `arg` chỉ
+ra, và **hình dạng cụm quyết định chiều**: chỉ vào một tổng thì `am_gm` hạ xuống trung
+bình nhân, chỉ vào $n\sqrt[n]{\cdot}$ thì nó nâng lên trung bình cộng.
+
+### §52.2 — Lời hứa của kế hoạch, và phép đo bác nó
+
+Kế hoạch của lượt này viết nguyên văn: *"luật chỉ cần **đề xuất** phép thay; bộ kiểm
+bốc điểm và **từ chối** khi chiều sai"*. Đúng cho Cauchy. **Sai cho AM–GM.**
+
+Đề xuất chiều sai — từ $a+b \ge 1$ suy ra $2\sqrt{ab} \ge 1$ — rồi hỏi bộ kiểm:
+*"kéo theo đúng trên 205 điểm"*. Không phải bộ kiểm hỏng. Phản ví dụ cần
+$a+b \ge 1$ **và** $ab < \tfrac14$, tức một số lớn kèm một số rất nhỏ; mà
+`relationSampler` bốc trong $[0{,}25,\,5]$ và phần đối xứng âm, cố ý tránh lân cận $0$
+vì mẫu sát $0$ làm mọi phép chia nổ. Hệ quả: **phép kiểm chiều rỗng** đúng ở luật cần
+nó nhất, và rỗng một cách xanh.
+
+Một chốt canh luôn xanh là chốt canh không có. Nên chiều được quyết bằng **cấu trúc**,
+trong `oneWay`, và `verify: 'implies'` ở lại làm **lưới thứ hai**. Đó cũng là tiền lệ
+đã có: `pow_both_sides` **từ chối** luỹ thừa chẵn trên bất đẳng thức thay vì hy vọng bốc
+trúng $-5 < 3$.
+
+Điều kiện đủ mà `oneWay` kiểm được bằng cây: đường từ nút quan hệ tới cụm đi qua **toàn
+nút `add`** — tổng đơn điệu tăng theo từng hạng tử, nên cụm tăng thì cả vế tăng. Ghép
+với chiều quan hệ:
+
+| | cụm ở vế trái | cụm ở vế phải |
+|---|---|---|
+| `L ≥ R` (và `>`) | phép thay phải **tăng** | phải **giảm** |
+| `L ≤ R` (và `<`) | phải **giảm** | phải **tăng** |
+
+`=` và `!=` thì từ chối: một bước một chiều trên đẳng thức không có nghĩa gì.
+
+### §52.3 — Ba chỗ lượt bẻ răng bắt được
+
+- **Một luật hai nhánh cần hai phép so.** Chốt canh đầu chỉ đi qua nhánh nghịch của
+  `am_gm`, nên bỏ `guard` khỏi nhánh xuôi mà $224$ test vẫn xanh. Danh sách **nhánh**,
+  không danh sách luật.
+- **`Guard` phải hỏi thẳng luật, không hỏi đầu-cuối.** Ở hạt giống của `model`, bỏ
+  `guard` đi thì `unsound` vẫn rỗng — cùng lý do §52.2. Nên phép so đọc `rule.run(...)`
+  và khẳng định đúng hai `Guard` dấu `>=0` trên đúng hai biến.
+- **Dòng đỏ nói sai món nợ.** Card của bài Cauchy hiện *"nghiệm có thể ngoại lai — phải
+  thử lại"*, một câu dặn người học đi làm việc **không tồn tại**: bước AM–GM không sinh
+  nghiệm lạ nào, nghĩa vụ duy nhất là đừng suy ngược. Nay `oneWayNote` chọn chữ theo
+  loại quan hệ. Lộ ra ở lượt **nhìn ảnh**, đúng chỗ mọi lỗi hiển thị từ M47 tới nay đều lộ.
+
+### §52.4 — Ranh giới, sắc hơn chứ không mờ đi
+
+**Không** làm *"không mất tổng quát, giả sử $a \ge b \ge c$"*. `ALGEBRA-COVERAGE.md`
+§4.1 đã vạch: đó là một bước về *cấu trúc chứng minh*, không phải phép biến đổi cây —
+nó đòi **nhánh giả thiết**, một khái niệm engine chưa có. Sau lượt này ranh giới ấy
+sắc hơn: phần *luật có tên* đã xong, nên phần còn lại là **một khái niệm**, không phải
+vài luật nữa.
+
+Cũng không có chiều ngược của Cauchy — từ một phân thức đoán ra cách **tách** nó thành
+$\sum a_i^2/x_i$. Phép tách không xác định, nên đó là một phép *tìm*, và engine này
+không tìm (NG-03). Tác giả khai tổng; luật dựng ảnh rồi khớp.

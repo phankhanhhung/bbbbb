@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.5.0",
+  "id": "am-gm-from-a-square",
+  "statement": {
+    "vi": "Bất đẳng thức $a + b \\ge 2\\sqrt{ab}$ không phải một câu thần chú. Nó rơi ra từ **một** sự thật duy nhất: một bình phương thì không âm. Dựng lại nó từ đó, rồi dùng nó như một nước đi có tên."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: cả chứng minh chỉ có **một** bất đẳng thức thật, ở dòng đầu. Bảy dòng sau là đại số thuần — engine kiểm từng dòng bằng phép so giá trị, không dòng nào cần tin. Đó cũng là lý do bước AM–GM xứng đáng có tên riêng: một khi đã dựng, nó là một nước đi chứ không phải một chuỗi biến đổi phải làm lại mỗi lần."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Từ một bình phương không âm"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Với $a, b \\ge 0$ thì $\\sqrt a$ và $\\sqrt b$ có nghĩa, và $(\\sqrt a - \\sqrt b)^2 \\ge 0$ — **sự thật duy nhất** cả bài dựa vào. Nhân ra, rút gọn hai bình phương của căn, rồi chuyển hạng tử âm sang vế phải.\n[[a1|Dòng cuối]] chính là AM–GM. Chú ý nó nói được cả **khi nào bằng nhau**: dấu bằng ở dòng đầu xảy ra đúng lúc $\\sqrt a = \\sqrt b$, tức $a = b$ — và thông tin ấy đi theo suốt bảy dòng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row7"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(sqrt(a) + (-1)*sqrt(b))*(sqrt(a) + (-1)*sqrt(b)) >= 0",
+              "steps": [
+                {
+                  "at": "L",
+                  "note": "nhân ra",
+                  "rule": "multiply_out"
+                },
+                {
+                  "at": "L.0",
+                  "rule": "root_pow"
+                },
+                {
+                  "at": "L.2",
+                  "rule": "root_pow"
+                },
+                {
+                  "arg": "2*sqrt(a)*sqrt(b)",
+                  "at": "",
+                  "note": "chuyển sang vế phải",
+                  "rule": "add_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "collect_like"
+                },
+                {
+                  "at": "R",
+                  "rule": "drop_unit"
+                },
+                {
+                  "at": "R",
+                  "rule": "root_of_product"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Tám dòng bất đẳng thức. Dòng đầu: (căn a trừ căn b) nhân chính nó, lớn hơn hoặc bằng 0. Rồi nhân ra thành căn a bình cộng trừ 2 căn a căn b cộng căn b bình. Rồi hai bình phương của căn thành a và b. Rồi cộng 2 căn a căn b vào hai vế. Rồi gộp vế trái thành a cộng b. Dòng cuối: a cộng b lớn hơn hoặc bằng 2 căn ab."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Đã dựng xong thì nó là một **nước đi**, không phải bảy dòng phải viết lại. Muốn chặn dưới $a+b$ thì chặn dưới $2\\sqrt{ab}$ trước, rồi bước AM–GM chuyển sang: từ $2\\sqrt{ab} \\ge 6$ suy ra $a+b \\ge 6$.\n[[a1|Dòng đỏ]] là phần engine không cho quên. Và chiều thì engine **không cho đi ngược**: bảo nó suy từ $a+b \\ge 6$ ra $2\\sqrt{ab} \\ge 6$ thì nó từ chối, vì $a=6, b=0$ thoả vế trước mà không thoả vế sau."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2*sqrt(a*b) >= 6",
+              "steps": [
+                {
+                  "arg": "2*sqrt(a*b)",
+                  "at": "",
+                  "rule": "am_gm"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: 2 căn ab lớn hơn hoặc bằng 6; rồi a cộng b lớn hơn hoặc bằng 6, kèm dòng điều kiện a lớn hơn hoặc bằng 0, b lớn hơn hoặc bằng 0."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

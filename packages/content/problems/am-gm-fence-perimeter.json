@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.5.0",
+  "id": "am-gm-fence-perimeter",
+  "statement": {
+    "vi": "Một mảnh vườn hình chữ nhật có diện tích $36$ m². Rào hết chu vi thì tốn ít nhất bao nhiêu mét hàng rào? Diện tích **cố định** mà chu vi thì không — và AM–GM nói đúng chỗ nó dừng."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: bài này thường được dạy bằng đạo hàm, mà không cần. Tích $ab$ bị ghim ở $36$, nên trung bình nhân là một **hằng số** — và AM–GM biến một hằng số thành cận dưới cho tổng. Dấu bằng ở $a=b=6$ không phải may mắn: nó là điều kiện bằng nhau của chính bất đẳng thức, và nó nói mảnh vườn tối ưu là hình vuông."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "extremal"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P1"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Ghim tích, chặn tổng"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Gọi hai cạnh là $a$ và $b$, thì $ab = 36$. Trung bình nhân $2\\sqrt{ab}$ vì thế **không còn ẩn nào**: nó bằng [[a1|đúng $12$]], một con số.\nĐây là toàn bộ mẹo. Cái làm bài này giải được không phải AM–GM mà là chuyện *tích bị ghim* — AM–GM chỉ là cái cầu bắc từ tích sang tổng."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2*sqrt(36)",
+              "steps": [
+                {
+                  "at": "1",
+                  "rule": "eval_root"
+                },
+                {
+                  "at": "",
+                  "rule": "eval_int"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Ba dòng: 2 nhân căn 36; rồi 2 nhân 6; rồi 12."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Vậy bất đẳng thức xuất phát $2\\sqrt{ab} \\ge 12$ chỉ là $12 \\ge 12$ — đúng, và không hề chặt. Bước AM–GM chuyển nó sang $a + b \\ge 12$, rồi nhân đôi cho ra chu vi: [[a1|dòng cuối]] nói hàng rào không dưới $24$ mét.\nĐạt được: $a = b = 6$, tức mảnh vườn **hình vuông**. Điều kiện bằng nhau của AM–GM là $a = b$, và ở đây nó vừa khít với ràng buộc $ab = 36$ ở đúng một điểm."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row3"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "2*sqrt(a*b) >= 12",
+              "steps": [
+                {
+                  "arg": "2*sqrt(a*b)",
+                  "at": "",
+                  "rule": "am_gm"
+                },
+                {
+                  "arg": "2",
+                  "at": "",
+                  "note": "chu vi",
+                  "rule": "mul_both_sides"
+                },
+                {
+                  "at": "L",
+                  "rule": "distribute"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bốn dòng: 2 căn ab lớn hơn hoặc bằng 12; rồi a cộng b lớn hơn hoặc bằng 12, kèm dòng điều kiện a và b không âm; rồi nhân hai vế với 2; rồi 2a cộng 2b lớn hơn hoặc bằng 24."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s1"
+  }
+}

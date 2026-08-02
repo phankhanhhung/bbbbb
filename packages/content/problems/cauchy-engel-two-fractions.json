@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.5.0",
+  "id": "cauchy-engel-two-fractions",
+  "statement": {
+    "vi": "Cho $x, y > 0$ với $x + y = 1$. Chứng minh $\\dfrac{1}{x} + \\dfrac{4}{y} \\ge 9$. Cộng hai phân số rồi đạo hàm thì được, nhưng có một đường một dòng."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Chỗ đáng nhìn: dạng Engel của Cauchy–Schwarz gộp cả tổng phân thức thành **một** phân thức, và mẫu mới là $x+y$ — đúng cái đại lượng bài đã ghim. Mẹo duy nhất là viết $1 = 1^2$ và $4 = 2^2$; sau đó không còn gì để nghĩ. Engine đi chiều **ảnh → tổng**, tức chiều một bất đẳng thức thật sự được dùng: chặn dưới cái đơn giản trước, rồi chuyển sang cái phức tạp."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-02",
+  "updated": "2026-08-02",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Dạng Engel, đọc ngược"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Dạng Engel nói $\\dfrac{a^2}{x} + \\dfrac{b^2}{y} \\ge \\dfrac{(a+b)^2}{x+y}$ khi $x, y > 0$. Với $a = 1$, $b = 2$ thì vế phải là $\\dfrac{(1+2)^2}{x+y} = \\dfrac{9}{1} = 9$ — [[a1|một hằng số]], vì bài đã ghim $x + y = 1$.\nNên xuất phát từ $\\dfrac{(1+2)^2}{x+y} \\ge 9$ (thật ra là $9 \\ge 9$) và để bước Cauchy chuyển sang tổng. Hai bước cuối chỉ tính $1^2$ và $2^2$."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row0"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(1 + 2)^2/(x + y) >= 9",
+              "steps": [
+                {
+                  "arg": "1^2/x + 2^2/y",
+                  "at": "",
+                  "note": "dạng Engel, đọc ngược",
+                  "rule": "cauchy_schwarz"
+                },
+                {
+                  "at": "L.0.0",
+                  "rule": "eval_int"
+                },
+                {
+                  "at": "L.1.0",
+                  "rule": "eval_int"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Bốn dòng: (1 cộng 2) bình phương chia (x cộng y), lớn hơn hoặc bằng 9; rồi tổng 1 bình trên x cộng 2 bình trên y, kèm dòng điều kiện x lớn hơn 0 và y lớn hơn 0; rồi 1 bình thành 1; rồi 2 bình thành 4."
+          },
+          "verified": true
+        },
+        {
+          "id": "s1",
+          "parent": "s0",
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chiều đi được là chiều **ảnh → tổng**, và chỉ chiều ấy. Thử đi ngược — từ $\\dfrac{1}{x} + \\dfrac{4}{y} \\ge 9$ suy ra $\\dfrac{9}{x+y} \\ge 9$ — thì engine từ chối, vì phép thay ấy làm vế trái **nhỏ đi** trong khi vị trí đòi nó lớn lên.\nĐiều kiện $x, y > 0$ cũng không phải hình thức: [[a1|dòng đỏ]] đòi mẫu **dương**, không chỉ khác $0$. Với $x = -1$ thì $\\frac{1}{x} = -1$, nhỏ hơn mọi thứ, và bất đẳng thức lật."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "(a + b)^2/(x + y) >= 1",
+              "steps": [
+                {
+                  "arg": "a^2/x + b^2/y",
+                  "at": "",
+                  "rule": "cauchy_schwarz"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Hai dòng: (a cộng b) bình phương chia (x cộng y), lớn hơn hoặc bằng 1; rồi a bình trên x cộng b bình trên y, kèm dòng điều kiện x lớn hơn 0 và y lớn hơn 0."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

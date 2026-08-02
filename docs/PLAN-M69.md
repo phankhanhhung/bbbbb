@@ -174,9 +174,10 @@ tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mớ
 | **Ba bài lượng giác** — tiêu bốn luật đã dựng mà chưa bài nào dùng; §5 tụt 12 → 8 | 08-02 | `ALGEBRA-COVERAGE.md` §5 |
 | **Chữ toán trên OG card**: `\sin` không còn bị xoá im lặng; 31 lệnh khác cũng thế | 08-02 | `PLAN-P1.md` §10.3c |
 | **Tiêu đề OG đo bề rộng thật** — đóng `PLAN-P1.md` §10.3b, `18/144 → 0` card tràn | 08-02 | `PLAN-P1.md` §10.3b |
+| **AL-21** — bất đẳng thức có tên: `am_gm`, `cauchy_schwarz` + 3 bài; đóng phần *có tên* của §4.1 | 08-02 | `ENGINE-ALGEBRA.md` §52 |
 
-Kho đi từ **114 bài → 144 bài** trong hai ngày, test từ **3459** (M78.8) lên
-**3890 / 68 tệp**, schema từ `1.0.0` lên `1.5.0` — năm minor, năm migration đồng nhất.
+Kho đi từ **114 bài → 147 bài** trong hai ngày, test từ **3459** (M78.8) lên
+**3925 / 68 tệp**, schema từ `1.0.0` lên `1.5.0` — năm minor, năm migration đồng nhất.
 
 > **Một cái bẫy đếm, ghi ra để lần sau không phải điều tra lại.** Con số chính thức
 > là số của `pnpm test` (`vitest run` không lọc đường dẫn) — **3843 / 67 tệp** lúc
@@ -259,9 +260,10 @@ lại vẫn phải soát tay — nhưng nay ít nhất chúng có một danh sá
 
 ### Nợ có tên còn mở sau đoạn này
 
-- **Bất đẳng thức olympiad** — họ lớn nhất (35% đề đại số), engine phủ 5%. Phần
-  *luật có tên* (AM–GM, Cauchy) vừa khuôn kiến trúc; phần *"không mất tổng quát"*
-  đòi một khái niệm chưa có — nhánh giả thiết. `ALGEBRA-COVERAGE.md` §4.1.
+- **Nhánh giả thiết** — *"không mất tổng quát, giả sử $a \ge b \ge c$"*. Phần *luật
+  có tên* của bất đẳng thức đã đóng ở AL-21, nên nợ này hết mờ: nó không còn là "vài
+  luật chưa cài" mà là **một khái niệm chưa có**. `ALGEBRA-COVERAGE.md` §4.1,
+  `ENGINE-ALGEBRA.md` §52.4.
 - **Kết luận về hàm** (đơn ánh, toàn ánh, đơn điệu) — nửa sau của M73.
   `ALGEBRA-COVERAGE.md` §4.2.
 - **Binet / $\frac{1}{1-P(x)}$ với $\deg P \ge 2$** — sau ranh giới vô tỉ mà

@@ -7,7 +7,7 @@ import {
   type Guard,
   type Guards,
 } from './check.js';
-import { intExp, needsRealEval } from './expr.js';
+import { allPaths, intExp, needsRealEval, replaceAt, trySegments } from './expr.js';
 import {
   Minter,
   abs,
@@ -3954,7 +3954,240 @@ const geometricSeries: Rule = {
   },
 };
 
+/* ---------- lớp bất đẳng thức có tên ---------- */
+
+/**
+ * **Bất đẳng thức có tên** — và vì sao chúng vừa khuôn mà không cần cơ chế mới.
+ *
+ * `ALGEBRA-COVERAGE.md` §4.1 gọi đây là con số quan trọng nhất của bảng: bất đẳng thức
+ * là **35% đề đại số olympiad** mà engine phủ **5%**, vì engine chỉ làm phần *biến đổi
+ * tương đương*. Bước mang nội dung — *"AM–GM cho ba số này"* — phải viết thành một
+ * `add_both_sides` nào đó, và lời giải **mất đúng câu đáng dạy**.
+ *
+ * Chỗ khó thật không phải viết ra công thức mà là **kiểm** nó. Một bước bất đẳng thức
+ * đi một chiều: $2\sqrt{ab} \ge C \Rightarrow a+b \ge C$, còn chiều ngược thì sai. Bốn
+ * mảnh cần cho việc ấy đều đã có, và không mảnh nào dựng riêng cho lượt này:
+ *
+ * | cần gì | đã có từ |
+ * |---|---|
+ * | điều kiện $a \ge 0$ | `Guard` — M50 tầng B |
+ * | **nhiều** điều kiện cùng lúc | `Guards` — dựng cho `sum_split` |
+ * | bước một chiều | `verify: 'implies'` — `pow_both_sides` |
+ * | phép kiểm chiều | `impliesSolutionSet` — bốc điểm, trả nhân chứng |
+ *
+ * Nên luật ở đây chỉ **đề xuất** phép thay; bộ kiểm bốc điểm và **từ chối** khi chiều
+ * sai, kèm một điểm cụ thể. Đó là lý do chúng nhận trọn nút `rel` (`at: ""`) chứ không
+ * nhận cây con: `impliesSolutionSet` so hai **quan hệ**, và hỏi nó về một cây con là
+ * hỏi sai câu. Cụm cần thay thì `arg` chỉ ra.
+ *
+ * **Không** làm *"không mất tổng quát, giả sử $a \ge b \ge c$"*. §4.1 đã vạch: đó là
+ * một bước về *cấu trúc chứng minh*, không phải phép biến đổi cây — nó đòi **nhánh giả
+ * thiết**, một khái niệm engine chưa có. Ranh giới ấy giữ nguyên, và nay nó sắc hơn:
+ * phần *luật có tên* đã xong, phần còn lại là một khái niệm chứ không phải vài luật.
+ */
+
+/**
+ * Phép thay này **có hợp lệ một chiều không** — hỏi bằng cấu trúc, không bằng bốc điểm.
+ *
+ * ## Vì sao không phó mặc cho `impliesSolutionSet`
+ *
+ * Kế hoạch của lượt này viết: *"luật chỉ cần **đề xuất** phép thay; bộ kiểm bốc điểm và
+ * **từ chối** khi chiều sai"*. Đo ra thì câu ấy đúng cho Cauchy và **sai cho AM–GM**.
+ *
+ * Đề xuất chiều sai — từ $a+b \ge 1$ suy ra $2\sqrt{ab} \ge 1$ — rồi hỏi bộ kiểm:
+ * *"kéo theo đúng trên 205 điểm"*. Không phải bộ kiểm hỏng, mà vùng phản ví dụ nằm
+ * ngoài tầm với của nó: cần $a+b \ge 1$ **và** $ab < 1/4$, tức một số lớn kèm một số
+ * rất nhỏ, trong khi `relationSampler` cố ý tránh lân cận $0$ (nó bốc trong
+ * $[0{,}25,\ 5]$ và phần đối xứng âm). Chỗ tránh ấy có lý do riêng của nó — mẫu sát $0$
+ * làm mọi phép chia nổ — nhưng hệ quả là **phép kiểm chiều rỗng** đúng ở luật cần nó
+ * nhất.
+ *
+ * Một chốt canh luôn xanh là chốt canh không có. Nên chiều được quyết ở đây, và
+ * `verify: 'implies'` ở lại làm **lưới thứ hai** chứ không phải lưới duy nhất — đúng
+ * tiền lệ `pow_both_sides`, vốn cũng **từ chối** luỹ thừa chẵn trên bất đẳng thức thay
+ * vì hy vọng bốc trúng $-5 < 3$.
+ *
+ * ## Điều kiện đủ mà hàm này kiểm
+ *
+ * Thay một cụm bên trong quan hệ chỉ an toàn khi biết **giá trị cả vế đổi theo hướng
+ * nào**. Điều kiện đủ, kiểm được bằng cây: đường từ nút quan hệ tới cụm đi qua **toàn
+ * nút `add`**. Tổng đơn điệu tăng theo từng hạng tử, nên cụm tăng thì cả vế tăng.
+ *
+ * Rồi ghép với chiều của quan hệ:
+ *
+ * | | cụm ở vế trái | cụm ở vế phải |
+ * |---|---|---|
+ * | `L ≥ R` (và `>`) | phép thay phải **tăng** | phải **giảm** |
+ * | `L ≤ R` (và `<`) | phải **giảm** | phải **tăng** |
+ *
+ * `=` và `!=` thì **từ chối**: một bước một chiều trên đẳng thức không có nghĩa gì, và
+ * để nó lọt là mời người học viết một dấu bằng mà họ không chứng minh được.
+ */
+function oneWay(node: Expr & { k: 'rel' }, path: string, lowers: boolean): string | null {
+  if (node.op === '=' || node.op === '!=') {
+    return 'bất đẳng thức có tên là bước một chiều — không áp lên một đẳng thức';
+  }
+  const segments = trySegments(path);
+  const side = segments?.[0];
+  if (side !== 0 && side !== 1) return 'lỗi trong engine: cụm không nằm trong vế nào';
+
+  // Mọi nút **trên đường đi** phải là `add`; nút cuối (chính cụm) thì không cần.
+  let cursor: Expr = side === 0 ? node.lhs : node.rhs;
+  for (const step of (segments as number[]).slice(1)) {
+    if (cursor.k !== 'add') {
+      return 'cụm nằm sâu trong một phép tính không đơn điệu — đưa nó ra thành một hạng tử trước';
+    }
+    cursor = cursor.args[step] as Expr;
+  }
+
+  const wantsLower = (node.op === '>=' || node.op === '>') === (side === 1);
+  if (wantsLower === lowers) return null;
+  return wantsLower
+    ? `ở vị trí này phép thay phải làm vế nhỏ đi, mà nó làm vế lớn lên`
+    : `ở vị trí này phép thay phải làm vế lớn lên, mà nó làm vế nhỏ đi`;
+}
+
+/**
+ * Dòng điều kiện, viết bằng chữ người đọc được.
+ *
+ * `Guard` và dòng chữ là **hai** thứ, và cả hai đều bắt buộc ở đây (M64): `Guard` trả
+ * lời *"thì sao nếu $a < 0$"*, còn dòng chữ là thứ người học **nhìn thấy**. Một bước
+ * AM–GM không hiện "$a \ge 0$" trên hình là một bước dạy sai — điều kiện không âm
+ * chính là chỗ AM–GM bị áp bừa nhiều nhất.
+ */
+const plainOf = (e: Expr): string => toPlain(e);
+
+const nonNegativeText = (terms: readonly Expr[]): string =>
+  terms.map((t) => `${plainOf(t)} ≥ 0`).join(', ');
+
+/** Cụm mà `arg` chỉ tới, kèm đường dẫn của nó trong quan hệ. */
+function locate(node: Expr, arg: string, m: Minter): { path: string; found: Expr } | string {
+  const wanted = parse(arg, m);
+  for (const [path, e] of allPaths(node)) if (same(e, wanted)) return { path, found: e };
+  return `không thấy cụm "${arg}" trong quan hệ này`;
+}
+
+/**
+ * AM–GM: $\dfrac{a_1 + \dots + a_n}{n} \ge \sqrt[n]{a_1 \cdots a_n}$, viết không mẫu.
+ *
+ * Hai chiều, và **hình dạng cụm quyết định chiều** chứ không phải một tham số thứ hai:
+ * chỉ vào một tổng thì nó hạ xuống trung bình nhân, chỉ vào $n\sqrt[n]{\cdot}$ thì nó
+ * nâng lên trung bình cộng. Chiều nào **hợp lệ ở vị trí ấy** thì `oneWay` trả lời — xem
+ * chú thích ở đó để biết vì sao câu trả lời không đến từ bộ bốc điểm.
+ *
+ * Điều kiện $a_i \ge 0$ là `Guard` có cấu trúc chứ không phải chữ: thiếu nó thì bộ kiểm
+ * bốc trúng điểm âm và kết tội **đúng** — $(-1) + (-4) \ge 2\sqrt{4}$ là sai.
+ */
+const amGm: Rule = {
+  id: 'am_gm',
+  label: 'bất đẳng thức AM–GM',
+  onRelation: true,
+  needsArg: true,
+  accepts: ['rel'],
+  run(m, node, arg) {
+    if (node.k !== 'rel') return no('AM–GM áp lên cả một bất đẳng thức, không lên cây con');
+    if (arg === undefined) return no('cần nói áp AM–GM cho cụm nào');
+    const hit = locate(node, arg, m);
+    if (typeof hit === 'string') return no(hit);
+    const { path, found } = hit;
+
+    // Chiều xuôi: tổng → trung bình nhân. Cụm **nhỏ đi**.
+    if (found.k === 'add') {
+      const terms = [...found.args];
+      if (terms.length < 2) return no('cần tổng ít nhất hai hạng tử');
+      const wrong = oneWay(node, path, true);
+      if (wrong !== null) return no(wrong);
+      const after = replaceAt(
+        node,
+        path,
+        mul(m, [int(m, terms.length), root(m, terms.length, mul(m, terms))]),
+      );
+      if (after === null) return no('lỗi trong engine: không thay được cụm');
+      return {
+        after,
+        verify: 'implies',
+        condition: nonNegativeText(terms),
+        guard: terms.map((t) => guardOf('>=0', () => t)),
+      };
+    }
+
+    // Chiều ngược: $n\sqrt[n]{a_1 \cdots a_n}$ → tổng. Cụm **lớn lên**.
+    const factors = found.k === 'mul' ? [...found.args] : [];
+    const radical = factors.find((f) => f.k === 'root') as (Expr & { k: 'root' }) | undefined;
+    const scale = factors.find((f) => f.k === 'int');
+    if (radical === undefined || scale === undefined || scale.k !== 'int') {
+      return no('cụm phải là một tổng, hoặc n lần căn bậc n của một tích');
+    }
+    const inside = radical.arg.k === 'mul' ? [...radical.arg.args] : [radical.arg];
+    if (scale.v !== radical.index || inside.length !== radical.index) {
+      return no(`căn bậc ${radical.index} thì hệ số và số thừa số đều phải là ${radical.index}`);
+    }
+    const wrong = oneWay(node, path, false);
+    if (wrong !== null) return no(wrong);
+    const after = replaceAt(node, path, add(m, inside));
+    if (after === null) return no('lỗi trong engine: không thay được cụm');
+    return {
+      after,
+      verify: 'implies',
+      condition: nonNegativeText(inside),
+      guard: inside.map((t) => guardOf('>=0', () => t)),
+    };
+  },
+};
+
+const cauchySchwarz: Rule = {
+  id: 'cauchy_schwarz',
+  label: 'Cauchy–Schwarz (dạng Engel)',
+  onRelation: true,
+  needsArg: true,
+  accepts: ['rel'],
+  run(m, node, arg) {
+    if (node.k !== 'rel') return no('Cauchy–Schwarz áp lên cả một bất đẳng thức');
+    if (arg === undefined) return no('cần khai tổng các phân thức');
+
+    // `arg` luôn khai **tổng**, kể cả khi quan hệ đang mang ảnh của nó. Lý do là phép
+    // tách không xác định: từ $\frac{(a+b)^2}{x+y}$ có vô số cách chẻ thành
+    // $\sum a_i^2/x_i$, và đoán hộ một cách là engine đi **tìm** thay vì đi kể (NG-03).
+    const sum = parse(arg, m);
+    if (sum.k !== 'add' || sum.args.length < 2) return no('cần tổng ít nhất hai phân thức');
+
+    const tops: Expr[] = [];
+    const bottoms: Expr[] = [];
+    for (const term of sum.args) {
+      if (term.k !== 'div') return no('mọi hạng tử phải là phân thức');
+      if (!(term.num.k === 'pow' && intExp(term.num) === 2)) {
+        return no('tử của mọi hạng tử phải là một bình phương');
+      }
+      tops.push(term.num.base);
+      bottoms.push(term.den);
+    }
+    const image = div(m, pow(m, add(m, tops), 2), add(m, bottoms));
+    const guard = bottoms.flatMap((b) => [guardOf('>=0', () => b), guardOf('!=0', () => b)]);
+    const condition = bottoms.map((b) => `${plainOf(b)} > 0`).join(', ');
+
+    // Hình dạng cụm đang có quyết định chiều, đúng như `am_gm`. Chiều **dùng được** là
+    // ảnh → tổng: từ $\frac{(\sum a)^2}{\sum x} \ge C$ suy ra $\sum \frac{a^2}{x} \ge C$.
+    // Chiều kia luật vẫn đề xuất, và `impliesSolutionSet` bác kèm một điểm cụ thể.
+    for (const [want, give, lowers] of [
+      [image, sum, false],
+      [sum, image, true],
+    ] as const) {
+      for (const [path, e] of allPaths(node)) {
+        if (!same(e, want)) continue;
+        const wrong = oneWay(node, path, lowers);
+        if (wrong !== null) return no(wrong);
+        const after = replaceAt(node, path, give);
+        if (after === null) return no('lỗi trong engine: không thay được cụm');
+        return { after, verify: 'implies', condition, guard };
+      }
+    }
+    return no(`không thấy "${arg}" lẫn ảnh Cauchy của nó trong quan hệ này`);
+  },
+};
+
 export const RULES: readonly Rule[] = [
+  amGm,
+  cauchySchwarz,
   geometricSeries,
   partialFractions,
   specialize,

@@ -15,11 +15,11 @@ Số đo dưới đây lấy từ mã và kho tại `HEAD` (soát 2026-08-02), k
 
 - Phase 1 đang chạy; **9 engine** — board, graph, sequence, set, point, game,
   derivation, longdiv, algebra — cộng một **lớp ván chơi** nằm ngang qua ba engine.
-- Kho có **144 bài đã xuất bản**, trên 568 scene. Nội dung do tác giả soạn và tự
+- Kho có **147 bài đã xuất bản**, trên 574 scene. Nội dung do tác giả soạn và tự
   duyệt; chất lượng editorial vẫn là gate của sản phẩm, không được tự động bỏ qua.
 - Schema đóng băng ở `1.0.0` (2026-08-01), nay ở **`1.5.0`** sau năm minor — mỗi
   minor một migration, cả năm đều đồng nhất. Player đọc được minor hiện tại và n−1.
-- 3890 test (68 tệp), 146 e2e, golden SVG phủ mọi step có hình.
+- 3925 test (68 tệp), 146 e2e, golden SVG phủ mọi step có hình.
 - Coverage ước lượng khoảng **85%** các họ bài tổ hợp mà engine hiện tại có
   thể gánh phần lập luận. Đây là ước lượng chuyên gia, không phải benchmark
   trên một tập đề hoàn chỉnh; xem [`docs/VIZ-COVERAGE.md`](docs/VIZ-COVERAGE.md).
@@ -52,7 +52,7 @@ Nó nằm **trên** SRS một tầng; SRS vẫn giữ quyền với mọi requir
 |---|---:|---|---|
 | `board` | 40 | lưới **vuông / tam giác / lục giác**, quân, tile (kể cả **trên lưới phi vuông**), vùng khuyết, bàn dán mép, bảng số, lan truyền, đường đi | bàn 3D / nhiều lớp; ô mang công thức; lưới vô hạn có cửa sổ trượt |
 | `graph` | 36 | đa đồ thị, ghép cặp + König + Hall, ma trận kề, poset/Hasse + Dilworth, mã Prüfer, **tô mặt sau embedding**, tô đỉnh và tô cạnh đúng luật, đỉnh mang số | kiểm tính phẳng **tổng quát** (LR / PQ-tree); analyzer số sắc $\chi(G)$; luồng cực đại |
-| `algebra` | 39 | cây biểu thức 16 kiểu nút, **80 luật**, và **kiểm tính đúng của từng bước** trên bốn sân: $\mathbb{F}_p$, thực, nguyên, chuỗi luỹ thừa hình thức | **không có bộ giải, không `simplify_all`, không gợi ý bước** (NG-03) — nó kể một chuỗi biến đổi đã biết và tự kiểm, không tìm ra lập luận |
+| `algebra` | 42 | cây biểu thức 16 kiểu nút, **82 luật**, và **kiểm tính đúng của từng bước** trên bốn sân: $\mathbb{F}_p$, thực, nguyên, chuỗi luỹ thừa hình thức | **không có bộ giải, không `simplify_all`, không gợi ý bước** (NG-03) — nó kể một chuỗi biến đổi đã biết và tự kiểm, không tìm ra lập luận |
 | `sequence` | 19 | dãy số, đa tập, đống sỏi, thao tác lặp, dãy con đơn điệu, lan truyền | luật gộp là **enum đóng**, không cho nhập biểu thức |
 | `game` | 10 | bốc đống: Grundy, misère, phổ một và **hai** chiều, Wythoff, trò Euclid, hợp luật, **luật nhớ nước trước** | mọi trò **không** phải đa tập số nguyên — chúng sống ở lớp ván chơi bên dưới, không ở engine này |
 | `set` | 6 | bảng incidence, Venn ≤ 3 tập, dot/bar cho đa tập | Venn quá 3 tập — sự thật hình học, không phải giới hạn cài đặt |
@@ -85,7 +85,7 @@ Kỷ luật đi kèm, và nó là phần đắt hơn cả tập luật: mọi su
 `readAlgebra` cho `refusal === null`, `unsound === []`, `unchecked === []` **trước
 khi** một chữ narrative nào được viết. Bị từ chối thì đổi bài, không đổi narrative.
 Chi tiết: [`docs/ENGINE-ALGEBRA.md`](docs/ENGINE-ALGEBRA.md) (§20 có bảng phân lớp
-80 luật, và bảng ấy **có chốt canh đọc lại từ mã**).
+82 luật, và bảng ấy **có chốt canh đọc lại từ mã**).
 
 ## Bắt đầu nhanh
 
