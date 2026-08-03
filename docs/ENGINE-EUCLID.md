@@ -411,7 +411,8 @@ sai, và engine chỉ ra được cấu hình phản ví dụ.
 
 Với mỗi bậc tự do:
 
-- `given` → hai số hữu tỉ trong $[-100, 100]$, mẫu số bị chặn.
+- `given` → hai số hữu tỉ, tử số bốc từ tập cỡ $|S|$ **suy ra theo §8.1**, không phải
+  một khoảng gõ cứng. Mặc định: tử số 32 bit, mẫu số bị chặn.
 - `point_on(circle)` → **một** tham số hữu tỉ, qua chiếu nổi từ điểm gốc mà đường
   tròn mang theo (§4.2); đường tròn không có điểm gốc thì bốc bằng float.
 - `point_on(line)` / `point_on(segment)` → một tham số hữu tỉ, `segment` thì trong $(0,1)$.
@@ -451,20 +452,79 @@ lỗi, **và** mệnh đề tác giả viết sai.
 
 ### 8.1 Cách kiểm
 
-Với mỗi `claim`: dựng lại toàn bộ cấu hình với **8 bộ tham số ngẫu nhiên**, đánh giá
-vị từ ở từng bộ. Đúng cả 8 → nhận. Sai ở bất kỳ bộ nào → `euclid/claim-false`, kèm
+Với mỗi `claim`: dựng lại toàn bộ cấu hình với $k$ bộ tham số ngẫu nhiên, đánh giá
+vị từ ở từng bộ. Đúng cả $k$ → nhận. Sai ở bất kỳ bộ nào → `euclid/claim-false`, kèm
 bộ tham số phản ví dụ và ảnh render của nó.
 
-Vì sao 8 lần là đủ mạnh: mọi vị từ ở §8.3 quy về "một hàm đại số theo các tham số tự
-do bằng $0$". Một hàm đại số khác không thì tập không điểm của nó có **độ đo $0$**;
-trúng nó 8 lần liên tiếp bằng số ngẫu nhiên là chuyện không xảy ra. Cùng lập luận với
-Schwartz–Zippel mà `algebra/check.ts` đang dùng, chỉ khác là ở đây biến số là toạ độ
-chứ không phải ẩn của biểu thức.
+Mọi vị từ ở §8.3 quy về "một đa thức $P$ theo các tham số tự do bằng $0$" (§8.3 cuối).
+Câu hỏi "mệnh đề có đúng không" là câu hỏi "$P \equiv 0$ hay không".
+
+#### $k$ **phải được suy ra**, không được gõ cứng
+
+Đây là chỗ bản đầu của tài liệu này sai, và sai theo kiểu tệ nhất — chép một con số
+từ engine khác mà không kiểm điều kiện của nó có còn đúng không.
+
+Schwartz–Zippel: bốc mỗi biến độc lập, đều, từ tập hữu hạn $S$ thì
+
+$$\Pr[P = 0 \mid P \not\equiv 0] \le \frac{d}{|S|}, \qquad \text{$k$ lượt} \Rightarrow \left(\frac{d}{|S|}\right)^{k}$$
+
+**Tham số quyết định là $d/|S|$, không phải $k$.** Số lượt chỉ nâng luỹ thừa một tỉ
+số đã có sẵn; tỉ số tệ thì bao nhiêu lượt cũng vô nghĩa.
+
+`algebra/check.ts` chạy được với $k$ nhỏ vì **hai** điều kiện, và comment ở đó nói
+thẳng rằng $8$ là *"thừa an toàn"*:
+
+| | `algebra` | `euclid` |
+|---|---|---|
+| chặn bậc | $d \le 64$ (ngữ pháp nhỏ + `maxDepth: 6`) | **không có sẵn** — bậc phình theo độ sâu dựng hình |
+| cỡ tập bốc | $\|S\| = 2^{31}-1$ (trường $\mathbb{F}_p$) | do ta chọn |
+| tỉ số | $3\times10^{-8}$ | **phải tính** |
+
+Chuỗi 25 phép dựng dễ cho ra $d$ hàng trăm tới hàng nghìn. Nếu bốc từ $[-100, 100]$
+thì $d/|S| > 1$ và **cận không nói gì cả** — tám lượt của một cận vô nghĩa vẫn vô
+nghĩa. Trên thực tế nó vẫn chạy đúng, nhưng "thực tế chạy đúng" không phải một bảo
+đảm, và tài liệu này không được nhận vơ bảo đảm mình không có.
+
+#### Quy trình đúng
+
+1. **Chặn bậc từ chính chuỗi phép dựng.** Mỗi op ở §5 khai một quy tắc bậc (`line`
+   cộng bậc hai đầu vào, `circumcircle` nhân ba, `intersect` cộng tử–mẫu…). Engine
+   cộng dồn ra cận $d$. Vượt `maxDegree` thì từ chối, không đoán bừa.
+2. **Chọn $|S|$ từ $d$.** Đòn bẩy rẻ là $|S|$ chứ không phải $k$: thêm một bit vào
+   $|S|$ **chia đôi** rủi ro và chỉ tốn một bit trong số hữu tỉ, còn thêm một lượt
+   thì **nhân thêm** đúng tỉ số ấy mà tốn cả một lần dựng lại toàn cấu hình.
+3. **Nhưng $|S|$ đánh nhau với `maxRatDigits`.** Toạ độ đầu vào càng nhiều chữ số thì
+   phân số càng sớm phình quá trần §16 và **rơi xuống float** — mà rơi float là mất
+   sạch bảo đảm này. Đây là chỗ đánh đổi thật của engine.
+4. **In con số ra.** Engine báo cận đạt được cho từng bài, ví dụ
+   `kiểm: d ≤ 4·10³, |S| = 2³³, k = 8 → rủi ro ≤ 2⁻¹³⁶`. Số không được là số phép
+   thuật; nó là đầu ra của một phép tính mà ai cũng đọc lại được.
+
+Điểm cân bằng đề nghị làm mặc định: tử số 32 bit ($|S| \approx 2^{33}$), $d \le 2^{16}$,
+$k = 8$ → rủi ro $\le 2^{-136}$. Ở cấu hình này **một lượt chỉ cho $\approx 10^{-5}$** —
+mỏng cho một chốt canh chặn publish — nên $k = 8$ có ăn tiền thật. Nhưng nó ăn tiền
+**sau khi suy ra**, không phải vì được chép từ file khác.
+
+#### Ba lý do $k > 1$ **không** phải Schwartz–Zippel
+
+Phải tách ra, vì gộp bốn thứ vào một con số làm cả bốn đều mù mờ. Ba lý do dưới đây
+là **heuristic**, và gọi đúng tên chúng là heuristic:
+
+1. **Phủ lớp cấu hình** — lý do lớn nhất, và không phải xác suất. Các cấu hình ngẫu
+   nhiên rơi vào các lớp khác nhau ($D$ trong hay ngoài, tứ giác lồi hay không). Một
+   khẳng định chỉ đúng ở một lớp sẽ qua lượt này, trượt lượt kia. Với vị từ `between`
+   thì đây là **bắt buộc**: nó phụ thuộc cấu hình theo định nghĩa. Góc định hướng
+   (§9.2) xoá được phần lớn chuyện này cho vị từ góc, **không** xoá cho `between`.
+2. **Nhánh float không có bảo đảm nào.** Ở đó ta so với ngưỡng §8.2 và
+   Schwartz–Zippel không áp dụng. Nhiều cấu hình độc lập là cách duy nhất có được
+   chút tin cậy.
+3. **Bốc trúng suy biến rồi bỏ** (§7.3) — đừng dựa vào một lượt may.
 
 **Vì sao không dùng thẳng $\mathbb{F}_p$ như `algebra`.** Vì đường tròn cần căn bậc
 hai, mà `check.ts` đã ghi rõ giới hạn ấy: *"Căn không sống trên $\mathbb{F}_p$: $\sqrt a$
 chỉ tồn tại khi $a$ là thặng dư bậc hai."* Ở đây ta chạy trên $\mathbb{Q}$ (§4.2) —
-mạnh hơn, vì nó **chính xác** chứ không xác suất, cho những bài không rơi float.
+và với bài không rơi float thì phép tính **chính xác**, chỉ còn phép **chọn điểm thử**
+là ngẫu nhiên.
 
 ### 8.2 Ngưỡng, cho nhánh float
 
@@ -793,9 +853,11 @@ NFR-P1 17,5ms cho một lần dựng lại toàn cấu hình.
 | `maxObjects` | 200 | kể cả vật lồng sinh ra |
 | `maxClaims` | 12 | |
 | `maxChaseSteps` | 30 | chuỗi đuổi góc |
+| `maxDegree` | $2^{16}$ | cận bậc cộng dồn từ chuỗi phép dựng (§8.1); vượt thì **từ chối** |
+| `sampleBits` | 32 | cỡ tập bốc, $\|S\| \approx 2^{33}$ (§8.1) |
 | `maxRatDigits` | 64 | **quan trọng** — xem dưới |
 | `resampleLimit` | 64 | §7.3 |
-| `checkRounds` | 8 | §8.1 |
+| `checkRounds` | 8 | §8.1 — **suy ra**, không gõ cứng; đổi `maxDegree` hay `sampleBits` thì phải tính lại |
 
 **`maxRatDigits` là trần thật, không phải trần cho vui.** Số hữu tỉ chính xác phình
 theo độ sâu phép dựng: mỗi phép giao nhân đôi cỡ tử/mẫu. Một chuỗi 25 bước có thể sinh
@@ -853,6 +915,11 @@ tự động. §15.1.
 - **Hình học xạ ảnh / toạ độ thuần nhất** — điểm ở vô cực hiện đang bị coi là suy
   biến (§7.3). Toạ độ thuần nhất xử đúng được, và nó cũng làm `intersect` không bao
   giờ hỏng. Đáng làm, không phải bây giờ.
+- **Chứng nhận ký hiệu (Wu / Gröbner).** Coi tham số tự do là biến hình thức, dựng
+  bằng đại số đa thức, kiểm $P$ có phải đa thức không. Đó là **chứng nhận** chứ không
+  phải phép thử — hết ngẫu nhiên, hết cận. Bùng nổ ký hiệu là giá phải trả, nhưng ở
+  cỡ bài **thi chuyên** thì cấu hình ngắn và nó thường chạy được. Đường nâng cấp thật
+  của §8.1, cạnh $\mathbb{Q}(\sqrt d)$.
 - **Hình học không gian.** Không.
 - **Bất đẳng thức hình học** — §8.4, và đây là *không làm được*, không phải *chưa làm*.
 
@@ -867,6 +934,11 @@ phải **nhìn được bằng mắt** trước khi sang tầng sau.
 `Rat`, không renderer đẹp, vẽ thô cũng được. Chốt canh: dựng 4 bài đồng quy (trung
 tuyến, đường cao, trung trực, phân giác) và kiểm `concurrent` trên $10^3$ cấu hình.
 Nếu bốn bài này không xanh thì dừng — mọi thứ sau đều vô nghĩa.
+
+**Tầng 0,5 — cận bậc + con số bảo đảm.** Quy tắc bậc cho từng op, cộng dồn, và engine
+**in ra** $(d, |S|, k, \text{rủi ro})$ cho mỗi bài. Nhỏ, và phải làm **trước** tầng 1
+vì đường tròn là thứ đẩy bậc lên nhanh nhất — không có cận thì tầng 1 chạy mà không ai
+biết nó bảo đảm cái gì. Chốt canh: `degree.test.ts`.
 
 **Tầng 1 — đường tròn + chọn nhánh.** §5.3, cộng `pick` và **chốt canh liên tục nhánh**
 của §6. Đây là bản hình học của phép quét $A = BQ + R$: quét $10^3$ cấu hình cho mọi
@@ -992,11 +1064,12 @@ Test bắt buộc, mỗi cái ứng với một chốt canh của §19:
 | test | canh gì |
 |---|---|
 | `rat.test.ts` | số học chính xác, trần chữ số, rơi float đúng lúc |
+| `degree.test.ts` | cận bậc cộng dồn **không bao giờ nhỏ hơn** bậc thật (đối chiếu bằng nội suy trên bài nhỏ) |
 | `build.test.ts` | 34 op, cây phụ thuộc, dựng lại theo nhánh |
 | `pick.test.ts` | **liên tục nhánh trên $10^3$ cấu hình** — chốt canh nặng nhất |
 | `sample.test.ts` | tất định: cùng id bài ⇒ cùng 8 cấu hình |
 | `predicates.test.ts` | 12 vị từ, cả chiều đúng lẫn chiều sai |
-| `check.test.ts` | mệnh đề sai **phải** bị bắt; kèm phản ví dụ |
+| `check.test.ts` | mệnh đề sai **phải** bị bắt; kèm phản ví dụ; con số bảo đảm in ra khớp $(d/\|S\|)^k$ |
 | `chase.test.ts` | 15 luật, quét ngẫu nhiên |
 | `display.test.ts` | `euclid/display-too-special` bắt được hình cân tình cờ |
 
