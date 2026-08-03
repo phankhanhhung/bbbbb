@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "happy-ending-five-points",
   "statement": {
     "vi": "Cho $5$ điểm ở vị trí tổng quát (không có ba điểm nào thẳng hàng). Chứng minh luôn chọn được $4$ điểm tạo thành một **tứ giác lồi**."

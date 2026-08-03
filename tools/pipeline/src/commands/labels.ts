@@ -84,6 +84,7 @@ async function collect(root: string): Promise<string[]> {
       for (const step of solution.steps ?? []) {
         addScene(out, step.scene);
         addScene(out, step.bijection?.scene);
+        addScene(out, step.sandbox?.scene);
       }
     }
   }

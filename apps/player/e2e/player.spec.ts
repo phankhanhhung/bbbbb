@@ -1771,3 +1771,34 @@ test.describe('Hộp cát đại số (AL-23)', () => {
     await expect(page.locator('.badge--done')).toHaveText('✓ Đạt mục tiêu');
   });
 });
+
+/**
+ * **Đích khai ở bước, và cửa vào mở đúng chỗ tác giả khai** (AL-27).
+ *
+ * `radical-simplify` là bốn ví dụ rời nhau, và đích nằm ở ví dụ **thứ hai**. Trước lượt
+ * này nút "Mở sandbox" fork bước đang xem — tức bước đầu — nên bài khai `both` mà cửa
+ * chính không dẫn tới thử thách nào, và huy hiệu mục tiêu không hiện. Hai bài kia chạy
+ * đúng chỉ vì đích tình cờ nằm ở bước đầu; lượt nhìn bắt được vì nó mở cả ba.
+ */
+test.describe('Hộp cát khai ở bước (AL-27)', () => {
+  test('cửa vào mở đúng bước mang đích, và nhãn nói đúng tên bước ấy', async ({ page }) => {
+    await page.goto('/?p=radical-simplify');
+    await page.getByRole('button', { name: 'Mở sandbox' }).click();
+    await expect(page.locator('section.sandbox')).toBeVisible();
+
+    // Fork **s1**, không phải s0 — và nhãn phải nói đúng chỗ nó vừa mở.
+    await expect(page.locator('.player__head .source')).toHaveText(/Thử từ bước s1/);
+    await expect(page.locator('.badge--todo')).toHaveText('Chưa đạt mục tiêu');
+  });
+
+  test('hộp cát mở ở **chỗ tác giả khai**, không ở cuối chuỗi minh hoạ', async ({ page }) => {
+    // Minh hoạ của `grouping-and-completing-square` có hai bước và kết ở dạng đã đặt
+    // nhân tử chung. Nếu hộp cát mở ở đó thì đích xanh ngay — nên nó phải mở ở dòng
+    // **trước**, tức hình trong hộp cát có đúng hai dòng, không phải ba.
+    await page.goto('/?p=grouping-and-completing-square');
+    await page.getByRole('button', { name: 'Mở sandbox' }).click();
+    await expect(page.locator('.badge--todo')).toHaveText('Chưa đạt mục tiêu');
+    await expect(page.locator('.sandbox .canvas [data-el^="r2-"]')).toHaveCount(0);
+    await expect(page.locator('.sandbox .canvas [data-el^="r1-"]').first()).toBeVisible();
+  });
+});

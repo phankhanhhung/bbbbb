@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "power-identities-degree-n",
   "statement": {
     "vi": "Hiệu hai bình phương ai cũng thuộc. Nhưng $a^n - b^n$ phân tích được với **mọi** $n$, còn $a^n + b^n$ thì chỉ khi $n$ lẻ. Xem ba trường hợp và chỗ ranh giới nằm ở đâu."

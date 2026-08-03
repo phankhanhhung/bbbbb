@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "ducci-four-numbers",
   "statement": {
     "vi": "Viết bốn số nguyên không âm trên một vòng tròn. Mỗi bước, thay đồng thời mỗi số bằng **hiệu tuyệt đối** giữa nó và số kế tiếp theo chiều kim đồng hồ. Chứng minh rằng sau hữu hạn bước, cả bốn số đều bằng $0$."

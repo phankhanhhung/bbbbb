@@ -2,7 +2,7 @@
 
 Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Đối tượng: 1 người (Owner-Author)
 
-**Trạng thái (soát lại 2026-08-02):** đang chạy · **9 engine** + lớp ván chơi (M78) · schema **`1.6.0`** (freeze `1.0.0` ngày 2026-08-01, sáu minor sau đó, mỗi minor một migration) · kho **150 bài** đã xuất bản · **3982 test** (70 tệp), e2e **148** · **G-A và G-C đã đóng** ngày 2026-08-01 (§10 ghi đóng bằng gì và rủi ro nào còn lại) · 84 luật đại số, 59 validator, 46 lệnh sandbox trên 9 engine.
+**Trạng thái (soát lại 2026-08-03):** đang chạy · **9 engine** + lớp ván chơi (M78) · schema **`1.7.0`** (freeze `1.0.0` ngày 2026-08-01, bảy minor sau đó, mỗi minor một migration) · kho **150 bài** đã xuất bản · **3983 test** (70 tệp), e2e **152** · **G-A và G-C đã đóng** ngày 2026-08-01 (§10 ghi đóng bằng gì và rủi ro nào còn lại) · 84 luật đại số, 59 validator, 46 lệnh sandbox trên 9 engine.
 
 > **Dòng trạng thái này từng đứng ở "M48 xong; schema `0.3.0`; kho 91 bài; G-C chưa
 > đóng" cho tới lượt soát 2026-08-02** — tức nó khai sai cả bốn trường, trong khi
@@ -2328,7 +2328,7 @@ là người soạn ⇒ việc còn nợ là G-C, không phải engine tiếp th
 bài) đã cũ hai lần. Nó nằm đó qua cả lượt viết mục 2. Bản đúng, tại lượt soát
 2026-08-02:
 
-- Kho có **150 bài**. G-C đóng, schema `1.6.0`.
+- Kho có **150 bài**. G-C đóng, schema `1.7.0`.
 - **Không engine tổ hợp mới nào được mở** kể từ đó, và đó là quyết định chứ không
   phải quán tính: `PRD-07` cấm thêm engine chỉ để tăng coverage. Việc đã chạy là
   **làm sâu engine đã có** — `algebra` từ 73 lên 80 luật, `graph` thêm ba validator,

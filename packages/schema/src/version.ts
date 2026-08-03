@@ -55,8 +55,20 @@
  * `additionalProperties: false`. Cửa sổ đọc trượt tiếp: `1.5.0` xuống n−1, `1.4.0` ra
  * khỏi cửa sổ.
  *
+ * **`1.7.0` — `step.sandbox` (AL-27)**: hộp cát của **riêng một bước** — mở ở scene nào,
+ * và xong khi biểu thức nào đúng. Sinh ra từ hai phép đo. Một: `problem.sandbox.goal_expr`
+ * là đích của cả bài, mà Player fork hộp cát theo **bước**, và chỉ 2/42 bài đại số
+ * `illustration` có đúng một scene — nên với 40 bài còn lại, đích của bài nói về một
+ * scene người học không nhất thiết đang mở. Hai: fork mở ở **cuối** chuỗi, nên một đích
+ * bằng dòng cuối là đích **đã đạt sẵn** — một huy hiệu xanh trước khi ai bấm gì, đúng lớp
+ * "chốt canh luôn xanh" mà `ENGINE-BACKLOG.md` §3b.2–§3b.4 vừa gỡ ba lần. Trường `scene`
+ * là thứ giữ được **cả hai**: minh hoạ trọn vẹn và một đích có nghĩa. Đây là minor đầu
+ * tiên đặt một **scene** vào `Step` kể từ `bijection`, và vẫn migration đồng nhất vì bài
+ * cũ không có hộp cát riêng nào — không có, và không có là đúng. Cửa sổ đọc trượt tiếp:
+ * `1.6.0` xuống n−1, `1.5.0` ra khỏi cửa sổ.
+ *
  * Từ đây: thêm trường optional = minor + migration đồng nhất; đổi/gỡ = major.
  * Cửa sổ đọc của Player là minor hiện tại và n−1 (`isReadableVersion`), và
  * validate đứng gác ở cửa (`version/unreadable`).
  */
-export const SCHEMA_VERSION = '1.6.0';
+export const SCHEMA_VERSION = '1.7.0';

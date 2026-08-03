@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "hex-board-three-colours",
   "statement": {
     "vi": "Một bàn ong gồm các ô lục giác đều; hai ô chung cạnh gọi là **kề nhau**. Cần tô mỗi ô một màu sao cho hai ô kề nhau luôn khác màu. Hỏi ít nhất bao nhiêu màu là đủ?"

@@ -2,7 +2,8 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Problem, Scene, SceneValidator } from '@combviz/schema';
-import { applyRule, readAlgebra, allPaths, applicableRules } from '@combviz/engine-algebra';
+import { applyRule, readAlgebra, allPaths, applicableRules, algebraEnvironment } from '@combviz/engine-algebra';
+import { tryEvaluate } from '@combviz/dsl';
 import { ENGINE_FRAGMENTS } from '../src/engines.js';
 
 /**
@@ -53,6 +54,9 @@ import { ENGINE_FRAGMENTS } from '../src/engines.js';
  */
 
 const PROBLEMS = 'packages/content/problems';
+
+/** Bao nhiêu nước là "vài nước". Ba: đủ cho một đường vòng, chưa đủ để thành bộ giải. */
+const GOAL_DEPTH = 3;
 const fragmentOf = new Map(ENGINE_FRAGMENTS.map((f) => [f.id, f]));
 
 /**
@@ -239,6 +243,54 @@ describe('mỗi validator một bài khai ra phải cắn được (§3b.3)', ()
       rescued,
       `khai thừa trong KNOWN_QUIET — nay đã đỏ được, hãy xoá dòng tương ứng:\n  ` +
         `${rescued.join('\n  ')}`,
+    ).toEqual([]);
+  });
+
+  it('đích của bước: **chưa đạt** lúc mở, và **tới được** trong vài nước', async () => {
+    // Đích có đúng hai lỗi gương của validator, và cả hai đều là "chốt canh không có":
+    // đã đạt lúc mở ⇒ huy hiệu xanh trước khi ai bấm gì; không ai tới nổi ⇒ luôn đỏ.
+    // `combviz validate` đã canh vế thứ nhất (nó rẻ, chạy mọi lần); vế thứ hai cần duyệt
+    // nước đi thật nên nó nằm ở đây, cạnh bộ duyệt đã có.
+    const unreachable: string[] = [];
+    let checked = 0;
+
+    for (const problem of await bank()) {
+      for (const sol of problem.solutions) {
+        for (const step of sol.steps) {
+          const goal = step.sandbox?.goal_expr;
+          const opens = step.sandbox?.scene ?? step.scene;
+          if (goal === undefined || opens === undefined || opens.engine !== 'algebra') continue;
+
+          checked += 1;
+          const met = (sc: Scene): boolean => {
+            const out = tryEvaluate(goal, algebraEnvironment(sc));
+            return out.ok && out.value === true;
+          };
+          expect(met(opens), `${problem.id}/${step.id}: đích đã đạt lúc mở`).toBe(false);
+
+          let frontier = [opens];
+          let found = false;
+          for (let depth = 1; depth <= GOAL_DEPTH && !found; depth += 1) {
+            const next: Scene[] = [];
+            for (const sc of frontier) {
+              for (const after of algebraStates(sc)) {
+                if (met(after)) { found = true; break; }
+                next.push(after);
+              }
+              if (found) break;
+            }
+            frontier = next.slice(0, 400);
+          }
+          if (!found) unreachable.push(`${problem.id}/${step.id}`);
+        }
+      }
+    }
+
+    expect(checked, 'không bài nào khai đích cho bước — chốt canh này rỗng').toBeGreaterThan(0);
+    expect(
+      unreachable,
+      `đích không tới được trong ${GOAL_DEPTH} nước — người học không xong được bài:\n  ` +
+        `${unreachable.join('\n  ')}`,
     ).toEqual([]);
   });
 

@@ -67,6 +67,14 @@ export function Player({
   const [incident, setIncident] = useState<string | null>(null);
   const [forkedScene, setForkedScene] = useState<Scene | null>(null);
   /**
+   * Đích của **chuyến sandbox đang mở**, chốt lại lúc fork (AL-27).
+   *
+   * Không đọc `step.sandbox?.goal_expr` ở chỗ render: bản đồ lời giải fork được từ một
+   * bước **khác** bước đang xem (`onFork`), nên đọc theo `step` là treo đích của bước
+   * này lên hộp cát của bước kia. Chốt lúc fork thì hai thứ không lệch được.
+   */
+  const [forkedGoal, setForkedGoal] = useState<string | null>(null);
+  /**
    * GM-02 — đang **chơi** thế của step nào (M78.7).
    *
    * Tách khỏi `forkedScene` chứ không dùng chung một cờ: sandbox và bàn chơi là hai chế
@@ -76,6 +84,15 @@ export function Player({
   const [played, setPlayed] = useState<{ scene: Scene; play: NonNullable<Step['play']> } | null>(
     null,
   );
+  /** Bước mang hộp cát tác giả khai — cửa vào của bài `challenge`/`both` (AL-27). */
+  const challengeStep = useMemo(
+    () =>
+      problem.solutions
+        .flatMap((s) => s.steps)
+        .find((s) => s.sandbox?.goal_expr !== undefined && (s.sandbox.scene ?? s.scene)),
+    [problem],
+  );
+
   // CMS-03: lời giải **che mặc định**. Trang bài mở ra là đề bài và sandbox —
   // người học nên có cơ hội tự nghĩ trước khi thấy lời giải, và một cú bấm là
   // ranh giới đủ để biến việc xem lời giải thành một lựa chọn có ý thức.
@@ -251,15 +268,16 @@ export function Player({
    * lại nguyên xi, nói về một chỗ người dùng đã rời từ lâu.
    */
   const fork = useCallback(
-    (scene: Scene, fromStepId: string) => {
+    (from: Step) => {
       setPlaying(false);
       setTapped(null);
       setIncident(null);
       setPlayed(null);
-      setForkedScene(scene);
+      setForkedScene(sandboxSceneOf(from));
+      setForkedGoal(from.sandbox?.goal_expr ?? null);
       // Chuyến mới thì đếm lại từ đầu — nhánh ma là *chuyến gần nhất*, không phải
       // tổng cộng dồn của cả phiên.
-      setExcursion({ from: fromStepId, states: 0 });
+      setExcursion({ from: from.id, states: 0 });
     },
     [],
   );
@@ -533,7 +551,15 @@ export function Player({
       <div class="player">
         <header class="player__head">
           <h1 dangerouslySetInnerHTML={{ __html: renderMath(problem.statement.vi) }} />
-          <p class="source">Thử từ bước {step.id} — thao tác ở đây không đổi lời giải</p>
+          {/*
+            Tên bước lấy từ **chuyến fork**, không từ bước đang xem. Lượt nhìn AL-27 bắt
+            đúng chỗ này: cửa vào của một bài `both` nay mở hộp cát tác giả khai, và với
+            `radical-simplify` đó là `s1` — trong khi dòng này vẫn in `s0`. Một nhãn nói
+            sai chỗ mình vừa mở còn tệ hơn không có nhãn.
+          */}
+          <p class="source">
+            Thử từ bước {excursion?.from ?? step.id} — thao tác ở đây không đổi lời giải
+          </p>
         </header>
         <Sandbox
           scene={forkedScene}
@@ -541,7 +567,9 @@ export function Player({
           validators={sandboxValidators}
           invariants={problem.invariants ?? []}
           labels={atlas}
-          {...(problem.sandbox?.goal_expr ? { goalExpr: problem.sandbox.goal_expr } : {})}
+          {...(forkedGoal ?? problem.sandbox?.goal_expr
+            ? { goalExpr: (forkedGoal ?? problem.sandbox?.goal_expr) as string }
+            : {})}
           onClose={() => setForkedScene(null)}
           onTrail={(states) =>
             setExcursion((now) => (now && now.states !== states ? { ...now, states } : now))
@@ -585,7 +613,19 @@ export function Player({
               Chơi thử
             </button>
           ) : null}{' '}
-          <button class="try" onClick={() => step.scene && fork(step.scene, step.id)}>
+          {/*
+            Cửa vào **chính** của một bài `challenge`/`both`, nên nó mở đúng hộp cát tác
+            giả khai — không phải hộp cát của bước đang đứng.
+
+            Lượt nhìn AL-27 bắt được chỗ này: `radical-simplify` là bốn ví dụ rời, và đích
+            nằm ở ví dụ thứ hai. Nút này fork bước đang xem (bước **đầu**), nên huy hiệu
+            mục tiêu không hiện — bài khai `both` mà cửa chính không dẫn tới thử thách.
+            Hai bài kia chạy đúng chỉ vì đích tình cờ nằm ở bước đầu.
+
+            Sau khi lộ lời giải thì "Thử từ đây" vẫn fork **bước đang đứng**, và đó là
+            đúng: lúc ấy người học đang đọc một bước cụ thể và muốn nghịch đúng bước ấy.
+          */}
+          <button class="try" onClick={() => fork(challengeStep ?? step)}>
             Mở sandbox
           </button>{' '}
           <button onClick={() => setRevealed(true)}>Xem lời giải</button>
@@ -724,7 +764,7 @@ export function Player({
             ) : null}
             <button
               class="try"
-              onClick={() => step.scene && fork(step.scene, step.id)}
+              onClick={() => step.scene && fork(step)}
               disabled={!engine}
             >
               Thử từ đây
@@ -741,7 +781,7 @@ export function Player({
               onSelect={goTo}
               onFork={(id) => {
                 const target = tree.steps.get(id);
-                if (target?.scene) fork(target.scene, id);
+                if (target?.scene) fork(target);
               }}
             />
           ) : null}
@@ -834,3 +874,15 @@ function altFallback(step: Step): string {
 }
 
 export { SPEEDS };
+
+/**
+ * Hộp cát của bước này mở ở scene nào (AL-27).
+ *
+ * `step.scene` là **cuối** chuỗi minh hoạ — mọi `config.steps` đã chạy. Với một bài chỉ
+ * muốn cho nghịch thì đó đúng là chỗ nên mở. Với một bài có **đích**, mở ở đó nghĩa là
+ * đích đã đạt trước khi người học bấm gì; nên tác giả nói thẳng chỗ bắt đầu, và
+ * `combviz validate` đỏ nếu đích đã đúng ngay tại thế ấy.
+ */
+function sandboxSceneOf(step: Step): Scene {
+  return step.sandbox?.scene ?? (step.scene as Scene);
+}

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "timetable-edge-colouring",
   "statement": {
     "vi": "Ba giáo viên, ba lớp, bảy tiết đã phân công. Hai tiết chung giáo viên hoặc chung lớp thì **không** xếp cùng một ca. Cần ít nhất bao nhiêu ca?"

@@ -4216,3 +4216,91 @@ thích nói nó quan trọng — cùng cách xử đã dùng cho phép sắp "d�
 
 Một mutant sống sót không phải lúc nào cũng đòi thêm một phép so. Đôi khi nó chỉ ra rằng
 **có hai đường cho một câu trả lời**, và việc phải làm là bỏ một đường.
+
+---
+
+## §54e — Hộp cát mở ở **chỗ tác giả khai**, không ở cuối chuỗi (AL-27, schema `1.7.0`)
+
+Ba mục trên trả lời phần *"vì sao không bật sandbox bừa"* của câu hỏi gốc. Mục này mở
+phần còn lại: **bật thế nào cho có nghĩa.** Nó nâng số bài đại số có hộp cát chấm được từ
+$2$ lên $5$ — mà không sửa một dòng minh hoạ nào.
+
+### §54e.1 — Kế hoạch nói "cho `goal_expr` khai ở scene". Hai phép đo nói chừng đó chưa đủ.
+
+**Phép thứ nhất** hỏi một đích khai ở *bài* thì thuộc về scene nào: chỉ **2/42** bài đại
+số `illustration` có đúng một scene đại số. Với 40 bài còn lại, `problem.sandbox.goal_expr`
+là một biểu thức không nói được nó đo hình nào.
+
+**Phép thứ hai** bác luôn cả bản đã sửa. `Player.tsx` fork bằng `step.scene` — mà
+`step.scene` là scene **trọn vẹn**, đã chạy hết `config.steps`. Nên hộp cát mở ra ở **dòng
+cuối**, và một đích viết bằng dòng cuối là đích **đã đạt lúc mở**: huy hiệu xanh trước khi
+người học bấm gì. Đó đúng là "chốt canh luôn xanh" — lần thứ tư trong cùng một mạch, sau
+`each-step-sound` (§54c.1), `reaches:` (§54.2) và `impliesSolutionSet` (§52.2).
+
+Chỗ này đáng ghi vì nó là một **cách hỏng mới của cùng một lớp lỗi**: ba lần trước là mã
+kiểm không kiểm gì; lần này mã kiểm đúng, mà **thế ban đầu** làm câu hỏi thành vô nghĩa.
+Một chốt canh còn phụ thuộc chỗ nó bắt đầu đo.
+
+Nên đích phải đi kèm **chỗ bắt đầu**, và trường mới mang cả hai:
+
+```jsonc
+"sandbox": {
+  "scene": { … },                  // hộp cát mở ở đây; vắng thì dùng `step.scene`
+  "goal_expr": "reaches(\"4\")"    // đích, đánh giá trong môi trường của scene ấy
+}
+```
+
+Đường khác đã cân: giữ mỗi `goal_expr`, rẻ hơn một trường, nhưng phải **cắt bớt chính
+minh hoạ** để đích chưa đạt lúc mở — tức phá một minh hoạ đang tốt và đổi golden của nó
+để chiều một trường schema. Ba bài nội dung của lượt này giữ **nguyên** chuỗi minh hoạ,
+và golden 150 bài đổi **0 byte**.
+
+Hình dạng không phải phát minh: `step.bijection.scene` đã là "một bước mang thêm một
+scene thứ hai" từ M66, nên `lint.ts:163`, `labels.ts:86` và `structure.ts` chỉ cần thêm
+một phần tử vào đúng vòng lặp đã có.
+
+### §54e.2 — Một cảnh báo đúng cho minh hoạ và sai cho hộp cát
+
+Scene hộp cát đi qua **đúng** bộ soát bounds của engine — nó không nằm trên đường vẽ lời
+giải nên không lớp nào khác nhìn tới nó, và một scene không ai soát là chỗ cấu hình hỏng
+nằm im tới lúc người học bấm "Thử từ đây".
+
+Trừ một mã: `algebra/no-steps` nói *"hình chỉ có một dòng"*. Câu ấy đúng cho minh hoạ và
+**sai cho hộp cát** — chỗ bắt đầu *nên* là một dòng, còn ép nó có sẵn một bước là cho
+không người học nước đi đầu. `radical-simplify` vấp đúng chỗ này.
+
+Miễn trừ nằm ở **chỗ gọi**, không ở chỗ đẻ ra cảnh báo, vì chỉ chỗ gọi biết scene này
+đóng vai gì; và danh sách khai bằng tay, một phần tử, để mỗi dòng thêm vào là một tuyên
+bố có người ký. Bài học lấy từ chính M45, ghi ngay cạnh cảnh báo ấy: một vệt vàng thường
+trực trên một lựa chọn đúng là cách nhanh nhất khiến người ta thôi đọc mọi cảnh báo.
+
+### §54e.3 — Cổng cho đích: hai vế, hai chỗ, vì hai giá khác nhau
+
+Đích có **hai lỗi gương**, và cả hai là "chốt canh không có":
+
+| lỗi | hỏi thế nào | ở đâu | vì sao ở đó |
+|---|---|---|---|
+| đã đạt lúc mở ⇒ **luôn xanh** | đánh giá đích tại chính scene hộp cát | `semantics.ts` — `sandbox/goal-already-met` | rẻ; chạy mọi lần `validate` |
+| không ai tới nổi ⇒ **luôn đỏ** | duyệt nước đi thật, $\le 3$ nước | `validator-bite.test.ts` | cần bộ duyệt của engine |
+
+Vế thứ hai dùng lại đúng bộ duyệt `algebraStates` mà §54c dựng cho "validator phải cắn
+được" — cùng khuôn `KNOWN_QUIET`: ngoại lệ phải khai kèm lý do, và khai thừa cũng đỏ. Và
+nó tự canh mình bằng `expect(checked).toBeGreaterThan(0)`: một cổng chạy qua **không** bài
+nào là một cổng rỗng, đúng thứ cả mạch này đi vá.
+
+### §54e.4 — Lượt nhìn bắt hai lỗi trong commit vừa gõ xong
+
+Ba bài đều xanh ở mọi cổng. Mở Player thật thì `radical-simplify` **không** hiện huy hiệu
+mục tiêu.
+
+Nút "Mở sandbox" fork **bước đang xem** — tức `s0` — còn đích của bài nằm ở ví dụ thứ
+**hai**. Hai bài kia chạy đúng chỉ vì đích tình cờ ở bước đầu. Sửa thành `challengeStep ??
+step`: cửa chính dẫn tới bước *có* thử thách.
+
+Sửa xong thì lộ lỗi thứ hai, do chính bản sửa: tiêu đề vẫn in `Thử từ bước s0` trong khi
+đã fork `s1`, vì nó đọc bước đang xem chứ không đọc chuyến fork. Một nhãn nói sai chỗ nó
+vừa mở còn tệ hơn không có nhãn — `excursion?.from ?? step.id`.
+
+Cả hai lỗi nằm ngoài tầm mọi chốt canh đã có, vì cả hai đều là *"cửa vào dẫn tới đâu"*,
+không phải *"dữ liệu có hợp lệ không"*. Chúng nay có răng: hai test e2e AL-27, và bẻ cả
+ba nhánh (`fork(step)`, `{step.id}`, bỏ `?? step.scene`) đều làm chúng đỏ.

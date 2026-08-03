@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "components-friend-groups",
   "statement": {
     "vi": "Một nhóm có $7$ người; quan hệ quen biết chia họ thành các nhóm rời nhau. Chứng minh nếu có $2$ nhóm thì số cặp quen nhau nhiều nhất là $\\binom{3}{2} + \\binom{4}{2} = 9$."

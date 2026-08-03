@@ -183,6 +183,7 @@ function evalOnEveryStep(
       issues.push(...checkClaims(step, env, path));
       issues.push(...checkValueMarkup(step, env, path));
       issues.push(...runValidators(problem, step, scene, path, engines));
+      issues.push(...checkStepGoal(step, path, engines));
     });
   });
 
@@ -317,6 +318,53 @@ function runValidators(
     });
   }
 
+  return issues;
+}
+
+/**
+ * Đích của **riêng một bước** (AL-27) — đọc được, và **chưa đạt** lúc hộp cát mở.
+ *
+ * Hai phép hỏi, và phép thứ hai mới là phép đáng có. `compile()` chỉ nói biểu thức có cú
+ * pháp đúng không; câu hỏi thật là *"cái đích này có nói gì không"*. Một đích **đã đúng**
+ * tại chính scene mà hộp cát mở ra là huy hiệu xanh trước khi người học bấm gì — tức
+ * chốt canh luôn xanh, lớp lỗi mà `ENGINE-BACKLOG.md` §3b.2–§3b.4 vừa gỡ ba lần trong
+ * cùng một mạch.
+ *
+ * Chiều còn lại — *"đích có tới được không"* — cần duyệt nước đi thật, nên nó nằm ở
+ * `tools/pipeline/test/validator-bite.test.ts` chỗ đã có sẵn bộ duyệt của engine đại số.
+ * Ở đây chỉ hỏi được chiều rẻ, và hỏi chiều rẻ ở cổng chạy mọi lần là đúng chỗ.
+ */
+function checkStepGoal(step: Step, path: string, engines: DslRegistry): ValidationIssue[] {
+  const goal = step.sandbox?.goal_expr;
+  if (goal === undefined) return [];
+
+  const issues: ValidationIssue[] = [];
+  try {
+    compile(goal);
+  } catch (error) {
+    issues.push({
+      code: 'dsl/parse-error',
+      severity: 'error',
+      message: `goal_expr của step "${step.id}": ${(error as Error).message}`,
+      path: `${path}/sandbox/goal_expr`,
+    });
+    return issues;
+  }
+
+  const opens = step.sandbox?.scene ?? step.scene;
+  const dsl = opens ? engines[opens.engine] : undefined;
+  if (!opens || !dsl) return issues;
+
+  const outcome = tryEvaluate(goal, dsl.environment(opens));
+  if (outcome.ok && outcome.value === true) {
+    issues.push({
+      code: 'sandbox/goal-already-met',
+      severity: 'error',
+      message: `Đích của step "${step.id}" đã đúng ngay tại thế hộp cát mở ra`,
+      path: `${path}/sandbox/goal_expr`,
+      hint: 'Huy hiệu sẽ xanh trước khi người học bấm gì — hãy cho `sandbox.scene` dừng sớm hơn',
+    });
+  }
   return issues;
 }
 

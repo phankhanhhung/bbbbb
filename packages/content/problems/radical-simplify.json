@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "radical-simplify",
   "statement": {
     "vi": "Rút gọn một biểu thức chứa căn nghĩa là gì, và mỗi bước được phép làm gì? Đưa thừa số chính phương ra ngoài dấu căn, gộp hai căn cùng chỉ số, và trục căn thức ở mẫu — ba thao tác cơ bản, chạy trên cả căn bậc hai lẫn căn bậc ba."
@@ -7,7 +7,7 @@
   "source": {
     "contest": "folklore",
     "note": {
-      "vi": "Chỗ đáng nhìn: engine kiểm từng bước bằng cách thay **số thực** ngẫu nhiên, kể cả số âm. Đó là lý do nó từ chối rút $x$ ra khỏi $\\sqrt{x^2}$ — đẳng thức ấy sai với mọi $x < 0$."
+      "vi": "Chỗ đáng nhìn: engine kiểm từng bước bằng cách thay **số thực** ngẫu nhiên, kể cả số âm. Đó là lý do nó từ chối rút $x$ ra khỏi $\\sqrt{x^2}$ — đẳng thức ấy sai với mọi $x < 0$. Hộp cát mở ở đúng đề bài, không cho sẵn nước nào. Đây là bài duy nhất trong ba bài mà chỗ bắt đầu **là** dòng đầu — và nó cũng là lý do `algebra/no-steps` phải miễn cho scene hộp cát: một chỗ bắt đầu nên được phép chỉ có một dòng."
     }
   },
   "topics": [
@@ -28,7 +28,7 @@
     "draft-may"
   ],
   "status": "published",
-  "kind": "illustration",
+  "kind": "both",
   "created": "2026-07-31",
   "updated": "2026-07-31",
   "solutions": [
@@ -108,7 +108,19 @@
           "alt_text": {
             "vi": "Ba dòng: căn 2 nhân căn 8, gộp thành căn của 2 nhân 8, rồi bằng 4."
           },
-          "verified": true
+          "verified": true,
+          "sandbox": {
+            "goal_expr": "reaches(\"4\")",
+            "scene": {
+              "config": {
+                "caption": "gộp căn, tính, rồi rút — ba nước",
+                "start": "sqrt(2)*sqrt(8)",
+                "steps": []
+              },
+              "elements": [],
+              "engine": "algebra"
+            }
+          }
         },
         {
           "id": "s2",

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "trig-sum-and-product",
   "statement": {
     "vi": "Một công thức, đọc được hai chiều. Chứng minh $\\dfrac{\\sin a + \\sin b}{\\cos a + \\cos b} = \\tan\\dfrac{a+b}{2}$, rồi đọc ngược đúng công thức ấy để đưa $\\sin 3x\\cos x$ về một **tổng**."

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "hanoi-generating-function",
   "statement": {
     "vi": "Tháp Hà Nội $n$ đĩa cần $a_n$ nước, với $a_0 = 0$ và $a_n = 2a_{n-1} + 1$. Tìm công thức đóng cho $a_n$ **bằng hàm sinh**."

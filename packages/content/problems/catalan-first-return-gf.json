@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "catalan-first-return-gf",
   "statement": {
     "vi": "Gọi $C_n$ là số đường đi Dyck độ dài $2n$ (mỗi bước lên hoặc xuống, không bao giờ xuống dưới trục). Dựng hệ thức truy hồi cho $C_n$ bằng hàm sinh."

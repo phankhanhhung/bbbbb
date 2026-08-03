@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "hall-defect-version",
   "statement": {
     "vi": "Ba bạn $A$, $B$, $C$ đăng ký hai suất học bổng $X$, $Y$. Điều kiện Hall hỏng — ba bạn chỉ với tới hai suất. Vậy có phải **không xếp được cho ai**? Nhiều nhất bao nhiêu bạn nhận được suất?"

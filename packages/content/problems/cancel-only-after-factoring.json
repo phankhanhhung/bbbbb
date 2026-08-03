@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "cancel-only-after-factoring",
   "statement": {
     "vi": "Rút gọn $\\dfrac{x^2 - 4}{x + 2}$. Nước đầu có sẵn dưới đây; **nước còn lại bạn tự tìm** trong hộp cát. Engine chỉ cho đi những nước hợp lệ, và mỗi nước bị từ chối đều nói ra vì sao."

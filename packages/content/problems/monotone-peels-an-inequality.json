@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "monotone-peels-an-inequality",
   "statement": {
     "vi": "Cho $f$ **tăng ngặt** và $f(2x) < f(x+3)$. Tìm $x$. Chỗ đáng nhìn: engine không biết $f$ là hàm nào — nó chỉ biết **một dòng giả thiết**, và một dòng ấy đủ để bỏ được cái vỏ $f$."

@@ -80,6 +80,10 @@ function checkEnginesUsed(
       // engine, Player lazy-load theo danh sách đó (D-10) và nửa bên phải trắng
       // trơn trong khi validate vẫn báo xanh.
       if (step.bijection) actual.add(step.bijection.scene.engine);
+      // Và scene hộp cát của bước (AL-27) — cùng lý do: Player lazy-load engine theo
+      // `engines_used`, nên một scene không có tên engine trong danh sách là một hộp cát
+      // mở ra trắng trơn trong khi validate vẫn báo xanh.
+      if (step.sandbox?.scene) actual.add(step.sandbox.scene.engine);
     }
   }
 
@@ -175,6 +179,21 @@ function checkSolutionTree(
     checkAnchors(step, step.scene, path, engines, issues);
     if (step.scene) {
       checkSceneBounds(step.scene, `${path}/scene`, engines, issues);
+    }
+    // Scene hộp cát đi qua **đúng** bộ soát bounds của engine (AL-27). Nó không nằm
+    // trong đường vẽ lời giải, nên không lớp nào khác nhìn tới nó — và một scene không
+    // ai soát là chỗ một cấu hình hỏng nằm im cho tới lúc người học bấm "Thử từ đây".
+    //
+    // Trừ đúng một cảnh báo, và chỗ lọc nằm **ở đây** vì đây là lớp duy nhất biết scene
+    // này đóng vai gì: `algebra/no-steps` nói *"hình chỉ có một dòng"*, một câu đúng cho
+    // minh hoạ và sai cho hộp cát — chỗ bắt đầu **nên** là một dòng, và ép nó có sẵn một
+    // bước là cho không người học nước đi đầu. Bài học M45 ghi ngay tại chỗ đẻ ra cảnh
+    // báo ấy: một vệt vàng thường trực trên một lựa chọn đúng là cách nhanh nhất khiến
+    // người ta thôi đọc mọi cảnh báo.
+    if (step.sandbox?.scene) {
+      const own: ValidationIssue[] = [];
+      checkSceneBounds(step.sandbox.scene, `${path}/sandbox/scene`, engines, own);
+      issues.push(...own.filter((issue) => !SANDBOX_SCENE_EXEMPT.has(issue.code)));
     }
     checkBijection(step, path, engines, issues);
     checkPlay(step, path, engines, issues);
@@ -840,6 +859,13 @@ function checkAnchors(
     });
   }
 }
+
+/**
+ * Cảnh báo chỉ có nghĩa với một scene **được vẽ ra làm minh hoạ**, nên scene hộp cát
+ * được miễn. Danh sách cố ý ngắn và cố ý khai bằng tay: mỗi dòng thêm vào là một tuyên
+ * bố rằng phép kiểm ấy không nói gì về chỗ bắt đầu của một hộp cát.
+ */
+const SANDBOX_SCENE_EXEMPT: ReadonlySet<string> = new Set(['algebra/no-steps']);
 
 function checkSceneBounds(
   scene: Scene,

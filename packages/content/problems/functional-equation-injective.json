@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "functional-equation-injective",
   "statement": {
     "vi": "Cho $f$ **đơn ánh** thoả $f(f(x) + y) = f(x + y)$ với mọi $x, y$. Chứng minh $f(x) = x$. Cả bài nằm ở một nước: đơn ánh cho phép **bóc $f$ khỏi hai vế**."

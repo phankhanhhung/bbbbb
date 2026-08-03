@@ -150,6 +150,19 @@ export const MIGRATIONS: readonly Migration[] = [
      */
     apply: (problem) => problem,
   },
+  {
+    from: '1.6.0',
+    to: '1.7.0',
+    summary:
+      'thêm `step.sandbox` (AL-27) — không đổi dữ liệu bài nào, chỉ đóng dấu phiên bản',
+    /**
+     * Đồng nhất, lần thứ bảy — và là lần đầu trường mới đặt một **scene** vào `Step` kể
+     * từ `bijection`. Vẫn không đổi gì ở tầng migration: bài cũ không khai hộp cát riêng
+     * cho bước nào, và **không khai là đúng** — vắng `sandbox` thì Player fork từ
+     * `step.scene` y như trước, tức hành vi cũ chính là hành vi mặc định.
+     */
+    apply: (problem) => problem,
+  },
 ];
 
 export interface MigrateResult {

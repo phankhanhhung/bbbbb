@@ -683,6 +683,29 @@ thì không ai nhắc. `ENGINE-ALGEBRA.md` §54d.
 > **Một hạng mục bị huỷ vì phép đo không phải một hạng mục thất bại.** Cái đáng ghi là
 > lượt dò ấy vẫn trả về một lỗi thật — chỉ không phải lỗi mà kế hoạch đoán.
 
+### 3b.5 Lần thứ tư của "chốt canh luôn xanh", và lần này mã kiểm **không** sai (2026-08-03)
+
+Ba mục trên đều là *mã kiểm không kiểm gì*. AL-27 gặp cùng triệu chứng với một nguyên
+nhân khác hẳn: đích của hộp cát tính đúng, mà **thế ban đầu** làm câu hỏi thành vô nghĩa —
+`Player` fork bằng `step.scene`, tức scene đã chạy hết `config.steps`, nên hộp cát mở ở
+**dòng cuối** và mọi đích viết bằng dòng cuối xanh trước khi người học bấm gì.
+
+Rút ra, và đây là chỗ khác bốn mục trước: **một chốt canh còn phụ thuộc chỗ nó bắt đầu
+đo.** Bẻ răng không thấy được điều đó — nhiễu loạn *mã* trong khi chỗ hỏng nằm ở *dữ liệu
+vào*. Cái thấy được nó là lượt nhìn bằng mắt, và câu hỏi rẻ tiền quen thuộc đặt cho đúng
+chỗ: *"chốt canh này đo từ đâu?"*
+
+Cùng lượt, lượt nhìn bắt thêm hai lỗi trong chính commit vừa gõ xong — cửa vào fork nhầm
+bước, rồi bản sửa ấy đẻ ra một nhãn nói sai bước. Cả hai là *"cửa vào dẫn tới đâu"*, không
+phải *"dữ liệu có hợp lệ không"*, nên chúng nằm ngoài tầm mọi cổng dữ liệu đã có.
+`ENGINE-ALGEBRA.md` §54e.
+
+| lượt | câu hỏi | thứ tìm được |
+|---|---|---|
+| §3b.1 | *cổng nào không nằm trong `pnpm check`?* | hai cổng đếm nói ngược nhau |
+| §3b.2 / §3b.3 | *năng lực nào chưa nội dung nào đi qua?* | hai chốt canh luôn xanh |
+| §3b.5 | *chốt canh này đo **từ đâu**?* | một chốt canh xanh trước khi ai bấm |
+
 ## 4. Việc **không** nằm trong tài liệu này
 
 Ba thứ hay bị nhầm là "làm engine mạnh hơn":

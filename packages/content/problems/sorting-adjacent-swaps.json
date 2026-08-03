@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "sorting-adjacent-swaps",
   "statement": {
     "vi": "Cho dãy $3, 1, 4, 2$. Mỗi bước được đổi chỗ hai số **đứng cạnh nhau**. Chứng minh cần ít nhất $3$ bước để đưa dãy về thứ tự tăng dần."

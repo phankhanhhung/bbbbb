@@ -160,7 +160,7 @@ function checkPlainLabels(step: Step, path: string): ValidationIssue[] {
    * xuất bản một thời gian. Rồi ngay ở M73 nó lại xuất hiện lần thứ ba trên một
    * bài vừa soạn. Ba lần là đủ để thôi bắt bằng mắt.
    */
-  for (const scene of [step.scene, step.bijection?.scene]) {
+  for (const scene of [step.scene, step.bijection?.scene, step.sandbox?.scene]) {
     const caption = (scene?.config as { caption?: unknown } | undefined)?.caption;
     if (typeof caption === 'string') flag(caption, `${path}/scene/config/caption`, 'caption');
   }

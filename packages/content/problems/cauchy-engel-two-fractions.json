@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "cauchy-engel-two-fractions",
   "statement": {
     "vi": "Cho $x, y > 0$ với $x + y = 1$. Chứng minh $\\dfrac{1}{x} + \\dfrac{4}{y} \\ge 9$. Cộng hai phân số rồi đạo hàm thì được, nhưng có một đường một dòng."

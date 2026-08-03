@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "sum-shift-index",
   "statement": {
     "vi": "Đổi biến chỉ số trong một tổng nghe như thủ tục, nhưng nó là **cách duy nhất** để hai tổng lệch nhau một bậc gặp được nhau. Xem $\\sum_{k=1}^{n} k^2$ dịch chỉ số, tách khoảng, và rút hằng ra ngoài."

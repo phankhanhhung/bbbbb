@@ -331,6 +331,44 @@ export const Step = Type.Object(
     claims: Type.Optional(Type.Array(Type.String({ minLength: 1 }), { maxItems: 8 })),
 
     /**
+     * **Hộp cát của riêng bước này** — mở ở đâu, và xong khi nào (AL-27).
+     *
+     * ## Vì sao đích không khai được ở tầng bài
+     *
+     * `problem.sandbox.goal_expr` là đích của **cả bài**, mà Player fork hộp cát theo
+     * **bước** (`Player.tsx` — *"Thử từ bước {step.id}"*). Đo trên kho: chỉ **2/42** bài
+     * đại số `illustration` có đúng một scene đại số, nên với 40 bài còn lại một biểu
+     * thức đích cho cả bài nói về một scene mà người học không nhất thiết đang mở.
+     *
+     * ## Và vì sao chỉ khai đích thôi thì **chưa đủ**
+     *
+     * Fork mở ở **cuối** chuỗi, sau khi `config.steps` đã chạy hết. Nên một đích bằng
+     * dòng cuối là đích **đã đạt sẵn** lúc mở: huy hiệu xanh trước khi người học bấm gì —
+     * đúng lớp "chốt canh luôn xanh" mà `ENGINE-BACKLOG.md` §3b.2–§3b.4 vừa gỡ ba lần.
+     *
+     * Cách duy nhất giữ được **cả hai** — minh hoạ trọn vẹn *và* một đích có nghĩa — là
+     * cho tác giả nói thẳng hộp cát bắt đầu từ đâu. `scene` vắng mặt thì dùng
+     * `step.scene`, nên bài chỉ muốn đích ở đúng chỗ minh hoạ dừng vẫn khai một dòng.
+     *
+     * Khuôn lấy nguyên từ `bijection.scene`: một step mang thêm một scene thứ hai, và mọi
+     * lớp đã biết xử hình dạng ấy (`lint.ts` soát bounds, `labels.ts` gom nhãn LaTeX).
+     * Scene này **không** vào đường vẽ lời giải, nên golden không đụng tới.
+     *
+     * **Không** có `validators` ở đây: `expects_violation` ngay trên đã lo phần điều tiết
+     * theo bước, còn *tập luật chơi* là tính chất của cả bài. Một trường chưa ai cần là
+     * một lời hứa không ai kiểm.
+     */
+    sandbox: Type.Optional(
+      Type.Object(
+        {
+          scene: Type.Optional(Scene),
+          goal_expr: Type.Optional(Type.String({ minLength: 1 })),
+        },
+        { additionalProperties: false },
+      ),
+    ),
+
+    /**
      * AUT-09: cổng khoá publish. Draft từ LLM vào kho với `verified: false`;
      * chính chủ phải bật tay từng step trong Studio. Lưu trong file để git diff
      * đọc được ai đã duyệt cái gì ở commit nào.
@@ -383,5 +421,6 @@ export interface Step {
   author_notes?: string;
   expects_violation?: string[];
   claims?: string[];
+  sandbox?: { scene?: Scene; goal_expr?: string };
   verified?: boolean;
 }

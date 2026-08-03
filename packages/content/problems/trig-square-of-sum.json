@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "trig-square-of-sum",
   "statement": {
     "vi": "Rút gọn $(\\sin x + \\cos x)^2$. Bài này không cần mẹo nào — nó cần **một** hằng đẳng thức, và chỗ đáng nhìn là hằng đẳng thức ấy nuốt đúng hai hạng tử rồi để lại một con số."

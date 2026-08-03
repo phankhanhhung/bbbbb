@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "exponential-equation",
   "statement": {
     "vi": "Giải $2^x = 8$. Ẩn nằm ở **số mũ**, và không phép biến đổi đại số nào kéo nó xuống được — phải đổi sân bằng logarit."

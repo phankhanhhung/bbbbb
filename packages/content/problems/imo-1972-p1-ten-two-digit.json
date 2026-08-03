@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "imo-1972-p1-ten-two-digit",
   "statement": {
     "vi": "Cho mười số **phân biệt** có hai chữ số. Chứng minh tồn tại hai tập con **rời nhau**, khác rỗng, có tổng bằng nhau."

@@ -58,6 +58,12 @@ export function sandboxStatus(problem: Problem): SandboxStatus {
   if ((sandbox?.validators?.length ?? 0) > 0 || sandbox?.goal_expr !== undefined) {
     return 'has-sandbox';
   }
+  // Đích khai ở **bước** cũng là phản hồi bằng máy (AL-27). Bỏ nhánh này thì một bài
+  // challenge có đích cho từng bước vẫn bị đếm là "thiếu sandbox", và cả hai cổng cùng
+  // sai một kiểu — đúng chuyện §3b.1 gộp chúng lại để tránh.
+  if (problem.solutions.some((s) => s.steps.some((step) => step.sandbox?.goal_expr))) {
+    return 'has-sandbox';
+  }
   return 'missing';
 }
 

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "erase-two-write-difference",
   "statement": {
     "vi": "Trên bảng viết các số $1, 2, \\ldots, 10$. Mỗi bước, xoá hai số $a$ và $b$ rồi viết thêm $|a-b|$. Sau $9$ bước chỉ còn một số. Chứng minh số đó là số lẻ — nói riêng, nó không thể bằng $0$."

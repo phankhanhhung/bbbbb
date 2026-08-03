@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "trig-equation-double-angle",
   "statement": {
     "vi": "Giải $\\sin 2x = \\sin x$. Hai vế đều là $\\sin$, nhưng **khác góc** — và chừng nào còn hai góc khác nhau thì không phép biến đổi đại số nào chạm tới được."

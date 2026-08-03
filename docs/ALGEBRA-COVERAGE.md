@@ -75,7 +75,7 @@ xong, và chỗ chưa xong lớn nhất vẫn là §4.1.
 | Hợp đồng kiểm | **7** | `sameValue`, `sameSolutionSet`, `implies`, `root`, `instance`, `binding`, `claim` |
 | Hàm không-đa-thức | **9** | `binom cos exp fact ln log perm sin tan` |
 | Bài dùng engine | **45 / 150** | `engines_used` chứa `algebra` |
-| …bật hộp cát | **2** | `kind` khác `illustration` — xem `ENGINE-ALGEBRA.md` §54, §54c |
+| …bật hộp cát | **5** | `kind` khác `illustration` — xem `ENGINE-ALGEBRA.md` §54, §54c, §54e |
 
 Bảng này đi từ $73$ luật lên $80$ kể từ lượt đo M70 — bảy luật, và đúng bảy: M71 thêm
 `sum_telescope` + `specialize`, M72 thêm bốn luật `coeff_*`, AL-20 thêm
@@ -108,7 +108,12 @@ xanh** đã sống từ AL-07 (`ENGINE-ALGEBRA.md` §54.2). Đó là lý do con 
 trong bảng dù nó không đo năng lực: **một năng lực chưa nội dung nào đi qua là một năng
 lực chưa ai kiểm.**
 
-Rồi AL-25 kéo nó xuống $2/45$, và **đi xuống ở đây là đi đúng**:
+Rồi AL-27 đưa nó lên $5/45$ bằng một đường khác hẳn ba bài đầu: đích khai ở **bước**, và
+bước nói luôn hộp cát **mở ở đâu**. Không bài nào bị sửa một dòng minh hoạ nào — chuyện
+ấy trước AL-27 là không làm được, vì hộp cát luôn mở ở cuối chuỗi nên một đích có nghĩa
+đòi phải cắt bớt chính minh hoạ. `ENGINE-ALGEBRA.md` §54e.
+
+Trước đó AL-25 kéo nó xuống $2/45$, và **đi xuống ở đây cũng là đi đúng**:
 `extraneous-root-by-squaring` trả về `illustration` vì cổng mới đếm 11 thế ở độ sâu 1 và
 42 ở độ sâu 2 mà validator của nó không đỏ lần nào — bài nói về phép *bình phương*, còn
 chốt canh nói về phép *chia*. Con số này đo **nội dung có đường tương tác nào đáng nghịch

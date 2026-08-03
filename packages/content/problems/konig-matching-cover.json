@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "konig-matching-cover",
   "statement": {
     "vi": "Trên đồ thị hai phía, cỡ ghép cặp lớn nhất bằng cỡ phủ đỉnh nhỏ nhất."

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "quartic-by-substitution",
   "statement": {
     "vi": "Giải phương trình $(x+1)(x+2)(x+3)(x+4) - 8 = 0$. Nhân hết ra thì được bậc bốn và bế tắc; mẹo là ghép các nhân tử thành **cặp có cùng tổng**, rồi đặt ẩn phụ để bài co lại thành bậc hai."
@@ -7,7 +7,7 @@
   "source": {
     "contest": "folklore",
     "note": {
-      "vi": "Dạng bài quen của đại số THCS. Chỗ đáng nhìn: **đặt ẩn phụ** được máy kiểm bằng cách thế ngược lại rồi so — không có ràng buộc ấy thì phép kiểm thấy hai biểu thức khác biến và kết tội oan."
+      "vi": "Dạng bài quen của đại số THCS. Chỗ đáng nhìn: **đặt ẩn phụ** được máy kiểm bằng cách thế ngược lại rồi so — không có ràng buộc ấy thì phép kiểm thấy hai biểu thức khác biến và kết tội oan. Hộp cát mở ngay sau nước đặt ẩn phụ: mẹo đã xong, phần còn lại là hai nước đại số thẳng. Chia đôi như thế vì mẹo là thứ đáng **đọc**, còn khai triển là thứ đáng **làm**."
     }
   },
   "topics": [
@@ -28,7 +28,7 @@
     "draft-may"
   ],
   "status": "published",
-  "kind": "illustration",
+  "kind": "both",
   "created": "2026-07-31",
   "updated": "2026-07-31",
   "solutions": [
@@ -92,7 +92,40 @@
           "alt_text": {
             "vi": "Bảy dòng đưa (x+1)(x+2)(x+3)(x+4) − 8 = 0 về t bình phương cộng 10t cộng 16 bằng 0."
           },
-          "verified": true
+          "verified": true,
+          "sandbox": {
+            "goal_expr": "reaches(\"t^2 + 10*t + 16 = 0\")",
+            "scene": {
+              "config": {
+                "caption": "ẩn phụ đã đặt — còn khai triển và thu gọn",
+                "start": "(x + 1)*(x + 2)*(x + 3)*(x + 4) - 8 = 0",
+                "steps": [
+                  {
+                    "arg": "1,3",
+                    "at": "L.0",
+                    "rule": "commute"
+                  },
+                  {
+                    "arg": "0,1",
+                    "at": "L.0",
+                    "rule": "multiply_out"
+                  },
+                  {
+                    "arg": "1,2",
+                    "at": "L.0",
+                    "rule": "multiply_out"
+                  },
+                  {
+                    "arg": "t := x^2 + 5*x",
+                    "at": "L",
+                    "rule": "set_variable"
+                  }
+                ]
+              },
+              "elements": [],
+              "engine": "algebra"
+            }
+          }
         },
         {
           "id": "c1",

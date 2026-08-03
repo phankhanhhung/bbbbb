@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "id": "wheel-faces-two-colours",
   "statement": {
     "vi": "Vẽ \"bánh xe\" bốn nan lên mặt phẳng. Nó chia mặt phẳng thành mấy mặt, và cần mấy màu để hai mặt kề nhau khác màu?"
