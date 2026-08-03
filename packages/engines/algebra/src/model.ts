@@ -1,17 +1,23 @@
 import type { Scene } from '@combviz/schema';
 import {
   evalReal,
+  guardList,
   impliesSolutionSet,
   sameSolutionSet,
   sameValue,
+  type Guard,
   type Guards,
   type SoundnessResult,
   type Witness,
 } from './check.js';
 import {
   Minter,
+  add,
   allPaths,
   boundAlong,
+  commutativeKey,
+  negate,
+  variable,
   depth,
   flipOp,
   nodeAt,
@@ -28,7 +34,7 @@ import {
   type TermId,
 } from './expr.js';
 import { checkArity } from './functions.js';
-import { ParseError, tryParse } from './parse.js';
+import { ParseError, toPlain, tryParse } from './parse.js';
 import { ruleById } from './rules.js';
 import { ALGEBRA_LIMITS, type AlgebraConfig } from './schema.js';
 import { ROW, measure, toBox } from './typeset.js';
@@ -339,6 +345,24 @@ export function peelsTo(before: Expr, after: Expr, assumption: string): boolean 
   return same(normalize(rel(new Minter(), want, left.args[0] as Expr, right.args[0] as Expr)), after);
 }
 
+/** Tiền tố của một giả thiết **thứ tự** — nguồn của nó là chuỗi, không phải `config`. */
+const ORDER_PREFIX = 'thứ tự: ';
+
+/** `"thứ tự: a >= b"` → `{hi: 'a', lo: 'b'}`; mọi chuỗi khác → `null` (AL-28). */
+function orderAssumption(assumption: string): { hi: string; lo: string } | null {
+  if (!assumption.startsWith(ORDER_PREFIX)) return null;
+  const parts = assumption.slice(ORDER_PREFIX.length).split('>=');
+  if (parts.length !== 2) return null;
+  const [hi, lo] = parts.map((p) => p.trim()) as [string, string];
+  return hi === '' || lo === '' ? null : { hi, lo };
+}
+
+/** Cây $u - v$, dựng lại **độc lập** với luật — bản thứ hai, đúng bài học M78.3. */
+function varDiff(hi: string, lo: string): Expr {
+  const m = new Minter();
+  return add(m, [variable(m, hi), negate(m, variable(m, lo))]);
+}
+
 export function readAlgebra(scene: Scene): AlgebraModel {
   try {
     return readAlgebraOrThrow(scene);
@@ -449,6 +473,8 @@ function readAlgebraOrThrow(scene: Scene): AlgebraModel {
     },
   ];
   const conditions: Condition[] = [];
+  /** Giả thiết đã khai và còn hiệu lực — rỗng cho tới lúc một bước `wlog` khai (AL-28). */
+  let standing: readonly Guard[] = [];
   const unsound: string[] = [];
   const unchecked: string[] = [];
   const extraneous: string[] = [];
@@ -528,9 +554,44 @@ function readAlgebraOrThrow(scene: Scene): AlgebraModel {
     // `guard` nay do **luật tự khai**. Bản trước dựng nó bằng cách parse lại `step.arg`
     // — đúng tình cờ cho `mul_both_sides`, nơi arg *là* thừa số, và sai với mọi luật
     // khác. `abs_case` cần "$A \ge 0$", thứ không đọc ra được từ chuỗi tác giả gõ.
-    const guard = outcome.guard ?? null;
+    //
+    // **Và giả thiết đang đứng** (AL-28): một bước `wlog` khai `standing`, và lời khai
+    // ấy đi theo **mọi bước sau**. Nhập vào đây chứ không ở từng luật, vì luật không
+    // thấy được các bước khác — chỉ `readAlgebra` mới biết chuỗi.
+    //
+    // Thứ tự trong danh sách không đổi kết quả: `guardHolds` đòi **mọi** điều kiện cùng
+    // đúng. Nhưng nó phải nhập **trước** khi bước này được kiểm, không phải sau — chính
+    // bước `wlog` cũng chạy dưới giả thiết nó vừa khai.
+    standing = [...standing, ...guardList(outcome.standing ?? null)];
+    const guard = [...guardList(outcome.guard ?? null), ...standing];
 
-    if (outcome.claim !== undefined) {
+    if (outcome.standing !== undefined && same(target, outcome.after)) {
+      /**
+       * **Bước không đổi biểu thức, mà đổi giả thiết** (AL-28) — và chứng cứ phải nói
+       * đúng chuyện ấy.
+       *
+       * Không có nhánh này thì một bước `wlog` rơi vào `sameSolutionSet`, và vì `after`
+       * **bằng** `before` nên nó luôn cho *"cùng chân lý trên 24 điểm"*. Câu ấy đúng và
+       * **rỗng**: nó kiểm một phép biến đổi không xảy ra, trong khi nghĩa vụ thật của
+       * bước — chứng chỉ đối xứng — thì không được nhắc. Một dòng chứng cứ luôn xanh vì
+       * nó hỏi sai câu là đúng lớp lỗi `ENGINE-BACKLOG.md` §3b đi vá.
+       *
+       * Nhận diện bằng **cấu trúc kết quả** (`standing` có, cây không đổi), không bằng
+       * tên luật: một danh sách tên thì luật thứ hai của họ này lại lọt — cùng lý lẽ với
+       * chỗ bỏ qua `binding` ở phép quét ngẫu nhiên.
+       *
+       * Nghĩa vụ ấy đã được **luật** gác: nó từ chối khi không có chứng chỉ. Nên chỗ này
+       * chỉ ghi lại cho người đọc thấy bước đã mua gì bằng cái giá nào.
+       */
+      const added = guardList(outcome.standing)
+        .map((g) => `${toPlain(g.expr)} ${g.sign === '>=0' ? '≥' : g.sign === '<=0' ? '≤' : '≠'} 0`)
+        .join(', ');
+      judge({
+        ok: true,
+        verified: true,
+        message: `biểu thức không đổi; từ đây thêm giả thiết ${added}`,
+      });
+    } else if (outcome.claim !== undefined) {
       // Hợp đồng thứ bảy (M59): đẳng thức bước này khẳng định. `left` đọc từ cây **sau**,
       // `right` dựng từ cây **trước**, nên một phép biến đổi hàng sai làm nó hỏng ngay.
       judge(sameValue(outcome.claim.left, outcome.claim.right, 20260731 + i, 8, guard));
@@ -613,25 +674,87 @@ function readAlgebraOrThrow(scene: Scene): AlgebraModel {
        * trước rồi so, không hỏi luật. Bài học M78.3: luật và phép kiểm đi qua *một* hàm
        * thì sai cùng nhau mà vẫn khớp. Nên phép bóc dưới đây là bản thứ hai, viết riêng.
        */
-      const declared = new Set((config.assume ?? []).map((a) => a.trim()));
       const need = outcome.assumption ?? '';
-      if (!declared.has(need)) {
-        return {
-          ...empty,
-          rows,
-          refusal:
-            `bước ${i + 1} (${rule.label}): bài chưa khai giả thiết "${need}" — ` +
-            (declared.size === 0
-              ? 'thêm nó vào `assume` của scene'
-              : `scene đang khai ${[...declared].map((d) => `"${d}"`).join(', ')}`),
-        };
-      }
+      const order = orderAssumption(need);
 
-      judge(
-        peelsTo(target, outcome.after, need)
-          ? { ok: true, verified: true, message: `bóc ${need} — hai vế cùng một lời gọi hàm` }
-          : { ok: false, verified: true, message: 'kết quả không bằng phép bóc trực tiếp' },
-      );
+      if (order !== null) {
+        /**
+         * **Giả thiết sinh ra từ chuỗi, không từ `config`** (AL-28).
+         *
+         * Hai nguồn giả thiết, và chúng đối chiếu ở hai chỗ khác nhau vì chúng *là* hai
+         * thứ khác nhau. `"f: đơn ánh"` là lời khai của tác giả về **bài** — nó phải nằm
+         * trong `config.assume`. `"thứ tự: a >= b"` là thứ một bước `wlog` **vừa dựng
+         * ra**, và nó chỉ có hiệu lực từ bước ấy trở đi — nên chỗ hỏi là `standing`.
+         *
+         * Hỏi nhầm chỗ thì hỏng cả hai chiều: bắt tác giả khai thứ tự vào `config.assume`
+         * là bỏ mất **vị trí** của bước `wlog` (giả sử ở bước 5 mà bước 2 đã dùng), còn
+         * cho `wlog` ghi vào `config` thì bước khai lấy bước dùng — đúng thứ AL-22 gỡ.
+         */
+        const { hi, lo } = order;
+        const wanted = commutativeKey(normalize(varDiff(hi, lo)));
+        const held = standing.some(
+          (g) => g.sign === '>=0' && commutativeKey(normalize(g.expr)) === wanted,
+        );
+        if (!held) {
+          return {
+            ...empty,
+            rows,
+            refusal:
+              `bước ${i + 1} (${rule.label}): bước này giả sử ${hi} ≥ ${lo}, mà chưa bước nào ` +
+              'khai thứ tự ấy — thêm một bước `wlog` trước nó',
+          };
+        }
+        /**
+         * **Biên của thứ tự, và vì sao phép hỏi này phải là cấu trúc** (AL-28).
+         *
+         * $a \ge b$ cho $a - b \ge 0$. Nhân một bất đẳng thức **ngặt** với $0$ thì ra
+         * $0 < 0$ — sai — nên ca ngặt đòi thêm $a \ne b$.
+         *
+         * Đo trước khi tin: bỏ mệnh đề ấy ở `rules.ts` rồi chạy lại thì `unsound` **vẫn
+         * rỗng**. Biên $a = b$ có độ đo $0$, nên bộ bốc điểm thực không bao giờ rơi trúng
+         * nó. Một chốt canh chỉ dựa vào bốc điểm ở đây là chốt canh luôn xanh — đúng lớp
+         * lỗi mà `ENGINE-BACKLOG.md` §3b.2–§3b.5 đã gỡ bốn lần.
+         *
+         * Nên hỏi bằng **cấu trúc**, và hỏi ở đây chứ không ở luật: `model` dựng lại điều
+         * kiện cần từ `target.op` của chính nó, độc lập với thứ luật khai. Luật và phép
+         * kiểm đi qua *một* đường thì sai cùng nhau mà vẫn khớp — bài học M78.3.
+         */
+        const strict = target.k === 'rel' && (target.op === '<' || target.op === '>');
+        const excluded = guardList(outcome.guard ?? null).some(
+          (g) => g.sign === '!=0' && commutativeKey(normalize(g.expr)) === wanted,
+        );
+        if (strict && !excluded) {
+          judge({
+            ok: false,
+            verified: true,
+            message: `${hi} ≥ ${lo} cho phép ${hi} = ${lo}, và nhân một dấu ngặt với 0 là sai`,
+          });
+        } else {
+          // Giả thiết chỉ cho phép **giữ chiều**; nó không chứng minh phép nhân đúng. Nên
+          // cây vẫn phải kiểm, và kiểm dưới `guard` đã trộn `standing` — tức chỉ trên
+          // miền bài đang xét.
+          judge(impliesSolutionSet(target, outcome.after, guard, 20260731 + i));
+        }
+      } else {
+        const declared = new Set((config.assume ?? []).map((a) => a.trim()));
+        if (!declared.has(need)) {
+          return {
+            ...empty,
+            rows,
+            refusal:
+              `bước ${i + 1} (${rule.label}): bài chưa khai giả thiết "${need}" — ` +
+              (declared.size === 0
+                ? 'thêm nó vào `assume` của scene'
+                : `scene đang khai ${[...declared].map((d) => `"${d}"`).join(', ')}`),
+          };
+        }
+
+        judge(
+          peelsTo(target, outcome.after, need)
+            ? { ok: true, verified: true, message: `bóc ${need} — hai vế cùng một lời gọi hàm` }
+            : { ok: false, verified: true, message: 'kết quả không bằng phép bóc trực tiếp' },
+        );
+      }
     } else if (rule.id === 'substitute') {
       /**
        * Thế biến là bước **đổi hệ quy chiếu**: sau "$x := 2y$" thì $x$ và $y$ là
@@ -663,7 +786,14 @@ function readAlgebraOrThrow(scene: Scene): AlgebraModel {
       // $x \ne 1$"*; `guard` là thứ duy nhất trả lời được *"thì sao nếu $x = 1$"* —
       // và câu thứ hai mới là câu người học hỏi. Không có nó thì chỗ chạm vào điều
       // kiện chỉ đọc lại đúng dòng chữ đang hiện trên màn hình.
-      conditions.push({ text: outcome.condition, guard });
+      //
+      // Và ở đây là **`outcome.guard`**, không phải `guard` đã trộn giả thiết đang đứng
+      // (AL-28). Hai thứ đi hai đường vì chúng trả lời hai câu khác nhau: `guard` trộn
+      // là thứ **bộ kiểm** dùng để biết bốc điểm ở đâu; `outcome.guard` là thứ **người
+      // học** chạm vào. Trộn chúng thì `violationOf` có quyền trả lời câu *"thì sao
+      // nếu"* bằng một điểm nằm **ngoài nhánh đã chọn** — đúng kiểu "$a = 0, b = 1$:
+      // $a - b < 0$" — mà một điểm ngoài nhánh không phải phản ví dụ của bước nào cả.
+      conditions.push({ text: outcome.condition, guard: outcome.guard ?? null });
     }
 
     const after = idsOfExpr(next);

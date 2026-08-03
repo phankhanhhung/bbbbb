@@ -67,14 +67,14 @@ xong, và chỗ chưa xong lớn nhất vẫn là §4.1.
 
 | | Số đo | Nguồn |
 |---|---:|---|
-| Luật | **84** | `RULES.length` |
-| …đã có bài dùng | **76** | quét `config.steps[].rule` toàn kho |
+| Luật | **85** | `RULES.length` |
+| …đã có bài dùng | **77** | quét `config.steps[].rule` toàn kho |
 | …chưa bài nào dùng | **8** | xem §5 |
 | Kiểu nút `Expr` | **16** | `EXPR_KINDS.length` |
 | Sân kiểm | **4** | $\mathbb{F}_p$ · thực · nguyên · chuỗi hệ số |
 | Hợp đồng kiểm | **7** | `sameValue`, `sameSolutionSet`, `implies`, `root`, `instance`, `binding`, `claim` |
 | Hàm không-đa-thức | **9** | `binom cos exp fact ln log perm sin tan` |
-| Bài dùng engine | **45 / 150** | `engines_used` chứa `algebra` |
+| Bài dùng engine | **47 / 152** | `engines_used` chứa `algebra` |
 | …bật hộp cát | **5** | `kind` khác `illustration` — xem `ENGINE-ALGEBRA.md` §54, §54c, §54e |
 
 Bảng này đi từ $73$ luật lên $80$ kể từ lượt đo M70 — bảy luật, và đúng bảy: M71 thêm
@@ -199,10 +199,29 @@ kèm $a+b \ge 1$, tức một số lớn và một số rất nhỏ, mà bộ l�
 Nên chiều phải quyết bằng **cấu trúc**, và bốc điểm ở lại làm lưới thứ hai. §52.2 ghi
 đủ; ở đây chỉ cần nhớ một câu: *một chốt canh luôn xanh là chốt canh không có*.
 
-Ô "Phủ" của họ này chưa ước lại — phần *có tên* đã đóng, nhưng phần
-*"không mất tổng quát"* vẫn nguyên, và ước lại mà không đếm là bịa. Điều **đã** đổi là
-hình dạng của nợ: nó không còn là "vài luật chưa cài" mà là **một khái niệm chưa có** —
-nhánh giả thiết. Một món như thế thì lịch cho nó là một quyết định khác hẳn.
+**Và nhánh giả thiết cũng làm rồi, 2026-08-03 (AL-28).** Luật `wlog` khai một thứ tự, và
+thứ tự ấy **sống tới hết chuỗi** — trường `standing` trên `RuleOutcome`, khác `guard` ở
+đời sống chứ không ở hình dạng. Hai bài dùng nó. `ENGINE-ALGEBRA.md` §55.
+
+Ba chỗ đáng ghi, và cả ba đều là **phép đo bác lại một câu đoán**:
+
+- Đoạn ngay trên gọi đây là *"chỗ đắt"*. Nó rẻ hơn tưởng, vì WLOG không phải **rẽ nhánh**
+  — nó thu hẹp miền về **một** nhánh, và nhánh kia là chính bài này với hai tên hoán vị.
+  Cái đắt thật là *tách trường hợp*, một khái niệm khác và vẫn chưa có.
+- Chứng chỉ đối xứng **không** dựng được bằng `same` + `normalize`: `normalize` chỉ làm
+  phẳng `add`/`mul` chứ không sắp đối số, nên hoán vị một biểu thức đối xứng hoàn toàn
+  vẫn cho `false`. Phải có một khoá chuẩn giao hoán riêng — và riêng thật, không sửa
+  `normalize`, vì sửa nó là đổi nghĩa `same` ở 84 luật còn lại.
+- Bốc điểm **không** canh được cái biên. $a \ge b$ cho phép $a = b$, và nhân một bất đẳng
+  thức *ngặt* với $0$ là sai — nhưng biên ấy có độ đo $0$, nên bộ bốc điểm thực không bao
+  giờ rơi trúng. Đo được: bỏ mệnh đề canh nó đi thì `unsound` vẫn rỗng. Lại đúng câu của
+  §52.2, ở một chỗ mới: *một chốt canh luôn xanh là chốt canh không có*.
+
+Ô "Phủ" của họ này vẫn **chưa ước lại**, và vẫn vì cùng một lý do: ước mà không đếm là
+bịa. Phần *có tên* đóng ở AL-21, phần *nhánh giả thiết* đóng ở AL-28, nhưng "phủ bao
+nhiêu phần trăm đề bất đẳng thức olympiad" thì chỉ trả lời được bằng §6 — phân loại một
+danh sách đề thật rồi **thử soạn**. Cho tới lúc ấy con số $5\%$ đứng nguyên: nó là con số
+cuối cùng có người đếm.
 
 ### 4.2 Phương trình hàm — 20%, đã đi từ **0** lên ~25% ✅ M73, nửa sau ✅ AL-22/AL-24
 
@@ -237,9 +256,21 @@ tính chất và một mệnh đề lật dấu — nên đây là phép thử x
 hàm"* — toàn ánh và *"$f$ là hằng"* vẫn nguyên. Điều **đã** đổi là khuôn để thêm chúng
 vào nay đã chạy qua **hai** luật và hai bài thật, tức nó không còn là một khuôn suy đoán.
 
+**Nhưng khuôn ấy không đỡ được toàn ánh, và câu cũ ở đây nói ngược** — sửa 2026-08-03,
+tìm ra lúc dò kế hoạch AL-28. Khuôn là `peelSameFunction`: **bóc $f$ khỏi hai vế** một
+quan hệ. Toàn ánh không có hình dạng đó — nó **sinh** một biến mới ($\forall y\, \exists x:
+f(x) = y$), và `binding` cũng không đỡ được vì $t$ ấy không có biểu thức định nghĩa để
+`model` thế ngược mà so. Nó là một **hợp đồng mới**, không phải một dòng thêm vào bảng
+tính chất.
+
+Ghi ra vì cái sai này đúng lớp lỗi trội của kho — *một khẳng định mà mã không đỡ* — và
+lần này nó nằm trong tài liệu **lập kế hoạch**, chỗ nó sẽ định giá sai một hạng mục chưa
+làm. Đơn điệu ngặt thật sự là "điền vào khuôn" và đã chứng minh thế; suy ra rằng mọi
+thành viên còn lại của họ cũng thế là suy quá tay.
+
 ### 4.3 Engine này phục vụ ai
 
-Cột "phổ thông" cho ~88%, và **45/150 bài** của kho đang dùng nó. Nếu bộ mặt của
+Cột "phổ thông" cho ~88%, và **47/152 bài** của kho đang dùng nó. Nếu bộ mặt của
 kho là chuyên đề bắc cầu phổ thông → chuyên, thì engine đã gần xong việc và ba mục
 M71–M73 là mở rộng biên, không phải lấp lỗ. Nếu bộ mặt là olympiad thuần, thì
 §4.1 là việc lớn nhất còn lại của cả dự án, và §4.2 là việc lớn thứ hai — nhưng

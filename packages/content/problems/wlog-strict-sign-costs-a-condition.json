@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.7.0",
+  "id": "wlog-strict-sign-costs-a-condition",
+  "statement": {
+    "vi": "Cùng một nước đi, đổi $\\ge$ thành $>$: bài mọc thêm một dòng đỏ. Chỗ đáng nhìn là **vì sao** — và vì sao thử vài bộ số sẽ không bao giờ tìm ra nó."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Giả sử $a \\ge b$ cho $a - b \\ge 0$, tức $a - b$ **có thể bằng 0**. Nhân một bất đẳng thức không ngặt với 0 thì ra $0 \\le 0$ — vẫn đúng; nhân một bất đẳng thức ngặt với 0 thì ra $0 < 0$ — sai. Cả sự khác nhau nằm gọn ở một điểm duy nhất, và một điểm thì có độ đo 0: bộ bốc điểm ngẫu nhiên của engine không bao giờ rơi trúng nó. Chốt canh ở đây vì thế phải hỏi bằng **cấu trúc**."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 3,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-03",
+  "updated": "2026-08-03",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Dấu ngặt và cái biên bị bỏ quên"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Chuỗi giống hệt bài trước, chỉ đổi $\\ge$ thành $>$ ở dòng đầu.\nKết quả: dòng đỏ dưới hình nay nêu **hai** điều kiện thay vì một. Thứ tự $a \\ge b$ cho phép $a = b$, mà [[a1|phép nhân]] một bất đẳng thức ngặt với $0$ thì được $0 > 0$ — sai. Nên nó đòi thêm $a \\ne b$, và engine bắt bạn nói ra."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a^2 + b^2 > 2*a*b",
+              "steps": [
+                {
+                  "arg": "a >= b",
+                  "at": "",
+                  "note": "chọn thứ tự",
+                  "rule": "wlog"
+                },
+                {
+                  "arg": "a - b",
+                  "at": "",
+                  "rule": "mul_both_sides"
+                },
+                {
+                  "at": "0",
+                  "rule": "multiply_out"
+                },
+                {
+                  "at": "1",
+                  "rule": "multiply_out"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Năm dòng bất đẳng thức ngặt. Dòng 1 và 2 giống hệt nhau: a bình cộng b bình lớn hơn 2ab, dòng 2 kèm ghi chú chọn thứ tự. Dòng 3 nhân hai vế với a trừ b. Dòng 4 và 5 nhân ra. Dưới cùng một dòng đỏ nêu hai điều kiện: a lớn hơn hoặc bằng b không mất tổng quát, và a khác b."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

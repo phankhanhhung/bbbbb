@@ -184,9 +184,10 @@ tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mớ
 | **Cổng "chốt canh phải cắn được"** — quét 97 cặp (bài × validator); bắt 2 lỗi nội dung và 4 dòng khai thừa của chính nó | 08-02 | `ENGINE-BACKLOG.md` §3b.3 |
 | **AL-26** — điều kiện của phép nhân gọi tên đúng chỗ hỏng (`1/sin x ≠ 0` là câu luôn đúng); `no-lost-roots` **không** dựng vì nó là bản trùng | 08-02 | `ENGINE-ALGEBRA.md` §54d |
 | **AL-27** — `step.sandbox`: hộp cát mở ở chỗ tác giả khai, không ở cuối chuỗi; hai cổng cho đích; bài đại số bật hộp cát `2 → 5`, golden 0 byte; schema `1.7.0` | 08-03 | `ENGINE-ALGEBRA.md` §54e |
+| **AL-28** — nhánh giả thiết: luật `wlog` + `RuleOutcome.standing`; khoá chuẩn giao hoán cho chứng chỉ đối xứng; đóng nợ có tên lớn nhất của §4.1; kho `150 → 152` | 08-03 | `ENGINE-ALGEBRA.md` §55 |
 
-Kho đi từ **114 bài → 150 bài** trong hai ngày, test từ **3459** (M78.8) lên
-**3983 / 70 tệp**, schema từ `1.0.0` lên `1.7.0` — bảy minor, bảy migration đồng nhất.
+Kho đi từ **114 bài → 152 bài** trong ba ngày, test từ **3459** (M78.8) lên
+**4006 / 70 tệp**, schema từ `1.0.0` lên `1.7.0` — bảy minor, bảy migration đồng nhất.
 
 > **Một cái bẫy đếm, ghi ra để lần sau không phải điều tra lại.** Con số chính thức
 > là số của `pnpm test` (`vitest run` không lọc đường dẫn) — **3843 / 67 tệp** lúc
@@ -269,14 +270,17 @@ lại vẫn phải soát tay — nhưng nay ít nhất chúng có một danh sá
 
 ### Nợ có tên còn mở sau đoạn này
 
-- **Nhánh giả thiết** — *"không mất tổng quát, giả sử $a \ge b \ge c$"*. Phần *luật
-  có tên* của bất đẳng thức đã đóng ở AL-21, nên nợ này hết mờ: nó không còn là "vài
-  luật chưa cài" mà là **một khái niệm chưa có**. `ALGEBRA-COVERAGE.md` §4.1,
-  `ENGINE-ALGEBRA.md` §52.4.
+- ~~**Nhánh giả thiết**~~ — đóng 2026-08-03 ở AL-28: luật `wlog`, `RuleOutcome.standing`,
+  hai bài. Ghi lại cái giá vì nó **rẻ hơn** dòng này từng đoán: WLOG không rẽ nhánh, nó
+  thu hẹp về một nhánh, và nhánh kia là chính bài với hai tên hoán vị. Cái đắt thật là
+  *tách trường hợp*, vẫn chưa có. `ENGINE-ALGEBRA.md` §55.
 - **Toàn ánh và "$f$ là hằng"** — họ *kết luận về hàm* nay có **hai** thành viên (đơn
-  ánh AL-22, đơn điệu ngặt AL-24). Khuôn đã chạy qua hai luật và hai bài thật mà không
-  phải sửa dòng hạ tầng nào, nên nợ này chắc chắn là "điền vào khuôn".
-  `ENGINE-ALGEBRA.md` §53, §54b.
+  ánh AL-22, đơn điệu ngặt AL-24). **Sửa 2026-08-03:** câu cũ ở đây nói nợ này "chắc chắn
+  là điền vào khuôn" — sai, và tìm ra lúc dò kế hoạch AL-28. Khuôn là `peelSameFunction`,
+  tức **bóc $f$ khỏi hai vế**; toàn ánh **sinh** một biến mới ($\forall y\, \exists x:
+  f(x)=y$), và `binding` không đỡ được vì $t$ ấy không có biểu thức định nghĩa để `model`
+  thế ngược. Nó là một **hợp đồng mới**. `ENGINE-ALGEBRA.md` §53, §54b;
+  `ALGEBRA-COVERAGE.md` §4.2.
 - **Binet / $\frac{1}{1-P(x)}$ với $\deg P \ge 2$** — sau ranh giới vô tỉ mà
   `series.ts` tự vạch. `ALGEBRA-COVERAGE.md` §5.1.
 - **`point` đứng yên ở 3 bài** kể từ M36 — nội dung trước, đúng luật

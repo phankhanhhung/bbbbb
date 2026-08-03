@@ -926,3 +926,94 @@ export function same(a: Expr, b: Expr): boolean {
     }
   }
 }
+
+/**
+ * **Khoá chuẩn: như `same`, nhưng `add` và `mul` không phân biệt thứ tự đối số** (AL-28).
+ *
+ * ## Vì sao `same` không đủ, đo trước khi viết
+ *
+ * `normalize` chỉ *làm phẳng* `add`/`mul`; nó không sắp đối số. Nên hoán vị
+ * $a \leftrightarrow b$ trên $a^2+b^2+c^2 \ge ab+bc+ca$ — một biểu thức đối xứng hoàn
+ * toàn — rồi hỏi `same(normalize(...), normalize(...))` cho **`false`**. Chứng chỉ đối
+ * xứng của `wlog` đứng trên đúng phép hỏi ấy, nên không có hàm này thì luật ấy từ chối
+ * mọi bài, kể cả bài đúng.
+ *
+ * ## Vì sao nó là một hàm riêng, không phải một dòng thêm vào `normalize`
+ *
+ * Cho `normalize` sắp đối số thì `same` đổi nghĩa ở **83 luật còn lại** — hai biểu thức
+ * chỉ khác thứ tự hạng tử bỗng hoá bằng nhau, và mọi luật dựa vào `same` để biết "bước
+ * này có đổi gì không" sẽ im lặng ở chỗ nó vốn phải nói. Đó là một thay đổi toàn cục để
+ * mua một phép hỏi cục bộ, và nó sẽ đổi golden.
+ *
+ * Nên thứ tự vẫn có nghĩa ở mọi chỗ khác; chỉ **chỗ hỏi về đối xứng** mới thôi nhìn nó.
+ *
+ * ## Khoá này phải bắt đúng những gì `same` bắt
+ *
+ * Mọi trường vô hướng mà `same` so — `notation` của `ufn`, tên biến ràng buộc của `big`
+ * và `coeff`, `index` của `root`, `join` của `sys` — đều phải nằm trong khoá. Bỏ sót một
+ * cái là dựng một phép so **lỏng hơn** `same` ở đúng chỗ nó phải chặt bằng, và một chứng
+ * chỉ đối xứng lỏng thì cấp cho cả bài không đối xứng.
+ */
+export function commutativeKey(e: Expr): string {
+  const kids = children(e).map(commutativeKey);
+  // Chỉ hai nút này giao hoán. `div`, `pow`, `rel` thì **không** — $a/b \ne b/a$, và
+  // một khoá coi chúng như nhau là một khoá nói dối ở chỗ dễ tin nhất.
+  if (e.k === 'add' || e.k === 'mul') return `${e.k}(${[...kids].sort().join(',')})`;
+  return `${e.k}:${own(e)}(${kids.join(',')})`;
+}
+
+/** Phần vô hướng của một nút — đúng bộ trường mà `same` so ngoài các con. */
+function own(e: Expr): string {
+  switch (e.k) {
+    case 'int':
+      return String(e.v);
+    case 'rat':
+      return `${e.p}/${e.q}`;
+    case 'var':
+      return e.name;
+    case 'root':
+      return String(e.index);
+    case 'fn':
+      return e.name;
+    case 'ufn':
+      return `${e.name}|${e.notation}`;
+    case 'big':
+      return `${e.op}|${e.v}`;
+    case 'coeff':
+      return e.v;
+    case 'rel':
+      return e.op;
+    case 'sys':
+      return e.join;
+    default:
+      return '';
+  }
+}
+
+/**
+ * **Biểu thức này có bất biến khi đổi chỗ hai biến này không** — chứng chỉ của `wlog`.
+ *
+ * Kiểm bằng **cấu trúc**, không bằng bốc điểm, và §52.2 là lý do: đề xuất sai chiều của
+ * AM–GM đã đi qua $205$ điểm mẫu rồi mới lộ ra là sai. Một phép hoán vị thì cấu trúc trả
+ * lời được dứt khoát, nên hỏi cách khác là tự chọn một câu trả lời yếu hơn.
+ *
+ * Tên trung gian bắt đầu bằng một ký tự **không** hợp lệ trong tên biến của parser, nên
+ * nó không thể đụng một biến thật của bài — thế hai lượt liên tiếp mà không có nó thì
+ * $a \to b$ rồi $b \to a$ biến thành $a \to a$, và mọi biểu thức đều hoá "đối xứng".
+ */
+/** Tên trung gian — `#` không hợp lệ trong tên biến của parser, nên nó không đụng bài nào. */
+const SWAP_NAME = '#swap';
+const SWAP_ID: TermId = '#swap';
+
+export function symmetricUnder(e: Expr, a: string, b: string): boolean {
+  if (a === b) return true;
+  // `id` ở đây không đi đâu cả: cây hoán vị chỉ sống tới lúc lấy khoá, và `commutativeKey`
+  // không đọc `id`. Dùng một hằng thay vì `Minter` để hàm này không cần trạng thái.
+  const at = (name: string): Expr => ({ k: 'var', name, id: SWAP_ID });
+  const swapped = substituteVar(
+    substituteVar(substituteVar(e, a, at(SWAP_NAME)), b, at(a)),
+    SWAP_NAME,
+    at(b),
+  );
+  return commutativeKey(normalize(swapped)) === commutativeKey(normalize(e));
+}

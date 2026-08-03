@@ -43,6 +43,9 @@ import {
   varsOf,
   walk,
   same,
+  normalize,
+  commutativeKey,
+  symmetricUnder,
   glyphBox,
   shrink,
   textWidth,
@@ -116,6 +119,17 @@ const ARGS: Readonly<Record<string, ArgMaker>> = {
   // Hướng đơn điệu là **tham số của bước**, không đọc được từ nút — luật chỉ dịch nó
   // thành tên một giả thiết, còn `model` mới đối chiếu với `assume`.
   use_monotone: () => 'tăng',
+  /**
+   * Thứ tự giả sử là **hai tên biến**, và cặp phải có mặt trong nút — nên đọc từ nút.
+   *
+   * Một `arg` cố định `"a >= b"` chỉ áp được cho hạt giống nào tình cờ có đủ cả $a$ lẫn
+   * $b$; đọc từ nút thì mọi quan hệ đối xứng bộ sinh dựng ra đều được thử. Và luật vẫn
+   * từ chối phần lớn trong số đó — đối xứng là điều kiện hiếm, đúng như nó phải hiếm.
+   */
+  wlog: (_p, node) => {
+    const names = [...varsOf(node as Expr)].sort();
+    return names.length >= 2 ? `${names[0]} >= ${names[1]}` : 'a >= b';
+  },
   factor_by_grouping: (_p, node) => {
     const n = node.args?.length ?? 0;
     if (n < 2) return '0|1';
@@ -3779,5 +3793,178 @@ describe('§54d — điều kiện của phép nhân gọi tên đúng chỗ h�
     // sắp chữ — ở đó $2x$ là lối viết, còn `2*x` là cú pháp nhập.
     expect(conditions('a = b', 'a - b')).toEqual(['a − b ≠ 0']);
     expect(conditions('a = b', '2*x - 1')).toEqual(['2x − 1 ≠ 0']);
+  });
+});
+
+/**
+ * **Chứng chỉ đối xứng của `wlog`** (AL-28).
+ *
+ * Phép hỏi này là *toàn bộ* tính đúng đắn của một bước "không mất tổng quát": nếu biểu
+ * thức không bất biến khi đổi chỗ hai biến ấy thì việc giả sử một thứ tự **làm mất**
+ * tổng quát, và lời giải sai từ đó trở đi.
+ */
+describe('khoá chuẩn giao hoán và chứng chỉ đối xứng (AL-28)', () => {
+  const at = (src: string): Expr => normalize(parse(src, new Minter()));
+
+  it('`same` **không** làm được việc này — đó là lý do khoá chuẩn tồn tại', () => {
+    // Đo trước khi viết, và phép đo ấy bác bỏ đường ngắn nhất: `normalize` chỉ làm
+    // phẳng `add`/`mul`, không sắp đối số, nên một biểu thức đối xứng hoàn toàn vẫn
+    // khác chính nó sau hoán vị. Không có dòng này thì lượt sau sẽ lại tưởng `same` đủ.
+    const before = at('a^2 + b^2 + c^2 >= a*b + b*c + c*a');
+    const after = at('b^2 + a^2 + c^2 >= b*a + a*c + c*b');
+    expect(same(before, after)).toBe(false);
+    expect(commutativeKey(before)).toBe(commutativeKey(after));
+  });
+
+  it('đối xứng thì cấp chứng chỉ', () => {
+    const e = at('a^2 + b^2 + c^2 >= a*b + b*c + c*a');
+    expect(symmetricUnder(e, 'a', 'b')).toBe(true);
+    expect(symmetricUnder(e, 'a', 'c')).toBe(true);
+    expect(symmetricUnder(e, 'b', 'c')).toBe(true);
+  });
+
+  it('**không** đối xứng thì từ chối — kể cả khi chỉ lệch một hệ số', () => {
+    expect(symmetricUnder(at('a^2 + 2*b >= 0'), 'a', 'b')).toBe(false);
+    // Ca sát ranh giới: đối xứng theo $a \leftrightarrow b$ mà **không** theo
+    // $a \leftrightarrow c$. Một chứng chỉ chỉ biết nói "có" sẽ qua cả hai.
+    const partial = at('a*b + c^3 >= 0');
+    expect(symmetricUnder(partial, 'a', 'b')).toBe(true);
+    expect(symmetricUnder(partial, 'a', 'c')).toBe(false);
+  });
+
+  it('phép hoán vị đi qua **tên trung gian** — thiếu nó thì mọi thứ hoá đối xứng', () => {
+    // Thế thẳng $a \to b$ rồi $b \to a$ biến cả hai thành $a$, và khi ấy hai vế trùng
+    // nhau vì lý do sai. Ca này phân biệt được: đổi chỗ đúng thì nó **không** đối xứng.
+    expect(symmetricUnder(at('a - b >= 0'), 'a', 'b')).toBe(false);
+  });
+
+  it('khoá chuẩn **không** coi `div`, `pow`, `rel` là giao hoán', () => {
+    expect(commutativeKey(at('a/b'))).not.toBe(commutativeKey(at('b/a')));
+    expect(commutativeKey(at('a^b'))).not.toBe(commutativeKey(at('b^a')));
+    expect(commutativeKey(at('a > b'))).not.toBe(commutativeKey(at('b > a')));
+  });
+
+  it('khoá chuẩn chặt **bằng** `same` ở mọi trường vô hướng', () => {
+    // Bỏ sót một trường là dựng một phép so lỏng hơn `same` ở đúng chỗ nó phải chặt
+    // bằng — và một chứng chỉ đối xứng lỏng thì cấp cho cả bài không đối xứng.
+    expect(commutativeKey(at('root(3, x)'))).not.toBe(commutativeKey(at('root(2, x)')));
+    expect(commutativeKey(at('sum(k, 1, n, k)'))).not.toBe(
+      commutativeKey(at('prod(k, 1, n, k)')),
+    );
+    expect(commutativeKey(at('x < 1; x > 2'))).not.toBe(
+      commutativeKey(at('x < 1 hoặc x > 2')),
+    );
+  });
+});
+
+/**
+ * **Nhánh giả thiết** (AL-28) — `wlog` khai một thứ tự, và `mul_both_sides` tiêu thụ nó.
+ */
+describe('không mất tổng quát (AL-28)', () => {
+  const model = (start: string, steps: readonly { rule: string; arg?: string }[]) =>
+    readAlgebra({
+      engine: 'algebra',
+      config: { start, steps: steps.map((s) => ({ at: '', ...s })) },
+    } as unknown as Scene);
+
+  it('đối xứng thì đi được, và điều kiện nói ra thứ tự đã giả sử', () => {
+    const m = model('a^2 + b^2 >= 2*a*b', [{ rule: 'wlog', arg: 'a >= b' }]);
+    expect(m.refusal).toBeNull();
+    expect(m.conditions.map((c) => c.text)).toEqual(['a ≥ b (không mất tổng quát)']);
+    expect(m.unsound).toEqual([]);
+  });
+
+  it('**không** đối xứng thì từ chối — đây là toàn bộ tính đúng đắn của bước', () => {
+    // Không có phép hỏi này thì `wlog` là một chứng chỉ luôn cấp, tức một chốt canh
+    // không có — đúng thứ `ENGINE-BACKLOG.md` §3b.2–§3b.5 đã gỡ bốn lần.
+    expect(model('a^2 + 2*b >= 0', [{ rule: 'wlog', arg: 'a >= b' }]).refusal).toMatch(
+      /không chứng minh được/,
+    );
+
+    // Và lời từ chối nói **"không chứng minh được"**, không nói "bài không đối xứng":
+    // $|a-b| \ge 0$ đối xứng thật mà vẫn bị từ chối, vì `abs` không giao hoán và engine
+    // không có luật kéo dấu trừ ra khỏi nó. Phép hỏi này chứng minh được đối xứng, nó
+    // không bác được — và một lời từ chối khẳng định quá tay là đúng lớp lỗi trội của
+    // kho: một khẳng định mà mã không đỡ.
+    expect(model('abs(a + (-1)*b) >= 0', [{ rule: 'wlog', arg: 'a >= b' }]).refusal).toMatch(
+      /không chứng minh được/,
+    );
+  });
+
+  it('`arg` phải là **hai tên biến** có mặt trong bài', () => {
+    const bad = (arg: string) => model('a^2 + b^2 >= 2*a*b', [{ rule: 'wlog', arg }]).refusal;
+    expect(bad('a > b')).toMatch(/thứ tự dạng/);
+    expect(bad('a + 1 >= b')).toMatch(/tên biến/);
+    expect(bad('a >= a')).toMatch(/không giả sử gì/);
+    expect(bad('a >= z')).toMatch(/không có biến "z"/);
+  });
+
+  it('giả thiết sống tới **hết chuỗi**, không chỉ bước khai nó', () => {
+    // Đây là cả nghĩa của `standing`. Bước nhân nằm **sau** bước `wlog` và vẫn dùng
+    // được thứ tự ấy; bỏ phần nhập `standing` ở `model` thì bước này bị từ chối.
+    const m = model('a^2 + b^2 >= 2*a*b', [
+      { rule: 'wlog', arg: 'a >= b' },
+      { rule: 'mul_both_sides', arg: 'a - b' },
+    ]);
+    expect(m.refusal).toBeNull();
+    expect(m.unsound).toEqual([]);
+    expect(m.rows).toHaveLength(3);
+  });
+
+  it('chưa khai thứ tự thì bước nhân **bị từ chối**, không phải cảnh báo', () => {
+    // Lời từ chối cũ của `mul_both_sides` không mất — nó dời sang chỗ biết được chuỗi.
+    expect(
+      model('a^2 + b^2 >= 2*a*b', [{ rule: 'mul_both_sides', arg: 'a - b' }]).refusal,
+    ).toMatch(/chưa bước nào khai thứ tự/);
+    // Và thứ tự **ngược** cũng không phải thứ tự đã khai.
+    expect(
+      model('a^2 + b^2 >= 2*a*b', [
+        { rule: 'wlog', arg: 'a >= b' },
+        { rule: 'mul_both_sides', arg: 'b - a' },
+      ]).refusal,
+    ).toMatch(/giả sử b ≥ a/);
+  });
+
+  it('dấu **ngặt** đòi thêm $a \\ne b$ — và bốc điểm không bắt được chỗ này', () => {
+    // Đo được, và nó là lý do phép hỏi ấy phải là **cấu trúc**: biên $a = b$ có độ đo
+    // $0$, nên bộ bốc điểm thực không bao giờ rơi trúng. Bỏ mệnh đề ngặt ở `rules.ts`
+    // thì `unsound` vẫn rỗng nếu chỉ dựa vào bốc điểm; chốt canh thật nằm ở `model` và
+    // nó hỏi bằng cây.
+    const strict = model('a^2 + b^2 > 2*a*b', [
+      { rule: 'wlog', arg: 'a >= b' },
+      { rule: 'mul_both_sides', arg: 'a - b' },
+    ]);
+    expect(strict.refusal).toBeNull();
+    expect(strict.unsound).toEqual([]);
+    expect(strict.conditions.map((c) => c.text)).toEqual([
+      'a ≥ b (không mất tổng quát)',
+      'a ≠ b',
+    ]);
+
+    // Không ngặt thì $0 \le 0$ vẫn đúng ⇒ **không** cần điều kiện thêm.
+    const loose = model('a^2 + b^2 >= 2*a*b', [
+      { rule: 'wlog', arg: 'a >= b' },
+      { rule: 'mul_both_sides', arg: 'a - b' },
+    ]);
+    expect(loose.conditions.map((c) => c.text)).toEqual(['a ≥ b (không mất tổng quát)']);
+  });
+
+  it('thừa số phức tạp hơn một **hiệu hai biến** vẫn bị từ chối', () => {
+    // Dấu của $a^2 - b^2$ không suy ra được từ một thứ tự trên biến, và nhận bừa ở đây
+    // là mở đúng cái khe mà `wlog` sinh ra để bịt.
+    expect(
+      model('a^2 + b^2 >= 2*a*b', [
+        { rule: 'wlog', arg: 'a >= b' },
+        { rule: 'mul_both_sides', arg: 'a^2 - b^2' },
+      ]).refusal,
+    ).toMatch(/chưa biết dấu/);
+  });
+
+  it('dòng điều kiện WLOG **không** mang guard — chạm vào nó không ra điểm ngoài nhánh', () => {
+    // `violationOf` trả lời câu *"thì sao nếu"* bằng một điểm làm điều kiện gãy. Một
+    // điểm nằm ngoài nhánh đã chọn không phải phản ví dụ của bước nào cả, nên giả thiết
+    // đang đứng **không** đi vào `conditions[].guard`.
+    const m = model('a^2 + b^2 >= 2*a*b', [{ rule: 'wlog', arg: 'a >= b' }]);
+    expect(guardList(m.conditions[0]?.guard ?? null)).toEqual([]);
   });
 });

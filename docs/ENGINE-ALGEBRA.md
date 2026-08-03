@@ -276,7 +276,7 @@ Bảng trên là bản **thiết kế**. Tập luật thật đã đi xa hơn n�
 - `common_denominator` **đã cài** (M50), cùng `combine_fraction` là nghịch đảo của
   `split_fraction`.
 
-Xem §21–§54b để biết tập luật thật — **84 luật**, xếp theo mười bốn lớp:
+Xem §21–§55 để biết tập luật thật — **85 luật**, xếp theo mười lăm lớp:
 
 > **Bảng này có răng.** `engine.test.ts` đọc chính bảng dưới, gom mọi tên trong dấu
 > nháy ngược, và so với `RULES`: thừa một tên là đỏ, thiếu một tên cũng là đỏ. Lý do
@@ -303,6 +303,7 @@ Xem §21–§54b để biết tập luật thật — **84 luật**, xếp theo 
 | **phương trình hàm** (M73, §45; AL-22, §53; AL-24, §54b) | `specialize`, `use_injective`, `use_monotone` |
 | **hàm sinh & chuỗi** (M68, §44; M72, §47; AL-20) | `geometric_series`, `coeff_of_product`, `coeff_linear`, `coeff_shift`, `coeff_repeated_geometric`, `partial_fractions` |
 | **bất đẳng thức có tên** (AL-21, §52) | `am_gm`, `cauchy_schwarz` |
+| **nhánh giả thiết** (AL-28, §55) | `wlog` |
 
 **Hai điều luật này cố ý không có:**
 
@@ -4304,3 +4305,106 @@ vừa mở còn tệ hơn không có nhãn — `excursion?.from ?? step.id`.
 Cả hai lỗi nằm ngoài tầm mọi chốt canh đã có, vì cả hai đều là *"cửa vào dẫn tới đâu"*,
 không phải *"dữ liệu có hợp lệ không"*. Chúng nay có răng: hai test e2e AL-27, và bẻ cả
 ba nhánh (`fork(step)`, `{step.id}`, bỏ `?? step.scene`) đều làm chúng đỏ.
+
+---
+
+## §55 — Nhánh giả thiết: *"không mất tổng quát, giả sử $a \ge b$"* (AL-28)
+
+Nợ có tên **lớn nhất còn mở** của engine, và `ALGEBRA-COVERAGE.md` §4.1 đã ghi nó hết mờ
+từ AL-21: phần *luật có tên* của bất đẳng thức đóng rồi, chỗ còn lại không phải "vài luật
+chưa cài" mà là **một khái niệm chưa có**. Bất đẳng thức là $35\%$ đề đại số olympiad và
+là ô duy nhất của §3 không nhúc nhích qua M71–M73, AL-20, AL-21.
+
+### §55.1 — Ba phép đo trước khi viết dòng nào, và cả ba đổi hình kế hoạch
+
+**(a) `same` + `normalize` không dựng được chứng chỉ đối xứng.** `normalize` chỉ *làm
+phẳng* `add`/`mul`; nó không sắp đối số. Nên hoán vị $a \leftrightarrow b$ trên
+$a^2+b^2+c^2 \ge ab+bc+ca$ — đối xứng hoàn toàn — rồi hỏi `same` cho **`false`**.
+
+Cần một khoá chuẩn giao hoán riêng, và **riêng thật**: cho `normalize` sắp đối số thì
+`same` đổi nghĩa ở 84 luật còn lại, mọi luật dựa vào nó để biết "bước này có đổi gì
+không" sẽ im lặng ở chỗ nó vốn phải nói, và golden đổi. Một thay đổi toàn cục để mua một
+phép hỏi cục bộ.
+
+**(b) Bộ bốc điểm chịu được điều kiện thứ tự — rủi ro lớn nhất, và nó không có thật.**
+Guard $a-b \ge 0,\ b-c \ge 0$ vẫn cho $8/8$ điểm trên ba seed, và vẫn bác đúng khi hai vế
+khác nhau. Sân thực đã lo sẵn: guard có **dấu** tự lái sang `sameValueReal`. Không phải
+đụng một dòng nào của `check.ts`.
+
+**(c) `guard` là của **một bước**.** `model.ts` — `const guard = outcome.guard ?? null`,
+trong vòng lặp. Một giả thiết WLOG phải sống tới hết chuỗi, và đó là toàn bộ phần kiến
+trúc của lượt này.
+
+### §55.2 — `standing`: khác `guard` ở **đời sống**, không ở hình dạng
+
+| | `guard` | `standing` |
+|---|---|---|
+| nói gì | "bước **này** chỉ đúng khi $x \ne 1$" | "từ đây trở đi ta giả sử $a \ge b$" |
+| sống bao lâu | một bước | tới hết chuỗi |
+| ai dựng | luật nào cũng được | tới nay chỉ `wlog` |
+
+Gộp hai thứ ấy thì hoặc mọi điều kiện dính tới cuối chuỗi (bộ kiểm bỏ qua những điểm đáng
+lẽ phải xét), hoặc giả thiết chết sau một bước (bước sau kiểm trên cả miền và đỏ vì lý do
+sai). Hai đời sống khác nhau thì phải khác tên.
+
+Và `standing` **không** đi vào `conditions[].guard`. Dòng điều kiện là thứ người học chạm
+vào để hỏi *"thì sao nếu"*, mà `violationOf` trả lời bằng một điểm làm điều kiện gãy — một
+điểm **ngoài nhánh đã chọn** không phải phản ví dụ của bước nào cả. Bộ kiểm và người học
+hỏi hai câu khác nhau, nên hai danh sách guard đi hai đường.
+
+### §55.3 — Luật `wlog`, và chỗ tiêu thụ đã nằm sẵn trong kho
+
+`wlog` không biến đổi cây: `after === node`. Thứ nó đổi là **miền**. Tính đúng đắn nằm
+gọn ở `symmetricUnder`, và luật **từ chối** khi không có chứng chỉ — không phải cảnh báo.
+
+Chỗ tiêu thụ không phải dựng mới. `mul_both_sides` vốn từ chối nhân một bất đẳng thức khi
+`definiteSign(term) === 0`, mà `definiteSign` trả $0$ cho **mọi** biểu thức có biến — nên
+$(a-b)$ luôn bị từ chối. Nay nó trả `verify: 'assumption'` với `assumption: "thứ tự: a >=
+b"`, và `model` đối chiếu với `standing`. Lời từ chối cũ không mất, nó **dời** sang chỗ
+biết được chuỗi; không có `wlog` đứng trước thì bước vẫn đỏ.
+
+Đây là lần thứ **ba** đi qua khuôn `'assumption'`, sau `use_injective` (§53) và
+`use_monotone` (§54b) — và là lần đầu khuôn ấy tiêu thụ một giả thiết sinh ra **từ chuỗi**
+chứ không từ `config.assume`. Nên `model` hỏi hai nguồn ở hai chỗ: `"f: đơn ánh"` là lời
+khai của tác giả về *bài*, `"thứ tự: a >= b"` là thứ một bước vừa dựng ra. Hỏi nhầm chỗ
+thì hỏng cả hai chiều — bắt tác giả khai thứ tự vào `config.assume` là bỏ mất **vị trí**
+của bước `wlog`.
+
+### §55.4 — Cái biên, và vì sao bốc điểm không canh được nó
+
+$a \ge b$ cho $a - b \ge 0$, tức $a-b$ **có thể bằng $0$**. Nhân một bất đẳng thức không
+ngặt với $0$ cho $0 \le 0$ — đúng; nhân một dấu **ngặt** với $0$ cho $0 < 0$ — sai.
+
+Đo trước khi tin, và phép đo bác luôn chốt canh đầu tiên tôi viết: bỏ mệnh đề canh biên
+rồi chạy lại thì `unsound` **vẫn rỗng**. Biên $a = b$ có độ đo $0$ trên $\mathbb{R}$, nên
+bộ bốc điểm thực không bao giờ rơi trúng. Chú thích tôi vừa gõ nói *"bỏ nó đi thì bộ kiểm
+đỏ ngay"* — một khẳng định mà mã không đỡ, trong chính commit đi vá lớp lỗi ấy.
+
+Nên phép hỏi phải là **cấu trúc**, và nó ở `model` chứ không ở luật: `model` dựng lại điều
+kiện cần từ `target.op` của chính nó, độc lập với thứ luật khai. Luật và phép kiểm đi qua
+*một* đường thì sai cùng nhau mà vẫn khớp — bài học M78.3.
+
+Ca ngặt vì thế đẻ ra một dòng đỏ thứ hai, `a ≠ b`. Đó không phải phiền hà: nó **là** nội
+dung, và bài `wlog-strict-sign-costs-a-condition` dạy đúng chỗ ấy.
+
+### §55.5 — Ranh giới, đo được và ghi ra
+
+`symmetricUnder` **chứng minh** được đối xứng; nó **không bác** được. $|a-b| \ge 0$ đối
+xứng thật mà vẫn bị từ chối: khoá chuẩn thấy `abs(a + (-1)b)` khác `abs(b + (-1)a)`, vì
+`abs` không giao hoán và engine không có luật kéo dấu trừ ra khỏi nó.
+
+Nên lời từ chối nói *"không chứng minh được"*, không nói *"bài không đối xứng"* — và
+khoảng cách giữa hai câu ấy là chỗ bản đầu suýt khai quá tay. Chiều thận trọng là chiều
+đúng: cấp nhầm một chứng chỉ thì lời giải sai từ đó và không ai thấy; từ chối nhầm thì
+tác giả thấy ngay.
+
+Hai chỗ khác cố ý hẹp:
+
+- **Thừa số phải là một hiệu hai biến.** Dấu của $a^2-b^2$ hay $f(a)-f(b)$ không suy ra
+  được từ một thứ tự trên biến, và nhận bừa là mở đúng cái khe `wlog` sinh ra để bịt.
+- **Ba biến thì ba bước `wlog` cặp kề**, không phải một `arg` ba tầng. Thứ thật sự phải
+  kiểm là đối xứng của **từng cặp**; tách ra thì bước nào thiếu chứng chỉ đỏ đúng chỗ nó.
+
+**Và WLOG không phải rẽ nhánh.** §4.1 gọi đây là "chỗ đắt"; nó rẻ hơn tưởng, vì nó thu hẹp
+về **một** nhánh và nhánh kia là chính bài này với hai tên hoán vị. Cái đắt thật là *tách
+trường hợp* — một khái niệm khác, và vẫn chưa có.

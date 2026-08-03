@@ -149,9 +149,12 @@
     "cauchy-engel-two-fractions",
     "functional-equation-injective",
     "cancel-only-after-factoring",
-    "monotone-peels-an-inequality"
+    "monotone-peels-an-inequality",
+    "wlog-order-lets-you-multiply",
+    "wlog-strict-sign-costs-a-condition"
   ],
   "newest": [
-    "monotone-peels-an-inequality"
+    "wlog-order-lets-you-multiply",
+    "wlog-strict-sign-costs-a-condition"
   ]
 }

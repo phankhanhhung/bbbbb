@@ -317,3 +317,56 @@ describe('mỗi validator một bài khai ra phải cắn được (§3b.3)', ()
     expect(bites(real as SceneValidator, scenes)).toBe(true);
   });
 });
+
+/**
+ * **Chứng chỉ đối xứng của `wlog` phải cắn được** (AL-28).
+ *
+ * Cùng hình dạng với cả tệp này, ở một chốt canh mới: `wlog` cho phép giả sử một thứ tự,
+ * và thứ *duy nhất* làm nó hợp lệ là bài bất biến khi đổi chỗ hai biến ấy. Một chứng chỉ
+ * luôn cấp là một chứng chỉ không có — và lần này nó sẽ không đỏ ở đâu cả, vì mọi bài
+ * trong kho đều **hợp lệ**. Chốt canh phải hỏi ngược: đổi sang một cặp **không** đối
+ * xứng thì bước ấy có bị từ chối không.
+ */
+describe('mỗi bước `wlog` phải từ chối được một thứ tự sai (AL-28)', () => {
+  it('đổi `arg` sang một cặp không đối xứng ⇒ bước đỏ', async () => {
+    const missed: string[] = [];
+    let checked = 0;
+
+    for (const problem of await bank()) {
+      for (const sol of problem.solutions) {
+        for (const step of sol.steps) {
+          const scene = step.scene;
+          if (scene?.engine !== 'algebra') continue;
+          const config = scene.config as { start?: string; steps?: { rule: string; arg?: string }[] };
+          for (const [i, one] of (config.steps ?? []).entries()) {
+            if (one.rule !== 'wlog') continue;
+            checked += 1;
+
+            // Thay biến vế nhỏ bằng một tên **chưa có trong bài**: cặp ấy chắc chắn
+            // không đối xứng, nên bước phải đỏ. Dùng một tên mới chứ không hoán vị hai
+            // biến sẵn có — hoán vị một cặp đối xứng lại cho một cặp đối xứng khác.
+            const hi = (one.arg ?? '').split('>=')[0]?.trim() ?? 'a';
+            const broken = {
+              ...config,
+              steps: (config.steps ?? []).map((s, j) =>
+                j === i ? { ...s, arg: `${hi} >= zzz` } : s,
+              ),
+            };
+            const out = readAlgebra({ ...scene, config: broken } as Scene);
+            if (out.refusal === null) {
+              missed.push(`${problem.id}/${step.id} bước ${i + 1}`);
+            }
+          }
+        }
+      }
+    }
+
+    // Cổng tự canh mình: chạy qua **không** bước nào là một cổng rỗng — đúng thứ cả tệp
+    // này sinh ra để bắt.
+    expect(checked, 'không bài nào dùng `wlog` — chốt canh này rỗng').toBeGreaterThan(0);
+    expect(
+      missed,
+      `bước \`wlog\` nhận cả một thứ tự sai:\n  ${missed.join('\n  ')}`,
+    ).toEqual([]);
+  });
+});

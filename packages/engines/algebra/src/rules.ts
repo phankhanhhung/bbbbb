@@ -7,7 +7,7 @@ import {
   type Guard,
   type Guards,
 } from './check.js';
-import { allPaths, intExp, needsRealEval, replaceAt, trySegments } from './expr.js';
+import { allPaths, intExp, needsRealEval, replaceAt, symmetricUnder, trySegments } from './expr.js';
 import {
   Minter,
   abs,
@@ -67,6 +67,23 @@ export interface RuleOutcome {
    * từ chuỗi tác giả gõ.
    */
   readonly guard?: Guards;
+  /**
+   * **Giả thiết của bài kể từ đây** — khác `guard` ở *đời sống*, không ở hình dạng
+   * (AL-28).
+   *
+   * `guard` là điều kiện **của một bước**: "bước này chỉ đúng khi $x \ne 1$". Nó chết
+   * ngay sau bước ấy, và đúng thế — bước sau nhân với thứ khác thì điều kiện cũng khác.
+   *
+   * `standing` là điều kiện **của mọi bước sau**: "từ đây trở đi ta giả sử $a \ge b$".
+   * Đó là cả nghĩa của một nhánh giả thiết, và nó không diễn đạt được bằng `guard` —
+   * một `guard` lặp lại ở từng bước là chín bản chép tay cho một lời khai, tức đúng thứ
+   * §3b.1 đã gỡ ở tầng khác.
+   *
+   * Hai đời sống khác nhau thì phải khác tên. Gộp chúng lại thì hoặc mọi điều kiện đều
+   * dính tới cuối chuỗi (bộ kiểm bỏ qua những điểm đáng lẽ phải xét), hoặc giả thiết
+   * chết sau một bước (bước sau kiểm trên cả miền, và nó sẽ đỏ vì lý do sai).
+   */
+  readonly standing?: Guards;
   /**
    * Các **vai** trong hằng đẳng thức đang áp: nhóm $i$ được tô một màu.
    *
@@ -1808,7 +1825,44 @@ const mulBothSides: Rule = {
     const isEquation = node.op === '=' || node.op === '!=';
     if (!isEquation) {
       if (sign === 0) {
-        return no(`chưa biết dấu của "${arg}" — bất đẳng thức phải tách trường hợp trước`);
+        /**
+         * **Nhánh giả thiết: dấu chưa biết, nhưng bài đã giả sử một thứ tự** (AL-28).
+         *
+         * Lời từ chối ngay trên **không mất** — nó dời sang `model`, chỗ duy nhất biết
+         * chuỗi có bước `wlog` nào đứng trước không. Luật vẫn mù với `config` và với
+         * `standing`: nó khai thứ nó cần, `model` đối chiếu. Đây là lần thứ **ba** đi
+         * qua khuôn `'assumption'`, sau `use_injective` (AL-22) và `use_monotone`
+         * (AL-24), và là lần đầu khuôn ấy tiêu thụ một giả thiết sinh ra **từ chuỗi**
+         * chứ không từ `config.assume`.
+         *
+         * ## Dấu ngặt cần hơn $\ge$, và đó là nội dung đáng dạy chứ không phải phiền hà
+         *
+         * $a \ge b$ cho $a - b \ge 0$, mà nhân một bất đẳng thức **ngặt** với $0$ cho
+         * $0 < 0$ — sai. Nên ca ngặt đòi thêm $a - b \ne 0$, và engine **ghi điều kiện
+         * ra** thay vì lặng lẽ nhận, đúng cách nó xử AL-08. Ca không ngặt thì $0 \le 0$
+         * vẫn đúng, nên không cần gì thêm.
+         *
+         * Bỏ mệnh đề ngặt này đi thì bộ kiểm đỏ ngay — nó bốc trúng điểm $a = b$.
+         */
+        const order = varDifference(term);
+        if (order === null) {
+          return no(`chưa biết dấu của "${arg}" — bất đẳng thức phải tách trường hợp trước`);
+        }
+        const strict = node.op === '<' || node.op === '>';
+        const { copy } = freshCopy(m, term);
+        return {
+          after: { ...node, lhs: mul(m, [node.lhs, term]), rhs: mul(m, [node.rhs, copy]) },
+          verify: 'assumption',
+          assumption: `thứ tự: ${order.hi} >= ${order.lo}`,
+          ...(strict
+            ? {
+                guard: guardOf('!=0', (g) =>
+                  add(g, [variable(g, order.hi), negate(g, variable(g, order.lo))]),
+                ),
+                condition: `${order.hi} ≠ ${order.lo}`,
+              }
+            : {}),
+        };
       }
       const { copy } = freshCopy(m, term);
       return {
@@ -4391,7 +4445,108 @@ export function peelSameFunction(
   return { name: lhs.name, op: node.op, lhs: lhs.args[0] as Expr, rhs: rhs.args[0] as Expr };
 }
 
+/**
+ * **"Không mất tổng quát, giả sử $a \ge b$"** — nhánh giả thiết (AL-28).
+ *
+ * Đây là món nợ có tên lớn nhất còn mở của engine, và `ALGEBRA-COVERAGE.md` §4.1 đã nói
+ * đúng vì sao nó khác mọi luật trước: nó **không phải một phép biến đổi cây**. Cây sau
+ * bằng đúng cây trước. Thứ đổi là **miền** ta đang lập luận trên đó.
+ *
+ * ## Tính đúng đắn nằm gọn trong một câu hỏi, và câu ấy máy trả lời được
+ *
+ * Giả sử một thứ tự là hợp lệ **khi và chỉ khi** biểu thức bất biến qua phép đổi chỗ hai
+ * biến ấy: nếu không, thứ tự giả sử **làm mất** tổng quát và lời giải sai từ đó. Nên
+ * luật hỏi `symmetricUnder` và **từ chối** khi câu trả lời là "không" — không có dòng
+ * cảnh báo, không có điều kiện ghi ra để đấy, mà từ chối.
+ *
+ * Phép hỏi ấy là **cấu trúc**, không phải bốc điểm, và §52.2 là lý do đứng sẵn: một đề
+ * xuất sai chiều của AM–GM đã đi qua $205$ điểm mẫu rồi mới lộ. Hoán vị thì cấu trúc trả
+ * lời dứt khoát.
+ *
+ * ## `standing`, không phải `guard`
+ *
+ * Thứ tự này sống tới **hết chuỗi**, nên nó đi bằng `standing` (xem `RuleOutcome`). Một
+ * `guard` chỉ sống một bước, và một giả thiết chết sau một bước thì không phải giả thiết.
+ *
+ * ## Ba biến thì ba bước, không phải một `arg` ba tầng
+ *
+ * `"a >= b >= c"` gói ba lời khai vào một chuỗi, mà thứ thật sự phải kiểm là đối xứng
+ * của **từng cặp**. Tách ra thì mỗi bước mang đúng một chứng chỉ, và bước nào không có
+ * chứng chỉ thì đỏ đúng chỗ nó — thay vì một dòng đỏ nói "chuỗi này có gì đó sai".
+ */
+const wlog: Rule = {
+  id: 'wlog',
+  label: 'không mất tổng quát',
+  onRelation: true,
+  accepts: ['rel', 'sys'],
+  needsArg: true,
+  run(m, node, arg) {
+    const parts = (arg ?? '').split('>=');
+    if (parts.length !== 2) return no('cần một thứ tự dạng `a >= b`');
+    const [hi, lo] = parts.map((p) => p.trim()) as [string, string];
+    if (!isVarName(hi) || !isVarName(lo)) {
+      return no('hai vế của thứ tự phải là **tên biến**, không phải biểu thức');
+    }
+    if (hi === lo) return no(`"${hi} >= ${hi}" không giả sử gì`);
+
+    const free = varsOf(node);
+    for (const name of [hi, lo]) {
+      if (!free.has(name)) return no(`bài không có biến "${name}"`);
+    }
+    if (!symmetricUnder(node, hi, lo)) {
+      /**
+       * Lời từ chối nói **"không chứng minh được"**, không nói "bài không đối xứng" — và
+       * khoảng cách giữa hai câu ấy là một sự thật đo được, không phải một chỗ thận trọng
+       * thừa.
+       *
+       * $|a-b| \ge 0$ đối xứng thật, mà `symmetricUnder` trả `false`: khoá chuẩn thấy
+       * `abs(a + (-1)b)` khác `abs(b + (-1)a)`, vì `abs` không giao hoán và engine không
+       * có luật nào kéo dấu trừ ra khỏi nó. Phép hỏi này **chứng minh** được đối xứng;
+       * nó không **bác** được. Nên một chuỗi hợp lệ vẫn có thể bị từ chối ở đây, và câu
+       * đúng để nói với tác giả là "tôi không thấy", chứ không phải "bạn sai".
+       *
+       * Chiều thận trọng là chiều đúng: cấp nhầm một chứng chỉ thì lời giải sai từ đó
+       * trở đi và không ai thấy; từ chối nhầm thì tác giả thấy ngay và đổi cách viết.
+       */
+      return no(
+        `không chứng minh được bài bất biến khi đổi chỗ ${hi} và ${lo} — ` +
+          'chưa có chứng chỉ ấy thì giả sử một thứ tự có thể **làm mất** tổng quát',
+      );
+    }
+
+    return {
+      // Cây **không đổi**: WLOG thu hẹp miền, không biến đổi biểu thức. Trả về chính
+      // `node` chứ không dựng bản sao — bản sao đổi id và làm gãy phả hệ của mọi hạng tử.
+      after: node,
+      standing: [guardOf('>=0', (g) => add(g, [variable(g, hi), negate(g, variable(g, lo))]))],
+      condition: `${hi} ≥ ${lo} (không mất tổng quát)`,
+    };
+  },
+};
+
+/** Một tên biến, không phải một biểu thức — cùng ngữ pháp với parser. */
+const isVarName = (s: string): boolean => /^[a-zA-Z][a-zA-Z0-9]*$/.test(s);
+
+/**
+ * Biểu thức này có đúng dạng $u - v$ với $u, v$ là **biến** không (AL-28).
+ *
+ * Hẹp có chủ đích. Một thừa số phức tạp hơn — $a^2 - b^2$, $f(a) - f(b)$ — thì dấu của
+ * nó **không** suy ra được từ một thứ tự trên biến, và nhận bừa ở đây là mở đúng cái khe
+ * mà `wlog` sinh ra để bịt. Ai cần chúng thì đi qua một bước có tên khác.
+ */
+function varDifference(e: Expr): { hi: string; lo: string } | null {
+  if (e.k !== 'add' || e.args.length !== 2) return null;
+  const [first, second] = e.args as [Expr, Expr];
+  if (first.k !== 'var') return null;
+  // Vế trừ là `mul(-1, v)` — engine không có nút `neg`, xem `ENGINE-ALGEBRA.md` §3.
+  if (second.k !== 'mul' || second.args.length !== 2) return null;
+  const [coef, who] = second.args as [Expr, Expr];
+  if (coef.k !== 'int' || coef.v !== -1 || who.k !== 'var') return null;
+  return { hi: first.name, lo: who.name };
+}
+
 export const RULES: readonly Rule[] = [
+  wlog,
   useInjective,
   useMonotone,
   amGm,

@@ -706,6 +706,33 @@ phải *"dữ liệu có hợp lệ không"*, nên chúng nằm ngoài tầm m�
 | §3b.2 / §3b.3 | *năng lực nào chưa nội dung nào đi qua?* | hai chốt canh luôn xanh |
 | §3b.5 | *chốt canh này đo **từ đâu**?* | một chốt canh xanh trước khi ai bấm |
 
+### 3b.6 Lần thứ năm, và lần này chốt canh sai nằm trong **chú thích tôi vừa gõ** (2026-08-03)
+
+AL-28 dựng nhánh giả thiết. Giả sử $a \ge b$ cho $a - b \ge 0$, tức $a-b$ **có thể bằng
+$0$** — và nhân một bất đẳng thức *ngặt* với $0$ là sai. Luật ghi thêm điều kiện $a \ne b$
+cho ca ngặt, và chú thích ngay cạnh nó khai: *"bỏ mệnh đề này đi thì bộ kiểm đỏ ngay — nó
+bốc trúng điểm $a = b$."*
+
+Bẻ thử: `unsound` **vẫn rỗng**. Biên $a = b$ có độ đo $0$ trên $\mathbb{R}$, nên bộ bốc
+điểm thực không bao giờ rơi trúng nó. Lời khai ấy sai, và nó là *một khẳng định mà mã
+không đỡ* — đúng lớp lỗi trội của kho, viết ra trong chính commit đi vá lớp lỗi ấy.
+
+Hai thứ đáng giữ:
+
+- **Chốt canh thật phải là cấu trúc, và phải ở `model`.** Nó dựng lại điều kiện cần từ
+  `target.op` của chính nó, độc lập với thứ luật khai — bài học M78.3. Sau khi dời, bẻ
+  mệnh đề kia làm `unsound` đỏ thật.
+- **Câu hỏi rẻ mới cho lượt sau:** *"chốt canh này bốc điểm hay hỏi cây?"* Nếu chỗ hỏng
+  nằm trên một tập có độ đo $0$ — một biên, một điểm, một trùng nhau — thì bốc điểm không
+  bao giờ tới. §3b.5 hỏi *đo từ đâu*; mục này hỏi *đo bằng gì*.
+
+| lượt | câu hỏi | thứ tìm được |
+|---|---|---|
+| §3b.1 | *cổng nào không nằm trong `pnpm check`?* | hai cổng đếm nói ngược nhau |
+| §3b.2 / §3b.3 | *năng lực nào chưa nội dung nào đi qua?* | hai chốt canh luôn xanh |
+| §3b.5 | *chốt canh này đo **từ đâu**?* | một chốt canh xanh trước khi ai bấm |
+| §3b.6 | *chốt canh này đo **bằng gì**?* | một chỗ hỏng có độ đo 0, bốc điểm không tới |
+
 ## 4. Việc **không** nằm trong tài liệu này
 
 Ba thứ hay bị nhầm là "làm engine mạnh hơn":

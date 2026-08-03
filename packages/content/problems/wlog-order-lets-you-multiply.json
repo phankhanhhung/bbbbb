@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.7.0",
+  "id": "wlog-order-lets-you-multiply",
+  "statement": {
+    "vi": "Nhân hai vế một bất đẳng thức với $a - b$ — được hay không? Câu trả lời là *\"còn tuỳ\"*, và chỗ đáng học nằm đúng ở chữ ấy: nó tuỳ vào một thứ bạn được phép **tự chọn**, nếu bài đối xứng."
+  },
+  "source": {
+    "contest": "folklore",
+    "note": {
+      "vi": "Bước *\"không mất tổng quát, giả sử $a \\ge b$\"* thường được viết ra rồi đi tiếp như một câu lịch sự. Nó không phải câu lịch sự: nó là một **suy luận có điều kiện**, và điều kiện ấy là bài phải bất biến khi đổi chỗ hai biến. Ở đây engine kiểm đúng điều kiện đó, bằng cấu trúc chứ không bằng thử vài bộ số."
+    }
+  },
+  "topics": [
+    "algebra"
+  ],
+  "techniques": [
+    "construction"
+  ],
+  "difficulty": {
+    "author_rating": 2,
+    "slot_proxy": "P2"
+  },
+  "engines_used": [
+    "algebra"
+  ],
+  "license": "CC-BY-SA-4.0",
+  "authors": [
+    "draft-may"
+  ],
+  "status": "published",
+  "kind": "illustration",
+  "created": "2026-08-03",
+  "updated": "2026-08-03",
+  "solutions": [
+    {
+      "id": "sol",
+      "label": {
+        "vi": "Chọn thứ tự, rồi mới nhân được"
+      },
+      "steps": [
+        {
+          "id": "s0",
+          "parent": null,
+          "edge_type": "seq",
+          "narrative": {
+            "vi": "Muốn nhân hai vế với $a - b$ thì phải biết **dấu** của nó, mà $a - b$ có thể âm.\n[[a1|Bước thứ hai]] không biến đổi gì — nó đổi **miền**: từ đây bài chỉ nói về trường hợp $a \\ge b$. Được phép chọn thế vì đổi chỗ $a$ và $b$ thì bài không đổi, nên trường hợp kia chỉ là bài này với hai tên hoán vị.\nCó thứ tự rồi thì [[a2|phép nhân]] giữ nguyên chiều."
+          },
+          "anchors": {
+            "a1": {
+              "ids": [
+                "row1"
+              ]
+            },
+            "a2": {
+              "ids": [
+                "row2"
+              ]
+            }
+          },
+          "scene": {
+            "engine": "algebra",
+            "config": {
+              "start": "a^2 + b^2 >= 2*a*b",
+              "steps": [
+                {
+                  "arg": "a >= b",
+                  "at": "",
+                  "note": "chọn thứ tự",
+                  "rule": "wlog"
+                },
+                {
+                  "arg": "a - b",
+                  "at": "",
+                  "rule": "mul_both_sides"
+                },
+                {
+                  "at": "0",
+                  "rule": "multiply_out"
+                },
+                {
+                  "at": "1",
+                  "rule": "multiply_out"
+                }
+              ]
+            },
+            "elements": []
+          },
+          "alt_text": {
+            "vi": "Năm dòng. Dòng 1 và dòng 2 giống hệt nhau: a bình cộng b bình lớn hơn hoặc bằng 2ab; dòng 2 kèm ghi chú chọn thứ tự và một dòng điều kiện không mất tổng quát a lớn hơn hoặc bằng b. Dòng 3: cả hai vế nhân với a trừ b. Dòng 4 và 5 nhân ra hai vế."
+          },
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "og_step_ref": {
+    "sol_id": "sol",
+    "step_id": "s0"
+  }
+}

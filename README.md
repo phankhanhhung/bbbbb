@@ -15,11 +15,11 @@ Số đo dưới đây lấy từ mã và kho tại `HEAD` (soát 2026-08-02), k
 
 - Phase 1 đang chạy; **9 engine** — board, graph, sequence, set, point, game,
   derivation, longdiv, algebra — cộng một **lớp ván chơi** nằm ngang qua ba engine.
-- Kho có **150 bài đã xuất bản**, trên 579 scene. Nội dung do tác giả soạn và tự
+- Kho có **152 bài đã xuất bản**, trên 584 scene. Nội dung do tác giả soạn và tự
   duyệt; chất lượng editorial vẫn là gate của sản phẩm, không được tự động bỏ qua.
 - Schema đóng băng ở `1.0.0` (2026-08-01), nay ở **`1.7.0`** sau bảy minor — mỗi
   minor một migration, cả năm đều đồng nhất. Player đọc được minor hiện tại và n−1.
-- 3983 test (70 tệp), 152 e2e, golden SVG phủ mọi step có hình.
+- 4006 test (70 tệp), 152 e2e, golden SVG phủ mọi step có hình.
 - Coverage ước lượng khoảng **85%** các họ bài tổ hợp mà engine hiện tại có
   thể gánh phần lập luận. Đây là ước lượng chuyên gia, không phải benchmark
   trên một tập đề hoàn chỉnh; xem [`docs/VIZ-COVERAGE.md`](docs/VIZ-COVERAGE.md).
