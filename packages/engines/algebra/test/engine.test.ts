@@ -43,6 +43,10 @@ import {
   varsOf,
   walk,
   same,
+  mul,
+  int,
+  add,
+  variable,
   normalize,
   commutativeKey,
   symmetricUnder,
@@ -3966,5 +3970,43 @@ describe('không mất tổng quát (AL-28)', () => {
     // đang đứng **không** đi vào `conditions[].guard`.
     const m = model('a^2 + b^2 >= 2*a*b', [{ rule: 'wlog', arg: 'a >= b' }]);
     expect(guardList(m.conditions[0]?.guard ?? null)).toEqual([]);
+  });
+});
+
+/**
+ * **Tích rỗng in ra `1`, không phải chuỗi rỗng** — tìm ra lúc đo §6 bằng cách *thử soạn*.
+ *
+ * `add_equations` với hệ số $1$ dựng ra `mul(1, 1)` thật, nên $x+y=3$ cộng $x-y=1$ in ra
+ * `3 + ` — một dấu cộng treo lơ lửng. Cây đúng, **bộ chữ** sai.
+ *
+ * Đáng có răng vì `toPlain` là bộ chữ của mọi **dòng điều kiện đỏ** (hai chục chỗ gọi
+ * trong `rules.ts`) và của câu *"thì sao nếu"* ở `incident.ts`: một điều kiện in ra
+ * `" > 0"` tệ hơn không có điều kiện.
+ */
+describe('bộ chữ: tích rỗng (§6)', () => {
+  const m = new Minter();
+
+  it('bỏ hết hệ số 1 mà không còn gì thì tích ấy **bằng** 1', () => {
+    expect(toPlain(mul(m, [int(m, 1), int(m, 1)]))).toBe('1');
+    expect(toPlain(mul(m, [int(m, 1), int(m, 1), int(m, 1)]))).toBe('1');
+  });
+
+  it('và nó không để lại dấu cộng treo trong một tổng', () => {
+    expect(toPlain(add(m, [int(m, 3), mul(m, [int(m, 1), int(m, 1)])]))).toBe('3 + 1');
+  });
+
+  it('ca thường **không** đổi — bản vá không được nhét thêm số 1 vào đâu cả', () => {
+    expect(toPlain(mul(m, [int(m, 2), int(m, 1)]))).toBe('2');
+    expect(toPlain(mul(m, [int(m, 1), int(m, -1)]))).toBe('−1');
+    expect(toPlain(mul(m, [int(m, 1), variable(m, 'x')]))).toBe('x');
+  });
+
+  it('đi qua đường thật: cộng hai phương trình hệ số 1', () => {
+    const model = readAlgebra(scene('x + y = 3; x + -1*y = 1', [
+      { at: '', rule: 'add_equations', arg: '0,1,1' },
+    ]));
+    expect(model.refusal).toBeNull();
+    expect(toPlain(model.rows[1]!.expr)).not.toMatch(/\+\s*(;|$)/);
+    expect(toPlain(model.rows[1]!.expr)).toContain('3 + 1');
   });
 });

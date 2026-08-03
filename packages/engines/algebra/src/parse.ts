@@ -571,6 +571,15 @@ export function toPlain(e: Expr): string {
       const body = neg ? stripSignPlain(e) : e;
       if (body.k !== 'mul') return `${neg ? '−' : ''}${toPlain(body)}`;
       const shown = body.args.filter((a) => !(a.k === 'int' && a.v === 1));
+      // **Tích rỗng là $1$, không phải chuỗi rỗng.** Bỏ hết hệ số $1$ rồi mà không còn
+      // gì thì tích ấy *bằng* $1$ — và `1 · 1` là một cây có thật: `add_equations` với
+      // hệ số $1$ dựng ra đúng nó, nên $x+y=3$ cộng $x-y=1$ in ra `3 + ` — một dấu cộng
+      // treo lơ lửng, không phải một công thức.
+      //
+      // Chỗ này **người học nhìn thấy**: `toPlain` là bộ chữ của mọi dòng điều kiện đỏ
+      // (`rules.ts` gọi nó ở hai chục chỗ) và của câu trả lời "thì sao nếu" trong
+      // `incident.ts`. Một điều kiện in ra `" > 0"` thì tệ hơn không có điều kiện.
+      if (shown.length === 0) return `${neg ? '−' : ''}1`;
       // Dấu nhân **chỉ** ở chỗ thiếu nó thì đọc sai. Kề nhau là cách viết tay ($2x$,
       // $xy$), nhưng hai chữ số kề nhau thì dính thành một số khác: $x^2 \cdot
       // \frac1{1-x}$ in ra `x^21/(1 − x)` và đọc thành "x mũ hai mươi mốt". Nên hỏi

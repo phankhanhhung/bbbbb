@@ -167,6 +167,77 @@ mười ô, bằng đúng cách §6 mô tả. Cho tới lúc ấy: **~33% là s�
 
 ---
 
+## 3b. Đo bằng cách **thử soạn** — nửa của §6 làm được offline (2026-08-03)
+
+§6 vạch bốn bước để biến §3 thành phép đo. **Bước 1–2 không làm được ở đây**, và ghi ra
+thay vì lặng lẽ bỏ: chúng cần một danh sách đề thật (IMO Shortlist mục A + đề quốc gia),
+kho không có corpus ấy — `source.contest` đếm ra **146 folklore, 4 IMO, 1 IMO Shortlist**
+— và hai nguồn ngoài (`artofproblemsolving.com`, `imo-official.org`) đều bị chặn ở proxy
+(403). Bịa một bảng phân loại từ trí nhớ là đúng thứ tài liệu này cấm.
+
+**Bước 3 thì không cần corpus**, và §6 gọi nó là *"bước duy nhất tốn công thật, và cũng
+là bước duy nhất không thay thế được"*: với mỗi họ, thử soạn thật rồi xem engine kể được
+lập luận không. Bảng dưới là bước ấy — **30 lần thử, 24 soạn được** — và nó chạy lại được
+ở mỗi commit: `tools/pipeline/test/algebra-reach.test.ts`.
+
+| Họ bài | Phổ thông | Olympiad |
+|---|---:|---:|
+| **bất đẳng thức** | 3 / 3 | 2 / 3 |
+| **phương trình hàm** | 1 / 1 | 2 / 3 |
+| **đa thức** | 1 / 1 | 1 / 2 |
+| **dãy số và truy hồi** | 1 / 1 | 2 / 2 |
+| **hàm sinh / chuỗi** | 1 / 1 | 1 / 2 |
+| **biến đổi / căn thức** | 2 / 2 | 1 / 1 |
+| **hệ phương trình** | 1 / 1 | 1 / 1 |
+| **log / mũ / lượng giác** | 1 / 1 | 1 / 1 |
+| **bất phương trình, tập nghiệm** | 1 / 1 | 1 / 1 |
+| **số học ⟂ đại số** | — | 0 / 2 |
+
+### 3b.1 Đọc bảng này đúng cách — nó **không** thay cột "Phủ"
+
+Đây là **chặn dưới**, không phải phần trăm phủ, và cả hai chiều đều không suy ra được:
+
+- *"soạn được"* nói engine kể được **dạng này**, không nói nó kể được cả họ;
+- *"chưa soạn được"* nói **người soạn** không tìm ra đường, không nói đường ấy không có.
+
+Vế thứ hai không phải lời rào đón: nó sai **hai lần** ngay trong lượt dựng bảng. `Σ(k+1)`
+và trục căn thức ban đầu đều bị ghi là chỗ hụt, hoá ra chỉ là gọi nhầm luật — và chính
+lời từ chối của engine chỉ sang luật đúng (*"dùng `multiply_by_conjugate`"*). Một bảng
+"chỗ hụt" đọc vội thì hai dòng ấy đã thành hai lỗ hổng tưởng tượng.
+
+Nên §3 giữ nguyên cột "Phủ" ước lượng, và bảng này đứng cạnh nó đo một thứ **khác**:
+*hôm nay, bằng máy, những dạng nào đi qua được engine.*
+
+### 3b.2 Sáu chỗ chặn, và chúng không cùng loại
+
+| chỗ chặn | loại |
+|---|---|
+| SOS ba biến: hình rộng $15{,}30$ ô, quá trần $13{,}6$ | **trần trình bày**, không phải trần suy luận |
+| `use_surjective` chưa có | năng lực thiếu — và là **hợp đồng mới**, xem §4.2 |
+| Vieta với hệ số ký hiệu | năng lực thiếu — `quadratic_formula` đòi đa thức một biến |
+| Binet $1/(1-x-x^2)$ | **ranh giới cố ý** — §5.1, mở tới vô tỉ là viết một CAS |
+| đồng dư $x \equiv 3 \pmod 5$ | chặn ở **ngữ pháp**, không ở tập luật |
+| chia hết $5 \mid x$ | cùng chỗ chặn |
+
+Phân loại này đáng hơn con số $24/30$. Ba loại chặn đòi ba quyết định khác hẳn nhau: một
+**trần trình bày** sửa bằng bố cục; một **ranh giới cố ý** thì không sửa; còn *"chặn ở
+ngữ pháp"* nghĩa là ô "số học ⟂ đại số" của §3 ghi $10\%$ vẫn còn **rộng tay** — engine
+không viết ra được đề bài, chứ không phải viết ra rồi thiếu luật.
+
+### 3b.3 Và lượt thử soạn tìm ra một lỗi thật
+
+Cộng hai phương trình với hệ số $1$ dựng ra cây `mul(1, 1)` — hợp lệ — nhưng bộ chữ in nó
+thành **chuỗi rỗng**, nên $x+y=3$ cộng $x-y=1$ hiện ra `3 + `: một dấu cộng treo lơ lửng.
+Cây đúng, `toPlain` sai, và `toPlain` là bộ chữ của **mọi dòng điều kiện đỏ** (hai chục
+chỗ gọi trong `rules.ts`) lẫn câu *"thì sao nếu"* của `incident.ts`. Một điều kiện in ra
+`" > 0"` tệ hơn không có điều kiện. Đã vá — tích rỗng là $1$ — và có răng.
+
+> Đây chính là thứ §6 bước 3 sinh ra để tìm, và là lý do nó *"không thay thế được"*: lỗi
+> này không nằm trong đường đi của một bài nào trong kho, nên không chốt canh nào đang có
+> với tới nó.
+
+---
+
 ## 4. Ba quyết định mà bảng này ép phải đối mặt
 
 ### 4.1 Bất đẳng thức — họ lớn nhất, phần **có tên** đã đóng ✅ AL-21

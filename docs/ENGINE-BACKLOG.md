@@ -733,6 +733,33 @@ Hai thứ đáng giữ:
 | §3b.5 | *chốt canh này đo **từ đâu**?* | một chốt canh xanh trước khi ai bấm |
 | §3b.6 | *chốt canh này đo **bằng gì**?* | một chỗ hỏng có độ đo 0, bốc điểm không tới |
 
+### 3b.7 Lượt thứ sáu, và lần này chốt canh không **với tới** chỗ hỏng (2026-08-03)
+
+`ALGEBRA-COVERAGE.md` §6 bước 3 — *thử soạn một dạng bài cho mỗi họ* — lôi ra một lỗi mà
+không cổng nào đang có bắt được: cộng hai phương trình với hệ số $1$ dựng ra cây
+`mul(1, 1)`, hợp lệ, nhưng `toPlain` in nó thành **chuỗi rỗng**, nên $x+y=3$ cộng
+$x-y=1$ hiện ra `3 + ` — một dấu cộng treo lơ lửng.
+
+Cây đúng, **bộ chữ** sai. Và `toPlain` là bộ chữ của **mọi dòng điều kiện đỏ** (hai chục
+chỗ gọi trong `rules.ts`) lẫn câu *"thì sao nếu"* của `incident.ts` — một điều kiện in ra
+`" > 0"` tệ hơn không có điều kiện.
+
+Vì sao không cổng nào bắt: golden chỉ phủ **đường đi của bài trong kho**, và không bài nào
+cộng hai phương trình với hệ số $1$. Quét ngẫu nhiên thì so *giá trị*, không so *chữ*. Bẻ
+răng thì bẻ chốt canh đang có. Cả ba đều đúng việc của mình và cả ba đều không với tới.
+
+| lượt | câu hỏi | thứ tìm được |
+|---|---|---|
+| §3b.1 | *cổng nào không nằm trong `pnpm check`?* | hai cổng đếm nói ngược nhau |
+| §3b.2 / §3b.3 | *năng lực nào chưa nội dung nào đi qua?* | hai chốt canh luôn xanh |
+| §3b.5 | *chốt canh này đo **từ đâu**?* | một chốt canh xanh trước khi ai bấm |
+| §3b.6 | *chốt canh này đo **bằng gì**?* | chỗ hỏng có độ đo 0, bốc điểm không tới |
+| §3b.7 | *thử một thứ **chưa bài nào làm** thì sao?* | bộ chữ hỏng ngoài đường đi của kho |
+
+Cái đáng giữ: bốn lượt trước đều đi tìm **cổng** hỏng. Lượt này đi tìm **đầu vào chưa ai
+thử**, và đó là một hướng khác hẳn — nó đo chỗ chốt canh *không phủ*, chứ không đo chốt
+canh. Kho nay có một bộ dò cho hướng ấy: `tools/pipeline/test/algebra-reach.test.ts`.
+
 ## 4. Việc **không** nằm trong tài liệu này
 
 Ba thứ hay bị nhầm là "làm engine mạnh hơn":

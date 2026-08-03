@@ -2,7 +2,7 @@
 
 Nguồn: `docs/SRS-v1.0.md` (SRS v1.0, 2026-07-29) · Định hướng sản phẩm: `docs/PRODUCT-REQUIREMENTS.md` v1.1 (họ ID mới `EXP-*`, `CHO-*`, `DOM-*`) · Đối tượng: 1 người (Owner-Author)
 
-**Trạng thái (soát lại 2026-08-03):** đang chạy · **9 engine** + lớp ván chơi (M78) · schema **`1.7.0`** (freeze `1.0.0` ngày 2026-08-01, bảy minor sau đó, mỗi minor một migration) · kho **152 bài** đã xuất bản · **4006 test** (70 tệp), e2e **152** · **G-A và G-C đã đóng** ngày 2026-08-01 (§10 ghi đóng bằng gì và rủi ro nào còn lại) · 85 luật đại số, 59 validator, 46 lệnh sandbox trên 9 engine.
+**Trạng thái (soát lại 2026-08-03):** đang chạy · **9 engine** + lớp ván chơi (M78) · schema **`1.7.0`** (freeze `1.0.0` ngày 2026-08-01, bảy minor sau đó, mỗi minor một migration) · kho **152 bài** đã xuất bản · **4014 test** (71 tệp), e2e **152** · **G-A và G-C đã đóng** ngày 2026-08-01 (§10 ghi đóng bằng gì và rủi ro nào còn lại) · 85 luật đại số, 59 validator, 46 lệnh sandbox trên 9 engine.
 
 > **Dòng trạng thái này từng đứng ở "M48 xong; schema `0.3.0`; kho 91 bài; G-C chưa
 > đóng" cho tới lượt soát 2026-08-02** — tức nó khai sai cả bốn trường, trong khi

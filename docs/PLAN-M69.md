@@ -185,9 +185,10 @@ tiếp, xếp theo lịch sử git, để không ai phải đọc `git log` mớ
 | **AL-26** — điều kiện của phép nhân gọi tên đúng chỗ hỏng (`1/sin x ≠ 0` là câu luôn đúng); `no-lost-roots` **không** dựng vì nó là bản trùng | 08-02 | `ENGINE-ALGEBRA.md` §54d |
 | **AL-27** — `step.sandbox`: hộp cát mở ở chỗ tác giả khai, không ở cuối chuỗi; hai cổng cho đích; bài đại số bật hộp cát `2 → 5`, golden 0 byte; schema `1.7.0` | 08-03 | `ENGINE-ALGEBRA.md` §54e |
 | **AL-28** — nhánh giả thiết: luật `wlog` + `RuleOutcome.standing`; khoá chuẩn giao hoán cho chứng chỉ đối xứng; đóng nợ có tên lớn nhất của §4.1; kho `150 → 152` | 08-03 | `ENGINE-ALGEBRA.md` §55 |
+| **§6 bước 3** — "thử soạn" thành phép đo chạy lại được: 30 lần thử / 24 soạn được, sáu chỗ chặn phân ba loại; lôi ra lỗi bộ chữ `toPlain` in tích rỗng thành chuỗi rỗng | 08-03 | `ALGEBRA-COVERAGE.md` §3b |
 
 Kho đi từ **114 bài → 152 bài** trong ba ngày, test từ **3459** (M78.8) lên
-**4006 / 70 tệp**, schema từ `1.0.0` lên `1.7.0` — bảy minor, bảy migration đồng nhất.
+**4014 / 71 tệp**, schema từ `1.0.0` lên `1.7.0` — bảy minor, bảy migration đồng nhất.
 
 > **Một cái bẫy đếm, ghi ra để lần sau không phải điều tra lại.** Con số chính thức
 > là số của `pnpm test` (`vitest run` không lọc đường dẫn) — **3843 / 67 tệp** lúc

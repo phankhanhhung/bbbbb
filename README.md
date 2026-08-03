@@ -19,7 +19,7 @@ Số đo dưới đây lấy từ mã và kho tại `HEAD` (soát 2026-08-02), k
   duyệt; chất lượng editorial vẫn là gate của sản phẩm, không được tự động bỏ qua.
 - Schema đóng băng ở `1.0.0` (2026-08-01), nay ở **`1.7.0`** sau bảy minor — mỗi
   minor một migration, cả năm đều đồng nhất. Player đọc được minor hiện tại và n−1.
-- 4006 test (70 tệp), 152 e2e, golden SVG phủ mọi step có hình.
+- 4014 test (71 tệp), 152 e2e, golden SVG phủ mọi step có hình.
 - Coverage ước lượng khoảng **85%** các họ bài tổ hợp mà engine hiện tại có
   thể gánh phần lập luận. Đây là ước lượng chuyên gia, không phải benchmark
   trên một tập đề hoàn chỉnh; xem [`docs/VIZ-COVERAGE.md`](docs/VIZ-COVERAGE.md).
